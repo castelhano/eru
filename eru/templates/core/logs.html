@@ -1,0 +1,60 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Logs{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link pointer" id="back" title="ALT + V" onclick="window.close();"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title">Logs</h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      <table id="main_table" class="table table-sm border table-striped table-hover">
+        <thead>
+          <tr>
+            <th class="d-none d-sm-table-cell">Data</th>
+            <th class="d-none d-lg-table-cell">Modelo</th>
+            <th class="d-none d-md-table-cell">ID</th>
+            <th>Objeto</th>
+            <th class="d-none d-lg-table-cell">Operação</th>
+            <th>Usuario</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td class="d-none d-sm-table-cell">{{log.data|date:'d/m/Y H:i:s'}}</td>
+              <td class="d-none d-lg-table-cell">{{log.modelo}}</td>
+              <td class="d-none d-md-table-cell">{{log.objeto_id}}</td>
+              <td>{{log.objeto_str}}</td>
+              <td class="d-none d-lg-table-cell">{{log.mensagem}}</td>
+              <td>{{log.usuario.username|upper}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+{% endblock %}
+
+<script>
+{% block add_script %}
+const table = new jsTable(document.getElementById('main_table'),{
+  canFilter: true,
+  filterCols: ['Objeto', 'Operacao', 'Usuario'],
+  enablePaginate: true,
+  rowsPerPage: 20,
+  keyBindEscape: ['enterRow']
+});
+
+{% endblock %}
+</script>

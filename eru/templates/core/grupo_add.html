@@ -1,0 +1,51 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Grupo{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_grupos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'core_grupo_add' %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'core/_form_grupo.html' %}
+  </form>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/selectm.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  const targetOptions = document.getElementById('id_permissions').options;
+  let perms = {};
+  const permsGroups = {};
+  const avoidGroups = ['admin','contenttypes','sessions'];
+  for(i = 0; i < targetOptions.length; i++){
+    let nome_split = targetOptions[i].innerText.split(' | ');
+    if(avoidGroups.includes(nome_split[0])){continue;}
+    
+    if(Object.keys(permsGroups).includes(nome_split[0])){ // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
+      permsGroups[nome_split[0]].push(`${targetOptions[i].value}`);
+    }
+    else{ // Caso nao, inicia grupo
+      permsGroups[nome_split[0]] = [`${targetOptions[i].value}`];
+    }
+    perms[targetOptions[i].value] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+  }
+  const select = new jsSelectm(document.getElementById('id_permissions'), {
+    title: 'Permissões',
+    options: perms,
+    groups: permsGroups
+  });
+  
+  {% endblock %}
+</script>

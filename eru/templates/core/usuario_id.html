@@ -1,0 +1,199 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Usuario{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-dark" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal">Historico</a></li>
+          {% if perms.auth.delete_user %}
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal">Excluir Usuario</a></li>
+          {% endif %}
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'core_usuario_update' usuario.id|safe %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'core/_form_usuario.html' %}
+  </form>
+</div>
+
+{% if perms.auth.delete_user %}
+<div class="modal fade" id="delete_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Excluir Usuário</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do usuário?</p>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'core_usuario_delete' usuario.id|safe %}">Excluir</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="modal fade" id="history_modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Operação</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody class="fs-7">
+            {% for i in usuario.profile.ultimas_alteracoes %}
+            <tr>
+              <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
+              <td>{{i.mensagem}}</td>
+              <td>{{i.usuario.username|upper|default:'None'}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/selectm.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  var selectEmpresas;
+  
+  const empresasUsuario = { // Armazena empresas atuais habilitadas para o usuario
+    {% for empresa in usuario.profile.empresas.all %}
+    {{empresa.id|safe}}: '{{empresa.nome}}',
+    {% endfor %}
+  }
+  
+  const empresas  = new selectPopulate({
+    target: document.getElementById('id_empresas'),
+    url: '{% url 'core_get_empresas' %}',
+    params: 'usuario=new',
+    onSuccess: ()=>{
+      selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
+        optionsSelected: Object.keys(empresasUsuario),
+        emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
+      });
+    }
+  })
+  
+  {% if not usuario.is_superuser %}
+  var selectGrupos;
+  // var selectGrupos, selectPerms;
+  
+  const gruposUsuario = { // Armazena os grupos atuais do usuario
+    {% for grupo in usuario.groups.all %}
+    {{grupo.id|safe}}: '{{grupo.name}}',
+    {% endfor %}
+  }
+  
+  const grupos  = new selectPopulate({
+    target: document.getElementById('id_grupos'),
+    url: '{% url 'core_get_grupos' %}',
+    params: 'usuario=new',
+    value: 'name',
+    onSuccess: ()=>{
+      selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
+        optionsSelected: Object.keys(gruposUsuario),
+        emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
+      });
+    }
+  })
+  
+  const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
+    customStyles:true,
+    reorderOptions: false,
+    wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
+    emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
+  });
+  
+  
+  const permsTodos = {};
+  const permsSelecionados = [];
+  const permsGroups = {};
+  function getPerms() {
+    selectPerms.optionsContainer.innerHTML = '<small class="text-body-secondary">Buscando permissões, aguarde....</small>';
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if(this.readyState == 4 && this.status == 200){
+        if(this.responseText == ''){}
+        else{
+          let obj = JSON.parse(this.responseText);
+          for(item in obj){
+            let nome_split = obj[item].nome.split(' | ');
+            if(Object.keys(permsGroups).includes(nome_split[0])){ // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
+              permsGroups[nome_split[0]].push(`${obj[item].id}`);
+            }
+            else{ // Caso nao, inicia grupo
+              permsGroups[nome_split[0]] = [`${obj[item].id}`];
+            }
+            permsTodos[obj[item].id] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+          }
+          getPermsUsuario();
+        }
+      }
+    };
+    xhttp.open("GET", "{% url 'core_get_user_perms' %}?usuario=new", true);
+    xhttp.send();
+  }
+  getPerms();
+  
+  function getPermsUsuario() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if(this.readyState == 4 && this.status == 200){
+        if(this.responseText == ''){}
+        else{
+          let obj = JSON.parse(this.responseText);
+          for(item in obj){permsSelecionados.push(`${obj[item].id}`);}
+          selectPerms.options = permsTodos;
+          selectPerms.optionsSelected = permsSelecionados;
+          selectPerms.groups = permsGroups;
+          selectPerms.buildOptions(); // Monta componente select
+          selectPerms.rebuildTargetOptions(); // Atualiza innerHTML do form
+          
+        }
+      }
+    };
+    xhttp.open("GET", "{% url 'core_get_user_perms' %}?usuario={{usuario.id}}", true);
+    xhttp.send();
+  }
+  {% endif %}
+  
+  {% endblock %}
+</script>

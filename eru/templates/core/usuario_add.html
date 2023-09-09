@@ -1,0 +1,92 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Usuario{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'core_usuario_add' %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'core/_form_usuario.html' %}
+  </form>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/selectm.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  var selectEmpresas, selectGrupos;
+  
+  const empresas  = new selectPopulate({
+    target: document.getElementById('id_empresas'),
+    url: '{% url 'core_get_empresas' %}',
+    params: 'usuario=new',
+    onSuccess: ()=>{
+      selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'});      
+    }
+  })
+  
+  const grupos  = new selectPopulate({
+    target: document.getElementById('id_grupos'),
+    url: '{% url 'core_get_grupos' %}',
+    params: 'usuario=new',
+    value: 'name',
+    onSuccess: ()=>{
+      selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});
+    }
+  })
+
+  const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
+    reorderOptions: false,
+    wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
+    emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
+  });
+  
+  const permsGroups = {};
+  function getPerms() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if(this.readyState == 4 && this.status == 200){
+        if(this.responseText == ''){}
+        else{
+          let obj = JSON.parse(this.responseText);
+          let perms = {};
+          for(item in obj){
+            let nome_split = obj[item].nome.split(' | ');
+            if(Object.keys(permsGroups).includes(nome_split[0])){ // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
+              permsGroups[nome_split[0]].push(`${obj[item].id}`);
+            }
+            else{ // Caso nao, inicia grupo
+              permsGroups[nome_split[0]] = [`${obj[item].id}`];
+            }
+            perms[obj[item].id] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+          }
+          selectPerms.options = perms;
+          selectPerms.groups = permsGroups;
+          selectPerms.buildOptions();
+        }
+      }
+    };
+    xhttp.open("GET", "{% url 'core_get_user_perms' %}?usuario=new", true);
+    xhttp.send();
+  }
+  getPerms();
+  
+  
+  
+  {% endblock %}
+</script>

@@ -1,0 +1,94 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Empresas{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+{% block content_fluid %}
+
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      {% if perms.core.add_empresa %}
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'core_empresa_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      {% endif %}
+      {% if perms.core.view_log %}
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=core.empresa&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+        </ul>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title">Empresas</h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      <table id="main_table" class="table border table-striped table-hover">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nome</th>
+            <th class="d-none d-lg-table-cell">Razão Social</th>
+            <th class="d-none d-lg-table-cell">CNPJ</th>
+            <th class="d-none">Insc Estadual</th>
+            <th class="d-none">Insc Municipal</th>
+            <th class="d-none">Cnae</th>
+            <th class="d-none">Endereço</th>
+            <th class="d-none">Bairro</th>
+            <th class="d-none">Cidade</th>
+            <th class="d-none">UF</th>
+            <th class="d-none">CEP</th>
+            <th class="d-none">Fone</th>
+            <th class="d-none">Fax</th>
+            {% if perms.core.change_empresa %}
+            <th>&nbsp;</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for empresa in empresas %}
+          <tr>
+            <td>{{empresa.id|safe}}</td>
+            <td>{{empresa.nome}}</td>
+            <td class="d-none d-lg-table-cell">{{empresa.razao_social}}</td>
+            <td class="d-none d-lg-table-cell">{{empresa.cnpj}}</td>
+            <td class="d-none">{{empresa.inscricao_estadual}}</td>
+            <td class="d-none">{{empresa.inscricao_municipal}}</td>
+            <td class="d-none">{{empresa.cnae}}</td>
+            <td class="d-none">{{empresa.endereco}}</td>
+            <td class="d-none">{{empresa.bairro}}</td>
+            <td class="d-none">{{empresa.cidade}}</td>
+            <td class="d-none">{{empresa.uf}}</td>
+            <td class="d-none">{{empresa.cep}}</td>
+            <td class="d-none">{{empresa.fone}}</td>
+            <td class="d-none">{{empresa.fax}}</td>
+            {% if perms.core.change_empresa %}
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'core_empresa_id' empresa.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+{% endblock %}
+
+
+<script>
+{% block add_script %}
+const table = new jsTable(document.getElementById('main_table'),{
+  canFilter: true,
+  filterCols: ['Nome'],
+});
+
+
+{% endblock %}
+</script>

@@ -1,0 +1,122 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Usuarios{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      {% if perms.auth.add_user %}
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'core_usuario_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      {% endif %}
+      {% if perms.core.view_log %}
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=auth.user&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+        </ul>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title">Usuários</h5>
+    <div class="row">
+      <div class="col-lg order-2 order-lg-1">
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+          <table id="main_table" class="table border table-striped table-hover">
+            <caption class="fs-7">
+              <div class="d-flex flex-column pe-1">
+                <span class="me-1"><small class="badge bg-secondary-subtle text-secondary-emphasis me-2" style="width: 35px;">SU</small>Super usuário</span>
+                <span><small class="badge bg-primary-subtle text-secondary-emphasis me-2" style="width: 35px;">ME</small>Membro de equipe</span>
+              </div>
+            </caption>
+            <thead>
+              <tr>
+                <th class="d-none d-sm-table-cell">#</th>
+                <th class="d-none d-md-table-cell fit">&nbsp;</th>
+                <th>Username</th>
+                <th class="d-none d-md-table-cell">First Name</th>
+                <th class="d-none d-md-table-cell">Last Name</th>
+                <th>Status</th>
+                <th class="d-none d-xl-table-cell">Last Login</th>
+                {% if perms.auth.change_user %}
+                <th>&nbsp;</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for usuario in usuarios %}
+              <tr>
+                <td class="d-none d-sm-table-cell">{{usuario.id|safe}}</td>
+                <td class="d-none d-md-table-cell">{{usuario.profile.force_password_change|yesno:'<i class="fas fa-sync" title="Trocar senha proximo login"></i>,'|safe}}</td>
+                <td>{{usuario.username}}{% if usuario.is_superuser %} <sup class="badge bg-secondary-subtle text-secondary-emphasis fs-9" style="width: 35px;" title="Super Usuário">SU</sup>{% endif %}{% if usuario.is_staff %} <sup class="badge bg-primary-subtle text-secondary-emphasis fs-9" title="Membro de equipe">ME</sup>{% endif %}</td>
+                <td class="d-none d-md-table-cell">{{usuario.first_name}}</td>
+                <td class="d-none d-md-table-cell">{{usuario.last_name}}</td>
+                <td>{{usuario.is_active|yesno:"<b class='text-success'>Ativo</b>,<b class='text-danger'>Inativo</b>"|safe}}</td>
+                <td class="d-none d-xl-table-cell">{{usuario.last_login|date:'d/m/y H:i'}}</td>
+                {% if perms.auth.change_user %}
+                <td class="text-end fit py-1">
+                  <a class="btn btn-sm btn-dark" href="{% url 'core_usuario_id' usuario.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a>
+                </td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <!-- <div class="tab-pane fade" id="param" role="tabpanel">param</div> -->
+      </div>
+      <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2">
+        <div class="filter-container">
+          <h6 class="text-body-secondary d-flex justify-content-between">Filtros:<a class="text-body-secondary text-decoration-none fs-8" id="clear" href="{% url 'core_usuarios' %}">Limpar</a></h6>
+          <ul class="list-unstyled">
+            <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Ativos</a></li>
+            <li><a href="#" id="id_bloqueados" onclick="urlFilter('is_active','False')">Bloqueados</a></li>
+            <li><a href="#" id="id_superuser" onclick="urlFilter('is_superuser','True')">Superusuario</a></li>
+            <li><a href="#" id="id_staff" onclick="urlFilter('is_staff','True')">Membro de Equipe</a></li>
+            <li><hr class="my-1"></li>
+            <li><a href="#" id="id_inativos" onclick="inativosFilter(-30);">Inativo +30 dias</a></li>
+            <li><a href="#" id="id_nunca_logado" onclick="urlFilter('last_login','None');">Sem registro de login</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  const table = new jsTable(document.getElementById('main_table'), {
+    enablePaginate: true,
+    canFilter: true,
+    filterCols: ['Username']
+  });
+
+  const usuario_filters = {
+    'is_active=True':'id_ativos',
+    'is_active=False':'id_bloqueados',
+    'is_superuser':'id_superuser',
+    'is_staff':'id_staff',
+    'last_login__lte':'id_inativos',
+    'last_login':'id_nunca_logado'
+  }
+  urlSetFiltersActive(usuario_filters);
+  
+  function inativosFilter(days){
+    urlFilter('last_login__lte', `${dateToday({days: days, native: true})}`);
+  }
+  {% endblock %}
+</script>

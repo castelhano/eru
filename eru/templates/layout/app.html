@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="castelhano.rafael@gmail.com">
+    <title>{% block title %}Solaris{% endblock %}</title>
+    
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico'%}">
+    <link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/vendor/bs_icons/font/bootstrap-icons.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    
+    {% block style_src %}{% endblock %}
+    
+    <style media="screen">
+        #notify_container{
+            position: fixed;
+            top: 50px;
+            right: 4px;
+            max-width: 450px;
+            z-index: 1000;
+        }
+        {% block style %}{% endblock %}
+    </style>
+    
+    {% block script_preload_src %}{% endblock %}
+    <script>
+        {% block script_preload %}{% endblock %}
+        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, false)})
+    </script>
+</head>
+
+<body class="{% block body_classlist %}{% endblock %}" style="{% block body_style %}{% endblock %}">
+    <nav class="navbar fixed-top py-1 {% block navbar_classlist %}bg-body-tertiary border-bottom{% endblock %}">
+        <div class="container-fluid">
+            <a class="text-body" id="home" href="{% url 'index' %}"><i class="bi bi-input-cursor fs-4"></i></a>
+            <span class="navbar-brand">Solaris</span>
+            <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title">Configurações</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                                <label class="form-check-label" for="themeSwitch">Tema escuro</label>
+                            </div>
+                        </div>
+                        <div class="col-auto d-none d-lg-block"><button type="button" class="btn btn-sm btn-secondary" title="Atalhos de teclado" onclick="appKeyMap.showKeymapModal()"><i class="bi bi-keyboard"></i></button></div>
+                    </div>
+                    <ul id="customCanvasNavMenu" class="navbar-nav justify-content-end flex-grow-1 mt-2"></ul>
+                    {% block canvasNav %}{% endblock %}
+                    <div class="position-sticky mt-2" style="top: 95%;">
+                        <a href="{% url 'logout' %}" class="btn btn-sm btn-primary me-1" id="logout"><i class="bi bi-power me-2"></i>Logout</a>
+                        <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i>Senha</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div style="margin-top: 48px;">
+        {% block content %}{% endblock %}
+    </div>
+    <div class="container-fluid" style="margin-top: 56px;">
+        <div id="notify_container"></div>
+        {% block content_fluid %}{% endblock %}
+    </div>
+    
+    {% for message in messages %}
+    <div id="app_sys_message" data-type="appAlert" class="alert appAlert slideIn alert-{{message.tags}} alert-dismissible fade show" role="alert">
+        {{ message|safe }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <script>if('{{message.tags}}' == 'success'){setTimeout(function(){try{document.getElementById('app_sys_message').remove()}catch(e){}}, 4000)}</script>
+    {% endfor %}
+    
+    {% if form.errors %}
+    <div id="form_error_msg" data-type="appAlert" class="alert appAlert slideIn alert-danger alert-dismissible fade show" role="alert">
+        {% for field in form %}
+        {% if field.errors %}
+        {% for error in field.errors %}
+        <span class="d-block">{{ error|safe }} <b>[ field: {{ field.name }} ]</b></span>
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+        {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+        <span class="d-block">{{ error|safe }} </span>
+        {% endfor %}
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Loading Modal -->
+    <div class="modal fade user-select-none" id="appModalLoading" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <label style="position: relative;top:-6px; left:5px;"><b>Aguarde!</b> Processando requisição...</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/vendor/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/listener.js' %}"></script>
+    <script src="{% static 'js/nav.js' %}"></script>
+    {% block add_script_src %}{% endblock %}
+
+    <script>
+        if(localStorage.theme){
+            document.documentElement.dataset.bsTheme = localStorage.theme;
+            document.getElementById('themeSwitch').checked = localStorage.theme == 'dark';
+        }
+        else if(window.matchMedia){
+            let theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
+            document.documentElement.dataset.bsTheme = theme;
+            document.getElementById('themeSwitch').checked = theme == 'dark';
+        }
+        
+        document.getElementById('themeSwitch').onclick = (e) => {
+            if(e.target.checked){
+                document.documentElement.dataset.bsTheme = 'dark';
+                localStorage.theme = 'dark'
+            }
+            else{
+                document.documentElement.dataset.bsTheme = 'light';
+                localStorage.theme = 'light'
+            }
+        };
+
+        const canvasNav = new bootstrap.Offcanvas('#canvasNav');
+        function canvasNavActive(set=null){ // Exibe, oculta ou consulta estado do canvasNav
+            switch (set) {
+                case null: return document.getElementById('canvasNav').classList.contains('show'); break;
+                case true: canvasNav.show();break;
+                case false: canvasNav.hide();break;
+            }
+        }
+
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Inicio', key:'i', alt: true, run: () => {try{document.getElementById('home').click()}catch(e){}}, desc:'Retorna à página inicial'})
+        if(document.getElementById('root')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Módulo', key:'.', alt: true, run: () => {try{document.getElementById('root').click()}catch(e){}}, desc:'Retorno inicio do módulo'})}
+        if(document.getElementById('add')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Novo', key:'n', alt: true, run: () => {try{document.getElementById('add').click()}catch(e){}}, desc:'Novo registro'})}
+        if(document.getElementById('submit')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Gravar', key:'g', alt: true, run: () => {try{document.getElementById('submit').click()}catch(e){}}, desc:'Grava alterações'})}
+        if(document.getElementById('back')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Voltar', key:'v', alt: true, run: () => {try{document.getElementById('back').click()}catch(e){}}, desc:'Retorna origem'})}
+        if(document.getElementById('search')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Pesquisar', key:'/', ctrl: true, run: () => {try{document.getElementById('search').click()}catch(e){}}, desc:'Exibe filtros da página'})}
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymapModal()}, desc:'Mostra atalhos disponiveis na página'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Limpar', key:'l', alt: true, run: () => {window.location = window.location.href.split("?")[0].split('#')[0];}, desc:'Recarregar página (limpa filtros)'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Painel', key:'m', alt: true, run: () => {canvasNav.toggle()}, desc:'Abre painel lateral de configurações'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Logout', key:'q', alt: true, run: () => {try{document.getElementById('logout').click()}catch(e){}}, desc:'Encerra sessão no sistema'})
+        
+        {% block add_script %}{% endblock %}
+    </script>
+
+    {% block canvas_menu %}{% endblock %}
+    
+    
+</body>
+</html>

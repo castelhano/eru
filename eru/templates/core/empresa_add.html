@@ -1,0 +1,66 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Empresas{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_empresas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'core_empresa_add' %}" enctype="multipart/form-data" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'core/_form_empresa.html' %}
+  </form>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/vendor/imask.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  const cnpj = IMask(
+  document.getElementById('id_cnpj'),
+  {mask: '00.000.000/0000-00'}).on('accept', function(){
+    if(cnpj.value != ''){cnpj.el.input.classList.add('is-invalid');}
+    else{cnpj.el.input.classList.remove('is-invalid');}
+  }).on('complete', function(){cnpj.el.input.classList.remove('is-invalid')})
+  
+  const cep = IMask(
+  document.getElementById('id_cep'),
+  {mask: '00.000-000'}).on('accept', function(){
+    if(cep.value != ''){cep.el.input.classList.add('is-invalid');}
+    else{cep.el.input.classList.remove('is-invalid');}
+  }).on('complete', function(){cep.el.input.classList.remove('is-invalid')})
+
+  const fone = IMask(
+  document.getElementById('id_fone'),
+  {mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]}).on('accept', function(){
+    if(fone.value != ''){fone.el.input.classList.add('is-invalid');}
+    else{fone.el.input.classList.remove('is-invalid');}
+  }).on('complete', function(){fone.el.input.classList.remove('is-invalid')})
+  
+  const fax = IMask(
+  document.getElementById('id_fax'),
+  {mask: '(00) 0000-0000'}).on('accept', function(){
+    if(fax.value != ''){fax.el.input.classList.add('is-invalid');}
+    else{fax.el.input.classList.remove('is-invalid');}
+  }).on('complete', function(){fax.el.input.classList.remove('is-invalid')})
+  
+  let imaskEL = [cnpj, cep, fone, fax];
+  imaskEL.forEach((el)=>{ // Elementos imask tem validacao propria, desativa validacao no submit do form
+    el.el.input.setAttribute('data-jsform', 'novalidate');
+  })
+
+  formValidate(document.getElementById('app_form'))
+
+  {% endblock %}
+</script>

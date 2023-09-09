@@ -1,0 +1,50 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Eru{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
+{% block content_fluid %}{% endblock%}
+  
+
+
+
+{% block add_script_src %}{% endblock %}
+<script>
+{% block add_script %}
+
+// const empresas = new selectPopulate({
+//     target: document.getElementById('id_empresa'),
+//     url: '{% url 'core_get_empresas' %}',
+//     emptyMessage: 'Nenhuma empresa disponivel',
+//     onSuccess: ()=>{}
+// });
+
+
+
+
+
+// const teste = IMask(
+// document.getElementById('teste'),
+// {
+//     // mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}],
+//     mask: Number,
+//     // min: 1,
+//     // max: 9999,
+//     scale: 2,
+//     // thousandsSeparator: '.',
+//     // radix: ',',
+//     // mapToRadix: ['.',','],
+//     padFractionalZeros: true,
+//     // normalizeZeros: true,
+//     // lazy: false,  // make placeholder always visible
+//     // placeholderChar: '_'     // defaults to '_'
+// }).on('accept', function() {
+//     if(teste.value != ''){teste.el.input.classList.add('is-invalid');}
+//     else{teste.el.input.classList.remove('is-invalid');}
+// }).on('complete', function(){teste.el.input.classList.remove('is-invalid')})
+
+// formValidate(document.querySelector('form'));
+
+{% endblock %}
+</script>

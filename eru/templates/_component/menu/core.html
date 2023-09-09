@@ -1,0 +1,39 @@
+<script>
+
+    const cadastro = new canvasNavDropdown({
+        name: '<b>C</b>adastro',
+        icon: 'bi bi-list',
+        itens: [
+        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', keybind: {visible: false, key: 'e', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}}},{% endif %}
+        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', keybind: {visible: false, key: 'u', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click();}}}}, {% endif %}
+        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', keybind: {visible: false, key: 'g', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click();}}}}, {% endif %}
+        ],
+        keybind: {
+            key:'c',
+            alt: true,
+            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Cadastro',
+            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+                canvasNavActive(true); // Exibe o canvasNav (caso oculto)
+                cadastro.click();
+                setTimeout(()=>{cadastro.focus()}, 340);
+            },
+            desc:'Abre menu de cadastro'
+        }
+    })
+
+    const settings = new canvasNavLink({
+        name: '<b>S</b>ettings <small class="d-none d-lg-inline text-secondary float-end">[Alt + S]</small>',
+        id: 'menu_settings',
+        class: 'text-purple',
+        icon: 'bi bi-gear-fill',
+        href: '{% url 'core_settings' %}',
+        keybind:{
+            key: 's',
+            alt: true,
+            name: 'Settings',
+            run: ()=>{
+               document.getElementById('menu_settings').click();
+            }
+        }
+    })
+</script>

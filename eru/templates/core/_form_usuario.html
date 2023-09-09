@@ -1,0 +1,141 @@
+<div class="card-body tab-content">
+  <h5 class="card-title mb-3">Cadastro de Usuario</h5>
+  <div class="tab-pane fade show active" id="base" role="tabpanel">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="row g-1">
+          <div class="form-floating mb-lg-1 col-lg">
+            {{ form.username }}
+            <label for="id_username">Username</label>
+          </div>
+          {% if 'usuario_add' in request.get_full_path %}
+          <div class="form-floating mb-1 col-lg">
+            <input type="password" class="form-control" name="password" id="id_password">
+            <label for="id_password">Password</label>
+          </div>
+          {% else %}
+          <div class="form-floating mb-1 col-lg">
+            <input type="text" class="form-control" name="reset_password" id="id_reset_password" placeholder="" disabled>
+            <label for="id_reset_password">Password Reset</label>
+          </div>
+          {% endif %}              
+        </div>
+        <div class="row g-1">
+          <div class="form-floating mb-lg-1 col-lg-6">
+            {{ form.first_name }}
+            <label for="id_first_name">Fist Name</label>
+          </div>
+          <div class="form-floating mb-1 col-lg-6">
+            {{ form.last_name }}
+            <label for="id_last_name">Last Name</label>
+          </div>
+        </div>
+        <div class="row g-1">
+          <div class="form-floating mb-1 col-lg-12">
+            {{ form.email }}
+            <label for="id_email">Email</label>
+          </div>
+        </div>
+        <div class="accordion mt-2" id="accordion_user_profile">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_empresas"><i class="bi bi-house-gear-fill text-body-secondary me-2"></i> Empresas</button>
+            </h2>
+            <div id="accordion_empresas" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
+              <div class="accordion-body">
+                <div class="row g-1">
+                  <div class="mb-1 col-lg">
+                    <select name="empresas" id="id_empresas" multiple></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if not usuario.is_superuser %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_grupos"><i class="bi bi-person-video2 text-body-secondary me-2"></i> Grupos</button>
+            </h2>
+            <div id="accordion_grupos" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
+              <div class="accordion-body">
+                <div class="row g-1">
+                  <div class="mb-1 col-lg">
+                    <select name="grupos" id="id_grupos" multiple></select>
+                  </div>
+                </div>                
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_permittions"><i class="bi bi-person-fill-lock text-body-secondary me-2"></i> Permissões</button>
+            </h2>
+            <div id="accordion_permittions" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
+              <div class="accordion-body">
+                <div class="row">
+                  <div class="mb-1 col-lg">
+                    <select name="perms" id="id_perms" multiple></select>
+                  </div>
+                </div>                 
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg">
+        {% if 'usuario_add' in request.get_full_path %}
+        <div class="form-check form-switch mt-1">
+          <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
+          <label class="form-check-label" for="mostrar_senha">Mostra Senha</label>
+        </div>
+        {% else %}
+        <div class="form-check form-switch mt-2 mt-lg-1">
+          <input type="checkbox" class="form-check-input" id="resetar_senha" name="" value="" onclick="switchSenha();">
+          <label class="form-check-label" for="resetar_senha">Reiniciar Password</label>
+        </div>
+        {% endif %}
+        <div class="form-check form-switch mt-1">
+          {{form.is_active}}
+          <label class="form-check-label" for="id_is_active">Ativo</label>
+        </div>
+        <div class="form-check form-switch">
+          {{form.is_staff}}
+          <label class="form-check-label" for="id_is_staff">Membro de Equipe</label>
+        </div>
+        <div class="form-check form-switch">
+          {{form.is_superuser}}
+          <label class="form-check-label text-danger" for="id_is_superuser">Super Usuário</label>
+        </div>
+        {% if 'usuario_id' in request.get_full_path %}
+        <hr />
+        <div class="form-check form-switch">
+          <input type="checkbox" class="form-check-input" name="force_password_change" id="id_force_password_change"{% if usuario.profile.force_password_change %} checked{% endif %}>
+          <label class="form-check-label" for="id_force_password_change">Forçar troca de senha</label>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+  </div>
+  <!-- CONTROLES DO FORM -->
+  <div class="row mt-3">
+    <div class="col">
+      <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"><b>G</b>ravar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  {% if 'usuario_add' in request.get_full_path %}
+  function switchSenha(){
+    if(document.getElementById('mostrar_senha').checked){document.getElementById('id_password').type = 'text';}
+    else{document.getElementById('id_password').type = 'password';}
+  }
+  {% else %}
+  function switchSenha(){
+    if(document.getElementById('resetar_senha').checked){document.getElementById('id_reset_password').disabled = false;document.getElementById('id_reset_password').focus();}
+    else{document.getElementById('id_reset_password').disabled = true;}
+  }
+  {% endif %} 
+</script>
