@@ -63,12 +63,12 @@
             </div>
         </div>
     </nav>
-    <div style="margin-top: 48px;">
+    <div style="margin-top: 50px;">
         {% block content %}{% endblock %}
-    </div>
-    <div class="container-fluid" style="margin-top: 56px;">
-        <div id="notify_container"></div>
-        {% block content_fluid %}{% endblock %}
+        <div class="container-fluid pt-2">
+            <div id="notify_container"></div>
+            {% block content_fluid %}{% endblock %}
+        </div>
     </div>
     
     {% for message in messages %}

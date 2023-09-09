@@ -4,7 +4,17 @@
 
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
-{% block content_fluid %}{% endblock%}
+{% block content_fluid %}
+<div class="row">
+    <div class="col"></div>
+    <div class="col-2">
+        <ul class="list-unstyled">
+            <li><h6>Handler's</h6></li>
+            <li><a href="{% url 'handler' 900 %}">900</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock%}
   
 
 
@@ -12,15 +22,6 @@
 {% block add_script_src %}{% endblock %}
 <script>
 {% block add_script %}
-
-// const empresas = new selectPopulate({
-//     target: document.getElementById('id_empresa'),
-//     url: '{% url 'core_get_empresas' %}',
-//     emptyMessage: 'Nenhuma empresa disponivel',
-//     onSuccess: ()=>{}
-// });
-
-
 
 
 

@@ -1,0 +1,37 @@
+*{scroll-margin: 55px;}
+a{text-decoration: none;}
+
+pre{border-radius: 0.25rem;}
+.code-btn-copy{position: absolute;top:15px;right: 5px;font-size: 1.2rem;padding: 2px 8px;cursor: pointer;color: #FFF;opacity: 0.5;border-radius: 5px;}
+.code-btn-copy:hover{background-color: #535350;opacity:1;}
+
+.goTop-anchor{
+  padding: 15px;
+  width: 55px;
+  text-align: center;
+  background-color: #e5e5e5;
+  border-radius: 30px;
+  position: fixed;
+  bottom: 40px;
+  right: 50px;
+  color: #666;
+  cursor: pointer;
+  opacity:0;
+  transition: opacity 0.5s ease-in-out;
+}
+.goTop-anchor:hover{color: #333;}
+.menu{
+  position: sticky;
+  top: 60px;
+}
+h3, h5{margin-top: 3rem;}
+
+/* Estilo no sm */
+@media(max-width: 576px){
+  .goTop-anchor{
+    bottom: 5px;
+    right: 10px;
+    padding: 8px;
+    width: 40px;
+  }
+}
