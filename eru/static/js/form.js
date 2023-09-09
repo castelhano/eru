@@ -137,6 +137,7 @@ class selectPopulate{
             appNotify('danger', `jsform: Erro ao carregar <b>${this.target.name}</b>, favor informar ao administrador`, false)
         };
         this.onSuccess = options?.onSuccess != undefined ? options.onSuccess : ()=>{}; // Funcao a ser executada em caso de successo (apos popular elemento)
+        this.then = options?.then != undefined ? options.then : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
         this.reload();
     }
     reload(){ // Consulta e carrega registros no select
@@ -154,6 +155,7 @@ class selectPopulate{
                     for(let i in instance.data){instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i][instance.value]}</option>`;}
                     instance.onSuccess();
                 }
+                instance.then(); // Funcao a ser executada indiferente se retornado dados do servidor
             }
         };
         xhttp.open(instance.method, instance.url + instance.params, true);

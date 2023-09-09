@@ -104,7 +104,7 @@
     target: document.getElementById('id_empresas'),
     url: '{% url 'core_get_empresas' %}',
     params: 'usuario=new',
-    onSuccess: ()=>{
+    then: ()=>{
       selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
         optionsSelected: Object.keys(empresasUsuario),
         emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
@@ -127,7 +127,7 @@
     url: '{% url 'core_get_grupos' %}',
     params: 'usuario=new',
     value: 'name',
-    onSuccess: ()=>{
+    then: ()=>{
       selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
         optionsSelected: Object.keys(gruposUsuario),
         emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
