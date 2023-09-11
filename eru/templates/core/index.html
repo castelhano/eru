@@ -6,11 +6,13 @@
 
 {% block content_fluid %}
 <div class="row">
-    <div class="col"></div>
+    <div class="col">
+        <div id="grid_container"></div>
+    </div>
     <div class="col-2">
         <ul class="list-unstyled">
             <li><h6>Handler's</h6></li>
-            <li><a href="{% url 'handler' 900 %}">900</a></li>
+            <li><a href="{% url 'handler' 999 %}">999</a></li>
         </ul>
     </div>
 </div>
@@ -19,9 +21,43 @@
 
 
 
-{% block add_script_src %}{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/grid.js' %}"></script>
+{% endblock %}
 <script>
 {% block add_script %}
+
+const grid = new jsGrid({
+    container: document.getElementById('grid_container'),
+    items:[
+        {
+            name: 'Core',
+            // class: 'bg-success border-success-subtle',
+            href: '{% url 'handler' 999 %}',
+            menu: [
+                {
+                    text: 'Download',
+                    icon: 'bi bi-person',
+                    linkText: 'Baixar em PDF',
+                    href: 'http://www.terra.com'
+                },
+                {
+                    innerHTML: 'Excluir',
+                    href: 'http://www.google.com',
+                    class: 'dropdown dropdown-danger',
+                },
+            ],
+            keybind: {
+                key: 'c',
+                alt:true,
+                name: '<b class="text-danger">APP GRID<b> Core',
+                desc: 'Acessa módulo core',
+                run: ()=>{appNotify('warning','Olá <b>mundo</b>!!!')}
+            }
+        }
+    ]
+
+})
 
 
 
