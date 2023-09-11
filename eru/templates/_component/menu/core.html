@@ -20,7 +20,7 @@
             desc:'Abre menu de cadastro'
         }
     })
-
+    {% if perms.core.view_settings %}
     const settings = new canvasNavLink({
         name: '<b>S</b>ettings <small class="d-none d-lg-inline text-secondary float-end">[Alt + S]</small>',
         id: 'menu_settings',
@@ -30,10 +30,12 @@
         keybind:{
             key: 's',
             alt: true,
-            name: 'Settings',
+            name: '<b>CORE:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Settings',
+            desc: 'Configurações gerais do sistema',
             run: ()=>{
-               document.getElementById('menu_settings').click();
+                document.getElementById('menu_settings').click();
             }
         }
     })
+    {% endif %}
 </script>

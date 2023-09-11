@@ -1,0 +1,7 @@
+{% extends "layout/handler.html" %}
+
+{% block code_color %}text-danger{% endblock %}
+{% block error_title %}<i class="bi bi-person-fill-lock text-orange me-1"></i> Acesso Negado{% endblock %}
+{% block error_message %}
+Você tentou acessar um recurso não habilitado para seu usuário, dúvidas ou se não concorda com o bloqueio procure o adminstrador do sistema.<br><a id="home" href="{% url 'index' %}">Página inicial</a>.
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "layout/handler.html" %}
+
+{% block code_color %}text-secondary{% endblock %}
+{% block error_title %}<i class="bi bi-phone-fill text-secondary me-1"></i> Página indisponivel para seu dispositivo{% endblock %}
+{% block error_message %}
+Este recurso não está disponível para exibição em smartphones, tente acessar de outro dispositivo ou entre em <a href="mailto:castelhano.rafael@gmail.com">contato</a> com o administrador.<br ><br ><a id="home" href="{% url 'index' %}">Página incial</a>
+{% endblock %}

@@ -25,7 +25,6 @@ function appNotify(tipo, mensagem, autodismiss=true){
 function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
 
 
-
 // Busca dados no servidor (espra um json como resposta), retorna promise
 // Ex: appGetData({url: '...'}).then(()=>{...do something})
 function appGetData(options) {

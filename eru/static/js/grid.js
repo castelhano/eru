@@ -2,44 +2,163 @@
 class jsGrid{
     constructor(options){
         this.container = options?.container || null;
-        this.containerClasslist = options?.containerClasslist || '';
+        this.containerClasslist = options?.containerClasslist || 'px-2';
         this.emptyMessage = options?.emptyMessage || '<p>Nenhum item a exibir</p>';
-        this.items = options?.items || [];
-        this.defaultItemClasslist = options?.defaultItemClasslist || 'jsGrid-item col-6 col-lg-4 col-xl-2 btn-secondary';
-        this.__addStyles();
-        this.__build();
+        this.items = options?.items || []; // Array de objetos com dados dos elementos do grid
+        this.gridItems = []; // Armazena os elementos html do grid
+        this.defaultItemClasslist = options?.defaultItemClasslist || 'jsGrid-item';
+        this.defaultItemColor = options?.defaultItemColor || 'dark';
+        this.selectedIndex = 0;
+        this.canNavigate = options?.canNavigate != undefined ? options.canNavigate : true; // Implementa nagevacao 
+        this.size = ['md','lg'].includes(options.size) ? options.size : 'md'; // Opcao de tamanho dos items (md ou lg)
+        this.breakpoint = this.size == 'lg' ? 'col-12 col-lg-6 col-xl-4' : 'col-6 col-lg-4 col-xl-2';
         // Carregando o items
         if(this.items.length == 0){this.container.innerHTML = this.emptyMessage;}
-        for(let item in this.items){this.addItem(this.items[item])}
+        for(let item in this.items){
+            this.addItem(this.items[item])
+        }
+        if(__sw >= 992 && this.canNavigate){ // Se viewport acima 992 (lg) adiciona funcionalidade de navegacao no grid
+            this.selectItem(0); // 
+            // Calcula a quantidade de colunas por linha pelo viewport
+            if(__sw >= 1200){this.cols = this.size == 'lg' ? 3 : 6}
+            else if(__sw >= 992){this.cols = this.size == 'lg' ? 2 : 3}
+            else{this.cols = this.size == 'lg' ? 1 : 2}
+            // Integracao com Keywatch
+            this.__appKeyMapIntegration()
+            this.rows = Math.ceil(this.gridItems.length / this.cols);
+        }
+        this.__addStyles();
+        this.__build();
+        
+        
     }
-    __addStyles(){}
+    __addStyles(){
+        let style = document.createElement('style');
+        style.innerHTML = `
+        .jsGrid-item{opacity: 0.8; min-height: 100px;border: 2px solid var(--bs-body-bg);position: relative;padding-top: 5px;padding-bottom: 5px;padding-left: 10px;padding-right: 10px;}
+        .jsGrid-item > .jsGrid-lead-image{display: inline-block;width: 100%;line-height: 250%;text-align: center;font-size: 3.2rem;}
+        .jsGrid-item-sm > .jsGrid-lead-image{width: 100%;line-height: 150%;text-align: center;font-size: 2.8rem;}
+        .jsGrid-item > .jsGrid-label{font-size: 0.9rem;color: #FFF;}
+        .jsGrid-item-sm > .jsGrid-label{font-size: 0.85rem;color: #FFF;}
+        .jsGrid-item > .jsGrid-control{position: absolute;padding-top: 3px;padding-bottom: 3px;padding-left: 7px;padding-right: 7px;border-radius: 25px;text-align: center;cursor: pointer;top: 0;right: 0;z-index: 500;transition: background-color 0.2s;user-select: none;}
+        .jsGrid-item > jsGrid-control:hover{--bg-opacity: 100;}
+        .jsGrid-item-selected{opacity: 1;}
+        [data-bs-theme="dark"] .jsGrid-item-selected{border-bottom:4px solid #FFF;}
+        @media(min-width: 992px){
+            .jsGrid-item{height: 166px;}
+            .jsGrid-item-sm{height: auto;}
+            .jsGrid-item-fixed{overflow-y: auto;}
+        }
+        `;
+        document.getElementsByTagName('head')[0].appendChild(style);
+    }
     __build(){
         if(!this.container){ // Se container nao fornecido ao instanciar objeto, cria container e faz append no body
             this.container = document.createElement('div');
             document.body.appendChild(this.container);
         }
         this.container.classList = this.containerClasslist;
-        this.container.style.display = 'flex';
+        this.container.classList.add('row');
     }
-    __addControler(item){}
+    __addControler(item, menu, color){
+        if(menu.length == 0){return false}
+        let ancor = document.createElement('a');
+        ancor.classList = 'jsGrid-control text-body mt-2 me-2';
+        ancor.setAttribute('data-bs-toggle', 'dropdown');
+        ancor.setAttribute('role', 'button');
+        ancor.innerHTML = '<i class="bi bi-three-dots-vertical"></i>'
+        let dropdown = document.createElement('ul');
+        dropdown.classList = `dropdown-menu bg-${color}-subtle dropdown-menu-end fs-7`;
+        for(let i in menu){
+            let li = document.createElement('li');
+            let text = document.createElement(menu[i]?.href ? 'a' : 'span');
+            text.classList = menu[i]?.class ? menu[i].class : 'dropdown-item';
+            text.innerHTML = menu[i]?.icon ? `<i class="${menu[i].icon} me-1"></i> ${menu[i].text}` : menu[i].text;
+            let attrs = Object.keys(menu[i]);
+            let avoid = ['text', 'icon', 'class', 'divisor', 'onclick'];
+            for(let j in attrs){ // Percorre os demais atributos
+                if(!avoid.includes(attrs[j])){
+                    text.setAttribute(attrs[j], menu[i][attrs[j]]);
+                }
+            }
+            li.appendChild(text);
+            if(menu[i]?.divisor){
+                let divisor = document.createElement('li');
+                divisor.innerHTML = '<hr class="dropdown-divider">';
+                dropdown.appendChild(divisor);
+            }
+            dropdown.appendChild(li);
+        }
+        item.appendChild(ancor);
+        item.appendChild(dropdown);
+    }
     addItem(options){
         let el = document.createElement('div');
-        el.classList = options?.class || this.defaultItemClasslist;
+        el.classList = options?.color ? `${this.defaultItemClasslist} btn-${options.color} ${this.breakpoint}` : `${this.defaultItemClasslist} btn-${this.defaultItemColor} ${this.breakpoint}`;
         if(options?.icon){
             let icon = document.createElement('i');
-            if(options?.text){icon.classList = `jsGrid-icon-text ${option.icon}`;}
-            else{icon.classList = `jsGrid-icon-only ${option.icon}`;}
+            if(options?.name){icon.classList = `jsGrid-icon-text ${options.icon}`;}
+            else{icon.classList = `jsGrid-lead-image ${options.icon}`;}
             el.appendChild(icon);
         }
-        if(options?.href){
-            let link = document.createElement('a');
-            link.classList = 'jsGrid-link stretched-link';
-            link.href = options?.href || '#';
-            link.innerHTML = options?.linkText || '';
-            el.appendChild(link);
+        if(options?.text){
+            let text = document.createElement('span');
+            text.classList = `jsGrid-lead-image`;
+            text.innerHTML = options.text;
+            el.appendChild(text);
         }
+        if(options?.desc){
+            let desc = document.createElement(options?.href ? 'a' : 'span');
+            desc.classList = 'jsGrid-label user-select-none';
+            if(options?.href){
+                desc.classList.add('stretched-link')
+                desc.href = options?.href || '#';
+            }
+            desc.innerHTML = options?.desc || '';
+            el.appendChild(desc);
+        }
+        if(options?.menu){
+            this.__addControler(el, options.menu, options?.color || '');
+        }
+        this.gridItems.push(el);
         this.container.appendChild(el);
     }
-    keyBind(options){}
+    selectItem(index){
+        if(!this.canNavigate || index < 0 || index >= this.gridItems.length){return false}
+        this.__clearSelectItem();
+        this.gridItems[index].classList.add('jsGrid-item-selected');
+        this.selectedIndex = index;
+    }
+    nextItem(){
+        if(!this.canNavigate || this.gridItems.length <= this.selectedIndex + 1){return false}
+        this.selectedIndex++;
+        this.selectItem(this.selectedIndex);
+    }
+    previousItem(){
+        if(!this.canNavigate || this.selectedIndex == 0){return false}
+        this.selectedIndex--;
+        this.selectItem(this.selectedIndex);
+    }
+    itemAbove(){
+        if(!this.canNavigate || !['lg','xl','xxl'].includes(__ss)){return false}
+        let nextIndex = this.selectedIndex - this.cols;
+        if(nextIndex > 0){this.selectItem(nextIndex)}
+    }
+    itemBelow(){
+        if(!this.canNavigate || !['lg','xl','xxl'].includes(__ss)){return false}
+        let nextIndex = this.selectedIndex + this.cols;
+        if(nextIndex < this.gridItems.length){this.selectItem(nextIndex)}
+    }
+    __clearSelectItem(){
+        try{this.container.querySelector('.jsGrid-item-selected').classList.remove('jsGrid-item-selected')}
+        catch(e){}
+    }
+    __appKeyMapIntegration(){
+        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próximo item', run: ()=>{this.previousItem()}, desc:'Seleciona próximo item'})
+        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item anterior', run: ()=>{this.nextItem()}, desc: 'Seleciona item anterior'})
+        appKeyMap.bind({key: 'arrowdown', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item abaixo', run: ()=>{this.itemBelow()}, desc: 'Seleciona item abaixo'})
+        appKeyMap.bind({key: 'arrowup', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item acima', run: ()=>{this.itemAbove()}, desc: 'Seleciona item acima'})
+    }
+    keyBind(options){appKeyMap.bind(options)}
 }
 

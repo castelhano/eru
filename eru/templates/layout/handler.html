@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr" data-bs-theme="dark">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>{{code}} Error</title>
+	<link rel="shortcut icon" href="{% static 'img/favicon.ico'%}">
+	<link rel="stylesheet" href="{% static 'css/app.css' %}" type="text/css">
+	<link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}" type="text/css">
+	<link rel="stylesheet" href="{% static 'css/vendor/bs_icons/font/bootstrap-icons.min.css' %}">
+	
+	<style media="screen">
+		h3{font-size: 1.5rem;}
+		@media(min-width: 768px){
+			.texto{max-width: 370px;}
+		}
+	</style>
+	<script>
+		var page = {% block page_code %}window.location.pathname.split('/').pop().split('?')[0];{% endblock %}
+
+	</script>
+</head>
+<body class="bg-body-tertiary">
+	<div class="container-fluid">
+		<div class="row pt-2">
+			<div class="col"><h3 class="text-body-secondary"><span data-itKey="page"></span> Error Page</h3></div>
+			<div class="col-auto mb-3 mb-md-5"><a class="text-decoration-none" href="{% url 'index' %}">Inicio</a>&nbsp;&nbsp;/&nbsp;&nbsp;<span data-itKey="page"></span> Error Page</div>
+		</div>
+		<div class="row mt-3 mt-md-5">
+			<div class="col-md-5 text-center text-md-end {% block code_color%}text-warning{% endblock%} pe-md-3" data-itKey="page" style="font-size:5.5rem;"></div>
+			<div class="col-md-7 px-4 px-md-1 pt-1 pt-md-4 text-start">
+				<div class="col-md-12 text-center text-md-start text-body-secondary fs-5">{% block error_title %}Titulo do erro{% endblock%}</div>
+				<div class="col-md texto pt-3">{% block error_message%}Mensagem do erro{% endblock%}</div>
+			</div>
+		</div>
+	</div>
+	<script src="{% static 'js/listener.js' %}"></script>
+	<script src="{% static 'js/interpolate.js' %}"></script>
+	<script> 
+		appPlot({page: page});
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Inicio', key:'i', alt: true, run: () => {try{document.getElementById('home').click()}catch(e){}}, desc:'Retorna à página inicial'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymapModal()}, desc:'Mostra atalhos disponiveis na página'})
+		if(localStorage.theme){
+			document.documentElement.dataset.bsTheme = localStorage.theme;
+		}
+		else if(window.matchMedia){
+			let theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
+			document.documentElement.dataset.bsTheme = theme;
+		}
+	</script>
+</body>
+</html>

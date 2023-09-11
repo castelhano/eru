@@ -1,0 +1,7 @@
+{% extends "layout/handler.html" %}
+
+{% block code_color %}text-danger{% endblock %}
+{% block error_title %}<i class="bi bi-bug-fill text-orange"></i> Oops! Alguma coisa deu errada.{% endblock %}
+{% block error_message %}
+Estaremos trabalhando para resolver isso, pedimos que nos relate como o problema ocorreu.<br><a href="mailto:castelhano.rafael@gmail.com">Relatar problema</a>, ou voltar a <a id="home" href="{% url 'index' %}">página inicial</a>.
+{% endblock %}

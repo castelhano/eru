@@ -5,17 +5,25 @@
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
-<div class="row">
-    <div class="col">
-        <div id="grid_container"></div>
+<div id="grid_container"></div>
+
+<div id="foo" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Modal body text goes here.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
     </div>
-    <div class="col-2">
-        <ul class="list-unstyled">
-            <li><h6>Handler's</h6></li>
-            <li><a href="{% url 'handler' 999 %}">999</a></li>
-        </ul>
-    </div>
-</div>
+  </div>
 {% endblock%}
   
 
@@ -31,22 +39,9 @@ const grid = new jsGrid({
     container: document.getElementById('grid_container'),
     items:[
         {
-            name: 'Core',
-            // class: 'bg-success border-success-subtle',
+            icon: 'bi bi-ubuntu',
+            desc: 'Icone somente (com keybind)',
             href: '{% url 'handler' 999 %}',
-            menu: [
-                {
-                    text: 'Download',
-                    icon: 'bi bi-person',
-                    linkText: 'Baixar em PDF',
-                    href: 'http://www.terra.com'
-                },
-                {
-                    innerHTML: 'Excluir',
-                    href: 'http://www.google.com',
-                    class: 'dropdown dropdown-danger',
-                },
-            ],
             keybind: {
                 key: 'c',
                 alt:true,
@@ -54,7 +49,46 @@ const grid = new jsGrid({
                 desc: 'Acessa módulo core',
                 run: ()=>{appNotify('warning','Olá <b>mundo</b>!!!')}
             }
-        }
+        },
+        {
+            text: 'Core',
+            // class: 'bg-success border-success-subtle',
+            desc: 'Somente Texto',
+            href: '{% url 'handler' 999 %}',
+        },
+        {
+            color: 'success',
+            icon: 'bi bi-earbuds',
+            desc: 'Custom style',
+            href: '{% url 'handler' 999 %}',
+        },
+        {
+            color: 'pink',
+            icon: 'bi bi-braces',
+            desc: 'Com menu',
+            href: '{% url 'handler' 999 %}',
+            menu: [
+                {
+                    text: 'Download',
+                    icon: 'bi bi-person-fill',
+                    href: 'http://www.terra.com'
+                },
+                {
+                    text: 'Excluir',
+                    divisor: true,
+                    class: 'dropdown-item dropdown-item-danger pointer',
+                    'data-bs-toggle': 'modal',
+                    'data-bs-target': '#foo',
+                },
+            ],
+        },
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        // {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
     ]
 
 })

@@ -1,0 +1,7 @@
+{% extends "layout/handler.html" %}
+
+
+{% block error_title %}<i class="bi bi-exclamation-triangle-fill text-orange"></i> Oops! Página não encontrada.{% endblock %}
+{% block error_message %}
+Não conseguimos localizar a página procurada. Você pode tentar novamente mais tarde, retornar para a <a id="home" href="{% url 'index' %}">página inicial</a> ou relatar um <a href="mailto:castelhano.rafael@gmail.com">problema</a>.
+{% endblock %}
