@@ -98,7 +98,7 @@
     {% endif %}
 
     <!-- Loading Modal -->
-    <div class="modal fade user-select-none" id="appModalLoading" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal fade user-select-none" id="appModalLoading" tabindex="-1" style="z-index: 10000;" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
@@ -106,6 +106,26 @@
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <label style="position: relative;top:-6px; left:5px;"><b>Aguarde!</b> Processando requisição...</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation modal -->
+    <div class="modal fade" id="appModalConfirm" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i>Confirma Operação</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="appModalConfirm_message">Confirma operação?</p>
+                    <div class="text-end">
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <a id="appModalConfirm_link" class="btn btn-sm btn-primary">Confirmar</a>
+                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary d-none">Confirmar</button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -37,24 +37,29 @@
 
 const grid = new jsGrid({
     container: document.getElementById('grid_container'),
+    // canNavigate: false,
+    size: 'md',
     items:[
         {
             icon: 'bi bi-ubuntu',
             desc: 'Icone somente (com keybind)',
             href: '{% url 'handler' 999 %}',
             keybind: {
-                key: 'c',
-                alt:true,
-                name: '<b class="text-danger">APP GRID<b> Core',
+                key: 'y',
+                alt: true,
+                name: '<b class="text-danger">App:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Core',
                 desc: 'Acessa módulo core',
                 run: ()=>{appNotify('warning','Olá <b>mundo</b>!!!')}
             }
         },
         {
             text: 'Core',
-            // class: 'bg-success border-success-subtle',
+            color: 'danger',
             desc: 'Somente Texto',
-            href: '{% url 'handler' 999 %}',
+            menu:[
+              {text: 'foo', onclick: ()=>{confirmOnClick({})}}
+            ]
+            // href: '{% url 'handler' 999 %}',
         },
         {
             color: 'success',
@@ -66,7 +71,7 @@ const grid = new jsGrid({
             color: 'pink',
             icon: 'bi bi-braces',
             desc: 'Com menu',
-            href: '{% url 'handler' 999 %}',
+            // href: '{% url 'handler' 999 %}',
             menu: [
                 {
                     text: 'Download',
@@ -82,17 +87,37 @@ const grid = new jsGrid({
                 },
             ],
         },
+        {
+          img:'{% static 'img/hckDworld.jpg' %}', 
+          desc:'Imagem',
+          menu:[
+            {
+              text: 'Download',
+              'data-appConfirm': true,
+              'data-appConfirmTitle': '<i class="bi bi-bug-fill me-2"></i>Confirma exclusao da bagaça',
+              'data-appConfirmMessage': 'Tem certeza? esse processo <b>não pode ser desfeito</b>...',
+              'data-appConfirmColor': 'danger',
+              'data-appConfirmText': 'Excluir',
+              'data-appConfirmDelay': '5',
+              href: 'http://www.terra.com'
+            },
+            {
+              text: 'Excluir',
+              divisor: true,
+              class: 'dropdown-item dropdown-item-danger',
+              href: '{% url 'core_empresas' %}'
+            }
+          ]
+        },
+        {color:'purple',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'orange',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'warning',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+        {color:'secondary',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
         {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        // {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
         {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
     ]
 
 })
-
 
 
 // const teste = IMask(

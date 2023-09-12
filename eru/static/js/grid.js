@@ -3,7 +3,7 @@ class jsGrid{
     constructor(options){
         this.container = options?.container || null;
         this.containerClasslist = options?.containerClasslist || 'px-2';
-        this.emptyMessage = options?.emptyMessage || '<p>Nenhum item a exibir</p>';
+        this.emptyMessage = options?.emptyMessage || '<p class="mt-2 text-secondary">Nenhum item a exibir</p>';
         this.items = options?.items || []; // Array de objetos com dados dos elementos do grid
         this.gridItems = []; // Armazena os elementos html do grid
         this.defaultItemClasslist = options?.defaultItemClasslist || 'jsGrid-item';
@@ -37,11 +37,8 @@ class jsGrid{
         style.innerHTML = `
         .jsGrid-item{opacity: 0.8; min-height: 100px;border: 2px solid var(--bs-body-bg);position: relative;padding-top: 5px;padding-bottom: 5px;padding-left: 10px;padding-right: 10px;}
         .jsGrid-item > .jsGrid-lead-image{display: inline-block;width: 100%;line-height: 250%;text-align: center;font-size: 3.2rem;}
-        .jsGrid-item-sm > .jsGrid-lead-image{width: 100%;line-height: 150%;text-align: center;font-size: 2.8rem;}
-        .jsGrid-item > .jsGrid-label{font-size: 0.9rem;color: #FFF;}
-        .jsGrid-item-sm > .jsGrid-label{font-size: 0.85rem;color: #FFF;}
+        .jsGrid-item > .jsGrid-label{font-size: 0.9rem; color: #FFF;}
         .jsGrid-item > .jsGrid-control{position: absolute;padding-top: 3px;padding-bottom: 3px;padding-left: 7px;padding-right: 7px;border-radius: 25px;text-align: center;cursor: pointer;top: 0;right: 0;z-index: 500;transition: background-color 0.2s;user-select: none;}
-        .jsGrid-item > jsGrid-control:hover{--bg-opacity: 100;}
         .jsGrid-item-selected{opacity: 1;}
         [data-bs-theme="dark"] .jsGrid-item-selected{border-bottom:4px solid #FFF;}
         @media(min-width: 992px){
@@ -66,13 +63,14 @@ class jsGrid{
         ancor.classList = 'jsGrid-control text-body mt-2 me-2';
         ancor.setAttribute('data-bs-toggle', 'dropdown');
         ancor.setAttribute('role', 'button');
+        if(!item.querySelector('.jsGrid_action')){ancor.classList.add('jsGrid_action')}
         ancor.innerHTML = '<i class="bi bi-three-dots-vertical"></i>'
         let dropdown = document.createElement('ul');
         dropdown.classList = `dropdown-menu bg-${color}-subtle dropdown-menu-end fs-7`;
         for(let i in menu){
             let li = document.createElement('li');
             let text = document.createElement(menu[i]?.href ? 'a' : 'span');
-            text.classList = menu[i]?.class ? menu[i].class : 'dropdown-item';
+            text.classList = menu[i]?.class ? menu[i].class : 'dropdown-item pointer';
             text.innerHTML = menu[i]?.icon ? `<i class="${menu[i].icon} me-1"></i> ${menu[i].text}` : menu[i].text;
             let attrs = Object.keys(menu[i]);
             let avoid = ['text', 'icon', 'class', 'divisor', 'onclick'];
@@ -81,6 +79,7 @@ class jsGrid{
                     text.setAttribute(attrs[j], menu[i][attrs[j]]);
                 }
             }
+            if(attrs.includes('onclick')){text.onclick = menu[i].onclick}
             li.appendChild(text);
             if(menu[i]?.divisor){
                 let divisor = document.createElement('li');
@@ -95,13 +94,21 @@ class jsGrid{
     addItem(options){
         let el = document.createElement('div');
         el.classList = options?.color ? `${this.defaultItemClasslist} btn-${options.color} ${this.breakpoint}` : `${this.defaultItemClasslist} btn-${this.defaultItemColor} ${this.breakpoint}`;
-        if(options?.icon){
+        if(options?.img){
+            let img = document.createElement('img');
+            img.classList = `position-absolute top-0 start-0 w-100`;
+            el.classList.add('overflow-hidden');
+            img.src = options.img;
+            img.style.zIndex = '1';
+            el.appendChild(img);
+        }
+        else if(options?.icon){
             let icon = document.createElement('i');
             if(options?.name){icon.classList = `jsGrid-icon-text ${options.icon}`;}
             else{icon.classList = `jsGrid-lead-image ${options.icon}`;}
             el.appendChild(icon);
         }
-        if(options?.text){
+        else if(options?.text){
             let text = document.createElement('span');
             text.classList = `jsGrid-lead-image`;
             text.innerHTML = options.text;
@@ -111,7 +118,8 @@ class jsGrid{
             let desc = document.createElement(options?.href ? 'a' : 'span');
             desc.classList = 'jsGrid-label user-select-none';
             if(options?.href){
-                desc.classList.add('stretched-link')
+                desc.classList.add('stretched-link');
+                desc.classList.add('jsGrid_action');
                 desc.href = options?.href || '#';
             }
             desc.innerHTML = options?.desc || '';
@@ -120,6 +128,7 @@ class jsGrid{
         if(options?.menu){
             this.__addControler(el, options.menu, options?.color || '');
         }
+        if(options?.keybind){appKeyMap.bind(options.keybind)} // Se informado keybind, adiciona ao mapa (Keywatch class)
         this.gridItems.push(el);
         this.container.appendChild(el);
     }
@@ -128,6 +137,11 @@ class jsGrid{
         this.__clearSelectItem();
         this.gridItems[index].classList.add('jsGrid-item-selected');
         this.selectedIndex = index;
+    }
+    enterItem(){ // Tenta acessa o item selecionado
+        if(!this.canNavigate){return false}
+        try{this.gridItems[this.selectedIndex].querySelector('.jsGrid_action').click();}
+        catch(e){}
     }
     nextItem(){
         if(!this.canNavigate || this.gridItems.length <= this.selectedIndex + 1){return false}
@@ -142,7 +156,7 @@ class jsGrid{
     itemAbove(){
         if(!this.canNavigate || !['lg','xl','xxl'].includes(__ss)){return false}
         let nextIndex = this.selectedIndex - this.cols;
-        if(nextIndex > 0){this.selectItem(nextIndex)}
+        if(nextIndex >= 0){this.selectItem(nextIndex)}
     }
     itemBelow(){
         if(!this.canNavigate || !['lg','xl','xxl'].includes(__ss)){return false}
@@ -158,7 +172,7 @@ class jsGrid{
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item anterior', run: ()=>{this.nextItem()}, desc: 'Seleciona item anterior'})
         appKeyMap.bind({key: 'arrowdown', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item abaixo', run: ()=>{this.itemBelow()}, desc: 'Seleciona item abaixo'})
         appKeyMap.bind({key: 'arrowup', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item acima', run: ()=>{this.itemAbove()}, desc: 'Seleciona item acima'})
+        appKeyMap.bind({key: 'enter', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Acessar item', run: ()=>{this.enterItem()}, desc: 'Tenta acessar o ite selecionado'})
     }
-    keyBind(options){appKeyMap.bind(options)}
 }
 

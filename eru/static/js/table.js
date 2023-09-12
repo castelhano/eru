@@ -76,13 +76,13 @@ class jsTable{
         this.saveButtonText = options?.saveButtonText || '<i class="bi bi-database-fill-check px-1"></i>';
         this.restoreButtonClasslist = options?.restoreButtonClasslist || 'btn btn-sm btn-outline-secondary d-none';
         this.restoreButtonText = options?.restoreButtonText || '<i class="bi bi-clock-history px-1"></i>';
-        this.activeRowClass = options?.activeRowClass || 'bg-body-secondary';
+        this.activeRowClass = options?.activeRowClass || 'selected';
         this.pgControlClasslist = options?.pgControlClasslist || 'pagination justify-content-end'; 
         this.pgPageClasslist = options?.pgPageClasslist || 'page-item';
         this.pgLinkClasslist = options?.pgLinkClasslist || 'page-link fs-7 px-2 py-1';
         this.pgFirstButtonLabel = options?.pgFirstButtonLabel || '<i class="bi bi-arrow-bar-left"></i>';
         this.pgPreviousButtonLabel = options?.pgPreviousButtonLabel || '<i class="bi bi-arrow-left"></i>';
-        this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-bar-right"></i>';
+        this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-right"></i>';
         this.emptyTableMessage = options?.emptyTableMessage || 'Nenhum registro a exibir';
         if(this.table == null){
             this.createTable();

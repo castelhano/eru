@@ -2,6 +2,7 @@ const __sw = screen?.width || null;
 const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
 
 const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
+const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
 
 /*
 * appAlert  Gera um alerta (bootstrap alert), somente um alerta aberto a cada momento
@@ -84,35 +85,76 @@ function timeNow(opt={}){
   }
 }
 
-// Adiciona botao para copiar para clipboard conteudo dentro das tags pre > code (integracao com prism.js)
-function addOnCopyToClipboard(selector='pre'){
-  document.querySelectorAll(selector).forEach((el) => {
-    if(navigator.clipboard && __ss != 'sm'){
-      let container = document.createElement('div');container.style.position = 'relative';container.style.height = '1px';container.style.zIndex = '1000';
-      let btn = document.createElement('span');
-      btn.title = 'Copiar';
-      btn.classList.add('code-btn-copy');
-      btn.innerHTML = '<i class="bi bi-clipboard"></i>';
-      btn.addEventListener('click', code_copy_clipboard);
-      container.appendChild(btn);
-      el.before(container);
-    }
-  });
-
-  function code_copy_clipboard(e){ // Funcao auxiliar ao componente prism
-    let copyLabel = '<i class="bi bi-clipboard"></i>';
-    let doneLabel = '<i class="bi bi-check-lg"></i>';
-    let b = e.target.tagName == 'SPAN' ? e.target : e.target.parentElement;
-    let t = b.parentNode.nextSibling.innerText;
-    navigator.clipboard.writeText(t);
-    b.innerHTML = doneLabel;
-    setTimeout(()=>{b.innerHTML = copyLabel;}, 2000)
-  }
+// Exibe modal para confirmacao 
+function confirmOnClick(options){
+  
+  if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
+  
+  appModalConfirm.show()
 }
-
 
 // Listeners / Configuracoes gerais
 // **
 
+
+
+
+
+
 // Exibe modal de carregamento antes de sair da pagina
 window.onbeforeunload = () => {appModalLoading.show()}
+
+// Codigo a ser executado apos carregamento completo da pagina
+document.addEventListener("DOMContentLoaded", function(event) {
+  
+  // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
+  document.querySelectorAll('[data-appConfirm=true]').forEach((el)=>{
+    let timeout, interv, span;
+    el.onclick = (e)=>{
+      e.preventDefault();
+      if(span){
+        clearInterval(interv);
+        clearTimeout(timeout);
+        span.remove();
+      }
+      if(el.hasAttribute('data-appConfirmTitle')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-appConfirmTitle')}
+      if(el.hasAttribute('data-appConfirmMessage')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-appConfirmMessage')}
+      if(el.hasAttribute('href')){
+        document.getElementById('appModalConfirm_link').classList.remove('d-none');
+        document.getElementById('appModalConfirm_button').classList.add('d-none');
+        document.getElementById('appModalConfirm_link').href = el.href;
+        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_link').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
+        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_link').innerHTML = el.getAttribute('data-appConfirmText')}
+      }
+      else if(el.hasAttribute('onclick')){
+        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
+        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
+        document.getElementById('appModalConfirm_link').classList.add('d-none');
+        document.getElementById('appModalConfirm_button').classList.remove('d-none');
+        document.getElementById('appModalConfirm_button').onclick = options.onclick;
+      }
+      if(el.hasAttribute('data-appConfirmDelay')){
+        span = document.createElement('span');
+        let counter = el.getAttribute('data-appConfirmDelay');
+        span.innerHTML = ' ' + counter;
+        if(el.hasAttribute('href')){
+          document.getElementById('appModalConfirm_link').classList.add('disabled');
+          document.getElementById('appModalConfirm_link').appendChild(span);
+        }
+        else{
+          document.getElementById('appModalConfirm_button').disabled = true;
+          document.getElementById('appModalConfirm_button').appendChild(span)
+        } 
+        timeout = setTimeout(()=>{
+          span.parentNode.classList.remove('disabled');
+          span.parentNode.disabled = false;
+          clearInterval(interv);
+          span.remove();
+        }, counter * 1000);
+        interv = setInterval(()=>{counter--;span.innerHTML = ` ${counter}`}, 1000);
+      }
+      appModalConfirm.show();
+    }
+  })
+  
+});

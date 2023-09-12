@@ -13,7 +13,45 @@
 <h6>jsForm</h6>
 <pre><code class="language-html">const p = foo()</code></pre>
 
+
+<a href="{% url 'core_usuarios' %}" data-appConfirm="true">Link para confirmar</a>
+
 <h6>iMask</h6>
+
+<div id="tableContainer"></div>
+<div>
+    <table id="main_table" class="table border">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>EMail</th>
+                <th>Idade</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Rafael</td>
+                <td>casa@asdas.com</td>
+                <td>22</td>
+            </tr>
+            <tr>
+                <td>Maria</td>
+                <td>ppoi@asdas.com</td>
+                <td>44</td>
+            </tr>
+            <tr>
+                <td>Jonas</td>
+                <td>casa@lll.com.br</td>
+                <td>9</td>
+            </tr>
+            <tr>
+                <td>Carlos</td>
+                <td>casa@asdas.com</td>
+                <td>55</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 
 {% endblock%}
@@ -21,13 +59,31 @@
 {% block add_script_src %}
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
+<script src="{% static 'js/table.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
-addOnCopyToClipboard();
+
+let json = [
+    {nome: 'Rafael', idade:40, sexo:'M'},
+    {nome: 'Maria', idade:22, sexo:'F', fone: '65 95485-5455'},
+    {nome: 'Jonas', sexo:'M'},
+]
+
+const table = new jsTable(document.getElementById('main_table'), {
+    enablePaginate: true
+})
+
+const table2 = new jsTable('novatabela', {
+    data: json,
+    container: document.getElementById('tableContainer'),
+    enablePaginate: true
+})
+
 
 
 {% endblock %}
