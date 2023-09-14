@@ -2,6 +2,15 @@
 {% load static %}
 {% block title %}Usuarios{% endblock %}
 
+
+<script>
+{% block script_preload %}
+if(__ss == 'sm'){
+  window.location = '{% url 'handler' '110' %}';
+}
+{% endblock %}
+</script>
+
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 

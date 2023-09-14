@@ -48,7 +48,7 @@ function formValidate(form){
     form.onsubmit = () => { // Funcao de validacao do form
         cleanNotify(); // Limpa area de notificacao
         // Verifica elementos REQUIRES se estao preenchidos
-        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([data-type=number]),[minlength]:not([data-jsform=novalidate]),[maxlength]:not([data-jsform=novalidate])').forEach((el)=>{
+        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-jsform=novalidate]):not([type=email]),[maxlength]:not([data-jsform=novalidate]):not([type=email])').forEach((el)=>{
             let max = el.getAttribute('maxlength');
             let min = el.getAttribute('minlength');
             if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
@@ -61,10 +61,17 @@ function formValidate(form){
         
         // Valida inputs NUMBER quanto ao MIN e MAX
         form.querySelectorAll('input[type=number][min]:not([data-jsform=novalidate]), input[type=number][max]:not([data-jsform=novalidate])').forEach((el)=>{
-            
             if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
                 el.classList.add('is-invalid');
                 appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`, false);
+            }
+        })
+
+        // Valida email
+        form.querySelectorAll('input[type=email]:not([data-jsform=novalidate])').forEach((el)=>{
+            if(el.value != '' && !emailIsValid(el.value)){
+                el.classList.add('is-invalid');
+                appNotify('warning', 'jsform: <b>Email</b> tem formato inválido');
             }
         })
         
@@ -86,7 +93,7 @@ function formValidate(form){
         return false;
     }
     function formValidate_addListeners(form){ // Funcao auxiliar ao formValidate, adiciona listeners de validacao no onblur
-        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([data-type=number]),[minlength]:not([data-jsform=novalidate]),[maxlength]:not([data-jsform=novalidate])').forEach((el)=>{
+        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-jsform=novalidate]):not([type=email]),[maxlength]:not([data-jsform=novalidate])').forEach((el)=>{
             el.onblur = () => {
                 let max = el.getAttribute('maxlength');
                 let min = el.getAttribute('minlength');
@@ -96,11 +103,24 @@ function formValidate(form){
         })
         form.querySelectorAll('input[type=number][min]:not([data-jsform=novalidate]), input[type=number][max]:not([data-jsform=novalidate])').forEach((el)=>{
             el.onblur = () => {
-                if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){el.classList.add('is-invalid');}
+                if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
+                    el.classList.add('is-invalid');
+                    appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`, false);
+                }
+                else{el.classList.remove('is-invalid');}
+            }  
+        })
+        form.querySelectorAll('input[type=email]:not([data-jsform=novalidate])').forEach((el)=>{
+            el.onblur = () => {
+                if(el.required && el.value == '' || el.value != '' && !emailIsValid(el.value)){
+                    el.classList.add('is-invalid');
+                    appNotify('warning', 'jsform: <b>Email</b> tem formato inválido');
+                }
                 else{el.classList.remove('is-invalid');}
             }  
         })
     }
+    function emailIsValid(email){return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)}
 }
 
 

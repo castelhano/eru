@@ -22,7 +22,7 @@
       </li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'core_usuario_update' usuario.id|safe %}" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'core_usuario_update' usuario.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'core/_form_usuario.html' %}
   </form>
@@ -91,6 +91,8 @@
 
 <script>
   {% block add_script %}
+
+  formValidate(document.getElementById('app_form'));
   
   var selectEmpresas;
   

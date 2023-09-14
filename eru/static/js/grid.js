@@ -2,7 +2,7 @@
 class jsGrid{
     constructor(options){
         this.container = options?.container || null;
-        this.containerClasslist = options?.containerClasslist || 'px-2';
+        this.containerClasslist = options?.containerClasslist || '';
         this.emptyMessage = options?.emptyMessage || '<p class="mt-2 text-secondary">Nenhum item a exibir</p>';
         this.items = options?.items || []; // Array de objetos com dados dos elementos do grid
         this.gridItems = []; // Armazena os elementos html do grid
@@ -10,8 +10,8 @@ class jsGrid{
         this.defaultItemColor = options?.defaultItemColor || 'dark';
         this.selectedIndex = 0;
         this.canNavigate = options?.canNavigate != undefined ? options.canNavigate : true; // Implementa nagevacao 
-        this.size = ['md','lg'].includes(options.size) ? options.size : 'md'; // Opcao de tamanho dos items (md ou lg)
-        this.breakpoint = this.size == 'lg' ? 'col-12 col-lg-6 col-xl-4' : 'col-6 col-lg-4 col-xl-2';
+        this.size = ['md','lg','xl'].includes(options.size) ? options.size : 'md'; // Opcao de tamanho dos items (md, lg, xl)
+        this.breakpoint = this.size == 'lg' ? 'col-lg-6 col-xl-4' : this.size == 'xl' ? 'col-lg-6' : 'col-6 col-lg-4 col-xl-2';
         // Carregando o items
         if(this.items.length == 0){this.container.innerHTML = this.emptyMessage;}
         for(let item in this.items){
@@ -20,8 +20,8 @@ class jsGrid{
         if(__sw >= 992 && this.canNavigate){ // Se viewport acima 992 (lg) adiciona funcionalidade de navegacao no grid
             this.selectItem(0); // 
             // Calcula a quantidade de colunas por linha pelo viewport
-            if(__sw >= 1200){this.cols = this.size == 'lg' ? 3 : 6}
-            else if(__sw >= 992){this.cols = this.size == 'lg' ? 2 : 3}
+            if(__sw >= 1200){this.cols = this.size == 'lg' ? 3 : this.size == 'xl' ? 2 : 6}
+            else if(__sw >= 992){this.cols = ['lg', 'xl'].includes(this.size) ? 2 : 3}
             else{this.cols = this.size == 'lg' ? 1 : 2}
             // Integracao com Keywatch
             this.__appKeyMapIntegration()
@@ -94,15 +94,7 @@ class jsGrid{
     addItem(options){
         let el = document.createElement('div');
         el.classList = options?.color ? `${this.defaultItemClasslist} btn-${options.color} ${this.breakpoint}` : `${this.defaultItemClasslist} btn-${this.defaultItemColor} ${this.breakpoint}`;
-        if(options?.img){
-            let img = document.createElement('img');
-            img.classList = `position-absolute top-0 start-0 w-100`;
-            el.classList.add('overflow-hidden');
-            img.src = options.img;
-            img.style.zIndex = '1';
-            el.appendChild(img);
-        }
-        else if(options?.icon){
+        if(options?.icon){
             let icon = document.createElement('i');
             if(options?.name){icon.classList = `jsGrid-icon-text ${options.icon}`;}
             else{icon.classList = `jsGrid-lead-image ${options.icon}`;}
@@ -113,6 +105,14 @@ class jsGrid{
             text.classList = `jsGrid-lead-image`;
             text.innerHTML = options.text;
             el.appendChild(text);
+        }
+        else if(options?.img){
+            let img = document.createElement('img');
+            img.classList = `position-absolute top-0 start-0 w-100`;
+            el.classList.add('overflow-hidden');
+            img.src = options.img;
+            img.style.zIndex = '1';
+            el.appendChild(img);
         }
         if(options?.desc){
             let desc = document.createElement(options?.href ? 'a' : 'span');

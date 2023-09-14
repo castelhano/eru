@@ -27,6 +27,8 @@
     
     {% block script_preload_src %}{% endblock %}
     <script>
+        const __sw = screen?.width || null;
+        const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
         {% block script_preload %}{% endblock %}
         window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, false)})
     </script>
@@ -174,9 +176,9 @@
         if(document.getElementById('submit')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Gravar', key:'g', alt: true, run: () => {try{document.getElementById('submit').click()}catch(e){}}, desc:'Grava alterações'})}
         if(document.getElementById('back')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Voltar', key:'v', alt: true, run: () => {try{document.getElementById('back').click()}catch(e){}}, desc:'Retorna origem'})}
         if(document.getElementById('search')){appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Pesquisar', key:'/', ctrl: true, run: () => {try{document.getElementById('search').click()}catch(e){}}, desc:'Exibe filtros da página'})}
-        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymapModal()}, desc:'Mostra atalhos disponiveis na página'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymap()}, desc:'Mostra atalhos disponiveis na página'})
         appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Limpar', key:'l', alt: true, run: () => {window.location = window.location.href.split("?")[0].split('#')[0];}, desc:'Recarregar página (limpa filtros)'})
-        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Painel', key:'m', alt: true, run: () => {canvasNav.toggle()}, desc:'Abre painel lateral de configurações'})
+        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Painel', key:'m', alt: true, run: () => {canvasNav.toggle()}, desc:'Abre painel lateral'})
         appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Logout', key:'q', alt: true, run: () => {try{document.getElementById('logout').click()}catch(e){}}, desc:'Encerra sessão no sistema'})
         
         {% block add_script %}{% endblock %}

@@ -2,6 +2,7 @@
 class Keywatch{
     constructor(){
         this.map = {};                                  // Mapa com todos os atalhos cadastrados
+        this.filteredMap = [];                          // Mapa filtrado
         this.tabOnEnter = true;                         // Ativa tabulacao ao precionar enter (dentro de formularios <form>)
         // Eh possivel exibir modal com atalhos, requer lib jsTable
         this.__addStyles();
@@ -19,6 +20,11 @@ class Keywatch{
         if(!options.hasOwnProperty('key') || !options.hasOwnProperty('run')){return false;} // Attrs key e run sao obrigatorios, nao adiciona caso nao presentes
         let cmd = this.getScope(options);
         if(cmd){this.map[cmd] = options;}
+    }
+    avail(options){
+        if(typeof options == 'object'){return !this.map.hasOwnProperty(this.getScope(options))}
+        else if(typeof options == 'string'){return !this.map.hasOwnProperty(options)}
+        return true;
     }
     run(ev){ // Recebe e trata evento, executa metodo run do atalho (caso encontrado)
         // console.log(ev);
@@ -57,14 +63,35 @@ class Keywatch{
         cmd += ev.shiftKey || ev.shift ? 'T': 'F';
         return cmd;
     }
-    unbind(list){ // Remove listener do mapa. Ex: appKeyBind.unbind('fTFF');
-        try{delete this.map[list]}catch(e){}
+    unbind(target){ // Remove listener do mapa (scope ou dicionario). Ex: appKeyBind.unbind('fTFF'); ou appKeyBind.unbind({key: 'f', alt: true});
+        if(typeof target == 'string'){try{delete this.map[target]}catch(e){}}
+        else if(typeof target == 'object'){try{delete this.map[this.getScope(target)]}catch(e){}}
     }
     unbindAll(){this.map = {}}
     getMap(){return Object.values(this.map)}
-    showKeymapModal(){ // Requer jsTable
-        let map = this.getMap();
-        if(map.length == 0){this.modalTableTbody.innerHTML = '<tr><td colspan="3">Nenhum atalho disponivel</td></tr>'}
+    showKeymap(){
+        this.__tableRefresh();
+        this.modal.showModal();
+    }
+    __filterMapsTable(e, criterio=null){
+        if(this.map.length == 0){return false}
+        this.filteredMap = [];
+        if([37, 38, 39, 40, 13].includes(e.keyCode)){return false;} // Nao busca registros caso tecla seja enter ou arrows
+        let c = criterio || this.searchInput.value.toLowerCase();
+        for(let i in this.map){
+            if(this.map[i].visible == false){continue}
+            let value = this.map[i]?.name ? this.map[i].name.replace(/<[^>]*>/g,'').toLowerCase() : '';
+            value += this.map[i]?.desc ? this.map[i].desc.replace(/<[^>]*>/g,'').toLowerCase() : '';
+            value += this.map[i].alt ? 'alt+' : '';
+            value += this.map[i].ctrl ? 'ctrl+' : '';
+            value += this.map[i].shift ? 'shift+' : '';
+            value += this.map[i].key;
+            if(value.indexOf(c) > -1){this.filteredMap.push(this.map[i])}
+        }
+        this.__tableRefresh(this.filteredMap);
+    }
+    __tableRefresh(map=this.getMap()){
+        if(map.length == 0){this.modalTableTbody.innerHTML = '<tr><td colspan="3">Nenhum atalho localizado</td></tr>'}
         else{
             this.modalTableTbody.innerHTML = ''
             for(let item in map){
@@ -77,9 +104,12 @@ class Keywatch{
                 this.modalTableTbody.innerHTML += tr;
             }
         }
-        this.modal.showModal();
+
+
     }
     __buildTable(){ // Cria tabela no modal (roda apenas ao carregar a pagina)
+        this.searchInput = document.createElement('input');this.searchInput.type = 'search';this.searchInput.classList = 'form-control form-control-sm bg-body-tertiary mb-1';this.searchInput.placeholder = 'Criterio pesquisa';
+        this.searchInput.oninput = (ev)=>{this.__filterMapsTable(ev)}
         this.modalTable = document.createElement('table');
         this.modalTable.classList = 'keywatch_table table table-sm table-striped table-hover border fs-7 mb-0';
         this.modalTableThead = document.createElement('thead');
@@ -87,6 +117,7 @@ class Keywatch{
         this.modalTableThead. innerHTML = '<tr><th>Nome</th><th>Combinação</th><th>Descrição</th></tr>';
         this.modalTable.appendChild(this.modalTableThead);
         this.modalTable.appendChild(this.modalTableTbody);
+        this.modal.appendChild(this.searchInput);
         this.modal.appendChild(this.modalTable);
     }
 }
