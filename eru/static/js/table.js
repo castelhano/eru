@@ -73,7 +73,7 @@ class jsTable{
         this.deleteRowButtonClasslist = options?.deleteRowButtonClasslist || 'btn btn-sm btn-secondary';
         this.deleteRowButtonText = options?.deleteRowButtonText || '<i class="bi bi-trash-fill"></i>';
         this.saveButtonClasslist = options?.saveButtonClasslist || 'btn btn-sm btn-outline-primary';
-        this.saveButtonText = options?.saveButtonText || '<i class="bi bi-database-fill-check px-1"></i>';
+        this.saveButtonText = options?.saveButtonText || '<i class="bi bi-floppy-fill px-1"></i>';
         this.restoreButtonClasslist = options?.restoreButtonClasslist || 'btn btn-sm btn-outline-secondary d-none';
         this.restoreButtonText = options?.restoreButtonText || '<i class="bi bi-clock-history px-1"></i>';
         this.activeRowClass = options?.activeRowClass || 'selected';
