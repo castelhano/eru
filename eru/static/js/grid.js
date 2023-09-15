@@ -1,7 +1,7 @@
 
 class jsGrid{
     constructor(options){
-        this.container = options?.container || null;
+        this.container = options?.container || document.body;
         this.containerClasslist = options?.containerClasslist || '';
         this.emptyMessage = options?.emptyMessage || '<p class="mt-2 text-secondary">Nenhum item a exibir</p>';
         this.items = options?.items || []; // Array de objetos com dados dos elementos do grid
@@ -63,7 +63,6 @@ class jsGrid{
         ancor.classList = 'jsGrid-control text-body mt-2 me-2';
         ancor.setAttribute('data-bs-toggle', 'dropdown');
         ancor.setAttribute('role', 'button');
-        if(!item.querySelector('.jsGrid_action')){ancor.classList.add('jsGrid_action')}
         ancor.innerHTML = '<i class="bi bi-three-dots-vertical"></i>'
         let dropdown = document.createElement('ul');
         dropdown.classList = `dropdown-menu bg-${color}-subtle dropdown-menu-end fs-7`;
@@ -114,15 +113,16 @@ class jsGrid{
             img.style.zIndex = '1';
             el.appendChild(img);
         }
+        if(options?.href){
+            let link = document.createElement('a');
+            link.href = options.href;
+            link.classList = 'stretched-link';
+            el.appendChild(link);
+        }
         if(options?.desc){
-            let desc = document.createElement(options?.href ? 'a' : 'span');
+            let desc = document.createElement('span');
             desc.classList = 'jsGrid-label user-select-none';
-            if(options?.href){
-                desc.classList.add('stretched-link');
-                desc.classList.add('jsGrid_action');
-                desc.href = options?.href || '#';
-            }
-            desc.innerHTML = options?.desc || '';
+            desc.innerHTML = options.desc;
             el.appendChild(desc);
         }
         if(options?.menu){
@@ -140,7 +140,7 @@ class jsGrid{
     }
     enterItem(){ // Tenta acessa o item selecionado
         if(!this.canNavigate){return false}
-        try{this.gridItems[this.selectedIndex].querySelector('.jsGrid_action').click();}
+        try{this.gridItems[this.selectedIndex].querySelector('a').click();}
         catch(e){}
     }
     nextItem(){

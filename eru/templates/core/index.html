@@ -18,88 +18,106 @@
 {% block add_script %}
 
 const grid = new jsGrid({
-    container: document.getElementById('grid_container'),
-    // canNavigate: false,
-    // size: 'md', // md, lg, xl
-    items:[
-        {
-            icon: 'bi bi-ubuntu',
-            desc: 'Icone somente (com keybind)',
-            href: '{% url 'handler' 999 %}',
-            keybind: {
-                key: 'y',
-                alt: true,
-                name: '<b class="text-danger">App:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Core',
-                desc: 'Acessa módulo core',
-                run: ()=>{appNotify('warning','Olá <b>mundo</b>!!!')}
-            }
-        },
-        {
-            text: 'Core',
-            color: 'danger',
-            desc: 'Somente Texto',
-            menu:[
-              {text: 'foo', onclick: ()=>{confirmOnClick({})}}
-            ]
-            // href: '{% url 'handler' 999 %}',
-        },
-        {
-            color: 'success',
-            icon: 'bi bi-earbuds',
-            desc: 'Custom style',
-            href: '{% url 'handler' 999 %}',
-        },
-        {
-            color: 'pink',
-            icon: 'bi bi-braces',
-            desc: 'Com menu',
-            // href: '{% url 'handler' 999 %}',
-            menu: [
-                {
-                    text: 'Download',
-                    icon: 'bi bi-person-fill',
-                    href: 'http://www.terra.com'
-                },
-                {
-                    text: 'Excluir',
-                    divisor: true,
-                    class: 'dropdown-item dropdown-item-danger pointer',
-                    'data-bs-toggle': 'modal',
-                    'data-bs-target': '#foo',
-                },
-            ],
-        },
-        {
-          img:'{% static 'img/hckDworld.jpg' %}', 
-          desc:'Imagem',
-          menu:[
-            {
-              text: 'Download',
-              'data-appConfirm': true,
-              'data-appConfirmTitle': '<i class="bi bi-bug-fill me-2"></i>Confirma exclusao da bagaça',
-              'data-appConfirmMessage': 'Tem certeza? esse processo <b>não pode ser desfeito</b>...',
-              'data-appConfirmColor': 'danger',
-              'data-appConfirmText': 'Excluir',
-              'data-appConfirmDelay': '5',
-              href: 'http://www.terra.com'
-            },
-            {
-              text: 'Excluir',
-              divisor: true,
-              class: 'dropdown-item dropdown-item-danger',
-              href: '{% url 'core_empresas' %}'
-            }
-          ]
-        },
-        {color:'purple',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'orange',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'warning',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'secondary',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-        {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
-    ]
-
+  container: document.getElementById('grid_container'),
+  items: [
+    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
+    {
+      icon: 'bi bi-ubuntu',
+      color: 'success',
+      desc: 'Last dist avail..',
+      menu: [
+        {text: 'Novo', href: 'bar', icon: 'bi bi-plus-lg'},
+        {text: 'Pesquisa', href: 'bar', icon: 'bi bi-search'},
+      ]
+    },
+  ]
 })
+
+
+
+// const grid = new jsGrid({
+//     container: document.getElementById('grid_container'),
+//     // canNavigate: false,
+//     // size: 'md', // md, lg, xl
+//     items:[
+//         {
+//             icon: 'bi bi-ubuntu',
+//             desc: 'Icone somente (com keybind)',
+//             href: '{% url 'handler' 999 %}',
+//             keybind: {
+//                 key: 'y',
+//                 alt: true,
+//                 name: '<b class="text-danger">App:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Core',
+//                 desc: 'Acessa módulo core',
+//                 run: ()=>{appNotify('warning','Olá <b>mundo</b>!!!')}
+//             }
+//         },
+//         {
+//             text: 'Core',
+//             color: 'danger',
+//             desc: 'Somente Texto',
+//             menu:[
+//               {text: 'foo', onclick: ()=>{confirmOnClick({})}}
+//             ]
+//             // href: '{% url 'handler' 999 %}',
+//         },
+//         {
+//             color: 'success',
+//             icon: 'bi bi-earbuds',
+//             desc: 'Custom style',
+//             href: '{% url 'handler' 999 %}',
+//         },
+//         {
+//             color: 'pink',
+//             icon: 'bi bi-braces',
+//             desc: 'Com menu',
+//             // href: '{% url 'handler' 999 %}',
+//             menu: [
+//                 {
+//                     text: 'Download',
+//                     icon: 'bi bi-person-fill',
+//                     href: 'http://www.terra.com'
+//                 },
+//                 {
+//                     text: 'Excluir',
+//                     divisor: true,
+//                     class: 'dropdown-item dropdown-item-danger pointer',
+//                     'data-bs-toggle': 'modal',
+//                     'data-bs-target': '#foo',
+//                 },
+//             ],
+//         },
+//         {
+//           img:'{% static 'img/hckDworld.jpg' %}', 
+//           desc:'Imagem',
+//           menu:[
+//             {
+//               text: 'Download',
+//               'data-appConfirm': true,
+//               'data-appConfirmTitle': '<i class="bi bi-bug-fill me-2"></i>Confirma exclusao da bagaça',
+//               'data-appConfirmMessage': 'Tem certeza? esse processo <b>não pode ser desfeito</b>...',
+//               'data-appConfirmColor': 'danger',
+//               'data-appConfirmText': 'Excluir',
+//               'data-appConfirmDelay': '5',
+//               href: 'http://www.terra.com'
+//             },
+//             {
+//               text: 'Excluir',
+//               divisor: true,
+//               class: 'dropdown-item dropdown-item-danger',
+//               href: '{% url 'core_empresas' %}'
+//             }
+//           ]
+//         },
+//         {color:'purple',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//         {color:'orange',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//         {color:'warning',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//         {color:'secondary',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//         {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//         {color:'success',icon:'bi bi-earbuds',desc:'Custom style', href:'{% url 'handler' 999 %}'},
+//     ]
+
+// })
 
 
 // const teste = IMask(

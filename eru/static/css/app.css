@@ -24,6 +24,7 @@ input[readonly], textarea[readonly]{background: rgb(233, 236, 239)!important;}
 .text-hover-orange:hover{color: #FF5722!important;}
 .text-hover-purple:hover{color: #6f42c1!important;}
 
+.btn-xl{height: calc(3.5rem + 2px);line-height: 1.25;}
 [data-bs-theme="dark"] .btn-dark, .btn-dark-alt, .bg-dark-alt{background-color: #393939;color: #FFF;}
 [data-bs-theme="dark"] .btn-dark:hover, .btn-dark-alt:hover{background-color: #333333;}
 .btn-orange, .bg-orange{background-color: #F35B04;color: #FFF;}

@@ -53,8 +53,8 @@ function formValidate(form){
             let min = el.getAttribute('minlength');
             if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
                 el.classList.add('is-invalid');
-                if(max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, false)}
-                else if(max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, false)}
+                if(max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`)}
+                else if(max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`)}
             }
             else if(el.required && el.value == ''){el.classList.add('is-invalid');}
         })
@@ -63,7 +63,7 @@ function formValidate(form){
         form.querySelectorAll('input[type=number][min]:not([data-jsform=novalidate]), input[type=number][max]:not([data-jsform=novalidate])').forEach((el)=>{
             if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
                 el.classList.add('is-invalid');
-                appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`, false);
+                appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`);
             }
         })
 
@@ -105,17 +105,14 @@ function formValidate(form){
             el.onblur = () => {
                 if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
                     el.classList.add('is-invalid');
-                    appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`, false);
+                    appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`);
                 }
                 else{el.classList.remove('is-invalid');}
             }  
         })
         form.querySelectorAll('input[type=email]:not([data-jsform=novalidate])').forEach((el)=>{
             el.onblur = () => {
-                if(el.required && el.value == '' || el.value != '' && !emailIsValid(el.value)){
-                    el.classList.add('is-invalid');
-                    appNotify('warning', 'jsform: <b>Email</b> tem formato inválido');
-                }
+                if(el.required && el.value == '' || el.value != '' && !emailIsValid(el.value)){el.classList.add('is-invalid');}
                 else{el.classList.remove('is-invalid');}
             }  
         })

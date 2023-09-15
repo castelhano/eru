@@ -34,7 +34,7 @@ class Keywatch{
             this.map[cmd].run(ev);
         }
         // Verifica se key=Enter e evento tem origem em input/select, se sim tenta tabular para proximo controle
-        // !Atencao: Tabulacao somente ocorre se input estiver dentro de um <form> e somente para outros elementos do form
+        // !Atencao: Tabulacao somente ocorre se input estiver dentro de um <form> e somente para outros elementos deste form
         // Caso proximo input esteja disable, hide ou tiver tabindex menor que zero busca proximo elemento
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
             ev.preventDefault();
