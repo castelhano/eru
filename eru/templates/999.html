@@ -3,32 +3,49 @@
 {% block title %}Handler: 900{% endblock %}
 
 {% block style_src %}
-<!-- <link rel="stylesheet" href="{% static 'css/docs.css' %}">
-<link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}"> -->
+<link rel="stylesheet" href="{% static 'css/docs.css' %}">
+<link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}">
 {% endblock %}
 
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">900</b></h5>
 <hr>
 
-<button class="btn btn-success"><i class="bi bi-copy me-2"></i> Foo</button>
-
-<h6>iMask</h6>
-<h6>listener</h6>
-<h6>nav</h6>
-<h6>jsForm</h6>
-<h6>jsGrid</h6>
+<h5>iMask</h5>
+<pre><code class="language-javascript">const field = IMask(
+document.getElementById('id_field'),
+{
+    mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}],
+    mask: Number,
+    min: 1,
+    max: 9999,
+    scale: 2,
+    thousandsSeparator: '.',
+    radix: ',',
+    mapToRadix: ['.',','],
+    padFractionalZeros: true,
+    normalizeZeros: true,
+    lazy: false,  // make placeholder always visible
+    placeholderChar: '_'     // defaults to '_'
+}).on('accept', function() {
+    if(teste.value != ''){teste.el.input.classList.add('is-invalid');}
+    else{teste.el.input.classList.remove('is-invalid');}
+}).on('complete', function(){teste.el.input.classList.remove('is-invalid')})</code></pre>
+<h5>listener</h5>
+<h5>nav</h5>
+<h5>jsForm</h5>
+<h5>jsGrid</h5>
 
 
 
 {% endblock%}
 
 {% block add_script_src %}
-<!-- <script src="{% static 'js/vendor/prism.js' %}"></script>
-<script src="{% static 'js/vendor/imask.js' %}"></script>
-<script src="{% static 'js/table.js' %}"></script> -->
+<script src="{% static 'js/vendor/prism.js' %}"></script>
+<!-- <script src="{% static 'js/vendor/imask.js' %}"></script> -->
+<!-- <script src="{% static 'js/table.js' %}"></script> -->
 <!-- <script src="{% static 'js/form.js' %}"></script> -->
-<!-- <script src="{% static 'js/docs.js' %}"></script> -->
+<script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
 
 

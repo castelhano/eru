@@ -10,8 +10,8 @@ class jsGrid{
         this.defaultItemColor = options?.defaultItemColor || 'dark';
         this.selectedIndex = 0;
         this.canNavigate = options?.canNavigate != undefined ? options.canNavigate : true; // Implementa nagevacao 
-        this.size = ['md','lg','xl'].includes(options.size) ? options.size : 'md'; // Opcao de tamanho dos items (md, lg, xl)
-        this.breakpoint = this.size == 'lg' ? 'col-lg-6 col-xl-4' : this.size == 'xl' ? 'col-lg-6' : 'col-6 col-lg-4 col-xl-2';
+        this.size = ['sm','md','lg','xl'].includes(options.size) ? options.size : 'md'; // Opcao de tamanho dos items (md, lg, xl)
+        this.breakpoint = this.size == 'sm' ? 'col-4 col-lg-3 col-xl-1' : this.size == 'lg' ? 'col-lg-6 col-xl-4' : this.size == 'xl' ? 'col-lg-6' : 'col-6 col-lg-4 col-xl-2';
         // Carregando o items
         if(this.items.length == 0){this.container.innerHTML = this.emptyMessage;}
         for(let item in this.items){
@@ -20,9 +20,8 @@ class jsGrid{
         if(__sw >= 992 && this.canNavigate){ // Se viewport acima 992 (lg) adiciona funcionalidade de navegacao no grid
             this.selectItem(0); // 
             // Calcula a quantidade de colunas por linha pelo viewport
-            if(__sw >= 1200){this.cols = this.size == 'lg' ? 3 : this.size == 'xl' ? 2 : 6}
-            else if(__sw >= 992){this.cols = ['lg', 'xl'].includes(this.size) ? 2 : 3}
-            else{this.cols = this.size == 'lg' ? 1 : 2}
+            if(__sw >= 1200){this.cols = this.size == 'sm' ? 12 : this.size == 'lg' ? 3 : this.size == 'xl' ? 2 : 6;}
+            else{this.cols = this.size == 'sm' ? 4 : ['lg', 'xl'].includes(this.size) ? 2 : 3;}
             // Integracao com Keywatch
             this.__appKeyMapIntegration()
             this.rows = Math.ceil(this.gridItems.length / this.cols);
@@ -119,6 +118,11 @@ class jsGrid{
             link.classList = 'stretched-link';
             el.appendChild(link);
         }
+        else if(options?.onclick){
+            el.onclick = options.onclick;
+            el.setAttribute('data-jsGrid-clickable', true);
+            el.classList.add('pointer');
+        }
         if(options?.desc){
             let desc = document.createElement('span');
             desc.classList = 'jsGrid-label user-select-none';
@@ -140,7 +144,11 @@ class jsGrid{
     }
     enterItem(){ // Tenta acessa o item selecionado
         if(!this.canNavigate){return false}
-        try{this.gridItems[this.selectedIndex].querySelector('a').click();}
+        // Veririca se item eh clicavel (se sim aciona evento click), se nao tenta localizar link (a) e aciona click do link
+        try{
+            if(this.gridItems[this.selectedIndex].dataset['jsgridClickable'] == 'true'){this.gridItems[this.selectedIndex].click()}
+            else{this.gridItems[this.selectedIndex].querySelector('a').click()}
+        }
         catch(e){}
     }
     nextItem(){

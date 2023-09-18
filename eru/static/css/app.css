@@ -11,8 +11,13 @@
 
 a{text-decoration: none;}
 select.readonly{background: rgb(233, 236, 239)!important;pointer-events: none;touch-action: none;}
-input[readonly], textarea[readonly]{background: rgb(233, 236, 239)!important;}
-[data-bs-theme="dark"] input[readonly], [data-bs-theme="dark"] .readonly, [data-bs-theme="dark"] .bg-light, [data-bs-theme="dark"] textarea[readonly]{background-color: #393939!important;color: #999!important;}
+input[readonly], input[readonly] + label::after, .readonly, .readonly + label::after, textarea[readonly]{background: rgb(233, 236, 239)!important;}
+
+[data-bs-theme="dark"] input[readonly],
+[data-bs-theme="dark"] input[readonly] + label::after,
+[data-bs-theme="dark"] .readonly,
+[data-bs-theme="dark"] .readonly + label::after,
+[data-bs-theme="dark"] textarea[readonly]{background-color: #393939!important;color: #999!important;}
 
 
 .text-justify{text-align: justify;}
