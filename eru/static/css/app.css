@@ -121,6 +121,17 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 
 .appAlert{position: fixed;width: 100%;bottom: 0;z-index: 300;margin-bottom: 0;}
 
+.callout{border: 1px solid #e9ecef;border-left-width: .25rem;border-radius: .25rem;padding: 8px 10px;}
+[data-bs-theme="dark"] .callout{background-color: #393939; border-color: rgba(255,255,255,0.15);}
+.callout-secondary{border-left-color: #6C757D!important;}
+.callout-primary{border-left-color: #0D6EFD!important;}
+.callout-info{border-left-color: #5bc0de!important;}
+.callout-success{border-left-color: #198754!important;}
+.callout-warning{border-left-color: #FFC107!important;}
+.callout-danger{border-left-color: #DC3545!important;}
+.callout-purple{border-left-color: #6f42c1!important;}
+.callout-orange{border-left-color: #F35B04!important;}
+
 pre, code{user-select: all;}
 .code{background-color: #F8F9FA;border: 1px solid #dee2e6;border-radius: .25rem;padding: 5px 10px;margin-bottom: 15px;user-select: all;}
 .code-btn-copy{position: absolute;top:5px;right: 5px;font-size: 1.2rem;padding: 2px 8px;cursor: pointer;color: #FFF;opacity: 0.5;border-radius: 5px;}

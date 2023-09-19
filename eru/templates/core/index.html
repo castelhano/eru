@@ -20,21 +20,16 @@
 
 const grid = new jsGrid({
   container: document.getElementById('grid_container'),
-  // size: 'lg',
+  // size: 'xl',
   items: [
-    {text: 'Foo', onclick: ()=>{appNotify('success', 'Ola mundo')}},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
-    {text: 'Foo', href:'{% url 'core_usuarios' %}'},
+    {text: '999', href:'{% url 'handler' '999' %}'},
+    {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
+    {icon: 'bi bi-people-fill', color: 'purple', href: '{% url 'core_usuarios' %}', desc: 'Usuários'},
     {
       icon: 'bi bi-ubuntu',
       color: 'success',
-      desc: 'Last dist avail..',
+      href: '{% url 'core_empresas' %}',
+      // desc: 'Exemplo com dropdown',
       menu: [
         {text: 'Novo', href: 'bar', icon: 'bi bi-plus-lg'},
         {text: 'Pesquisa', onclick: ()=>{appNotify('danger', 'Aqui deve funfar tbm')}, icon: 'bi bi-search'},

@@ -16,8 +16,7 @@ const customCanvasNavMenu = document.getElementById('customCanvasNavMenu');
 
 class canvasNavLink{
     constructor(options){
-        
-        this.el = document.createElement('li'); this.el.classList = 'nav-item';
+        this.el = document.createElement('li'); this.el.classList = 'nav-item py-1';
         this.link = document.createElement('a');
         this.link.classList = `${options?.class || 'nav-link'}`;
         if(options.icon){
@@ -51,7 +50,7 @@ class canvasNavDropdown{
         if(!options?.itens || options.itens.length == 0){return false} // Se nao informado intens p o dropdown, nao insere menu
         this.el = document.createElement('li'); this.el.classList = 'nav-item dropdown';
         this.link = document.createElement('a');
-        this.link.classList = `${options?.class || 'nav-link dropdown-toggle'}`;
+        this.link.classList = `${options?.class || 'nav-link dropdown-toggle py-1'}`;
         this.link.href = '#';this.link.setAttribute('role', 'button');this.link.setAttribute('data-bs-toggle', 'dropdown');
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
