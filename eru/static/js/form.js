@@ -18,7 +18,6 @@ class jsForm{
             this.form.onsubmit = ()=>{return this.validate()} ; // Chama funcao de validacao ao submeter form
             this.__imaskValidate(); // Adiciona validacao para elementos imask
             this.__validateListeners(); // Adiciona listeners (onblur) nos fields
-
         }
 
 
@@ -100,31 +99,31 @@ class jsForm{
             }
         }
     }
-    __validateRequired(el){
+    __validateRequired(el, notify=true){
         let max = el.getAttribute('maxlength');
         let min = el.getAttribute('minlength');
         if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
             el.classList.add('is-invalid');
-            if(max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`)}
-            else if(max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`)}
+            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`)}
+            else if(notify && max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`)}
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
     }
-    __validateNumber(el){
+    __validateNumber(el, notify=true){
         let max = parseFloat(el.getAttribute('max')) || null;
         let min = parseFloat(el.getAttribute('min')) || null;
         if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
             el.classList.add('is-invalid');
-            if(max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, false)}
-            else if(max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, false)}
+            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, false)}
+            else if(notify && max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, false)}
             
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
     }
-    __validateEmail(el){
-        if(el.value != '' && !this.__emailIsValid(el.value)){
+    __validateEmail(el, notify=true){
+        if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
             el.classList.add('is-invalid');
-            appNotify('warning', 'jsform: <b>Email</b> tem formato inválido');
+            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido')}
         }
     }
     __emailIsValid(email){
@@ -172,7 +171,17 @@ class jsForm{
             }).on('complete', function(){self.imask[i].el.input.classList.remove('is-invalid')})
         }
     }
-    __validateListeners(){}
+    __validateListeners(){
+        this.form.querySelectorAll('[required]:not([type=number]):not([type=email]),[minlength]:not([type=email]),[maxlength]:not([type=email])').forEach((el)=>{
+            el.onblur = () => {this.__validateRequired(el, false)}
+        })
+        this.form.querySelectorAll('input[type=number][min], input[type=number][max]').forEach((el)=>{
+            el.onblur = () => {this.__validateNumber(el, false)}  
+        })
+        this.form.querySelectorAll('input[type=email]').forEach((el)=>{
+            el.onblur = () => {this.__validateEmail(el, false)}
+        })
+    }
 }
 
 

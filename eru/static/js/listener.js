@@ -42,13 +42,13 @@ class Keywatch{
             try{
                 let form = ev.target.form;
                 let index = Array.prototype.indexOf.call(form, ev.target);
-                if(form.elements[index + 1].disabled == false && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
+                if(form.elements[index + 1].disabled == false && form.elements[index + 1]?.readOnly == false && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
                 else{
                     let el = ev.target.form.elements;
                     let i = index + 1;
                     let escape = false;
                     while(i <= el.length && !escape){
-                        if(form.elements[i].disabled == false && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
+                        if(form.elements[i].disabled == false && form.elements[i]?.readOnly == false && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
                         else{i++;}
                     }
                 }

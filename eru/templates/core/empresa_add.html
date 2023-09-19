@@ -32,11 +32,7 @@
   const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})
   const fax = IMask(document.getElementById('id_fax'),{mask: '(00) 0000-0000'})
 
-  
-  
-  
-  imaskValidate([cnpj, cep, fone, fax]); // Ativa validacao onTheFly para os elementos imask
-  formValidate(document.getElementById('app_form')); // Inicia validacao para form
+  const form = new jsForm(document.getElementById('app_form'), {imask: [cnpj, cep, fone, fax]});
 
   {% endblock %}
 </script>

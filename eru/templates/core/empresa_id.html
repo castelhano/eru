@@ -89,20 +89,11 @@
 
 <script>
   {% block add_script %}
-  
+
   const cnpj = IMask(document.getElementById('id_cnpj'),{mask: '00.000.000/0000-00'})
   const cep = IMask(document.getElementById('id_cep'),{mask: '00.000-000'})
   const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})
   const fax = IMask(document.getElementById('id_fax'),{mask: '(00) 0000-0000'})
-
-  document.getElementById('id_razao_social').type = 'email';
-  // document.getElementById('id_razao_social').setAttribute('min', 5);
-  // document.getElementById('id_razao_social').setAttribute('max', 22);
-  document.getElementById('id_razao_social').required = true;
   const form = new jsForm(document.getElementById('app_form'), {imask: [cnpj, cep, fone, fax]});
-
-  // imaskValidate([cnpj, cep, fone, fax]); // Ativa validacao onTheFly para os elementos imask
-  // formValidate(document.getElementById('app_form')); // Inicia validacao para form
-
   {% endblock %}
 </script>
