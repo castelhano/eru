@@ -35,20 +35,20 @@ class Keywatch{
         }
         // Verifica se key=Enter e evento tem origem em input/select, se sim tenta tabular para proximo controle
         // !Atencao: Tabulacao somente ocorre se input estiver dentro de um <form> e somente para outros elementos deste form
-        // Caso proximo input esteja disable, hide ou tiver tabindex menor que zero busca proximo elemento
+        // Caso proximo input esteja disable, readonly, hide ou tiver tabindex menor que zero busca proximo elemento
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
             ev.preventDefault();
             if(ev.target.hasOwnProperty('data-escape_tab')){return false} // Adicione attr data-escape_tab no inpit que queira evitar tabulacao no enter
             try{
                 let form = ev.target.form;
                 let index = Array.prototype.indexOf.call(form, ev.target);
-                if(form.elements[index + 1].disabled == false && form.elements[index + 1]?.readOnly == false && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
+                if(form.elements[index + 1].disabled == false && !form.elements[index + 1]?.readOnly == true && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
                 else{
                     let el = ev.target.form.elements;
                     let i = index + 1;
                     let escape = false;
                     while(i <= el.length && !escape){
-                        if(form.elements[i].disabled == false && form.elements[i]?.readOnly == false && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
+                        if(form.elements[i].disabled == false && !form.elements[i]?.readOnly == true && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
                         else{i++;}
                     }
                 }

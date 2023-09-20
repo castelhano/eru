@@ -91,111 +91,74 @@
 
 <script>
   {% block add_script %}
-
-  formValidate(document.getElementById('app_form'));
-  
-  var selectEmpresas;
-  
-  const empresasUsuario = { // Armazena empresas atuais habilitadas para o usuario
-    {% for empresa in usuario.profile.empresas.all %}
-    {{empresa.id|safe}}: '{{empresa.nome}}',
-    {% endfor %}
-  }
-  
-  const empresas  = new selectPopulate({
-    target: document.getElementById('id_empresas'),
-    url: '{% url 'core_get_empresas' %}',
-    params: 'usuario=new',
-    then: ()=>{
-      selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
-        optionsSelected: Object.keys(empresasUsuario),
-        emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
-      });
-    }
-  })
-  
-  {% if not usuario.is_superuser %}
-  var selectGrupos;
-  // var selectGrupos, selectPerms;
-  
-  const gruposUsuario = { // Armazena os grupos atuais do usuario
-    {% for grupo in usuario.groups.all %}
-    {{grupo.id|safe}}: '{{grupo.name}}',
-    {% endfor %}
-  }
-  
-  const grupos  = new selectPopulate({
-    target: document.getElementById('id_grupos'),
-    url: '{% url 'core_get_grupos' %}',
-    params: 'usuario=new',
-    value: 'name',
-    then: ()=>{
-      selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
-        optionsSelected: Object.keys(gruposUsuario),
-        emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
-      });
-    }
-  })
-  
-  const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
-    customStyles:true,
-    reorderOptions: false,
-    wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
-    emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
-  });
-  
-  
-  const permsTodos = {};
-  const permsSelecionados = [];
-  const permsGroups = {};
-  function getPerms() {
-    selectPerms.optionsContainer.innerHTML = '<small class="text-body-secondary">Buscando permissões, aguarde....</small>';
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if(this.readyState == 4 && this.status == 200){
-        if(this.responseText == ''){}
-        else{
-          let obj = JSON.parse(this.responseText);
-          for(item in obj){
-            let nome_split = obj[item].nome.split(' | ');
-            if(Object.keys(permsGroups).includes(nome_split[0])){ // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
-              permsGroups[nome_split[0]].push(`${obj[item].id}`);
-            }
-            else{ // Caso nao, inicia grupo
-              permsGroups[nome_split[0]] = [`${obj[item].id}`];
-            }
-            permsTodos[obj[item].id] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+  const form = new jsForm(document.getElementById('app_form'), {
+    selectPopulate: [
+      {
+        target: document.getElementById('id_empresas'),
+        url: '{% url 'core_get_empresas' %}',
+        params: 'usuario=new',
+        then: ()=>{
+          let empresasUsuario = [] // Armazena empresas atuais habilitadas para o usuario
+          {% for empresa in usuario.profile.empresas.all %}
+          empresasUsuario.push('{{empresa.id|safe}}');
+          {% endfor %}
+          let selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
+            optionsSelected: empresasUsuario,
+            emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
+          });
+          selectEmpresas.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
+        }
+      },
+      {% if not usuario.is_superuser %}
+      {
+        target: document.getElementById('id_grupos'),
+        url: '{% url 'core_get_grupos' %}',
+        params: 'usuario=new',
+        value: 'name',
+        then: ()=>{
+          let gruposUsuario = [] // Armazena os grupos atuais do usuario
+          {% for grupo in usuario.groups.all %}
+          gruposUsuario.push('{{grupo.id|safe}}');
+          {% endfor %}
+          let selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
+            optionsSelected: gruposUsuario,
+            emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
+          });
+          selectGrupos.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
+        }
+      },
+      {
+        target: document.getElementById('id_perms'),
+        url: '{% url 'core_get_user_perms' %}',
+        params: 'usuario=new',
+        then: (data)=>{
+          let permsGroups = {};
+          let perms = {};
+          let permsUsuario = [] // Armazena os perms atuais do usuario
+          {% for perm in usuario.user_permissions.all %}
+          permsUsuario.push('{{perm.id|safe}}');
+          {% endfor %}
+          // console.log(permsUsuario);
+          for(item in data){
+            let nome_split = data[item].nome.split(' | ');
+            // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
+            if(permsGroups.hasOwnProperty(nome_split[0])){permsGroups[nome_split[0]].push(`${data[item].id}`)}
+            else{permsGroups[nome_split[0]] = [`${data[item].id}`]} // Caso nao, inicia grupo
+            perms[data[item].id] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
           }
-          getPermsUsuario();
+          let selectPerms = new jsSelectm(document.getElementById('id_perms'), {
+            reorderOptions: false,
+            options: perms,
+            groups: permsGroups,
+            optionsSelected: permsUsuario,
+            wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
+            emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
+          });
+          selectPerms.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
         }
       }
-    };
-    xhttp.open("GET", "{% url 'core_get_user_perms' %}?usuario=new", true);
-    xhttp.send();
-  }
-  getPerms();
-  
-  function getPermsUsuario() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if(this.readyState == 4 && this.status == 200){
-        if(this.responseText == ''){}
-        else{
-          let obj = JSON.parse(this.responseText);
-          for(item in obj){permsSelecionados.push(`${obj[item].id}`);}
-          selectPerms.options = permsTodos;
-          selectPerms.optionsSelected = permsSelecionados;
-          selectPerms.groups = permsGroups;
-          selectPerms.buildOptions(); // Monta componente select
-          selectPerms.rebuildTargetOptions(); // Atualiza innerHTML do form
-          
-        }
-      }
-    };
-    xhttp.open("GET", "{% url 'core_get_user_perms' %}?usuario={{usuario.id}}", true);
-    xhttp.send();
-  }
-  {% endif %}
-  
+      {% endif %}
+    ]
+  })  
   {% endblock %}
 </script>

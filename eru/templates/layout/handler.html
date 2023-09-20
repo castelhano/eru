@@ -19,6 +19,7 @@
 	</style>
 	<script>
 		var page = {% block page_code %}window.location.pathname.split('/').pop().split('?')[0];{% endblock %}
+		if(!['110','403','404','500','999'].includes(page)){page = '500'}
 
 	</script>
 </head>

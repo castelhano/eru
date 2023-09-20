@@ -4,15 +4,23 @@ class jsForm{
         this.common = []; // Lista vai armazenar os fields comuns (sem maskara)
         this.imask = options?.imask || [];
         this.imaskFieldNames = [];
+        this.selectPopulate = options?.selectPopulate || [];
+        this.selects = {}; // Armazena instancias de selectPopulate
+        // customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
+        // deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
+        this.customValidation = options?.customValidation || {};
         this.novalidate = options?.novalidate != undefined ? options.novalidate : false;
         this.imask.forEach((el)=>{ // Carrega list com nomes dos imaskFields
             this.imaskFieldNames.push(el.el.input.name); // Popula list com names dos campos imask (usado no for do dicionario data)
         })
-        for(let i = 0; i < this.form.elements.length; i++){ // Carrega list dos elementos do form comuns (sem mascara)
+        for(let i = 0; i < this.form.elements.length; i++){ // Carrega list dos elementos do form comuns (sem mascara) alem de liberar acesso dos elementos como instance.field_name (ex. form.cpf)
+            if(this.form.elements[i]?.name){this[this.form.elements[i].name] = this.form.elements[i];}
             if(this.imaskFieldNames.includes(this.form.elements[i].name)){continue}
             this.common.push(this.form.elements[i]);
         }
-
+        for(let i = 0;i < this.selectPopulate.length; i++){ // Busca (ajax) dados e preenche select
+            this.selects[this.selectPopulate[i].target.name] = new selectPopulate(this.selectPopulate[i]);
+        }
         if(!this.novalidate){
             this.form.setAttribute('novalidate', null); // Desativa validacao pelo navegador
             this.form.onsubmit = ()=>{return this.validate()} ; // Chama funcao de validacao ao submeter form
@@ -104,10 +112,11 @@ class jsForm{
         let min = el.getAttribute('minlength');
         if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`)}
-            else if(notify && max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`)}
+            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, false)}
+            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, false)}
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
+        else{el.classList.remove('is-invalid')}
     }
     __validateNumber(el, notify=true){
         let max = parseFloat(el.getAttribute('max')) || null;
@@ -115,16 +124,18 @@ class jsForm{
         if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
             el.classList.add('is-invalid');
             if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, false)}
-            else if(notify && max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, false)}
+            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, false)}
             
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
+        else{el.classList.remove('is-invalid')}
     }
     __validateEmail(el, notify=true){
         if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido')}
+            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido', false)}
         }
+        else{el.classList.remove('is-invalid')}
     }
     __emailIsValid(email){
         return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
@@ -139,6 +150,24 @@ class jsForm{
 
         // Valida email fields
         this.form.querySelectorAll('input[type=email]').forEach((el)=>{ this.__validateEmail(el); })
+
+        // Verifica se existe validacao adicional na pagina de origem
+        for(let i in this.customValidation){
+            try {
+                let el = this.form.querySelector(`#id_${i}`);
+                let resp = this.customValidation[i](el.value);
+                if(!resp[0]){
+                    el.classList.add('is-invalid');
+                    if(resp[1]){
+                        appNotify('warning', `jsForm: ${resp[1]}`, false);
+                    }
+                }
+                else{el.classList.remove('is-invalid')}
+            } catch (e){
+                console.log(`jsForm: ERRO customValidation para ${i} inválido, verifique dados informados`);
+                console.log(`Deve existir no form field com ID id_${i}, e retorno deve ser um array, ex: [false, 'Texto de ajuda'] ou [true]`);
+            }
+        }
 
         // Verifica se foi apontado erro em algum field, se nao faz tratamento e submete form
         if(this.form.querySelectorAll('.is-invalid').length == 0){ // Caso nao tenha erros
@@ -185,104 +214,6 @@ class jsForm{
 }
 
 
-
-/*
-* formValidate
-*
-* @version  1.0
-* @since    03/09/2023
-* @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
-* @desc     Implementa validacao de dados para formulario
-* @example  formValidate(document.querySelector('form'));
-* Validacoes disponiveis:
-* -> fields com required
-* -> fields number valida min e max
-* -> fields text valida maxLength e minLength
-* -> atribua data-jsform_unmask="cur" ou data-jsform_unmask="num" para remover formatacao antes do submit
-* -> ajusta valores de elementos com classes text-[uppercase, lowercase] conforme caso
-* -> atribua data-jsform="novalidate" para ignorar validacao no elemento
-*/
-function formValidate(form){
-    
-    form.setAttribute('novalidate', null); // Desativa validacao pelo navegador
-    formValidate_addListeners(form); // Adiciona os listeners (onblur) nos elementos do form
-    form.onsubmit = () => { // Funcao de validacao do form
-        cleanNotify(); // Limpa area de notificacao
-        // Verifica elementos REQUIRES se estao preenchidos
-        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-jsform=novalidate]):not([type=email]),[maxlength]:not([data-jsform=novalidate]):not([type=email])').forEach((el)=>{
-            let max = el.getAttribute('maxlength');
-            let min = el.getAttribute('minlength');
-            if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
-                el.classList.add('is-invalid');
-                if(max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`)}
-                else if(max || min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`)}
-            }
-            else if(el.required && el.value == ''){el.classList.add('is-invalid');}
-        })
-        
-        // Valida inputs NUMBER quanto ao MIN e MAX
-        form.querySelectorAll('input[type=number][min]:not([data-jsform=novalidate]), input[type=number][max]:not([data-jsform=novalidate])').forEach((el)=>{
-            if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
-                el.classList.add('is-invalid');
-                appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`);
-            }
-        })
-
-        // Valida email
-        form.querySelectorAll('input[type=email]:not([data-jsform=novalidate])').forEach((el)=>{
-            if(el.value != '' && !emailIsValid(el.value)){
-                el.classList.add('is-invalid');
-                appNotify('warning', 'jsform: <b>Email</b> tem formato inválido');
-            }
-        })
-        
-        if(form.querySelectorAll('.is-invalid').length == 0){ // Caso nao tenha mais erros
-            // Ajusta formatacao de campos currency (data-jsform_unmask=cur) para o padrao americano (de 0.000,00 para 0000.00)
-            form.querySelectorAll('[data-jsform_unmask=cur]').forEach((el)=>{el.value = el.value.replace('.','').replace(',','.');})
-            
-            // Remove alpha e espacos do texto mantendo apenas numeros (data-jsform_unmask=num)
-            form.querySelectorAll('[data-jsform_unmask=num]').forEach((el)=>{el.value = el.value.replace(/\D/g,'');})
-            
-            // Faz toUpperCase no valor de elementos com classe text-uppercase
-            form.querySelectorAll('.text-uppercase').forEach((el)=>{el.value = el.value.toUpperCase();})
-            
-            // Faz toLowerCase no valor de elementos com classe text-lowercase
-            form.querySelectorAll('.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
-            return true;
-        }
-        appAlert('warning', '<b>jsform</b>: Existem campo(s) inválidos, corriga antes de prosseguir');
-        return false;
-    }
-    function formValidate_addListeners(form){ // Funcao auxiliar ao formValidate, adiciona listeners de validacao no onblur
-        form.querySelectorAll('[required]:not([data-jsform=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-jsform=novalidate]):not([type=email]),[maxlength]:not([data-jsform=novalidate])').forEach((el)=>{
-            el.onblur = () => {
-                let max = el.getAttribute('maxlength');
-                let min = el.getAttribute('minlength');
-                if(el.required && el.value == '' || max && el.value.length > el.maxLength || min && el.value.length < el.minLength){el.classList.add('is-invalid')}
-                else{el.classList.remove('is-invalid')}
-            }
-        })
-        form.querySelectorAll('input[type=number][min]:not([data-jsform=novalidate]), input[type=number][max]:not([data-jsform=novalidate])').forEach((el)=>{
-            el.onblur = () => {
-                if(el.hasAttribute('max') && parseFloat(el.value) > parseFloat(el.max) || el.hasAttribute('min') && parseFloat(el.value) < parseFloat(el.min)){
-                    el.classList.add('is-invalid');
-                    appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${el.min || '--'} e ${el.max || '--'}`);
-                }
-                else{el.classList.remove('is-invalid');}
-            }  
-        })
-        form.querySelectorAll('input[type=email]:not([data-jsform=novalidate])').forEach((el)=>{
-            el.onblur = () => {
-                if(el.required && el.value == '' || el.value != '' && !emailIsValid(el.value)){el.classList.add('is-invalid');}
-                else{el.classList.remove('is-invalid');}
-            }  
-        })
-    }
-    function emailIsValid(email){return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)}
-}
-
-
-
 /*
 * selectPopulate
 * --
@@ -316,7 +247,7 @@ class selectPopulate{
             appNotify('danger', `jsform: Erro ao carregar <b>${this.target.name}</b>, favor informar ao administrador`, false)
         };
         this.onSuccess = options?.onSuccess != undefined ? options.onSuccess : ()=>{}; // Funcao a ser executada em caso de successo (apos popular elemento)
-        this.then = options?.then != undefined ? options.then : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
+        this.then = options?.then != undefined ? ()=>{options.then(this.data)} : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
         this.reload();
     }
     reload(){ // Consulta e carrega registros no select

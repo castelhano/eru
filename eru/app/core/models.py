@@ -98,6 +98,7 @@ class Settings(models.Model):
     quantidade_caracteres_senha = models.PositiveIntegerField(default=8)
     senha_exige_alpha = models.BooleanField(default=True)
     senha_exige_numero = models.BooleanField(default=True)
+    senha_exige_maiuscula = models.BooleanField(default=False)
     senha_exige_caractere = models.BooleanField(default=False)
     historico_senhas_nao_repetir = models.PositiveIntegerField(default=0)
     quantidade_tentantivas_erradas = models.PositiveIntegerField(default=3)

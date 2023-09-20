@@ -473,7 +473,7 @@ def change_password(request):
                 messages.error(request, 'Senhas nova e confirmação não são iguais')
         else:
             messages.error(request, 'Senha atual não confere')
-        return render(request,'core/change_password.html')
+        return render(request,'core/change_password.html', {'settings':settings})
     else:
         return render(request,'core/change_password.html', {'settings':settings})
 
@@ -496,7 +496,9 @@ def password_valid(request, password):
         return False
     if settings.senha_exige_numero and re.search('[0-9]',password) is None:
         return False
-    if settings.senha_exige_alpha and re.search('[a-z]',password, re.IGNORECASE) is None:
+    if settings.senha_exige_maiuscula and re.search('^(?=.*[a-z])(?=.*[A-Z])',password) is None:
+        return False
+    elif settings.senha_exige_alpha and re.search('[a-z]',password, re.IGNORECASE) is None:
         return False
     if settings.senha_exige_caractere and re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", password) is None:
         return False

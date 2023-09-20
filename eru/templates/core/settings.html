@@ -47,6 +47,10 @@
                     <label class="form-check-label" for="id_senha_exige_alpha">Exigir alpha na senha</label>
                 </div>
                 <div class="form-check form-switch">
+                    {{ form.senha_exige_maiuscula }}
+                    <label class="form-check-label" for="id_senha_exige_maiuscula">Exigir caracteres maiusculos e minusculos</label>
+                </div>
+                <div class="form-check form-switch">
                     {{ form.senha_exige_numero }}
                     <label class="form-check-label" for="id_senha_exige_numero">Exigir número na senha</label>
                 </div>
@@ -112,6 +116,6 @@
 
 <script>
   {% block add_script %}
-  formValidate(document.getElementById('app_form'));
+  const form = new jsForm(document.getElementById('app_form'), {})
   {% endblock %}
 </script>

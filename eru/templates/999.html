@@ -10,6 +10,69 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
+<div class="alert alert-dark">
+    <div class="row">
+        <div class="col">Foo</div>
+        <div class="col-auto">
+            <button class="btn btn-phanton" style="margin: -8px 0;"><i class="bi bi-person-fill"></i></button>
+            <button class="btn btn-phanton btn-phanton-success" style="margin: -8px 0;"><i class="bi bi-info-circle-fill"></i></button>
+        </div>
+    </div>
+</div>
+<h5>jsForm:</h5>
+<div class="row">
+    <div class="col">
+        <form id="my_form" action="">
+            <div class="row g-1">
+                <div class="form-floating mb-lg-1 col-lg-3">
+                    <input type="text" name="nome" id="id_nome" class="form-control" minlength="4" maxlength="18" required autofocus>
+                    <label for="id_nome">Nome</label>
+                </div>
+                <div class="form-floating mb-lg-1 col-lg-3">
+                    <input type="text" name="cpf" id="id_cpf" class="form-control">
+                    <label for="id_cpf">CPF</label>
+                </div>
+                <div class="form-floating mb-1 col-lg">
+                    <select class="form-select" id="id_empresa" name="empresa"></select>
+                    <label for="id_empresa">Empresa</label>
+                </div>
+            </div>
+            <div class="row g-1">
+                <div class="form-floating mb-lg-1 col-lg-2">
+                    <input type="number" name="idade" id="id_idade" min="18" max="65" class="form-control">
+                    <label for="id_idade">Idade</label>
+                </div>
+                <div class="form-floating mb-lg-1 col-lg-3">
+                    <input type="password" name="senha" id="id_senha" class="form-control" required>
+                    <label for="id_senha">Senha</label>
+                </div>
+                <div class="form-floating mb-1 col-lg">
+                    <input type="email" name="email" id="id_email" class="form-control">
+                    <label for="id_email">Email</label>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <button class="btn btn-sm btn-primary" id="submit" type="submit"><b>G</b>ravar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<pre class="mt-3"><code class="language-javascript">const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
+const form = new jsForm(document.getElementById('my_form'), {
+    imask: [cpf],
+    selectPopulate: [
+        {target: document.getElementById('id_empresa'), url: '{% url 'core_get_empresas' %}'}
+    ],
+    customValidation: {
+        'senha': (v)=>{
+            let resp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
+            return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter números, letras maiusculas e minusculas'];
+        }
+    }
+})</code></pre>
+
 
 <h5>iMask</h5>
 <pre><code class="language-javascript">const field = IMask(
@@ -60,9 +123,9 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 
 {% block add_script_src %}
 <script src="{% static 'js/vendor/prism.js' %}"></script>
-<!-- <script src="{% static 'js/vendor/imask.js' %}"></script> -->
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 <!-- <script src="{% static 'js/table.js' %}"></script> -->
-<!-- <script src="{% static 'js/form.js' %}"></script> -->
+<script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
 
@@ -70,8 +133,20 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <script>
 {% block add_script %}
 
-
-
+const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
+const form = new jsForm(document.getElementById('my_form'), {
+    imask: [cpf],
+    novalidate: true,
+    selectPopulate: [
+        {target: document.getElementById('id_empresa'), url: '{% url 'core_get_empresas' %}'}
+    ],
+    customValidation: {
+        'senha': (v)=>{
+            let resp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
+            return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
+        }
+    }
+})
 
 {% endblock %}
 </script>

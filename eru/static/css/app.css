@@ -46,6 +46,8 @@ input[readonly], input[readonly] + label::after, .readonly, .readonly + label::a
 .btn-outline-purple{border-color: #6f42c1!important;color: #6f42c1!important;}
 .btn-outline-purple:hover{background-color: #6f42c1!important;color: #FFF!important;}
 
+.btn-phanton{background-color: transparent;}
+.btn-phanton:hover{background-color: var(--bs-secondary-bg);}
 .btn-phanton-success{color: rgb(var(--bs-success-rgb));}
 .btn-phanton-success:hover{background-color: #198754;color: #FFF;}
 .btn-phanton-primary{color: rgb(var(--bs-primary-rgb));}
@@ -139,6 +141,3 @@ pre, code{user-select: all;}
 
 .slideIn{animation-fill-mode: both; animation-name: slideIn; animation-duration: 0.5s;}
 @keyframes slideIn{from{transform:translate3d(0,100%,0);visibility:visible;}to{transform:translate3d(0,0,0);}}
-
-.pulse {animation-name: pulse;animation-timing-function: ease-in-out;animation-duration: 0.3s;}
-@keyframes pulse{from{transform: scale3d(1, 1, 1);} 50% {transform: scale3d(1.05, 1.05, 1.05);} to {transform: scale3d(1, 1, 1);}}

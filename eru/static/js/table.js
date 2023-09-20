@@ -65,7 +65,7 @@ class jsTable{
         this.maxPagesButtons = options?.maxPagesButtons || 6; // Quantidade maxima de botoes a serem exibidos 
         // Estilizacao ********
         this.tableClasslist = options?.tableClasslist || 'table border table-striped table-hover caption-top mb-2';
-        this.editableColsClasslist = options?.editableColsClasslist || 'text-primary';
+        this.editableColsClasslist = options?.editableColsClasslist || 'bg-body-tertiary';
         this.rowsCountLabelClasslist = options?.rowsCountLabelClasslist || 'btn btn-sm bg-body-secondary';
         this.addRowButtonClasslist = options?.addRowButtonClasslist || 'btn btn-sm btn-outline-success';
         this.addRowButtonText = options?.addRowButtonText || '<i class="bi bi-plus-lg px-1"></i>';

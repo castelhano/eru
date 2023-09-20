@@ -5,7 +5,7 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.127.0.0.1','https://*.192.168.1.129', 'https://localhost']
 
 SECRET_KEY = 'django-insecure-vy-@yf$=0^7s&i7d$3z81pr4ve)6!-c2ol&$0zp+ev$!7%h@wn'
-DEBUG = False
+DEBUG = True
 
 COMPANY_DATA = {
 'homepage': 'http://localhost:8000/index',
