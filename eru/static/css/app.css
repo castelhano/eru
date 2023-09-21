@@ -123,7 +123,7 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 
 .appAlert{position: fixed;width: 100%;bottom: 0;z-index: 300;margin-bottom: 0;}
 
-.callout{border: 1px solid #e9ecef;border-left-width: .25rem;border-radius: .25rem;padding: 8px 10px;}
+.callout{border: 1px solid #e9ecef;border-left-width: .25rem;border-radius: .25rem;padding: 0.8rem;}
 [data-bs-theme="dark"] .callout{background-color: #393939; border-color: rgba(255,255,255,0.15);}
 .callout-secondary{border-left-color: #6C757D!important;}
 .callout-primary{border-left-color: #0D6EFD!important;}
