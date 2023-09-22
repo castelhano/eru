@@ -38,7 +38,7 @@
     <nav class="navbar fixed-top py-1 {% block navbar_classlist %}bg-body-tertiary border-bottom{% endblock %}">
         <div class="container-fluid">
             <a class="text-body" id="home" href="{% url 'index' %}"><i class="bi bi-input-cursor fs-4"></i></a>
-            <span class="navbar-brand">Solaris</span>
+            <span class="navbar-brand">{% block nav_title %}Solaris{% endblock %}</span>
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
                 <div class="offcanvas-header">

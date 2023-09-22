@@ -22,19 +22,20 @@ const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   // size: 'xl',
   items: [
+    {text: '998', href:'{% url 'handler' '998' %}', color: 'orange', desc: 'Diagrama de Marcha'},
     {text: '999', href:'{% url 'handler' '999' %}'},
-    {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
+    // {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
     {icon: 'bi bi-people-fill', color: 'purple', href: '{% url 'core_usuarios' %}', desc: 'Usuários'},
-    {
-      icon: 'bi bi-ubuntu',
-      color: 'success',
-      // href: '{% url 'core_empresas' %}',
-      // desc: 'Exemplo com dropdown',
-      menu: [
-        {text: 'Novo', href: 'bar', icon: 'bi bi-plus-lg'},
-        {text: 'Pesquisa', onclick: ()=>{appNotify('danger', 'Aqui deve funfar tbm')}, icon: 'bi bi-search'},
-      ]
-    },
+    // {
+    //   icon: 'bi bi-ubuntu',
+    //   color: 'success',
+    //   // href: '{% url 'core_empresas' %}',
+    //   // desc: 'Exemplo com dropdown',
+    //   menu: [
+    //     {text: 'Novo', href: 'bar', icon: 'bi bi-plus-lg'},
+    //     {text: 'Pesquisa', onclick: ()=>{appNotify('danger', 'Aqui deve funfar tbm')}, icon: 'bi bi-search'},
+    //   ]
+    // },
   ]
 })
 
