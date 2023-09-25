@@ -5,11 +5,44 @@
 
 
 {% block style_src %}
-<link rel="stylesheet" href="{% static 'css/app/marcha.css' %}">
+<!-- <link rel="stylesheet" href="{@ static 'css/app/marcha.css' @}"> -->
 {% endblock %}
 
-{% block content_fluid %}
-
+{% block content %}
+<!-- <div id="canvas" class="overflow-hidden" style="height: calc(100vh - 120px);"> -->
+    <!-- <div data-role="ruller" class="" style="height: 20px;padding-left: 25px;">
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 16px;background-color: #BBB; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+        <span class="d-inline-block align-text-top" style="width: 1px;height: 8px;background-color: #666; margin-right: 7px;"></span>
+    </div> -->
+    <!-- <div data-role="carro" class="mt-2">
+        <span class="d-inline-block text-body-tertiary" style="width: 25px;">01</span><div data-role="viagem" class="bg-success d-inline-block" style="width: 150px;height: 8px;"></div>
+        <div data-role="viagem" class="bg-danger d-inline-block rounded" style="width: 185px;height: 8px;"></div>
+    </div>
+    <div data-role="carro" class="mt-2">
+        <span class="d-inline-block text-body-tertiary" style="width: 25px;">33</span>
+        <div data-role="viagem" class="ms-5 bg-success d-inline-block rounded" style="width: 150px;height: 8px;"></div>
+    </div> -->
+    <!-- <i data-role="cursor" class="bi bi-caret-down-fill fs-3 position-absolute" style="top: 60px;left:18px;"></i> -->
+    <!-- Inicio do footer -->
+    <!-- <div class="bg-body-secondary container-fluid position-absolute bottom-0 border-top">
+        <div class="row text-body-tertiary">
+            <div class="col-auto text-center">
+                <h4 class="my-1">04:40</h4>
+                <h4 class="my-1">05:20</h4>
+            </div>
+            <div class="col-auto text-center">
+                <h3 class="m-0 pt-1">22</h3>
+                <small>FREQ</small>
+            </div>
+        </div>
+    </div> -->
+<!-- </div> -->
 {% endblock%}
 
 {% block add_script_src %}
@@ -19,6 +52,8 @@
 
 <script>
     {% block add_script %}
-    const marcha_ui = new MarchaUI({});
+    const marcha_ui = new MarchaUI({
+        container: document.querySelector('[data-target=appContent]')
+    });
     {% endblock %}
 </script>

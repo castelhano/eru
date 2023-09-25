@@ -65,9 +65,9 @@
             </div>
         </div>
     </nav>
-    <div style="margin-top: 50px;">
+    <div data-target="appContent" style="margin-top: 50px;">
         {% block content %}{% endblock %}
-        <div class="container-fluid pt-2">
+        <div data-target="appContentFluid" class="container-fluid pt-2">
             <div id="notify_container"></div>
             {% block content_fluid %}{% endblock %}
         </div>

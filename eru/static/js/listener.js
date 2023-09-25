@@ -69,6 +69,11 @@ class Keywatch{
     }
     unbindAll(){this.map = {}}
     getMap(){return Object.values(this.map)}
+    hide(target=null){
+        if(!target){for(let i in this.map){this.map[i].visible = false}} // Se nao informado, oculta todos os eventos
+        else if(typeof target == 'string'){try{this.map[target].visible = false;}catch(e){}}
+        else if(typeof target == 'object'){try{this.map[this.getScope(target)].visible = false;}catch(e){}}
+    }
     showKeymap(){
         this.__tableRefresh();
         this.modal.showModal();

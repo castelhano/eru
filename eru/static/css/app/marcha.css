@@ -3,17 +3,17 @@ body {
     --ruler-num-c: #888;
     --ruler-num-fz: 10px;
     --ruler-num-pi: 0.75ch;
-    --ruler-unit: 1px;
+    --ruler-unit: 8px;
     
     --ruler1-bdw: 1px;
     --ruler1-c:  #666;
-    --ruler1-h: 8px;
-    --ruler1-space: 10;
+    --ruler1-h: 10px;
+    --ruler1-space: 1;
     
     --ruler2-bdw: 1px;
     --ruler2-c:  #BBB;
     --ruler2-h: 15px;
-    --ruler2-space: 60;
+    --ruler2-space: 30;
 
     background-attachment: fixed;
     background-image:
