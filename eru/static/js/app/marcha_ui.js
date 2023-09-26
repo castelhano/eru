@@ -2,6 +2,8 @@ class MarchaUI{
     constructor(options){
         this.sw = screen.width;
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
+        // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
+        if(typeof this.initialView == 'string'){this.initialView = this.__hour2Min(this.initialView)}
 
         this.container = options?.container || document.body;
 
@@ -27,6 +29,8 @@ class MarchaUI{
         
         this.maxMinutsVisible = parseInt((this.sw - parseInt(this.fleetTagWidth)) / parseInt(this.rulerUnit));
         
+        this.footerClasslist = options?.footerClasslist || 'bg-body-secondary container-fluid position-absolute bottom-0 border-top';
+        
         this.__build();
         this.__buildRuler();
 
@@ -35,13 +39,30 @@ class MarchaUI{
         this.canvas = document.createElement('div');
         this.canvas.style.overflow = 'hidden';
         this.canvas.style.height = `calc(100vh - ${this.rulerMarginTop});`;
+        // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.style.position = 'relative';
         this.rulerTop.style.height = this.rulerHeight;
         this.rulerTop.style.paddingLeft = this.fleetTagWidth;
-
+        // Footer
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;
+        let row = document.createElement('div');row.classList = 'row text-body-tertiary';
+        let col1 = document.createElement('div');col1.classList = 'col-auto text-center';
+        this.viagemInicio = document.createElement('h4');this.viagemInicio.classList = 'my-1';this.viagemInicio.innerHTML = '--:--';
+        this.viagemFim = document.createElement('h4');this.viagemFim.classList = 'my-1';this.viagemFim.innerHTML = '--:--';
+        let col2 = document.createElement('div');col2.classList = 'col-auto text-center';
+        this.viagemFreq = document.createElement('h3');this.viagemFreq.classList = 'm-0 pt-1';this.viagemFreq.innerHTML = '--';
+        let label = document.createElement('small');label.innerHTML = 'FREQ';
+        col1.appendChild(this.viagemInicio);
+        col1.appendChild(this.viagemFim);
+        col2.appendChild(this.viagemFreq);
+        col2.appendChild(label);
+        row.appendChild(col1);
+        row.appendChild(col2);
+        this.footer.appendChild(row);
         // ----
         this.canvas.appendChild(this.rulerTop);
+        this.canvas.appendChild(this.footer);
         this.container.firstChild.before(this.canvas);
     }
     __buildRuler(){
@@ -71,12 +92,24 @@ class MarchaUI{
                 num.style.top = this.rulerSmallHeight;
                 num.style.color = this.rulerNumColor;
                 num.style.fontSize = this.rulerNumSize;
-                num.innerHTML = '00:30';
+                num.innerHTML = this.__min2Hour(start);
                 this.rulerTop.appendChild(d);
                 this.rulerTop.appendChild(num);
             }
             reset++;
+            start++;
         }
 
+    }
+    __min2Hour(min){
+        let time = min / 60;
+        let h = Math.floor(time);
+        let m = Math.round((time - h) * 60);
+        if(h >= 24){h -= 24}
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
+    __hour2Min(hour, day=0){
+        let [h,m] = hour.split(':');
+        return day * 1440 + parseInt(h) * 60 + parseInt(m);
     }
 }
