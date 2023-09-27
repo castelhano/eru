@@ -1,9 +1,9 @@
-class MarchaUI{
+class MarchUI{
     constructor(options){
         this.sw = screen.width;
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
-        if(typeof this.initialView == 'string'){this.initialView = this.__hour2Min(this.initialView)}
+        if(typeof this.initialView == 'string'){this.initialView = hour2Min(this.initialView)}
 
         this.container = options?.container || document.body;
 
@@ -92,7 +92,7 @@ class MarchaUI{
                 num.style.top = this.rulerSmallHeight;
                 num.style.color = this.rulerNumColor;
                 num.style.fontSize = this.rulerNumSize;
-                num.innerHTML = this.__min2Hour(start);
+                num.innerHTML = min2Hour(start);
                 this.rulerTop.appendChild(d);
                 this.rulerTop.appendChild(num);
             }
@@ -100,16 +100,5 @@ class MarchaUI{
             start++;
         }
 
-    }
-    __min2Hour(min){
-        let time = min / 60;
-        let h = Math.floor(time);
-        let m = Math.round((time - h) * 60);
-        if(h >= 24){h -= 24}
-        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    }
-    __hour2Min(hour, day=0){
-        let [h,m] = hour.split(':');
-        return day * 1440 + parseInt(h) * 60 + parseInt(m);
     }
 }
