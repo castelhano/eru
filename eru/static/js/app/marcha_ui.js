@@ -1,14 +1,18 @@
 class MarchUI{
     constructor(options){
         this.sw = screen.width;
+        this.carFocus = -1;
+        this.tripFocus = -1;
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
         if(typeof this.initialView == 'string'){this.initialView = hour2Min(this.initialView)}
 
+        this.project = options?.project || new March();
         this.container = options?.container || document.body;
+        this.container.style.position = 'relative'; // Ajusta posicionamento do container para relativo para correta alocacao dos elementos
 
         this.fleetTagWidth = options?.fleetTagWidth || '25px';
-        this.fleetHeight = options?.fleetHeight || '8px';
+        this.fleetHeight = options?.fleetHeight || '35px'; // height do carro
         
         this.rulerMarginTop = options?.rulerMarginTop || '40px';
         this.rulerHeight = options?.rulerHeight || '25px';
@@ -33,37 +37,22 @@ class MarchUI{
         
         this.__build();
         this.__buildRuler();
+        // this.__buildFooter();
 
     }
     __build(){
         this.canvas = document.createElement('div');
         this.canvas.style.overflow = 'hidden';
-        this.canvas.style.height = `calc(100vh - ${this.rulerMarginTop});`;
         // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.style.position = 'relative';
         this.rulerTop.style.height = this.rulerHeight;
+        this.rulerTop.style.marginTop = this.rulerMarginTop;
         this.rulerTop.style.paddingLeft = this.fleetTagWidth;
-        // Footer
-        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;
-        let row = document.createElement('div');row.classList = 'row text-body-tertiary';
-        let col1 = document.createElement('div');col1.classList = 'col-auto text-center';
-        this.viagemInicio = document.createElement('h4');this.viagemInicio.classList = 'my-1';this.viagemInicio.innerHTML = '--:--';
-        this.viagemFim = document.createElement('h4');this.viagemFim.classList = 'my-1';this.viagemFim.innerHTML = '--:--';
-        let col2 = document.createElement('div');col2.classList = 'col-auto text-center';
-        this.viagemFreq = document.createElement('h3');this.viagemFreq.classList = 'm-0 pt-1';this.viagemFreq.innerHTML = '--';
-        let label = document.createElement('small');label.innerHTML = 'FREQ';
-        col1.appendChild(this.viagemInicio);
-        col1.appendChild(this.viagemFim);
-        col2.appendChild(this.viagemFreq);
-        col2.appendChild(label);
-        row.appendChild(col1);
-        row.appendChild(col2);
-        this.footer.appendChild(row);
+        
         // ----
-        this.canvas.appendChild(this.rulerTop);
-        this.canvas.appendChild(this.footer);
-        this.container.firstChild.before(this.canvas);
+        this.container.firstChild.before(this.rulerTop);
+        this.rulerTop.after(this.canvas);
     }
     __buildRuler(){
         this.rulerTop.innerHTML = '';
@@ -99,6 +88,43 @@ class MarchUI{
             reset++;
             start++;
         }
+    }
+    __buildFooter(){
+        // Footer
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;
+        let row = document.createElement('div');row.classList = 'row text-body-tertiary';
+        let col1 = document.createElement('div');col1.classList = 'col-auto text-center';
+        this.viagemInicio = document.createElement('h4');this.viagemInicio.classList = 'my-1';this.viagemInicio.innerHTML = '--:--';
+        this.viagemFim = document.createElement('h4');this.viagemFim.classList = 'my-1';this.viagemFim.innerHTML = '--:--';
+        let col2 = document.createElement('div');col2.classList = 'col-auto text-center';
+        this.viagemFreq = document.createElement('h3');this.viagemFreq.classList = 'm-0 pt-1';this.viagemFreq.innerHTML = '--';
+        let label = document.createElement('small');label.innerHTML = 'FREQ';
+        col1.appendChild(this.viagemInicio);
+        col1.appendChild(this.viagemFim);
+        col2.appendChild(this.viagemFreq);
+        col2.appendChild(label);
+        row.appendChild(col1);
+        row.appendChild(col2);
+        this.footer.appendChild(row);
+    }
+    addCar(){
+        let car = this.project.addCar();
+        let carLabel = document.createElement('span');
+        carLabel.style.width = this.fleetTagWidth;
+        carLabel.style.height = this.fleetHeight;
+        let seq = this.project.cars.length;
+        carLabel.innerHTML = String(seq).padStart(2,'0');
+        carLabel.style.position = 'absolute';
+        carLabel.style.top = `calc(${this.fleetHeight} * ${seq})`;
+        carLabel.style.left = 0;
+        carLabel.style.textAlign = 'right';
+        console.log(carLabel);
+        this.container.appendChild(carLabel);
+        // PAREI AQUI
+        // AQUI DEVE FAZER for viagem in carro ... foo
+
+
 
     }
+    refreshCanvas(){}
 }

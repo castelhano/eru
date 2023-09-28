@@ -11,8 +11,10 @@
 
 <script>
     {% block add_script %}
-    const marcha_ui = new MarchUI({
+    const model = new March({})
+    const project = new MarchUI({
         container: document.querySelector('[data-target=appContent]'),
+        project: model,
         initialView: 120,
         // initialView: '04:30'
     });
