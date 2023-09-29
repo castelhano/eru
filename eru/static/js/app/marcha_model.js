@@ -124,7 +124,7 @@ class Car{
     addTrip(){ // Adiciona viagem apos ultima viagem
         let opt = {}
         if(this.trips.length > 0){
-            let last = this.trips[this.trips.lenght - 1];
+            let last = this.trips[this.trips.length - 1];
             opt = {
                 start: last.end + INTERVALO,
                 end: last.end + INTERVALO + CICLO_BASE,
