@@ -151,7 +151,7 @@ class Car{
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
         if(index != this.trips.length - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
         this.trips[index].plus();
-        if(!cascade || this.trips.length - 1 == index){return true} // Se for a ultima viagem retorna true
+        if(!cascade || this.trips.length - 1 == index){return true} // Se for a ultima viagem ou cascade = false retorna true
         for(let i = index + 1; i < this.trips.length; i++){ // Caso tenha visgens posteriores, move viagens
             this.trips[i].advance();
         }
@@ -165,23 +165,23 @@ class Car{
         }
         return true;
     }
-    moveStart(index){ // Aumenta um minuto no inicio da viagem
+    moveStart(index, cascade=true){ // Aumenta um minuto no inicio da viagem
         return this.trips[index].moveStart();
     }
-    backStart(index){ // Subtrai um minuto no inicio da viagem
+    backStart(index, cascade=true){ // Subtrai um minuto no inicio da viagem
         if(index == 0 || this.trips[index - 1].end < this.trips[index].start - 1){return this.trips[index].backStart();}
         return false; // Retorna false caso fim da viagem anterior esteja com apenas 1 min de diff no inicio da atual
     }
     advance(index){ // Aumenta um minuto no inicio e no final da viagem e em todas as subsequentes
         for(let i = index; i < this.trips.length; i++){
-            this.trips[index].advance();
+            this.trips[i].advance();
         }
         return true;
     }
     back(index){ // Subtrai um minuto no inicio e no final da viagem e em todas as subsequentes
         if(index == 0 || this.trips[index - 1].end < this.trips[index].start - 1){
             for(let i = index; i < this.trips.length; i++){
-                this.trips[index].back();
+                this.trips[i].back();
             }
             return true;
         }

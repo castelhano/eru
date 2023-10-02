@@ -1,11 +1,14 @@
 class MarchUI{
     constructor(options){
         this.sw = screen.width;
-        this.fleetFocus = -1;
+        this.fleetIndex = -1
+        this.tripIndex = -1
+        this.fleetFocus = null;
         this.tripFocus = null;
         this.fleetLabels = []; // Lista com apontadores das labels dos carros
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
+        this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
         // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
         if(typeof this.initialView == 'string'){this.initialView = hour2Min(this.initialView)}
 
@@ -52,6 +55,7 @@ class MarchUI{
         this.__build();
         this.__buildRuler();
         this.__buildFooter();
+        this.__addListeners();
 
     }
     __build(){
@@ -100,6 +104,7 @@ class MarchUI{
                 d.style.backgroundColor = this.rulerMediumColor;
                 d.style.marginRight = this.rulerMediumMarginRight
                 let num = document.createElement('span');
+                num.setAttribute('data-role', 'ruler_num');
                 num.style.position = 'absolute';
                 num.style.marginLeft = '-3px';
                 num.style.top = this.rulerSmallHeight;
@@ -135,6 +140,7 @@ class MarchUI{
     addCar(){
         let car = this.project.addCar();
         let carLabel = document.createElement('span');
+        carLabel.setAttribute('data-role', 'fleet_tag');
         carLabel.style.width = this.fleetTagWidth;
         carLabel.style.height = this.fleetHeight;
         carLabel.style.paddingLeft = '3px';
@@ -146,30 +152,192 @@ class MarchUI{
         this.fleetLabels.push(carLabel);
         this.container.appendChild(carLabel);
         this.grid[seq - 1] = []; // Adiciona entrada para o carro no dicionario de grid
-        let v = this.addTrip(car.trips[0], seq)
-        // for(let i = 0; i < car.trips.length;i++){let v = this.addTrip(car.trips[i], seq)}
-        if(this.tripFocus == null){
-            this.fleetFocus = seq;
+        let v = this.addTrip(car.trips[0], seq - 1)
+        if(this.tripFocus == null){ // Se nenhua viagem em foco, aponta para primeira viagem do primeiro carro
+            this.fleetIndex = 0;
+            this.tripIndex = 0;
+            this.fleetFocus = car;
             this.tripFocus = car.trips[0];
             this.__cursorMove()
         }
     }
-    addTrip(trip, seq){
+    addTrip(trip=this.project.cars[this.fleetIndex].addTrip(), seq=this.fleetIndex){
         let v = document.createElement('div');
         v.style = trip.way == IDA ? this.tripFromStyle : this.tripToStyle;
         v.style.backgroundColor = trip.way == IDA ? this.tripFromColor : this.tripToColor;
         v.style.position = 'absolute';
         v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-        v.style.top = `calc(${this.fleetHeight} * ${seq} - 17px)`;
+        v.style.top = `calc(${this.fleetHeight} * ${seq + 1} - 17px)`;
         v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-        this.grid[seq - 1].push(v);
+        this.grid[seq].push(v);
         this.canvas.appendChild(v);
         return v;
     }
-    __cursorMove(){
-        this.cursor.style.top = `calc(${this.fleetFocus} * ${this.fleetTagWidth} - ${this.fleetTagWidth} - 10px)`;
-        this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
-        // this.cursor.style.left = `calc((${this.tripFocus.start} - ${this.initialView}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
+    plus(cascade=true){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].plus(this.tripIndex, cascade); // Icrementa 1 minuto no final na viagem foco e no inicio e fim das posteriores
+            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+            if(cascade){
+                for(let i = 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                    this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                    this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
+                }
+            }
+        }
     }
-    refreshCanvas(){}
+    sub(cascade=true){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].sub(this.tripIndex, cascade); // Subtrai 1 minuto no final na viagem foco e no inicio e fim das posteriores
+            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+            if(cascade){
+                for(let i = 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                    this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                    this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
+                }
+            }
+        }
+    }
+    moveStart(){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].moveStart(this.tripIndex); // Aumenta 1 minuto no final na viagem foco
+            this.grid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
+            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+        }
+
+    }
+    backStart(){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].backStart(this.tripIndex); // Aumenta 1 minuto no final na viagem foco
+            if(this.initialView > this.tripFocus.start){ // Se viagem movida antes da posicao inicial da regua, remonta regua ajustando inicio
+                // this.initialView -= this.rulerMediumUnit; // Volta regua em x minutos (mesma dimensao definida a cada contador)
+                this.moveCanvas(this.rulerMediumUnit * -1);
+            }
+            this.grid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
+            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+        }
+    }
+    advance(){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].advance(this.tripIndex); // Aumenta 1 minuto no inicio e final na viagem foco e todas as subsequentes
+            for(let i = this.tripIndex; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
+            }
+            this.__cursorMove();
+        }
+
+    }
+    __cursorMove(){
+        this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
+        this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
+    }
+    moveCanvas(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
+        // X valor em unidades (int) a ser movido o canvas
+        // Y valor em unidades (int) representando os carros (2 = this.fleetIndex += 2)
+        if(x == 0 && y == 0){return false}
+        if(x != 0){
+            this.initialView += x; // Redefine valor para initialView
+            // Refaz os numeros de referencia da regua
+            let v = this.initialView;
+            document.querySelectorAll('[data-role=ruler_num]').forEach((el)=>{
+                el.innerHTML = min2Hour(v);
+                v += this.rulerMediumUnit;
+            })
+            // Move o canvas
+            this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
+        }
+        // if(y > 0){
+        //     this.canvas.style.top += `calc(${this.rulerHeight} * ${y})`;
+        //     let count = y;
+        //     document.querySelectorAll('[data-role=fleet_tag]').forEach((el)=>{ // Move label dos carros
+        //         el.style.top +=  + `calc((${this.fleetHeight} * ${count})px)`;
+        //         if(y < 0){count++}
+        //         else{count--}
+        //     })
+        // }
+        // else if(y < 0){
+        //     this.canvas.style.top = `calc(${this.canvas.style.top} + ${this.rulerHeight} * ${y})`;
+        //     console.log(this.canvas.style.top);
+        // }
+    }
+    __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
+        return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
+    }
+    __addListeners(){
+        appKeyMap.bind({key: 'n', alt: true, name: 'Add Carro', desc: 'Insere novo carro no projeto', run: ()=>{this.addCar()}})
+        appKeyMap.bind({key: '+', alt: true, name: 'Add Viagem', desc: 'Insere novo viagem para carro em foco', run: ()=>{this.addTrip()}})
+        appKeyMap.bind({key: 'arrowright', name: 'Próxima viagem', desc: 'Move foco para próxima viagem', run: ()=>{
+            if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
+                this.tripIndex++;
+                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                this.__cursorMove();
+            }
+        }})
+        appKeyMap.bind({key: 'arrowleft', name: 'Viagem anterior', desc: 'Move foco para viagem anterior', run: ()=>{
+            if(this.tripIndex > 0){
+                this.tripIndex--;
+                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                this.__cursorMove();
+            }
+        }})
+        appKeyMap.bind({key: 'arrowdown', name: 'Próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
+            if(this.project.cars.length > this.fleetIndex + 1){
+                this.fleetIndex++;
+                this.fleetFocus = this.project.cars[this.fleetIndex];
+                // Identifica viagem mais proxima do proximo carro para mover cursor
+                let bestMatch = this.project.cars[this.fleetIndex].trips[0];
+                let start = this.tripFocus.start;
+                let escape = false;
+                this.tripIndex = 0;
+                while(!escape){
+                    // Percorre viagens do proximo carro ate final ou ate achar melhor correspondente
+                    // Se viagem analisada inicia apos (ou no mesmo horario) de bestMatch termina execucao
+                    if( this.project.cars[this.fleetIndex].trips.length == this.tripIndex + 1 ||
+                        this.project.cars[this.fleetIndex].trips[this.tripIndex + 1].start >= start){escape = true}
+                    else{
+                        this.tripIndex++;
+                        bestMatch = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                    }
+                }
+                this.tripFocus = bestMatch;
+                this.__cursorMove();
+            }
+        }})
+        appKeyMap.bind({key: 'arrowup', name: 'Carro anterior', desc: 'Move foco para carro anterior', run: ()=>{
+            if(this.fleetIndex > 0){
+                this.fleetIndex--;
+                this.fleetFocus = this.project.cars[this.fleetIndex];
+                // Identifica viagem mais proxima do proximo carro para mover cursor
+                let bestMatch = this.project.cars[this.fleetIndex].trips[0];
+                let start = this.tripFocus.start;
+                let escape = false;
+                this.tripIndex = 0;
+                while(!escape){
+                    // Percorre viagens do proximo carro ate final ou ate achar melhor correspondente
+                    // Se viagem analisada inicia apos (ou no mesmo horario) de bestMatch termina execucao
+                    if( this.project.cars[this.fleetIndex].trips.length == this.tripIndex + 1 ||
+                        this.project.cars[this.fleetIndex].trips[this.tripIndex + 1].start > start){escape = true}
+                    else{
+                        this.tripIndex++;
+                        bestMatch = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                    }
+                }
+                this.tripFocus = bestMatch;
+                this.__cursorMove();
+            }
+        }})
+        appKeyMap.bind({key: '+', name: 'Viagem >>', desc: 'Aumenta 1 min ao final da viagem atual e nas demais', run: ()=>{this.plus()}})
+        appKeyMap.bind({key: '-', name: 'Viagem <<', desc: 'Subtrai 1 min ao final da viagem atual e nas demais', run: ()=>{this.sub()}})
+        appKeyMap.bind({key: '+', shift: true, name: 'Viagem >', desc: 'Aumenta 1 minuto na viagem atual', run: ()=>{this.plus(false)}})
+        appKeyMap.bind({key: '-', shift: true, name: 'Viagem <', desc: 'Subtrai 1 minuto na viagem atual', run: ()=>{this.sub(false)}})
+        appKeyMap.bind({key: ' ', name: 'Move todas', desc: 'Move todas em 1 min', run: ()=>{this.advance()}})
+        appKeyMap.bind({key: ' ', shift: true, name: 'Inicio plus', desc: 'Aumenta 1 min no inicio da viagem atual', run: ()=>{
+            this.moveStart();
+            this.__cursorMove();
+        }})
+        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{
+            this.backStart();
+            this.__cursorMove();
+        }})
+    }
 }
