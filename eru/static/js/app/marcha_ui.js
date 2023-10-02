@@ -1,6 +1,7 @@
 class MarchUI{
     constructor(options){
         this.sw = screen.width;
+        this.sh = window.innerHeight;
         this.fleetIndex = -1
         this.tripIndex = -1
         this.fleetFocus = null;
@@ -9,6 +10,7 @@ class MarchUI{
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
+        this.initialFleetView = 0; // Indice do primeiro carro sendo exibido no grid
         // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
         if(typeof this.initialView == 'string'){this.initialView = hour2Min(this.initialView)}
 
@@ -42,15 +44,16 @@ class MarchUI{
         this.rulerMediumMarginRight = (parseInt(this.rulerUnit) - parseInt(this.rulerMediumWidth)) + 'px'
 
         this.tripFromStyle = options?.tripFromStyle || 'height: 8px;border-radius: 10px;';
-        // this.tripFromColor = options?.tripFromColor || 'var(--bs-link-color)';
-        this.tripToStyle = options?.tripToStyle || 'height: 8px;border-radius: 10px;background-color: red;';
-        this.tripFromColor = options?.tripFromColor || 'var(--bs-emphasis-color)';
+        this.tripToStyle = options?.tripToStyle || 'height: 8px;border-radius: 10px;';
+        this.tripFromColor = options?.tripFromColor || 'var(--bs-info-border-subtle)';
+        this.tripToColor = options?.tripToColor || 'var(--bs-secondary-bg)';
         this.tripHeight = options?.tripHeight || '8px';
-        
-        this.maxMinutsVisible = parseInt((this.sw - parseInt(this.fleetTagWidth)) / parseInt(this.rulerUnit));
         
         this.footerClasslist = options?.footerClasslist || 'bg-body-secondary container-fluid position-fixed bottom-0 start-0 border-top';
         this.footerHeight = options?.footerHeight || '70px';
+        
+        this.maxMinutsVisible = parseInt((this.sw - parseInt(this.fleetTagWidth)) / parseInt(this.rulerUnit));
+        this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.fleetHeight));
         
         this.__build();
         this.__buildRuler();
@@ -69,6 +72,7 @@ class MarchUI{
         this.cursor.style.position = 'absolute';
         this.cursor.style.left = '-300px';
         this.cursor.style.top = '-300px';
+        this.cursor.style.zIndex = '98';
         // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.classList = this.rulerClasslist;
@@ -120,7 +124,7 @@ class MarchUI{
     }
     __buildFooter(){
         // Footer
-        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.style.height = this.footerHeight;
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.style.height = this.footerHeight;this.footer.style.zIndex = '100';
         let row = document.createElement('div');row.classList = 'row text-body-tertiary';
         let col1 = document.createElement('div');col1.classList = 'col-auto text-center';
         this.viagemInicio = document.createElement('h4');this.viagemInicio.classList = 'my-1';this.viagemInicio.innerHTML = '--:--';
@@ -144,9 +148,11 @@ class MarchUI{
         carLabel.style.width = this.fleetTagWidth;
         carLabel.style.height = this.fleetHeight;
         carLabel.style.paddingLeft = '3px';
+        carLabel.style.position = 'absolute';
+        carLabel.style.backgroundColor = 'var(--bs-body-bg)';
+        carLabel.style.zIndex = '95';
         let seq = this.project.cars.length;
         carLabel.innerHTML = String(seq).padStart(2,'0');
-        carLabel.style.position = 'absolute';
         carLabel.style.top = `calc(${this.fleetHeight} * ${seq})`;
         carLabel.style.left = 0;
         this.fleetLabels.push(carLabel);
@@ -207,18 +213,26 @@ class MarchUI{
     }
     backStart(){
         if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].backStart(this.tripIndex); // Aumenta 1 minuto no final na viagem foco
-            if(this.initialView > this.tripFocus.start){ // Se viagem movida antes da posicao inicial da regua, remonta regua ajustando inicio
-                // this.initialView -= this.rulerMediumUnit; // Volta regua em x minutos (mesma dimensao definida a cada contador)
-                this.moveCanvas(this.rulerMediumUnit * -1);
-            }
+            this.project.cars[this.fleetIndex].backStart(this.tripIndex);
             this.grid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
             this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+            this.__cursorMove();
         }
     }
     advance(){
         if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].advance(this.tripIndex); // Aumenta 1 minuto no inicio e final na viagem foco e todas as subsequentes
+            this.project.cars[this.fleetIndex].advance(this.tripIndex);
+            for(let i = this.tripIndex; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
+            }
+            this.__cursorMove();
+        }
+
+    }
+    back(){
+        if(this.tripFocus != null){
+            this.project.cars[this.fleetIndex].back(this.tripIndex);
             for(let i = this.tripIndex; i < this.project.cars[this.fleetIndex].trips.length; i++){
                 this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
                 this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
@@ -230,6 +244,24 @@ class MarchUI{
     __cursorMove(){
         this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
         this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
+        if(this.tripFocus.start < this.initialView){ // Verifica se cursor esta atingindo o limite horizontal a esquerda, se sim ajusta canvas
+            let x = Math.ceil((this.initialView - this.tripFocus.start) / this.rulerMediumUnit) * this.rulerMediumUnit;
+            this.moveCanvas(x * -1);
+        }
+        else if(this.tripFocus.start > this.__getCanvasEndMargin()){// Verifica se cursor esta atingindo o limite horizontal a direita, se sim ajusta canvas
+            let x = Math.ceil((this.tripFocus.start - this.__getCanvasEndMargin()) / this.rulerMediumUnit) * this.rulerMediumUnit;
+            this.moveCanvas(x);
+        }
+        if(this.fleetIndex < this.initialFleetView){ // Verifica se cursor esta atingindo o limite vertical superior, se sim ajusta canvas
+            let y = (this.initialFleetView - this.fleetIndex) * parseInt(this.fleetHeight);
+            this.initialFleetView = this.fleetIndex;
+            this.moveCanvas(0, y);            
+        }
+        else if(this.fleetIndex > (this.initialFleetView + this.maxCarsVisible - 1)){ // Verifica se cursor esta atingindo o limite vertical inferior, se sim ajusta canvas
+            let y = this.fleetIndex - (this.initialFleetView + this.maxCarsVisible - 1);
+            this.initialFleetView += y;
+            this.moveCanvas(0, y * -1);            
+        }
     }
     moveCanvas(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
         // X valor em unidades (int) a ser movido o canvas
@@ -246,19 +278,12 @@ class MarchUI{
             // Move o canvas
             this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
         }
-        // if(y > 0){
-        //     this.canvas.style.top += `calc(${this.rulerHeight} * ${y})`;
-        //     let count = y;
-        //     document.querySelectorAll('[data-role=fleet_tag]').forEach((el)=>{ // Move label dos carros
-        //         el.style.top +=  + `calc((${this.fleetHeight} * ${count})px)`;
-        //         if(y < 0){count++}
-        //         else{count--}
-        //     })
-        // }
-        // else if(y < 0){
-        //     this.canvas.style.top = `calc(${this.canvas.style.top} + ${this.rulerHeight} * ${y})`;
-        //     console.log(this.canvas.style.top);
-        // }
+        if(y != 0){
+            this.canvas.style.top = `calc(${this.fleetHeight} * ${this.initialFleetView} * ${y > 0 ? 1 : -1})`;
+            document.querySelectorAll('[data-role=fleet_tag]').forEach((el)=>{ // Move label dos carros
+                el.style.top = `calc(${el.style.top} + (${this.fleetHeight} * ${y > 0 ? 1 : -1}))`;
+            })
+        }
     }
     __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
         return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
@@ -335,9 +360,7 @@ class MarchUI{
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{
-            this.backStart();
-            this.__cursorMove();
-        }})
+        appKeyMap.bind({key: 'backspace', name: 'Adiantar todos', desc: 'Diminui 1 min no inicio da viagem atual e nas seguintes', run: ()=>{this.back()}})
+        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{this.backStart()}})
     }
 }
