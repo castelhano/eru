@@ -142,7 +142,7 @@ class MarchUI{
         this.canvas.after(this.footer);
     }
     addCar(){
-        let car = this.project.addCar();
+        let car = this.project.addCar({param: this.project.route.param});
         let carLabel = document.createElement('span');
         carLabel.setAttribute('data-role', 'fleet_tag');
         carLabel.style.width = this.fleetTagWidth;
@@ -167,7 +167,7 @@ class MarchUI{
             this.__cursorMove()
         }
     }
-    addTrip(trip=this.project.cars[this.fleetIndex].addTrip(), seq=this.fleetIndex){
+    addTrip(trip=this.project.cars[this.fleetIndex].addTrip(this.project.route.param), seq=this.fleetIndex){
         let v = document.createElement('div');
         v.style = trip.way == IDA ? this.tripFromStyle : this.tripToStyle;
         v.style.backgroundColor = trip.way == IDA ? this.tripFromColor : this.tripToColor;

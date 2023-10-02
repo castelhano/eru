@@ -1,7 +1,7 @@
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
 const PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, REFEICAO = 2;
-const ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, INTERVALO = 5, INICIO_PADRAO = 290;
+const ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
 // Constantes para projeto
 const UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIAL';
 const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
@@ -14,6 +14,8 @@ function defaultParam(value=50){
         d[i] = {
             fromMin: value,
             toMin: value,
+            fromInterv: INTERVALO_IDA,
+            toInterv: INTERVALO_VOLTA,
             fromMinAccess: 0,
             toMinAccess: 0,
             fromMinRecall: 0,
@@ -33,6 +35,10 @@ function min2Hour(min){ // Converte minutos (int) em hora (hh:mm)
     let m = Math.round((time - h) * 60);
     if(h >= 24){h -= 24}
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function min2Range(min){ // Retorna a faixa horaria
+    let time = min / 60;
+    return Math.floor(time);
 }
 
 function hour2Min(hour, day=0){ // Converte string de hora (hh:mm) em minutos, recebe parametro opcional para virada de dia (0 = dia zero, 1 =  prox dia) 
@@ -119,16 +125,28 @@ class Car{
         this.espec = options?.espec || null;
         this.trips = options?.trips || []; // Armazena as viagens do carro
         this.schedules = options?.schedules || []; // Armazena as tabelas (escalas) para o carro
-        if(this.trips.length == 0){this.addTrip()} // Necessario pelo menos uma viagem no carro
+        if(this.trips.length == 0){this.addTrip(options.param, options['startAt'])} // Necessario pelo menos uma viagem no carro
     }
-    addTrip(){ // Adiciona viagem apos ultima viagem
-        let opt = {}
+    addTrip(route_params=null, startAt=null){ // Adiciona viagem apos ultima viagem
+        let opt = {}; // Dados da viagem
         if(this.trips.length > 0){
             let last = this.trips[this.trips.length - 1];
+            let faixa = min2Range(last.end);
+            let intervalo = last.way == IDA ? route_params[faixa].toInterv : route_params[faixa].fromInterv;
+            let ciclo = last.way == IDA ? route_params[faixa].toMin : route_params[faixa].fromMin;
             opt = {
-                start: last.end + INTERVALO,
-                end: last.end + INTERVALO + CICLO_BASE,
+                start: last.end + intervalo,
+                end: last.end + intervalo + ciclo,
                 way: last.way == IDA ? VOLTA : IDA,
+                type: PRODUTIVA
+            }
+        }
+        else{
+            let faixa = min2Range(INICIO_PADRAO);
+            opt = {
+                start: startAt || INICIO_PADRAO,
+                end: (startAt || INICIO_PADRAO) + route_params[faixa].fromMin,
+                way: IDA,
                 type: PRODUTIVA
             }
         }
@@ -202,7 +220,11 @@ class March{
         this.transf = []; // Armazena viagem(s) colocadas na area de transferencia
     }
     addCar(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
+        if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + FREQUENCIA_BASE;}
         this.cars.push(new Car(options));
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
+    }
+    addTrip(car_index, trip_index=null){
+        this.cars[car_index].addTrip(this.route.params);
     }
 }
