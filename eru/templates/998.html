@@ -8,16 +8,21 @@
 <script src="{% static 'js/app/marcha_ui.js' %}"></script>
 {% endblock %}
 
+{% block content %}<div id="march_container"></div>{% endblock %}
+{% block canvasNav %}<div id="marchSettings_container"></div>{% endblock %}
+
 
 <script>
     {% block add_script %}
     const model = new March({})
     const project = new MarchUI({
-        container: document.querySelector('[data-target=appContent]'),
+        container: document.getElementById('march_container'),
+        settingsContainer: document.getElementById('marchSettings_container'),
         project: model,
         initialView: 270,
-        // rulerMediumUnit: 60,
+        // rulerUnit: '2px',
         // initialView: '04:50'
+        // rulerMediumUnit: 120,
     });
     {% endblock %}
 </script>

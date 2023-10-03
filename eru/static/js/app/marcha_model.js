@@ -38,6 +38,7 @@ function min2Hour(min){ // Converte minutos (int) em hora (hh:mm)
 }
 function min2Range(min){ // Retorna a faixa horaria
     let time = min / 60;
+    if(time >= 24){time -= 24} // Reinicia faixa apos 23h59 (24h00 => 00, 25h00 => 01, etc)
     return Math.floor(time);
 }
 
@@ -71,7 +72,6 @@ class Route{
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
         this.refs = options?.refs || {from:[], to:[]}; // Armazena os pontos de referencia por sentido
     }
-    getCycle(sentido, faixa){}
 }
 
 class Trip{
@@ -206,6 +206,10 @@ class Car{
         return false; // Retorna false caso fim da viagem anterior esteja com apenas 1 min de diff no inicio da atual
         
     }
+    getInterv(tripIndex){
+        if(tripIndex == 0){return false}
+        return this.trips[tripIndex].start - this.trips[tripIndex - 1].end
+    }
 }
 
 class March{
@@ -226,5 +230,37 @@ class March{
     }
     addTrip(car_index, trip_index=null){
         this.cars[car_index].addTrip(this.route.params);
+    }
+    nextTrip(trip){ // Retorna proxima viagem (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
+        let bestMatch = null;
+        let carIndex = null;
+        for(let i = 0; i < this.cars.length; i++){
+            let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
+            for(let j = 0; j < curTrips.length; j++){
+                if(!bestMatch && curTrips[j].start > trip.start || curTrips[j].start < bestMatch?.start && curTrips[j].start > trip.start){
+                    bestMatch = curTrips[j];
+                    carIndex = i;
+                }
+            }            
+        }
+        return bestMatch ? [carIndex, this.cars[carIndex].trips.indexOf(bestMatch), bestMatch] : false;
+    }
+    previousTrip(trip){ // Retorna viagem anterior (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
+        let bestMatch = null;
+        let carIndex = null;
+        for(let i = 0; i < this.cars.length; i++){
+            let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
+            for(let j = 0; j < curTrips.length; j++){
+                if(!bestMatch && curTrips[j].start < trip.start || curTrips[j].start > bestMatch?.start && curTrips[j].start < trip.start){
+                    bestMatch = curTrips[j];
+                    carIndex = i;
+                }
+            }            
+        }
+        return bestMatch ? [carIndex, this.cars[carIndex].trips.indexOf(bestMatch), bestMatch] : false;
+    }
+    getHeadway(trip){ // Retorna minutos entre a viagem atual e anterior (mesmo sentido)
+        let t = this.previousTrip(trip);
+        return t ? trip.start - t[2].start : false;
     }
 }
