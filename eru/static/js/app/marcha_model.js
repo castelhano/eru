@@ -167,7 +167,7 @@ class Car{
         return true;
     }
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
-        if(index != this.trips.length - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
+        if(!cascade && index != this.trips.length - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
         this.trips[index].plus();
         if(!cascade || this.trips.length - 1 == index){return true} // Se for a ultima viagem ou cascade = false retorna true
         for(let i = index + 1; i < this.trips.length; i++){ // Caso tenha visgens posteriores, move viagens

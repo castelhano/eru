@@ -22,15 +22,6 @@ class MarchUI{
         this.settingsContainer = options?.settingsContainer || null;
         this.canvasMarginTop = options?.canvasMarginTop || '40px';
 
-        this.translate = {
-            '0': '<span class="text-secondary">Reservado</span>',
-            '1': '<span class="text-success">Produtiva</span>',
-            '3': '<span class="text-orange">Expreso</span>',
-            '4': '<span class="text-orange">Semiexpresso</span>',
-            '-1': '<span class="text-secondary">Acesso</span>',
-            '-2': '<span class="text-secondary">Recolhe</span>',
-        }
-
 
         this.cursorClasslist = options?.cursorClasslist || 'bi bi-caret-down-fill fs-2';
 
@@ -60,6 +51,19 @@ class MarchUI{
         
         this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 start-0 border-top';
         this.footerHeight = options?.footerHeight || '70px';
+
+        this.translateType = {
+            '0': '<span class="text-secondary">RESERVADO</span>',
+            '1': '<span class="text-success">PRODUTIVA</span>',
+            '3': '<span class="text-orange">EXPRESSP</span>',
+            '4': '<span class="text-orange">SEMIEXPRESSO</span>',
+            '-1': '<span class="text-secondary">ACESSO</span>',
+            '-2': '<span class="text-secondary">RECOLHE</span>',
+        }
+        this.translateWay = {
+            '1': 'IDA',
+            '2': 'VOLTA',
+        }
         
         this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.fleetHeight));
         
@@ -95,7 +99,7 @@ class MarchUI{
         this.canvas.appendChild(this.cursor);
         this.rulerTop.after(this.canvas);
     }
-    __buildRuler(){
+    __buildRuler(){ // Cria (ou atualiza) regua
         this.rulerSmallMarginRight = (parseInt(this.rulerUnit) - parseInt(this.rulerSmallWidth)) + 'px';
         this.rulerMediumMarginRight = (parseInt(this.rulerUnit) - parseInt(this.rulerMediumWidth)) + 'px';
         this.maxMinutsVisible = parseInt((this.sw - parseInt(this.fleetTagWidth)) / parseInt(this.rulerUnit));
@@ -134,7 +138,7 @@ class MarchUI{
             start++;
         }
     }
-    __buildFooter(){
+    __buildFooter(){ // Cria elementos do footer
         // Footer
         this.footer = document.createElement('div');
         this.footer.classList = this.footerClasslist;
@@ -142,13 +146,14 @@ class MarchUI{
         this.footer.style.zIndex = '100';
         this.displayStart = document.createElement('h5');this.displayStart.style.width = '70px';this.displayStart.style.position = 'absolute';this.displayStart.style.top = '5px';this.displayStart.style.left = '10px';this.displayStart.innerHTML = '--:--';
         this.displayEnd = document.createElement('h5');this.displayEnd.style.width = '70px';this.displayEnd.style.position = 'absolute';this.displayEnd.style.bottom = '5px';this.displayEnd.style.left = '10px';this.displayEnd.innerHTML = '--:--';
-        this.displayCycle = document.createElement('h4');this.displayCycle.style.position = 'absolute';this.displayCycle.style.top = '5px';this.displayCycle.style.left = '70px';this.displayCycle.innerHTML = '--';
+        this.displayCycle = document.createElement('h5');this.displayCycle.style.position = 'absolute';this.displayCycle.style.top = '5px';this.displayCycle.style.left = '70px';this.displayCycle.innerHTML = '--';
         let cycleLabel = document.createElement('small');cycleLabel.style.position = 'absolute';cycleLabel.style.bottom = '10px';cycleLabel.style.left = '70px';cycleLabel.innerHTML = 'MIN';
-        this.displayFreq = document.createElement('h4');this.displayFreq.style.position = 'absolute';this.displayFreq.style.top = '5px';this.displayFreq.style.left = '110px';this.displayFreq.innerHTML = '--';
+        this.displayFreq = document.createElement('h5');this.displayFreq.style.position = 'absolute';this.displayFreq.style.top = '5px';this.displayFreq.style.left = '110px';this.displayFreq.innerHTML = '--';
         let freqLabel = document.createElement('small');freqLabel.style.position = 'absolute';freqLabel.style.bottom = '10px';freqLabel.style.left = '110px';freqLabel.innerHTML = 'FREQ';
-        this.displayInterv = document.createElement('h4');this.displayInterv.style.position = 'absolute';this.displayInterv.style.top = '5px';this.displayInterv.style.left = '150px';this.displayInterv.innerHTML = '--';
+        this.displayInterv = document.createElement('h5');this.displayInterv.style.position = 'absolute';this.displayInterv.style.top = '5px';this.displayInterv.style.left = '150px';this.displayInterv.innerHTML = '--';
         let intervLabel = document.createElement('small');intervLabel.style.position = 'absolute';intervLabel.style.bottom = '10px';intervLabel.style.left = '150px';intervLabel.innerHTML = 'INTERV';
-        this.displayTripType = document.createElement('h6');this.displayTripType.classList.add('text-secondary');this.displayTripType.style.position = 'absolute';this.displayTripType.style.top = '10px';this.displayTripType.style.left = '200px';this.displayTripType.innerHTML = '';
+        this.displayTripType = document.createElement('h6');this.displayTripType.classList.add('text-secondary');this.displayTripType.style.position = 'absolute';this.displayTripType.style.top = '10px';this.displayTripType.style.left = '210px';this.displayTripType.innerHTML = '';
+        this.displayTripWay = document.createElement('h5');this.displayTripWay.classList = 'text-body-tertiary';this.displayTripWay.style.position = 'absolute';this.displayTripWay.style.bottom = '5px';this.displayTripWay.style.left = '210px';this.displayTripWay.innerHTML = '';
         this.footer.appendChild(this.displayStart);
         this.footer.appendChild(this.displayEnd);
         this.footer.appendChild(this.displayCycle);
@@ -158,6 +163,7 @@ class MarchUI{
         this.footer.appendChild(this.displayInterv);
         this.footer.appendChild(intervLabel);
         this.footer.appendChild(this.displayTripType);
+        this.footer.appendChild(this.displayTripWay);
         this.canvas.after(this.footer);
     }
     __builSettingsUI(){
@@ -324,9 +330,10 @@ class MarchUI{
         this.displayCycle.innerHTML = this.tripFocus.getCycle();
         this.displayFreq.innerHTML = this.project.getHeadway(this.tripFocus) || '--';
         this.displayInterv.innerHTML = this.project.cars[this.fleetIndex].getInterv(this.tripIndex) || '--';
-        this.displayTripType.innerHTML = this.translate[this.tripFocus.type];
+        this.displayTripType.innerHTML = this.translateType[this.tripFocus.type];
+        this.displayTripWay.innerHTML = this.translateWay[this.tripFocus.way];
     }
-    __cursorMove(){
+    __cursorMove(){ // Movimenta o cursor para carro e viagem em foco, se cursor atingir limites (vertical ou horiontal) move canvas para ajustar voualizacao
         this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
         this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
         if(this.tripFocus.start < this.initialView){ // Verifica se cursor esta atingindo o limite horizontal a esquerda, se sim ajusta canvas
@@ -354,12 +361,7 @@ class MarchUI{
         if(x == 0 && y == 0){return false}
         if(x != 0){
             this.initialView += x; // Redefine valor para initialView
-            // Refaz os numeros de referencia da regua
-            let v = this.initialView;
-            document.querySelectorAll('[data-role=ruler_num]').forEach((el)=>{
-                el.innerHTML = min2Hour(v);
-                v += this.rulerMediumUnit;
-            })
+            this.__buildRuler(); // Refaz a regua bazeado na nova dimensao
             // Move o canvas
             this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
         }
