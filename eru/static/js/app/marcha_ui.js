@@ -69,23 +69,17 @@ class MarchUI{
         
         this.__build();
         this.__buildRuler();
+        this.__buildCursor();
         this.__buildFooter();
         this.__addListeners();
         if(this.settingsContainer){this.__builSettingsUI()}
 
     }
-    __build(){
+    __build(){ // Constroi o canvas (grid principal) e a regua suprior
         this.canvas = document.createElement('div');
         this.canvas.style.position = 'relative';
         this.canvas.style.height = `calc(100vh - ${this.footerHeight} - ${this.canvasMarginTop} - ${this.rulerHeight})`;
         this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
-        // Cursor
-        this.cursor = document.createElement('i');
-        this.cursor.classList = this.cursorClasslist;
-        this.cursor.style.position = 'absolute';
-        this.cursor.style.left = '-300px';
-        this.cursor.style.top = '-300px';
-        this.cursor.style.zIndex = '98';
         // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.classList = this.rulerClasslist;
@@ -93,11 +87,18 @@ class MarchUI{
         this.rulerTop.style.position = 'relative';
         this.rulerTop.style.height = this.rulerHeight;
         this.rulerTop.style.paddingLeft = this.fleetTagWidth;
-        
         // ----
         this.container.appendChild(this.rulerTop);
-        this.canvas.appendChild(this.cursor);
         this.rulerTop.after(this.canvas);
+    }
+    __buildCursor(){ // Controi o cursor
+        this.cursor = document.createElement('i');
+        this.cursor.classList = this.cursorClasslist;
+        this.cursor.style.position = 'absolute';
+        this.cursor.style.left = '-300px';
+        this.cursor.style.top = '-300px';
+        this.cursor.style.zIndex = '98';
+        this.canvas.appendChild(this.cursor);
     }
     __buildRuler(){ // Cria (ou atualiza) regua
         this.rulerSmallMarginRight = (parseInt(this.rulerUnit) - parseInt(this.rulerSmallWidth)) + 'px';
@@ -167,26 +168,39 @@ class MarchUI{
         this.canvas.after(this.footer);
     }
     __builSettingsUI(){
-        this.settingsRulerUnit = document.createElement('input');this.settingsRulerUnit.type = 'number';this.settingsRulerUnit.min = 1;this.settingsRulerUnit.max = 10;this.settingsRulerUnit.style.width = '70px';this.settingsRulerUnit.classList = 'form-control form-control-sm d-inline-block m-0 me-2';this.settingsRulerUnit.value = parseInt(this.rulerUnit);
+        this.settingsRulerUnit = document.createElement('input');this.settingsRulerUnit.type = 'number';this.settingsRulerUnit.min = 2;this.settingsRulerUnit.max = 10;this.settingsRulerUnit.placeholder = ' ';this.settingsRulerUnit.classList = 'flat-input';this.settingsRulerUnit.value = parseInt(this.rulerUnit);
         this.settingsRulerUnit.onchange = () => {
+            if(parseInt(this.settingsRulerUnit.value) < this.settingsRulerUnit.min || parseInt(this.settingsRulerUnit.value) > this.settingsRulerUnit.max){
+                this.settingsRulerUnit.classList.add('is-invalid');
+                return false;
+            }
+            this.settingsRulerUnit.classList.remove('is-invalid');
             this.rulerUnit = `${this.settingsRulerUnit.value}px`;
-            this.__buildRuler();
+            this.__buildRuler(); // Refaz a regua com novos valores
+            if(this.tripFocus){ // Se tiver viagem inserida ajusta posicionamento do canvas
+                this.__canvasRebuild(); // Limpa p canvas e refazer todas as viagens com novos parametros
+                this.__cursorMove(); // Move o cursor para ajustar view
+            }
+            this.canvasFit(); // Ajusta posicao do canvas com novas definicoes
         }
         this.settingsContainer.appendChild(this.settingsRulerUnit);
-        this.settingsRulerMediumUnit = document.createElement('input');this.settingsRulerMediumUnit.type = 'number';this.settingsRulerMediumUnit.min = 1;this.settingsRulerMediumUnit.max = 360;this.settingsRulerMediumUnit.style.width = '70px';this.settingsRulerMediumUnit.classList = 'form-control form-control-sm d-inline-block m-0 me-2';this.settingsRulerMediumUnit.value = parseInt(this.rulerMediumUnit);
-        this.settingsContainer.appendChild(this.__settingsAddLabel('Unidade principal (pixels)'));
-        this.settingsContainer.appendChild(this.__settingsAddBreak());
+        this.settingsContainer.appendChild(this.__settingsAddLabel('Unidade principal (px) [ 2 a 10 ]'));
+        this.settingsRulerMediumUnit = document.createElement('input');this.settingsRulerMediumUnit.type = 'number';this.settingsRulerMediumUnit.min = 10;this.settingsRulerMediumUnit.max = 180;this.settingsRulerMediumUnit.placeholder = ' ';this.settingsRulerMediumUnit.classList = 'flat-input';this.settingsRulerMediumUnit.value = parseInt(this.rulerMediumUnit);
         this.settingsRulerMediumUnit.onchange = () => {
+            if(parseInt(this.settingsRulerMediumUnit.value) < this.settingsRulerMediumUnit.min || parseInt(this.settingsRulerMediumUnit.value) > this.settingsRulerMediumUnit.max){
+                this.settingsRulerMediumUnit.classList.add('is-invalid');
+                return false;
+            }
+            this.settingsRulerMediumUnit.classList.remove('is-invalid');
             this.rulerMediumUnit = this.settingsRulerMediumUnit.value;
             this.__buildRuler();
         }
         this.settingsContainer.appendChild(this.settingsRulerMediumUnit);
-        this.settingsContainer.appendChild(this.__settingsAddLabel('Display de minutos'));
-        this.settingsContainer.appendChild(this.__settingsAddBreak());
+        this.settingsContainer.appendChild(this.__settingsAddLabel('Display de minutos [ 10 a 180 ]'));
     }
     __settingsAddLabel(text){
         let l = document.createElement('label');
-        l.classList = 'form-label fs-7 text-body-secondary';
+        l.classList = 'flat-label';
         l.innerHTML = text;
         return l;
     }
@@ -219,7 +233,8 @@ class MarchUI{
             this.__updateTripDisplay();
         }
     }
-    addTrip(trip=this.project.cars[this.fleetIndex].addTrip(this.project.route.param), seq=this.fleetIndex){
+    addTrip(trip=null, seq=this.fleetIndex){
+        trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route.param);
         let v = document.createElement('div');
         v.style = trip.way == IDA ? this.tripFromStyle : this.tripToStyle;
         v.style.backgroundColor = trip.way == IDA ? this.tripFromColor : this.tripToColor;
@@ -338,24 +353,27 @@ class MarchUI{
         this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
         if(this.tripFocus.start < this.initialView){ // Verifica se cursor esta atingindo o limite horizontal a esquerda, se sim ajusta canvas
             let x = Math.ceil((this.initialView - this.tripFocus.start) / this.rulerMediumUnit) * this.rulerMediumUnit;
-            this.moveCanvas(x * -1);
+            this.canvasMove(x * -1);
         }
         else if(this.tripFocus.start > this.__getCanvasEndMargin()){// Verifica se cursor esta atingindo o limite horizontal a direita, se sim ajusta canvas
             let x = Math.ceil((this.tripFocus.start - this.__getCanvasEndMargin()) / this.rulerMediumUnit) * this.rulerMediumUnit;
-            this.moveCanvas(x);
+            this.canvasMove(x);
         }
         if(this.fleetIndex < this.initialFleetView){ // Verifica se cursor esta atingindo o limite vertical superior, se sim ajusta canvas
             let y = (this.initialFleetView - this.fleetIndex) * parseInt(this.fleetHeight);
             this.initialFleetView = this.fleetIndex;
-            this.moveCanvas(0, y);            
+            this.canvasMove(0, y);            
         }
         else if(this.fleetIndex > (this.initialFleetView + this.maxCarsVisible - 1)){ // Verifica se cursor esta atingindo o limite vertical inferior, se sim ajusta canvas
             let y = this.fleetIndex - (this.initialFleetView + this.maxCarsVisible - 1);
             this.initialFleetView += y;
-            this.moveCanvas(0, y * -1);            
+            this.canvasMove(0, y * -1);            
         }
     }
-    moveCanvas(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
+    canvasFit(){ // Move canvas para posicao ajustada com a regua
+        this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
+    }
+    canvasMove(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
         // X valor em unidades (int) a ser movido o canvas
         // Y valor em unidades (int) representando os carros (2 = this.fleetIndex += 2)
         if(x == 0 && y == 0){return false}
@@ -372,12 +390,24 @@ class MarchUI{
             })
         }
     }
+    __canvasRebuild(){ // Limpa canvas e refaz todas as viagens
+        this.canvas.innerHTML = '';
+        this.__buildCursor(); // Refaz cursor
+        this.grid = {};
+        for(let i = 0; i < this.project.cars.length;i++){
+            this.grid[i] = [];
+            for(let j = 0; j < this.project.cars[i].trips.length; j++){
+                this.addTrip(this.project.cars[i].trips[j], i);
+            } 
+        }
+        this.fleetFocus = this.project.cars[this.flee]
+    }
     __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
         return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
     }
     __addListeners(){
-        appKeyMap.bind({key: ';', alt: true, name: 'Add Carro', desc: 'Insere novo carro no projeto', run: ()=>{this.addCar()}})
-        appKeyMap.bind({key: ']', alt: true, name: 'Add Viagem', desc: 'Insere novo viagem para carro em foco', run: ()=>{ if(this.tripFocus){this.addTrip()}}})
+        appKeyMap.bind({key: ';', alt: true, name: 'Add Carro', desc: 'Insere novo carro no projeto', run: ()=>{if(canvasNavActive()){return false};this.addCar()}})
+        appKeyMap.bind({key: ']', alt: true, name: 'Add Viagem', desc: 'Insere novo viagem para carro em foco', run: ()=>{if(canvasNavActive()){return false}if(this.tripFocus){this.addTrip()}}})
         appKeyMap.bind({key: 'arrowright', name: 'Próxima viagem', desc: 'Move foco para próxima viagem', run: ()=>{
             if(canvasNavActive()){return false}
             if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
@@ -447,18 +477,18 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: '+', name: 'Viagem >>', desc: 'Aumenta 1 min ao final da viagem atual e nas demais', run: ()=>{this.plus()}})
-        appKeyMap.bind({key: '-', name: 'Viagem <<', desc: 'Subtrai 1 min ao final da viagem atual e nas demais', run: ()=>{this.sub()}})
-        appKeyMap.bind({key: '+', shift: true, name: 'Viagem >', desc: 'Aumenta 1 minuto na viagem atual', run: ()=>{this.plus(false)}})
-        appKeyMap.bind({key: '-', shift: true, name: 'Viagem <', desc: 'Subtrai 1 minuto na viagem atual', run: ()=>{this.sub(false)}})
-        appKeyMap.bind({key: ' ', name: 'Move todas', desc: 'Move todas em 1 min', run: ()=>{this.advance()}})
-        appKeyMap.bind({key: ' ', shift: true, name: 'Inicio plus', desc: 'Aumenta 1 min no inicio da viagem atual', run: ()=>{
+        appKeyMap.bind({key: '+', name: 'Viagem >>', desc: 'Aumenta 1 min ao final da viagem atual e nas demais', run: ()=>{if(canvasNavActive()){return false}this.plus()}})
+        appKeyMap.bind({key: '-', name: 'Viagem <<', desc: 'Subtrai 1 min ao final da viagem atual e nas demais', run: ()=>{if(canvasNavActive()){return false}this.sub()}})
+        appKeyMap.bind({key: '+', shift: true, name: 'Viagem >', desc: 'Aumenta 1 minuto na viagem atual', run: ()=>{if(canvasNavActive()){return false}this.plus(false)}})
+        appKeyMap.bind({key: '-', shift: true, name: 'Viagem <', desc: 'Subtrai 1 minuto na viagem atual', run: ()=>{if(canvasNavActive()){return false}this.sub(false)}})
+        appKeyMap.bind({key: ' ', name: 'Move todas', desc: 'Move todas em 1 min', run: ()=>{if(canvasNavActive()){return false}this.advance()}})
+        appKeyMap.bind({key: ' ', shift: true, name: 'Inicio plus', desc: 'Aumenta 1 min no inicio da viagem atual', run: ()=>{if(canvasNavActive()){return false}
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({key: 'backspace', name: 'Adiantar todos', desc: 'Diminui 1 min no inicio da viagem atual e nas seguintes', run: ()=>{this.back()}})
-        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{this.backStart()}})
-        appKeyMap.bind({key: 'pagedown', name: 'Proxima viagem', desc: 'Foca próxima viagem', run: ()=>{this.nextTrip()}})
-        appKeyMap.bind({key: 'pageup', name: 'Viagem anterior', desc: 'Foca viagem anterior', run: ()=>{this.previousTrip()}})
+        appKeyMap.bind({key: 'backspace', name: 'Adiantar todos', desc: 'Diminui 1 min no inicio da viagem atual e nas seguintes', run: ()=>{if(canvasNavActive()){return false}this.back()}})
+        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{if(canvasNavActive()){return false}this.backStart()}})
+        appKeyMap.bind({key: 'pagedown', name: 'Proxima viagem', desc: 'Foca próxima viagem', run: ()=>{if(canvasNavActive()){return false}this.nextTrip()}})
+        appKeyMap.bind({key: 'pageup', name: 'Viagem anterior', desc: 'Foca viagem anterior', run: ()=>{if(canvasNavActive()){return false}this.previousTrip()}})
     }
 }

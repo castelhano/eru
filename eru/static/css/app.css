@@ -19,6 +19,10 @@ input[readonly], input[readonly] + label::after, .readonly, .readonly + label::a
 [data-bs-theme="dark"] .readonly + label::after,
 [data-bs-theme="dark"] textarea[readonly]{background-color: #393939!important;color: #999!important;}
 
+.flat-input{border: 0;border-bottom: 2px solid var(--bs-border-color-translucent);background-color: transparent;padding-top: 22px;padding-bottom: 3px;margin-bottom: 4px;outline: none;font-size: 0.95rem;width: 100%;}
+.flat-input.is-invalid{border-bottom-color: var(--bs-form-invalid-border-color);}
+.flat-label{float: left;margin-top: -35px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
+.flat-input:focus ~ .flat-label, .flat-input:not(:placeholder-shown) ~ .flat-label{font-size: 0.85rem;margin-top: -55px; opacity: 0.8;}
 
 .text-justify{text-align: justify;}
 .text-transparent{color: transparent!important;}
