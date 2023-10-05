@@ -12,6 +12,7 @@
 a{text-decoration: none;}
 select.readonly{background: rgb(233, 236, 239)!important;pointer-events: none;touch-action: none;}
 input[readonly], input[readonly] + label::after, .readonly, .readonly + label::after, textarea[readonly]{background: rgb(233, 236, 239)!important;}
+dialog:focus-visible{outline: none!important;}
 
 [data-bs-theme="dark"] input[readonly],
 [data-bs-theme="dark"] input[readonly] + label::after,
@@ -23,6 +24,7 @@ input[readonly], input[readonly] + label::after, .readonly, .readonly + label::a
 .flat-input.is-invalid{border-bottom-color: var(--bs-form-invalid-border-color);}
 .flat-label{float: left;margin-top: -35px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
 .flat-input:focus ~ .flat-label, .flat-input:not(:placeholder-shown) ~ .flat-label{font-size: 0.85rem;margin-top: -55px; opacity: 0.8;}
+.form-check-label{user-select: none;}
 
 .text-justify{text-align: justify;}
 .text-transparent{color: transparent!important;}

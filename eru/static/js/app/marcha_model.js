@@ -7,6 +7,7 @@ const UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIA
 const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
 const MICROONIBUS = -1, CONVENCIONAL = 0, PADRON = 1, ARTICULADO = 2, BIARTICULADO = 3;
 const PORTA_LE = 1;
+var March_nextTripId = 0; // Contador para insercao de identificador unico na viagem, necessario para diferenciar viagens com parametros identicos
 // ------------------------------------------------------------------------------
 function defaultParam(value=50){
     let d = {};
@@ -81,6 +82,8 @@ class Trip{
         this.end = options?.end || INICIO_PADRAO + CICLO_BASE;
         if(typeof this.end == 'string'){this.end = hour2Min(this.end)} // Converte em inteiros caso instanciado start: '04:00'
         if(this.end <= this.start){this.end = this.start + CICLO_BASE} // Final tem que ser maior (pelo menos 1 min) que inicio 
+        this.__id = March_nextTripId;
+        March_nextTripId++;
 
         this.way = options?.way || IDA; // Sentido da viagem (ida, volta)
         this.type = options?.type || PRODUTIVA;  // Tipo (produtiva, inprodutiva, especial, etc)
@@ -207,8 +210,8 @@ class Car{
         
     }
     getInterv(tripIndex){
-        if(tripIndex == 0){return false}
-        return this.trips[tripIndex].start - this.trips[tripIndex - 1].end
+        if(tripIndex == this.trips.length - 1){return false}
+        return this.trips[tripIndex + 1].start - this.trips[tripIndex].end
     }
 }
 
@@ -237,7 +240,7 @@ class March{
         for(let i = 0; i < this.cars.length; i++){
             let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
             for(let j = 0; j < curTrips.length; j++){
-                if(!bestMatch && curTrips[j].start > trip.start || curTrips[j].start < bestMatch?.start && curTrips[j].start > trip.start){
+                if(!bestMatch && curTrips[j].start >= trip.start || curTrips[j].start < bestMatch?.start && curTrips[j].start >= trip.start){
                     bestMatch = curTrips[j];
                     carIndex = i;
                 }
@@ -251,7 +254,7 @@ class March{
         for(let i = 0; i < this.cars.length; i++){
             let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
             for(let j = 0; j < curTrips.length; j++){
-                if(!bestMatch && curTrips[j].start < trip.start || curTrips[j].start > bestMatch?.start && curTrips[j].start < trip.start){
+                if(!bestMatch && curTrips[j].start <= trip.start || curTrips[j].start > bestMatch?.start && curTrips[j].start <= trip.start){
                     bestMatch = curTrips[j];
                     carIndex = i;
                 }

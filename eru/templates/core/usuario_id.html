@@ -138,7 +138,6 @@
           {% for perm in usuario.user_permissions.all %}
           permsUsuario.push('{{perm.id|safe}}');
           {% endfor %}
-          // console.log(permsUsuario);
           for(item in data){
             let nome_split = data[item].nome.split(' | ');
             // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo

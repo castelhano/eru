@@ -240,7 +240,7 @@ class selectPopulate{
         this.emptyMessage = options?.emptyMessage || 'Nenhum registro';
         if(options?.onChange){this.target.onchange = options.onChange} // Funcao a ser atribuida no evento onchange (caso informado ao instanciar)
         this.onEmpty = options?.onEmpty != undefined ? options.onEmpty : ()=>{ // Funcao a ser executada caso retorno seja array vazio '[]'
-            this.target.innerHTML = `<option selected disabled>${this.emptyMessage}</option>`;
+            this.target.innerHTML = `<span>${this.emptyMessage}</span>`;
         };
         this.onError = options?.onError != undefined ? options.onError : ()=>{ 
             this.target.innerHTML = `<option selected disabled>${this.emptyMessage}</option>`;
