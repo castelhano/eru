@@ -1,3 +1,4 @@
+// TODO: Ajustar rulerFreq quando alterado ruleTop
 class MarchUI{
     constructor(options){
         this.sw = screen.width;
@@ -95,13 +96,14 @@ class MarchUI{
         this.container.appendChild(this.rulerTop);
         this.rulerTop.after(this.canvas);
         // Regua de frequencia
-        this.rulerFreq = document.createElement('dialog');
-        this.rulerFreq.style.outline = 'none';
-        this.rulerFreq.style = 'position: relative;border:0; height: 45px;z-index: 110;opacity: 0.8;position:absolute;bottom: 8px;'
-        this.rulerFreq.style.minWidth = `calc(100% + ${Math.abs(this.canvas.offsetLeft)}px)`;
+        this.rulerFreqDialog = document.createElement('dialog');
+        this.rulerFreqDialog.style = 'position: relative;border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:absolute;bottom: 8px;padding: 0;'
+        this.rulerFreqDialog.open = true; // Inicia exibindo a regua de freq
+        this.rulerFreq = document.createElement('div');
+        this.rulerFreq.style.position = 'relative';
         this.rulerFreq.style.left = this.canvas.style.left;
-        this.rulerFreq.open = true; // Inicia exibindo a regua de freq
-        this.canvas.after(this.rulerFreq);
+        this.rulerFreqDialog.appendChild(this.rulerFreq);
+        this.canvas.after(this.rulerFreqDialog);
     }
     __buildCursor(){ // Controi o cursor
         this.cursor = document.createElement('i');
@@ -185,8 +187,8 @@ class MarchUI{
     __builSettingsUI(){
         this.settingsShowFreqRule = document.createElement('input');this.settingsShowFreqRule.id = `March_settingsShowFreqRule`;this.settingsShowFreqRule.checked = true;
         this.settingsShowFreqRule.onclick = () => {
-            if(this.settingsShowFreqRule.checked){this.rulerFreq.show()}
-            else{this.rulerFreq.close()}
+            if(this.settingsShowFreqRule.checked){this.rulerFreqDialog.show()}
+            else{this.rulerFreqDialog.close()}
         }
         this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsShowFreqRule, 'Exibir régua de frequência'));
         this.settingsContainer.appendChild(this.__settingsAddBreak());
