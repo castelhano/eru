@@ -197,7 +197,13 @@ class MarchUI{
             let confirm = document.createElement('button');confirm.type = 'button';confirm.innerHTML = 'OK';
             confirm.style = `position: absolute;left: ${select.offsetLeft + select.offsetWidth + 2}px;top: ${select.style.top};border: 1px solid var(--bs-border-color);font-size: 0.8rem;padding: 1px 5px;border-radius: 2px;background-color: var(--bs-dark-bg-subtle);`;
             confirm.onclick = () => {
-                this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
+                if(select.value != INTERVALO){
+                    this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
+                }
+                else{ // Se for intervalo, viagem nao pode ser primeira e sentido deve ser repetir de viagem anterior
+
+                }
+
                 if(select.value != PRODUTIVA){
                     let c = this.tripFocus.way == IDA ? this.tripFromColor : 'var(--bs-tertiary-bg)';
                     this.grid[this.fleetIndex][this.tripIndex].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
