@@ -1,6 +1,6 @@
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
-const PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, REFEICAO = 2;
+const PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
 const ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
 // Constantes para projeto
 const UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIAL';
@@ -30,11 +30,11 @@ function defaultParam(value=50){
     return d;
 }
 
-function min2Hour(min){ // Converte minutos (int) em hora (hh:mm)
+function min2Hour(min, reset=true){ // Converte minutos (int) em hora (hh:mm)
     let time = min / 60;
     let h = Math.floor(time);
     let m = Math.round((time - h) * 60);
-    if(h >= 24){h -= 24}
+    if(reset && h >= 24){h -= 24}
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 function min2Range(min){ // Retorna a faixa horaria
@@ -213,6 +213,19 @@ class Car{
         if(tripIndex == this.trips.length - 1){return false}
         return this.trips[tripIndex + 1].start - this.trips[tripIndex].end
     }
+    getJourney(includeGaps=true){ // Retorna jornada total do carro
+        let sum = this.trips[this.trips.length - 1].end - this.trips[0].start; // Inicia soma com o total geral do carro
+        sum -= this.getIntervs(includeGaps); // Remove intervalos da jornada
+        return sum;
+    }
+    getIntervs(includeGaps=true){ // Retorna total de intervalos do carro
+        let sum = 0;
+        for(let i = 0; i < this.trips.length; i++){
+            if(this.trips[i].type == INTERVALO){sum += this.trips[i].getCycle()} // Soma 'viagens' do tipo INTERVALO
+            if(includeGaps){sum += this.getInterv(i)} // Se includeGaps soma os intervalos entre viagens
+        }
+        return sum;
+    }
 }
 
 class March{
@@ -224,6 +237,7 @@ class March{
         this.user = options?.user || null;
         this.status = options?.status || INCOMPLETO;
         this.dayType = options?.dayType || UTIL;
+        this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
         this.transf = []; // Armazena viagem(s) colocadas na area de transferencia
     }
     addCar(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
@@ -265,5 +279,25 @@ class March{
     getHeadway(trip){ // Retorna minutos entre a viagem atual e anterior (mesmo sentido)
         let t = this.previousTrip(trip);
         return t ? trip.start - t[2].start : false;
+    }
+    getJourney(car_index=null){
+        if(car_index != null){ // Retorna a soma da jornada do carro informado
+            return this.cars[car_index].getJourney(this.sumInterGaps);
+        }
+        let sum = 0;
+        for(let i = 0; i < this.cars.length; i++){
+            sum += this.cars[i].getJourney(this.sumInterGaps);
+        }
+        return sum;
+    }
+    getIntervs(car_index=null){
+        if(car_index != null){ // Retorna a soma de intervalos do carro informado
+            return this.cars[car_index].getIntervs(this.sumInterGaps);
+        }
+        let sum = 0;
+        for(let i = 0; i < this.cars.length; i++){
+            sum += this.cars[i].getIntervs(this.sumInterGaps);
+        }
+        return sum;
     }
 }

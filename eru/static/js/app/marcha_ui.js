@@ -49,13 +49,13 @@ class MarchUI{
         this.rulerMediumHeight = options?.rulerMediumHeight || '15px';
         this.rulerMediumUnit = options?.rulerMediumUnit || 30;
 
-        this.tripFromStyle = options?.tripFromStyle || 'height: 8px;border-radius: 10px;';
-        this.tripToStyle = options?.tripToStyle || 'height: 8px;border-radius: 10px;';
+        this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
+        
         this.tripFromColor = options?.tripFromColor || 'var(--bs-info-border-subtle)';
         this.tripToColor = options?.tripToColor || 'var(--bs-secondary-bg)';
         this.tripHeight = options?.tripHeight || '8px';
 
-        // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, REFEICAO = 2;
+        // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
         this.typePattern = { // Ajusta style da viagem baseado no tipo da viagem
             0:`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
             3:'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
@@ -75,7 +75,7 @@ class MarchUI{
             4: '<span class="text-orange">SEMIEXPRESSO</span>',
             '-1': '<span class="text-orange">ACESSO</span>',
             '-2': '<span class="text-orange">RECOLHE</span>',
-            2: '<span class="text-purple">REFEICAO</span>',
+            2: '<span class="text-purple">INTERVALO</span>',
         }
         this.translateWay = {
             '1': 'IDA',
@@ -186,7 +186,7 @@ class MarchUI{
         this.displayTripType.ondblclick = () => { // No double click, transforma span em select para alterar tipo da viagem
             this.displayTripType.style.display = 'none';
             let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayTripType.style.left};top: ${this.displayTripType.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
-            let options = {'1': 'Produtiva', '0': 'Reservado', '3': 'Expresso', '4': 'Semiexpresso', '-1': 'Acesso', '-2': 'Recolhe', '2': 'Refeição'};
+            let options = {'1': 'Produtiva', '0': 'Reservado', '3': 'Expresso', '4': 'Semiexpresso', '-1': 'Acesso', '-2': 'Recolhe', '2': 'Intervalo'};
             for(let key in options){
                 let opt = document.createElement('option');
                 opt.value = key;opt.innerHTML = options[key];
@@ -198,10 +198,19 @@ class MarchUI{
             confirm.style = `position: absolute;left: ${select.offsetLeft + select.offsetWidth + 2}px;top: ${select.style.top};border: 1px solid var(--bs-border-color);font-size: 0.8rem;padding: 1px 5px;border-radius: 2px;background-color: var(--bs-dark-bg-subtle);`;
             confirm.onclick = () => {
                 this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
-                console.log(select.value);
                 if(select.value != PRODUTIVA){
                     let c = this.tripFocus.way == IDA ? this.tripFromColor : 'var(--bs-tertiary-bg)';
                     this.grid[this.fleetIndex][this.tripIndex].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
+                }
+                else{
+                    if(this.tripFocus.way == IDA){
+                        this.grid[this.fleetIndex][this.tripIndex].style.background = ''; // Limpa patterns (caso exista)
+                        this.grid[this.fleetIndex][this.tripIndex].style.backgroundColor = this.tripFromColor; // Ajusta cor da linha
+                    }
+                    else{
+                        this.grid[this.fleetIndex][this.tripIndex].style.background = ''; // Limpa patterns (caso exista)
+                        this.grid[this.fleetIndex][this.tripIndex].style.backgroundColor = this.tripToColor; // Ajusta cor da linha
+                    }
                 }
                 select.remove();
                 confirm.remove();
@@ -211,6 +220,16 @@ class MarchUI{
             select.after(confirm);
         }
         this.displayTripWay = document.createElement('h5');this.displayTripWay.classList = 'text-body-tertiary';this.displayTripWay.style.position = 'absolute';this.displayTripWay.style.bottom = '5px';this.displayTripWay.style.left = '210px';this.displayTripWay.innerHTML = '';
+        let vr = document.createElement('div');vr.classList = 'vr';vr.style = 'position: absolute; left: 375px;top: 10px;height: 50px;'
+        this.displayTripsCount = document.createElement('h5');this.displayTripsCount.style.position = 'absolute';this.displayTripsCount.style.top = '10px';this.displayTripsCount.style.left = '390px';this.displayTripsCount.innerHTML = '';
+        let tripsCountLabel = document.createElement('small');tripsCountLabel.style.position = 'absolute';tripsCountLabel.style.bottom = '10px';tripsCountLabel.style.left = '390px';tripsCountLabel.innerHTML = 'VIAGENS';
+        this.displayJorney = document.createElement('h5');this.displayJorney.style.position = 'absolute';this.displayJorney.style.top = '10px';this.displayJorney.style.left = '455px';this.displayJorney.innerHTML = '';
+        let jorneyLabel = document.createElement('small');jorneyLabel.style.position = 'absolute';jorneyLabel.style.bottom = '10px';jorneyLabel.style.left = '455px';jorneyLabel.innerHTML = 'JORNADA';
+        this.displayInterv2 = document.createElement('h5');this.displayInterv2.style.position = 'absolute';this.displayInterv2.style.top = '10px';this.displayInterv2.style.left = '530px';this.displayInterv2.innerHTML = '';
+        let intervLabel2 = document.createElement('small');intervLabel2.style.position = 'absolute';intervLabel2.style.bottom = '10px';intervLabel2.style.left = '530px';intervLabel2.innerHTML = 'INTERV';
+
+
+        // ---
         this.footer.appendChild(this.displayStart);
         this.footer.appendChild(this.displayEnd);
         this.footer.appendChild(this.displayCycle);
@@ -221,6 +240,13 @@ class MarchUI{
         this.footer.appendChild(intervLabel);
         this.footer.appendChild(this.displayTripType);
         this.footer.appendChild(this.displayTripWay);
+        this.footer.appendChild(vr);
+        this.footer.appendChild(this.displayTripsCount);
+        this.footer.appendChild(tripsCountLabel);
+        this.footer.appendChild(this.displayJorney);
+        this.footer.appendChild(jorneyLabel);
+        this.footer.appendChild(this.displayInterv2);
+        this.footer.appendChild(intervLabel2);
         this.canvas.after(this.footer);
     }
     __builSettingsUI(){
@@ -230,11 +256,16 @@ class MarchUI{
             else{this.rulerFreqDialog.close()}
         }
         this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsShowFreqRule, 'Exibir régua de frequência'));
+        
+        this.settingsSumIntervGaps = document.createElement('input');this.settingsSumIntervGaps.id = `March_settingsSumIntervGaps`;this.settingsSumIntervGaps.checked = false;
+        this.settingsSumIntervGaps.onclick = () => {
+            if(this.settingsSumIntervGaps.checked){this.project.sumInterGaps = true;}
+            else{this.project.sumInterGaps = false;}
+        }
+        this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsSumIntervGaps, 'Somar tempo parado aos intervalos'));
+        
         this.settingsContainer.appendChild(this.__settingsAddBreak());
         
-        // this.settingsContainer.appendChild(this.__settingsAddSwitchLabel('Exibir régua de frequência', this.settingsShowFreqRule.id));
-        
-
         this.settingsRulerUnit = document.createElement('input');this.settingsRulerUnit.type = 'number';this.settingsRulerUnit.min = 2;this.settingsRulerUnit.max = 10;this.settingsRulerUnit.placeholder = ' ';this.settingsRulerUnit.classList = 'flat-input';this.settingsRulerUnit.value = parseInt(this.rulerUnit);
         this.settingsRulerUnit.onchange = () => {
             if(this.settingsRulerUnit.value == '' || parseInt(this.settingsRulerUnit.value) < this.settingsRulerUnit.min || parseInt(this.settingsRulerUnit.value) > this.settingsRulerUnit.max){
@@ -318,7 +349,7 @@ class MarchUI{
     addTrip(trip=null, seq=this.fleetIndex){
         trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route.param);
         let v = document.createElement('div'); // Elemento viagem (grid)
-        v.style = trip.way == IDA ? this.tripFromStyle : this.tripToStyle;
+        v.style = this.tripStyle;
         v.style.backgroundColor = trip.way == IDA ? this.tripFromColor : this.tripToColor;
         v.style.position = 'absolute';
         v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
@@ -446,6 +477,18 @@ class MarchUI{
         this.displayTripType.innerHTML = this.translateType[this.tripFocus.type];
         this.displayTripWay.innerHTML = this.translateWay[this.tripFocus.way];
     }
+    __updateFleetDisplay(){
+        if(this.tripFocus == null){return false;}
+        this.displayTripsCount.innerHTML = this.project.cars[this.fleetIndex].trips.length;
+        this.displayJorney.innerHTML = min2Hour(this.project.getJourney(this.fleetIndex), false);
+        this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
+
+    }
+    __clearFleetDisplay(){
+        this.displayTripsCount.innerHTML = '';
+        this.displayJorney.innerHTML = '';
+        this.displayInterv2.innerHTML = '';
+    }
     __cursorMove(){ // Movimenta o cursor para carro e viagem em foco, se cursor atingir limites (vertical ou horiontal) move canvas para ajustar voualizacao
         this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
         this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
@@ -533,7 +576,7 @@ class MarchUI{
         SEMIEXPRESSO <div id="semi" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
         ACESSO <div id="acesso" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
         RECOLHE <div id="recolhe" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.tripFromColor)};"></div>
-        REFEIÇÃO <div id="refeicao" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[REFEICAO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
+        REFEIÇÃO <div id="refeicao" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[INTERVALO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
         this.patternsDialog.addEventListener("close", (e) => {this.gridLocked = false;this.patternsDialog = null;}); // AO fechar destrava grid
         document.body.appendChild(this.patternsDialog);
         this.patternsDialog.showModal();
@@ -562,6 +605,7 @@ class MarchUI{
         }})
         appKeyMap.bind({key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
             if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.project.cars.length > this.fleetIndex + 1){
                 this.fleetIndex++;
                 this.fleetFocus = this.project.cars[this.fleetIndex];
@@ -587,6 +631,7 @@ class MarchUI{
         }})
         appKeyMap.bind({key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: () => {
             if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.fleetIndex > 0){
                 this.fleetIndex--;
                 this.fleetFocus = this.project.cars[this.fleetIndex];
@@ -634,5 +679,6 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
+        appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
     }
 }
