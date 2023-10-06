@@ -1,4 +1,3 @@
-
 class Keywatch{
     constructor(){
         this.map = {};                                  // Mapa com todos os atalhos cadastrados
@@ -101,10 +100,10 @@ class Keywatch{
             this.modalTableTbody.innerHTML = ''
             for(let item in map){
                 if(map[item]?.visible == false){continue}
-                let comb = map[item].alt ? 'Alt + ' : '';
-                comb += map[item].ctrl ? 'Ctrl + ' : '';
-                comb += map[item].shift ? 'Shift + ' : '';
-                comb += map[item].key.toUpperCase();
+                let comb = map[item].alt ? 'Alt ' : '';
+                comb += map[item].ctrl ? 'Ctrl ' : '';
+                comb += map[item].shift ? 'Shift ' : '';
+                comb += map[item].key == ' ' ? '[space]' : map[item].key.toUpperCase();
                 let tr = `<tr><td>${map[item].name || ''}</td><td class="keywatch_table_combination_td"><code>${comb}</code></td><td>${map[item].desc || ''}</td></tr>`
                 this.modalTableTbody.innerHTML += tr;
             }

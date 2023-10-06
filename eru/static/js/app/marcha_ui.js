@@ -3,6 +3,7 @@ class MarchUI{
     constructor(options){
         this.sw = screen.width;
         this.sh = window.innerHeight;
+        this.gridLocked = false; // Se true desativa atalhos de edicao do grid
         this.fleetIndex = -1
         this.tripIndex = -1
         this.fleetFocus = null;
@@ -53,17 +54,28 @@ class MarchUI{
         this.tripFromColor = options?.tripFromColor || 'var(--bs-info-border-subtle)';
         this.tripToColor = options?.tripToColor || 'var(--bs-secondary-bg)';
         this.tripHeight = options?.tripHeight || '8px';
+
+        // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, REFEICAO = 2;
+        this.typePattern = { // Ajusta style da viagem baseado no tipo da viagem
+            0:`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
+            3:'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
+            4:'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
+            '-1':'linear-gradient(90deg, var(--bs-dark-bg-subtle) 40%, var(--bs-secondary-bg) 0)',
+            '-2':'linear-gradient(90deg, var(--bs-secondary-bg) 60%, var(--bs-dark-bg-subtle) 0)',
+            2:'repeating-linear-gradient(0deg, var(--bs-secondary-bg), var(--bs-secondary-bg) 3px, transparent 3px, transparent)',
+        }
         
         this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 start-0 border-top';
         this.footerHeight = options?.footerHeight || '70px';
 
         this.translateType = {
-            '0': '<span class="text-secondary">RESERVADO</span>',
-            '1': '<span class="text-success">PRODUTIVA</span>',
-            '3': '<span class="text-orange">EXPRESSP</span>',
-            '4': '<span class="text-orange">SEMIEXPRESSO</span>',
-            '-1': '<span class="text-secondary">ACESSO</span>',
-            '-2': '<span class="text-secondary">RECOLHE</span>',
+            0: '<span class="text-orange">RESERVADO</span>',
+            1: '<span class="text-success">PRODUTIVA</span>',
+            3: '<span class="text-orange">EXPRESSO</span>',
+            4: '<span class="text-orange">SEMIEXPRESSO</span>',
+            '-1': '<span class="text-orange">ACESSO</span>',
+            '-2': '<span class="text-orange">RECOLHE</span>',
+            2: '<span class="text-purple">REFEICAO</span>',
         }
         this.translateWay = {
             '1': 'IDA',
@@ -171,6 +183,33 @@ class MarchUI{
         this.displayInterv = document.createElement('h5');this.displayInterv.style.position = 'absolute';this.displayInterv.style.top = '5px';this.displayInterv.style.left = '150px';this.displayInterv.innerHTML = '--';
         let intervLabel = document.createElement('small');intervLabel.style.position = 'absolute';intervLabel.style.bottom = '10px';intervLabel.style.left = '150px';intervLabel.innerHTML = 'INTERV';
         this.displayTripType = document.createElement('h6');this.displayTripType.classList.add('text-secondary');this.displayTripType.style.position = 'absolute';this.displayTripType.style.top = '10px';this.displayTripType.style.left = '210px';this.displayTripType.innerHTML = '';
+        this.displayTripType.ondblclick = () => { // No double click, transforma span em select para alterar tipo da viagem
+            this.displayTripType.style.display = 'none';
+            let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayTripType.style.left};top: ${this.displayTripType.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
+            let options = {'1': 'Produtiva', '0': 'Reservado', '3': 'Expresso', '4': 'Semiexpresso', '-1': 'Acesso', '-2': 'Recolhe', '2': 'Refeição'};
+            for(let key in options){
+                let opt = document.createElement('option');
+                opt.value = key;opt.innerHTML = options[key];
+                if(opt.value == this.tripFocus.type){opt.selected = true;}
+                select.appendChild(opt);
+            }
+            this.displayTripType.after(select);
+            let confirm = document.createElement('button');confirm.type = 'button';confirm.innerHTML = 'OK';
+            confirm.style = `position: absolute;left: ${select.offsetLeft + select.offsetWidth + 2}px;top: ${select.style.top};border: 1px solid var(--bs-border-color);font-size: 0.8rem;padding: 1px 5px;border-radius: 2px;background-color: var(--bs-dark-bg-subtle);`;
+            confirm.onclick = () => {
+                this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
+                console.log(select.value);
+                if(select.value != PRODUTIVA){
+                    let c = this.tripFocus.way == IDA ? this.tripFromColor : 'var(--bs-tertiary-bg)';
+                    this.grid[this.fleetIndex][this.tripIndex].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
+                }
+                select.remove();
+                confirm.remove();
+                this.displayTripType.style.display = 'inline';
+                this.__updateTripDisplay();
+            }
+            select.after(confirm);
+        }
         this.displayTripWay = document.createElement('h5');this.displayTripWay.classList = 'text-body-tertiary';this.displayTripWay.style.position = 'absolute';this.displayTripWay.style.bottom = '5px';this.displayTripWay.style.left = '210px';this.displayTripWay.innerHTML = '';
         this.footer.appendChild(this.displayStart);
         this.footer.appendChild(this.displayEnd);
@@ -441,13 +480,17 @@ class MarchUI{
     }
     canvasFit(){ // Move canvas para posicao ajustada com a regua
         this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
+        this.rulerFreq.style.left = this.canvas.style.left;
     }
     canvasMove(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
         // X valor em unidades (int) a ser movido o canvas
         // Y valor em unidades (int) representando os carros (2 = this.fleetIndex += 2)
         if(x == 0 && y == 0){return false}
         if(x != 0){
+            let actualView = this.initialView;
             this.initialView += x; // Redefine valor para initialView
+            if(this.initialView < 0){this.initialView = 0} // Impede que regua assuma valor negativo
+            if(actualView == this.initialView){return false; } // Se valor do canvas nao foi alterado, termina codigo
             this.__buildRuler(); // Refaz a regua bazeado na nova dimensao
             // Move o canvas
             this.canvas.style.left = `calc(${this.rulerUnit} * ${this.initialView} * -1)`;
@@ -463,10 +506,13 @@ class MarchUI{
     }
     __canvasRebuild(){ // Limpa canvas e refaz todas as viagens
         this.canvas.innerHTML = '';
+        this.rulerFreq.innerHTML = '';
         this.__buildCursor(); // Refaz cursor
         this.grid = {};
+        this.freqGrid = {};
         for(let i = 0; i < this.project.cars.length;i++){
             this.grid[i] = [];
+            this.freqGrid[i] = [];
             for(let j = 0; j < this.project.cars[i].trips.length; j++){
                 this.addTrip(this.project.cars[i].trips[j], i);
             } 
@@ -476,11 +522,27 @@ class MarchUI{
     __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
         return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
     }
+    __showTripPatterns(){
+        if(this.patternsDialog){this.patternsDialog.close(); return false;} // Se modal ja esta aberto, fecha modal
+        this.gridLocked = true; // Trava edicao do grid enquanto modal esta aberto
+        this.patternsDialog = document.createElement('dialog');
+        this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripFromColor};"></div>
+        VOLTA <div id="volta" style="width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripToColor}"></div>
+        RESERVADO <div id="reservado" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RESERVADO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        EXPRESSO <div id="expresso" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[EXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        SEMIEXPRESSO <div id="semi" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        ACESSO <div id="acesso" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        RECOLHE <div id="recolhe" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.tripFromColor)};"></div>
+        REFEIÇÃO <div id="refeicao" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[REFEICAO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
+        this.patternsDialog.addEventListener("close", (e) => {this.gridLocked = false;this.patternsDialog = null;}); // AO fechar destrava grid
+        document.body.appendChild(this.patternsDialog);
+        this.patternsDialog.showModal();
+    }
     __addListeners(){
-        appKeyMap.bind({key: ';', alt: true, name: 'Add Carro', desc: 'Insere novo carro no projeto', run: ()=>{if(canvasNavActive()){return false};this.addCar()}})
-        appKeyMap.bind({key: ']', alt: true, name: 'Add Viagem', desc: 'Insere novo viagem para carro em foco', run: ()=>{if(canvasNavActive()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
-        appKeyMap.bind({key: 'arrowright', name: 'Próxima viagem', desc: 'Move foco para próxima viagem', run: ()=>{
-            if(!this.tripFocus || canvasNavActive()){return false}
+        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(canvasNavActive() || this.gridLocked){return false};this.addCar()}})
+        appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem para carro em foco', run: ()=>{if(canvasNavActive() || this.gridLocked){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: ()=>{
+            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
             if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
                 this.tripIndex++;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -489,8 +551,8 @@ class MarchUI{
                 
             }
         }})
-        appKeyMap.bind({key: 'arrowleft', name: 'Viagem anterior', desc: 'Move foco para viagem anterior', run: ()=>{
-            if(!this.tripFocus || canvasNavActive()){return false}
+        appKeyMap.bind({key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: ()=>{
+            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
             if(this.tripIndex > 0){
                 this.tripIndex--;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -498,8 +560,8 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowdown', name: 'Próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
-            if(!this.tripFocus || canvasNavActive()){return false}
+        appKeyMap.bind({key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
+            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
             if(this.project.cars.length > this.fleetIndex + 1){
                 this.fleetIndex++;
                 this.fleetFocus = this.project.cars[this.fleetIndex];
@@ -523,8 +585,8 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowup', name: 'Carro anterior', desc: 'Move foco para carro anterior', run: () => {
-            if(!this.tripFocus || canvasNavActive()){return false}
+        appKeyMap.bind({key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: () => {
+            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
             if(this.fleetIndex > 0){
                 this.fleetIndex--;
                 this.fleetFocus = this.project.cars[this.fleetIndex];
@@ -548,19 +610,29 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: '/', alt: true, name: 'Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
-        appKeyMap.bind({key: '+', name: 'Viagem >>', desc: 'Aumenta 1 min ao final da viagem atual e nas demais', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.plus()}})
-        appKeyMap.bind({key: '-', name: 'Viagem <<', desc: 'Subtrai 1 min ao final da viagem atual e nas demais', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.sub()}})
-        appKeyMap.bind({key: '+', shift: true, name: 'Viagem >', desc: 'Aumenta 1 minuto na viagem atual', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.plus(false)}})
-        appKeyMap.bind({key: '-', shift: true, name: 'Viagem <', desc: 'Subtrai 1 minuto na viagem atual', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.sub(false)}})
-        appKeyMap.bind({key: ' ', name: 'Move todas', desc: 'Move todas em 1 min', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.advance()}})
-        appKeyMap.bind({key: ' ', shift: true, name: 'Inicio plus', desc: 'Aumenta 1 min no inicio da viagem atual', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}
+        appKeyMap.bind({key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
+        appKeyMap.bind({key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.plus()}})
+        appKeyMap.bind({key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.plus(false)}})
+        appKeyMap.bind({key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.sub()}})
+        appKeyMap.bind({key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.sub(false)}})
+        appKeyMap.bind({key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.advance()}})
+        appKeyMap.bind({key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({key: 'backspace', name: 'Adiantar todos', desc: 'Diminui 1 min no inicio da viagem atual e nas seguintes', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.back()}})
-        appKeyMap.bind({key: 'backspace', shift: true, name: 'Inicio sub', desc: 'Diminui 1 min no inicio da viagem atual', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.backStart()}})
-        appKeyMap.bind({key: 'pagedown', name: 'Proxima viagem', desc: 'Foca próxima viagem', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.nextTrip()}})
-        appKeyMap.bind({key: 'pageup', name: 'Viagem anterior', desc: 'Foca viagem anterior', run: ()=>{if(!this.tripFocus || canvasNavActive()){return false}this.previousTrip()}})
+        appKeyMap.bind({key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.back()}})
+        appKeyMap.bind({key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.backStart()}})
+        appKeyMap.bind({key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.nextTrip()}})
+        appKeyMap.bind({key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.previousTrip()}})
+        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (03 horas)', run: ()=>{this.canvasMove(180)}})
+        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (03 horas)', run: ()=>{this.canvasMove(-180)}})
+        appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
+            if(this.tripFocus){
+                this.initialView = this.tripFocus.start - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
+                this.__buildRuler();
+                this.canvasFit();
+            }
+        }})
+        appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
     }
 }

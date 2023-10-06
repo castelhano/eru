@@ -12,6 +12,23 @@
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
 
+IDA <div id="ida" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-info-border-subtle);"></div>
+VOLTA <div id="volta" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+RESERVADO <div id="reservado" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+EXPRESSO <div id="expresso" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+SEMIEXPRESSO <div id="semi" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+ACESSO <div id="acesso" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+RECOLHE <div id="recolhe" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+REFEIÇÃO <div id="refeicao" style="width: 150px;height: 8px;border-radius: 10px;background-color: var(--bs-secondary-bg)"></div>
+<script>
+    document.getElementById('reservado').style.background = 'repeating-linear-gradient(-45deg, var(--bs-info-border-subtle), var(--bs-info-border-subtle) 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px )';
+    document.getElementById('expresso').style.background = 'repeating-linear-gradient(90deg, var(--bs-info-border-subtle), var(--bs-info-border-subtle) 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px )';
+    document.getElementById('semi').style.background = 'repeating-linear-gradient(90deg, var(--bs-info-border-subtle), var(--bs-info-border-subtle) 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px )';
+    document.getElementById('acesso').style.background = 'linear-gradient(90deg, var(--bs-dark-bg-subtle) 30%, var(--bs-secondary-bg) 0)';
+    document.getElementById('recolhe').style.background = 'linear-gradient(90deg, var(--bs-secondary-bg) 60%, var(--bs-dark-bg-subtle) 0)';
+    document.getElementById('refeicao').style.background = 'repeating-linear-gradient(0deg, var(--bs-secondary-bg), var(--bs-secondary-bg) 3px, transparent 3px, transparent)';
+</script>
+
 
 <input type="text" class="flat-input" placeholder=" " required>
 <label for="" class="flat-label">Ola mundo</label>
