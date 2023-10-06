@@ -1,9 +1,9 @@
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
-const PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
-const ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
+const RESERVADO = '0', PRODUTIVA = '1', EXPRESSO = '3', SEMIEXPRESSO = '4', ACESSO = '-1', RECOLHE = '-2', INTERVALO = '2';
+var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
 // Constantes para projeto
-const UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIAL';
+var UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIAL';
 const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
 const MICROONIBUS = -1, CONVENCIONAL = 0, PADRON = 1, ARTICULADO = 2, BIARTICULADO = 3;
 const PORTA_LE = 1;
@@ -133,7 +133,19 @@ class Car{
     addTrip(route_params=null, startAt=null){ // Adiciona viagem apos ultima viagem
         let opt = {}; // Dados da viagem
         if(this.trips.length > 0){
-            let last = this.trips[this.trips.length - 1];
+            let last;
+            if(startAt == null){last = this.trips[this.trips.length - 1]} // Se nao informado startAt insere apos ultima viagem
+            else{ // Se startAt busca viagem anterior
+                let i = this.trips.length - 1;
+                let escape = false;
+                while(!escape && i >= 0){
+                    if(this.trips[i].start < startAt && ![INTERVALO, ACESSO, RECOLHE].includes(this.trips[i].type)){
+                        escape = true;
+                        last = this.trips[i];
+                    }
+                    i--;
+                }
+            }
             let faixa = min2Range(last.end);
             let intervalo = last.way == IDA ? route_params[faixa].toInterv : route_params[faixa].fromInterv;
             let ciclo = last.way == IDA ? route_params[faixa].toMin : route_params[faixa].fromMin;
@@ -155,9 +167,19 @@ class Car{
         }
         let v = new Trip(opt);
         if(startAt && !this.__tripIsValid(v)){ // Se definido startAt e viagem entra em conflito com outras viagens, cancela operacao
-            appNotify('warning','jsMarch: Conflito com <b>outras viagens</b>')
+            appNotify('warning','jsMarch: Conflito com <b>outras viagens</b>');
             return false;
         }
+        this.trips.push(v);
+        this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
+        return v;
+    }
+    addInterv(trip_index){ // Adiciona viagem do tipo intervalo entre duas viagens
+        // Necessario ter viagem valida (produtiva) antes e depois do intervalo
+        if(trip_index == this.trips.length - 1 || [INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index]) || [INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index + 1])){return false}
+        let current = this.trips[trip_index];
+        let next = this.trips[trip_index + 1];
+        let v = new Trip({start: current.end + 1, end: next.start - 1, type: INTERVALO, way: current.way})
         this.trips.push(v);
         this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
         return v;
@@ -177,8 +199,9 @@ class Car{
     getEmptySchedule(){ // Retorna 1o intervalo nao alocado para carro
     }
     removeTrip(index, cascade=true){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
-        if(cascade){this.trips = this.trips.splice(0,index);}
-        else{this.trips = this.trips.slice(index);}
+        if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
+        if(cascade){this.trips.splice(index, this.trips.length - 1);}
+        else{this.trips.splice(index, 1);}
         return true;
     }
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
@@ -233,7 +256,7 @@ class Car{
     getIntervs(includeGaps=true){ // Retorna total de intervalos do carro
         let sum = 0;
         for(let i = 0; i < this.trips.length; i++){
-            if(this.trips[i].type == INTERVALO){sum += this.trips[i].getCycle()} // Soma 'viagens' do tipo INTERVALO
+            if(this.trips[i].type == INTERVALO){sum += this.trips[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
             if(includeGaps){sum += this.getInterv(i)} // Se includeGaps soma os intervalos entre viagens
         }
         return sum;
@@ -266,7 +289,7 @@ class March{
         for(let i = 0; i < this.cars.length; i++){
             let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
             for(let j = 0; j < curTrips.length; j++){
-                if(!bestMatch && curTrips[j].start >= trip.start || curTrips[j].start < bestMatch?.start && curTrips[j].start >= trip.start){
+                if(!bestMatch && ![INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(curTrips[j].type) && curTrips[j].start >= trip.start || ![INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(curTrips[j].type) && curTrips[j].start < bestMatch?.start && curTrips[j].start >= trip.start){
                     bestMatch = curTrips[j];
                     carIndex = i;
                 }
@@ -280,7 +303,7 @@ class March{
         for(let i = 0; i < this.cars.length; i++){
             let curTrips = this.cars[i].trips.filter((el) => el != trip && el.way == trip.way);
             for(let j = 0; j < curTrips.length; j++){
-                if(!bestMatch && curTrips[j].start <= trip.start || curTrips[j].start > bestMatch?.start && curTrips[j].start <= trip.start){
+                if(!bestMatch && ![INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(curTrips[j].type) && curTrips[j].start <= trip.start || ![INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(curTrips[j].type) && curTrips[j].start > bestMatch?.start && curTrips[j].start <= trip.start){
                     bestMatch = curTrips[j];
                     carIndex = i;
                 }
