@@ -36,7 +36,7 @@ class MarchUI{
         this.rulerHeight = options?.rulerHeight || '25px';
         this.rulerNumColor = options?.rulerNumColor || '#888';
         this.rulerNumSize = options?.rulerNumSize || '11px';
-        this.rulerNumPaddingStart = options?.rulerNumPaddingStart || '0';
+        this.rulerNumPaddingStart = options?.rulerNumPaddingStart || '4px';
         this.rulerNumPaddingTop = options?.rulerNumPaddingTop || '2px';
         
         this.rulerUnit = options?.rulerUnit || '6px';
@@ -369,6 +369,41 @@ class MarchUI{
         this.rulerFreq.appendChild(vf);
         return v;
     }
+    addTripAt(){ // Exibe modal com entrada para hora de inicio de viagem
+        this.gridLocked = true;
+        let modal = document.createElement('dialog');modal.innerHTML = '<h6>Adicionar viagem as:</h6>'
+        let startAt = document.createElement('input');startAt.type = 'time';startAt.style.width = '100px';startAt.style.textAlign = 'center';startAt.style.display = 'block';startAt.style.marginLeft = 'auto';startAt.style.marginRight = 'auto';
+        let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-dark mt-2 float-end';confirm.innerHTML = 'Confirmar';
+        confirm.onclick = () => {
+            let time = hour2Min(startAt.value)
+            if(time){
+                let v = this.project.addTrip(this.fleetIndex, time);
+                if(v){this.addTrip(v, this.fleetIndex)} // Se viagem atende requisitos, insere viagem no grid
+                // Ao inserir viagem com horario predefinido move o foco para esta viagem
+                this.tripFocus = v;
+                this.tripIndex = this.project.cars[this.fleetIndex].trips.indexOf(this.tripFocus);
+                // Ao inserir viagem com horario predefinido a viagem sera inserida na ordem de inicio
+                // necessario reordenar tambem grid para corresponder indices de viagens
+                this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+                this.__cursorMove();
+                this.__updateTripDisplay();
+                cancel.click(); // Fecha modal
+            }
+            else{startAt.style.border = '2px solid var(--bs-form-invalid-color)'}
+        }
+        let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-secondary mt-2 me-1 float-end';cancel.innerHTML = 'Cancelar';
+        cancel.onclick = () => { // Libera o grid e destroi o modal
+            this.gridLocked = false;
+            modal.remove();
+        }
+        modal.addEventListener('close', ()=>{this.gridLocked = false;})
+
+        modal.appendChild(startAt);
+        modal.appendChild(confirm);
+        modal.appendChild(cancel);
+        document.body.appendChild(modal);
+        modal.showModal();
+    }
     plus(cascade=true){
         if(this.tripFocus != null){
             this.project.cars[this.fleetIndex].plus(this.tripIndex, cascade); // Icrementa 1 minuto no final na viagem foco e no inicio e fim das posteriores
@@ -581,11 +616,15 @@ class MarchUI{
         document.body.appendChild(this.patternsDialog);
         this.patternsDialog.showModal();
     }
+    __gridIsBlock(){
+        return this.gridLocked || canvasNavActive() || appKeyMap.modal.open;        
+    }
     __addListeners(){
-        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(canvasNavActive() || this.gridLocked){return false};this.addCar()}})
-        appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem para carro em foco', run: ()=>{if(canvasNavActive() || this.gridLocked){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addCar()}})
+        appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({key: ']', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTripAt()}}})
         appKeyMap.bind({key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: ()=>{
-            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
             if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
                 this.tripIndex++;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -595,7 +634,7 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: ()=>{
-            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
             if(this.tripIndex > 0){
                 this.tripIndex--;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -604,7 +643,7 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
-            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
             this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.project.cars.length > this.fleetIndex + 1){
                 this.fleetIndex++;
@@ -630,7 +669,7 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: () => {
-            if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
             this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.fleetIndex > 0){
                 this.fleetIndex--;
@@ -656,21 +695,21 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
-        appKeyMap.bind({key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.plus()}})
-        appKeyMap.bind({key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.plus(false)}})
-        appKeyMap.bind({key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.sub()}})
-        appKeyMap.bind({key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.sub(false)}})
-        appKeyMap.bind({key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.advance()}})
-        appKeyMap.bind({key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}
+        appKeyMap.bind({key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus()}})
+        appKeyMap.bind({key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus(false)}})
+        appKeyMap.bind({key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub()}})
+        appKeyMap.bind({key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub(false)}})
+        appKeyMap.bind({key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.advance()}})
+        appKeyMap.bind({key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.back()}})
-        appKeyMap.bind({key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.backStart()}})
-        appKeyMap.bind({key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.nextTrip()}})
-        appKeyMap.bind({key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: ()=>{if(!this.tripFocus || canvasNavActive() || this.gridLocked){return false}this.previousTrip()}})
-        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (03 horas)', run: ()=>{this.canvasMove(180)}})
-        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (03 horas)', run: ()=>{this.canvasMove(-180)}})
+        appKeyMap.bind({key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.back()}})
+        appKeyMap.bind({key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
+        appKeyMap.bind({key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.nextTrip()}})
+        appKeyMap.bind({key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.previousTrip()}})
+        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
+        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
         appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
             if(this.tripFocus){
                 this.initialView = this.tripFocus.start - 60; // Ajusta o view inicial para uma hora antes da viagem em foco

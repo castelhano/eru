@@ -138,8 +138,8 @@ class Car{
             let intervalo = last.way == IDA ? route_params[faixa].toInterv : route_params[faixa].fromInterv;
             let ciclo = last.way == IDA ? route_params[faixa].toMin : route_params[faixa].fromMin;
             opt = {
-                start: last.end + intervalo,
-                end: last.end + intervalo + ciclo,
+                start: startAt || last.end + intervalo,
+                end: (startAt || last.end) + intervalo + ciclo,
                 way: last.way == IDA ? VOLTA : IDA,
                 type: PRODUTIVA
             }
@@ -154,10 +154,22 @@ class Car{
             }
         }
         let v = new Trip(opt);
+        if(startAt && !this.__tripIsValid(v)){ // Se definido startAt e viagem entra em conflito com outras viagens, cancela operacao
+            appNotify('warning','jsMarch: Conflito com <b>outras viagens</b>')
+            return false;
+        }
         this.trips.push(v);
+        this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
         return v;
     }
-    addTripAt(index){ // Adiciona viagem apos indice informado, necessario ter 'espaco' disponivel
+    __tripIsValid(trip){ // Valida de viagem pode ser inserida no carro sem gerar conflito com outras viagens
+        let conflict = false;
+        let i = 0;
+        while(!conflict && i < this.trips.length){
+            if((trip.start >= this.trips[i].start && trip.start <= this.trips[i].end) || (trip.end >= this.trips[i].start && trip.end <= this.trips[i].end)){conflict = true;}
+            i++;
+        }
+        return !conflict;
     }
     addSchedule(options){}
     checkSchedule(start, end){ // Verifica se tabela esta disponivel para carro (se nao conflita com outras tabelas)
@@ -245,8 +257,8 @@ class March{
         this.cars.push(new Car(options));
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
     }
-    addTrip(car_index, trip_index=null){
-        this.cars[car_index].addTrip(this.route.params);
+    addTrip(car_index, startAt=null){
+        return this.cars[car_index].addTrip(this.route.param, startAt);
     }
     nextTrip(trip){ // Retorna proxima viagem (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;
