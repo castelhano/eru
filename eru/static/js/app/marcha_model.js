@@ -200,9 +200,10 @@ class Car{
     }
     removeTrip(index, cascade=true){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
-        if(cascade){this.trips.splice(index, this.trips.length - 1);}
-        else{this.trips.splice(index, 1);}
-        return true;
+        let removed = [];
+        if(cascade){removed = this.trips.splice(index, this.trips.length - 1);}
+        else{removed = this.trips.splice(index, 1);}
+        return removed;
     }
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
         if(!cascade && index != this.trips.length - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
@@ -256,7 +257,7 @@ class Car{
     getIntervs(includeGaps=true){ // Retorna total de intervalos do carro
         let sum = 0;
         for(let i = 0; i < this.trips.length; i++){
-            if(this.trips[i].type == INTERVALO){sum += this.trips[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
+            if(this.trips[i].type == INTERVALO){sum += includeGaps ? this.trips[i].getCycle() : this.trips[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
             if(includeGaps){sum += this.getInterv(i)} // Se includeGaps soma os intervalos entre viagens
         }
         return sum;
