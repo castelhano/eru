@@ -223,6 +223,7 @@ class MarchUI{
             select.after(confirm);
         }
         this.displayTripWay = document.createElement('h5');this.displayTripWay.classList = 'text-body-tertiary';this.displayTripWay.style.position = 'absolute';this.displayTripWay.style.bottom = '5px';this.displayTripWay.style.left = '210px';this.displayTripWay.innerHTML = '';
+        this.displayTripWay.ondblclick = () => {if(this.tripFocus){this.switchWay();}}
         let vr = document.createElement('div');vr.classList = 'vr';vr.style = 'position: absolute; left: 375px;top: 10px;height: 50px;'
         this.displayTripsCount = document.createElement('h5');this.displayTripsCount.style.position = 'absolute';this.displayTripsCount.style.top = '10px';this.displayTripsCount.style.left = '390px';this.displayTripsCount.innerHTML = '';
         let tripsCountLabel = document.createElement('small');tripsCountLabel.style.position = 'absolute';tripsCountLabel.style.bottom = '10px';tripsCountLabel.style.left = '390px';tripsCountLabel.innerHTML = 'VIAGENS';
@@ -366,7 +367,7 @@ class MarchUI{
         trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route.param);
         let v = document.createElement('div'); // Elemento viagem (grid)
         v.style = this.tripStyle;
-        v.style.backgroundColor = trip.way == IDA ? this.tripFromColor : this.tripToColor;
+        this.__updateTripStyle(trip, v);
         v.style.position = 'absolute';
         v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
         v.style.top = `calc(${this.fleetHeight} * ${seq + 1} - 17px)`;
@@ -381,6 +382,9 @@ class MarchUI{
         vf.style.height = this.rulerSmallHeight;
         vf.style.backgroundColor = this.rulerSmallColor;
         vf.style.marginRight = this.rulerSmallMarginRight;
+        if([INTERVALO, ACESSO, RECOLHE].includes(trip.type)){
+            vf.style.visibility = 'hidden';
+        }
         this.freqGrid[seq].push(vf);
         this.rulerFreq.appendChild(vf);
         return v;
@@ -435,6 +439,7 @@ class MarchUI{
             v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
             this.grid[this.fleetIndex].push(v);
             this.canvas.appendChild(v);
+            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
@@ -443,11 +448,97 @@ class MarchUI{
             vf.style.height = this.rulerSmallHeight;
             vf.style.backgroundColor = this.rulerSmallColor;
             vf.style.marginRight = this.rulerSmallMarginRight;
-            vf.style.display = 'none'; // Intervalos nao sao vistos na freqRule
-            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            vf.style.visibility = 'hidden'; // Intervalos nao sao vistos na freqRule
             this.freqGrid[this.fleetIndex].push(vf);
             this.rulerFreq.appendChild(vf);
             this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+        }
+    }
+    addAccess(){
+        if(!this.tripFocus){return false}
+        let trip = this.project.cars[this.fleetIndex].addAccess(this.tripIndex, this.project.route.param);
+        if(trip){
+            let v = document.createElement('div'); // Elemento viagem (grid)
+            v.style = this.tripStyle;
+            v.style.background = this.typePattern[ACESSO];
+            v.style.position = 'absolute';
+            v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
+            v.style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
+            this.grid[this.fleetIndex].push(v);
+            this.canvas.appendChild(v);
+            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            let vf = document.createElement('div'); // Dot na regua de frequencia
+            vf.style.position = 'absolute';
+            vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
+            vf.style.top = trip.way == IDA ? '5px' : '30px';
+            vf.style.width = this.rulerSmallWidth;
+            vf.style.height = this.rulerSmallHeight;
+            vf.style.backgroundColor = this.rulerSmallColor;
+            vf.style.marginRight = this.rulerSmallMarginRight;
+            vf.style.visibility = 'hidden';; // Acesso nao sao vistos na freqRule
+            this.freqGrid[this.fleetIndex].push(vf);
+            this.rulerFreq.appendChild(vf);
+            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.tripIndex++; // Ajusta o indice
+
+        }
+    }
+    addRecall(){
+        if(!this.tripFocus){return false}
+        let trip = this.project.cars[this.fleetIndex].addRecall(this.tripIndex, this.project.route.param);
+        if(trip){
+            let v = document.createElement('div'); // Elemento viagem (grid)
+            v.style = this.tripStyle;
+            v.style.background = this.typePattern[RECOLHE];
+            v.style.position = 'absolute';
+            v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
+            v.style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
+            this.grid[this.fleetIndex].push(v);
+            this.canvas.appendChild(v);
+            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            let vf = document.createElement('div'); // Dot na regua de frequencia
+            vf.style.position = 'absolute';
+            vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
+            vf.style.top = trip.way == IDA ? '5px' : '30px';
+            vf.style.width = this.rulerSmallWidth;
+            vf.style.height = this.rulerSmallHeight;
+            vf.style.backgroundColor = this.rulerSmallColor;
+            vf.style.marginRight = this.rulerSmallMarginRight;
+            vf.style.visibility = 'hidden';; // Recolhe nao sao vistos na freqRule
+            this.rulerFreq.appendChild(vf);
+            this.freqGrid[this.fleetIndex].push(vf);
+            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+        }
+    }
+    switchWay(){ // Abre modal para alteracao do sentido da viagem
+        let dialog = document.createElement('dialog');
+        dialog.innerHTML = `<p>Deseja altera o sentido da viagem para <b class="text-purple">${this.tripFocus.way  == IDA ? 'VOLTA' : 'IDA'}</b>?</p>`
+        let check = document.createElement('input');check.id = 'March_switchWayCheck';check.checked = 'true'
+        dialog.appendChild(this.__settingsContainerSwitch(check, 'Alterar demais viagens'));
+        let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-phanton float-end';confirm.innerHTML = 'Gravar';
+        confirm.onclick = () => {
+            this.project.cars[this.fleetIndex].switchWay(this.tripIndex, check.checked);
+            this.__updateTripStyle(this.project.cars[this.fleetIndex].trips[this.tripIndex], this.grid[this.fleetIndex][this.tripIndex]);
+            if(check.checked){
+                for(let i = this.tripIndex + 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                    this.__updateTripStyle(this.project.cars[this.fleetIndex].trips[i], this.grid[this.fleetIndex][i]);
+                }
+            }
+            dialog.close();
+            dialog.remove();
+            this.__updateTripDisplay();
+        }
+        dialog.appendChild(confirm);
+        document.body.appendChild(dialog);
+        dialog.showModal();
+    }
+    __updateTripStyle(model, target){ // Ajusta stilo da viagem
+        target.style.backgroundColor = model.way == IDA ? this.tripFromColor : this.tripToColor;
+        if(model.type != PRODUTIVA){
+            let c = model.way == IDA ? this.tripFromColor : 'var(--bs-tertiary-bg)';
+            target.style.background = this.typePattern[model.type].replaceAll('COLOR', c);
         }
     }
     plus(cascade=true){
@@ -589,6 +680,7 @@ class MarchUI{
             this.displayStart.innerHTML = min2Hour(this.tripFocus.start - 1);
             this.displayEnd.innerHTML = min2Hour(this.tripFocus.end + 1);
             this.displayCycle.innerHTML = this.tripFocus.getCycle() + 2;
+            this.displayFreq.innerHTML = '--';
             this.displayInterv.innerHTML = '--';
             this.displayTripWay.innerHTML = '';
         }
@@ -687,14 +779,14 @@ class MarchUI{
         if(this.patternsDialog){this.patternsDialog.close(); return false;} // Se modal ja esta aberto, fecha modal
         this.gridLocked = true; // Trava edicao do grid enquanto modal esta aberto
         this.patternsDialog = document.createElement('dialog');
-        this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripFromColor};"></div>
-        VOLTA <div id="volta" style="width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripToColor}"></div>
-        RESERVADO <div id="reservado" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RESERVADO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        EXPRESSO <div id="expresso" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[EXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        SEMIEXPRESSO <div id="semi" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        ACESSO <div id="acesso" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        RECOLHE <div id="recolhe" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.tripFromColor)};"></div>
-        REFEIÇÃO <div id="refeicao" style="width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[INTERVALO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
+        this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripFromColor};"></div>
+        VOLTA <div id="volta" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripToColor}"></div>
+        RESERVADO <div id="reservado" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RESERVADO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        EXPRESSO <div id="expresso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[EXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        SEMIEXPRESSO <div id="semi" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        ACESSO <div id="acesso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
+        RECOLHE <div id="recolhe" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.tripFromColor)};"></div>
+        INTERVALO <div id="refeicao" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[INTERVALO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
         this.patternsDialog.addEventListener("close", (e) => {this.gridLocked = false;this.patternsDialog = null;}); // AO fechar destrava grid
         document.body.appendChild(this.patternsDialog);
         this.patternsDialog.showModal();
@@ -790,6 +882,8 @@ class MarchUI{
         appKeyMap.bind({key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.back()}})
         appKeyMap.bind({key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
         appKeyMap.bind({key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addInterv()}})
+        appKeyMap.bind({key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess()}})
+        appKeyMap.bind({key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addRecall()}})
         appKeyMap.bind({key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.nextTrip()}})
         appKeyMap.bind({key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.previousTrip()}})
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})

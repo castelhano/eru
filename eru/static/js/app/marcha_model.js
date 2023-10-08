@@ -17,10 +17,10 @@ function defaultParam(value=50){
             toMin: value,
             fromInterv: INTERVALO_IDA,
             toInterv: INTERVALO_VOLTA,
-            fromMinAccess: 0,
-            toMinAccess: 0,
-            fromMinRecall: 0,
-            toMinRecall: 0,
+            fromMinAccess: ACESSO_PADRAO,
+            toMinAccess: ACESSO_PADRAO,
+            fromMinRecall: RECOLHE_PADRAO,
+            toMinRecall: RECOLHE_PADRAO,
             fromKmAccess: 0,
             toKmAccess: 0,
             fromKmRecall: 0,
@@ -184,6 +184,32 @@ class Car{
         this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
         return v;
     }
+    addAccess(trip_index, params){
+        // Acesso somente inserido se viagem for produtiva
+        if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type)){return false}
+        let wayAccess = this.trips[trip_index].way == IDA ? 'fromMinAccess' : 'toMinAccess';
+        let accessMin = params[min2Range(this.trips[trip_index].start)][wayAccess];
+        let v = new Trip({start: this.trips[trip_index].start - accessMin - 1, end: this.trips[trip_index].start - 1, type: ACESSO, way: this.trips[trip_index].way})
+        if(this.__tripIsValid(v)){
+            this.trips.push(v);
+            this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
+            return v;
+        }
+        return false;
+    }
+    addRecall(trip_index, params){
+        // Recolhe somente inserido se viagem for produtiva
+        if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type)){return false}
+        let wayRecall = this.trips[trip_index].way == IDA ? 'fromMinRecall' : 'toMinRecall';
+        let recallMin = params[min2Range(this.trips[trip_index].end)][wayRecall];
+        let v = new Trip({start: this.trips[trip_index].end + 1, end: this.trips[trip_index].end + recallMin + 1, type: RECOLHE, way: this.trips[trip_index].way})
+        if(this.__tripIsValid(v)){
+            this.trips.push(v);
+            this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
+            return v;
+        }
+        return false;
+    }
     __tripIsValid(trip){ // Valida de viagem pode ser inserida no carro sem gerar conflito com outras viagens
         let conflict = false;
         let i = 0;
@@ -205,8 +231,17 @@ class Car{
         else{removed = this.trips.splice(index, 1);}
         return removed;
     }
+    switchWay(trip_index, cascade=true){ // Altera o sentido da viagem, se cascade altera tbm das seguintes
+        this.trips[trip_index].way = this.trips[trip_index].way == IDA ? VOLTA : IDA;
+        if(cascade){
+            for(let i = trip_index + 1; i < this.trips.length; i++){
+                this.trips[i].way = this.trips[i].way == IDA ? VOLTA : IDA;
+            }
+        }
+        return true;
+    }
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
-        if(!cascade && index != this.trips.length - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
+        if(!cascade && index != this.trips.lengthcurrent - 1 && this.trips[index + 1].start <= this.trips[index].end + 1){return false;} // Se viagem posterior e diff de apenas 1 min nao realiza operacao
         this.trips[index].plus();
         if(!cascade || this.trips.length - 1 == index){return true} // Se for a ultima viagem ou cascade = false retorna true
         for(let i = index + 1; i < this.trips.length; i++){ // Caso tenha visgens posteriores, move viagens
