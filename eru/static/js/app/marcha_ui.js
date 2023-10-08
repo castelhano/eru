@@ -4,8 +4,11 @@ class MarchUI{
         this.sw = screen.width;
         this.sh = window.innerHeight;
         this.gridLocked = false; // Se true desativa atalhos de edicao do grid
-        this.fleetIndex = -1
-        this.tripIndex = -1
+        this.fleetIndex = -1;
+        this.tripIndex = -1;
+        this.fleetSelection = -1; // Indice do carro onde foi iniciado selecao
+        this.startSelection = -1; // Viagem inicial selecionada
+        this.endSelection = -1; // Viagem final selecionada
         this.fleetFocus = null;
         this.tripFocus = null;
         this.fleetLabels = []; // Lista com apontadores das labels dos carros
@@ -641,6 +644,54 @@ class MarchUI{
             }
         }
     }
+    moveTrips(){
+        if(this.fleetSelection == this.fleetIndex || this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false;}
+        let resp = this.project.moveTrips(this.fleetSelection, this.fleetIndex, this.startSelection, this.endSelection);
+        if(resp){
+            for(let i = this.startSelection; i <= this.endSelection;i++){ // Ajusta posicao top das viagens alvo para novo carro no canvas
+                this.grid[this.fleetSelection][i].style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            }
+            this.grid[this.fleetIndex] = this.grid[this.fleetIndex].concat(this.grid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1));
+            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.freqGrid[this.fleetIndex] = this.freqGrid[this.fleetIndex].concat(this.freqGrid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1));
+            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.__clearSelection();
+        }
+        else{
+            appNotify('warning', '<b>Atenção:</b> Conflito de horário, não é possivel mover viagens');
+        }
+    }
+    __addToSelection(){
+        if(this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
+        if(this.fleetSelection >= 0 &&  this.startSelection >= 0){ // Selecao ja iniciada
+            // this.tripIndex++;
+            // this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            // this.__cursorMove();
+            this.endSelection++;
+            let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
+            this.selectTripsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
+
+        }
+        else{
+            this.fleetSelection = this.fleetIndex;
+            this.startSelection = this.tripIndex;
+            this.endSelection = this.tripIndex;
+            this.selectTripsBox = document.createElement('div');
+            let selectWd = `calc(${this.tripFocus.getCycle()} * ${this.rulerUnit} + 10px)`;
+            let selectSt = `calc(${this.fleetTagWidth} + ${this.tripFocus.start} * ${this.rulerUnit} - 5px)`;
+            let selectTp = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 22px)`;
+            this.selectTripsBox.style = `border:1px solid #b72a2a;height: calc(${this.tripHeight} + 10px);border-radius: 10px;width: ${selectWd};position: absolute; top: ${selectTp}; left: ${selectSt}`;
+            this.canvas.appendChild(this.selectTripsBox);
+        }
+        
+    }
+    __clearSelection(){
+        if(!this.selectTripsBox){return false}
+        this.fleetSelection = -1;
+        this.startSelection = -1;
+        this.endSelection = -1;
+        this.selectTripsBox.remove();
+    }
     nextTrip(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
         if(!this.tripFocus){return false}
         let v = this.project.nextTrip(this.tripFocus);
@@ -903,7 +954,6 @@ class MarchUI{
         appKeyMap.bind({key: 'home', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem sentido', desc: 'Foca primeira viagem no mesmo sentido', run: ()=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getFirstTrip(this.tripFocus.way);
-            console.log(resp);
             if(resp){
                 this.tripFocus = resp[0];
                 this.fleetIndex = resp[1];
@@ -923,6 +973,11 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
+        appKeyMap.bind({key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{
+            this.__addToSelection();
+        }})
+        appKeyMap.bind({key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
+        appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips();}})
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
         appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
         appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{

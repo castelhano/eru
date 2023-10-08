@@ -18,7 +18,10 @@ class Keywatch{
     bind(options){
         if(!options.hasOwnProperty('key') || !options.hasOwnProperty('run')){return false;} // Attrs key e run sao obrigatorios, nao adiciona caso nao presentes
         let cmd = this.getScope(options);
-        if(cmd){this.map[cmd] = options;}
+        if(cmd){
+            if(this.map.hasOwnProperty(cmd)){delete this.map[cmd]} // Se atalho ja existe, apaga entrada antes de sobregravar (para garantir ordem de posicionamento)
+            this.map[cmd] = options;
+        }
     }
     avail(options){
         if(typeof options == 'object'){return !this.map.hasOwnProperty(this.getScope(options))}

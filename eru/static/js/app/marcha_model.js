@@ -399,4 +399,19 @@ class March{
         }
         return [last, fleet_index, trip_index];
     }
+    moveTrips(fleetOriginIndex, fleetDestinyIndex, startTripIndex, endTripIndex){ // Movimenta viagens de um carro para outro
+        let conflict = false;
+        let i = startTripIndex;
+        while(!conflict && i <= endTripIndex){ // Verifica de todas as viagens podem ser movimentadas
+            if(!this.cars[fleetDestinyIndex].__tripIsValid(this.cars[fleetOriginIndex].trips[i])){
+                conflict = true;
+            }
+            i++;
+        }
+        if(conflict){return false}
+        // Se nenhum conflito encontrado, remove as viagens do carro de origem e move para o destino
+        this.cars[fleetDestinyIndex].trips = this.cars[fleetDestinyIndex].trips.concat(this.cars[fleetOriginIndex].trips.splice(startTripIndex, endTripIndex - startTripIndex + 1));
+        this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
+        return true;
+    }
 }
