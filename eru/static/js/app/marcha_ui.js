@@ -94,6 +94,8 @@ class MarchUI{
         this.__addListeners();
         if(this.settingsContainer){this.__builSettingsUI()}
 
+        this.__load(); // Carrega carros e viagens (caso pre carregado projeto)
+
     }
     __build(){ // Constroi o canvas (grid principal) e as reguas superior e de frequencia
         this.canvas = document.createElement('div');
@@ -338,8 +340,8 @@ class MarchUI{
     }
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
-    addCar(){
-        let car = this.project.addCar({param: this.project.route.param});
+    addFleet(car=null, seq=this.project.cars.length + 1){
+        car = car || this.project.addFleet({param: this.project.route.param});
         let carLabel = document.createElement('span');
         carLabel.setAttribute('data-role', 'fleet_tag');
         carLabel.style.width = this.fleetTagWidth;
@@ -348,7 +350,6 @@ class MarchUI{
         carLabel.style.position = 'absolute';
         carLabel.style.backgroundColor = 'var(--bs-body-bg)';
         carLabel.style.zIndex = '95';
-        let seq = this.project.cars.length;
         carLabel.innerHTML = String(seq).padStart(2,'0');
         carLabel.style.top = `calc(${this.fleetHeight} * ${seq})`;
         carLabel.style.left = 0;
@@ -356,7 +357,9 @@ class MarchUI{
         this.container.appendChild(carLabel);
         this.grid[seq - 1] = []; // Adiciona entrada para o carro no dicionario de grid
         this.freqGrid[seq - 1] = []; // Adiciona entrada para o carro no dicionario de freqGrid
-        let v = this.addTrip(car.trips[0], seq - 1)
+        for(let i = 0; i < car.trips.length; i++){
+            let v = this.addTrip(car.trips[i], seq - 1);
+        }
         if(this.tripFocus == null){ // Se nenhuma viagem em foco, aponta para primeira viagem do primeiro carro
             this.fleetIndex = 0;
             this.tripIndex = 0;
@@ -661,12 +664,9 @@ class MarchUI{
             appNotify('warning', '<b>Atenção:</b> Conflito de horário, não é possivel mover viagens');
         }
     }
-    __addToSelection(){
+    __addToSelection(){ // Seleciona viagens
         if(this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
         if(this.fleetSelection >= 0 &&  this.startSelection >= 0){ // Selecao ja iniciada
-            // this.tripIndex++;
-            // this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
-            // this.__cursorMove();
             this.endSelection++;
             let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
             this.selectTripsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
@@ -684,6 +684,13 @@ class MarchUI{
             this.canvas.appendChild(this.selectTripsBox);
         }
         
+    }
+    __subToSelection(){
+        if(this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false}
+        if(this.endSelection == this.startSelection){this.__clearSelection();return false} // Se existe apenas uma viagem selecionada apenasremove a selecao e encerra bloco
+        this.endSelection--;
+        let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
+        this.selectTripsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
     }
     __clearSelection(){
         if(!this.selectTripsBox){return false}
@@ -845,8 +852,45 @@ class MarchUI{
     __gridIsBlock(){
         return this.gridLocked || canvasNavActive() || appKeyMap.modal.open;        
     }
+    __saveLocal(){
+        localStorage.marchCurrentProject = JSON.stringify(this.project);
+    }
+    __load(){
+        // Apaga todos os elementos do grid e freqGrid
+        for(let i = 0; i < this.grid.length; i++){
+            for(let j = 0; j < this.grid[i].length; j++){
+                this.grid[i][j].remove(); // Apaga viagem no grid
+                this.freqGrid[i][j].remove(); // Apaga viagem no freqGrid
+            }
+        }
+        document.querySelectorAll('[data-role=fleet_tag]').forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
+        this.grid = [];
+        this.freqGrid = [];
+        // ---
+        for(let i = 0; i < this.project.cars.length; i++){ // Recria todos os carros e viagens
+            this.addFleet(this.project.cars[i], i + 1);
+        }
+        if(this.project.cars.length > 0){
+            this.fleetFocus = this.project.cars[0];
+            this.tripFocus = this.project.cars[0].trips[0];
+            this.fleetIndex = 0;
+            this.tripIndex = 0;
+            this.__cursorMove();
+        }
+        else{
+            this.fleetFocus = null;
+            this.tripFocus = null;
+            this.fleetIndex = -1;
+            this.tripIndex = -1;
+            this.cursor.style.left = '-200px'
+
+        }
+    }
+    __loadLocal(){
+        
+    }
     __addListeners(){
-        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addCar()}})
+        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
         appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
         appKeyMap.bind({key: ']', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTripAt()}}})
         appKeyMap.bind({key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: ()=>{
@@ -973,9 +1017,8 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{
-            this.__addToSelection();
-        }})
+        appKeyMap.bind({key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
+        appKeyMap.bind({key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
         appKeyMap.bind({key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
         appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips();}})
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
@@ -991,5 +1034,18 @@ class MarchUI{
         appKeyMap.bind({key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagens', desc: 'Remove viagem em foco e posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip()}})
         appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
         appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
+        appKeyMap.bind({key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
+            this.__saveLocal();
+            appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')
+        }})
+        appKeyMap.bind({key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recarrega última prévia', desc: 'Recarrega última prévia salva em disco', run: ()=>{
+            if(localStorage['marchCurrentProject']){
+                this.project.load(localStorage.marchCurrentProject)
+                this.__load();
+            }
+            else{
+                appNotify('warning', 'Nenhuma prévia salva localmente');
+            }
+        }})
     }
 }

@@ -303,15 +303,14 @@ class March{
     constructor(options){
         this.id = options?.id || null;
         this.desc = options?.desc || 'Novo projeto';
-        this.route = options?.route || new Route();
+        this.route = options?.route || new Route({});
         this.cars = options?.cars || [];
         this.user = options?.user || null;
         this.status = options?.status || INCOMPLETO;
         this.dayType = options?.dayType || UTIL;
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
-        this.transf = []; // Armazena viagem(s) colocadas na area de transferencia
     }
-    addCar(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
+    addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
         if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + FREQUENCIA_BASE;}
         this.cars.push(new Car(options));
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
@@ -413,5 +412,38 @@ class March{
         this.cars[fleetDestinyIndex].trips = this.cars[fleetDestinyIndex].trips.concat(this.cars[fleetOriginIndex].trips.splice(startTripIndex, endTripIndex - startTripIndex + 1));
         this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
         return true;
+    }
+    load(project){ // Recebe json simples, monta instancias e carrega projeto
+        project = JSON.parse(project);
+        let allowedFields = ['id', 'desc', 'user', 'status','dayType','sumIntervGaps'];
+        for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
+            this[allowedFields[i]] = project[allowedFields[i]];
+        }
+        // ----------
+        project.route.from = new Locale(project.route.from); // Cria instancia Locale para from
+        project.route.to = new Locale(project.route.to); // Cria instancia Locale para from
+        let fromRefs = [], toRefs = [];
+        for(let i = 0; i < project.route.refs.from.length;i++){ // Cria instancias para referencias de ida
+            project.route.refs.from[i].local = new Locale(project.route.refs.from[i].local); // Cria instancia de Locale
+            fromRefs.push(new Reference(project.route.refs.from[i]))
+        }
+        for(let i = 0; i < project.route.refs.to.length;i++){ // Cria instancias para referencias de volta
+            project.route.refs.to[i].local = new Locale(project.route.refs.to[i].local); // Cria instancia de Locale
+            toRefs.push(new Reference(project.route.refs.to[i]))
+        }
+        project.route.refs.from = fromRefs;
+        project.route.refs.to = toRefs;
+        // ----------
+        this.route = new Route(project.route); // Cria instancia da linha
+        this.cars = [];
+        for(let i = 0; i < project.cars.length;i++){ // Cria instancias para todos os carros do projeto
+            let trips = [];
+            for(let j = 0; j < project.cars[i].trips.length;j++){ // Cria instancias para todas as viagens
+                trips.push(new Trip(project.cars[i].trips[j]))
+            }
+            project.cars[i].trips = trips; // Substitui o cars.trips (array simples) pelo trips (array de instancias Trip)
+            this.cars.push(new Car(project.cars[i]));
+        }
+
     }
 }
