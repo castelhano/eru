@@ -371,4 +371,32 @@ class March{
         }
         return sum;
     }
+    getFirstTrip(way=IDA){ // Retorna primeia viagem no sentido informado
+        if(this.cars.length == 0){return false}
+        let first, fleet_index, trip_index;
+        for(let i = 0; i < this.cars.length;i++){
+            for(let j = 0; j < this.cars[i].trips.length; j++){
+                if(this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start < first?.start || !first)){
+                    first = this.cars[i].trips[j];
+                    fleet_index = i;
+                    trip_index = j;
+                }
+            }
+        }
+        return [first, fleet_index, trip_index];
+    }
+    getLastTrip(way=VOLTA){ // Retorna ultima viagem no sentido informado
+        if(this.cars.length == 0){return false}
+        let last, fleet_index, trip_index;
+        for(let i = 0; i < this.cars.length;i++){
+            for(let j = 0; j < this.cars[i].trips.length; j++){
+                if(this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start > last?.start || !last)){
+                    last = this.cars[i].trips[j];
+                    fleet_index = i;
+                    trip_index = j;
+                }
+            }
+        }
+        return [last, fleet_index, trip_index];
+    }
 }
