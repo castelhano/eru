@@ -98,7 +98,7 @@ class MarchUI{
         this.__load(); // Carrega carros e viagens (caso pre carregado projeto)
 
     }
-    __build(){ // Constroi o canvas (grid principal) e as reguas superior e de frequencia
+    __build(){ // Constroi o canvas (grid principal) e as reguas superior e de frequencia, alem do modal de configuracao do projeto
         this.canvas = document.createElement('div');
         this.canvas.style.position = 'relative';
         this.canvas.style.height = `calc(100vh - ${this.footerHeight} - ${this.canvasMarginTop} - ${this.rulerHeight})`;
@@ -256,7 +256,7 @@ class MarchUI{
         this.canvas.after(this.footer);
     }
     __builSettingsUI(){
-        this.settingsContainer.innerHTML = '<small class="text-secondary">Version: <b>0.1.22</b></small>';
+        this.settingsContainer.innerHTML = `<small class="text-secondary">Version: <b>${this.project.version}</b></small>`;
         this.settingsShowFreqRule = document.createElement('input');this.settingsShowFreqRule.id = `March_settingsShowFreqRule`;this.settingsShowFreqRule.checked = true;
         this.settingsShowFreqRule.onclick = () => {
             if(this.settingsShowFreqRule.checked){this.rulerFreqDialog.show()}
@@ -883,10 +883,7 @@ class MarchUI{
 
         }
     }
-    __loadLocal(){
-        
-    }
-    __addListeners(){
+    __addListeners(){ // Cria atalhos de teclado para manipulação do projeto (dependencia da lib listener.js)
         appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
         appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
         appKeyMap.bind({key: ']', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTripAt()}}})
@@ -1043,6 +1040,12 @@ class MarchUI{
             else{
                 appNotify('warning', 'Nenhuma prévia salva localmente');
             }
+        }})
+        appKeyMap.bind({key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
+            localStorage.removeItem('marchCurrentProject');
+            this.project = new March({})
+            this.__load();
+            appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
         }})
     }
 }

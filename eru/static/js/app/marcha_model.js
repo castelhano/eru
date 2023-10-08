@@ -177,7 +177,7 @@ class Car{
     }
     addInterv(trip_index){ // Adiciona viagem do tipo intervalo entre duas viagens
         // Necessario ter viagem valida (produtiva) antes e depois do intervalo
-        if(trip_index == this.trips.length - 1 || [INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index]) || [INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index + 1])){return false}
+        if(trip_index == this.trips.length - 1 || [INTERVALO, RECOLHE].includes(this.trips[trip_index].type) || [INTERVALO, ACESSO].includes(this.trips[trip_index + 1].type)){return false}
         let current = this.trips[trip_index];
         let next = this.trips[trip_index + 1];
         let v = new Trip({start: current.end + 1, end: next.start - 1, type: INTERVALO, way: current.way})
@@ -302,14 +302,18 @@ class Car{
 
 class March{
     constructor(options){
+        this.version = '0.1.36';
         this.id = options?.id || 'new';
-        this.desc = options?.desc || 'Novo projeto';
+        this.name = options?.name || 'Novo Projeto';
+        this.desc = options?.desc || '';
         this.route = options?.route || new Route({});
         this.cars = options?.cars || [];
         this.user = options?.user || null;
         this.status = options?.status || INCOMPLETO;
         this.dayType = options?.dayType || UTIL;
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
+        // Se projeto vazio verifica se nao existe previa salvo localmente, se sim carrega previa
+        if(this.cars.length == 0 && localStorage['marchCurrentProject']){this.load(localStorage.marchCurrentProject)}
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
         if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + FREQUENCIA_BASE;}
