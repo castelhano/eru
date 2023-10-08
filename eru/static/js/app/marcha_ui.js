@@ -28,7 +28,7 @@ class MarchUI{
         this.settingsContainer = options?.settingsContainer || null;
         this.canvasMarginTop = options?.canvasMarginTop || '40px';
 
-        this.freqRulerSelectColor = options?.freqRulerSelectColor || 'var(--bs-info-border-subtle)';
+        this.freqRulerSelectColor = options?.freqRulerSelectColor || '#FFF';
         this.freqRulerSelectHeight = options?.freqRulerSelectHeight || '15px';
 
         this.cursorClasslist = options?.cursorClasslist || 'bi bi-caret-down-fill fs-2';
@@ -54,8 +54,9 @@ class MarchUI{
 
         this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
         
-        this.tripFromColor = options?.tripFromColor || 'var(--bs-info-border-subtle)';
-        this.tripToColor = options?.tripToColor || 'var(--bs-secondary-bg)';
+        this.tripFromColor = options?.tripFromColor || 'var(--bs-primary-text-emphasis)';
+        // this.tripToColor = options?.tripToColor || 'var(--bs-danger)';
+        this.tripToColor = options?.tripToColor || 'var(--bs-tertiary-bg)';
         this.tripHeight = options?.tripHeight || '8px';
 
         // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
@@ -113,8 +114,8 @@ class MarchUI{
         this.container.appendChild(this.rulerTop);
         this.rulerTop.after(this.canvas);
         // Regua de frequencia
-        this.rulerFreqDialog = document.createElement('dialog');
-        this.rulerFreqDialog.style = 'position: relative;border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:absolute;bottom: 8px;padding: 0;'
+        this.rulerFreqDialog = document.createElement('dialog');this.rulerFreqDialog.setAttribute('data-bs-theme', 'dark');
+        this.rulerFreqDialog.style = 'border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:absolute;bottom: 8px;padding: 0;background-color: var(--bs-tertiary-bg)'
         this.rulerFreqDialog.open = true; // Inicia exibindo a regua de freq
         this.rulerFreq = document.createElement('div');
         this.rulerFreq.style.position = 'relative';
@@ -174,11 +175,7 @@ class MarchUI{
     }
     __buildFooter(){ // Cria elementos do footer
         // Footer
-        this.footer = document.createElement('div');
-        this.footer.classList = this.footerClasslist;
-        this.footer.classList.add('user-select-none');
-        this.footer.style.height = this.footerHeight;
-        this.footer.style.zIndex = '100';
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndex = '100';
         this.displayStart = document.createElement('h5');this.displayStart.style.width = '70px';this.displayStart.style.position = 'absolute';this.displayStart.style.top = '5px';this.displayStart.style.left = '10px';this.displayStart.innerHTML = '--:--';
         this.displayEnd = document.createElement('h5');this.displayEnd.style.width = '70px';this.displayEnd.style.position = 'absolute';this.displayEnd.style.bottom = '5px';this.displayEnd.style.left = '10px';this.displayEnd.innerHTML = '--:--';
         this.displayCycle = document.createElement('h5');this.displayCycle.style.position = 'absolute';this.displayCycle.style.top = '5px';this.displayCycle.style.left = '70px';this.displayCycle.innerHTML = '--';
@@ -205,7 +202,7 @@ class MarchUI{
             confirm.onclick = () => {
                 this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
                 if(select.value != PRODUTIVA){
-                    let c = this.tripFocus.way == IDA ? this.tripFromColor : 'var(--bs-tertiary-bg)';
+                    let c = this.tripFocus.way == IDA ? this.tripFromColor : this.tripToColor;
                     this.grid[this.fleetIndex][this.tripIndex].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
                 }
                 else{
@@ -219,7 +216,7 @@ class MarchUI{
                     }
                 }
                 // Se viagem foi alterada p reservada, deixa de aparecer no freqRule
-                this.freqGrid[this.fleetIndex][this.tripIndex].style.display = select.value == RESERVADO ? 'none' : 'block';
+                this.freqGrid[this.fleetIndex][this.tripIndex].style.visibility = select.value == RESERVADO ? 'hidden' : 'visible';
                 select.remove();
                 confirm.remove();
                 this.displayTripType.style.display = 'inline';
@@ -388,7 +385,7 @@ class MarchUI{
         vf.style.height = this.rulerSmallHeight;
         vf.style.backgroundColor = this.rulerSmallColor;
         vf.style.marginRight = this.rulerSmallMarginRight;
-        if([INTERVALO, ACESSO, RECOLHE].includes(trip.type)){
+        if([INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(trip.type)){
             vf.style.visibility = 'hidden';
         }
         this.freqGrid[seq].push(vf);
