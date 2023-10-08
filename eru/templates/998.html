@@ -14,7 +14,7 @@
 
 <script>
     {% block add_script %}
-    const model = new March({id:536, user: 1});
+    const model = new March({});
     if (localStorage['marchCurrentProject']){model.load(localStorage.marchCurrentProject)}
     const project = new MarchUI({
         container: document.getElementById('march_container'),

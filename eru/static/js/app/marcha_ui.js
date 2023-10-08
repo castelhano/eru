@@ -338,7 +338,7 @@ class MarchUI{
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
     addFleet(car=null, seq=this.project.cars.length + 1){
-        car = car || this.project.addFleet({param: this.project.route.param});
+        car = car || this.project.addFleet({route: this.project.route});
         let carLabel = document.createElement('span');
         carLabel.setAttribute('data-role', 'fleet_tag');
         carLabel.style.width = this.fleetTagWidth;
@@ -367,7 +367,7 @@ class MarchUI{
         }
     }
     addTrip(trip=null, seq=this.fleetIndex){
-        trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route.param);
+        trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route);
         let v = document.createElement('div'); // Elemento viagem (grid)
         v.style = this.tripStyle;
         this.__updateTripStyle(trip, v);

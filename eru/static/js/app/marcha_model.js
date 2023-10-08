@@ -68,6 +68,7 @@ class Route{
         this.id = options?.id || null;
         this.prefix = options?.prefix || '0.00';
         this.name = options?.name || 'Linha indefinida';
+        this.circular = options?.circular || false;
         this.from = options?.from || new Locale({}); // Ponto inicial da linha (PT1)
         this.to = options?.to || new Locale({}); // Ponto final da linha (PT2)
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
@@ -128,9 +129,9 @@ class Car{
         this.espec = options?.espec || null;
         this.trips = options?.trips || []; // Armazena as viagens do carro
         this.schedules = options?.schedules || []; // Armazena as tabelas (escalas) para o carro
-        if(this.trips.length == 0){this.addTrip(options.param, options['startAt'])} // Necessario pelo menos uma viagem no carro
+        if(this.trips.length == 0){this.addTrip(options.route, options['startAt'])} // Necessario pelo menos uma viagem no carro
     }
-    addTrip(route_params=null, startAt=null){ // Adiciona viagem apos ultima viagem
+    addTrip(route=null, startAt=null){ // Adiciona viagem apos ultima viagem
         let opt = {}; // Dados da viagem
         if(this.trips.length > 0){
             let last;
@@ -147,12 +148,12 @@ class Car{
                 }
             }
             let faixa = min2Range(last.end);
-            let intervalo = last.way == IDA ? route_params[faixa].toInterv : route_params[faixa].fromInterv;
-            let ciclo = last.way == IDA ? route_params[faixa].toMin : route_params[faixa].fromMin;
+            let intervalo = last.way == VOLTA || route.circular == true ? route.param[faixa].fromInterv : route.param[faixa].toInterv;
+            let ciclo = last.way == VOLTA || route.circular == true ? route.param[faixa].fromMin : route.param[faixa].toMin;
             opt = {
                 start: startAt || last.end + intervalo,
                 end: (startAt || last.end) + intervalo + ciclo,
-                way: last.way == IDA ? VOLTA : IDA,
+                way: last.way == VOLTA || route.circular == true ? IDA : VOLTA,
                 type: PRODUTIVA
             }
         }
@@ -160,7 +161,7 @@ class Car{
             let faixa = min2Range(INICIO_PADRAO);
             opt = {
                 start: startAt || INICIO_PADRAO,
-                end: (startAt || INICIO_PADRAO) + route_params[faixa].fromMin,
+                end: (startAt || INICIO_PADRAO) + route.param[faixa].fromMin,
                 way: IDA,
                 type: PRODUTIVA
             }
@@ -301,7 +302,7 @@ class Car{
 
 class March{
     constructor(options){
-        this.id = options?.id || null;
+        this.id = options?.id || 'new';
         this.desc = options?.desc || 'Novo projeto';
         this.route = options?.route || new Route({});
         this.cars = options?.cars || [];
@@ -316,7 +317,7 @@ class March{
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
     }
     addTrip(car_index, startAt=null){
-        return this.cars[car_index].addTrip(this.route.param, startAt);
+        return this.cars[car_index].addTrip(this.route, startAt);
     }
     nextTrip(trip){ // Retorna proxima viagem (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;
