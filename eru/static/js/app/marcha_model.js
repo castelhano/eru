@@ -3,7 +3,7 @@ const IDA = 1, VOLTA = 2;
 const RESERVADO = '0', PRODUTIVA = '1', EXPRESSO = '3', SEMIEXPRESSO = '4', ACESSO = '-1', RECOLHE = '-2', INTERVALO = '2';
 var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
 // Constantes para projeto
-var UTIL = 'UTIL', SABADO = 'SABADO', DOMINGO = 'DOMINGO', ESPECIAL = 'ESPECIAL';
+var UTIL = 1, SABADO = 2, DOMINGO = 3, ESPECIAL = 4;
 const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
 const MICROONIBUS = -1, CONVENCIONAL = 0, PADRON = 1, ARTICULADO = 2, BIARTICULADO = 3;
 const PORTA_LE = 1;
@@ -74,8 +74,30 @@ class Route{
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
         this.refs = options?.refs || {from:[], to:[]}; // Armazena os pontos de referencia por sentido
     }
+    getBaselines(){ // Retorna json com resumo dos patamares {start: 4, end: 8, fromMin: 50, toMin: 45, ...}
+        let paramKeys = ['fromMin','toMin','fromInterv','toInterv','fromMinAccess','toMinAccess','fromMinRecall','toMinRecall','fromKmAccess','toKmAccess','fromKmRecall','toKmRecall'];
+        let baseline = [];
+        let start = 0;
+        let end = 0;
+        let last_entry = {};
+        for(let i in this.param){
+            let entry = {};
+            for(let j = 0; j < paramKeys.length;j++){entry[paramKeys[j]] = this.param[i][paramKeys[j]]} // Carrega os attrs em entry
+            if(i == 0){ // Na primeira iteracao, cria a entrada do primeiro patamar
+                last_entry = {...entry}
+                baseline.push(Object.assign({start: 0, end: 0}, entry));
+            }
+            else if(JSON.stringify(last_entry) == JSON.stringify(entry)){ // Se nova entrada for igual entrada anterior, apenas aumenta end em 1
+                baseline[baseline.length - 1].end += 1;
+            }
+            else{ // Se encontrou diferenca no patamar, fecha entry e carrega na baseline
+                baseline.push(Object.assign({start: parseInt(i), end: parseInt(i)}, entry));
+                last_entry = {...entry};
+            }
+        }
+        return baseline;
+   }
 }
-
 class Trip{
     constructor(options){
         this.start = options?.start || INICIO_PADRAO;
@@ -420,7 +442,7 @@ class March{
     }
     load(project){ // Recebe json simples, monta instancias e carrega projeto
         project = JSON.parse(project);
-        let allowedFields = ['id', 'desc', 'user', 'status','dayType','sumIntervGaps'];
+        let allowedFields = ['id', 'desc', 'name','user', 'status','dayType','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }

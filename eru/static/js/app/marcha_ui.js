@@ -264,7 +264,7 @@ class MarchUI{
         }
         this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsShowFreqRule, 'Exibir régua de frequência'));
         
-        this.settingsSumIntervGaps = document.createElement('input');this.settingsSumIntervGaps.id = `March_settingsSumIntervGaps`;this.settingsSumIntervGaps.checked = false;
+        this.settingsSumIntervGaps = document.createElement('input');this.settingsSumIntervGaps.id = `March_settingsSumIntervGaps`;this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
         this.settingsSumIntervGaps.onclick = () => {
             if(this.settingsSumIntervGaps.checked){this.project.sumInterGaps = true;}
             else{this.project.sumInterGaps = false;}
@@ -314,6 +314,28 @@ class MarchUI{
         }
         this.settingsContainer.appendChild(this.settingsStartOperation);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Inicio de operação'));
+
+        this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.value = this.project.name;
+        this.settingsProjectName.onchange = ()=>{this.project.name = this.settingsProjectName.value;}
+        this.settingsContainer.appendChild(this.settingsProjectName);
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Nome Projeto'));
+        
+        this.settingsDayType = document.createElement('select');this.settingsDayType.classList = 'flat-select';
+        let dayTypeOpts = {1: 'Util', 2: 'Sabado', 3: 'Domingo', 4: 'Especial'}
+        for(let key in dayTypeOpts){
+            let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
+            this.settingsDayType.appendChild(opt);
+        }
+        this.settingsContainer.appendChild(this.settingsDayType);
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Dia Tipo'));
+
+        this.settingsProjectDesc = document.createElement('textarea');this.settingsProjectDesc.placeholder = ' ';this.settingsProjectDesc.classList = 'flat-textarea';this.settingsProjectDesc.value = this.project.desc;
+        this.settingsProjectDesc.onchange = ()=>{this.project.desc = this.settingsProjectDesc.value;}
+        this.settingsContainer.appendChild(this.settingsProjectDesc);
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Descrição'));
+
+        this.settingsRouteParam = document.createElement('button');this.settingsRouteParam.type = 'button';this.settingsRouteParam.classList = 'btn btn-sm btn-dark';this.settingsRouteParam.innerHTML = '<i class="bi bi-sliders2 me-2"></i> Patamares';
+        this.settingsContainer.appendChild(this.settingsRouteParam);
 
     }
     __settingsAddCustomLabel(text){
