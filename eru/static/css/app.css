@@ -22,10 +22,10 @@ dialog:focus-visible{outline: none!important;}
 
 .flat-input{border: 0;border-bottom: 2px solid var(--bs-border-color-translucent);background-color: transparent;padding-top: 22px;padding-bottom: 3px;margin-bottom: 4px;outline: none;font-size: 0.95rem;width: 100%;}
 .flat-input.is-invalid{border-bottom-color: var(--bs-form-invalid-border-color);}
-.flat-input + .flat-label{float: left;margin-top: -35px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
+.flat-input ~ .flat-label{float: left;margin-top: -35px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
 .flat-input:focus + .flat-label, .flat-input:not(:placeholder-shown) + .flat-label{font-size: 0.85rem;margin-top: -55px; opacity: 0.8;}
 .flat-textarea{border: 0;border-bottom: 2px solid var(--bs-border-color-translucent);background-color: transparent;padding-top: 20px;padding-bottom: 3px;margin-bottom: 4px;outline: none;font-size: 0.95rem;width: 100%;}
-.flat-textarea + .flat-label{float: left;margin-top: -60px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
+.flat-textarea ~ .flat-label{float: left;margin-top: -60px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
 .flat-textarea:focus + .flat-label, .flat-textarea:not(:placeholder-shown) + .flat-label{font-size: 0.85rem;margin-top: -80px; opacity: 0.8;}
 
 .flat-select{border: 0;border-bottom: 2px solid var(--bs-border-color-translucent);background-color: transparent;padding-top: 28px;padding-bottom: 3px;margin-bottom: 4px;outline: none;font-size: 0.95rem;width: 100%;}

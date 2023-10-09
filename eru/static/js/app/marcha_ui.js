@@ -34,6 +34,7 @@ class MarchUI{
         this.cursorClasslist = options?.cursorClasslist || 'bi bi-caret-down-fill fs-2';
 
         this.fleetTagWidth = options?.fleetTagWidth || '35px';
+        this.fleetTagColor = options?.fleetTagColor || '#bcbcbc';
         this.fleetHeight = options?.fleetHeight || '45px'; // height do carro
         
         this.rulerHeight = options?.rulerHeight || '25px';
@@ -54,9 +55,8 @@ class MarchUI{
 
         this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
         
-        this.tripFromColor = options?.tripFromColor || 'var(--bs-primary-text-emphasis)';
-        // this.tripToColor = options?.tripToColor || 'var(--bs-danger)';
-        this.tripToColor = options?.tripToColor || 'var(--bs-tertiary-bg)';
+        this.tripFromColor = options?.tripFromColor || 'var(--bs-purple)';
+        this.tripToColor = options?.tripToColor || 'var(--bs-gray)';
         this.tripHeight = options?.tripHeight || '8px';
 
         // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
@@ -324,8 +324,10 @@ class MarchUI{
         let dayTypeOpts = {1: 'Util', 2: 'Sabado', 3: 'Domingo', 4: 'Especial'}
         for(let key in dayTypeOpts){
             let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
+            if(this.project.dayType == key){opt.selected = true}
             this.settingsDayType.appendChild(opt);
         }
+        this.settingsDayType.onchange = ()=>{this.project.dayType = this.settingsDayType.value}
         this.settingsContainer.appendChild(this.settingsDayType);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Dia Tipo'));
 
@@ -335,6 +337,202 @@ class MarchUI{
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Descrição'));
 
         this.settingsRouteParam = document.createElement('button');this.settingsRouteParam.type = 'button';this.settingsRouteParam.classList = 'btn btn-sm btn-dark';this.settingsRouteParam.innerHTML = '<i class="bi bi-sliders2 me-2"></i> Patamares';
+        this.settingsRouteParam.onclick = ()=>{
+            canvasNavActive(false);
+            let dialog = document.createElement('dialog'); dialog.style.minWidth = '600px';dialog.style.display = 'flex';dialog.style.columnGap = '15px';
+            dialog.addEventListener('close', ()=>{dialog.remove()})
+            let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = '<h6 class="mb-2">Métricas da Linha</h6>';
+            let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
+            // Adicionado os controles das metricas
+            let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
+            this.settingsAccessFromMin = document.createElement('input');this.settingsAccessFromMin.type = 'number';this.settingsAccessFromMin.classList = 'flat-input';this.settingsAccessFromMin.min = 1;this.settingsAccessFromMin.max = 300;this.settingsAccessFromMin.value = this.project.route.metrics.fromMinAccess;this.settingsAccessFromMin.id = 'March_settingsAccessFromMin';this.settingsAccessFromMin.placeholder = ' ';
+            this.settingsAccessFromMin.onchange = ()=>{
+                if(this.settingsAccessFromMin.value == '' || parseInt(this.settingsAccessFromMin.value) < this.settingsAccessFromMin.min || parseInt(this.settingsAccessFromMin.value) > this.settingsAccessFromMin.max){
+                    this.settingsAccessFromMin.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsAccessFromMin.classList.remove('is-invalid');
+                this.project.route.metrics.fromMinAccess = parseInt(this.settingsAccessFromMin.value);
+            }
+            col11.appendChild(this.settingsAccessFromMin);
+            col11.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (min)'));
+            col1.appendChild(col11);
+            
+            let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
+            this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.route.metrics.toMinAccess;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
+            this.settingsAccessToMin.onchange = ()=>{
+                if(this.settingsAccessToMin.value == '' || parseInt(this.settingsAccessToMin.value) < this.settingsAccessToMin.min || parseInt(this.settingsAccessToMin.value) > this.settingsAccessToMin.max){
+                    this.settingsAccessToMin.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsAccessToMin.classList.remove('is-invalid');
+                this.project.route.metrics.toMinAccess = parseInt(this.settingsAccessToMin.value);
+            }
+            col12.appendChild(this.settingsAccessToMin);
+            col12.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (min)'));
+            col1.appendChild(col12);
+            
+            let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
+            this.settingsRecallFromMin = document.createElement('input');this.settingsRecallFromMin.type = 'number';this.settingsRecallFromMin.classList = 'flat-input';this.settingsRecallFromMin.min = 1;this.settingsRecallFromMin.max = 300;this.settingsRecallFromMin.value = this.project.route.metrics.fromMinRecall;this.settingsRecallFromMin.id = 'March_settingsRecallFromMin';this.settingsRecallFromMin.placeholder = ' ';
+            this.settingsRecallFromMin.onchange = ()=>{
+                if(this.settingsRecallFromMin.value == '' || parseInt(this.settingsRecallFromMin.value) < this.settingsRecallFromMin.min || parseInt(this.settingsRecallFromMin.value) > this.settingsRecallFromMin.max){
+                    this.settingsRecallFromMin.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsRecallFromMin.classList.remove('is-invalid');
+                this.project.route.metrics.fromMinRecall = parseInt(this.settingsRecallFromMin.value);
+            }
+            col13.appendChild(this.settingsRecallFromMin);
+            col13.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (min)'));
+            col1.appendChild(col13);
+            
+            let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
+            this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.route.metrics.toMinRecall;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
+            this.settingsRecallToMin.onchange = ()=>{
+                if(this.settingsRecallToMin.value == '' || parseInt(this.settingsRecallToMin.value) < this.settingsRecallToMin.min || parseInt(this.settingsRecallToMin.value) > this.settingsRecallToMin.max){
+                    this.settingsRecallToMin.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsRecallToMin.classList.remove('is-invalid');
+                this.project.route.metrics.toMinRecall = parseInt(this.settingsRecallToMin.value);
+            }
+            col14.appendChild(this.settingsRecallToMin);
+            col14.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (min)'));
+            col1.appendChild(col14);
+            
+            let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
+            this.settingsAccessFromKm = document.createElement('input');this.settingsAccessFromKm.type = 'number';this.settingsAccessFromKm.classList = 'flat-input';this.settingsAccessFromKm.min = 0;this.settingsAccessFromKm.max = 300;this.settingsAccessFromKm.value = this.project.route.metrics.fromKmAccess;this.settingsAccessFromKm.id = 'March_settingsAccessFromKm';this.settingsAccessFromKm.placeholder = ' ';
+            this.settingsAccessFromKm.onchange = ()=>{
+                if(this.settingsAccessFromKm.value == '' || parseInt(this.settingsAccessFromKm.value) < this.settingsAccessFromKm.min || parseInt(this.settingsAccessFromKm.value) > this.settingsAccessFromKm.max){
+                    this.settingsAccessFromKm.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsAccessFromKm.classList.remove('is-invalid');
+                this.project.route.metrics.fromKmAccess = parseInt(this.settingsAccessFromKm.value);
+            }
+            col15.appendChild(this.settingsAccessFromKm);
+            col15.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (km)'));
+            col1.appendChild(col15);
+            
+            let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
+            this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.route.metrics.toKmAccess;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
+            this.settingsAccessToKm.onchange = ()=>{
+                if(this.settingsAccessToKm.value == '' || parseInt(this.settingsAccessToKm.value) < this.settingsAccessToKm.min || parseInt(this.settingsAccessToKm.value) > this.settingsAccessToKm.max){
+                    this.settingsAccessToKm.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsAccessToKm.classList.remove('is-invalid');
+                this.project.route.metrics.toKmAccess = parseInt(this.settingsAccessToKm.value);
+            }
+            col16.appendChild(this.settingsAccessToKm);
+            col16.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (km)'));
+            col1.appendChild(col16);
+            
+            let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
+            this.settingsRecallFromKm = document.createElement('input');this.settingsRecallFromKm.type = 'number';this.settingsRecallFromKm.classList = 'flat-input';this.settingsRecallFromKm.min = 0;this.settingsRecallFromKm.max = 300;this.settingsRecallFromKm.value = this.project.route.metrics.fromKmRecall;this.settingsRecallFromKm.id = 'March_settingsRecallFromKm';this.settingsRecallFromKm.placeholder = ' ';
+            this.settingsRecallFromKm.onchange = ()=>{
+                if(this.settingsRecallFromKm.value == '' || parseInt(this.settingsRecallFromKm.value) < this.settingsRecallFromKm.min || parseInt(this.settingsRecallFromKm.value) > this.settingsRecallFromKm.max){
+                    this.settingsRecallFromKm.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsRecallFromKm.classList.remove('is-invalid');
+                this.project.route.metrics.fromKmRecall = parseInt(this.settingsRecallFromKm.value);
+            }
+            col17.appendChild(this.settingsRecallFromKm);
+            col17.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (km)'));
+            col1.appendChild(col17);
+            
+            let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
+            this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.route.metrics.toKmRecall;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
+            this.settingsRecallToKm.onchange = ()=>{
+                if(this.settingsRecallToKm.value == '' || parseInt(this.settingsRecallToKm.value) < this.settingsRecallToKm.min || parseInt(this.settingsRecallToKm.value) > this.settingsRecallToKm.max){
+                    this.settingsRecallToKm.classList.add('is-invalid');
+                    return false;
+                }
+                this.settingsRecallToKm.classList.remove('is-invalid');
+                this.project.route.metrics.toKmRecall = parseInt(this.settingsRecallToKm.value);
+            }
+            col18.appendChild(this.settingsRecallToKm);
+            col18.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (km)'));
+            col1.appendChild(col18);
+            
+            // Adicionando os controles dos patamares
+            let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '14%';
+            this.settingsBaselineStart = document.createElement('input');this.settingsBaselineStart.type = 'number';this.settingsBaselineStart.classList = 'flat-input';this.settingsBaselineStart.min = 0;this.settingsBaselineStart.max = 23;this.settingsBaselineStart.value = 0;this.settingsBaselineStart.id = 'March_settingsBaselineStart';this.settingsBaselineStart.placeholder = ' ';
+            col21.appendChild(this.settingsBaselineStart);
+            col21.appendChild(this.__settingsAddCustomLabel('Faixa Inicio'));
+            col2.appendChild(col21);
+            
+            let col22 = document.createElement('div'); col22.style.display = 'inline-block';col22.style.width = '14%';
+            this.settingsBaselineEnd = document.createElement('input');this.settingsBaselineEnd.type = 'number';this.settingsBaselineEnd.classList = 'flat-input';this.settingsBaselineEnd.min = 1;this.settingsBaselineEnd.max = 23;this.settingsBaselineEnd.value = 23;this.settingsBaselineEnd.id = 'March_settingsBaselineEnd';this.settingsBaselineEnd.placeholder = ' ';
+            col22.appendChild(this.settingsBaselineEnd);
+            col22.appendChild(this.__settingsAddCustomLabel('Faixa Fim'));
+            col2.appendChild(col22);
+            
+            let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '14%';
+            this.settingsBaselineFromMin = document.createElement('input');this.settingsBaselineFromMin.type = 'number';this.settingsBaselineFromMin.classList = 'flat-input';this.settingsBaselineFromMin.min = 1;this.settingsBaselineFromMin.max = 300;this.settingsBaselineFromMin.value = 1;this.settingsBaselineFromMin.id = 'March_settingsBaselineFromMin';this.settingsBaselineFromMin.placeholder = ' ';
+            col23.appendChild(this.settingsBaselineFromMin);
+            col23.appendChild(this.__settingsAddCustomLabel('Ciclo Ida'));
+            col2.appendChild(col23);
+            
+            let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '14%';
+            this.settingsBaselineToMin = document.createElement('input');this.settingsBaselineToMin.type = 'number';this.settingsBaselineToMin.classList = 'flat-input';this.settingsBaselineToMin.min = 1;this.settingsBaselineToMin.max = 300;this.settingsBaselineToMin.value = 1;this.settingsBaselineToMin.id = 'March_settingsBaselineToMin';this.settingsBaselineToMin.placeholder = ' ';
+            col24.appendChild(this.settingsBaselineToMin);
+            col24.appendChild(this.__settingsAddCustomLabel('Ciclo Volta'));
+            col2.appendChild(col24);
+            
+            let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '14%';
+            this.settingsBaselineFromInterv = document.createElement('input');this.settingsBaselineFromInterv.type = 'number';this.settingsBaselineFromInterv.classList = 'flat-input';this.settingsBaselineFromInterv.min = 1;this.settingsBaselineFromInterv.max = 300;this.settingsBaselineFromInterv.value = 1;this.settingsBaselineFromInterv.id = 'March_settingsBaselineFromInterv';this.settingsBaselineFromInterv.placeholder = ' ';
+            col25.appendChild(this.settingsBaselineFromInterv);
+            col25.appendChild(this.__settingsAddCustomLabel('Intervalo Ida'));
+            col2.appendChild(col25);
+            
+            let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '14%';
+            this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
+            col26.appendChild(this.settingsBaselineToInterv);
+            col26.appendChild(this.__settingsAddCustomLabel('Intervalo Volta'));
+            col2.appendChild(col26);
+            
+            let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '16%';col27.style.textAlign  = 'right';
+            this.settingsBaselineSubmit = document.createElement('button');this.settingsBaselineSubmit.type = 'button';this.settingsBaselineSubmit.classList  = 'btn btn-sm btn-dark ms-2';this.settingsBaselineSubmit.innerHTML = 'Gravar'; 
+            this.settingsBaselineSubmit.onclick = ()=>{
+                console.log('ENTREI');
+                let has_error = false
+                col2.querySelectorAll('input').forEach((el)=>{ // Valida entradas nos inputs
+                    if(el.value == '' || parseInt(el.value) < el.min || parseInt(el.value) > el.max){
+                        el.classList.add('is-invalid');
+                        has_error = true;
+                    }
+                })
+                if(has_error){return false}
+                for(let i = parseInt(this.settingsBaselineStart.value); i <= parseInt(this.settingsBaselineEnd.value); i++){
+                    this.project.route.param[i].fromMin = parseInt(this.settingsBaselineFromMin.value);
+                    this.project.route.param[i].toMin = parseInt(this.settingsBaselineToMin.value);
+                    this.project.route.param[i].fromInterv = parseInt(this.settingsBaselineFromInterv.value);
+                    this.project.route.param[i].toInterv = parseInt(this.settingsBaselineToInterv.value);
+                }
+                console.log('FAZAENDO UPDATE');
+                this.__settingsUpdateBaselines();
+            }
+            col27.appendChild(this.settingsBaselineSubmit);
+            
+            this.settingsBaselineCancel = document.createElement('button');this.settingsBaselineCancel.type = 'button';this.settingsBaselineCancel.classList  = 'btn btn-sm btn-dark ms-1';this.settingsBaselineCancel.innerHTML = 'Cancelar'; 
+            this.settingsBaselineCancel.onclick = ()=>{dialog.close();dialog.remove();}
+            col27.appendChild(this.settingsBaselineCancel);
+            col2.appendChild(col27);
+            
+            this.settingsBaselineContainer = document.createElement('div');
+            this.settingsBaselineTable = document.createElement('table');this.settingsBaselineTable.classList = 'table table-sm table-border text-center fs-7 mt-2';
+            this.settingsBaselineContainer.appendChild(this.settingsBaselineTable);
+            col2.appendChild(this.settingsBaselineContainer);
+            this.__settingsUpdateBaselines();
+            
+            // ****
+            dialog.appendChild(col1);
+            dialog.appendChild(col2);
+            document.body.appendChild(dialog);
+            dialog.showModal();
+        }
         this.settingsContainer.appendChild(this.settingsRouteParam);
 
     }
@@ -359,11 +557,21 @@ class MarchUI{
     }
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
+    __settingsUpdateBaselines(){
+        let baseline = this.project.route.getBaselines();
+        this.settingsBaselineTable.innerHTML = '<thead><tr><th colspan="2">Faixa</th><th colspan="2">Ciclo</th><th colspan="2">Intervalo</th></tr><tr><th>Inicio</th><th>Fim</th><th>Ida</th><th>Volta</th><th>Ida</th><th>Volta</th></tr></thead>';
+        for(let i = 0; i < baseline.length; i++){
+            let tr = `<tr><td>${baseline[i].start}</td><td>${baseline[i].end}</td><td>${baseline[i].fromMin}</td><td>${baseline[i].toMin}</td><td>${baseline[i].fromInterv}</td><td>${baseline[i].toInterv}</td></tr>`;
+            this.settingsBaselineTable.innerHTML += tr;
+        }
+    }
+
     addFleet(car=null, seq=this.project.cars.length + 1){
         car = car || this.project.addFleet({route: this.project.route});
         let carLabel = document.createElement('span');
         carLabel.setAttribute('data-role', 'fleet_tag');
         carLabel.style.width = this.fleetTagWidth;
+        carLabel.style.color = this.fleetTagColor;
         carLabel.style.height = this.fleetHeight;
         carLabel.style.paddingLeft = '3px';
         carLabel.style.position = 'absolute';
@@ -481,7 +689,7 @@ class MarchUI{
     }
     addAccess(){
         if(!this.tripFocus){return false}
-        let trip = this.project.cars[this.fleetIndex].addAccess(this.tripIndex, this.project.route.param);
+        let trip = this.project.cars[this.fleetIndex].addAccess(this.tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.tripStyle;
@@ -511,7 +719,7 @@ class MarchUI{
     }
     addRecall(){
         if(!this.tripFocus){return false}
-        let trip = this.project.cars[this.fleetIndex].addRecall(this.tripIndex, this.project.route.param);
+        let trip = this.project.cars[this.fleetIndex].addRecall(this.tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.tripStyle;
@@ -542,6 +750,11 @@ class MarchUI{
         dialog.innerHTML = `<p>Deseja altera o sentido da viagem para <b class="text-purple">${this.tripFocus.way  == IDA ? 'VOLTA' : 'IDA'}</b>?</p>`
         let check = document.createElement('input');check.id = 'March_switchWayCheck';check.checked = 'true'
         dialog.appendChild(this.__settingsContainerSwitch(check, 'Alterar demais viagens'));
+        let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-phanton text-secondary float-end';cancel.innerHTML = 'Cancelar';
+        cancel.onclick = ()=>{
+            dialog.close();
+            dialog.remove();            
+        }
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-phanton float-end';confirm.innerHTML = 'Gravar';
         confirm.onclick = () => {
             this.project.cars[this.fleetIndex].switchWay(this.tripIndex, check.checked);
@@ -551,11 +764,11 @@ class MarchUI{
                     this.__updateTripStyle(this.project.cars[this.fleetIndex].trips[i], this.grid[this.fleetIndex][i]);
                 }
             }
-            dialog.close();
-            dialog.remove();
+            cancel.click();
             this.__updateTripDisplay();
         }
         dialog.appendChild(confirm);
+        dialog.appendChild(cancel);
         document.body.appendChild(dialog);
         dialog.showModal();
     }
@@ -1050,6 +1263,7 @@ class MarchUI{
         appKeyMap.bind({key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagens', desc: 'Remove viagem em foco e posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip()}})
         appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
         appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
+        appKeyMap.bind({key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: ()=>{this.settingsRouteParam.click()}})
         appKeyMap.bind({key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
             this.__saveLocal();
             appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')

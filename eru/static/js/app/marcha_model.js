@@ -17,14 +17,6 @@ function defaultParam(value=50){
             toMin: value,
             fromInterv: INTERVALO_IDA,
             toInterv: INTERVALO_VOLTA,
-            fromMinAccess: ACESSO_PADRAO,
-            toMinAccess: ACESSO_PADRAO,
-            fromMinRecall: RECOLHE_PADRAO,
-            toMinRecall: RECOLHE_PADRAO,
-            fromKmAccess: 0,
-            toKmAccess: 0,
-            fromKmRecall: 0,
-            toKmRecall: 0,
         };
     }
     return d;
@@ -72,10 +64,20 @@ class Route{
         this.from = options?.from || new Locale({}); // Ponto inicial da linha (PT1)
         this.to = options?.to || new Locale({}); // Ponto final da linha (PT2)
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
+        this.metrics = options?.metrics || { // Metricas adicionais (tempos de acesso, recolhe e extensao de acesso e recolhe)
+            fromMinAccess: ACESSO_PADRAO,
+            toMinAccess: ACESSO_PADRAO,
+            fromMinRecall: RECOLHE_PADRAO,
+            toMinRecall: RECOLHE_PADRAO,
+            fromKmAccess: 0,
+            toKmAccess: 0,
+            fromKmRecall: 0,
+            toKmRecall: 0,
+        }; 
         this.refs = options?.refs || {from:[], to:[]}; // Armazena os pontos de referencia por sentido
     }
     getBaselines(){ // Retorna json com resumo dos patamares {start: 4, end: 8, fromMin: 50, toMin: 45, ...}
-        let paramKeys = ['fromMin','toMin','fromInterv','toInterv','fromMinAccess','toMinAccess','fromMinRecall','toMinRecall','fromKmAccess','toKmAccess','fromKmRecall','toKmRecall'];
+        let paramKeys = ['fromMin','toMin','fromInterv','toInterv'];
         let baseline = [];
         let start = 0;
         let end = 0;
@@ -207,11 +209,11 @@ class Car{
         this.trips.sort((a, b) => a.start > b.start ? 1 : -1);
         return v;
     }
-    addAccess(trip_index, params){
+    addAccess(trip_index, metrics){
         // Acesso somente inserido se viagem for produtiva
         if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type)){return false}
         let wayAccess = this.trips[trip_index].way == IDA ? 'fromMinAccess' : 'toMinAccess';
-        let accessMin = params[min2Range(this.trips[trip_index].start)][wayAccess];
+        let accessMin = metrics[wayAccess];
         let v = new Trip({start: this.trips[trip_index].start - accessMin - 1, end: this.trips[trip_index].start - 1, type: ACESSO, way: this.trips[trip_index].way})
         if(this.__tripIsValid(v)){
             this.trips.push(v);
@@ -220,11 +222,11 @@ class Car{
         }
         return false;
     }
-    addRecall(trip_index, params){
+    addRecall(trip_index, metrics){
         // Recolhe somente inserido se viagem for produtiva
         if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type)){return false}
         let wayRecall = this.trips[trip_index].way == IDA ? 'fromMinRecall' : 'toMinRecall';
-        let recallMin = params[min2Range(this.trips[trip_index].end)][wayRecall];
+        let recallMin = metrics[wayRecall];
         let v = new Trip({start: this.trips[trip_index].end + 1, end: this.trips[trip_index].end + recallMin + 1, type: RECOLHE, way: this.trips[trip_index].way})
         if(this.__tripIsValid(v)){
             this.trips.push(v);
