@@ -336,8 +336,6 @@ class March{
         this.status = options?.status || INCOMPLETO;
         this.dayType = options?.dayType || UTIL;
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
-        // Se projeto vazio verifica se nao existe previa salvo localmente, se sim carrega previa
-        if(this.cars.length == 0 && localStorage['marchCurrentProject']){this.load(localStorage.marchCurrentProject)}
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
         if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + FREQUENCIA_BASE;}
@@ -379,8 +377,8 @@ class March{
         let t = this.previousTrip(trip);
         return t ? trip.start - t[2].start : false;
     }
-    getJourney(car_index=null){
-        if(car_index != null){ // Retorna a soma da jornada do carro informado
+    getJourney(car_index=null){ // Retorna a soma da jornada do carro informado
+        if(car_index != null){
             return this.cars[car_index].getJourney(this.sumInterGaps);
         }
         let sum = 0;
@@ -389,8 +387,8 @@ class March{
         }
         return sum;
     }
-    getIntervs(car_index=null){
-        if(car_index != null){ // Retorna a soma de intervalos do carro informado
+    getIntervs(car_index=null){ // Retorna a soma de intervalos do carro informado
+        if(car_index != null){
             return this.cars[car_index].getIntervs(this.sumInterGaps);
         }
         let sum = 0;
@@ -442,8 +440,12 @@ class March{
         this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
         return true;
     }
+    generate(metrics){ // Gera planejamento baseado nas metricas definidas
+        this.cars = []; // Limpa planejamento atual
+        console.log(metrics);
+    }
     load(project){ // Recebe json simples, monta instancias e carrega projeto
-        project = JSON.parse(project);
+        // project = JSON.parse(project);
         let allowedFields = ['id', 'desc', 'name','user', 'status','dayType','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];

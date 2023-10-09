@@ -43,7 +43,7 @@ class MarchUI{
         this.rulerNumPaddingStart = options?.rulerNumPaddingStart || '4px';
         this.rulerNumPaddingTop = options?.rulerNumPaddingTop || '2px';
         
-        this.rulerUnit = options?.rulerUnit || '6px';
+        this.rulerUnit = options?.rulerUnit || '4px';
         this.rulerClasslist = options?.rulerClasslist || 'bg-body';
         this.rulerSmallWidth = options?.rulerSmallWidth || '1px';
         this.rulerSmallColor = options?.rulerSmallColor || '#666';
@@ -51,12 +51,12 @@ class MarchUI{
         this.rulerMediumWidth = options?.rulerMediumWidth || '1px';
         this.rulerMediumColor = options?.rulerMediumColor || '#BBB';
         this.rulerMediumHeight = options?.rulerMediumHeight || '15px';
-        this.rulerMediumUnit = options?.rulerMediumUnit || 30;
+        this.rulerMediumUnit = options?.rulerMediumUnit || 60;
 
         this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
         
-        this.tripFromColor = options?.tripFromColor || 'var(--bs-purple)';
-        this.tripToColor = options?.tripToColor || 'var(--bs-gray)';
+        this.tripFromColor = options?.tripFromColor || '#6F42C1';
+        this.tripToColor = options?.tripToColor || '#6C757D';
         this.tripHeight = options?.tripHeight || '8px';
 
         // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
@@ -64,9 +64,9 @@ class MarchUI{
             '0':`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
             '3':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
             '4':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
-            '-1':'linear-gradient(90deg, var(--bs-dark-bg-subtle) 40%, var(--bs-secondary-bg) 0)',
-            '-2':'linear-gradient(90deg, var(--bs-secondary-bg) 60%, var(--bs-dark-bg-subtle) 0)',
-            '2':'repeating-linear-gradient(0deg, var(--bs-secondary-bg), var(--bs-secondary-bg) 3px, transparent 3px, transparent)',
+            '-1':'linear-gradient(90deg, #666 40%, #CCC 0)',
+            '-2':'linear-gradient(90deg, #CCC 60%, #666 0)',
+            '2':'repeating-linear-gradient(0deg, #CCC, #CCC 3px, transparent 3px, transparent)',
         }
         
         this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 start-0 border-top';
@@ -88,6 +88,16 @@ class MarchUI{
         
         this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.fleetHeight));
         
+        // Carrega configuracoes do usuario para o grid
+        if(localStorage['marchUiSettings']){
+            let s = JSON.parse(localStorage['marchUiSettings']);
+            this.project.sumInterGaps = s.sumInterGaps;
+            this.tripFromColor = s.tripFromColor;
+            this.tripToColor = s.tripToColor;
+            this.rulerUnit = s.rulerUnit + 'px';
+            INICIO_PADRAO = parseInt(s.startOperation);
+        }
+
         this.__build();
         this.__buildRuler();
         this.__buildCursor();
@@ -95,8 +105,11 @@ class MarchUI{
         this.__addListeners();
         if(this.settingsContainer){this.__builSettingsUI()}
 
-        this.__load(); // Carrega carros e viagens (caso pre carregado projeto)
-
+        // Se projeto vazio verifica se nao existe previa salvo localmente, se sim carrega previa
+        if(this.project.cars.length == 0 && localStorage['marchCurrentProject']){
+            this.project.load(JSON.parse(localStorage.marchCurrentProject)); // Carrega modelo com projeto salvo localmente
+            this.__load(); // Constroi interface para projeto
+        }
     }
     __build(){ // Constroi o canvas (grid principal) e as reguas superior e de frequencia, alem do modal de configuracao do projeto
         this.canvas = document.createElement('div');
@@ -268,10 +281,41 @@ class MarchUI{
         this.settingsSumIntervGaps.onclick = () => {
             if(this.settingsSumIntervGaps.checked){this.project.sumInterGaps = true;}
             else{this.project.sumInterGaps = false;}
+            this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsSumIntervGaps, 'Somar tempo parado aos intervalos'));
         
-        this.settingsContainer.appendChild(this.__settingsAddBreak());
+        this.settingsContainer.appendChild(this.__settingsAddDivisor());
+        
+        this.settingsFromColor = document.createElement('input');this.settingsFromColor.type = `color`;this.settingsFromColor.value = this.tripFromColor;
+        this.settingsFromColor.onchange = () => {
+            this.tripFromColor = this.settingsFromColor.value;
+            for(let i = 0; i < this.project.cars.length; i++){
+                for(let j = 0; j < this.project.cars[i].trips.length;j++){
+                    if(this.project.cars[i].trips[j].way == IDA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
+                }
+            }
+            this.__saveUISettings();
+        }
+        this.settingsContainer.appendChild(this.settingsFromColor);
+        let fromColorLabel = document.createElement('small');fromColorLabel.innerHTML = `IDA`;fromColorLabel.style.position = 'relative';fromColorLabel.style.top = '-7px';fromColorLabel.style.left = '5px';
+        this.settingsContainer.appendChild(fromColorLabel);
+        
+        this.settingsToColor = document.createElement('input');this.settingsToColor.type = `color`;this.settingsToColor.style.marginLeft = `25px`;this.settingsToColor.value = this.tripToColor;
+        this.settingsToColor.onchange = () => {
+            this.tripToColor = this.settingsToColor.value;
+            for(let i = 0; i < this.project.cars.length; i++){
+                for(let j = 0; j < this.project.cars[i].trips.length;j++){
+                    if(this.project.cars[i].trips[j].way == VOLTA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
+                }
+            }
+            this.__saveUISettings();
+        }
+        this.settingsContainer.appendChild(this.settingsToColor);
+        let toColorLabel = document.createElement('small');toColorLabel.innerHTML = `VOLTA`;toColorLabel.style.position = 'relative';toColorLabel.style.top = '-7px';toColorLabel.style.left = '5px';
+        this.settingsContainer.appendChild(toColorLabel);
+        
+        this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
         this.settingsRulerUnit = document.createElement('input');this.settingsRulerUnit.type = 'number';this.settingsRulerUnit.min = 2;this.settingsRulerUnit.max = 10;this.settingsRulerUnit.placeholder = ' ';this.settingsRulerUnit.classList = 'flat-input';this.settingsRulerUnit.value = parseInt(this.rulerUnit);
         this.settingsRulerUnit.onchange = () => {
@@ -287,6 +331,7 @@ class MarchUI{
                 this.__cursorMove(); // Move o cursor para ajustar view
             }
             this.canvasFit(); // Ajusta posicao do canvas com novas definicoes
+            this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.settingsRulerUnit);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Unidade (em px) [ 2 a 10 ]'));
@@ -300,6 +345,7 @@ class MarchUI{
             this.settingsRulerMediumUnit.classList.remove('is-invalid');
             this.rulerMediumUnit = this.settingsRulerMediumUnit.value;
             this.__buildRuler();
+            this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.settingsRulerMediumUnit);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Display de minutos [ 10 a 180 ]'));
@@ -307,7 +353,7 @@ class MarchUI{
         this.settingsStartOperation = document.createElement('input');this.settingsStartOperation.type = 'time';this.settingsStartOperation.placeholder = ' ';this.settingsStartOperation.classList = 'flat-input';this.settingsStartOperation.value = min2Hour(INICIO_PADRAO);
         this.settingsStartOperation.onchange = () => {
             let v = hour2Min(this.settingsStartOperation.value);
-            if(v){INICIO_PADRAO = v;this.settingsStartOperation.classList.remove('is-invalid');}
+            if(v){INICIO_PADRAO = v;this.settingsStartOperation.classList.remove('is-invalid');this.__saveUISettings();}
             else{
                 this.settingsStartOperation.classList.add('is-invalid');
             }
@@ -339,8 +385,9 @@ class MarchUI{
         this.settingsRouteParam = document.createElement('button');this.settingsRouteParam.type = 'button';this.settingsRouteParam.classList = 'btn btn-sm btn-dark';this.settingsRouteParam.innerHTML = '<i class="bi bi-sliders2 me-2"></i> Patamares';
         this.settingsRouteParam.onclick = ()=>{
             canvasNavActive(false);
+            this.gridLocked = true;
             let dialog = document.createElement('dialog'); dialog.style.minWidth = '600px';dialog.style.display = 'flex';dialog.style.columnGap = '15px';
-            dialog.addEventListener('close', ()=>{dialog.remove()})
+            dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove();})
             let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = '<h6 class="mb-2">Métricas da Linha</h6>';
             let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
             // Adicionado os controles das metricas
@@ -457,46 +504,60 @@ class MarchUI{
             col1.appendChild(col18);
             
             // Adicionando os controles dos patamares
-            let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '14%';
+            let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '12%';
             this.settingsBaselineStart = document.createElement('input');this.settingsBaselineStart.type = 'number';this.settingsBaselineStart.classList = 'flat-input';this.settingsBaselineStart.min = 0;this.settingsBaselineStart.max = 23;this.settingsBaselineStart.value = 0;this.settingsBaselineStart.id = 'March_settingsBaselineStart';this.settingsBaselineStart.placeholder = ' ';
             col21.appendChild(this.settingsBaselineStart);
             col21.appendChild(this.__settingsAddCustomLabel('Faixa Inicio'));
             col2.appendChild(col21);
             
-            let col22 = document.createElement('div'); col22.style.display = 'inline-block';col22.style.width = '14%';
+            let col22 = document.createElement('div'); col22.style.display = 'inline-block';col22.style.width = '12%';
             this.settingsBaselineEnd = document.createElement('input');this.settingsBaselineEnd.type = 'number';this.settingsBaselineEnd.classList = 'flat-input';this.settingsBaselineEnd.min = 1;this.settingsBaselineEnd.max = 23;this.settingsBaselineEnd.value = 23;this.settingsBaselineEnd.id = 'March_settingsBaselineEnd';this.settingsBaselineEnd.placeholder = ' ';
             col22.appendChild(this.settingsBaselineEnd);
             col22.appendChild(this.__settingsAddCustomLabel('Faixa Fim'));
             col2.appendChild(col22);
             
-            let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '14%';
+            let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '12%';
             this.settingsBaselineFromMin = document.createElement('input');this.settingsBaselineFromMin.type = 'number';this.settingsBaselineFromMin.classList = 'flat-input';this.settingsBaselineFromMin.min = 1;this.settingsBaselineFromMin.max = 300;this.settingsBaselineFromMin.value = 1;this.settingsBaselineFromMin.id = 'March_settingsBaselineFromMin';this.settingsBaselineFromMin.placeholder = ' ';
+            this.settingsBaselineFromMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
             col23.appendChild(this.settingsBaselineFromMin);
             col23.appendChild(this.__settingsAddCustomLabel('Ciclo Ida'));
             col2.appendChild(col23);
             
-            let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '14%';
+            let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '12%';
             this.settingsBaselineToMin = document.createElement('input');this.settingsBaselineToMin.type = 'number';this.settingsBaselineToMin.classList = 'flat-input';this.settingsBaselineToMin.min = 1;this.settingsBaselineToMin.max = 300;this.settingsBaselineToMin.value = 1;this.settingsBaselineToMin.id = 'March_settingsBaselineToMin';this.settingsBaselineToMin.placeholder = ' ';
+            this.settingsBaselineToMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
             col24.appendChild(this.settingsBaselineToMin);
             col24.appendChild(this.__settingsAddCustomLabel('Ciclo Volta'));
             col2.appendChild(col24);
             
-            let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '14%';
+            let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '12%';
             this.settingsBaselineFromInterv = document.createElement('input');this.settingsBaselineFromInterv.type = 'number';this.settingsBaselineFromInterv.classList = 'flat-input';this.settingsBaselineFromInterv.min = 1;this.settingsBaselineFromInterv.max = 300;this.settingsBaselineFromInterv.value = 1;this.settingsBaselineFromInterv.id = 'March_settingsBaselineFromInterv';this.settingsBaselineFromInterv.placeholder = ' ';
+            this.settingsBaselineFromInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
             col25.appendChild(this.settingsBaselineFromInterv);
             col25.appendChild(this.__settingsAddCustomLabel('Intervalo Ida'));
             col2.appendChild(col25);
             
-            let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '14%';
+            let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '12%';
             this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
+            this.settingsBaselineToInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
             col26.appendChild(this.settingsBaselineToInterv);
             col26.appendChild(this.__settingsAddCustomLabel('Intervalo Volta'));
             col2.appendChild(col26);
             
-            let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '16%';col27.style.textAlign  = 'right';
+            let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '12%';
+            this.settingsFleetSimulate = document.createElement('input');this.settingsFleetSimulate.type = 'number';this.settingsFleetSimulate.classList = 'flat-input w-auto';this.settingsFleetSimulate.min = 0;this.settingsFleetSimulate.max = 30;this.settingsFleetSimulate.value = 0;this.settingsFleetSimulate.id = 'March_settingsFleetSimulate';this.settingsFleetSimulate.placeholder = ' ';
+            this.settingsFleetSimulate.onchange = () => {this.__settingsUpdateFreqSimulate()}
+            col27.appendChild(this.settingsFleetSimulate);
+            col27.appendChild(this.__settingsAddCustomLabel('Frota (simulada)'));
+            
+            this.settingsFreqSimulate = document.createElement('b');this.settingsFreqSimulate.style.paddingLeft = '20px';;this.settingsFreqSimulate.innerHTML = '--';
+            col27.appendChild(this.settingsFreqSimulate);
+            
+            col2.appendChild(col27);
+            
+            let col28 = document.createElement('div'); col28.style.display = 'inline-block';col28.style.width = '16%';col28.style.textAlign  = 'right';
             this.settingsBaselineSubmit = document.createElement('button');this.settingsBaselineSubmit.type = 'button';this.settingsBaselineSubmit.classList  = 'btn btn-sm btn-dark ms-2';this.settingsBaselineSubmit.innerHTML = 'Gravar'; 
             this.settingsBaselineSubmit.onclick = ()=>{
-                console.log('ENTREI');
                 let has_error = false
                 col2.querySelectorAll('input').forEach((el)=>{ // Valida entradas nos inputs
                     if(el.value == '' || parseInt(el.value) < el.min || parseInt(el.value) > el.max){
@@ -511,15 +572,14 @@ class MarchUI{
                     this.project.route.param[i].fromInterv = parseInt(this.settingsBaselineFromInterv.value);
                     this.project.route.param[i].toInterv = parseInt(this.settingsBaselineToInterv.value);
                 }
-                console.log('FAZAENDO UPDATE');
                 this.__settingsUpdateBaselines();
             }
-            col27.appendChild(this.settingsBaselineSubmit);
+            col28.appendChild(this.settingsBaselineSubmit);
             
             this.settingsBaselineCancel = document.createElement('button');this.settingsBaselineCancel.type = 'button';this.settingsBaselineCancel.classList  = 'btn btn-sm btn-dark ms-1';this.settingsBaselineCancel.innerHTML = 'Cancelar'; 
             this.settingsBaselineCancel.onclick = ()=>{dialog.close();dialog.remove();}
-            col27.appendChild(this.settingsBaselineCancel);
-            col2.appendChild(col27);
+            col28.appendChild(this.settingsBaselineCancel);
+            col2.appendChild(col28);
             
             this.settingsBaselineContainer = document.createElement('div');
             this.settingsBaselineTable = document.createElement('table');this.settingsBaselineTable.classList = 'table table-sm table-border text-center fs-7 mt-2';
@@ -557,7 +617,7 @@ class MarchUI{
     }
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
-    __settingsUpdateBaselines(){
+    __settingsUpdateBaselines(){ // Atualiza tabela com patamares cadastrados
         let baseline = this.project.route.getBaselines();
         this.settingsBaselineTable.innerHTML = '<thead><tr><th colspan="2">Faixa</th><th colspan="2">Ciclo</th><th colspan="2">Intervalo</th></tr><tr><th>Inicio</th><th>Fim</th><th>Ida</th><th>Volta</th><th>Ida</th><th>Volta</th></tr></thead>';
         for(let i = 0; i < baseline.length; i++){
@@ -565,7 +625,10 @@ class MarchUI{
             this.settingsBaselineTable.innerHTML += tr;
         }
     }
-
+    __settingsUpdateFreqSimulate(){ // Calcula frequencia (exibe na label) baseado nos dados do patamar
+        if(this.settingsFleetSimulate.value == '' || this.settingsFleetSimulate.value == 0){this.settingsFreqSimulate.innerHTML = '--'; return false;}
+        this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineToMin.value) + parseInt(this.settingsBaselineFromInterv.value) + parseInt(this.settingsBaselineToInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+    }
     addFleet(car=null, seq=this.project.cars.length + 1){
         car = car || this.project.addFleet({route: this.project.route});
         let carLabel = document.createElement('span');
@@ -605,6 +668,7 @@ class MarchUI{
         v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
         v.style.top = `calc(${this.fleetHeight} * ${seq + 1} - 17px)`;
         v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
+        v.setAttribute('data-trip', trip.way);
         this.grid[seq].push(v);
         this.canvas.appendChild(v);
         let vf = document.createElement('div'); // Dot na regua de frequencia
@@ -897,7 +961,7 @@ class MarchUI{
         }
     }
     __addToSelection(){ // Seleciona viagens
-        if(this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
+        if(!this.tripFocus || this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
         if(this.fleetSelection >= 0 &&  this.startSelection >= 0){ // Selecao ja iniciada
             this.endSelection++;
             let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
@@ -918,7 +982,7 @@ class MarchUI{
         
     }
     __subToSelection(){
-        if(this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false}
+        if(!this.tripFocus || this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false}
         if(this.endSelection == this.startSelection){this.__clearSelection();return false} // Se existe apenas uma viagem selecionada apenasremove a selecao e encerra bloco
         this.endSelection--;
         let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
@@ -1084,8 +1148,17 @@ class MarchUI{
     __gridIsBlock(){
         return this.gridLocked || canvasNavActive() || appKeyMap.modal.open;        
     }
-    __saveLocal(){
+    __saveLocal(){ // Salva no localStorage o projeto
         localStorage.marchCurrentProject = JSON.stringify(this.project);
+    }
+    __saveUISettings(){ // Salva no localStorage algumas variaveis de interface
+        localStorage.marchUiSettings = JSON.stringify({
+            sumInterGaps: this.project.sumInterGaps,
+            tripFromColor: this.tripFromColor,
+            tripToColor: this.tripToColor,
+            rulerUnit: this.rulerUnit,
+            startOperation: INICIO_PADRAO
+        })
     }
     __load(){
         // Apaga todos os elementos do grid e freqGrid
@@ -1120,8 +1193,8 @@ class MarchUI{
     }
     __addListeners(){ // Cria atalhos de teclado para manipulação do projeto (dependencia da lib listener.js)
         appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
-        appKeyMap.bind({key: ']', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
-        appKeyMap.bind({key: ']', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTripAt()}}})
+        appKeyMap.bind({key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock() || !this.tripFocus){return false;}this.addTripAt()}})
         appKeyMap.bind({key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: ()=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
@@ -1270,7 +1343,8 @@ class MarchUI{
         }})
         appKeyMap.bind({key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recarrega última prévia', desc: 'Recarrega última prévia salva em disco', run: ()=>{
             if(localStorage['marchCurrentProject']){
-                this.project.load(localStorage.marchCurrentProject)
+                let obj = JSON.parse(project);
+                this.project.load(obj.project)
                 this.__load();
             }
             else{
