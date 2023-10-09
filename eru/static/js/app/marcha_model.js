@@ -126,8 +126,11 @@ class Trip{
         return false;
     }
     backStart(){ // Subtrai um minuto no inicio da viagem
-        this.start--;
-        return true;
+        if(this.start > 1){ // Primeira viagem precisa iniciar as 00:01 no grid
+            this.start--;
+            return true;
+        }
+        return false;
     }
     advance(){ // Aumenta um minuto no inicio e no final da viagem
         this.start++;
@@ -135,9 +138,12 @@ class Trip{
         return true;
     }
     back(){ // Subtrai um minuto no inicio e no final da viagem
-        this.start--;
-        this.end--;
-        return true;
+        if(this.start > 1){ // Primeira viagem precisa iniciar as 00:01 no grid
+            this.start--;
+            this.end--;
+            return true;
+        }
+        return false;
     }
     getCycle(){ // Retorna ciclo em minutos
         return this.end - this.start;
@@ -158,8 +164,8 @@ class Car{
     addTrip(route=null, startAt=null){ // Adiciona viagem apos ultima viagem
         let opt = {}; // Dados da viagem
         if(this.trips.length > 0){
-            let last;
-            if(startAt == null){last = this.trips[this.trips.length - 1]} // Se nao informado startAt insere apos ultima viagem
+            let last = null;
+            if(!startAt){last = this.trips[this.trips.length - 1]} // Se nao informado startAt insere apos ultima viagem
             else{ // Se startAt busca viagem anterior
                 let i = this.trips.length - 1;
                 let escape = false;
@@ -171,21 +177,26 @@ class Car{
                     i--;
                 }
             }
-            let faixa = min2Range(last.end);
-            let intervalo = last.way == VOLTA || route.circular == true ? route.param[faixa].fromInterv : route.param[faixa].toInterv;
-            let ciclo = last.way == VOLTA || route.circular == true ? route.param[faixa].fromMin : route.param[faixa].toMin;
+            let faixa;
+            if(startAt){faixa = min2Range(startAt)}
+            else if(last){faixa = min2Range(last.end)}
+            else{faixa = 0} // Em teoria se nao definido startAt, sempre deve existir uma viagem anterior
+            
+            // let faixa = min2Range(last.end);
+            let intervalo = last?.way == VOLTA || route.circular == true ? route.param[faixa].fromInterv : route.param[faixa].toInterv;
+            let ciclo = last?.way == VOLTA || route.circular == true ? route.param[faixa].fromMin : route.param[faixa].toMin;
             opt = {
-                start: startAt || last.end + intervalo,
-                end: (startAt || last.end) + intervalo + ciclo,
-                way: last.way == VOLTA || route.circular == true ? IDA : VOLTA,
+                start: startAt ? startAt : last.end + intervalo,
+                end: startAt ? startAt + intervalo + ciclo : last.end + intervalo + ciclo,
+                way: last?.way == VOLTA || route.circular == true ? IDA : VOLTA,
                 type: PRODUTIVA
             }
         }
         else{
             let faixa = min2Range(INICIO_PADRAO);
             opt = {
-                start: startAt || INICIO_PADRAO,
-                end: (startAt || INICIO_PADRAO) + route.param[faixa].fromMin,
+                start: startAt ? startAt : INICIO_PADRAO,
+                end: startAt ? startAt + route.param[faixa].fromMin : INICIO_PADRAO + route.param[faixa].fromMin,
                 way: IDA,
                 type: PRODUTIVA
             }
@@ -286,7 +297,7 @@ class Car{
         return this.trips[index].moveStart();
     }
     backStart(index, cascade=true){ // Subtrai um minuto no inicio da viagem
-        if(index == 0 || this.trips[index - 1].end < this.trips[index].start - 1){return this.trips[index].backStart();}
+        if(index == 0 && this.trips[index].start > 1 || index > 0 && this.trips[index - 1].end < this.trips[index].start - 1){return this.trips[index].backStart();}
         return false; // Retorna false caso fim da viagem anterior esteja com apenas 1 min de diff no inicio da atual
     }
     advance(index){ // Aumenta um minuto no inicio e no final da viagem e em todas as subsequentes
@@ -296,7 +307,7 @@ class Car{
         return true;
     }
     back(index){ // Subtrai um minuto no inicio e no final da viagem e em todas as subsequentes
-        if(index == 0 || this.trips[index - 1].end < this.trips[index].start - 1){
+        if(index == 0 && this.trips[index].start > 1 || index > 0 && this.trips[index - 1].end < this.trips[index].start - 1){
             for(let i = index; i < this.trips.length; i++){
                 this.trips[i].back();
             }
@@ -304,6 +315,13 @@ class Car{
         }
         return false; // Retorna false caso fim da viagem anterior esteja com apenas 1 min de diff no inicio da atual
         
+    }
+    countTrips(){
+        let count = 0;
+        for(let i = 0; i < this.trips.length; i++){
+            if([PRODUTIVA, EXPRESSO, SEMIEXPRESSO, RESERVADO].includes(this.trips[i].type)){count++}
+        }
+        return count;
     }
     getInterv(tripIndex){
         if(tripIndex == this.trips.length - 1){return false}
