@@ -1,7 +1,7 @@
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
 const RESERVADO = '0', PRODUTIVA = '1', EXPRESSO = '3', SEMIEXPRESSO = '4', ACESSO = '-1', RECOLHE = '-2', INTERVALO = '2';
-var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_PADRAO = 290;
+var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_OPERACAO = 290;
 // Constantes para projeto
 var UTIL = 1, SABADO = 2, DOMINGO = 3, ESPECIAL = 4;
 const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
@@ -63,6 +63,8 @@ class Route{
         this.circular = options?.circular || false;
         this.from = options?.from || new Locale({}); // Ponto inicial da linha (PT1)
         this.to = options?.to || new Locale({}); // Ponto final da linha (PT2)
+        this.fromExtension = options?.fromExtension || 0; // Extensao de ida (em km)
+        this.toExtension = options?.toExtension || 0; // Extensao de volta (em km)
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
         this.metrics = options?.metrics || { // Metricas adicionais (tempos de acesso, recolhe e extensao de acesso e recolhe)
             fromMinAccess: ACESSO_PADRAO,
@@ -102,9 +104,9 @@ class Route{
 }
 class Trip{
     constructor(options){
-        this.start = options?.start || INICIO_PADRAO;
+        this.start = options?.start || INICIO_OPERACAO;
         if(typeof this.start == 'string'){this.start = hour2Min(this.start)}
-        this.end = options?.end || INICIO_PADRAO + CICLO_BASE;
+        this.end = options?.end || INICIO_OPERACAO + CICLO_BASE;
         if(typeof this.end == 'string'){this.end = hour2Min(this.end)} // Converte em inteiros caso instanciado start: '04:00'
         if(this.end <= this.start){this.end = this.start + CICLO_BASE} // Final tem que ser maior (pelo menos 1 min) que inicio 
         this.__id = March_nextTripId;
@@ -193,10 +195,10 @@ class Car{
             }
         }
         else{
-            let faixa = min2Range(INICIO_PADRAO);
+            let faixa = min2Range(INICIO_OPERACAO);
             opt = {
-                start: startAt ? startAt : INICIO_PADRAO,
-                end: startAt ? startAt + route.param[faixa].fromMin : INICIO_PADRAO + route.param[faixa].fromMin,
+                start: startAt ? startAt : INICIO_OPERACAO,
+                end: startAt ? startAt + route.param[faixa].fromMin : INICIO_OPERACAO + route.param[faixa].fromMin,
                 way: IDA,
                 type: PRODUTIVA
             }
@@ -356,7 +358,7 @@ class March{
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
-        if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + FREQUENCIA_BASE;}
+        if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + options?.freq || FREQUENCIA_BASE;}
         this.cars.push(new Car(options));
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
     }
@@ -420,7 +422,7 @@ class March{
         let first, fleet_index, trip_index;
         for(let i = 0; i < this.cars.length;i++){
             for(let j = 0; j < this.cars[i].trips.length; j++){
-                if(this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start < first?.start || !first)){
+                if(![ACESSO, RECOLHE, INTERVALO].includes(this.cars[i].trips[j].type) && this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start < first?.start || !first)){
                     first = this.cars[i].trips[j];
                     fleet_index = i;
                     trip_index = j;
@@ -434,7 +436,7 @@ class March{
         let last, fleet_index, trip_index;
         for(let i = 0; i < this.cars.length;i++){
             for(let j = 0; j < this.cars[i].trips.length; j++){
-                if(this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start > last?.start || !last)){
+                if(![ACESSO, RECOLHE, INTERVALO].includes(this.cars[i].trips[j].type) && this.cars[i].trips[j].way == way && (this.cars[i].trips[j].start > last?.start || !last)){
                     last = this.cars[i].trips[j];
                     fleet_index = i;
                     trip_index = j;
@@ -458,21 +460,29 @@ class March{
         this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
         return true;
     }
-    __asyncGenerate(metrics){ // Gera planejamento baseado nas metricas definidas
+    generate(metrics){ // Gera planejamento baseado nas metricas definidas
         return new Promise(resolve => {
-            // this.cars = []; // Limpa planejamento atual
-            // let faixa = min2Range(metrics.start);
-            // let ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].toMin + this.route.param[faixa].fromInterv + this.route.param[faixa].toMin;
-            // let freq = Math.ceil(ciclo / metrics.fleet);
-            setTimeout(()=>{resolve('Ola mundo...')}, 3000);
+            this.cars = []; // Limpa planejamento atual
+            let faixa = min2Range(metrics.start);
+            let ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].toMin + this.route.param[faixa].fromInterv + this.route.param[faixa].toInterv;
+            let freq = Math.ceil(ciclo / metrics.fleet);
+            INICIO_OPERACAO = metrics.start; // Ajusta inicio de operacao para hora informada
+            for(let i = 0; i < metrics.fleet; i++){
+                let c = this.addFleet({route: this.route, freq: freq});
+                let j = 0;
+                while(c.trips[j].start < metrics.end){
+                    c.addTrip(this.route);
+                    j++;
+                }
+            }
+            if(metrics?.addAccess == true || metrics?.addAccess == undefined){
+                for(let i = 0; i < metrics.fleet; i++){ // Adiciona acesso para todos os carros
+                    this.cars[i].addAccess(0, this.route.metrics);
+                }
+            }
+            resolve(true);
         })
     }
-    async generate(metrics){
-        let result = await this.__asyncGenerate(metrics);
-        console.log(result);        
-    }
-    
-    
     load(project){ // Recebe json simples, monta instancias e carrega projeto
         // project = JSON.parse(project);
         let allowedFields = ['id', 'desc', 'name','user', 'status','dayType','sumInterGaps'];

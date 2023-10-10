@@ -59,6 +59,13 @@ class MarchUI{
         this.tripToColor = options?.tripToColor || '#6C757D';
         this.tripHeight = options?.tripHeight || '8px';
 
+        this.defaultSettings = {
+            rulerUnit: '4px',
+            rulerMediumUnit: 30,
+            tripFromColor: '#6F42C1',
+            tripToColor: '#6C757D',
+        }
+
         // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
         this.typePattern = { // Ajusta style da viagem baseado no tipo da viagem
             '0':`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
@@ -96,7 +103,6 @@ class MarchUI{
             this.tripToColor = s.tripToColor;
             this.rulerUnit = s.rulerUnit;
             this.rulerMediumUnit = s.rulerMediumUnit;
-            INICIO_PADRAO = parseInt(s.startOperation);
         }
 
         this.__build();
@@ -201,6 +207,7 @@ class MarchUI{
         this.displayTripType = document.createElement('h6');this.displayTripType.classList.add('text-secondary');this.displayTripType.style.position = 'absolute';this.displayTripType.style.top = '10px';this.displayTripType.style.left = '210px';this.displayTripType.innerHTML = '';
         this.displayTripType.ondblclick = () => { // No double click, transforma span em select para alterar tipo da viagem
             if([INTERVALO, ACESSO, RECOLHE].includes(this.tripFocus.type)){return false;} // Nao pode ser alterado tipos de intervalo, acesso e recolhe
+            this.gridLocked = true;
             this.displayTripType.style.display = 'none';
             let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayTripType.style.left};top: ${this.displayTripType.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
             let options = {'1': 'Produtiva', '0': 'Reservado', '3': 'Expresso', '4': 'Semiexpresso'};
@@ -235,6 +242,7 @@ class MarchUI{
                 confirm.remove();
                 this.displayTripType.style.display = 'inline';
                 this.__updateTripDisplay();
+                this.gridLocked = false;
             }
             select.after(confirm);
         }
@@ -288,9 +296,9 @@ class MarchUI{
         
         this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
-        this.settingsFromColor = document.createElement('input');this.settingsFromColor.type = `color`;this.settingsFromColor.value = this.tripFromColor;
-        this.settingsFromColor.onchange = () => {
-            this.tripFromColor = this.settingsFromColor.value;
+        this.settingstripFromColor = document.createElement('input');this.settingstripFromColor.type = `color`;this.settingstripFromColor.value = this.tripFromColor;
+        this.settingstripFromColor.onchange = () => {
+            this.tripFromColor = this.settingstripFromColor.value;
             for(let i = 0; i < this.project.cars.length; i++){
                 for(let j = 0; j < this.project.cars[i].trips.length;j++){
                     if(this.project.cars[i].trips[j].way == IDA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
@@ -298,13 +306,13 @@ class MarchUI{
             }
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingsFromColor);
+        this.settingsContainer.appendChild(this.settingstripFromColor);
         let fromColorLabel = document.createElement('small');fromColorLabel.innerHTML = `IDA`;fromColorLabel.style.position = 'relative';fromColorLabel.style.top = '-7px';fromColorLabel.style.left = '5px';
         this.settingsContainer.appendChild(fromColorLabel);
         
-        this.settingsToColor = document.createElement('input');this.settingsToColor.type = `color`;this.settingsToColor.style.marginLeft = `25px`;this.settingsToColor.value = this.tripToColor;
-        this.settingsToColor.onchange = () => {
-            this.tripToColor = this.settingsToColor.value;
+        this.settingstripToColor = document.createElement('input');this.settingstripToColor.type = `color`;this.settingstripToColor.style.marginLeft = `25px`;this.settingstripToColor.value = this.tripToColor;
+        this.settingstripToColor.onchange = () => {
+            this.tripToColor = this.settingstripToColor.value;
             for(let i = 0; i < this.project.cars.length; i++){
                 for(let j = 0; j < this.project.cars[i].trips.length;j++){
                     if(this.project.cars[i].trips[j].way == VOLTA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
@@ -312,20 +320,20 @@ class MarchUI{
             }
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingsToColor);
+        this.settingsContainer.appendChild(this.settingstripToColor);
         let toColorLabel = document.createElement('small');toColorLabel.innerHTML = `VOLTA`;toColorLabel.style.position = 'relative';toColorLabel.style.top = '-7px';toColorLabel.style.left = '5px';
         this.settingsContainer.appendChild(toColorLabel);
         
         this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
-        this.settingsRulerUnit = document.createElement('input');this.settingsRulerUnit.type = 'number';this.settingsRulerUnit.min = 2;this.settingsRulerUnit.max = 10;this.settingsRulerUnit.placeholder = ' ';this.settingsRulerUnit.classList = 'flat-input';this.settingsRulerUnit.value = parseInt(this.rulerUnit);
-        this.settingsRulerUnit.onchange = () => {
-            if(this.settingsRulerUnit.value == '' || parseInt(this.settingsRulerUnit.value) < this.settingsRulerUnit.min || parseInt(this.settingsRulerUnit.value) > this.settingsRulerUnit.max){
-                this.settingsRulerUnit.classList.add('is-invalid');
+        this.settingsrulerUnit = document.createElement('input');this.settingsrulerUnit.type = 'number';this.settingsrulerUnit.min = 2;this.settingsrulerUnit.max = 10;this.settingsrulerUnit.placeholder = ' ';this.settingsrulerUnit.classList = 'flat-input';this.settingsrulerUnit.value = parseInt(this.rulerUnit);
+        this.settingsrulerUnit.onchange = () => {
+            if(this.settingsrulerUnit.value == '' || parseInt(this.settingsrulerUnit.value) < this.settingsrulerUnit.min || parseInt(this.settingsrulerUnit.value) > this.settingsrulerUnit.max){
+                this.settingsrulerUnit.classList.add('is-invalid');
                 return false;
             }
-            this.settingsRulerUnit.classList.remove('is-invalid');
-            this.rulerUnit = `${this.settingsRulerUnit.value}px`;
+            this.settingsrulerUnit.classList.remove('is-invalid');
+            this.rulerUnit = `${this.settingsrulerUnit.value}px`;
             this.__buildRuler(); // Refaz a regua com novos valores
             if(this.tripFocus){ // Se tiver viagem inserida ajusta posicionamento do canvas
                 this.__canvasRebuild(); // Limpa p canvas e refazer todas as viagens com novos parametros
@@ -334,33 +342,22 @@ class MarchUI{
             this.canvasFit(); // Ajusta posicao do canvas com novas definicoes
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingsRulerUnit);
+        this.settingsContainer.appendChild(this.settingsrulerUnit);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Unidade (em px) [ 2 a 10 ]'));
         
-        this.settingsRulerMediumUnit = document.createElement('input');this.settingsRulerMediumUnit.type = 'number';this.settingsRulerMediumUnit.min = 10;this.settingsRulerMediumUnit.max = 180;this.settingsRulerMediumUnit.placeholder = ' ';this.settingsRulerMediumUnit.classList = 'flat-input';this.settingsRulerMediumUnit.value = parseInt(this.rulerMediumUnit);
-        this.settingsRulerMediumUnit.onchange = () => {
-            if(this.settingsRulerMediumUnit.value == '' || parseInt(this.settingsRulerMediumUnit.value) < this.settingsRulerMediumUnit.min || parseInt(this.settingsRulerMediumUnit.value) > this.settingsRulerMediumUnit.max){
-                this.settingsRulerMediumUnit.classList.add('is-invalid');
+        this.settingsrulerMediumUnit = document.createElement('input');this.settingsrulerMediumUnit.type = 'number';this.settingsrulerMediumUnit.min = 10;this.settingsrulerMediumUnit.max = 180;this.settingsrulerMediumUnit.placeholder = ' ';this.settingsrulerMediumUnit.classList = 'flat-input';this.settingsrulerMediumUnit.value = parseInt(this.rulerMediumUnit);
+        this.settingsrulerMediumUnit.onchange = () => {
+            if(this.settingsrulerMediumUnit.value == '' || parseInt(this.settingsrulerMediumUnit.value) < this.settingsrulerMediumUnit.min || parseInt(this.settingsrulerMediumUnit.value) > this.settingsrulerMediumUnit.max){
+                this.settingsrulerMediumUnit.classList.add('is-invalid');
                 return false;
             }
-            this.settingsRulerMediumUnit.classList.remove('is-invalid');
-            this.rulerMediumUnit = this.settingsRulerMediumUnit.value;
+            this.settingsrulerMediumUnit.classList.remove('is-invalid');
+            this.rulerMediumUnit = this.settingsrulerMediumUnit.value;
             this.__buildRuler();
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingsRulerMediumUnit);
+        this.settingsContainer.appendChild(this.settingsrulerMediumUnit);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Display de minutos [ 10 a 180 ]'));
-
-        this.settingsStartOperation = document.createElement('input');this.settingsStartOperation.type = 'time';this.settingsStartOperation.placeholder = ' ';this.settingsStartOperation.classList = 'flat-input';this.settingsStartOperation.value = min2Hour(INICIO_PADRAO);
-        this.settingsStartOperation.onchange = () => {
-            let v = hour2Min(this.settingsStartOperation.value);
-            if(v){INICIO_PADRAO = v;this.settingsStartOperation.classList.remove('is-invalid');this.__saveUISettings();}
-            else{
-                this.settingsStartOperation.classList.add('is-invalid');
-            }
-        }
-        this.settingsContainer.appendChild(this.settingsStartOperation);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Inicio de operação'));
 
         this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.value = this.project.name;
         this.settingsProjectName.onchange = ()=>{this.project.name = this.settingsProjectName.value;}
@@ -833,6 +830,14 @@ class MarchUI{
         this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
 
     }
+    __clearTripDisplay(){
+        this.displayStart.innerHTML = '--:--';
+        this.displayEnd.innerHTML = '--:--';
+        this.displayCycle.innerHTML = '--';
+        this.displayFreq.innerHTML = '--';
+        this.displayInterv.innerHTML = '--';
+        this.displayTripWay.innerHTML = '';
+    }
     __clearFleetDisplay(){
         this.displayTripsCount.innerHTML = '';
         this.displayJorney.innerHTML = '';
@@ -902,11 +907,11 @@ class MarchUI{
         this.canvas.innerHTML = '';
         this.rulerFreq.innerHTML = '';
         this.__buildCursor(); // Refaz cursor
-        this.grid = {};
-        this.freqGrid = {};
+        this.grid = [];
+        this.freqGrid = [];
         for(let i = 0; i < this.project.cars.length;i++){
-            this.grid[i] = [];
-            this.freqGrid[i] = [];
+            this.grid.push([]);
+            this.freqGrid.push([]);
             for(let j = 0; j < this.project.cars[i].trips.length; j++){
                 this.addTrip(this.project.cars[i].trips[j], i);
             } 
@@ -941,6 +946,34 @@ class MarchUI{
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
         // Adicionado os controles das metricas
         let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
+        this.settingsFromExtension = document.createElement('input');this.settingsFromExtension.type = 'number';this.settingsFromExtension.classList = 'flat-input';this.settingsFromExtension.min = 0;this.settingsFromExtension.max = 300;this.settingsFromExtension.value = this.project.route.fromExtension;this.settingsFromExtension.id = 'March_settingsFromExtension';this.settingsFromExtension.placeholder = ' ';
+        this.settingsFromExtension.onchange = ()=>{
+            if(this.settingsFromExtension.value == '' || parseInt(this.settingsFromExtension.value) < this.settingsFromExtension.min || parseInt(this.settingsFromExtension.value) > this.settingsFromExtension.max){
+                this.settingsFromExtension.classList.add('is-invalid');
+                return false;
+            }
+            this.settingsFromExtension.classList.remove('is-invalid');
+            this.project.route.fromExtension = parseInt(this.settingsFromExtension.value);
+        }
+        col11.appendChild(this.settingsFromExtension);
+        col11.appendChild(this.__settingsAddCustomLabel('Extensão Ida (km)'));
+        col1.appendChild(col11);
+        
+        let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
+        this.settingsToExtension = document.createElement('input');this.settingsToExtension.type = 'number';this.settingsToExtension.classList = 'flat-input';this.settingsToExtension.min = 0;this.settingsToExtension.max = 300;this.settingsToExtension.value = this.project.route.toExtension;this.settingsToExtension.id = 'March_settingsToExtension';this.settingsToExtension.placeholder = ' ';
+        this.settingsToExtension.onchange = ()=>{
+            if(this.settingsToExtension.value == '' || parseInt(this.settingsToExtension.value) < this.settingsToExtension.min || parseInt(this.settingsToExtension.value) > this.settingsToExtension.max){
+                this.settingsToExtension.classList.add('is-invalid');
+                return false;
+            }
+            this.settingsToExtension.classList.remove('is-invalid');
+            this.project.route.toExtension = parseInt(this.settingsToExtension.value);
+        }
+        col12.appendChild(this.settingsToExtension);
+        col12.appendChild(this.__settingsAddCustomLabel('Extensão Volta (km)'));
+        col1.appendChild(col12);
+        
+        let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
         this.settingsAccessFromMin = document.createElement('input');this.settingsAccessFromMin.type = 'number';this.settingsAccessFromMin.classList = 'flat-input';this.settingsAccessFromMin.min = 1;this.settingsAccessFromMin.max = 300;this.settingsAccessFromMin.value = this.project.route.metrics.fromMinAccess;this.settingsAccessFromMin.id = 'March_settingsAccessFromMin';this.settingsAccessFromMin.placeholder = ' ';
         this.settingsAccessFromMin.onchange = ()=>{
             if(this.settingsAccessFromMin.value == '' || parseInt(this.settingsAccessFromMin.value) < this.settingsAccessFromMin.min || parseInt(this.settingsAccessFromMin.value) > this.settingsAccessFromMin.max){
@@ -950,11 +983,11 @@ class MarchUI{
             this.settingsAccessFromMin.classList.remove('is-invalid');
             this.project.route.metrics.fromMinAccess = parseInt(this.settingsAccessFromMin.value);
         }
-        col11.appendChild(this.settingsAccessFromMin);
-        col11.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (min)'));
-        col1.appendChild(col11);
+        col13.appendChild(this.settingsAccessFromMin);
+        col13.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (min)'));
+        col1.appendChild(col13);
         
-        let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
+        let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
         this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.route.metrics.toMinAccess;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
         this.settingsAccessToMin.onchange = ()=>{
             if(this.settingsAccessToMin.value == '' || parseInt(this.settingsAccessToMin.value) < this.settingsAccessToMin.min || parseInt(this.settingsAccessToMin.value) > this.settingsAccessToMin.max){
@@ -964,11 +997,11 @@ class MarchUI{
             this.settingsAccessToMin.classList.remove('is-invalid');
             this.project.route.metrics.toMinAccess = parseInt(this.settingsAccessToMin.value);
         }
-        col12.appendChild(this.settingsAccessToMin);
-        col12.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (min)'));
-        col1.appendChild(col12);
+        col14.appendChild(this.settingsAccessToMin);
+        col14.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (min)'));
+        col1.appendChild(col14);
         
-        let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
+        let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
         this.settingsRecallFromMin = document.createElement('input');this.settingsRecallFromMin.type = 'number';this.settingsRecallFromMin.classList = 'flat-input';this.settingsRecallFromMin.min = 1;this.settingsRecallFromMin.max = 300;this.settingsRecallFromMin.value = this.project.route.metrics.fromMinRecall;this.settingsRecallFromMin.id = 'March_settingsRecallFromMin';this.settingsRecallFromMin.placeholder = ' ';
         this.settingsRecallFromMin.onchange = ()=>{
             if(this.settingsRecallFromMin.value == '' || parseInt(this.settingsRecallFromMin.value) < this.settingsRecallFromMin.min || parseInt(this.settingsRecallFromMin.value) > this.settingsRecallFromMin.max){
@@ -978,11 +1011,11 @@ class MarchUI{
             this.settingsRecallFromMin.classList.remove('is-invalid');
             this.project.route.metrics.fromMinRecall = parseInt(this.settingsRecallFromMin.value);
         }
-        col13.appendChild(this.settingsRecallFromMin);
-        col13.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (min)'));
-        col1.appendChild(col13);
+        col15.appendChild(this.settingsRecallFromMin);
+        col15.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (min)'));
+        col1.appendChild(col15);
         
-        let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
+        let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
         this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.route.metrics.toMinRecall;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
         this.settingsRecallToMin.onchange = ()=>{
             if(this.settingsRecallToMin.value == '' || parseInt(this.settingsRecallToMin.value) < this.settingsRecallToMin.min || parseInt(this.settingsRecallToMin.value) > this.settingsRecallToMin.max){
@@ -992,11 +1025,11 @@ class MarchUI{
             this.settingsRecallToMin.classList.remove('is-invalid');
             this.project.route.metrics.toMinRecall = parseInt(this.settingsRecallToMin.value);
         }
-        col14.appendChild(this.settingsRecallToMin);
-        col14.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (min)'));
-        col1.appendChild(col14);
+        col16.appendChild(this.settingsRecallToMin);
+        col16.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (min)'));
+        col1.appendChild(col16);
         
-        let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
+        let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
         this.settingsAccessFromKm = document.createElement('input');this.settingsAccessFromKm.type = 'number';this.settingsAccessFromKm.classList = 'flat-input';this.settingsAccessFromKm.min = 0;this.settingsAccessFromKm.max = 300;this.settingsAccessFromKm.value = this.project.route.metrics.fromKmAccess;this.settingsAccessFromKm.id = 'March_settingsAccessFromKm';this.settingsAccessFromKm.placeholder = ' ';
         this.settingsAccessFromKm.onchange = ()=>{
             if(this.settingsAccessFromKm.value == '' || parseInt(this.settingsAccessFromKm.value) < this.settingsAccessFromKm.min || parseInt(this.settingsAccessFromKm.value) > this.settingsAccessFromKm.max){
@@ -1006,11 +1039,11 @@ class MarchUI{
             this.settingsAccessFromKm.classList.remove('is-invalid');
             this.project.route.metrics.fromKmAccess = parseInt(this.settingsAccessFromKm.value);
         }
-        col15.appendChild(this.settingsAccessFromKm);
-        col15.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (km)'));
-        col1.appendChild(col15);
+        col17.appendChild(this.settingsAccessFromKm);
+        col17.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (km)'));
+        col1.appendChild(col17);
         
-        let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
+        let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
         this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.route.metrics.toKmAccess;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
         this.settingsAccessToKm.onchange = ()=>{
             if(this.settingsAccessToKm.value == '' || parseInt(this.settingsAccessToKm.value) < this.settingsAccessToKm.min || parseInt(this.settingsAccessToKm.value) > this.settingsAccessToKm.max){
@@ -1020,11 +1053,11 @@ class MarchUI{
             this.settingsAccessToKm.classList.remove('is-invalid');
             this.project.route.metrics.toKmAccess = parseInt(this.settingsAccessToKm.value);
         }
-        col16.appendChild(this.settingsAccessToKm);
-        col16.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (km)'));
-        col1.appendChild(col16);
+        col18.appendChild(this.settingsAccessToKm);
+        col18.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (km)'));
+        col1.appendChild(col18);
         
-        let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
+        let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
         this.settingsRecallFromKm = document.createElement('input');this.settingsRecallFromKm.type = 'number';this.settingsRecallFromKm.classList = 'flat-input';this.settingsRecallFromKm.min = 0;this.settingsRecallFromKm.max = 300;this.settingsRecallFromKm.value = this.project.route.metrics.fromKmRecall;this.settingsRecallFromKm.id = 'March_settingsRecallFromKm';this.settingsRecallFromKm.placeholder = ' ';
         this.settingsRecallFromKm.onchange = ()=>{
             if(this.settingsRecallFromKm.value == '' || parseInt(this.settingsRecallFromKm.value) < this.settingsRecallFromKm.min || parseInt(this.settingsRecallFromKm.value) > this.settingsRecallFromKm.max){
@@ -1034,11 +1067,11 @@ class MarchUI{
             this.settingsRecallFromKm.classList.remove('is-invalid');
             this.project.route.metrics.fromKmRecall = parseInt(this.settingsRecallFromKm.value);
         }
-        col17.appendChild(this.settingsRecallFromKm);
-        col17.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (km)'));
-        col1.appendChild(col17);
+        col19.appendChild(this.settingsRecallFromKm);
+        col19.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (km)'));
+        col1.appendChild(col19);
         
-        let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
+        let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
         this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.route.metrics.toKmRecall;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
         this.settingsRecallToKm.onchange = ()=>{
             if(this.settingsRecallToKm.value == '' || parseInt(this.settingsRecallToKm.value) < this.settingsRecallToKm.min || parseInt(this.settingsRecallToKm.value) > this.settingsRecallToKm.max){
@@ -1048,9 +1081,9 @@ class MarchUI{
             this.settingsRecallToKm.classList.remove('is-invalid');
             this.project.route.metrics.toKmRecall = parseInt(this.settingsRecallToKm.value);
         }
-        col18.appendChild(this.settingsRecallToKm);
-        col18.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (km)'));
-        col1.appendChild(col18);
+        col20.appendChild(this.settingsRecallToKm);
+        col20.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (km)'));
+        col1.appendChild(col20);
         
         // Adicionando os controles dos patamares
         let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '12%';
@@ -1154,22 +1187,24 @@ class MarchUI{
             tripFromColor: this.tripFromColor,
             tripToColor: this.tripToColor,
             rulerUnit: this.rulerUnit,
-            rulerMediumUnit: this.rulerMediumUnit,
-            startOperation: INICIO_PADRAO
+            rulerMediumUnit: this.rulerMediumUnit
         })
     }
     __generate(){
+        this.gridLocked = true;
         let dialog = document.createElement('dialog');dialog.innerHTML = '<h5><i class="bi bi-code-slash me-1"></i> Gerar Planejamento</h5><p><b class="text-purple">Atenção</b>, ao confirmar, todo projeto em andamento <b class="text-purple">será apagado</b>,<br>este processo não pode ser desfeito.</p>';
+        dialog.addEventListener('close', ()=>{this.gridLocked = false;})
         let col1 = document.createElement('div');col1.style.width = '25%';col1.style.display = 'inline-block';
         let col2 = document.createElement('div');col2.style.width = '25%';col2.style.display = 'inline-block';col2.style.paddingLeft = '5px';
         let col3 = document.createElement('div');col3.style.width = '25%';col3.style.display = 'inline-block';col3.style.paddingLeft = '5px';
         let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';
         let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';
-        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_PADRAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';
+        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_OPERACAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';
         let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';
         let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton-warning px-3 ms-4';submit.innerHTML = 'Gerar';
-        submit.onclick = () => {
-            dialog.close();
+        submit.onclick = async () => {
+            dialog.close(); // Ao fechar lock do grid sera destravado (manter para tratar esc quando foco no modal)
+            this.gridLocked = true; // Adiciona trava novamente
             let loading = document.createElement('dialog');loading.innerHTML = '<div class="spinner-border text-warning me-1"></div><span style="position: relative; top: -6px; left: 8px; padding-right: 10px;">Processando, aguarde...</span>'
             loading.addEventListener('cancel', (e)=>{e.preventDefault();}) // Previne fechar modal ao precionar esc
             document.body.appendChild(loading);
@@ -1180,7 +1215,14 @@ class MarchUI{
                 end: hour2Min(endOperation.value),
             }
             if(metrics.fleet < 1 || !metrics.start || !metrics.end){return false;}
-            let r = this.project.generate(metrics);
+            let r = await this.project.generate(metrics);
+            if(r){
+                this.__load();
+            }
+            else{appNotify('danger', '<b>Erro:</b> Ao gerar planejamento')}
+            loading.close();
+            loading.remove();
+            this.gridLocked = false;
         }
         col1.appendChild(fleet);
         col1.appendChild(this.__settingsAddCustomLabel('Frota'));
@@ -1214,12 +1256,13 @@ class MarchUI{
         for(let i = 0; i < this.project.cars.length; i++){ // Recria todos os carros e viagens
             this.addFleet(this.project.cars[i], i + 1);
         }
-        if(this.project.cars.length > 0){
+        if(this.project.cars.length > 0){ // Se projeto ja iniciado aponta para primeira viagem do primeiro carro
             this.fleetFocus = this.project.cars[0];
             this.tripFocus = this.project.cars[0].trips[0];
             this.fleetIndex = 0;
             this.tripIndex = 0;
             this.__cursorMove();
+            this.__updateTripDisplay();
         }
         else{
             this.fleetFocus = null;
@@ -1227,6 +1270,7 @@ class MarchUI{
             this.fleetIndex = -1;
             this.tripIndex = -1;
             this.cursor.style.left = '-200px'
+            this.__clearTripDisplay();
 
         }
     }
@@ -1401,6 +1445,17 @@ class MarchUI{
             this.cursor.style.left = '-200px';
             this.__load();
             appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
+        }})
+        appKeyMap.bind({key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
+            localStorage.removeItem('marchUiSettings');
+            for(let key in this.defaultSettings){
+                this[key] = this.defaultSettings[key]; // Retorna valor padrao a variavel de ambiente
+                this[`settings${key}`].value = key == 'rulerUnit' ? parseInt(this.defaultSettings[key]) : this.defaultSettings[key]; // Retorna valor padrao ao controle no painel de configuracoes
+            }
+            this.__buildRuler(); // Refaz Regua
+            this.__load(); // Ajusta viagens
+            this.canvasFit(); // Centraliza canvas na viagem em foco
+            appNotify('warning', '<b>Info:</b> Ajustes de interface revertidos');
         }})
     }
 }
