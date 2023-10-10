@@ -1158,6 +1158,47 @@ class MarchUI{
             startOperation: INICIO_PADRAO
         })
     }
+    __generate(){
+        let dialog = document.createElement('dialog');dialog.innerHTML = '<h5><i class="bi bi-code-slash me-1"></i> Gerar Planejamento</h5><p><b class="text-purple">Atenção</b>, ao confirmar, todo projeto em andamento <b class="text-purple">será apagado</b>,<br>este processo não pode ser desfeito.</p>';
+        let col1 = document.createElement('div');col1.style.width = '25%';col1.style.display = 'inline-block';
+        let col2 = document.createElement('div');col2.style.width = '25%';col2.style.display = 'inline-block';col2.style.paddingLeft = '5px';
+        let col3 = document.createElement('div');col3.style.width = '25%';col3.style.display = 'inline-block';col3.style.paddingLeft = '5px';
+        let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';
+        let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';
+        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_PADRAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';
+        let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';
+        let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton-warning px-3 ms-4';submit.innerHTML = 'Gerar';
+        submit.onclick = () => {
+            dialog.close();
+            let loading = document.createElement('dialog');loading.innerHTML = '<div class="spinner-border text-warning me-1"></div><span style="position: relative; top: -6px; left: 8px; padding-right: 10px;">Processando, aguarde...</span>'
+            loading.addEventListener('cancel', (e)=>{e.preventDefault();}) // Previne fechar modal ao precionar esc
+            document.body.appendChild(loading);
+            loading.showModal();
+            let metrics = {
+                fleet: parseInt(fleet.value),
+                start: hour2Min(startOperation.value),
+                end: hour2Min(endOperation.value),
+            }
+            if(metrics.fleet < 1 || !metrics.start || !metrics.end){return false;}
+            let r = this.project.generate(metrics);
+        }
+        col1.appendChild(fleet);
+        col1.appendChild(this.__settingsAddCustomLabel('Frota'));
+        col2.appendChild(startOperation);
+        col2.appendChild(this.__settingsAddCustomLabel('Hora Inicial'));
+        col3.appendChild(endOperation);
+        col3.appendChild(this.__settingsAddCustomLabel('Hora Final'));
+        col4.appendChild(submit);
+        
+        // --
+        dialog.appendChild(col1);
+        dialog.appendChild(col2);
+        dialog.appendChild(col3);
+        dialog.appendChild(col4);
+        document.body.appendChild(dialog);
+        dialog.showModal();
+
+    }
     __load(){
         // Apaga todos os elementos do grid e freqGrid
         for(let i = 0; i < this.grid.length; i++){
@@ -1335,6 +1376,7 @@ class MarchUI{
         appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
         appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
         appKeyMap.bind({key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: ()=>{this.__showRouteMetrics()}})
+        appKeyMap.bind({key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: ()=>{this.__generate()}})
         appKeyMap.bind({key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
             this.__saveLocal();
             appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')

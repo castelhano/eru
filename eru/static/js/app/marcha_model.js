@@ -458,16 +458,28 @@ class March{
         this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
         return true;
     }
-    generate(metrics){ // Gera planejamento baseado nas metricas definidas
-        this.cars = []; // Limpa planejamento atual
-        console.log(metrics);
+    __asyncGenerate(metrics){ // Gera planejamento baseado nas metricas definidas
+        return new Promise(resolve => {
+            // this.cars = []; // Limpa planejamento atual
+            // let faixa = min2Range(metrics.start);
+            // let ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].toMin + this.route.param[faixa].fromInterv + this.route.param[faixa].toMin;
+            // let freq = Math.ceil(ciclo / metrics.fleet);
+            setTimeout(()=>{resolve('Ola mundo...')}, 3000);
+        })
     }
+    async generate(metrics){
+        let result = await this.__asyncGenerate(metrics);
+        console.log(result);        
+    }
+    
+    
     load(project){ // Recebe json simples, monta instancias e carrega projeto
         // project = JSON.parse(project);
         let allowedFields = ['id', 'desc', 'name','user', 'status','dayType','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }
+        
         // ----------
         project.route.from = new Locale(project.route.from); // Cria instancia Locale para from
         project.route.to = new Locale(project.route.to); // Cria instancia Locale para from
