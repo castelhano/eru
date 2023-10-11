@@ -44,8 +44,7 @@ class jsGrid{
             .jsGrid-item{height: 166px;}
             .jsGrid-item-sm{height: auto;}
             .jsGrid-item-fixed{overflow-y: auto;}
-        }
-        `;
+        }`;
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     __build(){

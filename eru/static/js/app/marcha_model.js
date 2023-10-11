@@ -110,6 +110,7 @@ class Trip{
         if(typeof this.end == 'string'){this.end = hour2Min(this.end)} // Converte em inteiros caso instanciado start: '04:00'
         if(this.end <= this.start){this.end = this.start + CICLO_BASE} // Final tem que ser maior (pelo menos 1 min) que inicio 
         this.__id = March_nextTripId;
+        this.shut = false; // Define encerramento de viagem, usado para encerrar turno onde nao ocorre a recolhida do veiculo
         March_nextTripId++;
 
         this.way = options?.way || IDA; // Sentido da viagem (ida, volta)
@@ -236,8 +237,8 @@ class Car{
         return false;
     }
     addRecall(trip_index, metrics){
-        // Recolhe somente inserido se viagem for produtiva
-        if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type)){return false}
+        // Recolhe somente inserido se viagem for produtiva ou tiver sido encerrada
+        if([INTERVALO, ACESSO, RECOLHE].includes(this.trips[trip_index].type) || this.trips[trip_index].shut){return false}
         let wayRecall = this.trips[trip_index].way == IDA ? 'fromMinRecall' : 'toMinRecall';
         let recallMin = metrics[wayRecall];
         let v = new Trip({start: this.trips[trip_index].end + 1, end: this.trips[trip_index].end + recallMin + 1, type: RECOLHE, way: this.trips[trip_index].way})
@@ -276,6 +277,13 @@ class Car{
                 this.trips[i].way = this.trips[i].way == IDA ? VOLTA : IDA;
             }
         }
+        return true;
+    }
+    tripShut(trip_index){ // Encerra (ou cancela encerramento) viagem informada
+        if(this.trips[trip_index].shut){this.trips[trip_index].shut = false; return true;} // Para cancelar encerramnto nao existe validacao
+        // Retorna false se viagem nao for produtiva e/ou se viagem posterior nao for produtiva ou acesso
+        if([ACESSO, RECOLHE, INTERVALO].includes(this.trips[trip_index].type) || (trip_index < this.trips.length - 1 &&  [RECOLHE, INTERVALO].includes(this.trips[trip_index + 1].type))){return false}
+        this.trips[trip_index].shut = true;
         return true;
     }
     plus(index, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
@@ -318,6 +326,18 @@ class Car{
         return false; // Retorna false caso fim da viagem anterior esteja com apenas 1 min de diff no inicio da atual
         
     }
+    firstTrip(){ // Retorna a primeira viagem produtiva do carro
+        for(let i = 0; i < this.trips.length; i++){
+            if(![ACESSO, RECOLHE, INTERVALO, RESERVADO].includes(this.trips[i].type)){return this.trips[i]}
+        }
+        return false;
+    }
+    lastTrip(){ // Retorna a ultima viagem produtiva do carro
+        for(let i = this.trips.length - 1; i >= 0; i--){
+            if(![ACESSO, RECOLHE, INTERVALO, RESERVADO].includes(this.trips[i].type)){return this.trips[i]}
+        }
+        return false;
+    }
     countTrips(){
         let count = 0;
         for(let i = 0; i < this.trips.length; i++){
@@ -325,20 +345,28 @@ class Car{
         }
         return count;
     }
-    getInterv(tripIndex){
-        if(tripIndex == this.trips.length - 1){return false}
-        return this.trips[tripIndex + 1].start - this.trips[tripIndex].end
+    getInterv(tripIndex){ // Retorna o intervalo entre a viagem informada e a proxima (se for produtiva)
+        if(tripIndex == this.trips.length - 1){return 0}
+        // Se viagem atual NAO for recolhe e proxima viagem for produtiva retorna intervalo entre viagens
+        if(![RECOLHE,INTERVALO].includes(this.trips[tripIndex].type) && !this.trips[tripIndex].shut && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO, RECOLHE].includes(this.trips[tripIndex + 1].type)){
+            return this.trips[tripIndex + 1].start - this.trips[tripIndex].end;
+        }
+        return 0;
     }
-    getJourney(includeGaps=true){ // Retorna jornada total do carro
-        let sum = this.trips[this.trips.length - 1].end - this.trips[0].start; // Inicia soma com o total geral do carro
-        sum -= this.getIntervs(includeGaps); // Remove intervalos da jornada
+    getJourney(gaps=true){ // Retorna jornada total do carro
+        let sum = this.getIntervs(true, false); // Retorna soma dos intervalos
+        for(let i = 0; i < this.trips.length;i++){
+            if(this.trips[i].type != INTERVALO){
+                sum += this.trips[i].getCycle();
+            }
+        }
         return sum;
     }
-    getIntervs(includeGaps=true){ // Retorna total de intervalos do carro
+    getIntervs(gaps=true, intervs=true){ // Retorna total de intervalos do carro
         let sum = 0;
         for(let i = 0; i < this.trips.length; i++){
-            if(this.trips[i].type == INTERVALO){sum += includeGaps ? this.trips[i].getCycle() : this.trips[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
-            if(includeGaps){sum += this.getInterv(i)} // Se includeGaps soma os intervalos entre viagens
+            if(intervs && this.trips[i].type == INTERVALO){sum += this.trips[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
+            else if(gaps){sum += this.getInterv(i)} // Se gaps soma os intervalos entre viagens
         }
         return sum;
     }
@@ -358,7 +386,9 @@ class March{
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
-        if(this.cars.length > 0){options['startAt'] = this.cars[this.cars.length - 1].trips[0].start + options?.freq || FREQUENCIA_BASE;}
+        if(this.cars.length > 0){
+            options['startAt'] = this.cars[this.cars.length - 1].firstTrip().start + (options?.freq || FREQUENCIA_BASE);
+        }
         this.cars.push(new Car(options));
         return this.cars.slice(-1)[0]; // Retorna carro inserido 
     }

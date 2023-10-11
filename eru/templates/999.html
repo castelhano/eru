@@ -3,6 +3,19 @@
 {% block title %}Handler: 999{% endblock %}
 
 
+<style>
+{% block style %}
+.trip-shut{border-radius: 5px 0 0 5px!important;}
+.trip-shut::after{
+    content: '|';
+    font-weight: bolder;
+    position: relative;
+    top: -16px;
+    left: calc(100% - 3.6px);
+}
+{% endblock %}
+</style>
+
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
 <link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}">
@@ -11,6 +24,10 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
+
+<div class="bg-success text-success trip-shut" style="height: 8px; width: 150px;border-radius: 5px;"></div>
+
+<br>
 
 <div class="row">
     <div class="col-12">Fooo</div>
