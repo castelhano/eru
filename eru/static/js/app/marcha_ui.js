@@ -340,7 +340,7 @@ class MarchUI{
         
         this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
-        this.settingsrulerUnit = document.createElement('input');this.settingsrulerUnit.type = 'number';this.settingsrulerUnit.min = 2;this.settingsrulerUnit.max = 10;this.settingsrulerUnit.placeholder = ' ';this.settingsrulerUnit.classList = 'flat-input';this.settingsrulerUnit.value = parseInt(this.rulerUnit);
+        this.settingsrulerUnit = document.createElement('input');this.settingsrulerUnit.type = 'number';this.settingsrulerUnit.min = 2;this.settingsrulerUnit.max = 10;this.settingsrulerUnit.placeholder = ' ';this.settingsrulerUnit.classList = 'flat-input';this.settingsrulerUnit.id = 'March_settingsrulerUnit';this.settingsrulerUnit.value = parseInt(this.rulerUnit);
         this.settingsrulerUnit.onchange = () => {
             if(this.settingsrulerUnit.value == '' || parseInt(this.settingsrulerUnit.value) < this.settingsrulerUnit.min || parseInt(this.settingsrulerUnit.value) > this.settingsrulerUnit.max){
                 this.settingsrulerUnit.classList.add('is-invalid');
@@ -357,9 +357,9 @@ class MarchUI{
             this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.settingsrulerUnit);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Unidade (em px) [ 2 a 10 ]'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerUnit, 'Unidade (em px) [ 2 a 10 ]'));
         
-        this.settingsrulerMediumUnit = document.createElement('input');this.settingsrulerMediumUnit.type = 'number';this.settingsrulerMediumUnit.min = 10;this.settingsrulerMediumUnit.max = 180;this.settingsrulerMediumUnit.placeholder = ' ';this.settingsrulerMediumUnit.classList = 'flat-input';this.settingsrulerMediumUnit.value = parseInt(this.rulerMediumUnit);
+        this.settingsrulerMediumUnit = document.createElement('input');this.settingsrulerMediumUnit.type = 'number';this.settingsrulerMediumUnit.min = 10;this.settingsrulerMediumUnit.max = 180;this.settingsrulerMediumUnit.placeholder = ' ';this.settingsrulerMediumUnit.classList = 'flat-input';this.settingsrulerMediumUnit.id = 'March_settingsrulerMediumUnit';this.settingsrulerMediumUnit.value = parseInt(this.rulerMediumUnit);
         this.settingsrulerMediumUnit.onchange = () => {
             if(this.settingsrulerMediumUnit.value == '' || parseInt(this.settingsrulerMediumUnit.value) < this.settingsrulerMediumUnit.min || parseInt(this.settingsrulerMediumUnit.value) > this.settingsrulerMediumUnit.max){
                 this.settingsrulerMediumUnit.classList.add('is-invalid');
@@ -371,14 +371,14 @@ class MarchUI{
             this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.settingsrulerMediumUnit);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Display de minutos [ 10 a 180 ]'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerMediumUnit, 'Display de minutos [ 10 a 180 ]'));
 
-        this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.value = this.project.name;
+        this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.id = 'March_settingsProjectName';this.settingsProjectName.value = this.project.name;
         this.settingsProjectName.onchange = ()=>{this.project.name = this.settingsProjectName.value;}
         this.settingsContainer.appendChild(this.settingsProjectName);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Nome Projeto'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectName, 'Nome Projeto'));
         
-        this.settingsDayType = document.createElement('select');this.settingsDayType.classList = 'flat-select';
+        this.settingsDayType = document.createElement('select');this.settingsDayType.classList = 'flat-select';this.settingsDayType.id = 'March_settingsDayType';
         let dayTypeOpts = {1: 'Util', 2: 'Sabado', 3: 'Domingo', 4: 'Especial'}
         for(let key in dayTypeOpts){
             let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
@@ -387,15 +387,16 @@ class MarchUI{
         }
         this.settingsDayType.onchange = ()=>{this.project.dayType = this.settingsDayType.value}
         this.settingsContainer.appendChild(this.settingsDayType);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Dia Tipo'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsDayType, 'Dia Tipo'));
 
-        this.settingsProjectDesc = document.createElement('textarea');this.settingsProjectDesc.placeholder = ' ';this.settingsProjectDesc.classList = 'flat-textarea';this.settingsProjectDesc.value = this.project.desc;
+        this.settingsProjectDesc = document.createElement('textarea');this.settingsProjectDesc.placeholder = ' ';this.settingsProjectDesc.classList = 'flat-textarea';this.settingsProjectDesc.id = 'March_settingsProjectDesc';this.settingsProjectDesc.value = this.project.desc;
         this.settingsProjectDesc.onchange = ()=>{this.project.desc = this.settingsProjectDesc.value;}
         this.settingsContainer.appendChild(this.settingsProjectDesc);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel('Descrição'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectDesc, 'Descrição'));
     }
-    __settingsAddCustomLabel(text){
+    __settingsAddCustomLabel(input, text){
         let l = document.createElement('label');
+        l.setAttribute('for', input.id);
         l.classList = 'flat-label';
         l.innerHTML = text;
         return l;
@@ -720,12 +721,37 @@ class MarchUI{
         }
 
     }
-    removeCar(){}
+    removeFleet(){
+        if(!this.fleetFocus){return false}
+        let r = this.project.removeFleet(this.fleetIndex);
+        if(r){
+            this.__load();
+            // for(let i = 0; i < this.grid[this.fleetIndex].length; i++){ // Apaga as viagens do grid e freqGrid
+            //     this.grid[this.fleetIndex][i].remove();
+            //     this.freqGrid[this.fleetIndex][i].remove();
+            // }
+            // for(let i = 0; ){ // Altera label dos carros com nova sequencia
+
+            // }
+        }
+    }
     removeTrip(cascade=true){ // Remove viagem em foco e se cascade=true as seguintes
         if(this.tripFocus){
-            let r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, cascade);
+            let r;
+            // Se itens selecionados, apaga as viagens selecionadas
+            if(this.startSelection > 0 && this.endSelection > 0){r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, false, this.endSelection - this.startSelection + 1)}
+            else{r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, cascade)}
             if(r){
-                if(!cascade){
+                if(this.startSelection > 0 && this.endSelection > 0){
+                    for(let i = this.endSelection; i >= this.startSelection; i--){
+                        this.grid[this.fleetSelection][i].remove(); // Apaga viagem no grid
+                        this.freqGrid[this.fleetSelection][i].remove(); // Apaga viagem no freqGrid
+                    }
+                    this.grid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1); // Apaga entradas no grid
+                    this.freqGrid[this.fleetSelection].splice(this.tripIndex, this.endSelection - this.startSelection + 1); // Apaga entradas no freqGrid
+                    this.__clearSelection();
+                }
+                else if(!cascade){
                     this.grid[this.fleetIndex][this.tripIndex].remove(); // Apaga elemento do canvas
                     this.grid[this.fleetIndex].splice(this.tripIndex, 1); // Apaga entrada no grid
                     this.freqGrid[this.fleetIndex][this.tripIndex].remove(); // Apaga elemento no ruleFreq
@@ -737,7 +763,7 @@ class MarchUI{
                         this.freqGrid[this.fleetIndex][i].remove(); // Apaga viagem no freqGrid
                     }
                     this.grid[this.fleetIndex].splice(this.tripIndex, this.grid[this.fleetIndex].length - this.tripIndex); // Apaga entradas no grid
-                    this.freqGrid[this.fleetIndex].splice(this.tripIndex, this.freqGrid[this.fleetIndex].length - this.tripIndex); // Apaga entradas no grid
+                    this.freqGrid[this.fleetIndex].splice(this.tripIndex, this.freqGrid[this.fleetIndex].length - this.tripIndex); // Apaga entradas no freqGrid
                 }
                 // Muda o foco para viagem anterior (se existir) ou posterior
                 this.tripIndex = this.tripIndex == 0 ? this.tripIndex : this.tripIndex - 1;
@@ -762,6 +788,55 @@ class MarchUI{
         else{
             appNotify('warning', '<b>Atenção:</b> Conflito de horário, não é possivel mover viagens');
         }
+    }
+    addToTransferArea(){
+        if(this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false};
+        let r = this.project.addToTransferArea(this.fleetSelection, this.startSelection, this.endSelection);
+        if(r){
+            for(let i = this.startSelection; i <= this.endSelection; i++){ // Remove itens do grid e freqGrid
+                let v = this.project.cars[this.fleetSelection].trips[i];
+                this.grid[this.fleetSelection][i].remove();
+                this.freqGrid[this.fleetSelection][i].remove();
+            }
+            this.grid[this.fleetSelection].splice(this.startSelection, r.length);
+            this.freqGrid[this.fleetSelection].splice(this.startSelection, r.length);
+            if(this.startSelection > 0){
+                this.tripIndex = this.startSelection - 1;
+                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            }
+            else{
+                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            }
+            this.__cursorMove();
+            this.__updateTripDisplay();
+            this.__clearSelection();
+            // Adiciona icone identificando que existe viagens na area de transferencia
+            this.transferAreaIcon = document.createElement('div');
+            this.transferAreaIcon.style = 'position: absolute; top: 90px; right: 20px; border:1px solid var(--bs-border-color); border-radius: 10px;padding: 4px 10px; background-color: var(--bs-secondary-bg);opacity: 0.7; cursor: pointer;';
+            this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${r.length}</b>`;
+            this.transferAreaIcon.title = `Inicio: ${min2Hour(this.project.transferArea[0].start)} | Fim: ${min2Hour(this.project.transferArea[this.project.transferArea.length - 1].end)}`;
+            document.body.appendChild(this.transferAreaIcon);
+        }
+    }
+    copyTransfer(){
+        let r = this.project.copyTransfer(this.fleetIndex);
+        if(r){
+            for(let i = 0; i < this.grid[this.fleetIndex].length; i++){
+                this.grid[this.fleetIndex][i].remove(); // Limpa a viagem do grid
+                this.freqGrid[this.fleetIndex][i].remove(); // Limpa a viagem do freqGrid
+            }
+            this.grid[this.fleetIndex] = []; // Limpa o grid
+            this.freqGrid[this.fleetIndex] = []; // Limpa o freqGrid
+            for(let i = 0; i < this.project.cars[this.fleetIndex].trips.length; i++){
+                this.addTrip(this.project.cars[this.fleetIndex].trips[i]); // Adiciona as viagens ajustadas do carro no grid
+            }
+            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.__cursorMove();
+            this.transferAreaIcon.remove();
+        }
+        else{appNotify('warning', '<b>Atenção:</b> Conflito de horário, não é possivel mover viagens')}
+
+
     }
     __addToSelection(){ // Seleciona viagens
         if(!this.tripFocus || this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
@@ -973,7 +1048,7 @@ class MarchUI{
             this.project.route.fromExtension = parseInt(this.settingsFromExtension.value);
         }
         col11.appendChild(this.settingsFromExtension);
-        col11.appendChild(this.__settingsAddCustomLabel('Extensão Ida (km)'));
+        col11.appendChild(this.__settingsAddCustomLabel(this.settingsFromExtension, 'Extensão Ida (km)'));
         col1.appendChild(col11);
         
         let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
@@ -987,7 +1062,7 @@ class MarchUI{
             this.project.route.toExtension = parseInt(this.settingsToExtension.value);
         }
         col12.appendChild(this.settingsToExtension);
-        col12.appendChild(this.__settingsAddCustomLabel('Extensão Volta (km)'));
+        col12.appendChild(this.__settingsAddCustomLabel(this.settingsToExtension, 'Extensão Volta (km)'));
         col1.appendChild(col12);
         
         let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
@@ -1001,7 +1076,7 @@ class MarchUI{
             this.project.route.metrics.fromMinAccess = parseInt(this.settingsAccessFromMin.value);
         }
         col13.appendChild(this.settingsAccessFromMin);
-        col13.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (min)'));
+        col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessFromMin, 'Acesso PT1 (min)'));
         col1.appendChild(col13);
         
         let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
@@ -1015,7 +1090,7 @@ class MarchUI{
             this.project.route.metrics.toMinAccess = parseInt(this.settingsAccessToMin.value);
         }
         col14.appendChild(this.settingsAccessToMin);
-        col14.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (min)'));
+        col14.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToMin, 'Acesso PT2 (min)'));
         col1.appendChild(col14);
         
         let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
@@ -1029,7 +1104,7 @@ class MarchUI{
             this.project.route.metrics.fromMinRecall = parseInt(this.settingsRecallFromMin.value);
         }
         col15.appendChild(this.settingsRecallFromMin);
-        col15.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (min)'));
+        col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallFromMin, 'Recolhe PT1 (min)'));
         col1.appendChild(col15);
         
         let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
@@ -1043,7 +1118,7 @@ class MarchUI{
             this.project.route.metrics.toMinRecall = parseInt(this.settingsRecallToMin.value);
         }
         col16.appendChild(this.settingsRecallToMin);
-        col16.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (min)'));
+        col16.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToMin, 'Recolhe PT2 (min)'));
         col1.appendChild(col16);
         
         let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
@@ -1057,7 +1132,7 @@ class MarchUI{
             this.project.route.metrics.fromKmAccess = parseInt(this.settingsAccessFromKm.value);
         }
         col17.appendChild(this.settingsAccessFromKm);
-        col17.appendChild(this.__settingsAddCustomLabel('Acesso PT1 (km)'));
+        col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessFromKm, 'Acesso PT1 (km)'));
         col1.appendChild(col17);
         
         let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
@@ -1071,7 +1146,7 @@ class MarchUI{
             this.project.route.metrics.toKmAccess = parseInt(this.settingsAccessToKm.value);
         }
         col18.appendChild(this.settingsAccessToKm);
-        col18.appendChild(this.__settingsAddCustomLabel('Acesso PT2 (km)'));
+        col18.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToKm, 'Acesso PT2 (km)'));
         col1.appendChild(col18);
         
         let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
@@ -1085,7 +1160,7 @@ class MarchUI{
             this.project.route.metrics.fromKmRecall = parseInt(this.settingsRecallFromKm.value);
         }
         col19.appendChild(this.settingsRecallFromKm);
-        col19.appendChild(this.__settingsAddCustomLabel('Recolhe PT1 (km)'));
+        col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallFromKm, 'Recolhe PT1 (km)'));
         col1.appendChild(col19);
         
         let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
@@ -1099,55 +1174,55 @@ class MarchUI{
             this.project.route.metrics.toKmRecall = parseInt(this.settingsRecallToKm.value);
         }
         col20.appendChild(this.settingsRecallToKm);
-        col20.appendChild(this.__settingsAddCustomLabel('Recolhe PT2 (km)'));
+        col20.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToKm, 'Recolhe PT2 (km)'));
         col1.appendChild(col20);
         
         // Adicionando os controles dos patamares
         let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '12%';
         this.settingsBaselineStart = document.createElement('input');this.settingsBaselineStart.type = 'number';this.settingsBaselineStart.classList = 'flat-input';this.settingsBaselineStart.min = 0;this.settingsBaselineStart.max = 23;this.settingsBaselineStart.value = 0;this.settingsBaselineStart.id = 'March_settingsBaselineStart';this.settingsBaselineStart.placeholder = ' ';
         col21.appendChild(this.settingsBaselineStart);
-        col21.appendChild(this.__settingsAddCustomLabel('Faixa Inicio'));
+        col21.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineStart, 'Faixa Inicio'));
         col2.appendChild(col21);
         
         let col22 = document.createElement('div'); col22.style.display = 'inline-block';col22.style.width = '12%';
         this.settingsBaselineEnd = document.createElement('input');this.settingsBaselineEnd.type = 'number';this.settingsBaselineEnd.classList = 'flat-input';this.settingsBaselineEnd.min = 1;this.settingsBaselineEnd.max = 23;this.settingsBaselineEnd.value = 23;this.settingsBaselineEnd.id = 'March_settingsBaselineEnd';this.settingsBaselineEnd.placeholder = ' ';
         col22.appendChild(this.settingsBaselineEnd);
-        col22.appendChild(this.__settingsAddCustomLabel('Faixa Fim'));
+        col22.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineEnd, 'Faixa Fim'));
         col2.appendChild(col22);
         
         let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '12%';
-        this.settingsBaselineFromMin = document.createElement('input');this.settingsBaselineFromMin.type = 'number';this.settingsBaselineFromMin.classList = 'flat-input';this.settingsBaselineFromMin.min = 1;this.settingsBaselineFromMin.max = 300;this.settingsBaselineFromMin.value = 1;this.settingsBaselineFromMin.id = 'March_settingsBaselineFromMin';this.settingsBaselineFromMin.placeholder = ' ';
+        this.settingsBaselineFromMin = document.createElement('input');this.settingsBaselineFromMin.type = 'number';this.settingsBaselineFromMin.classList = 'flat-input';this.settingsBaselineFromMin.min = 1;this.settingsBaselineFromMin.max = 300;this.settingsBaselineFromMin.value = CICLO_BASE;this.settingsBaselineFromMin.id = 'March_settingsBaselineFromMin';this.settingsBaselineFromMin.placeholder = ' ';
         this.settingsBaselineFromMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col23.appendChild(this.settingsBaselineFromMin);
-        col23.appendChild(this.__settingsAddCustomLabel('Ciclo Ida'));
+        col23.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineFromMin, 'Ciclo Ida'));
         col2.appendChild(col23);
         
         let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '12%';
-        this.settingsBaselineToMin = document.createElement('input');this.settingsBaselineToMin.type = 'number';this.settingsBaselineToMin.classList = 'flat-input';this.settingsBaselineToMin.min = 1;this.settingsBaselineToMin.max = 300;this.settingsBaselineToMin.value = 1;this.settingsBaselineToMin.id = 'March_settingsBaselineToMin';this.settingsBaselineToMin.placeholder = ' ';
+        this.settingsBaselineToMin = document.createElement('input');this.settingsBaselineToMin.type = 'number';this.settingsBaselineToMin.classList = 'flat-input';this.settingsBaselineToMin.min = 1;this.settingsBaselineToMin.max = 300;this.settingsBaselineToMin.value = CICLO_BASE;this.settingsBaselineToMin.id = 'March_settingsBaselineToMin';this.settingsBaselineToMin.placeholder = ' ';
         this.settingsBaselineToMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col24.appendChild(this.settingsBaselineToMin);
-        col24.appendChild(this.__settingsAddCustomLabel('Ciclo Volta'));
+        col24.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineToMin, 'Ciclo Volta'));
         col2.appendChild(col24);
         
         let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '12%';
-        this.settingsBaselineFromInterv = document.createElement('input');this.settingsBaselineFromInterv.type = 'number';this.settingsBaselineFromInterv.classList = 'flat-input';this.settingsBaselineFromInterv.min = 1;this.settingsBaselineFromInterv.max = 300;this.settingsBaselineFromInterv.value = 1;this.settingsBaselineFromInterv.id = 'March_settingsBaselineFromInterv';this.settingsBaselineFromInterv.placeholder = ' ';
+        this.settingsBaselineFromInterv = document.createElement('input');this.settingsBaselineFromInterv.type = 'number';this.settingsBaselineFromInterv.classList = 'flat-input';this.settingsBaselineFromInterv.min = 1;this.settingsBaselineFromInterv.max = 300;this.settingsBaselineFromInterv.value = 10;this.settingsBaselineFromInterv.id = 'March_settingsBaselineFromInterv';this.settingsBaselineFromInterv.placeholder = ' ';
         this.settingsBaselineFromInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col25.appendChild(this.settingsBaselineFromInterv);
-        col25.appendChild(this.__settingsAddCustomLabel('Intervalo Ida'));
+        col25.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineFromInterv, 'Intervalo Ida'));
         col2.appendChild(col25);
         
         let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '12%';
         this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
         this.settingsBaselineToInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col26.appendChild(this.settingsBaselineToInterv);
-        col26.appendChild(this.__settingsAddCustomLabel('Intervalo Volta'));
+        col26.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineToInterv, 'Intervalo Volta'));
         col2.appendChild(col26);
         
         let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '12%';
         this.settingsFleetSimulate = document.createElement('input');this.settingsFleetSimulate.type = 'number';this.settingsFleetSimulate.classList = 'flat-input w-auto';this.settingsFleetSimulate.min = 0;this.settingsFleetSimulate.max = 30;this.settingsFleetSimulate.value = 0;this.settingsFleetSimulate.id = 'March_settingsFleetSimulate';this.settingsFleetSimulate.placeholder = ' ';
         this.settingsFleetSimulate.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col27.appendChild(this.settingsFleetSimulate);
-        col27.appendChild(this.__settingsAddCustomLabel('Frota (simulada)'));
+        col27.appendChild(this.__settingsAddCustomLabel(this.settingsFleetSimulate, 'Frota (simulada)'));
         
         this.settingsFreqSimulate = document.createElement('b');this.settingsFreqSimulate.style.paddingLeft = '20px';;this.settingsFreqSimulate.innerHTML = '--';
         col27.appendChild(this.settingsFreqSimulate);
@@ -1214,7 +1289,7 @@ class MarchUI{
         let col1 = document.createElement('div');col1.style.width = '25%';col1.style.display = 'inline-block';
         let col2 = document.createElement('div');col2.style.width = '25%';col2.style.display = 'inline-block';col2.style.paddingLeft = '5px';
         let col3 = document.createElement('div');col3.style.width = '25%';col3.style.display = 'inline-block';col3.style.paddingLeft = '5px';
-        let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';
+        let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';col4.style.marginBottom = '10px';
         let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';
         let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_OPERACAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';
         let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';
@@ -1230,6 +1305,7 @@ class MarchUI{
                 fleet: parseInt(fleet.value),
                 start: hour2Min(startOperation.value),
                 end: hour2Min(endOperation.value),
+                addAccess: addAccess.checked
             }
             if(metrics.fleet < 1 || !metrics.start || !metrics.end){return false;}
             let r = await this.project.generate(metrics);
@@ -1242,18 +1318,19 @@ class MarchUI{
             this.gridLocked = false;
         }
         col1.appendChild(fleet);
-        col1.appendChild(this.__settingsAddCustomLabel('Frota'));
+        col1.appendChild(this.__settingsAddCustomLabel(fleet, 'Frota'));
         col2.appendChild(startOperation);
-        col2.appendChild(this.__settingsAddCustomLabel('Hora Inicial'));
+        col2.appendChild(this.__settingsAddCustomLabel(startOperation, 'Hora Inicial'));
         col3.appendChild(endOperation);
-        col3.appendChild(this.__settingsAddCustomLabel('Hora Final'));
+        col3.appendChild(this.__settingsAddCustomLabel(endOperation, 'Hora Final'));
         col4.appendChild(submit);
-        
+        let addAccess = document.createElement('input');addAccess.type = 'checkbox';addAccess.checked = true;addAccess.id = 'March_generateAddAccess';
         // --
         dialog.appendChild(col1);
         dialog.appendChild(col2);
         dialog.appendChild(col3);
         dialog.appendChild(col4);
+        dialog.appendChild(this.__settingsContainerSwitch(addAccess, 'Adicionar acesso aos veículos'));
         document.body.appendChild(dialog);
         dialog.showModal();
 
@@ -1424,7 +1501,9 @@ class MarchUI{
         appKeyMap.bind({key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
         appKeyMap.bind({key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
         appKeyMap.bind({key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
-        appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips();}})
+        appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips()}})
+        appKeyMap.bind({key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.copyTransfer()}})
+        appKeyMap.bind({key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{this.addToTransferArea();}})
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
         appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
         appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
@@ -1435,7 +1514,11 @@ class MarchUI{
             }
         }})
         appKeyMap.bind({key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip(false)}})
-        appKeyMap.bind({key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagens', desc: 'Remove viagem em foco e posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip()}})
+        appKeyMap.bind({key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(this.tripIndex == 0){this.removeFleet()}
+            else{this.removeTrip()}
+        }})
         appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
         appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
         appKeyMap.bind({key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: ()=>{this.__showRouteMetrics()}})
@@ -1461,6 +1544,7 @@ class MarchUI{
             this.tripFocus = null;
             this.fleetIndex = -1;
             this.tripIndex = -1;
+            this.__clearSelection();
             this.cursor.style.left = '-200px';
             this.__load();
             this.settingsSumIntervGaps.checked = this.project.sumInterGaps;

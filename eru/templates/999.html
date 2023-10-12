@@ -5,14 +5,6 @@
 
 <style>
 {% block style %}
-.trip-shut{border-radius: 5px 0 0 5px!important;}
-.trip-shut::after{
-    content: '|';
-    font-weight: bolder;
-    position: relative;
-    top: -16px;
-    left: calc(100% - 3.6px);
-}
 {% endblock %}
 </style>
 
@@ -24,19 +16,6 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-
-<div class="bg-success text-success trip-shut" style="height: 8px; width: 150px;border-radius: 5px;"></div>
-
-<br>
-
-<div class="row">
-    <div class="col-12">Fooo</div>
-    <div class="col">as</div>
-</div>
-
-<input type="text" class="flat-input" placeholder=" " required>
-<label for="" class="flat-label">Ola mundo</label>
-
 <div class="alert alert-dark">
     <div class="row">
         <div class="col">Foo</div>
@@ -74,7 +53,7 @@
                     <label for="id_senha">Senha</label>
                 </div>
                 <div class="form-floating mb-1 col-lg">
-                    <input type="email" name="email" id="id_email" class="form-control" placeholder=" ">
+                    <input type="email" name="email" id="id_email" class="form-control" placeholder=" " autocomplete="email">
                     <label for="id_email">Email</label>
                 </div>
             </div>

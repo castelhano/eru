@@ -212,6 +212,7 @@ class jsTable{
             let capFilter = document.createElement('div');
             capFilter.classList = 'col';
             this.filterInput = document.createElement('input');
+            this.filterInput.id = 'jsTable_filterinput';
             this.filterInput.type = 'text';
             this.filterInput.disabled = this.filterCols.length || this.dataUrl != null ? false : true; // Disabled elemento se nao informado colunas para filtrar (filterCols) ou definido url para busca ajax
             this.filterInput.classList = 'form-control form-control-sm';

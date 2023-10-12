@@ -115,7 +115,7 @@ class Keywatch{
 
     }
     __buildTable(){ // Cria tabela no modal (roda apenas ao carregar a pagina)
-        this.searchInput = document.createElement('input');this.searchInput.type = 'search';this.searchInput.classList = 'form-control form-control-sm bg-body-tertiary mb-1';this.searchInput.placeholder = 'Criterio pesquisa';
+        this.searchInput = document.createElement('input');this.searchInput.type = 'search';this.searchInput.classList = 'form-control form-control-sm bg-body-tertiary mb-1';this.searchInput.placeholder = 'Criterio pesquisa';this.searchInput.id = 'Listener_searchInput';
         this.searchInput.oninput = (ev)=>{this.__filterMapsTable(ev)}
         this.modalTable = document.createElement('table');
         this.modalTable.classList = 'keywatch_table table table-sm table-striped table-hover border fs-7 mb-0';

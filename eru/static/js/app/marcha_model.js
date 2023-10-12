@@ -158,8 +158,8 @@ class Trip{
 class Car{
     constructor(options){
         this.prefix = options?.prefix || '';
-        this.class = options?.class || '';
-        this.espec = options?.espec || null;
+        this.class = options?.class || CONVENCIONAL; // Tipo de tecnologia a ser usada
+        this.espec = options?.espec || null; // Especificacao adicional para carro (porta lado esquerdo, etc..)
         this.trips = options?.trips || []; // Armazena as viagens do carro
         this.schedules = options?.schedules || []; // Armazena as tabelas (escalas) para o carro
         if(this.trips.length == 0){this.addTrip(options.route, options['startAt'])} // Necessario pelo menos uma viagem no carro
@@ -214,8 +214,8 @@ class Car{
         return v;
     }
     addInterv(trip_index){ // Adiciona viagem do tipo intervalo entre duas viagens
-        // Necessario ter viagem valida (produtiva) antes e depois do intervalo
-        if(trip_index == this.trips.length - 1 || [INTERVALO, RECOLHE].includes(this.trips[trip_index].type) || [INTERVALO, ACESSO].includes(this.trips[trip_index + 1].type)){return false}
+        // Necessario ter viagem valida (produtiva) antes e depois do intervalo, e mais de um minuto entre as viagens
+        if(trip_index == this.trips.length - 1 || [INTERVALO, RECOLHE].includes(this.trips[trip_index].type) || [INTERVALO, ACESSO].includes(this.trips[trip_index + 1].type) || this.trips[trip_index + 1].start <= this.trips[trip_index].end + 1){return false}
         let current = this.trips[trip_index];
         let next = this.trips[trip_index + 1];
         let v = new Trip({start: current.end + 1, end: next.start - 1, type: INTERVALO, way: current.way})
@@ -263,11 +263,11 @@ class Car{
     }
     getEmptySchedule(){ // Retorna 1o intervalo nao alocado para carro
     }
-    removeTrip(index, cascade=true){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
+    removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
         let removed = [];
         if(cascade){removed = this.trips.splice(index, this.trips.length - 1);}
-        else{removed = this.trips.splice(index, 1);}
+        else{removed = this.trips.splice(index, count);}
         return removed;
     }
     switchWay(trip_index, cascade=true){ // Altera o sentido da viagem, se cascade altera tbm das seguintes
@@ -383,6 +383,7 @@ class March{
         this.user = options?.user || null;
         this.status = options?.status || INCOMPLETO;
         this.dayType = options?.dayType || UTIL;
+        this.transferArea = []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
@@ -394,6 +395,9 @@ class March{
     }
     addTrip(car_index, startAt=null){
         return this.cars[car_index].addTrip(this.route, startAt);
+    }
+    removeFleet(fleet_index){
+        return this.cars.splice(fleet_index, 1);
     }
     nextTrip(trip){ // Retorna proxima viagem (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;
@@ -490,6 +494,22 @@ class March{
         this.cars[fleetDestinyIndex].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
         return true;
     }
+    addToTransferArea(fleet_index, trip_start_index, trip_end_index){ // Adiciona viagem's a area de transferencia
+        if(this.transferArea.length > 0 || trip_end_index - trip_start_index + 1 == this.cars[fleet_index].trips.length){return false} // Area de transferencia armazena apenas um grupo de linhas de cada vez
+        this.transferArea = this.cars[fleet_index].removeTrip(trip_start_index, false, trip_end_index - trip_start_index + 1);
+        return this.transferArea;
+    }
+    copyTransfer(fleet_index){ // Move as viagens da area de transfeencia para o carro informado
+        for(let i = 0; i < this.transferArea.length; i++){ // Valida todas as viagens se nao gera conflito com a carro de destino
+            if(!this.cars[fleet_index].__tripIsValid(this.transferArea[i])){return false}
+        }    
+        for(let i = 0; i < this.transferArea.length; i++){ // Adiciona as viagens no carro alvo
+            this.cars[fleet_index].trips.push(this.transferArea[i]);
+        }
+        this.cars[fleet_index].trips.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena viagens pelo inicio
+        this.transferArea = []; // Limpa area de trasnferencia
+        return true;
+    }
     generate(metrics){ // Gera planejamento baseado nas metricas definidas
         return new Promise(resolve => {
             this.cars = []; // Limpa planejamento atual
@@ -505,7 +525,7 @@ class March{
                     j++;
                 }
             }
-            if(metrics?.addAccess == true || metrics?.addAccess == undefined){
+            if(metrics?.addAccess){
                 for(let i = 0; i < metrics.fleet; i++){ // Adiciona acesso para todos os carros
                     this.cars[i].addAccess(0, this.route.metrics);
                 }
