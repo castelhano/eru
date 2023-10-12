@@ -1,12 +1,16 @@
+// TODO: CRUD referencias
+// TODO: Calcular extensao
+// TODO: Resumo geral do planejamento
+// TODO: Interface de criacao de tabelas
+// ------------------
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
 const RESERVADO = '0', PRODUTIVA = '1', EXPRESSO = '3', SEMIEXPRESSO = '4', ACESSO = '-1', RECOLHE = '-2', INTERVALO = '2';
 var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_OPERACAO = 290;
 // Constantes para projeto
 var UTIL = 1, SABADO = 2, DOMINGO = 3, ESPECIAL = 4;
-const FINALIZADO = 2, PARCIAL = 1, INCOMPLETO = 0;
 const MICROONIBUS = -1, CONVENCIONAL = 0, PADRON = 1, ARTICULADO = 2, BIARTICULADO = 3;
-const PORTA_LE = 1;
+const PORTA_LE = '1';
 var March_nextTripId = 0; // Contador para insercao de identificador unico na viagem, necessario para diferenciar viagens com parametros identicos
 // ------------------------------------------------------------------------------
 function defaultParam(value=50){
@@ -40,7 +44,7 @@ function hour2Min(hour, day=0){ // Converte string de hora (hh:mm) em minutos, r
     return day * 1440 + parseInt(h) * 60 + parseInt(m);
 }
 
-class Locale{
+class Locale{ // Class para locais
     constructor(options){
         this.id = options?.id || null;
         this.name = options?.name || 'Local indefinido';
@@ -48,11 +52,20 @@ class Locale{
         this.surrender = options?.surrender || true;
     }
 }
-class Reference{
+class Reference{ // Classe das referencias
     constructor(options){
         this.local = options?.local || new Locale({}); // Deve referenciar um local
         this.delta = options?.delta || 1; // Armazena o tempo em minutos em relacao a origem (from ou to)
     }
+}
+
+class Schedule{ // Classe para tabelas (escalas)
+    constructor(options){
+        this.name = options?.name || ''; // Nome da tabela
+        this.tripStartIndex = options?.tripStartIndex || 0;
+        this.tripEndIndex = options?.tripStartIndex || 0;
+    }
+    
 }
 
 class Route{
@@ -157,9 +170,8 @@ class Trip{
 
 class Car{
     constructor(options){
-        this.prefix = options?.prefix || '';
-        this.class = options?.class || CONVENCIONAL; // Tipo de tecnologia a ser usada
-        this.espec = options?.espec || null; // Especificacao adicional para carro (porta lado esquerdo, etc..)
+        this.classification = options?.classification || CONVENCIONAL; // Tipo de tecnologia a ser usada
+        this.specification = options?.specification || '0'; // Especificacao adicional para carro (porta lado esquerdo, etc..)
         this.trips = options?.trips || []; // Armazena as viagens do carro
         this.schedules = options?.schedules || []; // Armazena as tabelas (escalas) para o carro
         if(this.trips.length == 0){this.addTrip(options.route, options['startAt'])} // Necessario pelo menos uma viagem no carro
@@ -249,7 +261,7 @@ class Car{
         }
         return false;
     }
-    __tripIsValid(trip){ // Valida de viagem pode ser inserida no carro sem gerar conflito com outras viagens
+    __tripIsValid(trip){ // Valida se viagem pode ser inserida no carro sem gerar conflito com outras viagens
         let conflict = false;
         let i = 0;
         while(!conflict && i < this.trips.length){
@@ -258,10 +270,27 @@ class Car{
         }
         return !conflict;
     }
-    addSchedule(options){}
+    addSchedule(options){ // Cria nova escala
+        let s = new Schedule(options);
+        if(this.__scheduleIsValid(s)){
+            this.scheduleBaptize(s);
+            this.schedules.push(s);
+            this.schedules.sort((a, b) => a.tripStartIndex > b.tripStartIndex ? 1 : -1); // Reordena escalas pelo inicio
+            return true;
+        }
+        return false;
+    }
+    scheduleBaptize(schedule){ // Define nome automatico para tabela
+        schedule.name = '01A';
+    }
     checkSchedule(start, end){ // Verifica se tabela esta disponivel para carro (se nao conflita com outras tabelas)
     }
     getEmptySchedule(){ // Retorna 1o intervalo nao alocado para carro
+    }
+    __scheduleIsValid(schedule){ // Valida se tabela pode ser inserida no carro sem gerar conflito com outras escalas
+        return true;
+    }
+    cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
@@ -347,7 +376,7 @@ class Car{
         }
         return false;
     }
-    countTrips(){
+    countTrips(){ // Retorna a quantidade de viagens do carro (viagens produtivas), ignora acessos, recolhidas e intervalos
         let count = 0;
         for(let i = 0; i < this.trips.length; i++){
             if([PRODUTIVA, EXPRESSO, SEMIEXPRESSO, RESERVADO].includes(this.trips[i].type)){count++}
@@ -390,7 +419,7 @@ class March{
         this.route = options?.route || new Route({});
         this.cars = options?.cars || [];
         this.user = options?.user || null;
-        this.status = options?.status || INCOMPLETO;
+        this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dayType = options?.dayType || UTIL;
         this.transferArea = []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
@@ -543,9 +572,8 @@ class March{
             resolve(true);
         })
     }
-    load(project){ // Recebe json simples, monta instancias e carrega projeto
-        // project = JSON.parse(project);
-        let allowedFields = ['id', 'desc', 'name','user', 'status','dayType','sumInterGaps'];
+    load(project){ // Recebe dicionario, monta instancias e carrega projeto
+        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }

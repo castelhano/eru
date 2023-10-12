@@ -825,7 +825,7 @@ class MarchUI{
             this.transferAreaIcon = document.createElement('div');
             this.transferAreaIcon.style = 'position: absolute; top: 90px; right: 20px; border:1px solid var(--bs-border-color); border-radius: 10px;padding: 4px 10px; background-color: var(--bs-secondary-bg);opacity: 0.7; cursor: pointer;';
             this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${r.length}</b>`;
-            this.transferAreaIcon.title = `Inicio: ${min2Hour(this.project.transferArea[0].start)} | Fim: ${min2Hour(this.project.transferArea[this.project.transferArea.length - 1].end)}`;
+            this.transferAreaIcon.title = `Inicio: ${this.project.transferArea[0].getStart()} | Fim: ${this.project.transferArea[this.project.transferArea.length - 1].getEnd()}`;
             document.body.appendChild(this.transferAreaIcon);
         }
     }
@@ -910,8 +910,8 @@ class MarchUI{
         if(this.tripFocus == null){return false;}
         this.displayTripType.innerHTML = this.translateType[this.tripFocus.type];
         if(this.tripFocus.type != INTERVALO){
-            this.displayStart.innerHTML = min2Hour(this.tripFocus.start);
-            this.displayEnd.innerHTML = min2Hour(this.tripFocus.end);
+            this.displayStart.innerHTML = this.tripFocus.getStart();
+            this.displayEnd.innerHTML = this.tripFocus.getEnd();
             this.displayCycle.innerHTML = this.tripFocus.getCycle();
             this.displayFreq.innerHTML = this.tripFocus.type != RESERVADO ? this.project.getHeadway(this.tripFocus) || '--' : '--';
             this.displayInterv.innerHTML = this.project.cars[this.fleetIndex].getInterv(this.tripIndex) || '--';
@@ -931,7 +931,27 @@ class MarchUI{
         this.displayTripsCount.innerHTML = this.project.cars[this.fleetIndex].countTrips();
         this.displayJorney.innerHTML = min2Hour(this.project.getJourney(this.fleetIndex), false);
         this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
-
+        this.fleetDisplayClassification = document.createElement('select');this.fleetDisplayClassification.style = `position: absolute;left: 600px;top: 11px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplayClassification.id = 'March_footerFleetDisplayClassification';
+        this.fleetDisplayClassification.onchange = () => {this.project.cars[this.fleetIndex].classification = this.fleetDisplayClassification.value;}
+        let classOptions = {'0': 'Convencional', '1': 'Padron', '-1': 'Microonibus', '2': 'Articulado', '3': 'Biarticulado'};
+        for(let key in classOptions){
+            let opt = document.createElement('option');
+            opt.value = key;opt.innerHTML = classOptions[key];
+            if(opt.value == this.fleetFocus.classification){opt.selected = true;}
+            this.fleetDisplayClassification.appendChild(opt);
+        }
+        this.footer.appendChild(this.fleetDisplayClassification);
+        
+        this.fleetDisplaySpecification = document.createElement('select');this.fleetDisplaySpecification.style = `position: absolute;left: 600px;bottom: 11px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplaySpecification.id = 'March_footerFleetDisplaySpecification';
+        this.fleetDisplaySpecification.onchange = () => {this.project.cars[this.fleetIndex].specification = this.fleetDisplaySpecification.value;}
+        let specOptions = {'0': '---', '1': 'Porta LE'};
+        for(let key in specOptions){
+            let opt = document.createElement('option');
+            opt.value = key;opt.innerHTML = specOptions[key];
+            if(opt.value == this.fleetFocus.specification){opt.selected = true;}
+            this.fleetDisplaySpecification.appendChild(opt);
+        }
+        this.footer.appendChild(this.fleetDisplaySpecification);
     }
     __clearTripDisplay(){
         this.displayStart.innerHTML = '--:--';
@@ -945,6 +965,10 @@ class MarchUI{
         this.displayTripsCount.innerHTML = '';
         this.displayJorney.innerHTML = '';
         this.displayInterv2.innerHTML = '';
+        try{
+            this.fleetDisplayClassification.remove();
+            this.fleetDisplaySpecification.remove();
+        }catch(e){}
     }
     __cursorMove(){ // Movimenta o cursor para carro e viagem em foco, se cursor atingir limites (vertical ou horiontal) move canvas para ajustar voualizacao
         this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
