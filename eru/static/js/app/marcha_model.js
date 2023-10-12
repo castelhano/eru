@@ -266,9 +266,18 @@ class Car{
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
         let removed = [];
-        if(cascade){removed = this.trips.splice(index, this.trips.length - 1);}
-        else{removed = this.trips.splice(index, count);}
-        return removed;
+        let before = index > 0 && [ACESSO, INTERVALO].includes(this.trips[index - 1].type) ? true : false;
+        let after = index < this.trips.length - 1 && [RECOLHE, INTERVALO].includes(this.trips[index + 1].type) ? true : false;
+        if(cascade){
+            let count = (this.trips.length - index) + (before ? 1 : 0);
+            if(this.trips.length <= count){return false} // Valida se vai sobrar pelo menos uma viagem no carro
+            removed = this.trips.splice(index - (before ? 1 : 0), this.trips.length - 1);
+        }
+        else{
+            if(this.trips.length <= 1 + (after ? 1 : 0) + (before ? 1 : 0)){return false} // Valida se vai sobrar pelo menos uma viagem no carro
+            removed = this.trips.splice(index - (before ? 1 : 0), count + (before ? 1 : 0) + (after ? 1 : 0));
+        }
+        return [removed, before, after];
     }
     switchWay(trip_index, cascade=true){ // Altera o sentido da viagem, se cascade altera tbm das seguintes
         this.trips[trip_index].way = this.trips[trip_index].way == IDA ? VOLTA : IDA;
@@ -480,6 +489,7 @@ class March{
         return [last, fleet_index, trip_index];
     }
     moveTrips(fleetOriginIndex, fleetDestinyIndex, startTripIndex, endTripIndex){ // Movimenta viagens de um carro para outro
+        if(this.cars[fleetOriginIndex].trips.length <= endTripIndex - startTripIndex + 1){return false}
         let conflict = false;
         let i = startTripIndex;
         while(!conflict && i <= endTripIndex){ // Verifica de todas as viagens podem ser movimentadas
@@ -496,10 +506,10 @@ class March{
     }
     addToTransferArea(fleet_index, trip_start_index, trip_end_index){ // Adiciona viagem's a area de transferencia
         if(this.transferArea.length > 0 || trip_end_index - trip_start_index + 1 == this.cars[fleet_index].trips.length){return false} // Area de transferencia armazena apenas um grupo de linhas de cada vez
-        this.transferArea = this.cars[fleet_index].removeTrip(trip_start_index, false, trip_end_index - trip_start_index + 1);
+        this.transferArea = this.cars[fleet_index].removeTrip(trip_start_index, false, trip_end_index - trip_start_index + 1)[0];
         return this.transferArea;
     }
-    copyTransfer(fleet_index){ // Move as viagens da area de transfeencia para o carro informado
+    pasteTransfer(fleet_index){ // Move as viagens da area de transfeencia para o carro informado
         for(let i = 0; i < this.transferArea.length; i++){ // Valida todas as viagens se nao gera conflito com a carro de destino
             if(!this.cars[fleet_index].__tripIsValid(this.transferArea[i])){return false}
         }    

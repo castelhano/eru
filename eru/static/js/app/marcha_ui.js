@@ -55,15 +55,15 @@ class MarchUI{
 
         this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
         
-        this.tripFromColor = options?.tripFromColor || '#6F42C1';
-        this.tripToColor = options?.tripToColor || '#6C757D';
+        this.tripFromColor = options?.tripFromColor || '#4080A0';
+        this.tripToColor = options?.tripToColor || '#98D3F0';
         this.tripHeight = options?.tripHeight || '8px';
 
         this.defaultSettings = {
             rulerUnit: '4px',
             rulerMediumUnit: 30,
-            tripFromColor: '#6F42C1',
-            tripToColor: '#6C757D',
+            tripFromColor: '#4080A0',
+            tripToColor: '#98D3F0',
         }
 
         // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
@@ -403,6 +403,7 @@ class MarchUI{
     }
     __settingsContainerSwitch(el, label_text, marginBottom=false){ // Recebe um elemento input e configura attrs para switch
         let c = document.createElement('div');c.classList = 'form-check form-switch';
+        if(marginBottom){c.style.marginBottom = marginBottom};
         el.type = 'checkbox';
         el.setAttribute('role', 'switch');
         el.classList = 'form-check-input';
@@ -458,6 +459,7 @@ class MarchUI{
         }
     }
     addTrip(trip=null, seq=this.fleetIndex){
+        this.__clearSelection();
         trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route);
         let v = document.createElement('div'); // Elemento viagem (grid)
         v.style = this.tripStyle;
@@ -484,6 +486,7 @@ class MarchUI{
         return v;
     }
     addTripAt(){ // Exibe modal com entrada para hora de inicio de viagem
+        this.__clearSelection();
         this.gridLocked = true;
         let modal = document.createElement('dialog');modal.innerHTML = '<h6>Adicionar viagem as:</h6>'
         let startAt = document.createElement('input');startAt.type = 'time';startAt.style.width = '100px';startAt.style.textAlign = 'center';startAt.style.display = 'block';startAt.style.marginLeft = 'auto';startAt.style.marginRight = 'auto';
@@ -522,6 +525,7 @@ class MarchUI{
         modal.showModal();
     }
     addInterv(){
+        this.__clearSelection();
         let trip = this.project.cars[this.fleetIndex].addInterv(this.tripIndex);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
@@ -549,6 +553,7 @@ class MarchUI{
         }
     }
     addAccess(){
+        this.__clearSelection();
         let trip = this.project.cars[this.fleetIndex].addAccess(this.tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
@@ -578,6 +583,7 @@ class MarchUI{
         }
     }
     addRecall(){ // Adiciona recolhida na viagem em foco
+        this.__clearSelection();
         let trip = this.project.cars[this.fleetIndex].addRecall(this.tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
@@ -743,30 +749,37 @@ class MarchUI{
             else{r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, cascade)}
             if(r){
                 if(this.startSelection > 0 && this.endSelection > 0){
-                    for(let i = this.endSelection; i >= this.startSelection; i--){
+                    let ajustedStart = this.startSelection - (r[1] ? 1 : 0);
+                    let ajustedEnd = this.endSelection + (r[2] ? 1 : 0);
+                    for(let i = ajustedEnd; i >= ajustedStart; i--){
                         this.grid[this.fleetSelection][i].remove(); // Apaga viagem no grid
                         this.freqGrid[this.fleetSelection][i].remove(); // Apaga viagem no freqGrid
                     }
-                    this.grid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1); // Apaga entradas no grid
-                    this.freqGrid[this.fleetSelection].splice(this.tripIndex, this.endSelection - this.startSelection + 1); // Apaga entradas no freqGrid
+                    this.grid[this.fleetSelection].splice(ajustedStart, ajustedEnd - ajustedStart + 1); // Apaga entradas no grid
+                    this.freqGrid[this.fleetSelection].splice(this.tripIndex, ajustedEnd - ajustedStart + 1); // Apaga entradas no freqGrid
                     this.__clearSelection();
                 }
                 else if(!cascade){
-                    this.grid[this.fleetIndex][this.tripIndex].remove(); // Apaga elemento do canvas
-                    this.grid[this.fleetIndex].splice(this.tripIndex, 1); // Apaga entrada no grid
-                    this.freqGrid[this.fleetIndex][this.tripIndex].remove(); // Apaga elemento no ruleFreq
-                    this.freqGrid[this.fleetIndex].splice(this.tripIndex, 1); // Apaga viagem no freqGrid
+                    let ajustedStart = this.tripIndex - (r[1] ? 1 : 0);
+                    let ajustedEnd = this.tripIndex + (r[2] ? 1 : 0);
+                    for(let i = ajustedEnd; i >= ajustedStart; i--){
+                        this.grid[this.fleetIndex][i].remove(); // Apaga elemento do canvas
+                        this.freqGrid[this.fleetIndex][i].remove(); // Apaga elemento no ruleFreq
+                    }
+                    this.grid[this.fleetIndex].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga entrada no grid
+                    this.freqGrid[this.fleetIndex].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga viagem no freqGrid
                 }
                 else{
-                    for(let i = this.grid[this.fleetIndex].length - 1; i >= this.tripIndex; i--){
+                    let ajustedStart = this.tripIndex - (r[1] ? 1 : 0);
+                    for(let i = this.grid[this.fleetIndex].length - 1; i >= ajustedStart; i--){
                         this.grid[this.fleetIndex][i].remove(); // Apaga viagem no grid
                         this.freqGrid[this.fleetIndex][i].remove(); // Apaga viagem no freqGrid
                     }
-                    this.grid[this.fleetIndex].splice(this.tripIndex, this.grid[this.fleetIndex].length - this.tripIndex); // Apaga entradas no grid
-                    this.freqGrid[this.fleetIndex].splice(this.tripIndex, this.freqGrid[this.fleetIndex].length - this.tripIndex); // Apaga entradas no freqGrid
+                    this.grid[this.fleetIndex].splice(ajustedStart, this.grid[this.fleetIndex].length - ajustedStart); // Apaga entradas no grid
+                    this.freqGrid[this.fleetIndex].splice(ajustedStart, this.freqGrid[this.fleetIndex].length - ajustedStart); // Apaga entradas no freqGrid
                 }
                 // Muda o foco para viagem anterior (se existir) ou posterior
-                this.tripIndex = this.tripIndex == 0 ? this.tripIndex : this.tripIndex - 1;
+                this.tripIndex = this.tripIndex == 0 || (this.tripIndex == 1 && r[1]) ? 0 : this.tripIndex - (r[1] ? 2 : 1);
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
                 this.__cursorMove();
             }
@@ -785,9 +798,7 @@ class MarchUI{
             this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             this.__clearSelection();
         }
-        else{
-            appNotify('warning', '<b>Atenção:</b> Conflito de horário, não é possivel mover viagens');
-        }
+        else{appNotify('warning', '<b>Atenção:</b> Conflito de horário ou você tentou mover todas as viagens do veiculo')}
     }
     addToTransferArea(){
         if(this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false};
@@ -818,8 +829,8 @@ class MarchUI{
             document.body.appendChild(this.transferAreaIcon);
         }
     }
-    copyTransfer(){
-        let r = this.project.copyTransfer(this.fleetIndex);
+    pasteTransfer(){ // 
+        let r = this.project.pasteTransfer(this.fleetIndex);
         if(r){
             for(let i = 0; i < this.grid[this.fleetIndex].length; i++){
                 this.grid[this.fleetIndex][i].remove(); // Limpa a viagem do grid
@@ -1037,6 +1048,9 @@ class MarchUI{
         let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = '<h6 class="mb-2">Métricas da Linha</h6>';
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
         // Adicionado os controles das metricas
+        let routeCirc = document.createElement('input');routeCirc.type = 'checkbox';routeCirc.id = 'March_routeCircControl';routeCirc.checked = this.project.route.circular;
+        routeCirc.onchange = () => {this.project.route.circular = routeCirc.checked;}
+        col1.appendChild(this.__settingsContainerSwitch(routeCirc, 'Linha circular', '10px'));
         let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
         this.settingsFromExtension = document.createElement('input');this.settingsFromExtension.type = 'number';this.settingsFromExtension.classList = 'flat-input';this.settingsFromExtension.min = 0;this.settingsFromExtension.max = 300;this.settingsFromExtension.value = this.project.route.fromExtension;this.settingsFromExtension.id = 'March_settingsFromExtension';this.settingsFromExtension.placeholder = ' ';
         this.settingsFromExtension.onchange = ()=>{
@@ -1285,14 +1299,14 @@ class MarchUI{
     __generate(){
         this.gridLocked = true;
         let dialog = document.createElement('dialog');dialog.innerHTML = '<h5><i class="bi bi-code-slash me-1"></i> Gerar Planejamento</h5><p><b class="text-purple">Atenção</b>, ao confirmar, todo projeto em andamento <b class="text-purple">será apagado</b>,<br>este processo não pode ser desfeito.</p>';
-        dialog.addEventListener('close', ()=>{this.gridLocked = false;})
+        dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove()})
         let col1 = document.createElement('div');col1.style.width = '25%';col1.style.display = 'inline-block';
         let col2 = document.createElement('div');col2.style.width = '25%';col2.style.display = 'inline-block';col2.style.paddingLeft = '5px';
         let col3 = document.createElement('div');col3.style.width = '25%';col3.style.display = 'inline-block';col3.style.paddingLeft = '5px';
         let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';col4.style.marginBottom = '10px';
-        let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';
-        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_OPERACAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';
-        let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';
+        let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';fleet.id = 'March_generateFleet'
+        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_OPERACAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';startOperation.id = 'March_generateStartOperation';
+        let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';endOperation.id = 'March_generateEndOperation';
         let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton-warning px-3 ms-4';submit.innerHTML = 'Gerar';
         submit.onclick = async () => {
             dialog.close(); // Ao fechar lock do grid sera destravado (manter para tratar esc quando foco no modal)
@@ -1502,8 +1516,8 @@ class MarchUI{
         appKeyMap.bind({key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
         appKeyMap.bind({key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
         appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips()}})
-        appKeyMap.bind({key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.copyTransfer()}})
         appKeyMap.bind({key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{this.addToTransferArea();}})
+        appKeyMap.bind({key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.pasteTransfer()}})
         appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
         appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
         appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
