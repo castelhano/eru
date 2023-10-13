@@ -65,11 +65,31 @@ class Keywatch{
         cmd += ev.shiftKey || ev.shift ? 'T': 'F';
         return cmd;
     }
+    getHumanize(entry){
+        let comb = entry.alt ? 'Alt ' : '';
+        comb += entry.ctrl ? 'Ctrl ' : '';
+        comb += entry.shift ? 'Shift ' : '';
+        comb += entry.key == ' ' ? '[space]' : entry.key.toUpperCase();
+        return comb;        
+    }
+    getEntryByRole(role, onlyHumanizeScope=false){
+        let entry = Object.entries(this.map).filter(([k,v]) => v?.role == role)[0];
+        if(!onlyHumanizeScope){return entry}
+        return this.getHumanize(entry[1]);
+    }
     unbind(target){ // Remove listener do mapa (scope ou dicionario). Ex: appKeyBind.unbind('fTFF'); ou appKeyBind.unbind({key: 'f', alt: true});
         if(typeof target == 'string'){try{delete this.map[target]}catch(e){}}
         else if(typeof target == 'object'){try{delete this.map[this.getScope(target)]}catch(e){}}
     }
     unbindAll(){this.map = {}}
+    unbindGroup(group){
+        let l;
+        if(typeof group == 'object'){l = Object.entries(this.map).filter(([k,v]) => group.includes(v?.group))}
+        else{l = Object.entries(this.map).filter(([k,v]) => v?.group == group)}
+        for(let i = 0; i < l.length; i++){
+            delete this.map[l[i][0]];
+        }
+    }
     getMap(){return Object.values(this.map)}
     hide(target=null){
         if(!target){for(let i in this.map){this.map[i].visible = false}} // Se nao informado, oculta todos os eventos
@@ -103,16 +123,11 @@ class Keywatch{
             this.modalTableTbody.innerHTML = ''
             for(let item in map){
                 if(map[item]?.visible == false){continue}
-                let comb = map[item].alt ? 'Alt ' : '';
-                comb += map[item].ctrl ? 'Ctrl ' : '';
-                comb += map[item].shift ? 'Shift ' : '';
-                comb += map[item].key == ' ' ? '[space]' : map[item].key.toUpperCase();
+                let comb = this.getHumanize(map[item]);
                 let tr = `<tr><td>${map[item].name || ''}</td><td class="keywatch_table_combination_td"><code>${comb}</code></td><td>${map[item].desc || ''}</td></tr>`
                 this.modalTableTbody.innerHTML += tr;
             }
         }
-
-
     }
     __buildTable(){ // Cria tabela no modal (roda apenas ao carregar a pagina)
         this.searchInput = document.createElement('input');this.searchInput.type = 'search';this.searchInput.classList = 'form-control form-control-sm bg-body-tertiary mb-1';this.searchInput.placeholder = 'Criterio pesquisa';this.searchInput.id = 'Listener_searchInput';

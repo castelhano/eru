@@ -303,7 +303,7 @@ class Car{
             removed = this.trips.splice(index - (before ? 1 : 0), this.trips.length - 1);
         }
         else{
-            if(this.trips.length <= 1 + (after ? 1 : 0) + (before ? 1 : 0)){return false} // Valida se vai sobrar pelo menos uma viagem no carro
+            if(this.trips.length <= count + (after ? 1 : 0) + (before ? 1 : 0)){return false} // Valida se vai sobrar pelo menos uma viagem no carro
             removed = this.trips.splice(index - (before ? 1 : 0), count + (before ? 1 : 0) + (after ? 1 : 0));
         }
         return [removed, before, after];
@@ -553,7 +553,9 @@ class March{
         return new Promise(resolve => {
             this.cars = []; // Limpa planejamento atual
             let faixa = min2Range(metrics.start);
-            let ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].toMin + this.route.param[faixa].fromInterv + this.route.param[faixa].toInterv;
+            let ciclo;
+            if(this.route.circular){ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].fromInterv}
+            else{ciclo = this.route.param[faixa].fromMin + this.route.param[faixa].toMin + this.route.param[faixa].fromInterv + this.route.param[faixa].toInterv}
             let freq = Math.ceil(ciclo / metrics.fleet);
             INICIO_OPERACAO = metrics.start; // Ajusta inicio de operacao para hora informada
             for(let i = 0; i < metrics.fleet; i++){
@@ -573,7 +575,7 @@ class March{
         })
     }
     load(project){ // Recebe dicionario, monta instancias e carrega projeto
-        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','sumInterGaps'];
+        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','viewStage','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }

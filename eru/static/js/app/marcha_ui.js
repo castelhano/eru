@@ -108,16 +108,15 @@ class MarchUI{
         this.__buildStyles();
         this.__build();
         this.__buildRuler();
-        this.__buildCursor();
         this.__buildFooter();
-        this.__addListeners();
+        this.__addGeneralListeners();
         if(this.settingsContainer){this.__builSettingsUI()}
-
+        
         // Se projeto vazio verifica se nao existe previa salvo localmente, se sim carrega previa
         if(this.project.cars.length == 0 && localStorage['marchCurrentProject']){
             this.project.load(JSON.parse(localStorage.marchCurrentProject)); // Carrega modelo com projeto salvo localmente
-            this.__load(); // Constroi interface para projeto
         }
+        this.switchStage(this.project.viewStage); // Carrega interface do respectivo viewStage
     }
     __buildStyles(){
         let style = document.createElement('style');
@@ -208,7 +207,6 @@ class MarchUI{
         }
     }
     __buildFooter(){ // Cria elementos do footer
-        // Footer
         this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndex = '100';
         this.displayStart = document.createElement('h5');this.displayStart.style.width = '70px';this.displayStart.style.position = 'absolute';this.displayStart.style.top = '5px';this.displayStart.style.left = '10px';this.displayStart.innerHTML = '--:--';
         this.displayEnd = document.createElement('h5');this.displayEnd.style.width = '70px';this.displayEnd.style.position = 'absolute';this.displayEnd.style.bottom = '5px';this.displayEnd.style.left = '10px';this.displayEnd.innerHTML = '--:--';
@@ -427,7 +425,12 @@ class MarchUI{
     }
     __settingsUpdateFreqSimulate(){ // Calcula frequencia (exibe na label) baseado nos dados do patamar
         if(this.settingsFleetSimulate.value == '' || this.settingsFleetSimulate.value == 0){this.settingsFreqSimulate.innerHTML = '--'; return false;}
-        this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineToMin.value) + parseInt(this.settingsBaselineFromInterv.value) + parseInt(this.settingsBaselineToInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+        if(!this.project.route.circular){
+            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineToMin.value) + parseInt(this.settingsBaselineFromInterv.value) + parseInt(this.settingsBaselineToInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+        }
+        else{
+            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineFromInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+        }
     }
     addFleet(car=null, seq=this.project.cars.length + 1){
         car = car || this.project.addFleet({route: this.project.route});
@@ -730,25 +733,16 @@ class MarchUI{
     removeFleet(){
         if(!this.fleetFocus){return false}
         let r = this.project.removeFleet(this.fleetIndex);
-        if(r){
-            this.__load();
-            // for(let i = 0; i < this.grid[this.fleetIndex].length; i++){ // Apaga as viagens do grid e freqGrid
-            //     this.grid[this.fleetIndex][i].remove();
-            //     this.freqGrid[this.fleetIndex][i].remove();
-            // }
-            // for(let i = 0; ){ // Altera label dos carros com nova sequencia
-
-            // }
-        }
+        if(r){this.__loadStage1()} // Ao remover carro, todo o grid eh reconstruido
     }
     removeTrip(cascade=true){ // Remove viagem em foco e se cascade=true as seguintes
         if(this.tripFocus){
             let r;
             // Se itens selecionados, apaga as viagens selecionadas
-            if(this.startSelection > 0 && this.endSelection > 0){r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, false, this.endSelection - this.startSelection + 1)}
+            if(this.startSelection >= 0 && this.endSelection >= 0){r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, false, this.endSelection - this.startSelection + 1)}
             else{r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, cascade)}
             if(r){
-                if(this.startSelection > 0 && this.endSelection > 0){
+                if(this.startSelection >= 0 && this.endSelection >= 0){
                     let ajustedStart = this.startSelection - (r[1] ? 1 : 0);
                     let ajustedEnd = this.endSelection + (r[2] ? 1 : 0);
                     for(let i = ajustedEnd; i >= ajustedStart; i--){
@@ -757,7 +751,6 @@ class MarchUI{
                     }
                     this.grid[this.fleetSelection].splice(ajustedStart, ajustedEnd - ajustedStart + 1); // Apaga entradas no grid
                     this.freqGrid[this.fleetSelection].splice(this.tripIndex, ajustedEnd - ajustedStart + 1); // Apaga entradas no freqGrid
-                    this.__clearSelection();
                 }
                 else if(!cascade){
                     let ajustedStart = this.tripIndex - (r[1] ? 1 : 0);
@@ -778,11 +771,13 @@ class MarchUI{
                     this.grid[this.fleetIndex].splice(ajustedStart, this.grid[this.fleetIndex].length - ajustedStart); // Apaga entradas no grid
                     this.freqGrid[this.fleetIndex].splice(ajustedStart, this.freqGrid[this.fleetIndex].length - ajustedStart); // Apaga entradas no freqGrid
                 }
+                this.__clearSelection();
                 // Muda o foco para viagem anterior (se existir) ou posterior
                 this.tripIndex = this.tripIndex == 0 || (this.tripIndex == 1 && r[1]) ? 0 : this.tripIndex - (r[1] ? 2 : 1);
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
                 this.__cursorMove();
             }
+            else{appNotify('warning', `<b>Atenção:</b> Não é possivel remover todas as viagens de um carro, use o comando <code>${appKeyMap.getEntryByRole('removeFleet', true)}</code> caso queria remover o carro do projeto`, false)}
         }
     }
     moveTrips(){
@@ -797,6 +792,8 @@ class MarchUI{
             this.freqGrid[this.fleetIndex] = this.freqGrid[this.fleetIndex].concat(this.freqGrid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1));
             this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             this.__clearSelection();
+            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.__cursorMove();
         }
         else{appNotify('warning', '<b>Atenção:</b> Conflito de horário ou você tentou mover todas as viagens do veiculo')}
     }
@@ -931,7 +928,7 @@ class MarchUI{
         this.displayTripsCount.innerHTML = this.project.cars[this.fleetIndex].countTrips();
         this.displayJorney.innerHTML = min2Hour(this.project.getJourney(this.fleetIndex), false);
         this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
-        this.fleetDisplayClassification = document.createElement('select');this.fleetDisplayClassification.style = `position: absolute;left: 600px;top: 11px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplayClassification.id = 'March_footerFleetDisplayClassification';
+        this.fleetDisplayClassification = document.createElement('select');this.fleetDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplayClassification.id = 'March_footerFleetDisplayClassification';
         this.fleetDisplayClassification.onchange = () => {this.project.cars[this.fleetIndex].classification = this.fleetDisplayClassification.value;}
         let classOptions = {'0': 'Convencional', '1': 'Padron', '-1': 'Microonibus', '2': 'Articulado', '3': 'Biarticulado'};
         for(let key in classOptions){
@@ -942,7 +939,7 @@ class MarchUI{
         }
         this.footer.appendChild(this.fleetDisplayClassification);
         
-        this.fleetDisplaySpecification = document.createElement('select');this.fleetDisplaySpecification.style = `position: absolute;left: 600px;bottom: 11px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplaySpecification.id = 'March_footerFleetDisplaySpecification';
+        this.fleetDisplaySpecification = document.createElement('select');this.fleetDisplaySpecification.style = `position: absolute;left: 600px;bottom: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplaySpecification.id = 'March_footerFleetDisplaySpecification';
         this.fleetDisplaySpecification.onchange = () => {this.project.cars[this.fleetIndex].specification = this.fleetDisplaySpecification.value;}
         let specOptions = {'0': '---', '1': 'Porta LE'};
         for(let key in specOptions){
@@ -1045,6 +1042,20 @@ class MarchUI{
         }
         this.fleetFocus = this.project.cars[this.flee]
     }
+    __clearGrid(){
+        for(let i in this.grid){ // Apaga todos os elementos do grid
+            for(let j = 0; j < this.grid[i].length; j++){
+                this.grid[i][j].remove(); // Apaga viagem no grid
+                this.freqGrid[i][j].remove(); // Apaga viagem no freqGrid
+            }
+        }
+        this.grid = {};
+        this.freqGrid = {};
+    }
+    __clearFleetLabels(){
+        this.fleetLabels.forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
+        this.fleetLabels = [];
+    }
     __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
         return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
     }
@@ -1073,7 +1084,17 @@ class MarchUI{
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
         // Adicionado os controles das metricas
         let routeCirc = document.createElement('input');routeCirc.type = 'checkbox';routeCirc.id = 'March_routeCircControl';routeCirc.checked = this.project.route.circular;
-        routeCirc.onchange = () => {this.project.route.circular = routeCirc.checked;}
+        routeCirc.onchange = () => {
+            this.project.route.circular = routeCirc.checked;
+            if(routeCirc.checked){
+                this.settingsBaselineToMin.disabled = true;
+                this.settingsBaselineToInterv.disabled = true;
+            }
+            else{
+                this.settingsBaselineToMin.disabled = false;
+                this.settingsBaselineToInterv.disabled = false;
+            }
+        }
         col1.appendChild(this.__settingsContainerSwitch(routeCirc, 'Linha circular', '10px'));
         let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
         this.settingsFromExtension = document.createElement('input');this.settingsFromExtension.type = 'number';this.settingsFromExtension.classList = 'flat-input';this.settingsFromExtension.min = 0;this.settingsFromExtension.max = 300;this.settingsFromExtension.value = this.project.route.fromExtension;this.settingsFromExtension.id = 'March_settingsFromExtension';this.settingsFromExtension.placeholder = ' ';
@@ -1251,6 +1272,10 @@ class MarchUI{
         
         let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '12%';
         this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
+        if(this.project.route.circular){
+            this.settingsBaselineToMin.disabled = true;
+            this.settingsBaselineToInterv.disabled = true;
+        }
         this.settingsBaselineToInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
         col26.appendChild(this.settingsBaselineToInterv);
         col26.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineToInterv, 'Intervalo Volta'));
@@ -1348,7 +1373,7 @@ class MarchUI{
             if(metrics.fleet < 1 || !metrics.start || !metrics.end){return false;}
             let r = await this.project.generate(metrics);
             if(r){
-                this.__load();
+                this.__loadStage1();
             }
             else{appNotify('danger', '<b>Erro:</b> Ao gerar planejamento')}
             loading.close();
@@ -1373,18 +1398,67 @@ class MarchUI{
         dialog.showModal();
 
     }
-    __load(){ // Apaga carros e viagens, e insere novamente
-        for(let i in this.grid){ // Apaga todos os elementos do grid
-            for(let j = 0; j < this.grid[i].length; j++){
-                this.grid[i][j].remove(); // Apaga viagem no grid
-                this.freqGrid[i][j].remove(); // Apaga viagem no freqGrid
-            }
+    switchStage(stage=1){
+        if(![1,2,3].includes(stage)){return false}
+        this.project.viewStage = stage;
+        if(stage == 1){
+            this.__canvasRebuild();
+            this.footer.style.display = 'block';
+            if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+            appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+            this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
+            this.__loadStage1(); 
         }
-        this.fleetLabels.forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
-        this.fleetLabels = [];
-        this.grid = {};
-        this.freqGrid = {};
-        // ---
+        else if(stage == 2){
+            this.canvas.innerHTML = '';
+            this.rulerFreq.innerHTML = '';
+            this.__clearFleetLabels();
+            this.footer.style.display = 'none';
+            if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+            appKeyMap.unbindGroup(['March_stage1','March_stage3']);
+            this.__loadStage2();
+        }
+        else{}
+    }
+    __switchStageModal(){
+        if(this.gridLocked){return false}
+        this.gridLocked = true;
+        let dialog = document.createElement('dialog');dialog.innerHTML = '<h5 class="text-center user-select-none">Alterar Vizualização do Grid</h5>';
+        dialog.addEventListener('close', ()=>{
+            this.gridLocked = false;
+            dialog.remove();
+        })
+        let btnGroup = document.createElement('div');btnGroup.classList = 'btn-group mt-3 ps-1';
+        let stage1 = document.createElement('button');stage1.type = 'button';stage1.classList = 'btn btn-sm btn-phanton';stage1.innerHTML = 'Planejamento';
+        stage1.onclick = ()=>{
+            this.switchStage(1);
+            dialog.close();
+        };
+        let stage2 = document.createElement('button');stage2.type = 'button';stage2.classList = 'btn btn-sm btn-phanton';stage2.innerHTML = 'Escala';
+        stage2.onclick = ()=>{
+            this.switchStage(2)
+            dialog.close();
+        };
+        let stage3 = document.createElement('button');stage3.type = 'button';stage3.classList = 'btn btn-sm btn-phanton';stage3.innerHTML = 'Conclusão';
+        stage3.onclick = ()=>{
+            this.switchStage(3)
+            dialog.close();
+        };
+        switch (this.project.viewStage){
+            case 1: stage1.classList.add('active','disabled');break;
+            case 2: stage2.classList.add('active','disabled');break;
+            case 3: stage3.classList.add('active','disabled');break;
+        }
+        btnGroup.appendChild(stage1);
+        btnGroup.appendChild(stage2);
+        btnGroup.appendChild(stage3);
+        dialog.appendChild(btnGroup);
+        document.body.appendChild(dialog);
+        dialog.showModal();
+    }
+    __loadStage1(){ // Refaz grid
+        this.__clearGrid(); // Apaga elemento do grid e freqGrid
+        this.__clearFleetLabels(); // Apaga as labels dos carros
         for(let i = 0; i < this.project.cars.length; i++){ // Recria todos os carros e viagens
             this.addFleet(this.project.cars[i], i + 1);
         }
@@ -1407,12 +1481,37 @@ class MarchUI{
 
         }
     }
-    __addListeners(){ // Cria atalhos de teclado para manipulação do projeto (dependencia da lib listener.js)
-        appKeyMap.bind({key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
-        appKeyMap.bind({key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
-        appKeyMap.bind({key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock() || !this.tripFocus){return false;}this.addTripAt()}})
-        appKeyMap.bind({key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: ()=>{
+    __loadStage2(){ // Carrega interface para manipulacao das escalas
+        appNotify('success', 'Contruindo stage 2');
+    }
+    __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (indiferente do viewStage)
+        appKeyMap.bind({group: 'March_general', key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Altera Visualização', desc: 'Exibe modal para alteração da visualização', run: (ev)=>{ev.preventDefault();this.__switchStageModal()}})
+        appKeyMap.bind({group: 'March_general', key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
+            this.__saveLocal();
+            appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')
+        }})
+        appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
+            localStorage.removeItem('marchCurrentProject');
+            this.project = new March({})
+            this.fleetFocus = null;
+            this.tripFocus = null;
+            this.fleetIndex = -1;
+            this.tripIndex = -1;
+            this.__clearSelection();
+            this.cursor.style.left = '-200px';
+            this.__canvasRebuild();
+            this.__clearFleetLabels();
+            this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
+            appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
+        }})
+    }
+    __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
+        appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
+        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock() || !this.tripFocus){return false;}this.addTripAt()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
                 this.tripIndex++;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -1421,8 +1520,9 @@ class MarchUI{
                 
             }
         }})
-        appKeyMap.bind({key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             if(this.tripIndex > 0){
                 this.tripIndex--;
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
@@ -1430,8 +1530,9 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.project.cars.length > this.fleetIndex + 1){
                 this.fleetIndex++;
@@ -1456,8 +1557,9 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: () => {
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: (ev) => {
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.fleetIndex > 0){
                 this.fleetIndex--;
@@ -1482,39 +1584,41 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
-        appKeyMap.bind({key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus()}})
-        appKeyMap.bind({key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus(false)}})
-        appKeyMap.bind({key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub()}})
-        appKeyMap.bind({key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub(false)}})
-        appKeyMap.bind({key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.advance()}})
-        appKeyMap.bind({key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}
+        appKeyMap.bind({group: 'March_stage1', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
+        appKeyMap.bind({group: 'March_stage1', key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.plus();}})
+        appKeyMap.bind({group: 'March_stage1', key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus(false)}})
+        appKeyMap.bind({group: 'March_stage1', key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.sub();}})
+        appKeyMap.bind({group: 'March_stage1', key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub(false)}})
+        appKeyMap.bind({group: 'March_stage1', key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.advance();}})
+        appKeyMap.bind({group: 'March_stage1', key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.back()}})
-        appKeyMap.bind({key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
-        appKeyMap.bind({key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addInterv()}})
-        appKeyMap.bind({key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess()}})
-        appKeyMap.bind({key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.tripShut()}})
-        appKeyMap.bind({key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addRecall()}})
-        appKeyMap.bind({key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.nextTrip()}})
-        appKeyMap.bind({key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.previousTrip()}})
-        appKeyMap.bind({key: 'home', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem carro', desc: 'Foca primeira viagem do carro', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.back()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addInterv()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.tripShut()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addRecall()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextTrip();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousTrip();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'home', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem carro', desc: 'Foca primeira viagem do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             this.tripIndex = 0;
             this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
             this.__cursorMove();
             this.__updateTripDisplay();
         }})
-        appKeyMap.bind({key: 'end', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'end', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
+            ev.preventDefault();
             this.tripIndex = this.project.cars[this.fleetIndex].trips.length - 1;
             this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
             this.__cursorMove();
             this.__updateTripDisplay();
         }})
-        appKeyMap.bind({key: 'home', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem sentido', desc: 'Foca primeira viagem no mesmo sentido', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'home', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem sentido', desc: 'Foca primeira viagem no mesmo sentido', run: ()=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getFirstTrip(this.tripFocus.way);
             if(resp){
@@ -1525,7 +1629,7 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'end', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'end', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getLastTrip(this.tripFocus.way);
             if(resp){
@@ -1536,66 +1640,39 @@ class MarchUI{
                 this.__updateTripDisplay();
             }
         }})
-        appKeyMap.bind({key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
-        appKeyMap.bind({key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
-        appKeyMap.bind({key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
-        appKeyMap.bind({key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips()}})
-        appKeyMap.bind({key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{this.addToTransferArea();}})
-        appKeyMap.bind({key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.pasteTransfer()}})
-        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
-        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
-        appKeyMap.bind({key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{this.addToTransferArea();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.pasteTransfer()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
+        appKeyMap.bind({group: 'March_stage1', key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
             if(this.tripFocus){
                 this.initialView = this.tripFocus.start - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
                 this.__buildRuler();
                 this.canvasFit();
             }
         }})
-        appKeyMap.bind({key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip(false)}})
-        appKeyMap.bind({key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip(false)}})
+        appKeyMap.bind({group: 'March_stage1', role: 'removeFleet', key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             if(this.tripIndex == 0){this.removeFleet()}
             else{this.removeTrip()}
         }})
-        appKeyMap.bind({key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
-        appKeyMap.bind({key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
-        appKeyMap.bind({key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: ()=>{this.__showRouteMetrics()}})
-        appKeyMap.bind({key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: ()=>{this.__generate()}})
-        appKeyMap.bind({key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
-            this.__saveLocal();
-            appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')
-        }})
-        appKeyMap.bind({key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recarrega última prévia', desc: 'Recarrega última prévia salva em disco', run: ()=>{
-            if(localStorage['marchCurrentProject']){
-                let obj = JSON.parse(project);
-                this.project.load(obj.project)
-                this.__load();
-            }
-            else{
-                appNotify('warning', 'Nenhuma prévia salva localmente');
-            }
-        }})
-        appKeyMap.bind({key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
-            localStorage.removeItem('marchCurrentProject');
-            this.project = new March({})
-            this.fleetFocus = null;
-            this.tripFocus = null;
-            this.fleetIndex = -1;
-            this.tripIndex = -1;
-            this.__clearSelection();
-            this.cursor.style.left = '-200px';
-            this.__load();
-            this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
-            appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
-        }})
-        appKeyMap.bind({key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: (ev)=>{ev.preventDefault();this.__showRouteMetrics()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: (ev)=>{ev.preventDefault();this.__generate()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
             localStorage.removeItem('marchUiSettings');
             for(let key in this.defaultSettings){
                 this[key] = this.defaultSettings[key]; // Retorna valor padrao a variavel de ambiente
                 this[`settings${key}`].value = key == 'rulerUnit' ? parseInt(this.defaultSettings[key]) : this.defaultSettings[key]; // Retorna valor padrao ao controle no painel de configuracoes
             }
             this.__buildRuler(); // Refaz Regua
-            this.__load(false); // Ajusta viagens
+            this.__loadStage1(false); // Ajusta viagens
             this.canvasFit(); // Centraliza canvas na viagem em foco
             appNotify('warning', '<b>Info:</b> Ajustes de interface revertidos');
         }})
