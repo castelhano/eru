@@ -65,9 +65,7 @@ class Schedule{ // Classe para tabelas (escalas)
         this.tripStartIndex = options?.tripStartIndex || 0;
         this.tripEndIndex = options?.tripStartIndex || 0;
     }
-    
 }
-
 class Route{
     constructor(options){
         this.id = options?.id || null;
@@ -268,29 +266,55 @@ class Car{
             if((trip.start >= this.trips[i].start && trip.start <= this.trips[i].end) || (trip.end >= this.trips[i].start && trip.end <= this.trips[i].end)){conflict = true;}
             i++;
         }
-        return !conflict;
+        return !conflict;trips.length
     }
     addSchedule(options){ // Cria nova escala
         let s = new Schedule(options);
         if(this.__scheduleIsValid(s)){
-            this.scheduleBaptize(s);
             this.schedules.push(s);
             this.schedules.sort((a, b) => a.tripStartIndex > b.tripStartIndex ? 1 : -1); // Reordena escalas pelo inicio
             return true;
         }
         return false;
     }
-    scheduleBaptize(schedule){ // Define nome automatico para tabela
-        schedule.name = '01A';
-    }
     checkSchedule(start, end){ // Verifica se tabela esta disponivel para carro (se nao conflita com outras tabelas)
     }
-    getEmptySchedule(){ // Retorna 1o intervalo nao alocado para carro
+    getEmptySchedules(){ // Retorna intervalos nao alocado para carro (sempre no final do carro)
+        let empty = []; // Array com todos os intervalos nao alocados do veiculo
+        let sq = {start:0, end:this.trips.length - 1}; // Variavel armazena o inicio e fim do intervalo
+        if(this.schedules.length > 0){ // Se ja existir schedule para carro ajusta dados no novo schedule
+            sq.start = this.schedules[this.schedules.length - 1].end + 1;
+            if(sq.start >= sq.end){return false} // Nao existe intervalo nao alocado, retorna null
+        }
+        for(let i = sq.start; i < this.trips.length; i++){ // Percorre as viagens para identificar os terminos dos intervalos, deve considerar recolhe e shut
+            if(this.trips[i].type == RECOLHE || this.trips[i].shut){ // Deve fechar intervalo e carregar no array de empty
+                let sq_n = Object.assign({}, sq); // Clona dict sq
+                sq_n.end = i; // Ajusta final
+                empty.push(sq_n);
+                sq.start = i + 1;
+            }
+        }
+        if(this.trips[this.trips.length - 1].type != RECOLHE && !this.trips[this.trips.length - 1].shut){empty.push(sq)} // Caso ultima viagem nao tem recolhe ou shut intervalo nao sera adicionado dentro do for, ca
+        return empty;
     }
     __scheduleIsValid(schedule){ // Valida se tabela pode ser inserida no carro sem gerar conflito com outras escalas
         return true;
     }
     cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
+    }
+    getScheduleJourney(schedule_index){
+        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start;
+    }
+    getChangeTurnsSpots(route){
+        let spots = [];
+        for(let i = 0; i < this.trips.length; i++){
+            if(![ACESSO, RECOLHE, INTERVALO].includes(this.trips[i].type)){
+                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: this.trips[i].end})}
+                else{spots.push({locale: route.from, time: this.trips[i].end})}
+            }
+        }
+        spots.pop(); // Remove ultimo ponto (fim da ultima viagem)
+        return spots;
     }
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
@@ -478,6 +502,9 @@ class March{
             sum += this.cars[i].getJourney(this.sumInterGaps);
         }
         return sum;
+    }
+    scheduleBaptize(schedule){ // Define nome automatico para tabela
+        schedule.name = '01A';
     }
     getIntervs(car_index=null){ // Retorna a soma de intervalos do carro informado
         if(car_index != null){
