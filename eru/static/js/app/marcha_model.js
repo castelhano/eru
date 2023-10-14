@@ -58,14 +58,6 @@ class Reference{ // Classe das referencias
         this.delta = options?.delta || 1; // Armazena o tempo em minutos em relacao a origem (from ou to)
     }
 }
-
-class Schedule{ // Classe para tabelas (escalas)
-    constructor(options){
-        this.name = options?.name || ''; // Nome da tabela
-        this.tripStartIndex = options?.tripStartIndex || 0;
-        this.tripEndIndex = options?.tripStartIndex || 0;
-    }
-}
 class Route{
     constructor(options){
         this.id = options?.id || null;
@@ -121,7 +113,7 @@ class Trip{
         if(typeof this.end == 'string'){this.end = hour2Min(this.end)} // Converte em inteiros caso instanciado start: '04:00'
         if(this.end <= this.start){this.end = this.start + CICLO_BASE} // Final tem que ser maior (pelo menos 1 min) que inicio 
         this.__id = March_nextTripId;
-        this.shut = false; // Define encerramento de viagem, usado para encerrar turno onde nao ocorre a recolhida do veiculo
+        this.shut = options?.shut || options?.shut == true; // Define encerramento de viagem, usado para encerrar turno onde nao ocorre a recolhida do veiculo
         March_nextTripId++;
 
         this.way = options?.way || IDA; // Sentido da viagem (ida, volta)
@@ -269,14 +261,25 @@ class Car{
         return !conflict;trips.length
     }
     addSchedule(options){ // Cria nova escala
-        let s = new Schedule(options);
-        if(this.__scheduleIsValid(s)){
-            this.schedules.push(s);
-            this.schedules.sort((a, b) => a.tripStartIndex > b.tripStartIndex ? 1 : -1); // Reordena escalas pelo inicio
-            return true;
-        }
-        return false;
+        options.start = this.schedules[this.schedules.length - 1].end + 1;
+        this.schedules.push(options);
+        return true;
     }
+    updateSchedule(schedule_index, options){
+        for(let key in options){
+            this.schedules[schedule_index][key] = options[key]; // Atualiza os valores da schedule
+        }
+        if(this.schedules.length > schedule_index + 1 && options?.end){ // Se existir schedule depois da editada
+            if(this.schedules[schedule_index].end >= this.schedules[schedule_index + 1].end){ // Caso novo valor de fim ocupe todo o espaco da schedule posterior, remove todos os schedules posteriores
+                this.schedules.splice(schedule_index + 1, this.schedules.length - 1 - schedule_index);
+            }
+            else{ // Caso nao, apenas ajusta o inicio da posterior conforme fim da corrente mais 1
+                this.schedules[schedule_index + 1].start = this.schedules[schedule_index].end + 1;
+            }
+        }
+        return true;
+    }
+    deleteSchedule(schedule_index){}
     checkSchedule(start, end){ // Verifica se tabela esta disponivel para carro (se nao conflita com outras tabelas)
     }
     getEmptySchedules(){ // Retorna intervalos nao alocado para carro (sempre no final do carro)
@@ -303,14 +306,14 @@ class Car{
     cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
     getScheduleJourney(schedule_index){
-        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start;
+        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end) - 1;
     }
     getChangeTurnsSpots(route){
         let spots = [];
         for(let i = 0; i < this.trips.length; i++){
             if(![ACESSO, RECOLHE, INTERVALO].includes(this.trips[i].type)){
-                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: this.trips[i].end})}
-                else{spots.push({locale: route.from, time: this.trips[i].end})}
+                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: this.trips[i].end, type: 'tripEnd', tripIndex: i})}
+                else{spots.push({locale: route.from, time: this.trips[i].end, type: 'tripEnd', tripIndex: i})}
             }
         }
         spots.pop(); // Remove ultimo ponto (fim da ultima viagem)
@@ -475,6 +478,12 @@ class March{
         }
         return bestMatch ? [carIndex, this.cars[carIndex].trips.indexOf(bestMatch), bestMatch] : false;
     }
+    addSchedule(fleet_index, options){
+        options.name = this.scheduleBaptize(fleet_index, this.cars[fleet_index].schedules.length);
+        let r = this.cars[fleet_index].addSchedule(options)
+        return r;
+
+    }
     previousTrip(trip){ // Retorna viagem anterior (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;
         let carIndex = null;
@@ -503,8 +512,9 @@ class March{
         }
         return sum;
     }
-    scheduleBaptize(schedule){ // Define nome automatico para tabela
-        schedule.name = '01A';
+    scheduleBaptize(fleet_index, new_seq){ // Define nome automatico para tabela
+        let seq = ['A', 'B', 'C', 'D', 'E', 'F'];
+        return `${String(fleet_index + 1).padStart(2,'0')}${seq[new_seq]}`;
     }
     getIntervs(car_index=null){ // Retorna a soma de intervalos do carro informado
         if(car_index != null){
