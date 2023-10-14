@@ -280,43 +280,76 @@ class Car{
         return true;
     }
     deleteSchedule(schedule_index){}
-    checkSchedule(start, end){ // Verifica se tabela esta disponivel para carro (se nao conflita com outras tabelas)
-    }
-    getEmptySchedules(){ // Retorna intervalos nao alocado para carro (sempre no final do carro)
-        let empty = []; // Array com todos os intervalos nao alocados do veiculo
-        let sq = {start:0, end:this.trips.length - 1}; // Variavel armazena o inicio e fim do intervalo
-        if(this.schedules.length > 0){ // Se ja existir schedule para carro ajusta dados no novo schedule
-            sq.start = this.schedules[this.schedules.length - 1].end + 1;
-            if(sq.start >= sq.end){return false} // Nao existe intervalo nao alocado, retorna null
-        }
-        for(let i = sq.start; i < this.trips.length; i++){ // Percorre as viagens para identificar os terminos dos intervalos, deve considerar recolhe e shut
-            if(this.trips[i].type == RECOLHE || this.trips[i].shut){ // Deve fechar intervalo e carregar no array de empty
-                let sq_n = Object.assign({}, sq); // Clona dict sq
-                sq_n.end = i; // Ajusta final
-                empty.push(sq_n);
-                sq.start = i + 1;
+    getFleetSchedulesBlock(){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou trip.shut
+        let blocks = [];
+        let block = {start: this.trips[0].start, size:0};
+        for(let i = 0; i < this.trips.length; i++){
+            if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
+                block.size += this.trips[i].getCycle();
+                blocks.push(Object.assign({}, block));
+                if(this.trips.length - 1 > i){
+                    block.start = this.trips[i + 1].start;
+                }
+                block.size = 0;
+            }
+            else{
+                block.size += this.trips[i].getCycle() + this.getInterv(i);
             }
         }
-        if(this.trips[this.trips.length - 1].type != RECOLHE && !this.trips[this.trips.length - 1].shut){empty.push(sq)} // Caso ultima viagem nao tem recolhe ou shut intervalo nao sera adicionado dentro do for, ca
-        return empty;
+        return blocks;
     }
-    __scheduleIsValid(schedule){ // Valida se tabela pode ser inserida no carro sem gerar conflito com outras escalas
-        return true;
+    getEmptySchedules(){ // Retorna intervalos nao alocados para carro
+        let empty = []; // Array com todos os intervalos nao alocados do veiculo
+        let sq = {start:0, end:0}; // Variavel armazena o inicio e fim do intervalo
+        let blocks = this.getFleetSchedulesBlock();
+        console.log(blocks);
+        // if(this.schedules.length > 0){ // Se ja existir schedule para carro ajusta dados no novo schedule
+        //     sq.start = this.trips[this.schedules[this.schedules.length - 1].end + 1];
+        //     if(sq.start >= sq.end){return false} // Nao existe intervalo nao alocado, retorna null
+        // }
+        // for(let i = sq.start; i < this.trips.length; i++){ // Percorre as viagens para identificar os terminos dos intervalos, deve considerar recolhe e shut
+        //     if(this.trips[i].type == RECOLHE || this.trips[i].shut){ // Deve fechar intervalo e carregar no array de empty
+        //         let sq_n = Object.assign({}, sq); // Clona dict sq
+        //         sq_n.end = i; // Ajusta final
+        //         empty.push(sq_n);
+        //         sq.start = i + 1;
+        //     }
+        // }
+        // if(this.trips[this.trips.length - 1].type != RECOLHE && !this.trips[this.trips.length - 1].shut){empty.push(sq)} // Caso ultima viagem nao tem recolhe ou shut intervalo nao sera adicionado dentro do for, ca
+        return [];
     }
+    // getEmptySchedules(){ // Retorna intervalos nao alocados para carro
+    //     let empty = []; // Array com todos os intervalos nao alocados do veiculo
+    //     let sq = {start:0, end:this.trips.length - 1}; // Variavel armazena o inicio e fim do intervalo
+    //     if(this.schedules.length > 0){ // Se ja existir schedule para carro ajusta dados no novo schedule
+    //         sq.start = this.schedules[this.schedules.length - 1].end + 1;
+    //         if(sq.start >= sq.end){return false} // Nao existe intervalo nao alocado, retorna null
+    //     }
+    //     for(let i = sq.start; i < this.trips.length; i++){ // Percorre as viagens para identificar os terminos dos intervalos, deve considerar recolhe e shut
+    //         if(this.trips[i].type == RECOLHE || this.trips[i].shut){ // Deve fechar intervalo e carregar no array de empty
+    //             let sq_n = Object.assign({}, sq); // Clona dict sq
+    //             sq_n.end = i; // Ajusta final
+    //             empty.push(sq_n);
+    //             sq.start = i + 1;
+    //         }
+    //     }
+    //     if(this.trips[this.trips.length - 1].type != RECOLHE && !this.trips[this.trips.length - 1].shut){empty.push(sq)} // Caso ultima viagem nao tem recolhe ou shut intervalo nao sera adicionado dentro do for, ca
+    //     return empty;
+    // }
     cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
     getScheduleJourney(schedule_index){
-        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end) - 1;
+        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end);
     }
     getChangeTurnsSpots(route){
         let spots = [];
         for(let i = 0; i < this.trips.length; i++){
             if(![ACESSO, RECOLHE, INTERVALO].includes(this.trips[i].type)){
-                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: this.trips[i].end, type: 'tripEnd', tripIndex: i})}
-                else{spots.push({locale: route.from, time: this.trips[i].end, type: 'tripEnd', tripIndex: i})}
+                let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
+                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
+                else{spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
             }
         }
-        spots.pop(); // Remove ultimo ponto (fim da ultima viagem)
         return spots;
     }
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
