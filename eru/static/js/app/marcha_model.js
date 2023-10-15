@@ -104,6 +104,10 @@ class Route{
         }
         return baseline;
    }
+   getSurrenderRefs(way){
+    if(way == IDA){return this.refs.from.filter((el) => el.local.surrender == true)}
+    else{return this.refs.to.filter((el) => el.local.surrender == true)}
+   }
 }
 class Trip{
     constructor(options){
@@ -258,7 +262,7 @@ class Car{
             if((trip.start >= this.trips[i].start && trip.start <= this.trips[i].end) || (trip.end >= this.trips[i].start && trip.end <= this.trips[i].end)){conflict = true;}
             i++;
         }
-        return !conflict;trips.length
+        return !conflict;
     }
     addSchedule(options){ // Cria nova escala
         this.schedules.push(options);
@@ -267,7 +271,7 @@ class Car{
     }
     updateSchedule(schedule_index, options, blockStartIndex, blockEndIndex){
         // Aborta operacao caso o novo fim informado seja menor que o inicio da escala, ou se o novo fim ser igual ao atual fim
-        if(this.schedules[schedule_index].start > options.end || this.schedules[schedule_index].end == options.end){return false}
+        if(this.schedules[schedule_index].start > options.end || (this.schedules[schedule_index].end == options.end && this.schedules[schedule_index].delta == options.delta)){return false}
         for(let key in options){
             this.schedules[schedule_index][key] = options[key]; // Atualiza os valores da schedule
         }
@@ -289,11 +293,26 @@ class Car{
     getFleetSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou trip.shut
         let blocks = [];
         let block = {start: this.trips[0].start, startIndex: 0, endIndex: 0, size:0, spots: []};
+        let fromRefs = route.getSurrenderRefs(IDA);
+        let toRefs = route.getSurrenderRefs(VOLTA);
         for(let i = 0; i < this.trips.length; i++){
-            // Adiciona spots do bloco
+            // Adiciona spot de referencia do bloco
+            if(this.trips[i].way == IDA && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO].includes(this.trips[i].type)){
+                for(let j = 0; j < fromRefs.length; j++){
+                    let time = this.trips[i].start + fromRefs[j].delta;
+                    block.spots.push({locale: fromRefs[j].local, time: time, type: 'reference', tripIndex: i, way: IDA, delta: fromRefs[j].delta})
+                }
+            }
+            else if(this.trips[i].way == VOLTA && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO].includes(this.trips[i].type)){
+                for(let j = 0; j < toRefs.length; j++){
+                    let time = this.trips[i].start + toRefs[j].delta;
+                    block.spots.push({locale: fromRefs[j].local, time: time, type: 'reference', tripIndex: i, way: VOLTA, delta: toRefs[j].delta})
+                }
+            }
+            // Adiciona spots de viagem do bloco
             if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
                 let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
+                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
                 else{block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
@@ -316,31 +335,24 @@ class Car{
     }
     __blockAddEmpty(block){
         let lastScheduleIndex = -1;
+        let lastDelta = 0;
         for(let i = 0; i < this.schedules.length; i++){
             if(this.schedules[i].start >= block.startIndex && this.schedules[i].end <= block.endIndex){
                 lastScheduleIndex = this.schedules[i].end
+                lastDelta = this.schedules[i].delta
             }
         }
-        if(lastScheduleIndex == -1){block.emptyStart = block.startIndex}
-        else if(lastScheduleIndex < block.endIndex){block.emptyStart = lastScheduleIndex + 1}
+        if(lastScheduleIndex == -1){block.emptyStart = block.startIndex;block.delta = 0;}
+        else if(lastScheduleIndex < block.endIndex){
+            block.emptyStart = lastScheduleIndex + 1;
+            block.delta = lastDelta;
+        }
         return block;
     }
     cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
     getScheduleJourney(schedule_index){
         return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end);
-    }
-    // ///
-    getChangeTurnsSpots(route){
-        let spots = [];
-        for(let i = 0; i < this.trips.length; i++){
-            if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
-                let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA){spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
-                else{spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
-            }
-        }
-        return spots;
     }
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem

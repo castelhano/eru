@@ -1514,13 +1514,21 @@ class MarchUI{
                 this.canvas.appendChild(fleet);
                 // Adiciona pontos de rendicao de cada bloco
                 for(let x = 0; x < blocks[y].spots.length; x++){                    
-                    let sp = document.createElement('i'); sp.classList = 'bi bi-caret-down-fill marchSpot';sp.style.position = 'absolute';sp.style.zIndex = '80';
+                    let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndex = '80';
                     sp.style.opacity = '10%';
-                    sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 8px)`;
+                    sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 12px)`;
                     sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 10px)`;
+                    if(blocks[y].spots[x].type == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
+                    else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {
                         if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
-                        let r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex}, blocks[y].startIndex, blocks[y].endIndex);
+                        let r;
+                        if(blocks[y].spots[x].type == 'tripEnd'){
+                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, delta: 0, local: blocks[y].spots[x].local}, blocks[y].startIndex, blocks[y].endIndex);
+                        }
+                        else{
+                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, delta: blocks[y].spots[x].delta, local: blocks[y].spots[x].local}, blocks[y].startIndex, blocks[y].endIndex);
+                        }
                         if(r){  // Ajustar para atualizar o blocks
                             this.__cleanScheduleGrid(i);
                             this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
@@ -1571,13 +1579,14 @@ class MarchUI{
         for(let i = 0; i < blocks.length; i++){
             if(blocks[i].emptyStart == undefined){continue}
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
-            sq.style.left = `calc(${this.project.cars[fleet_index].trips[blocks[i].emptyStart].start} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
+            sq.style.left = `calc(${this.project.cars[fleet_index].trips[blocks[i].emptyStart].start + blocks[i].delta} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
             sq.innerHTML = '<i class="bi bi-plus-lg fs-5 text-secondary"></i>';
-            sq.style.width = `calc(${this.project.cars[fleet_index].trips[blocks[i].endIndex].end - this.project.cars[fleet_index].trips[blocks[i].emptyStart].start} * ${this.rulerUnit} - 2px)`;
+            let jornada = this.project.cars[fleet_index].trips[blocks[i].endIndex].end - this.project.cars[fleet_index].trips[blocks[i].emptyStart].start - blocks[i].delta;
+            sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex})
+                this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, delta: blocks[i].delta})
                 this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
             }
             this.canvas.appendChild(sq);
@@ -1792,8 +1801,16 @@ class MarchUI{
                 this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
             }
         }})
-        appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: ()=>{
+        appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
+            ev.preventDefault();
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
+            if(this.__gridIsBlock()){return false}
+            for(let i = 0; i < this.project.cars.length; i++){
+                this.project.cars[i].schedules = [];
+                this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+            }
         }})
     }
 }
