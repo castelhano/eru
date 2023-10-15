@@ -1518,6 +1518,7 @@ class MarchUI{
                     sp.style.opacity = '10%';
                     sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 12px)`;
                     sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 10px)`;
+                    sp.title = blocks[y].spots[x].locale.name;
                     if(blocks[y].spots[x].type == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {

@@ -306,14 +306,14 @@ class Car{
             else if(this.trips[i].way == VOLTA && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO].includes(this.trips[i].type)){
                 for(let j = 0; j < toRefs.length; j++){
                     let time = this.trips[i].start + toRefs[j].delta;
-                    block.spots.push({locale: fromRefs[j].local, time: time, type: 'reference', tripIndex: i, way: VOLTA, delta: toRefs[j].delta})
+                    block.spots.push({locale: toRefs[j].local, time: time, type: 'reference', tripIndex: i, way: VOLTA, delta: toRefs[j].delta})
                 }
             }
             // Adiciona spots de viagem do bloco
             if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
                 let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
-                else{block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
+                if(this.trips[i].way == IDA){block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
+                else{block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
             if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
