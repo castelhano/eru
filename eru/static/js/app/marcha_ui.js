@@ -16,7 +16,7 @@ class MarchUI{
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.freqGrid = {}; // Dicionario com item da regua de frequencia
         this.scheduleGrid = {}; // Dicionario com os schedules
-        this.spots = {}; // Dicionario com os pontos de rendicao dos carros
+        // this.spots = {}; // Dicionario com os pontos de rendicao dos carros
         this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
@@ -896,6 +896,7 @@ class MarchUI{
             this.fleetFocus = this.project.cars[this.fleetIndex];
             this.__cursorMove();
             this.__updateTripDisplay();
+            this.__clearFleetDisplay();
         }
     }
     previousTrip(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
@@ -907,6 +908,7 @@ class MarchUI{
             this.fleetFocus = this.project.cars[this.fleetIndex];
             this.__cursorMove();
             this.__updateTripDisplay();
+            this.__clearFleetDisplay();
         }
     }
     __updateTripDisplay(){
@@ -1500,40 +1502,41 @@ class MarchUI{
         this.__buildRuler();
         this.canvasFit();
         // --
-        for(let i = 0; i < this.project.cars.length; i++){
-            let blocks = this.project.cars[i].getFleetSchedulesBlock();
+        for(let i = 0; i < this.project.cars.length; i++){ // Constroi os schedules do carro
+            let blocks = this.project.cars[i].getFleetSchedulesBlock(this.project.route);
             this.scheduleGrid[i] = []; // Incicia array para armazenar schedules do carro
+            this.spotsGrid[i] = []; // Incicia array para armazenar elements spots
             for(let y = 0; y < blocks.length; y++){
                 let fleet = document.createElement('div');fleet.style = 'position:absolute;display: flex;align-content: center;height: 45px;border:1px solid #495057;border-radius: 3px;'
                 fleet.style.width = `calc(${this.rulerUnit} * ${blocks[y].size})`;
                 fleet.style.top = `calc(${this.fleetHeight} * ${i + 1} - ${this.fleetHeight} + 10px)`;
                 fleet.style.left = `calc(${this.fleetTagWidth} + (${blocks[y].start} * ${this.rulerUnit}))`;
                 this.canvas.appendChild(fleet);
+                // Adiciona pontos de rendicao de cada bloco
+                for(let x = 0; x < blocks[y].spots.length; x++){                    
+                    let sp = document.createElement('i'); sp.classList = 'bi bi-caret-down-fill marchSpot';sp.style.position = 'absolute';sp.style.zIndex = '80';
+                    sp.style.opacity = '10%';
+                    sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 8px)`;
+                    sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 10px)`;
+                    sp.onclick = () => {
+                        if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
+                        let r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex}, blocks[y].startIndex, blocks[y].endIndex);
+                        if(r){  // Ajustar para atualizar o blocks
+                            this.__cleanScheduleGrid(i);
+                            this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+                        }
+                    }
+                    this.canvas.appendChild(sp);
+                    this.spotsGrid[i].push(sp);                    
+                }
             }
             let fleet_tag = document.createElement('div');fleet_tag.style = 'position: absolute; user-select: none;';
             fleet_tag.style.top = `calc(${this.fleetHeight} * ${i + 1} - 25px)`;
             fleet_tag.style.left = `calc(${this.fleetTagWidth} + (${blocks[0].start} * ${this.rulerUnit}) - 22px)`;
             fleet_tag.innerHTML = String(i + 1).padStart(2,'0');
-            this.spots[i] = this.project.cars[i].getChangeTurnsSpots(this.project.route);
-            this.spotsGrid[i] = []; // Incicia array para armazenar elements spots
-            for(let j = 0; j < this.spots[i].length; j++){
-                let sp = document.createElement('i'); sp.classList = 'bi bi-caret-down-fill marchSpot';sp.style.position = 'absolute';sp.style.zIndex = '80';
-                sp.style.opacity = '10%';
-                sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 8px)`;
-                sp.style.left = `calc(${this.fleetTagWidth} + ${this.spots[i][j].time} * ${this.rulerUnit} - 10px)`;
-                sp.onclick = () => {
-                    if(this.scheduleFocus == null || this.scheduleFocus[0] != i){return false}
-                    let r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: this.spots[i][j].tripIndex});
-                    this.__cleanScheduleGrid(this.scheduleFocus[0]);
-                    if(r){this.__updateFleetSchedules(i, blocks)} // Ajustar para atualizar o blocks
-                }
-                this.canvas.appendChild(sp);
-                this.spotsGrid[i].push(sp)
-            }
             this.__updateFleetSchedules(i, blocks);
             this.canvas.appendChild(fleet_tag);
-        } // Constroi os schedules do carro
-
+        }
     }
     __scheduleAddContent(options){
         let inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start);
@@ -1542,27 +1545,31 @@ class MarchUI{
         return `<div><b class="me-2">${this.project.cars[options.i].schedules[options.j].name}</b>${min2Hour(jornada)}<div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
     __updateFleetSchedules(fleet_index, blocks){ // Ajusta stilo dos schedules do carro
+        this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
         this.scheduleGrid[fleet_index] = []; // Incicia array para armazenar schedules do carro
         for(let j = 0; j < this.project.cars[fleet_index].schedules.length; j++){ // Percorre todos os schedules ja definidos e adiciona no fleet
             let jornada = this.project.cars[fleet_index].getScheduleJourney(j);
-            let bg = JSON.stringify(this.scheduleFocus) == JSON.stringify([fleet_index, j]) ? '#032830' : '#1a1d20';
+            let bg = this.scheduleFocus && JSON.stringify([this.scheduleFocus[0], this.scheduleFocus[1]]) == JSON.stringify([fleet_index, j]) ? '#032830' : '#1a1d20';
             let sq = document.createElement('div');sq.style = `height: 43px;border-right: 2px solid #495057;text-align: center;background-color: ${bg};user-select: none; position: absolute;z-index: 50;`;
-            sq.style.left = `calc(${blocks[0].start} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
+            sq.style.left = `calc(${this.project.cars[fleet_index].trips[this.project.cars[fleet_index].schedules[j].start].start} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
             sq.innerHTML = this.__scheduleAddContent({i: fleet_index, j: j});
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 1px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
                 sq.style.backgroundColor = '#032830';
-                this.scheduleFocus = [fleet_index, j];
+                let target_block = null;
+                for(let x = 0; x < blocks.length; x++){ // Verifica a qual bloco a viagem pertence
+                    if(project.project.cars[fleet_index].schedules[j].start >= blocks[x].startIndex && project.project.cars[fleet_index].schedules[j].end <= blocks[x].endIndex){ target_block = x}
+                }
+                this.scheduleFocus = [fleet_index, j, target_block];
             }
             this.canvas.appendChild(sq);
             this.scheduleGrid[fleet_index].push(sq);
         }
         // Se existe viagens sem escala no bloco, insere bloco empty
-        // console.log(blocks);
         for(let i = 0; i < blocks.length; i++){
-            if(!blocks[i].emptyStart){continue}
+            if(blocks[i].emptyStart == undefined){continue}
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
             sq.style.left = `calc(${this.project.cars[fleet_index].trips[blocks[i].emptyStart].start} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
@@ -1570,10 +1577,12 @@ class MarchUI{
             sq.style.width = `calc(${this.project.cars[fleet_index].trips[blocks[i].endIndex].end - this.project.cars[fleet_index].trips[blocks[i].emptyStart].start} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                sq.style.backgroundColor = '#032830';
-                this.scheduleFocus = [fleet_index, seq - 1];
+                this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex})
+                this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
+                
             }
             this.canvas.appendChild(sq);
+            this.scheduleGrid[fleet_index].push(sq);
         }
     }
     __cleanScheduleGrid(fleet_index){
@@ -1583,6 +1592,7 @@ class MarchUI{
     __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (indiferente do viewStage)
         appKeyMap.bind({group: 'March_general', key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
         appKeyMap.bind({group: 'March_general', key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
+        appKeyMap.bind({group: 'March_general', key: 'f5', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Desfazer alterações', desc: 'Recarrega ultimo status salvo do projeto', run: (ev)=>{}}) // Apenas entrada para exibicao no keymap
         appKeyMap.bind({group: 'March_general', key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Altera Visualização', desc: 'Exibe modal para alteração da visualização', run: (ev)=>{ev.preventDefault();this.__switchStageModal()}})
         appKeyMap.bind({group: 'March_general', key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
             this.__saveLocal();

@@ -261,31 +261,42 @@ class Car{
         return !conflict;trips.length
     }
     addSchedule(options){ // Cria nova escala
-        // if(this.schedules.length > 0){
-        //     options.start = this.schedules[this.schedules.length - 1].end + 1;
-        // }
         this.schedules.push(options);
+        this.schedules.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena escalas pelo start
         return true;
     }
-    updateSchedule(schedule_index, options){
+    updateSchedule(schedule_index, options, blockStartIndex, blockEndIndex){
+        // Aborta operacao caso o novo fim informado seja menor que o inicio da escala, ou se o novo fim ser igual ao atual fim
+        if(this.schedules[schedule_index].start > options.end || this.schedules[schedule_index].end == options.end){return false}
         for(let key in options){
             this.schedules[schedule_index][key] = options[key]; // Atualiza os valores da schedule
         }
-        if(this.schedules.length > schedule_index + 1 && options?.end){ // Se existir schedule depois da editada
-            if(this.schedules[schedule_index].end >= this.schedules[schedule_index + 1].end){ // Caso novo valor de fim ocupe todo o espaco da schedule posterior, remove todos os schedules posteriores
-                this.schedules.splice(schedule_index + 1, this.schedules.length - 1 - schedule_index);
+        // Se existir schedule depois da editada, verifica se ser necessario ajustar posteriores
+        if(this.schedules.length > schedule_index + 1 && options.end != undefined && this.schedules[schedule_index + 1].start <= blockEndIndex){
+            if(this.schedules[schedule_index].end == this.schedules[schedule_index + 1].end){ // Novo final ocupa todo espaco da proxima escala, apaga a proxima
+                this.schedules.splice(schedule_index + 1, 1)
             }
-            else{ // Caso nao, apenas ajusta o inicio da posterior conforme fim da corrente mais 1
-                this.schedules[schedule_index + 1].start = this.schedules[schedule_index].end + 1;
+            else if(this.schedules[schedule_index].end > this.schedules[schedule_index + 1].end){ // Se novo final ocupe mais que o final da proxima viagem, apaga toda as demais
+                this.schedules.splice(schedule_index + 1, this.schedules.length - 1 - schedule_index)
+            }
+            else{
+                this.schedules[schedule_index + 1].start = Math.max(blockStartIndex, this.schedules[schedule_index].end + 1);
             }
         }
         return true;
     }
     deleteSchedule(schedule_index){}
-    getFleetSchedulesBlock(){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou trip.shut
+    getFleetSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou trip.shut
         let blocks = [];
-        let block = {start: this.trips[0].start, startIndex: 0, endIndex: 0, size:0};
+        let block = {start: this.trips[0].start, startIndex: 0, endIndex: 0, size:0, spots: []};
         for(let i = 0; i < this.trips.length; i++){
+            // Adiciona spots do bloco
+            if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
+                let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
+                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
+                else{block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
+            }
+            // Ajusta bloco inicio, fim e dimensao
             if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
                 block.endIndex = i;
                 block.size += this.trips[i].getCycle();
@@ -293,14 +304,13 @@ class Car{
                 if(this.trips.length - 1 > i){
                     block.start = this.trips[i + 1].start;
                     block.startIndex = i + 1;
+                    block.spots = [];
                     delete block.emptyStart;
                     delete block.emptyEnd;
                 }
                 block.size = 0;
             }
-            else{
-                block.size += this.trips[i].getCycle() + this.getInterv(i);
-            }
+            else{block.size += this.trips[i].getCycle() + this.getInterv(i)}
         }
         return blocks;
     }
@@ -320,6 +330,7 @@ class Car{
     getScheduleJourney(schedule_index){
         return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end);
     }
+    // ///
     getChangeTurnsSpots(route){
         let spots = [];
         for(let i = 0; i < this.trips.length; i++){
