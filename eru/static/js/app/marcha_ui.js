@@ -16,7 +16,6 @@ class MarchUI{
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.freqGrid = {}; // Dicionario com item da regua de frequencia
         this.scheduleGrid = {}; // Dicionario com os schedules
-        // this.spots = {}; // Dicionario com os pontos de rendicao dos carros
         this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
@@ -1424,6 +1423,7 @@ class MarchUI{
             this.footer.style.display = 'none';
             if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
             appKeyMap.unbindGroup(['March_stage1','March_stage3']);
+            this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
             this.__loadStage2();
         }
         else{}
@@ -1538,10 +1538,6 @@ class MarchUI{
             this.canvas.appendChild(fleet_tag);
         }
     }
-    __addScheduleControls(){ // Adiciona no canvas controle para edicao dos schedules
-        this.scheduleControls = document.createElement('div');this.scheduleControls.classList = 'btn-group bg-body-tertiary';this.scheduleControls.style = 'position: absolute;top: 55px; right: 8px;border: 1px solid #495057; border-radius: 5px;';
-        let schedulesAutoGenerate = document.createElement('button');schedulesAutoGenerate.type = 'button';schedulesAutoGenerate.classList = 'btn btn-sm scheduleControl btn-phanton-purple';schedulesAutoGenerate.innerHTML = '<i class="bi bi-code-slash me-1"></i> Gerar Escalas';
-    }
     __scheduleAddContent(options){
         let inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start);
         let fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end);
@@ -1583,7 +1579,6 @@ class MarchUI{
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
                 this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex})
                 this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
-                
             }
             this.canvas.appendChild(sq);
             this.scheduleGrid[fleet_index].push(sq);
@@ -1786,6 +1781,19 @@ class MarchUI{
             this.__buildRuler(); // Refaz Regua
             this.__loadStage1(false); // Ajusta viagens
             this.canvasFit(); // Centraliza canvas na viagem em foco
+        }})
+    }
+    __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
+        appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
+            ev.preventDefault();
+            if(this.__gridIsBlock()){return false}
+            this.project.autoGenerateSchedules();
+            for(let i = 0; i < this.project.cars.length; i++){
+                this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+            }
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: ()=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         }})
     }
 }

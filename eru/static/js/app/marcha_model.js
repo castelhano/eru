@@ -535,6 +535,16 @@ class March{
         }
         return sum;
     }
+    autoGenerateSchedules(){
+        for(let i = 0; i < this.cars.length; i++){
+            let blocks = this.cars[i].getFleetSchedulesBlock(this.route);
+            this.cars[i].schedules = []; // Limpa as escalas do carro
+            for(let j = 0; j < blocks.length; j++){
+                this.cars[i].schedules.push({start: blocks[j].startIndex, end: blocks[j].endIndex, name: this.scheduleBaptize(i, j)})
+            }
+        }
+        return true;
+    }
     scheduleBaptize(fleet_index, new_seq){ // Define nome automatico para tabela
         let seq = ['A', 'B', 'C', 'D', 'E', 'F'];
         return `${String(fleet_index + 1).padStart(2,'0')}${seq[new_seq]}`;
