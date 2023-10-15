@@ -1538,6 +1538,10 @@ class MarchUI{
             this.canvas.appendChild(fleet_tag);
         }
     }
+    __addScheduleControls(){ // Adiciona no canvas controle para edicao dos schedules
+        this.scheduleControls = document.createElement('div');this.scheduleControls.classList = 'btn-group bg-body-tertiary';this.scheduleControls.style = 'position: absolute;top: 55px; right: 8px;border: 1px solid #495057; border-radius: 5px;';
+        let schedulesAutoGenerate = document.createElement('button');schedulesAutoGenerate.type = 'button';schedulesAutoGenerate.classList = 'btn btn-sm scheduleControl btn-phanton-purple';schedulesAutoGenerate.innerHTML = '<i class="bi bi-code-slash me-1"></i> Gerar Escalas';
+    }
     __scheduleAddContent(options){
         let inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start);
         let fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end);

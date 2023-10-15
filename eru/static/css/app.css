@@ -70,7 +70,8 @@ dialog:focus-visible{outline: none!important;}
 .btn-phanton-primary:hover{background-color: #0d6efd;color: #FFF;}
 .btn-phanton-warning{color: rgb(var(--bs-warning-rgb));}
 .btn-phanton-warning:hover{background-color: #ffc107;color: #333;}
-.btn-phanton-danger{color: rgb(var(--bs-danger-rgb));}
+.btn-phanton-danger{color: var(--bs-danger);}
+[data-bs-theme="dark"] .btn-phanton-danger{color: var(--bs-danger-text-emphasis);}
 .btn-phanton-danger:hover{background-color: #dc3545;color: #FFF;}
 .btn-phanton-orange{color: #F35B04;}
 .btn-phanton-orange:hover{background-color: #F35B04;color: #FFF;}
