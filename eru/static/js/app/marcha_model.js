@@ -278,7 +278,7 @@ class Car{
                 this.schedules[index].deltaStart = this.schedules[index - 1].deltaEnd;
             }
         }
-        return true;
+        return this.schedules.indexOf(options);
     }
     updateSchedule(schedule_index, options, blockStartIndex, blockEndIndex){
         // Aborta operacao caso o novo fim informado seja menor que o inicio da escala, ou se o novo fim ser igual ao atual fim
