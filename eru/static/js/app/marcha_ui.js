@@ -1408,24 +1408,8 @@ class MarchUI{
     switchStage(stage=1){
         if(![1,2,3].includes(stage)){return false}
         this.project.viewStage = stage;
-        if(stage == 1){
-            this.__canvasRebuild();
-            this.footer.style.display = 'block';
-            if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
-            appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
-            this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
-            this.__loadStage1(); 
-        }
-        else if(stage == 2){
-            this.canvas.innerHTML = '';
-            this.rulerFreq.innerHTML = '';
-            this.__clearFleetLabels();
-            this.footer.style.display = 'none';
-            if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
-            appKeyMap.unbindGroup(['March_stage1','March_stage3']);
-            this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
-            this.__loadStage2();
-        }
+        if(stage == 1){this.__loadStage1()}
+        else if(stage == 2){this.__loadStage2()}
         else{}
     }
     __switchStageModal(){
@@ -1465,9 +1449,18 @@ class MarchUI{
         dialog.showModal();
     }
     __loadStage1(){ // Refaz grid
+        this.__canvasRebuild();
+        this.footer.style.display = 'block';
+        if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+        appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearFleetLabels(); // Apaga as labels dos carros
+        this.__clearSelection(); // Limpa selecao (caso exista)
         this.rulerUnit = this.defaultSettings.rulerUnit;
+        this.rulerMediumUnit = this.defaultSettings.rulerMediumUnit;
+        this.settingsrulerUnit.value = parseInt(this.defaultSettings.rulerUnit);
+        this.settingsrulerMediumUnit.value = this.defaultSettings.rulerMediumUnit;
         this.__buildRuler();
         for(let i = 0; i < this.project.cars.length; i++){ // Recria todos os carros e viagens
             this.addFleet(this.project.cars[i], i + 1);
@@ -1494,10 +1487,17 @@ class MarchUI{
         }
     }
     __loadStage2(){ // Carrega interface para manipulacao das escalas
+        this.footer.style.display = 'none';
+        if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+        appKeyMap.unbindGroup(['March_stage1','March_stage3']);
+        this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearFleetLabels(); // Apaga as labels dos carros
-        this.rulerUnit = '1.35px';
+        this.cursor.remove(); // Remove o cursor
+        this.rulerUnit = '2px';
         this.rulerMediumUnit = 60;
+        this.settingsrulerUnit.value = 2;
+        this.settingsrulerMediumUnit.value = 60;
         this.initialView = min2Range(this.project.getFirstTrip()[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
         this.__buildRuler();
         this.canvasFit();
@@ -1513,11 +1513,11 @@ class MarchUI{
                 fleet.style.left = `calc(${this.fleetTagWidth} + (${blocks[y].start} * ${this.rulerUnit}))`;
                 this.canvas.appendChild(fleet);
                 // Adiciona pontos de rendicao de cada bloco
-                for(let x = 0; x < blocks[y].spots.length; x++){                    
+                for(let x = 0; x < blocks[y].spots.length; x++){
                     let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndex = '80';
                     sp.style.opacity = '10%';
                     sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 12px)`;
-                    sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 10px)`;
+                    sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
                     sp.title = blocks[y].spots[x].locale.name;
                     if(blocks[y].spots[x].type == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
@@ -1525,10 +1525,10 @@ class MarchUI{
                         if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
                         let r;
                         if(blocks[y].spots[x].type == 'tripEnd'){
-                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, delta: 0, local: blocks[y].spots[x].local}, blocks[y].startIndex, blocks[y].endIndex);
+                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].startIndex, blocks[y].endIndex);
                         }
                         else{
-                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, delta: blocks[y].spots[x].delta, local: blocks[y].spots[x].local}, blocks[y].startIndex, blocks[y].endIndex);
+                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].startIndex, blocks[y].endIndex);
                         }
                         if(r){  // Ajustar para atualizar o blocks
                             this.__cleanScheduleGrid(i);
@@ -1557,13 +1557,13 @@ class MarchUI{
         this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
         this.scheduleGrid[fleet_index] = []; // Incicia array para armazenar schedules do carro
         for(let j = 0; j < this.project.cars[fleet_index].schedules.length; j++){ // Percorre todos os schedules ja definidos e adiciona no fleet
-            let jornada = this.project.cars[fleet_index].getScheduleJourney(j);
+            let metrics = this.project.cars[fleet_index].getScheduleJourney(j, true);
             let bg = this.scheduleFocus && JSON.stringify([this.scheduleFocus[0], this.scheduleFocus[1]]) == JSON.stringify([fleet_index, j]) ? '#032830' : '#1a1d20';
             let sq = document.createElement('div');sq.style = `height: 43px;border-right: 2px solid #495057;text-align: center;background-color: ${bg};user-select: none; position: absolute;z-index: 50;`;
-            sq.style.left = `calc(${this.project.cars[fleet_index].trips[this.project.cars[fleet_index].schedules[j].start].start} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
+            sq.style.left = `calc(${metrics[1]} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
             sq.innerHTML = this.__scheduleAddContent({i: fleet_index, j: j});
-            sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 1px)`;
+            sq.style.width = `calc(${metrics[0]} * ${this.rulerUnit} - 1px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
                 sq.style.backgroundColor = '#032830';
@@ -1580,14 +1580,14 @@ class MarchUI{
         for(let i = 0; i < blocks.length; i++){
             if(blocks[i].emptyStart == undefined){continue}
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
-            sq.style.left = `calc(${this.project.cars[fleet_index].trips[blocks[i].emptyStart].start + blocks[i].delta} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
+            sq.style.left = `calc(${this.project.cars[fleet_index].trips[blocks[i].emptyStart].start - blocks[i].deltaStart} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
             sq.innerHTML = '<i class="bi bi-plus-lg fs-5 text-secondary"></i>';
-            let jornada = this.project.cars[fleet_index].trips[blocks[i].endIndex].end - this.project.cars[fleet_index].trips[blocks[i].emptyStart].start - blocks[i].delta;
+            let jornada = this.project.cars[fleet_index].trips[blocks[i].endIndex].end - this.project.cars[fleet_index].trips[blocks[i].emptyStart].start - blocks[i].deltaEnd;
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, delta: blocks[i].delta})
+                this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, deltaEnd: 0})
                 this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
             }
             this.canvas.appendChild(sq);
@@ -1610,16 +1610,7 @@ class MarchUI{
         appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
             localStorage.removeItem('marchCurrentProject');
             this.project = new March({})
-            this.fleetFocus = null;
-            this.tripFocus = null;
-            this.fleetIndex = -1;
-            this.tripIndex = -1;
-            this.__clearSelection();
-            this.cursor.style.left = '-200px';
-            this.__canvasRebuild();
-            this.__clearFleetLabels();
-            this.__updateFleetDisplay();
-            this.__updateFleetDisplay();
+            this.__loadStage1();
             this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
             appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
         }})

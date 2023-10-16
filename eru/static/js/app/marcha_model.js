@@ -265,13 +265,24 @@ class Car{
         return !conflict;
     }
     addSchedule(options){ // Cria nova escala
-        this.schedules.push(options);
-        this.schedules.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena escalas pelo start
+        options.deltaStart = 0;
+        if(this.schedules.length == 0){
+            this.schedules.push(options)
+            this.schedules.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena escalas pelo start
+        }
+        else{
+            this.schedules.push(options)
+            this.schedules.sort((a, b) => a.start > b.start ? 1 : -1); // Reordena escalas pelo start
+            let index = this.schedules.indexOf(options);
+            if(index > 0 && (![RECOLHE, INTERVALO].includes(this.trips[this.schedules[index].end].type) || !this.trips[this.schedules[index].end].shut)){
+                this.schedules[index].deltaStart = this.schedules[index - 1].deltaEnd;
+            }
+        }
         return true;
     }
     updateSchedule(schedule_index, options, blockStartIndex, blockEndIndex){
         // Aborta operacao caso o novo fim informado seja menor que o inicio da escala, ou se o novo fim ser igual ao atual fim
-        if(this.schedules[schedule_index].start > options.end || (this.schedules[schedule_index].end == options.end && this.schedules[schedule_index].delta == options.delta)){return false}
+        if(this.schedules[schedule_index].start > options.end || (this.schedules[schedule_index].end == options.end && this.schedules[schedule_index].deltaStart == options.deltaStart && this.schedules[schedule_index].deltaEnd == options.deltaEnd)){return false}
         for(let key in options){
             this.schedules[schedule_index][key] = options[key]; // Atualiza os valores da schedule
         }
@@ -284,7 +295,10 @@ class Car{
                 this.schedules.splice(schedule_index + 1, this.schedules.length - 1 - schedule_index)
             }
             else{
-                this.schedules[schedule_index + 1].start = Math.max(blockStartIndex, this.schedules[schedule_index].end + 1);
+                if(!this.trips[this.schedules[schedule_index].end].type == RECOLHE || !this.trips[this.schedules[schedule_index].shut]){
+                    this.schedules[schedule_index + 1].start = Math.max(blockStartIndex, this.schedules[schedule_index].end + 1);
+                    this.schedules[schedule_index + 1].deltaStart = this.schedules[schedule_index].deltaEnd;
+                }
             }
         }
         return true;
@@ -335,24 +349,38 @@ class Car{
     }
     __blockAddEmpty(block){
         let lastScheduleIndex = -1;
-        let lastDelta = 0;
+        let lastDeltaStart = 0;
+        let lastDeltaEnd = 0;
         for(let i = 0; i < this.schedules.length; i++){
             if(this.schedules[i].start >= block.startIndex && this.schedules[i].end <= block.endIndex){
                 lastScheduleIndex = this.schedules[i].end
-                lastDelta = this.schedules[i].delta
+                lastDeltaStart = this.schedules[i].deltaStart
+                lastDeltaEnd = this.schedules[i].deltaEnd
             }
         }
-        if(lastScheduleIndex == -1){block.emptyStart = block.startIndex;block.delta = 0;}
+        if(lastScheduleIndex == -1){block.emptyStart = block.startIndex;block.deltaStart = 0;block.deltaEnd = 0;}
         else if(lastScheduleIndex < block.endIndex){
             block.emptyStart = lastScheduleIndex + 1;
-            block.delta = lastDelta;
+            block.deltaStart = lastDeltaStart;
+            block.deltaEnd = lastDeltaEnd;
         }
         return block;
     }
     cleanSchedule(index=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
-    getScheduleJourney(schedule_index){
-        return this.trips[this.schedules[schedule_index].end].end - this.trips[this.schedules[schedule_index].start].start + this.getInterv(this.schedules[schedule_index].end);
+    getScheduleJourney(schedule_index, allMetrics=false){
+        let start = this.trips[this.schedules[schedule_index].start].start;
+        let end = this.trips[this.schedules[schedule_index].end].end;
+        if(this.schedules[schedule_index].deltaStart > 0){
+            start = this.trips[this.schedules[schedule_index - 1].end].start + this.schedules[schedule_index].deltaStart;
+        }
+        if(this.schedules[schedule_index].deltaEnd > 0){
+            end = this.trips[this.schedules[schedule_index].end].start + this.schedules[schedule_index].deltaEnd;
+        }
+        else{
+            end += this.getInterv(this.schedules[schedule_index].end);
+        }
+        return allMetrics ? [end - start, start, end] : end - start;
     }
     removeTrip(index, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
         if(this.trips.length == 1 || index == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
