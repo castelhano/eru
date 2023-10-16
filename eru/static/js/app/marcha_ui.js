@@ -1441,6 +1441,11 @@ class MarchUI{
             case 2: stage2.classList.add('active','disabled');break;
             case 3: stage3.classList.add('active','disabled');break;
         }
+        switch (this.project.viewStage){
+            case 1: setTimeout(()=>{stage1.focus();}, 10);break;
+            case 2: setTimeout(()=>{stage2.focus();}, 10);break;
+            case 3: setTimeout(()=>{stage3.focus();}, 10);break;
+        }
         btnGroup.appendChild(stage1);
         btnGroup.appendChild(stage2);
         btnGroup.appendChild(stage3);
@@ -1546,12 +1551,16 @@ class MarchUI{
             this.__updateFleetSchedules(i, blocks);
             this.canvas.appendChild(fleet_tag);
         }
+        if(this.scheduleGrid[0].length > 0){
+            this.scheduleFocus = [0,0,0];
+            this.scheduleGrid[0][0].style.backgroundColor = '#032830'
+        }
     }
     __scheduleAddContent(options){
         let inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start);
         let fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end);
         let jornada = this.project.cars[options.i].getScheduleJourney(options.j);
-        return `<div><b class="me-2">${this.project.cars[options.i].schedules[options.j].name}</b>${min2Hour(jornada)}<div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
+        return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.i].schedules[options.j].name}</b>${min2Hour(jornada)}<div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
     __updateFleetSchedules(fleet_index, blocks){ // Ajusta stilo dos schedules do carro
         this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
@@ -1580,6 +1589,7 @@ class MarchUI{
         for(let i = 0; i < blocks.length; i++){
             if(blocks[i].emptyStart == undefined){continue}
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
+            sq.setAttribute('data-type', 'emptySchedule');
             let left;
             if(blocks[i].deltaEnd == 0){left = this.project.cars[fleet_index].trips[blocks[i].emptyStart].start}
             else{
@@ -1833,6 +1843,11 @@ class MarchUI{
                 this.scheduleFocus = [this.scheduleFocus[0] - 1, 0 , 0];
             }
         }})
+        appKeyMap.bind({group: 'March_stage2', key: 'enter', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerar escala', desc: 'Inicia escala no espaço em foco', run: (ev)=>{
+            ev.preventDefault();
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].click();
+        }})
         appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
             ev.preventDefault();
             if(this.__gridIsBlock() || this.project.cars.length == 0){return false}
@@ -1844,18 +1859,37 @@ class MarchUI{
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
             ev.preventDefault();
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
             this.gridLocked = true;
-            let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';
+            let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';modal.style.position = 'relative';
             modal.addEventListener('close', ()=>{modal.remove(); this.gridLocked = false;})
             let nameInput = document.createElement('input');nameInput.type = 'text';nameInput.classList = 'flat-input';nameInput.id = 'March_renameScheduleName';
             nameInput.value = this.project.cars[this.scheduleFocus[0]].schedules[this.scheduleFocus[1]].name;
-            let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton float-end';submit.innerHTML = 'Gravar';
+            nameInput.onfocus = ()=>{nameInput.select()}
+            nameInput.addEventListener('keydown', (ev)=>{if(ev.key == 'Enter'){submit.click()}})
+            let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton position-absolute';submit.innerHTML = 'Gravar';submit.style = 'top:56px; right: 10px;'
+            submit.onclick = () => {
+                if(nameInput.value == '' || nameInput.value.length < 2){nameInput.classList.add('is-invalid'); return false;}
+                this.project.cars[this.scheduleFocus[0]].schedules[this.scheduleFocus[1]].name = nameInput.value;
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].querySelector('[data-type=schedule-name]').innerHTML = nameInput.value;
+                modal.close();
+            }
             modal.appendChild(nameInput)
             modal.appendChild(this.__settingsAddCustomLabel(nameInput, 'Nome Tabela'))
             modal.appendChild(submit);
             document.body.appendChild(modal);
             modal.showModal();
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'delete', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Apagar Escala', desc: 'Exclui a escala em foco', run: ()=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            let r = this.project.cars[this.scheduleFocus[0]].deleteSchedule(this.scheduleFocus[1]);
+            if(r){
+                this.__updateFleetSchedules(this.scheduleFocus[0], this.project.cars[this.scheduleFocus[0]].getFleetSchedulesBlock(this.project.route));
+                if(this.scheduleGrid[0].length > 0){
+                    this.scheduleFocus = [0,0,0];
+                    this.scheduleGrid[0][0].style.backgroundColor = '#032830';
+                }
+            }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
             if(this.__gridIsBlock()){return false}

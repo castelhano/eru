@@ -62,7 +62,7 @@ dialog:focus-visible{outline: none!important;}
 .btn-outline-purple:hover{background-color: #6f42c1!important;color: #FFF!important;}
 
 .btn-phanton{background-color: transparent;}
-.btn-phanton:hover{background-color: var(--bs-secondary-bg);}
+.btn-phanton:hover, .btn-phanton:focus{background-color: var(--bs-secondary-bg);}
 .btn-phanton.active{border-color: transparent;background-color: var(--bs-success);}
 .btn-phanton-success{color: rgb(var(--bs-success-rgb));}
 .btn-phanton-success:hover{background-color: #198754;color: #FFF;}

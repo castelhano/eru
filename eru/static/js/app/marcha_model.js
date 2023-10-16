@@ -303,7 +303,10 @@ class Car{
         }
         return true;
     }
-    deleteSchedule(schedule_index){}
+    deleteSchedule(schedule_index){
+        this.schedules.splice(schedule_index, 1);
+        return true;
+    }
     getFleetSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou trip.shut
         let blocks = [];
         let block = {start: this.trips[0].start, startIndex: 0, endIndex: 0, size:0, spots: []};
