@@ -527,6 +527,11 @@ class March{
     removeFleet(fleet_index){
         return this.cars.splice(fleet_index, 1);
     }
+    addSchedule(fleet_index, options){
+        options.name = this.scheduleBaptize(fleet_index, this.cars[fleet_index].schedules.length);
+        let r = this.cars[fleet_index].addSchedule(options)
+        return r;
+    }
     nextTrip(trip){ // Retorna proxima viagem (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;
         let carIndex = null;
@@ -540,12 +545,6 @@ class March{
             }            
         }
         return bestMatch ? [carIndex, this.cars[carIndex].trips.indexOf(bestMatch), bestMatch] : false;
-    }
-    addSchedule(fleet_index, options){
-        options.name = this.scheduleBaptize(fleet_index, this.cars[fleet_index].schedules.length);
-        let r = this.cars[fleet_index].addSchedule(options)
-        return r;
-
     }
     previousTrip(trip){ // Retorna viagem anterior (no mesmo sentido) indiferente de carro, alem do index do referido carro e viagem
         let bestMatch = null;

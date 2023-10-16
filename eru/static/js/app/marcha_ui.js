@@ -1793,6 +1793,46 @@ class MarchUI{
         }})
     }
     __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
+        appKeyMap.bind({group: 'March_stage2', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próxima escala', desc: 'Seleciona próxima escala', run: (ev)=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            ev.preventDefault();
+            if(this.scheduleGrid[this.scheduleFocus[0]].length - 1 > this.scheduleFocus[1]){
+                // #1a1d20 #032830
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] + 1, this.scheduleFocus[2]];
+            }
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar escala anterior', desc: 'Seleciona escala anterior', run: (ev)=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            ev.preventDefault();
+            if(this.scheduleFocus[1] > 0){
+                // #1a1d20 #032830
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] - 1, this.scheduleFocus[2]];
+            }
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próximo carro', desc: 'Seleciona escala do próximo carro', run: (ev)=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            ev.preventDefault();
+            if(this.scheduleGrid[this.scheduleFocus[0] + 1]){
+                // #1a1d20 #032830
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.scheduleFocus = [this.scheduleFocus[0] + 1, 0 , 0];
+            }
+        }})
+        appKeyMap.bind({group: 'March_stage2', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar carro anterior', desc: 'Seleciona escala do carro anterior', run: (ev)=>{
+            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            ev.preventDefault();
+            if(this.scheduleFocus[0] > 0){
+                // #1a1d20 #032830
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.scheduleFocus = [this.scheduleFocus[0] - 1, 0 , 0];
+            }
+        }})
         appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
             ev.preventDefault();
             if(this.__gridIsBlock() || this.project.cars.length == 0){return false}
@@ -1805,6 +1845,17 @@ class MarchUI{
         appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
             ev.preventDefault();
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            this.gridLocked = true;
+            let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';
+            modal.addEventListener('close', ()=>{modal.remove(); this.gridLocked = false;})
+            let nameInput = document.createElement('input');nameInput.type = 'text';nameInput.classList = 'flat-input';nameInput.id = 'March_renameScheduleName';
+            nameInput.value = this.project.cars[this.scheduleFocus[0]].schedules[this.scheduleFocus[1]].name;
+            let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton float-end';submit.innerHTML = 'Gravar';
+            modal.appendChild(nameInput)
+            modal.appendChild(this.__settingsAddCustomLabel(nameInput, 'Nome Tabela'))
+            modal.appendChild(submit);
+            document.body.appendChild(modal);
+            modal.showModal();
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
             if(this.__gridIsBlock()){return false}
