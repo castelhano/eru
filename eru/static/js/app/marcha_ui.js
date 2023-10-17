@@ -153,7 +153,7 @@ class MarchUI{
         this.rulerTop.after(this.canvas);
         // Regua de frequencia
         this.rulerFreqDialog = document.createElement('dialog');this.rulerFreqDialog.setAttribute('data-bs-theme', 'dark');
-        this.rulerFreqDialog.style = 'border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:absolute;bottom: 8px;padding: 0;background-color: var(--bs-tertiary-bg)'
+        this.rulerFreqDialog.style = 'border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:fixed;bottom: 70px;padding: 0;background-color: var(--bs-tertiary-bg)'
         this.rulerFreqDialog.open = true; // Inicia exibindo a regua de freq
         this.rulerFreq = document.createElement('div');
         this.rulerFreq.style.position = 'relative';
@@ -1491,8 +1491,8 @@ class MarchUI{
         if(this.summaryModal){this.summaryModal.remove()}
         this.__clearScheduleGrid();
         this.__canvasRebuild();
-        this.footer.style.display = 'block';
         if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+        this.footer.style.display = 'block';
         appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
         this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
@@ -1727,7 +1727,8 @@ class MarchUI{
         }})
         appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
             localStorage.removeItem('marchCurrentProject');
-            this.project = new March({})
+            // this.project = new March({})
+            this.project.reset();
             this.__loadStage1();
             this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
             appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');

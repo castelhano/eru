@@ -48,8 +48,8 @@ class Locale{ // Class para locais
     constructor(options){
         this.id = options?.id || null;
         this.name = options?.name || 'Local indefinido';
-        this.checkpoint = options?.checkpoint || false;
-        this.surrender = options?.surrender || true;
+        this.checkpoint = options?.checkpoint || options?.checkpoint == true;
+        this.surrender = options?.surrender || options?.checkpoint == true;
     }
 }
 class Reference{ // Classe das referencias
@@ -329,8 +329,8 @@ class Car{
             // Adiciona spots de viagem do bloco
             if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
                 let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
-                else{block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
+                if(this.trips[i].way == IDA && route.to.surrender){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
+                else if(this.trips[i].way == VOLTA && route.from.surrender){block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
             if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
@@ -718,6 +718,12 @@ class March{
             this.cars.push(new Car(project.cars[i]));
         }
 
+    }
+    reset(){ // Limpa planejamento e escalas
+        this.cars = [];
+        this.viewStage = 1;
+        this.transferArea = [];
+        return true;
     }
     countTrips(){ // Retorna a quantidade de viagens geral do projeto ou do carro se informado fleet_index
         let counter = {from: 0, to: 0, express: 0, semiexpress: 0, lazyFrom: 0, lazyTo: 0, accessFrom: 0, accessTo: 0, recallFrom: 0, recallTo: 0};
