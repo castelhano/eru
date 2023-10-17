@@ -1065,7 +1065,7 @@ class MarchUI{
                 this.addTrip(this.project.cars[i].trips[j], i);
             } 
         }
-        this.fleetFocus = this.project.cars[this.flee]
+        this.fleetFocus = this.project.cars[this.fleetIndex]
     }
     __clearGrid(){
         for(let i in this.grid){ // Apaga todos os elementos do grid
@@ -1638,7 +1638,7 @@ class MarchUI{
             <div class="d-inline-block">
                 <b class="d-block mb-2">Km Improdutiva</b>
                 <small class="d-block mb-3"><b>${km_improdutiva.toFixed(2)}</b> km</small>
-                <div class="semipie animate hover" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
+                <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
             </div>
         </div>
         <div style="flex: 1 1 0px;"></div>

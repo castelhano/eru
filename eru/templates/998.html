@@ -18,7 +18,36 @@
 
 <script>
     {% block add_script %}
-    const model = new March({});
+
+    let interestPoints = []
+    interestPoints.push(new Locale({id: 12, name: 'Jd Vitoria'}));
+    interestPoints.push(new Locale({id: 55, name: 'Peg Lev'}));
+    interestPoints.push(new Locale({id: 82, name: 'Hosp Cancer'}));
+    interestPoints.push(new Locale({id: 65, name: 'Igreja Matriz'}));
+
+    const model = new March({
+        route: new Route({
+            id: 5,
+            prefixo: '301',
+            name: 'Jd Vitoria x Centro',
+            circular: false,
+            from: interestPoints[0],
+            to: interestPoints[1],
+            fromExtension: 23.22,
+            toExtension: 21.10,
+            metrics: {
+                fromMinAccess: 20,
+                toMinAccess: 25,
+                fromMinRecall: 18,
+                toMinRecall: 16,
+                fromKmAccess: 4.22,
+                toKmAccess: 5,
+                fromKmRecall: 4.63,
+                toKmRecall: 3.36,
+            },
+            refs: {from:[{local: interestPoints[2], delta: 20}], to:[{local: interestPoints[3], delta: 35}]}
+        })
+    });
     const project = new MarchUI({
         container: document.getElementById('march_container'),
         settingsContainer: document.getElementById('marchSettings_container'),
