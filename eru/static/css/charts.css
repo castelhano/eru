@@ -1,0 +1,32 @@
+@property --v{
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 1;
+}
+
+.pie {--v:1;--b:12px;--c:#FF3D00;--w:100px;--fs:calc(var(--w) * 0.25);--fc:gray22;width: var(--w);aspect-ratio: 1;position: relative;display: inline-grid;margin: 5px;place-content: center;font-size: var(--fs);font-weight: bold;font-family: sans-serif;color: var(--fc);}
+.pie::before,.pie::after {content: "";position: absolute;border-radius: 50%;}
+.pie::before {inset: 0;background:radial-gradient(farthest-side,var(--c) 98%,#0000) top/var(--b) var(--b) no-repeat,conic-gradient(var(--c) calc(var(--v)*1%),#0000 0);-webkit-mask: radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));mask: radial-gradient(farthest-side,#0000 calc(99% - var(--b)),#000 calc(100% - var(--b)));}
+.pie::after {inset: calc(50% - var(--b)/2);background: var(--c);transform: rotate(calc(var(--v)*3.6deg)) translateY(calc(50% - var(--w)/2));}
+.pie.animate {animation: pie 0.8s 0.2s both;}
+.pie.flat::before {background-size: 0 0, auto;}
+.pie.flat::after {content: none;}
+@keyframes pie{from{--v:0;}}
+
+.semipie {--v: 0;--c: #FF3D00;--w:200px;--b:40px;--fs: calc(var(--w) * 0.12); width: var(--w);height: calc(var(--w) / 2);position: relative;font-size: var(--fs);font-weight: 600;overflow: hidden;color: var(--c);display: inline-flex;margin-right: 5px;align-items: flex-end;justify-content: center;box-sizing : border-box;}
+.semipie::after{content: '';width: var(--w);height: var(--w);border:var(--b) solid;border-color : rgba(0,0,0,0.15) rgba(0,0,0,0.15) var(--c) var(--c);position: absolute;border-radius: 50%;left: 0;top: 0;box-sizing : border-box;transform: rotate( calc( 1deg * ( -45 + var(--v) * 1.8 ) ) );}
+.semipie.animate::after{animation : semipieAnimate 0.8s ease-in;}
+.semipie.hover:hover:after{opacity: .8;cursor: pointer;}
+@keyframes semipieAnimate{0%{transform : rotate(-45deg);}}
+
+.charts-css tr.bar-h-sm, .bar-h-sm tr{min-height: 40px;}
+.charts-css tr.bar-h-md, .bar-h-md tr{min-height: 50px;}
+.charts-css tr.bar-h-lg, .bar-h-lg tr{min-height: 60px;}
+.charts-css tr.bar-h-xl, .bar-h-xl tr{min-height: 80px;}
+.labels-align-end th{padding-right: 5px!important;}
+.charts-css td span.data{padding-right: 8px;}
+
+.column.animate tbody td {transform-origin: bottom;animation: revealing-columns 3.5s 0.1s linear;}
+.bar.animate tbody td {transform-origin: left;animation: revealing-bars 3.5s 0.1s linear;}
+@keyframes revealing-columns{0%{ transform: scaleY(0);}15%{transform: scaleY(1);}}
+@keyframes revealing-bars{0%{transform: scaleX(0);}15%{transform:scaleX(1);}}

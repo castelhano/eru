@@ -329,8 +329,8 @@ class Car{
             // Adiciona spots de viagem do bloco
             if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
                 let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA){block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
-                else{block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i})}
+                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
+                else{block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
             if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
@@ -718,5 +718,24 @@ class March{
             this.cars.push(new Car(project.cars[i]));
         }
 
+    }
+    countTrips(){ // Retorna a quantidade de viagens geral do projeto ou do carro se informado fleet_index
+        let counter = {from: 0, to: 0, express: 0, semiexpress: 0, lazyFrom: 0, lazyTo: 0, accessFrom: 0, accessTo: 0, recallFrom: 0, recallTo: 0};
+        for(let i = 0; i < this.cars.length; i++){
+            for(let j = 0; j < this.cars[i].trips.length; j++){
+                if(this.cars[i].trips[j].type == INTERVALO){continue}
+                else if(this.cars[i].trips[j].type == ACESSO){if(this.cars[i].trips[j].way == IDA){counter.accessFrom ++}else{counter.accessTo ++}}
+                else if(this.cars[i].trips[j].type == RECOLHE){if(this.cars[i].trips[j].way == IDA){counter.recallFrom ++}else{counter.recallTo ++}}
+                else if(this.cars[i].trips[j].type == RESERVADO){if(this.cars[i].trips[j].way == IDA){counter.lazyFrom ++}else{counter.lazyTo ++}}
+                else{
+                    if(this.cars[i].trips[j].type == EXPRESSO){counter.express ++;}
+                    else if(this.cars[i].trips[j].type == SEMIEXPRESSO){counter.semiexpress ++;}
+                    // ---
+                    if(this.cars[i].trips[j].way == IDA){counter.from ++;}
+                    else if(this.cars[i].trips[j].way == VOLTA){counter.to ++;}
+                }
+            }
+        }
+        return counter;
     }
 }

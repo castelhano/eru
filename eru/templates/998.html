@@ -3,6 +3,10 @@
 {% block title %}Marcha{% endblock %}
 {% block nav_title %}Diagrama de Marcha{% endblock %}
 
+{% block style_src %}
+<link rel="stylesheet" href="{% static 'css/charts.css' %}">
+{% endblock %}
+
 {% block add_script_src %}
 <script src="{% static 'js/app/marcha_model.js' %}"></script>
 <script src="{% static 'js/app/marcha_ui.js' %}"></script>

@@ -466,7 +466,7 @@ class MarchUI{
             this.__updateTripDisplay();
         }
     }
-    addTrip(trip=null, seq=this.fleetIndex){
+    addTrip(trip=null, seq=this.fleetIndex, confirmed=false){
         this.__clearSelection();
         trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route);
         let v = document.createElement('div'); // Elemento viagem (grid)
@@ -493,6 +493,24 @@ class MarchUI{
         this.rulerFreq.appendChild(vf);
         return v;
     }
+    __modalConfirmationChangeProject(resolve, reject=null){
+        this.gridLocked = true;
+        let modal = document.createElement('dialog');modal.innerHTML = '<h6><i class="bi bi-exclamation-lg fs-4 m-0 text-orange"></i><span>Alteração de Planejamento</span></h6><hr class="mt-0"><p><b>Atenção:</b> Já existe escala gerada para o carro, ao editar planejamento as escalas do veiculo serão <b class="text-orange">removidas</b>, confirma operação?</p>';
+        modal.addEventListener('close', ()=> {modal.remove(); this.gridLocked = false;})
+        let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-secondary float-end';confirm.innerHTML = 'Confirmar';
+        confirm.onclick = ()=>{resolve();modal.close()};
+        let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-phanton float-end me-2';cancel.innerHTML = 'Cancelar';
+        cancel.onclick = ()=>{
+            if(reject){reject()}
+            modal.close();
+        };
+        
+        modal.appendChild(confirm);
+        modal.appendChild(cancel);
+        document.body.appendChild(modal);
+        modal.showModal();
+    }
+
     addTripAt(){ // Exibe modal com entrada para hora de inicio de viagem
         this.__clearSelection();
         this.gridLocked = true;
@@ -1059,6 +1077,21 @@ class MarchUI{
         this.grid = {};
         this.freqGrid = {};
     }
+    __clearScheduleGrid(){ // Limpa toda interface de escala
+        for(let i in this.scheduleGrid){ // Apaga todos os elementos do grid
+            for(let j = 0; j < this.scheduleGrid[i].length; j++){
+                this.scheduleGrid[i][j].remove(); // Apaga escalas
+            }
+        }
+        for(let i in this.spotsGrid){ // Apaga todos os elementos do grid
+            for(let j = 0; j < this.spotsGrid[i].length; j++){
+                this.spotsGrid[i][j].remove(); // Apaga spots
+            }
+        }
+        this.scheduleGrid = {};
+        this.spotsGrid = {};
+        this.canvas.innerHTML = ''; // Limpa restante dos componentes (fleet e fleet_tags)
+    }
     __clearFleetLabels(){
         this.fleetLabels.forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
         this.fleetLabels = [];
@@ -1410,7 +1443,7 @@ class MarchUI{
         this.project.viewStage = stage;
         if(stage == 1){this.__loadStage1()}
         else if(stage == 2){this.__loadStage2()}
-        else{}
+        else if(stage == 3){this.__loadStage3()}
     }
     __switchStageModal(){
         if(this.gridLocked){return false}
@@ -1454,6 +1487,9 @@ class MarchUI{
         dialog.showModal();
     }
     __loadStage1(){ // Refaz grid
+        this.scheduleFocus = null;
+        if(this.summaryModal){this.summaryModal.remove()}
+        this.__clearScheduleGrid();
         this.__canvasRebuild();
         this.footer.style.display = 'block';
         if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
@@ -1493,6 +1529,7 @@ class MarchUI{
     }
     __loadStage2(){ // Carrega interface para manipulacao das escalas
         this.footer.style.display = 'none';
+        if(this.summaryModal){this.summaryModal.remove()}
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         appKeyMap.unbindGroup(['March_stage1','March_stage3']);
         this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
@@ -1556,9 +1593,72 @@ class MarchUI{
             this.scheduleGrid[0][0].style.backgroundColor = '#032830'
         }
     }
+    __loadStage3(){ // Carrega interface de conclusao e resumo do projeto
+        this.scheduleFocus = null;
+        this.__clearGrid(); // Apaga elemento do grid e freqGrid
+        this.__clearScheduleGrid();
+        this.footer.style.display = 'none';
+        this.__clearFleetLabels(); // Apaga as labels dos carros
+        this.__clearSelection(); // Limpa selecao (caso exista)
+        if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
+        this.rulerTop.style.display = 'none';
+        if(this.cursor){this.cursor.remove();} // Remove o cursor
+        appKeyMap.unbindGroup(['March_stage1','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        // ****
+        this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 50%; margin-top: 80px;';
+        this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
+        let counter = this.project.countTrips(); // Gera resumo das viagens planejadas
+        let km_produtiva = parseFloat((counter.from * this.project.route.fromExtension) + (counter.to * this.project.route.toExtension));
+        let km_improdutiva = parseFloat((counter.accessFrom * this.project.route.metrics.fromKmAccess) + (counter.accessTo * this.project.route.metrics.toKmAccess) + (counter.lazyFrom * this.project.route.fromExtension) + (counter.lazyTo * this.project.route.toExtension));
+        let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100;
+        let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100;
+        this.summaryModal.innerHTML = `
+        <h6>Resumo de Projeto</h6><hr>
+        <div style="display: flex; gap: 12px;">
+        <table class="caption-top">
+        <tbody>
+        <tr><td style="padding-right: 20px;">Frota</td><td>${this.project.cars.length}</td></tr>
+        <tr><td style="padding-right: 20px;">Viagens Produtivas</td><td>${counter.from + counter.to}</td></tr>
+        <tr><td style="padding-right: 20px;">Viagens Reservadas</td><td>${counter.lazyFrom + counter.lazyTo}</td></tr>
+        <tr><td colspan="2"><hr class="m-0"></td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Ida</td><td>${counter.from}</td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Volta</td><td>${counter.to}</td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Expresso</td><td>${counter.express}</td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Semiexpresso</td><td>${counter.semiexpress}</td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Acesso</td><td>${counter.accessFrom + counter.accessTo}</td></tr>
+        <tr><td style="padding-right: 20px;text-align: right;">Recolhidas</td><td>${counter.recallFrom + counter.recallTo}</td></tr>
+        </tbody>
+        </table>
+        <div style="flex: 1 1 0px;" class="text-center">
+            <div class="d-inline-block me-3">
+                <b class="d-block mb-2">Km Produtiva</b>
+                <small class="d-block mb-3"><b>${km_produtiva.toFixed(2)}</b> km</small>
+                <div class="semipie animate" style="--v:${perc_produtiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-success)">${perc_produtiva.toFixed(2)}%</div>
+            </div>
+            <div class="d-inline-block">
+                <b class="d-block mb-2">Km Improdutiva</b>
+                <small class="d-block mb-3"><b>${km_improdutiva.toFixed(2)}</b> km</small>
+                <div class="semipie animate hover" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
+            </div>
+        </div>
+        <div style="flex: 1 1 0px;"></div>
+        </div>
+        `;
+
+        document.body.appendChild(this.summaryModal);
+        this.summaryModal.showModal();
+    }
     __scheduleAddContent(options){
-        let inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start);
-        let fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end);
+        let inicio, fim;
+        if(this.project.cars[options.i].schedules[options.j].deltaStart > 0){
+            inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start - 1].start + this.project.cars[options.i].schedules[options.j].deltaStart);
+        }
+        else{inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start)}
+        // ---
+        if(this.project.cars[options.i].schedules[options.j].deltaEnd > 0){
+            fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].start + this.project.cars[options.i].schedules[options.j].deltaEnd - 1);
+        }
+        else{fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end)}
         let jornada = this.project.cars[options.i].getScheduleJourney(options.j);
         return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.i].schedules[options.j].name}</b>${min2Hour(jornada)}<div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
@@ -1595,7 +1695,7 @@ class MarchUI{
             else{
                 left = this.project.cars[fleet_index].trips[blocks[i].emptyStart - 1].start + blocks[i].deltaEnd;
             }
-            sq.style.left = `calc(${left} * ${this.rulerUnit} + ${this.fleetTagWidth})`;
+            sq.style.left = `calc(${left} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
             sq.innerHTML = '<i class="bi bi-plus-lg fs-5 text-secondary"></i>';
             
@@ -1612,7 +1712,7 @@ class MarchUI{
             this.scheduleGrid[fleet_index].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
     }
-    __cleanScheduleGrid(fleet_index){
+    __cleanScheduleGrid(fleet_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
         for(let i in this.scheduleGrid[fleet_index]){
             this.scheduleGrid[fleet_index][i].remove();
         }}
@@ -1635,7 +1735,17 @@ class MarchUI{
     }
     __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
         appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
-        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{if(this.__gridIsBlock()){return false}if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}}})
+        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{
+            if(this.__gridIsBlock()){return false}
+            if(this.tripFocus && this.project.cars[this.fleetIndex].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.addTrip();
+                    this.__updateTripDisplay();
+                })
+            }
+            else if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}
+        }})
         appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock() || !this.tripFocus){return false;}this.addTripAt()}})
         appKeyMap.bind({group: 'March_stage1', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
@@ -1807,8 +1917,7 @@ class MarchUI{
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
             ev.preventDefault();
             if(this.scheduleGrid[this.scheduleFocus[0]].length - 1 > this.scheduleFocus[1]){
-                // #1a1d20 #032830
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] + 1, this.scheduleFocus[2]];
             }
@@ -1817,8 +1926,7 @@ class MarchUI{
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
             ev.preventDefault();
             if(this.scheduleFocus[1] > 0){
-                // #1a1d20 #032830
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] - 1, this.scheduleFocus[2]];
             }
@@ -1827,8 +1935,7 @@ class MarchUI{
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
             ev.preventDefault();
             if(this.scheduleGrid[this.scheduleFocus[0] + 1]){
-                // #1a1d20 #032830
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.scheduleGrid[this.scheduleFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.scheduleFocus = [this.scheduleFocus[0] + 1, 0 , 0];
             }
@@ -1837,8 +1944,7 @@ class MarchUI{
             if(this.__gridIsBlock() || !this.scheduleFocus){return false}
             ev.preventDefault();
             if(this.scheduleFocus[0] > 0){
-                // #1a1d20 #032830
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20'; // Altera visual da escala em foco atual
+                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.scheduleGrid[this.scheduleFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.scheduleFocus = [this.scheduleFocus[0] - 1, 0 , 0];
             }
@@ -1881,14 +1987,13 @@ class MarchUI{
             modal.showModal();
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Apagar Escala', desc: 'Exclui a escala em foco', run: ()=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
             let r = this.project.cars[this.scheduleFocus[0]].deleteSchedule(this.scheduleFocus[1]);
             if(r){
-                this.__updateFleetSchedules(this.scheduleFocus[0], this.project.cars[this.scheduleFocus[0]].getFleetSchedulesBlock(this.project.route));
-                if(this.scheduleGrid[0].length > 0){
-                    this.scheduleFocus = [0,0,0];
-                    this.scheduleGrid[0][0].style.backgroundColor = '#032830';
-                }
+                let fleet_index = this.scheduleFocus[0];
+                this.scheduleFocus = null;
+                if(this.scheduleGrid[0].length > 0){this.scheduleFocus = [0,0,0]}
+                this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route));
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
