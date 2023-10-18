@@ -1604,62 +1604,94 @@ class MarchUI{
         if(this.cursor){this.cursor.remove();} // Remove o cursor
         appKeyMap.unbindGroup(['March_stage1','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
         // ****
-        this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 50%; margin-top: 80px;';
+        this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; margin-top: 80px;';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
         let counter = this.project.countTrips(); // Gera resumo das viagens planejadas
         let km_produtiva = parseFloat((counter.from * this.project.route.fromExtension) + (counter.to * this.project.route.toExtension));
         let km_improdutiva = parseFloat((counter.accessFrom * this.project.route.metrics.fromKmAccess) + (counter.accessTo * this.project.route.metrics.toKmAccess) + (counter.lazyFrom * this.project.route.fromExtension) + (counter.lazyTo * this.project.route.toExtension));
-        let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100;
-        let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100;
+        let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
+        let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100 || 0;
         this.summaryModal.innerHTML = `
-        <h6>Resumo de Projeto</h6><hr>
-        <div style="display: flex; gap: 12px;">
-        <table class="caption-top">
+        <h6>Resumo de Projeto<span id="March_summaryProjectActivateContainer" class="float-end"></span></h6><hr>
+        <div style="display: flex; gap: 10px;">
+        <table>
         <tbody>
-        <tr><td style="padding-right: 20px;">Frota</td><td>${this.project.cars.length}</td></tr>
-        <tr><td style="padding-right: 20px;">Viagens Produtivas</td><td>${counter.from + counter.to}</td></tr>
-        <tr><td style="padding-right: 20px;">Viagens Reservadas</td><td>${counter.lazyFrom + counter.lazyTo}</td></tr>
+        <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.cars.length}</td></tr>
+        <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${counter.from + counter.to}</td></tr>
+        <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${counter.lazyFrom + counter.lazyTo}</td></tr>
+        <tr><td style="padding-right: 10px;">Km planejada</td><td>${formatCur(km_produtiva + km_improdutiva)}</td></tr>
         <tr><td colspan="2"><hr class="m-0"></td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Ida</td><td>${counter.from}</td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Volta</td><td>${counter.to}</td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Expresso</td><td>${counter.express}</td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Semiexpresso</td><td>${counter.semiexpress}</td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Acesso</td><td>${counter.accessFrom + counter.accessTo}</td></tr>
-        <tr><td style="padding-right: 20px;text-align: right;">Recolhidas</td><td>${counter.recallFrom + counter.recallTo}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${counter.from}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${counter.to}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${counter.express}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${counter.semiexpress}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${counter.accessFrom + counter.accessTo}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${counter.recallFrom + counter.recallTo}</td></tr>
         </tbody>
         </table>
         <div style="flex: 1 1 0px;" class="text-center">
             <div class="d-inline-block me-3">
                 <b class="d-block mb-2">Km Produtiva</b>
-                <small class="d-block mb-3"><b>${km_produtiva.toFixed(2)}</b> km</small>
+                <small class="d-block mb-3"><b>${formatCur(km_produtiva)}</b> km</small>
                 <div class="semipie animate" style="--v:${perc_produtiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-success)">${perc_produtiva.toFixed(2)}%</div>
             </div>
             <div class="d-inline-block">
                 <b class="d-block mb-2">Km Improdutiva</b>
-                <small class="d-block mb-3"><b>${km_improdutiva.toFixed(2)}</b> km</small>
+                <small class="d-block mb-3"><b>${formatCur(km_improdutiva)}</b> km</small>
                 <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
             </div>
         </div>
-        <div style="flex: 1 1 0px;"></div>
+        <div style="flex: 1 1 0px;" id="March_summaryBlock3Container">
+        <table class="fs-7">
+        <tbody>
+        <tr><td style="padding-right: 20px;">Projeto:</td><td><b class="text-secondary">${this.project.name}</b></td></tr>
+        <tr><td style="padding-right: 20px;">Linha:</td><td><b class="text-secondary">${this.project.route.prefix}</b></td></tr>
+        <tr><td style="padding-right: 20px;">Nome:</td><td><b class="text-secondary">${this.project.route.name}</b></td></tr>
+        <tr><td style="padding-right: 20px;">Status:</td><td><b class="text-secondary" id="March_summaryActiveLabel">${this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>'}</b></td></tr>
+        <tr><td colspan="2"><hr class="my-2"></td></tr>
+        <tr><td colspan="2" class="text-secondary">${this.project.desc}</td></tr>
+        </tbody>
+        </table>
+        </div>
         </div>
         `;
-
+        let summaryProjectActivate = document.createElement('input');summaryProjectActivate.type = 'checkbox';summaryProjectActivate.role = 'switch';summaryProjectActivate.id = 'March_summaryProjectActivate';summaryProjectActivate.checked = this.project.active;
+        summaryProjectActivate.onclick = () => {
+            this.project.active = summaryProjectActivate.checked;
+            document.getElementById('March_summaryActiveLabel').innerHTML = this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>';
+        }
         document.body.appendChild(this.summaryModal);
+        document.getElementById('March_summaryProjectActivateContainer').appendChild(this.__settingsContainerSwitch(summaryProjectActivate, 'Ativar projeto'));
+        
+        let summaryProjectSumbit = document.createElement('button');summaryProjectSumbit.type = 'button';summaryProjectSumbit.classList = 'btn btn-sm btn-phanton-success mt-1 float-end fw-bold';summaryProjectSumbit.id = 'March_summaryProjectActivate';summaryProjectSumbit.innerHTML = 'Gravar e Fechar'
+        document.getElementById('March_summaryBlock3Container').appendChild(summaryProjectSumbit);
+        
         this.summaryModal.showModal();
     }
     __scheduleAddContent(options){
         let inicio, fim;
-        if(this.project.cars[options.i].schedules[options.j].deltaStart > 0){
-            inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start - 1].start + this.project.cars[options.i].schedules[options.j].deltaStart);
+        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaStart > 0){
+            inicio = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].start - 1].start + this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaStart);
         }
-        else{inicio = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].start].start)}
+        else{inicio = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].start].start)}
         // ---
-        if(this.project.cars[options.i].schedules[options.j].deltaEnd > 0){
-            fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].start + this.project.cars[options.i].schedules[options.j].deltaEnd - 1);
+        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaEnd > 0){
+            fim = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].end].start + this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaEnd - 1);
         }
-        else{fim = min2Hour(this.project.cars[options.i].trips[this.project.cars[options.i].schedules[options.j].end].end)}
-        let jornada = this.project.cars[options.i].getScheduleJourney(options.j);
-        return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.i].schedules[options.j].name}</b>${min2Hour(jornada)}<div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
+        else{fim = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].end].end)}
+        let jornada = this.project.cars[options.fleet_index].getScheduleJourney(options.schedule_index);
+        let previous, next;
+
+        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next){ // Verifica se existe complmento de jornada em tabela posterior a esta
+            if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next?.externalProject == null){ // Verifica se o complemento eh neste mesmo projeto
+                next = this.project.cars[this.project.cars[options.fleet_index].schedules[options.schedule_index].next.fleet].schedules[this.project.cars[options.fleet_index].schedules[options.schedule_index].next.schedule];
+            }
+            else{
+                let n = this.project.cars[options.fleet_index].schedules[options.schedule_index].next;
+                next = {name: `[ ${n.externalProject} ]`}
+            }
+        }
+        return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.fleet_index].schedules[options.schedule_index].name}</b>${min2Hour(jornada)}<b data-type="schedule-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.name : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
     __updateFleetSchedules(fleet_index, blocks){ // Ajusta stilo dos schedules do carro
         this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
@@ -1670,7 +1702,7 @@ class MarchUI{
             let sq = document.createElement('div');sq.style = `height: 43px;border-right: 2px solid #495057;text-align: center;background-color: ${bg};user-select: none; position: absolute;z-index: 50;`;
             sq.style.left = `calc(${metrics[1]} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
             sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
-            sq.innerHTML = this.__scheduleAddContent({i: fleet_index, j: j});
+            sq.innerHTML = this.__scheduleAddContent({fleet_index: fleet_index, schedule_index: j});
             sq.style.width = `calc(${metrics[0]} * ${this.rulerUnit} - 1px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}

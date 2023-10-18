@@ -11,32 +11,35 @@
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
 <link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}">
-<link rel="stylesheet" href="{% static 'css/charts.css' %}">
 {% endblock %}
 
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
 
-<div class="row text-center">
-    <div class="col">
-        <b class="d-block">Km Produtiva</b>
-        <div class="semipie animate" style="--v:30;--b:30px;--c:var(--bs-success)">30%</div>
-    </div>
-    <div class="col">
-        <b class="d-block">Km Improdutiva</b>
-        <div class="semipie animate hover" style="--v:50;--b:30px;--c:var(--bs-danger)">50%</div>
-    </div>
+<div id="container_foo" class="position-relative">
+    <div id="box1" style="left: 20px; top: 10px;" class="position-absolute d-inline-block p-5 border bg-success">Box 1</div>
+    <div id="box2" style="top: 250px; right: 70px; " class="position-absolute d-inline-block p-5 border bg-info">Box 2</div>
 </div>
 
-
-<br>
-<div id="March_scheduleControls" class="btn-group bg-body-tertiary" style="position: absolute;top: 55px; right: 8px;border: 1px solid var(--bs-border-color); border-radius: 5px;">
-    <button class="btn btn-sm scheduleControl btn-phanton-purple"><i class="bi bi-code-slash me-1"></i> Gerar Escalas</button>
-    <button data-role="March_scheduleFocusControl" class="btn btn-sm scheduleControl btn-phanton" style="border-left:1px solid var(--bs-border-color)"><i class="bi bi-type"></i></button>
-    <button data-role="March_scheduleFocusControl" class="btn btn-sm scheduleControl btn-phanton-danger"><i class="bi bi-trash-fill"></i></button>
-</div>
-
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
+<br><br><br><br>
 <div class="alert alert-dark">
     <div class="row">
         <div class="col">Foo</div>
@@ -154,6 +157,7 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <!-- <script src="{% static 'js/table.js' %}"></script> -->
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
+<script src="{% static 'js/elConnector.js' %}"></script>
 {% endblock %}
 
 
@@ -173,6 +177,15 @@ const form = new jsForm(document.getElementById('my_form'), {
             return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
         }
     }
+})
+
+const arrow = new jsELConnector({
+    style: 'linear',
+    from: document.getElementById('box1'),
+    to: document.getElementById('box2'),
+    container: document.getElementById('container_foo'),
+    fromGap: 10,
+    breakpoint: 0.8,
 })
 
 {% endblock %}

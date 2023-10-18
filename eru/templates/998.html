@@ -20,10 +20,10 @@
     {% block add_script %}
 
     let interestPoints = []
-    interestPoints.push(new Locale({id: 12, name: 'Jd Vitoria'}));
+    interestPoints.push(new Locale({id: 12, name: 'Jd Vitoria', surrender: true}));
     interestPoints.push(new Locale({id: 55, name: 'Peg Lev'}));
     interestPoints.push(new Locale({id: 82, name: 'Hosp Cancer'}));
-    interestPoints.push(new Locale({id: 65, name: 'Igreja Matriz'}));
+    interestPoints.push(new Locale({id: 65, name: 'Igreja Matriz', surrender: true}));
 
     const model = new March({
         route: new Route({

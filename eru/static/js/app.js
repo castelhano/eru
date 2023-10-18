@@ -24,7 +24,7 @@ function appNotify(tipo, mensagem, autodismiss=true){
 function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
 
 
-// Busca dados no servidor (espra um json como resposta), retorna promise
+// Busca dados no servidor (espera um json como resposta), retorna promise
 // Ex: appGetData({url: '...'}).then(()=>{...do something})
 function appGetData(options) {
   return new Promise(function(resolve, reject) {
@@ -40,6 +40,7 @@ function appGetData(options) {
   });
 }
 
+function formatCur(value, precision=2){return value.toLocaleString('pt-br', {minimumFractionDigits: precision});}
 
 
 // Ativa bootstrap tooltip

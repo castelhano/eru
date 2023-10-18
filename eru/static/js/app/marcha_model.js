@@ -63,7 +63,7 @@ class Route{
         this.id = options?.id || null;
         this.prefix = options?.prefix || '0.00';
         this.name = options?.name || 'Linha indefinida';
-        this.circular = options?.circular || false;
+        this.circular = options?.circular || options?.circular == true;
         this.from = options?.from || new Locale({}); // Ponto inicial da linha (PT1)
         this.to = options?.to || new Locale({}); // Ponto final da linha (PT2)
         this.fromExtension = options?.fromExtension || 0; // Extensao de ida (em km)
@@ -514,6 +514,7 @@ class March{
         this.user = options?.user || null;
         this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dayType = options?.dayType || UTIL;
+        this.active = options?.active || options?.active == true;
         this.transferArea = options?.transferArea || []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
     }
@@ -582,7 +583,7 @@ class March{
             let blocks = this.cars[i].getFleetSchedulesBlock(this.route);
             this.cars[i].schedules = []; // Limpa as escalas do carro
             for(let j = 0; j < blocks.length; j++){
-                this.cars[i].schedules.push({start: blocks[j].startIndex, end: blocks[j].endIndex, name: this.scheduleBaptize(i, j)})
+                this.cars[i].schedules.push({start: blocks[j].startIndex, end: blocks[j].endIndex, name: this.scheduleBaptize(i, j), deltaStart: 0, deltaEnd: 0, previous: null, next: null})
             }
         }
         return true;
@@ -687,7 +688,7 @@ class March{
         })
     }
     load(project){ // Recebe dicionario, monta instancias e carrega projeto
-        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','viewStage','sumInterGaps'];
+        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','active','viewStage','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }

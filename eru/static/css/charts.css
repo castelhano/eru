@@ -13,8 +13,8 @@
 .pie.flat::after {content: none;}
 @keyframes pie{from{--v:0;}}
 
-.semipie {--v: 0;--c: #FF3D00;--w:200px;--b:40px;--fs: calc(var(--w) * 0.12); width: var(--w);height: calc(var(--w) / 2);position: relative;font-size: var(--fs);font-weight: 600;overflow: hidden;color: var(--c);display: inline-flex;margin-right: 5px;align-items: flex-end;justify-content: center;box-sizing : border-box;}
-.semipie::after{content: '';width: var(--w);height: var(--w);border:var(--b) solid;border-color : rgba(0,0,0,0.15) rgba(0,0,0,0.15) var(--c) var(--c);position: absolute;border-radius: 50%;left: 0;top: 0;box-sizing : border-box;transform: rotate( calc( 1deg * ( -45 + var(--v) * 1.8 ) ) );}
+.semipie {--v: 0;--c: #FF3D00;--w:200px;--b:40px;--bg: rgba(0,0,0,0.15);--fs: calc(var(--w) * 0.12); width: var(--w);height: calc(var(--w) / 2);position: relative;font-size: var(--fs);font-weight: 600;overflow: hidden;color: var(--c);display: inline-flex;margin-right: 5px;align-items: flex-end;justify-content: center;box-sizing : border-box;}
+.semipie::after{content: '';width: var(--w);height: var(--w);border:var(--b) solid;border-color : var(--bg) var(--bg) var(--c) var(--c);position: absolute;border-radius: 50%;left: 0;top: 0;box-sizing : border-box;transform: rotate( calc( 1deg * ( -45 + var(--v) * 1.8 ) ) );}
 .semipie.animate::after{animation : semipieAnimate 0.8s ease-in;}
 .semipie.hover:hover:after{opacity: .8;cursor: pointer;}
 @keyframes semipieAnimate{0%{transform : rotate(-45deg);}}
