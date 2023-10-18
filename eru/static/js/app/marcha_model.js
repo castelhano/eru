@@ -514,7 +514,7 @@ class March{
         this.user = options?.user || null;
         this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dayType = options?.dayType || UTIL;
-        this.transferArea = []; // Area de armazenamento de viagens
+        this.transferArea = options?.transferArea || []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
@@ -717,7 +717,10 @@ class March{
             project.cars[i].trips = trips; // Substitui o cars.trips (array simples) pelo trips (array de instancias Trip)
             this.cars.push(new Car(project.cars[i]));
         }
-
+        this.transferArea = [];
+        for(let i = 0; i < project.transferArea.length;i++){ // Cria instancias para viagens na area de transferencia
+            this.transferArea.push(new Trip(project.transferArea[i]))
+        }
     }
     reset(){ // Limpa planejamento e escalas
         this.cars = [];

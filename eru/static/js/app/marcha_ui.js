@@ -104,8 +104,6 @@ class MarchUI{
             this.project.sumInterGaps = s.sumInterGaps;
             this.tripFromColor = s.tripFromColor;
             this.tripToColor = s.tripToColor;
-            this.rulerUnit = s.rulerUnit;
-            this.rulerMediumUnit = s.rulerMediumUnit;
         }
 
         this.__buildStyles();
@@ -495,7 +493,7 @@ class MarchUI{
     }
     __modalConfirmationChangeProject(resolve, reject=null){
         this.gridLocked = true;
-        let modal = document.createElement('dialog');modal.innerHTML = '<h6><i class="bi bi-exclamation-lg fs-4 m-0 text-orange"></i><span>Alteração de Planejamento</span></h6><hr class="mt-0"><p><b>Atenção:</b> Já existe escala gerada para o carro, ao editar planejamento as escalas do veiculo serão <b class="text-orange">removidas</b>, confirma operação?</p>';
+        let modal = document.createElement('dialog');modal.innerHTML = '<h6 class="text-orange">Alteração de Planejamento</h6><hr class="mt-0"><p><b>Atenção:</b> Já existe escala gerada para o carro, ao inserir, excluir ou movimentar viagens, as escalas do veiculo serão <b class="text-orange">removidas</b>, confirma operação?</p>';
         modal.addEventListener('close', ()=> {modal.remove(); this.gridLocked = false;})
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-secondary float-end';confirm.innerHTML = 'Confirmar';
         confirm.onclick = ()=>{resolve();modal.close()};
@@ -503,8 +501,7 @@ class MarchUI{
         cancel.onclick = ()=>{
             if(reject){reject()}
             modal.close();
-        };
-        
+        };        
         modal.appendChild(confirm);
         modal.appendChild(cancel);
         document.body.appendChild(modal);
@@ -799,8 +796,8 @@ class MarchUI{
                 this.tripIndex = this.tripIndex == 0 || (this.tripIndex == 1 && r[1]) ? 0 : this.tripIndex - (r[1] ? 2 : 1);
                 this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
                 this.__cursorMove();
+                this.__updateTripDisplay();
             }
-            else{appNotify('warning', `<b>Atenção:</b> Não é possivel remover todas as viagens de um carro, use o comando <code>${appKeyMap.getEntryByRole('removeFleet', true)}</code> caso queria remover o carro do projeto`, false)}
         }
     }
     moveTrips(){
@@ -841,13 +838,16 @@ class MarchUI{
             this.__cursorMove();
             this.__updateTripDisplay();
             this.__clearSelection();
-            // Adiciona icone identificando que existe viagens na area de transferencia
-            this.transferAreaIcon = document.createElement('div');
-            this.transferAreaIcon.style = 'position: absolute; top: 90px; right: 20px; border:1px solid var(--bs-border-color); border-radius: 10px;padding: 4px 10px; background-color: var(--bs-secondary-bg);opacity: 0.7; cursor: pointer;';
-            this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${r.length}</b>`;
-            this.transferAreaIcon.title = `Inicio: ${this.project.transferArea[0].getStart()} | Fim: ${this.project.transferArea[this.project.transferArea.length - 1].getEnd()}`;
-            document.body.appendChild(this.transferAreaIcon);
+            this.__addToTransferAddLabel()
         }
+    }
+    __addToTransferAddLabel(){
+        // Adiciona icone identificando que existe viagens na area de transferencia
+        this.transferAreaIcon = document.createElement('div');
+        this.transferAreaIcon.style = 'position: absolute; top: 90px; right: 20px; border:1px solid var(--bs-border-color); border-radius: 10px;padding: 4px 10px; background-color: var(--bs-secondary-bg);opacity: 0.7; cursor: pointer;';
+        this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${this.project.transferArea.length}</b>`;
+        this.transferAreaIcon.title = `Inicio: ${this.project.transferArea[0].getStart()} | Fim: ${this.project.transferArea[this.project.transferArea.length - 1].getEnd()}`;
+        document.body.appendChild(this.transferAreaIcon);
     }
     pasteTransfer(){ // 
         let r = this.project.pasteTransfer(this.fleetIndex);
@@ -1381,8 +1381,6 @@ class MarchUI{
             sumInterGaps: this.project.sumInterGaps,
             tripFromColor: this.tripFromColor,
             tripToColor: this.tripToColor,
-            rulerUnit: this.rulerUnit,
-            rulerMediumUnit: this.rulerMediumUnit
         })
     }
     __generate(){
@@ -1489,10 +1487,13 @@ class MarchUI{
     __loadStage1(){ // Refaz grid
         this.scheduleFocus = null;
         if(this.summaryModal){this.summaryModal.remove()}
+        if(this.transferAreaIcon){this.transferAreaIcon.remove()}
         this.__clearScheduleGrid();
         this.__canvasRebuild();
         if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         this.footer.style.display = 'block';
+        this.__clearTripDisplay();
+        this.__clearFleetDisplay();
         appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
         this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
@@ -1515,6 +1516,7 @@ class MarchUI{
             this.__updateTripDisplay();
             this.initialView = min2Range(this.project.getFirstTrip()[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
             this.canvasFit();
+            if(this.project.transferArea.length > 0)(this.__addToTransferAddLabel()) // Se existe viagem na area de transferencia, adiciona label
         }
         else{
             this.fleetFocus = null;
@@ -1522,9 +1524,6 @@ class MarchUI{
             this.fleetIndex = -1;
             this.tripIndex = -1;
             this.cursor.style.left = '-200px'
-            this.__clearTripDisplay();
-            this.__clearFleetDisplay();
-
         }
     }
     __loadStage2(){ // Carrega interface para manipulacao das escalas
@@ -1717,6 +1716,7 @@ class MarchUI{
             this.scheduleGrid[fleet_index][i].remove();
         }}
     __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (indiferente do viewStage)
+        appKeyMap.unbind('lTFF'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
         appKeyMap.bind({group: 'March_general', key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
         appKeyMap.bind({group: 'March_general', key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
         appKeyMap.bind({group: 'March_general', key: 'f5', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Desfazer alterações', desc: 'Recarrega ultimo status salvo do projeto', run: (ev)=>{}}) // Apenas entrada para exibicao no keymap
@@ -1727,7 +1727,6 @@ class MarchUI{
         }})
         appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
             localStorage.removeItem('marchCurrentProject');
-            // this.project = new March({})
             this.project.reset();
             this.__loadStage1();
             this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
@@ -1737,17 +1736,26 @@ class MarchUI{
     __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
         appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
         appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{
-            if(this.__gridIsBlock()){return false}
-            if(this.tripFocus && this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.tripFocus){return false}
+            if(this.project.cars[this.fleetIndex].schedules.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
                     this.project.cars[this.fleetIndex].schedules = [];
                     this.addTrip();
-                    this.__updateTripDisplay();
                 })
             }
-            else if(this.tripFocus){this.addTrip();this.__updateTripDisplay();}
+            else{this.addTrip();}
         }})
-        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{if(this.__gridIsBlock() || !this.tripFocus){return false;}this.addTripAt()}})
+        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{
+            if(this.__gridIsBlock() || !this.tripFocus){return false;}
+            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.addTripAt()
+                })
+            }
+            else{this.addTripAt();}
+        }})
+
         appKeyMap.bind({group: 'March_stage1', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: (ev)=>{
             if(!this.tripFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
@@ -1836,9 +1844,9 @@ class MarchUI{
         appKeyMap.bind({group: 'March_stage1', key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.back()}})
         appKeyMap.bind({group: 'March_stage1', key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
         appKeyMap.bind({group: 'March_stage1', key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addInterv()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.tripShut()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addRecall()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.tripShut();this.__updateTripDisplay();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addRecall();this.__updateTripDisplay()}})
         appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextTrip();}})
         appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousTrip();}})
         appKeyMap.bind({group: 'March_stage1', key: 'home', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem carro', desc: 'Foca primeira viagem do carro', run: (ev)=>{
@@ -1882,9 +1890,31 @@ class MarchUI{
         appKeyMap.bind({group: 'March_stage1', key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
         appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
         appKeyMap.bind({group: 'March_stage1', key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{this.moveTrips()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{this.addToTransferArea();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{this.pasteTransfer()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{
+            if(this.__gridIsBlock() || this.startSelection < 0){return false;}
+            if(this.project.cars[this.fleetSelection].schedules.length > 0 || this.project.cars[this.fleetIndex].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetSelection].schedules = [];
+                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.moveTrips()
+                })
+            }
+            else{this.moveTrips()}
+        }})
+        appKeyMap.bind({group: 'March_stage1', key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{
+            if(this.__gridIsBlock() || this.startSelection < 0 || this.project.transferArea.length > 0){return false;}
+            if(this.project.cars[this.fleetSelection].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetSelection].schedules = [];
+                    this.addToTransferArea()
+                })
+            }
+            else{this.addToTransferArea()}
+        }})
+        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{
+            if(this.project.transferArea.length == 0){return false}
+            this.pasteTransfer()
+        }})
         appKeyMap.bind({group: 'March_stage1', key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
             if(this.tripFocus){
                 this.initialView = this.tripFocus.start - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
@@ -1892,11 +1922,26 @@ class MarchUI{
                 this.canvasFit();
             }
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.removeTrip(false)}})
+        appKeyMap.bind({group: 'March_stage1', key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{
+            if(this.__gridIsBlock() || !this.tripFocus){return false;}
+            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.removeTrip(false)
+                })
+            }
+            else{this.removeTrip(false)}
+        }})
         appKeyMap.bind({group: 'March_stage1', role: 'removeFleet', key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(this.__gridIsBlock() || !this.tripFocus){return false;}
             if(this.tripIndex == 0){this.removeFleet()}
-            else{this.removeTrip()}
+            else if(this.project.cars[this.fleetIndex].schedules.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.removeTrip();
+                })
+            }
+            else{this.removeTrip()} 
         }})
         appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
         appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
@@ -1906,7 +1951,7 @@ class MarchUI{
             localStorage.removeItem('marchUiSettings');
             for(let key in this.defaultSettings){
                 this[key] = this.defaultSettings[key]; // Retorna valor padrao a variavel de ambiente
-                this[`settings${key}`].value = key == 'rulerUnit' ? parseInt(this.defaultSettings[key]) : this.defaultSettings[key]; // Retorna valor padrao ao controle no painel de configuracoes
+                this[`settings${key}`].value = this.defaultSettings[key]; // Retorna valor padrao ao controle no painel de configuracoes
             }
             this.__buildRuler(); // Refaz Regua
             this.__loadStage1(false); // Ajusta viagens
