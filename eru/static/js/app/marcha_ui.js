@@ -12,10 +12,13 @@ class MarchUI{
         this.fleetFocus = null;
         this.tripFocus = null;
         this.scheduleFocus = null;
+        this.scheduleSelection = null;
         this.fleetLabels = []; // Lista com apontadores das labels dos carros
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.freqGrid = {}; // Dicionario com item da regua de frequencia
         this.scheduleGrid = {}; // Dicionario com os schedules
+        this.scheduleArrowsList = []; // Lista com arrows a serem montadas
+        this.scheduleArrowsGrid = {}; // Lista com elementos arrows
         this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
@@ -1542,6 +1545,7 @@ class MarchUI{
         this.initialView = min2Range(this.project.getFirstTrip()[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
         this.__buildRuler();
         this.canvasFit();
+        this.scheduleArrowsList = [];
         // --
         for(let i = 0; i < this.project.cars.length; i++){ // Constroi os schedules do carro
             let blocks = this.project.cars[i].getFleetSchedulesBlock(this.project.route);
@@ -1587,6 +1591,7 @@ class MarchUI{
             this.__updateFleetSchedules(i, blocks);
             this.canvas.appendChild(fleet_tag);
         }
+        this.__updateScheduleArrows(); // Adiciona arrows nas schedules
         if(this.scheduleGrid[0].length > 0){
             this.scheduleFocus = [0,0,0];
             this.scheduleGrid[0][0].style.backgroundColor = '#032830'
@@ -1693,7 +1698,7 @@ class MarchUI{
         }
         return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.fleet_index].schedules[options.schedule_index].name}</b>${min2Hour(jornada)}<b data-type="schedule-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.name : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
-    __updateFleetSchedules(fleet_index, blocks){ // Ajusta stilo dos schedules do carro
+    __updateFleetSchedules(fleet_index, blocks){ // Refaz schedules do carro informado
         this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
         this.scheduleGrid[fleet_index] = []; // Incicia array para armazenar schedules do carro
         for(let j = 0; j < this.project.cars[fleet_index].schedules.length; j++){ // Percorre todos os schedules ja definidos e adiciona no fleet
@@ -1712,6 +1717,52 @@ class MarchUI{
                     if(project.project.cars[fleet_index].schedules[j].start >= blocks[x].startIndex && project.project.cars[fleet_index].schedules[j].end <= blocks[x].endIndex){ target_block = x}
                 }
                 this.scheduleFocus = [fleet_index, j, target_block];
+            }
+            if(this.project.cars[fleet_index].schedules[j].previous == null){
+                let previous = document.createElement('i');previous.classList = 'bi bi-arrow-bar-left px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
+                previous.onclick = (ev) => {
+                    ev.stopImmediatePropagation();
+                    if(this.scheduleSelection){
+                        this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].next = {externalProject: null, fleet: fleet_index, schedule: j};
+                        this.project.cars[fleet_index].schedules[j].previous = {externalProject: null, fleet: this.scheduleSelection[0], schedule: this.scheduleSelection[1]};
+                        this.scheduleArrowsList.push({from_fleet: this.scheduleSelection[0], from_schedule: this.scheduleSelection[1], to_fleet: fleet_index, to_schedule: j});
+                        this.__updateScheduleArrows();
+                        this.__updateFleetSchedules(fleet_index, blocks);
+                        if(this.scheduleSelection[0] != fleet_index){this.__updateFleetSchedules(this.scheduleSelection[0], blocks);}
+                        this.scheduleSelection = null;
+                    }
+                }
+                sq.appendChild(previous);
+            }
+            else{
+                let previous = document.createElement('i');previous.classList = 'bi bi-x-lg px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
+                previous.onclick = (ev)=>{
+                    ev.stopImmediatePropagation();
+                    // TODO...
+                }
+                sq.appendChild(previous);
+            }
+            if(this.project.cars[fleet_index].schedules[j].next == null){
+                let next = document.createElement('i');next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
+                next.onclick = (ev) => {
+                    ev.stopImmediatePropagation();
+                    this.scheduleSelection = [fleet_index, j, next];
+                }
+                sq.appendChild(next);
+            }
+            else{
+                let next = document.createElement('i');next.classList = 'bi bi-x-lg px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
+                next.onclick = (ev) => { // Remove o apontamento de next do alvo e o previous do correlato
+                    ev.stopImmediatePropagation();
+                    let destiny = this.project.cars[fleet_index].schedules[j].next;
+                    this.project.cars[destiny.fleet].schedules[destiny.schedule].previous = null;
+                    this.project.cars[fleet_index].schedules[j].next = null;
+                    this.scheduleArrowsGrid[fleet_index][j].destroy();
+                    this.scheduleSelection = null;
+                    this.__updateFleetSchedules(fleet_index, blocks);
+                }
+                sq.appendChild(next);
+                this.scheduleArrowsList.push({from_fleet: fleet_index, from_schedule: j, to_fleet: this.project.cars[fleet_index].schedules[j].next.fleet, to_schedule: this.project.cars[fleet_index].schedules[j].next.schedule});
             }
             this.canvas.appendChild(sq);
             this.scheduleGrid[fleet_index].push(sq);
@@ -1734,7 +1785,7 @@ class MarchUI{
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                let r = this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, deltaEnd: 0})
+                let r = this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
                 this.scheduleFocus = [fleet_index, r, i];
                 this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
             }
@@ -1742,6 +1793,25 @@ class MarchUI{
             this.scheduleGrid[fleet_index].push(sq);
             this.scheduleGrid[fleet_index].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
+    }
+    __updateScheduleArrows(){
+        for(let i in this.scheduleArrowsGrid){ // Apaga todos as arrows e reinicia scheduleArrowsGrid
+            this.scheduleArrowsGrid[i].forEach((el)=>{el.destroy();});
+        }
+        for(let i = 0; i < this.project.cars.length; i++){ // Inicia dicionario
+            this.scheduleArrowsGrid[i] = [];
+        }
+        // Adiciona arrows de ligacao entre schedules
+        for(let i = 0; i < this.scheduleArrowsList.length; i++){
+            let arrow = new jsELConnector({
+                from: this.scheduleGrid[this.scheduleArrowsList[i].from_fleet][this.scheduleArrowsList[i].from_schedule],
+                to: this.scheduleGrid[this.scheduleArrowsList[i].to_fleet][this.scheduleArrowsList[i].to_schedule],
+                container: this.canvas,
+
+            });
+            this.scheduleArrowsGrid[this.scheduleArrowsList[i].from_fleet].push(arrow);
+        }
+        this.scheduleArrowsList = [];
     }
     __cleanScheduleGrid(fleet_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
         for(let i in this.scheduleGrid[fleet_index]){
@@ -2070,6 +2140,7 @@ class MarchUI{
             for(let i = 0; i < this.project.cars.length; i++){
                 this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
             }
+            this.__updateScheduleArrows();
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
             ev.preventDefault();

@@ -18,8 +18,8 @@
 <hr>
 
 <div id="container_foo" class="position-relative">
-    <div id="box1" style="left: 20px; top: 10px;" class="position-absolute d-inline-block p-5 border bg-success">Box 1</div>
-    <div id="box2" style="top: 250px; right: 70px; " class="position-absolute d-inline-block p-5 border bg-info">Box 2</div>
+    <div id="box1" style="left: 20px; top: 0px;" class="position-absolute d-inline-block p-5 border bg-success">Box 1</div>
+    <div id="box2" style="top: 250px; right: 10px; " class="position-absolute d-inline-block p-5 border bg-info">Box 2</div>
 </div>
 
 <br><br><br><br>
@@ -180,12 +180,12 @@ const form = new jsForm(document.getElementById('my_form'), {
 })
 
 const arrow = new jsELConnector({
-    style: 'linear',
+    style: 'path',
     from: document.getElementById('box1'),
     to: document.getElementById('box2'),
     container: document.getElementById('container_foo'),
-    fromGap: 10,
-    breakpoint: 0.8,
+    // fromGap: 10,
+    // breakpoint: 0.8,
 })
 
 {% endblock %}
