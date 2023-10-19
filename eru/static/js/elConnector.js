@@ -48,7 +48,6 @@ class jsELConnector{
             this.els.push(line);
         }
         else if(this.style == 'path'){
-            let deltaY = (y2 + (toH / 2) - (parseInt(this.lineH) / 2)) - (y1 + (fromH / 2) - (parseInt(this.lineH) / 2));
             let initial = document.createElement('div'); initial.style.height = this.lineH;initial.style.position = 'absolute';initial.style.backgroundColor = this.lineC;initial.style.zIndex = '90';
             initial.style.top = `${y1 + (fromH / 2) - (parseInt(this.lineH) / 2)}px`;
             initial.style.left = `${fromE + this.fromGap}px`;
@@ -74,9 +73,18 @@ class jsELConnector{
             }
             
             let central = document.createElement('div'); central.style.width = this.lineH;central.style.position = 'absolute';central.style.backgroundColor = this.lineC;central.style.zIndex = '90';
-            central.style.top = `${y1 + (fromH / 2) - (parseInt(this.lineH) / 2)}px`;
-            central.style.left = `${deltaX * this.breakpoint + fromE + this.fromGap}px`;
+            let deltaY;
+            if(y2 > y1){
+                central.style.top = `${y1 + (fromH / 2) - (parseInt(this.lineH) / 2)}px`;
+                deltaY = (y2 + (toH / 2) - (parseInt(this.lineH) / 2)) - (y1 + (fromH / 2) - (parseInt(this.lineH) / 2));
+            }
+            else{
+                central.style.top = `${y2 + (toH / 2) - (parseInt(this.lineH) / 2)}px`;
+                deltaY = (y1 + (fromH / 2) - (parseInt(this.lineH) / 2)) - (y2 + (toH / 2) - (parseInt(this.lineH) / 2));
+                
+            }
             central.style.height = `${deltaY}px`;
+            central.style.left = `${deltaX * this.breakpoint + fromE + this.fromGap}px`;
             
             this.container.appendChild(initial);
             this.container.appendChild(final);
@@ -88,6 +96,7 @@ class jsELConnector{
     }
     destroy(){
         this.els.forEach((el)=> el.remove())
+        this.els = [];
         delete this;
     }
 }

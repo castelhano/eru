@@ -17,7 +17,6 @@ class MarchUI{
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.freqGrid = {}; // Dicionario com item da regua de frequencia
         this.scheduleGrid = {}; // Dicionario com os schedules
-        this.scheduleArrowsList = []; // Lista com arrows a serem montadas
         this.scheduleArrowsGrid = {}; // Lista com elementos arrows
         this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
@@ -1545,7 +1544,6 @@ class MarchUI{
         this.initialView = min2Range(this.project.getFirstTrip()[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
         this.__buildRuler();
         this.canvasFit();
-        this.scheduleArrowsList = [];
         // --
         for(let i = 0; i < this.project.cars.length; i++){ // Constroi os schedules do carro
             let blocks = this.project.cars[i].getFleetSchedulesBlock(this.project.route);
@@ -1687,16 +1685,13 @@ class MarchUI{
         let jornada = this.project.cars[options.fleet_index].getScheduleJourney(options.schedule_index);
         let previous, next;
 
-        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next){ // Verifica se existe complmento de jornada em tabela posterior a esta
-            if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next?.externalProject == null){ // Verifica se o complemento eh neste mesmo projeto
-                next = this.project.cars[this.project.cars[options.fleet_index].schedules[options.schedule_index].next.fleet].schedules[this.project.cars[options.fleet_index].schedules[options.schedule_index].next.schedule];
-            }
-            else{
-                let n = this.project.cars[options.fleet_index].schedules[options.schedule_index].next;
-                next = {name: `[ ${n.externalProject} ]`}
-            }
+        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next?.externalProject){ // Verifica se existe complmento de jornada em outra linha posterior a esta
+            next = {name: `[ ${this.project.cars[options.fleet_index].schedules[options.schedule_index].next.externalProject} ]`}
         }
-        return `<div><b data-type="schedule-name" class="me-2">${this.project.cars[options.fleet_index].schedules[options.schedule_index].name}</b>${min2Hour(jornada)}<b data-type="schedule-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.name : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
+        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].previous?.externalProject){ // Verifica se existe complemento de jornada em outra linha anterior a esta
+            previous = {name: `[ ${this.project.cars[options.fleet_index].schedules[options.schedule_index].previous.externalProject} ]`}
+        }
+        return `<div><b data-type="schedule-next" class="ms-1">${previous ? previous.name + ' <i class="bi bi-arrow-left me-1"></i>': ''}</b><b data-type="schedule-name" class="me-2">${this.project.cars[options.fleet_index].schedules[options.schedule_index].name}</b>${min2Hour(jornada)}<b data-type="schedule-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.name : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
     __updateFleetSchedules(fleet_index, blocks){ // Refaz schedules do carro informado
         this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
@@ -1725,10 +1720,9 @@ class MarchUI{
                     if(this.scheduleSelection){
                         this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].next = {externalProject: null, fleet: fleet_index, schedule: j};
                         this.project.cars[fleet_index].schedules[j].previous = {externalProject: null, fleet: this.scheduleSelection[0], schedule: this.scheduleSelection[1]};
-                        this.scheduleArrowsList.push({from_fleet: this.scheduleSelection[0], from_schedule: this.scheduleSelection[1], to_fleet: fleet_index, to_schedule: j});
-                        this.__updateScheduleArrows();
                         this.__updateFleetSchedules(fleet_index, blocks);
                         if(this.scheduleSelection[0] != fleet_index){this.__updateFleetSchedules(this.scheduleSelection[0], blocks);}
+                        this.__updateScheduleArrows();
                         this.scheduleSelection = null;
                     }
                 }
@@ -1738,7 +1732,17 @@ class MarchUI{
                 let previous = document.createElement('i');previous.classList = 'bi bi-x-lg px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
                 previous.onclick = (ev)=>{
                     ev.stopImmediatePropagation();
-                    // TODO...
+                    let destiny;
+                    if(!this.project.cars[fleet_index].schedules[j].previous.externalProject){
+                        destiny = this.project.cars[fleet_index].schedules[j].previous;
+                        this.project.cars[destiny.fleet].schedules[destiny.schedule].next = null;
+                    }
+                    if(!this.project.cars[fleet_index].schedules[j].previous.externalProject && fleet_index != destiny.fleet){
+                        this.__updateFleetSchedules(destiny.fleet, blocks);
+                    }
+                    this.project.cars[fleet_index].schedules[j].previous = null;
+                    this.__updateFleetSchedules(fleet_index, blocks);
+                    this.__updateScheduleArrows();
                 }
                 sq.appendChild(previous);
             }
@@ -1746,7 +1750,17 @@ class MarchUI{
                 let next = document.createElement('i');next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
                 next.onclick = (ev) => {
                     ev.stopImmediatePropagation();
-                    this.scheduleSelection = [fleet_index, j, next];
+                    if(this.scheduleSelection && (this.scheduleSelection[0] != fleet_index || this.scheduleSelection[1] != j)){return null} // So seleciona caso nao existe schedule selecionada
+                    if(this.scheduleSelection && this.scheduleSelection[0] == fleet_index && this.scheduleSelection[1] == j){ // Se precionar novamente cancela selecao de schedule
+                        next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';
+                        this.scheduleSelection = null;
+                        this.externalControl.remove();
+                    }
+                    else{
+                        next.classList = 'bi bi-arrow-left-right py-1 pe-1 fs-5 pointer';
+                        this.scheduleSelection = [fleet_index, j, next];
+                        this.__scheduleExternalControl(); // Adiciona controle para externalProject
+                    }
                 }
                 sq.appendChild(next);
             }
@@ -1754,15 +1768,19 @@ class MarchUI{
                 let next = document.createElement('i');next.classList = 'bi bi-x-lg px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
                 next.onclick = (ev) => { // Remove o apontamento de next do alvo e o previous do correlato
                     ev.stopImmediatePropagation();
-                    let destiny = this.project.cars[fleet_index].schedules[j].next;
-                    this.project.cars[destiny.fleet].schedules[destiny.schedule].previous = null;
+                    let destiny;
+                    if(!this.project.cars[fleet_index].schedules[j].next.externalProject){
+                        destiny = this.project.cars[fleet_index].schedules[j].next;
+                        this.project.cars[destiny.fleet].schedules[destiny.schedule].previous = null;
+                    }
+                    if(!this.project.cars[fleet_index].schedules[j].next.externalProject && fleet_index != destiny.fleet){
+                        this.__updateFleetSchedules(destiny.fleet, blocks);
+                    }
                     this.project.cars[fleet_index].schedules[j].next = null;
-                    this.scheduleArrowsGrid[fleet_index][j].destroy();
-                    this.scheduleSelection = null;
                     this.__updateFleetSchedules(fleet_index, blocks);
+                    this.__updateScheduleArrows();
                 }
                 sq.appendChild(next);
-                this.scheduleArrowsList.push({from_fleet: fleet_index, from_schedule: j, to_fleet: this.project.cars[fleet_index].schedules[j].next.fleet, to_schedule: this.project.cars[fleet_index].schedules[j].next.schedule});
             }
             this.canvas.appendChild(sq);
             this.scheduleGrid[fleet_index].push(sq);
@@ -1795,23 +1813,46 @@ class MarchUI{
         }
     }
     __updateScheduleArrows(){
-        for(let i in this.scheduleArrowsGrid){ // Apaga todos as arrows e reinicia scheduleArrowsGrid
+        for(let i in this.scheduleArrowsGrid){ // Apaga todos as arrows do canvas
             this.scheduleArrowsGrid[i].forEach((el)=>{el.destroy();});
         }
-        for(let i = 0; i < this.project.cars.length; i++){ // Inicia dicionario
-            this.scheduleArrowsGrid[i] = [];
+        for(let i = 0; i < this.project.cars.length; i++){ // Monta arrows
+            this.scheduleArrowsGrid[i] = []; // Reinicia dicionario
+            for(let j = 0; j < this.project.cars[i].schedules.length; j++){
+                if(this.project.cars[i].schedules[j].next && !this.project.cars[i].schedules[j].next.externalProject){
+                    let arrow = new jsELConnector({
+                        from: this.scheduleGrid[i][j],
+                        to: this.scheduleGrid[this.project.cars[i].schedules[j].next.fleet][this.project.cars[i].schedules[j].next.schedule],
+                        container: this.canvas,               
+                    });
+                    this.scheduleArrowsGrid[i].push(arrow);
+                }
+            }
         }
-        // Adiciona arrows de ligacao entre schedules
-        for(let i = 0; i < this.scheduleArrowsList.length; i++){
-            let arrow = new jsELConnector({
-                from: this.scheduleGrid[this.scheduleArrowsList[i].from_fleet][this.scheduleArrowsList[i].from_schedule],
-                to: this.scheduleGrid[this.scheduleArrowsList[i].to_fleet][this.scheduleArrowsList[i].to_schedule],
-                container: this.canvas,
-
-            });
-            this.scheduleArrowsGrid[this.scheduleArrowsList[i].from_fleet].push(arrow);
+    }
+    __scheduleExternalControl(){ // Exibe modal para adicao de externalProject na schedule
+        let el = this.scheduleGrid[this.scheduleSelection[0]][this.scheduleSelection[1]];
+        this.externalControl = document.createElement('button');this.externalControl.type = 'button';this.externalControl.classList = 'btn btn-sm btn-phanton'; this.externalControl.innerHTML = 'Externo';
+        this.externalControl.style = `position: absolute; top: ${el.offsetTop + 5}px;left: ${el.offsetLeft + el.offsetWidth + 5}px;z-index: 200;`;
+        this.externalControl.onclick = () => {
+            let modal = document.createElement('dialog');
+            modal.addEventListener('close', ()=>{this.gridLocked = false;this.externalControl.remove();})
+            let name = document.createElement('input');name.type = 'text';name.classList = 'flat-input';
+            modal.appendChild(name);modal.appendChild(this.__settingsAddCustomLabel(name, 'Nome planejamento'));
+            
+            let tabela = document.createElement('input');tabela.type = 'text';tabela.classList = 'flat-input';
+            modal.appendChild(tabela);modal.appendChild(this.__settingsAddCustomLabel(tabela, 'Tabela'));
+            
+            let jornada = document.createElement('input');jornada.type = 'time';jornada.classList = 'flat-input';
+            modal.appendChild(jornada);modal.appendChild(this.__settingsAddCustomLabel(jornada, 'Jornada'));
+            
+            let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-dark float-end mt-1';submit.innerHTML = 'Gravar';
+            modal.appendChild(submit);
+            
+            document.body.appendChild(modal);
+            modal.showModal();
         }
-        this.scheduleArrowsList = [];
+        this.canvas.appendChild(this.externalControl);
     }
     __cleanScheduleGrid(fleet_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
         for(let i in this.scheduleGrid[fleet_index]){
