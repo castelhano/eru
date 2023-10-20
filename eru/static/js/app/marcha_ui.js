@@ -396,6 +396,10 @@ class MarchUI{
         this.settingsProjectDesc.onchange = ()=>{this.project.desc = this.settingsProjectDesc.value;}
         this.settingsContainer.appendChild(this.settingsProjectDesc);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectDesc, 'Descrição'));
+        
+        this.settingsUploadProjectControl = document.createElement('button');this.settingsUploadProjectControl.type = 'button';this.settingsUploadProjectControl.classList = 'btn btn-sm btn-dark';this.settingsUploadProjectControl.innerHTML = 'Carregar Arquivo';
+        this.settingsUploadProjectControl.onclick = ()=>{this.uploadProject();}
+        this.settingsContainer.appendChild(this.settingsUploadProjectControl);
     }
     __settingsAddCustomLabel(input, text){
         let l = document.createElement('label');
@@ -1609,27 +1613,28 @@ class MarchUI{
         // ****
         this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; margin-top: 80px;';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
-        let counter = this.project.countTrips(); // Gera resumo das viagens planejadas
-        let km_produtiva = parseFloat((counter.from * this.project.route.fromExtension) + (counter.to * this.project.route.toExtension));
-        let km_improdutiva = parseFloat((counter.accessFrom * this.project.route.metrics.fromKmAccess) + (counter.accessTo * this.project.route.metrics.toKmAccess) + (counter.lazyFrom * this.project.route.fromExtension) + (counter.lazyTo * this.project.route.toExtension));
+        let summary1 = this.project.countTrips(); // Gera resumo das viagens planejadas
+        let summary2 = this.project.countOperatores(); // Gera resumo de mao de obra
+        let km_produtiva = parseFloat((summary1.from * this.project.route.fromExtension) + (summary1.to * this.project.route.toExtension));
+        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.route.metrics.fromKmAccess) + (summary1.accessTo * this.project.route.metrics.toKmAccess) + (summary1.lazyFrom * this.project.route.fromExtension) + (summary1.lazyTo * this.project.route.toExtension));
         let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
         let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100 || 0;
         this.summaryModal.innerHTML = `
         <h6>Resumo de Projeto<span id="March_summaryProjectActivateContainer" class="float-end"></span></h6><hr>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex;gap: 10px;">
         <table>
         <tbody>
         <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.cars.length}</td></tr>
-        <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${counter.from + counter.to}</td></tr>
-        <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${counter.lazyFrom + counter.lazyTo}</td></tr>
+        <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${summary1.from + summary1.to}</td></tr>
+        <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${summary1.lazyFrom + summary1.lazyTo}</td></tr>
         <tr><td style="padding-right: 10px;">Km planejada</td><td>${formatCur(km_produtiva + km_improdutiva)}</td></tr>
         <tr><td colspan="2"><hr class="m-0"></td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${counter.from}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${counter.to}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${counter.express}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${counter.semiexpress}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${counter.accessFrom + counter.accessTo}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${counter.recallFrom + counter.recallTo}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${summary1.from}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${summary1.to}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${summary1.express}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${summary1.semiexpress}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${summary1.accessFrom + summary1.accessTo}</td></tr>
+        <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${summary1.recallFrom + summary1.recallTo}</td></tr>
         </tbody>
         </table>
         <div style="flex: 1 1 0px;" class="text-center">
@@ -1642,6 +1647,15 @@ class MarchUI{
                 <b class="d-block mb-2">Km Improdutiva</b>
                 <small class="d-block mb-3"><b>${formatCur(km_improdutiva)}</b> km</small>
                 <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
+            </div>
+            <div class="d-inline-block mt-5">
+                <table class="text-start">
+                    <tbody>
+                    <tr><td style="padding-right: 10px;">Condutores:</td><td><b>${summary2.workers}</b></td></tr>
+                    <tr><td style="padding-right: 10px;">H Normais:</td><td><b>${min2Hour(summary2.normalTime, false)}</b></td></tr>
+                    <tr><td style="padding-right: 10px;">H Extras:</td><td><b>${min2Hour(summary2.overtime, false)}</b></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         <div style="flex: 1 1 0px;" id="March_summaryBlock3Container">
@@ -1664,10 +1678,19 @@ class MarchUI{
             document.getElementById('March_summaryActiveLabel').innerHTML = this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>';
         }
         document.body.appendChild(this.summaryModal);
+        // summary2.schedules.forEach((el) => { // Adiciona detalhamendo dos schedules na tabela
+        //     document.getElementById('March_summarySchedulesDetailsContainer').innerHTML += `<tr><td class="border">${el.name}</td><td class="border">${min2Hour(el.normalTime)}</td><td class="border">${min2Hour(el.overtime)}</td></tr>`;
+        // });
+
+        // ***************
         document.getElementById('March_summaryProjectActivateContainer').appendChild(this.__settingsContainerSwitch(summaryProjectActivate, 'Ativar projeto'));
         
-        let summaryProjectSumbit = document.createElement('button');summaryProjectSumbit.type = 'button';summaryProjectSumbit.classList = 'btn btn-sm btn-phanton-success mt-1 float-end fw-bold';summaryProjectSumbit.id = 'March_summaryProjectActivate';summaryProjectSumbit.innerHTML = 'Gravar e Fechar'
+        let summaryProjectSumbit = document.createElement('button');summaryProjectSumbit.type = 'button';summaryProjectSumbit.classList = 'btn btn-sm btn-phanton-success mt-3 float-end fw-bold';summaryProjectSumbit.id = 'March_summaryProjectSubmit';summaryProjectSumbit.innerHTML = 'Gravar e Fechar'
         document.getElementById('March_summaryBlock3Container').appendChild(summaryProjectSumbit);
+        
+        let summaryProjectExport = document.createElement('button');summaryProjectExport.type = 'button';summaryProjectExport.classList = 'btn btn-sm btn-phanton mt-3 me-2 float-end fw-bold';summaryProjectExport.id = 'March_summaryProjectExport';summaryProjectExport.innerHTML = 'Exportar';
+        summaryProjectExport.onclick = () => {this.project.exportJson()}
+        document.getElementById('March_summaryBlock3Container').appendChild(summaryProjectExport);
         
         this.summaryModal.showModal();
     }
@@ -1717,13 +1740,21 @@ class MarchUI{
                 let previous = document.createElement('i');previous.classList = 'bi bi-arrow-bar-left px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
                 previous.onclick = (ev) => {
                     ev.stopImmediatePropagation();
-                    if(this.scheduleSelection){
+                    if(!this.scheduleSelection){
+                        this.scheduleSelection = [fleet_index, j, previous];
+                        this.__scheduleExternalControl('previous', blocks); // Adiciona controle para externalProject
+                    }
+                    if(this.scheduleSelection[0] != fleet_index || this.scheduleSelection[1] != j){
+                        let start = this.project.cars[fleet_index].trips[this.project.cars[fleet_index].schedules[j].start];
+                        let end = this.project.cars[this.scheduleSelection[0]].trips[this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].end];
+                        if(end.end > start.start){return false}
                         this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].next = {externalProject: null, fleet: fleet_index, schedule: j};
                         this.project.cars[fleet_index].schedules[j].previous = {externalProject: null, fleet: this.scheduleSelection[0], schedule: this.scheduleSelection[1]};
                         this.__updateFleetSchedules(fleet_index, blocks);
                         if(this.scheduleSelection[0] != fleet_index){this.__updateFleetSchedules(this.scheduleSelection[0], blocks);}
                         this.__updateScheduleArrows();
                         this.scheduleSelection = null;
+                        this.externalControl.remove();
                     }
                 }
                 sq.appendChild(previous);
@@ -1759,7 +1790,7 @@ class MarchUI{
                     else{
                         next.classList = 'bi bi-arrow-left-right py-1 pe-1 fs-5 pointer';
                         this.scheduleSelection = [fleet_index, j, next];
-                        this.__scheduleExternalControl(); // Adiciona controle para externalProject
+                        this.__scheduleExternalControl('next', blocks); // Adiciona controle para externalProject
                     }
                 }
                 sq.appendChild(next);
@@ -1830,13 +1861,22 @@ class MarchUI{
             }
         }
     }
-    __scheduleExternalControl(){ // Exibe modal para adicao de externalProject na schedule
+    __scheduleExternalControl(position, blocks){ // Exibe modal para adicao de externalProject na schedule
         let el = this.scheduleGrid[this.scheduleSelection[0]][this.scheduleSelection[1]];
         this.externalControl = document.createElement('button');this.externalControl.type = 'button';this.externalControl.classList = 'btn btn-sm btn-phanton'; this.externalControl.innerHTML = 'Externo';
         this.externalControl.style = `position: absolute; top: ${el.offsetTop + 5}px;left: ${el.offsetLeft + el.offsetWidth + 5}px;z-index: 200;`;
         this.externalControl.onclick = () => {
-            let modal = document.createElement('dialog');
-            modal.addEventListener('close', ()=>{this.gridLocked = false;this.externalControl.remove();})
+            this.gridLocked = true;
+            let modal = document.createElement('dialog');modal.style.width = '200px';
+            modal.addEventListener('close', ()=>{
+                this.gridLocked = false;
+                if(position == 'previous'){
+                    this.externalControl.remove();
+                    this.scheduleSelection = null;
+                }
+                modal.remove();
+            })
+            
             let name = document.createElement('input');name.type = 'text';name.classList = 'flat-input';
             modal.appendChild(name);modal.appendChild(this.__settingsAddCustomLabel(name, 'Nome planejamento'));
             
@@ -1847,17 +1887,52 @@ class MarchUI{
             modal.appendChild(jornada);modal.appendChild(this.__settingsAddCustomLabel(jornada, 'Jornada'));
             
             let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-dark float-end mt-1';submit.innerHTML = 'Gravar';
+            submit.onclick = ()=>{
+                if(name.value.trim() == '' || name.value.trim().length < 3){name.classList.add('is-invalid')}else{name.classList.remove('is-invalid')};
+                if(tabela.value.trim() == '' || tabela.value.trim().length < 2){tabela.classList.add('is-invalid')}else{tabela.classList.remove('is-invalid')};
+                if(jornada.value.trim() == '' || jornada.value.trim().length < 5){jornada.classList.add('is-invalid')}else{jornada.classList.remove('is-invalid')};
+                let s = {externalProject: `${name.value}:${tabela.value}`, fleet: null, schedule: null, journey: hour2Min(jornada.value)}
+                if(!s.journey){jornada.classList.add('is-invalid')}
+                if(modal.querySelectorAll('.is-invalid').length > 0){return false}
+                this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]][position] = s;
+                this.__updateFleetSchedules(this.scheduleSelection[0], blocks);
+                this.scheduleSelection = null;
+                modal.remove();
+                this.externalControl.remove();
+            }
             modal.appendChild(submit);
             
             document.body.appendChild(modal);
             modal.showModal();
         }
         this.canvas.appendChild(this.externalControl);
+        if(position == 'previous'){
+            this.externalControl.style.display == 'none';
+            this.externalControl.click();
+        }
     }
     __cleanScheduleGrid(fleet_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
         for(let i in this.scheduleGrid[fleet_index]){
             this.scheduleGrid[fleet_index][i].remove();
-        }}
+    }}
+    uploadProject(){
+        let loadInput = document.createElement('input');loadInput.type = 'file';loadInput.setAttribute('accept', '.json');loadInput.style.display = 'none';
+        let obj = this;
+        loadInput.onchange = (ev) => {
+            ev.stopPropagation();
+            let fr = new FileReader();
+            fr.onload = (function(){
+                let r = JSON.parse(fr.result);
+                if(r.version != obj.project.version){appNotify('warning', `O arquivo carregado <code>${r.version}</code> tem versão diferente da aplicação <code>${obj.project.version}</code>, o que pode gerar incompatibilidade e/ou erros de execução.`, false)}
+                obj.project.load(JSON.parse(fr.result));
+                obj.project.viewStage = 1;
+                obj.switchStage(1);
+            });
+            fr.readAsText(loadInput.files[0]);
+        }
+        loadInput.click();
+        loadInput.remove();
+    }
     __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (indiferente do viewStage)
         appKeyMap.unbind('lTFF'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
         appKeyMap.bind({group: 'March_general', key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})

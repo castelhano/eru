@@ -505,7 +505,7 @@ class Car{
 
 class March{
     constructor(options){
-        this.version = '0.1.36';
+        this.version = '1.0.212';
         this.id = options?.id || 'new';
         this.name = options?.name || 'Novo Projeto';
         this.desc = options?.desc || '';
@@ -514,6 +514,7 @@ class March{
         this.user = options?.user || null;
         this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dayType = options?.dayType || UTIL;
+        this.workHours = options?.workHours || 420; // Jornada de trabalho normal 07:00 = 420 | 07:20 = 440
         this.active = options?.active || options?.active == true;
         this.transferArea = options?.transferArea || []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
@@ -688,7 +689,7 @@ class March{
         })
     }
     load(project){ // Recebe dicionario, monta instancias e carrega projeto
-        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','active','viewStage','sumInterGaps'];
+        let allowedFields = ['version','id', 'name', 'desc','user', 'status','dayType','active','viewStage','workHours','sumInterGaps'];
         for(let i = 0; i < allowedFields.length; i++){ // Carrega os dados base do projeto
             this[allowedFields[i]] = project[allowedFields[i]];
         }
@@ -747,5 +748,38 @@ class March{
             }
         }
         return counter;
+    }
+    countOperatores(){
+        let qtde = 0, horas_normais = 0, horas_extras = 0, escalas = [];
+        for(let i = 0; i < this.cars.length; i++){
+            for(let j = 0; j < this.cars[i].schedules.length; j++){
+                if(this.cars[i].schedules[j].previous && !this.cars[i].schedules[j].previous.externalProject){continue}
+                if(!this.cars[i].schedules[j].previous){qtde++} // Se escala nao tiver apontamento anterior, conta motorista
+                let c = 0, p = 0, n = 0, nt = 0, ot = 0, chain = this.cars[i].schedules[j].next; // Current sched, previous e next, normal_time e overtime, chain marca proxima schedule encadeada
+                c = this.cars[i].getScheduleJourney(j);
+                while(chain){ // Corre escalas procurando proximo elo
+                    n += this.cars[i].schedules[j].next.externalProject ? hour2Min(chain.journey) : this.cars[chain.fleet].getScheduleJourney(chain.schedule);
+                    chain = this.cars[i].schedules[j].next.externalProject ? false : this.cars[chain.fleet].schedules[chain.schedule].next;
+                }
+                if(this.cars[i].schedules[j].previous && this.cars[i].schedules[j].previous.externalProject){p = this.cars[i].schedules[j].previous.journey}
+                nt = Math.min(c + p + n, this.workHours);
+                ot = (c + p + n) - nt;
+                escalas.push({name: this.cars[i].schedules[j].name, normalTime: nt, overtime: ot})
+                horas_normais += nt;
+                horas_extras += ot;
+            }
+        }
+        return {workers: qtde, normalTime: horas_normais, overtime: horas_extras, schedules: escalas};
+    }
+    exportJson(){
+        let data = JSON.stringify(this);
+        let dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(data);
+        let filename = `${this.name}.json`;
+        let btn = document.createElement('a');
+        btn.classList = 'd-none';
+        btn.setAttribute('href', dataUri);
+        btn.setAttribute('download', filename);
+        btn.click();
+        btn.remove();
     }
 }
