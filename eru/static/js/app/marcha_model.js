@@ -593,6 +593,19 @@ class March{
         let seq = ['A', 'B', 'C', 'D', 'E', 'F'];
         return `${String(fleet_index + 1).padStart(2,'0')}${seq[new_seq]}`;
     }
+    deleteSchedule(fleet_index, schedule_index){
+        let chain = [];
+        if(this.cars[fleet_index].schedules[schedule_index].next && !this.cars[fleet_index].schedules[schedule_index].next.externalProject){
+            chain.push(this.cars[fleet_index].schedules[schedule_index].next.fleet);
+            this.cars[this.cars[fleet_index].schedules[schedule_index].next.fleet].schedules[this.cars[fleet_index].schedules[schedule_index].next.schedule].previous = null;
+        }
+        if(this.cars[fleet_index].schedules[schedule_index].previous && !this.cars[fleet_index].schedules[schedule_index].previous.externalProject){
+            chain.push(this.cars[fleet_index].schedules[schedule_index].previous.fleet);
+            this.cars[this.cars[fleet_index].schedules[schedule_index].previous.fleet].schedules[this.cars[fleet_index].schedules[schedule_index].previous.schedule].next = null;
+        }
+        this.cars[fleet_index].deleteSchedule(schedule_index);
+        return chain;
+    }
     getIntervs(car_index=null){ // Retorna a soma de intervalos do carro informado
         if(car_index != null){
             return this.cars[car_index].getIntervs(this.sumInterGaps);
@@ -750,11 +763,12 @@ class March{
         return counter;
     }
     countOperatores(){
-        let qtde = 0, horas_normais = 0, horas_extras = 0, escalas = [];
+        let full = 0, half = 0, horas_normais = 0, horas_extras = 0, escalas = [];
         for(let i = 0; i < this.cars.length; i++){
             for(let j = 0; j < this.cars[i].schedules.length; j++){
                 if(this.cars[i].schedules[j].previous && !this.cars[i].schedules[j].previous.externalProject){continue}
-                if(!this.cars[i].schedules[j].previous){qtde++} // Se escala nao tiver apontamento anterior, conta motorista
+                if(!this.cars[i].schedules[j].previous){full++} // Se escala nao tiver apontamento anterior, conta motorista
+                else{half++;}
                 let c = 0, p = 0, n = 0, nt = 0, ot = 0, chain = this.cars[i].schedules[j].next; // Current sched, previous e next, normal_time e overtime, chain marca proxima schedule encadeada
                 c = this.cars[i].getScheduleJourney(j);
                 while(chain){ // Corre escalas procurando proximo elo
@@ -769,7 +783,7 @@ class March{
                 horas_extras += ot;
             }
         }
-        return {workers: qtde, normalTime: horas_normais, overtime: horas_extras, schedules: escalas};
+        return {workers: full, half: half, normalTime: horas_normais, overtime: horas_extras, schedules: escalas};
     }
     exportJson(){
         let data = JSON.stringify(this);

@@ -94,6 +94,9 @@ class jsELConnector{
             this.els.push(central);
         }
     }
+    setVisibility(visibility){
+        this.els.forEach((el)=>{el.style.visibility = visibility;})
+    }
     destroy(){
         this.els.forEach((el)=> el.remove())
         this.els = [];
