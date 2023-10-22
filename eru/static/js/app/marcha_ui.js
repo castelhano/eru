@@ -71,27 +71,27 @@ class MarchUI{
             tripToColor: '#98D3F0',
         }
 
-        // PRODUTIVA = 1, RESERVADO = 0, EXPRESSO = 3, SEMIEXPRESSO = 4, ACESSO = -1, RECOLHE = -2, INTERVALO = 2;
+        // PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', TROCA_TURNO = '8', RESERVADO = '9';
         this.typePattern = { // Ajusta style da viagem baseado no tipo da viagem
-            '0':`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
+            '2':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
             '3':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
-            '4':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
-            '-1':'linear-gradient(90deg, #666 40%, #CCC 0)',
-            '-2':'linear-gradient(90deg, #CCC 60%, #666 0)',
-            '2':'repeating-linear-gradient(0deg, #CCC, #CCC 3px, transparent 3px, transparent)',
+            '5':'linear-gradient(90deg, #666 40%, #CCC 0)',
+            '6':'linear-gradient(90deg, #CCC 60%, #666 0)',
+            '7':'repeating-linear-gradient(0deg, #CCC, #CCC 3px, transparent 3px, transparent)',
+            '9':`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
         }
         
         this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 start-0 border-top';
         this.footerHeight = options?.footerHeight || '70px';
 
         this.translateType = {
-            '0': '<span class="text-orange">RESERVADO</span>',
             '1': '<span class="text-success">PRODUTIVA</span>',
-            '3': '<span class="text-orange">EXPRESSO</span>',
-            '4': '<span class="text-orange">SEMIEXPRESSO</span>',
-            '-1': '<span class="text-orange">ACESSO</span>',
-            '-2': '<span class="text-orange">RECOLHE</span>',
-            '2': '<span class="text-purple">INTERVALO</span>',
+            '2': '<span class="text-orange">EXPRESSO</span>',
+            '3': '<span class="text-orange">SEMIEXPRESSO</span>',
+            '5': '<span class="text-orange">ACESSO</span>',
+            '6': '<span class="text-orange">RECOLHE</span>',
+            '7': '<span class="text-purple">INTERVALO</span>',
+            '9': '<span class="text-orange">RESERVADO</span>',
         }
         this.translateWay = {
             '1': 'IDA',
@@ -227,7 +227,7 @@ class MarchUI{
             this.gridLocked = true;
             this.displayTripType.style.display = 'none';
             let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayTripType.style.left};top: ${this.displayTripType.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
-            let options = {'1': 'Produtiva', '0': 'Reservado', '3': 'Expresso', '4': 'Semiexpresso'};
+            let options = {'1': 'Produtiva', '9': 'Reservado', '2': 'Expresso', '3': 'Semiexpresso'};
             for(let key in options){
                 let opt = document.createElement('option');
                 opt.value = key;opt.innerHTML = options[key];
@@ -382,7 +382,7 @@ class MarchUI{
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectName, 'Nome Projeto'));
         
         this.settingsDayType = document.createElement('select');this.settingsDayType.classList = 'flat-select';this.settingsDayType.id = 'March_settingsDayType';
-        let dayTypeOpts = {1: 'Util', 2: 'Sabado', 3: 'Domingo', 4: 'Especial'}
+        let dayTypeOpts = {'U': 'Util', 'S': 'Sabado', 'D': 'Domingo', 'E': 'Especial', 'F': 'Ferias'}
         for(let key in dayTypeOpts){
             let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
             if(this.project.dayType == key){opt.selected = true}
@@ -966,7 +966,7 @@ class MarchUI{
         this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
         this.fleetDisplayClassification = document.createElement('select');this.fleetDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplayClassification.id = 'March_footerFleetDisplayClassification';
         this.fleetDisplayClassification.onchange = () => {this.project.cars[this.fleetIndex].classification = this.fleetDisplayClassification.value;}
-        let classOptions = {'0': 'Convencional', '1': 'Padron', '-1': 'Microonibus', '2': 'Articulado', '3': 'Biarticulado'};
+        let classOptions = {'CV': 'Convencional', 'PD': 'Padron', 'MC': 'Microonibus', 'AT': 'Articulado', 'BI': 'Biarticulado'};
         for(let key in classOptions){
             let opt = document.createElement('option');
             opt.value = key;opt.innerHTML = classOptions[key];
