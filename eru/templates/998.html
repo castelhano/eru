@@ -11,6 +11,7 @@
 <script src="{% static 'js/app/marcha_model.js' %}"></script>
 <script src="{% static 'js/app/marcha_ui.js' %}"></script>
 <script src="{% static 'js/elConnector.js' %}"></script>
+<script src="{% static 'js/vendor/chart.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}<div id="march_container"></div>{% endblock %}
@@ -49,6 +50,10 @@
             refs: {from:[{local: interestPoints[2], delta: 20}], to:[{local: interestPoints[3], delta: 35}]}
         })
     });
+    model.route.param[4].fromDemand = 450;
+    model.route.param[4].toDemand = 85;
+    model.route.param[5].fromDemand = 520;
+    model.route.param[5].toDemand = 122;
     const project = new MarchUI({
         container: document.getElementById('march_container'),
         settingsContainer: document.getElementById('marchSettings_container'),

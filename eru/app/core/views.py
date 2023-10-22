@@ -1,6 +1,5 @@
 import re
 import json
-# from json import dumps
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
@@ -9,13 +8,8 @@ from .models import Empresa, Log, Settings
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-# from datetime import datetime, date
 from .extras import clean_request
 from django.http import HttpResponse, JsonResponse
-# from django.core import serializers
-# from django.conf import settings as ROOT
-# from django.db.models import Q
-# from .validators import validate_file_extension
 
 
 @login_required

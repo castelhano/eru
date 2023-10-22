@@ -8,6 +8,7 @@ APP_DIR = os.path.join(BASE_DIR,'eru/app/')
 from .settings_local import *
 INSTALLED_APPS = [
     'core',
+    'trafego',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

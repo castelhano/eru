@@ -1,17 +1,22 @@
 // TODO: CRUD referencias
-// TODO: Calcular extensao
-// TODO: Resumo geral do planejamento
-// TODO: Interface de criacao de tabelas
 // ------------------
 // Constantes de classificacao
 const IDA = 1, VOLTA = 2;
-const RESERVADO = '0', PRODUTIVA = '1', EXPRESSO = '3', SEMIEXPRESSO = '4', ACESSO = '-1', RECOLHE = '-2', INTERVALO = '2';
+const PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', TROCA_TURNO = '8', RESERVADO = '9';
 var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_OPERACAO = 290;
 // Constantes para projeto
-var UTIL = 1, SABADO = 2, DOMINGO = 3, ESPECIAL = 4;
-const MICROONIBUS = -1, CONVENCIONAL = 0, PADRON = 1, ARTICULADO = 2, BIARTICULADO = 3;
+var UTIL = 'U', SABADO = 'S', DOMINGO = 'D', ESPECIAL = 'E', FERIAS = 'F';
+const MICROONIBUS = 'MC', CONVENCIONAL = 'CV', PADRON = 'PD', ARTICULADO = 'AT', BIARTICULADO = 'BI';
 const PORTA_LE = '1';
 var March_nextTripId = 0; // Contador para insercao de identificador unico na viagem, necessario para diferenciar viagens com parametros identicos
+var classificationLoad = { // Capacidade de carregamento de cada tecnologia
+    'MC': 35,
+    'CV': 80,
+    'PD': 90,
+    'AT': 120,
+    'BI': 200
+}
+
 // ------------------------------------------------------------------------------
 function defaultParam(value=50){
     let d = {};
@@ -20,7 +25,9 @@ function defaultParam(value=50){
             fromMin: value,
             toMin: value,
             fromInterv: INTERVALO_IDA,
-            toInterv: INTERVALO_VOLTA,
+            toInterv: INTERVALO_IDA,
+            fromDemand: 0,
+            toDemand: 0,
         };
     }
     return d;
@@ -48,8 +55,9 @@ class Locale{ // Class para locais
     constructor(options){
         this.id = options?.id || null;
         this.name = options?.name || 'Local indefinido';
+        this.garage = options?.garage || options?.garage == true;
         this.checkpoint = options?.checkpoint || options?.checkpoint == true;
-        this.surrender = options?.surrender || options?.checkpoint == true;
+        this.surrender = options?.surrender || options?.surrender == true;
     }
 }
 class Reference{ // Classe das referencias
@@ -505,7 +513,7 @@ class Car{
 
 class March{
     constructor(options){
-        this.version = '1.0.212';
+        this.version = '1.1.322';
         this.id = options?.id || 'new';
         this.name = options?.name || 'Novo Projeto';
         this.desc = options?.desc || '';
@@ -784,6 +792,36 @@ class March{
             }
         }
         return {workers: full, half: half, normalTime: horas_normais, overtime: horas_extras, schedules: escalas};
+    }
+    supplyNDemand(){ // Retorna dicionario com dados de oferta e demanda por faixa horario (demanda deve ser fornecida)
+        let od = {}
+        for(let i = 0; i < 24; i++){
+            od[i] = {fromTrips: 0, fromDemand: this.route.param[i].fromDemand, fromSuply: 0, toTrips: 0, toDemand: this.route.param[i].toDemand, toSuply: 0}
+        }
+        for(let i = 0; i < this.cars.length; i++){
+            for(let j = 0; j < this.cars[i].trips.length; j++){
+                let faixa = min2Range(this.cars[i].trips[j].start);
+                if(![ACESSO, RECOLHE, INTERVALO, RESERVADO].includes(this.cars[i].trips[j].type)){ // Se for viagem produtiva
+                    if(this.cars[i].trips[j].way == IDA){
+                        od[faixa].fromTrips++; // Incrementa contador de viagens da faixa/sentido
+                        od[faixa].fromSuply += classificationLoad[this.cars[i].classification]; // Incrementa contator de oferta para faixa/sentido
+                    }
+                    else if(this.cars[i].trips[j].way == VOLTA){
+                        od[faixa].toTrips++; // Incrementa contador de viagens da faixa/sentido
+                        od[faixa].toSuply += classificationLoad[this.cars[i].classification]; // Incrementa contator de oferta para faixa/sentido
+                    }
+                }
+            }
+        }
+        let fromSuply=[], fromDemand=[], toSuply=[], toDemand=[];
+        for(let i in od){
+            fromSuply.push(od[i].fromSuply);
+            fromDemand.push(od[i].fromDemand);
+            toSuply.push(od[i].toSuply);
+            toDemand.push(od[i].toDemand);
+        }
+
+        return [od, {fromSuply:fromSuply, fromDemand:fromDemand, toSuply:toSuply, toDemand:toDemand}];
     }
     exportJson(){
         let data = JSON.stringify(this);

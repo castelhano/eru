@@ -1,4 +1,3 @@
-// TODO: Implementar movimentacao vertical na tela de escalas
 class MarchUI{
     constructor(options){
         this.sw = screen.width;
@@ -154,7 +153,7 @@ class MarchUI{
         this.rulerTop.after(this.canvas);
         // Regua de frequencia
         this.rulerFreqDialog = document.createElement('dialog');this.rulerFreqDialog.setAttribute('data-bs-theme', 'dark');
-        this.rulerFreqDialog.style = 'border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.8;position:fixed;bottom: 70px;padding: 0;background-color: var(--bs-tertiary-bg)'
+        this.rulerFreqDialog.style = 'border:0; width: 100%; height: 45px;z-index: 110;opacity: 0.95;position:fixed;bottom: 70px;padding: 0;background-color: var(--bs-tertiary-bg)'
         this.rulerFreqDialog.open = true; // Inicia exibindo a regua de freq
         this.rulerFreq = document.createElement('div');
         this.rulerFreq.style.position = 'relative';
@@ -344,7 +343,7 @@ class MarchUI{
         
         this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
-        this.settingsrulerUnit = document.createElement('input');this.settingsrulerUnit.type = 'number';this.settingsrulerUnit.min = 2;this.settingsrulerUnit.max = 10;this.settingsrulerUnit.placeholder = ' ';this.settingsrulerUnit.classList = 'flat-input';this.settingsrulerUnit.id = 'March_settingsrulerUnit';this.settingsrulerUnit.value = parseFloat(this.rulerUnit);
+        this.settingsrulerUnit = document.createElement('input');this.settingsrulerUnit.type = 'number';this.settingsrulerUnit.min = 2;this.settingsrulerUnit.max = 6;this.settingsrulerUnit.placeholder = ' ';this.settingsrulerUnit.classList = 'flat-input';this.settingsrulerUnit.id = 'March_settingsrulerUnit';this.settingsrulerUnit.value = parseFloat(this.rulerUnit);
         this.settingsrulerUnit.onchange = () => {
             if(this.settingsrulerUnit.value == '' || parseInt(this.settingsrulerUnit.value) < this.settingsrulerUnit.min || parseInt(this.settingsrulerUnit.value) > this.settingsrulerUnit.max){
                 this.settingsrulerUnit.classList.add('is-invalid');
@@ -361,7 +360,7 @@ class MarchUI{
             this.__saveUISettings();
         }
         this.settingsContainer.appendChild(this.settingsrulerUnit);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerUnit, 'Unidade (em px) [ 2 a 10 ]'));
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerUnit, 'Unidade (em px) [ 2 a 6 ]'));
         
         this.settingsrulerMediumUnit = document.createElement('input');this.settingsrulerMediumUnit.type = 'number';this.settingsrulerMediumUnit.min = 10;this.settingsrulerMediumUnit.max = 180;this.settingsrulerMediumUnit.placeholder = ' ';this.settingsrulerMediumUnit.classList = 'flat-input';this.settingsrulerMediumUnit.id = 'March_settingsrulerMediumUnit';this.settingsrulerMediumUnit.value = parseInt(this.rulerMediumUnit);
         this.settingsrulerMediumUnit.onchange = () => {
@@ -582,20 +581,20 @@ class MarchUI{
             this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
     }
-    addAccess(){
+    addAccess(fleetIndex=this.fleetIndex, tripIndex=this.tripIndex, incrementIndex=true){
         this.__clearSelection();
-        let trip = this.project.cars[this.fleetIndex].addAccess(this.tripIndex, this.project.route.metrics);
+        let trip = this.project.cars[fleetIndex].addAccess(tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.tripStyle;
             v.style.background = this.typePattern[ACESSO];
             v.style.position = 'absolute';
             v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-            v.style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            v.style.top = `calc(${this.fleetHeight} * ${fleetIndex + 1} - 17px)`;
             v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-            this.grid[this.fleetIndex].push(v);
+            this.grid[fleetIndex].push(v);
             this.canvas.appendChild(v);
-            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.grid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
@@ -605,27 +604,26 @@ class MarchUI{
             vf.style.backgroundColor = this.rulerSmallColor;
             vf.style.marginRight = this.rulerSmallMarginRight;
             vf.style.visibility = 'hidden';; // Acesso nao sao vistos na freqRule
-            this.freqGrid[this.fleetIndex].push(vf);
+            this.freqGrid[fleetIndex].push(vf);
             this.rulerFreq.appendChild(vf);
-            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
-            this.tripIndex++; // Ajusta o indice
-
+            this.freqGrid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            if(incrementIndex){this.tripIndex++}
         }
     }
-    addRecall(){ // Adiciona recolhida na viagem em foco
+    addRecall(fleetIndex=this.fleetIndex, tripIndex=this.tripIndex){ // Adiciona recolhida na viagem em foco
         this.__clearSelection();
-        let trip = this.project.cars[this.fleetIndex].addRecall(this.tripIndex, this.project.route.metrics);
+        let trip = this.project.cars[fleetIndex].addRecall(tripIndex, this.project.route.metrics);
         if(trip){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.tripStyle;
             v.style.background = this.typePattern[RECOLHE];
             v.style.position = 'absolute';
             v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-            v.style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            v.style.top = `calc(${this.fleetHeight} * ${fleetIndex + 1} - 17px)`;
             v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-            this.grid[this.fleetIndex].push(v);
+            this.grid[fleetIndex].push(v);
             this.canvas.appendChild(v);
-            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.grid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
@@ -636,9 +634,11 @@ class MarchUI{
             vf.style.marginRight = this.rulerSmallMarginRight;
             vf.style.visibility = 'hidden';; // Recolhe nao sao vistos na freqRule
             this.rulerFreq.appendChild(vf);
-            this.freqGrid[this.fleetIndex].push(vf);
-            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.freqGrid[fleetIndex].push(vf);
+            this.freqGrid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            return true;
         }
+        return false;
     }
     tripShut(){ // Encerra turno na viagem em foco
         let v = this.fleetFocus.tripShut(this.tripIndex);
@@ -993,6 +993,7 @@ class MarchUI{
         this.displayFreq.innerHTML = '--';
         this.displayInterv.innerHTML = '--';
         this.displayTripWay.innerHTML = '';
+        this.displayTripType.innerHTML = '';
     }
     __clearFleetDisplay(){
         this.displayTripsCount.innerHTML = '';
@@ -1637,56 +1638,59 @@ class MarchUI{
         this.summaryModal.innerHTML = `
         <h6>Resumo de Projeto<span id="March_summaryProjectActivateContainer" class="float-end"></span></h6><hr>
         <div style="display: flex;gap: 10px;">
-        <table>
-        <tbody>
-        <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.cars.length}</td></tr>
-        <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${summary1.from + summary1.to}</td></tr>
-        <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${summary1.lazyFrom + summary1.lazyTo}</td></tr>
-        <tr><td style="padding-right: 10px;">Km planejada</td><td>${formatCur(km_produtiva + km_improdutiva)}</td></tr>
-        <tr><td colspan="2"><hr class="m-0"></td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${summary1.from}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${summary1.to}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${summary1.express}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${summary1.semiexpress}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${summary1.accessFrom + summary1.accessTo}</td></tr>
-        <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${summary1.recallFrom + summary1.recallTo}</td></tr>
-        </tbody>
-        </table>
-        <div style="flex: 1 1 0px;" class="text-center">
-            <div class="d-inline-block me-3">
-                <b class="d-block mb-2">Km Produtiva</b>
-                <small class="d-block mb-3"><b>${formatCur(km_produtiva)}</b> km</small>
-                <div class="semipie animate" style="--v:${perc_produtiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-success)">${perc_produtiva.toFixed(2)}%</div>
+            <table>
+                <tbody>
+                    <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.cars.length}</td></tr>
+                    <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${summary1.from + summary1.to}</td></tr>
+                    <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${summary1.lazyFrom + summary1.lazyTo}</td></tr>
+                    <tr><td style="padding-right: 10px;">Km planejada</td><td>${formatCur(km_produtiva + km_improdutiva)}</td></tr>
+                    <tr><td colspan="2"><hr class="m-0"></td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${summary1.from}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${summary1.to}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${summary1.express}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${summary1.semiexpress}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${summary1.accessFrom + summary1.accessTo}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${summary1.recallFrom + summary1.recallTo}</td></tr>
+                </tbody>
+            </table>
+            <div style="flex: 1 1 0px;" class="text-center">
+                <div class="d-inline-block me-3">
+                    <b class="d-block mb-2">Km Produtiva</b>
+                    <small class="d-block mb-3"><b>${formatCur(km_produtiva)}</b> km</small>
+                    <div class="semipie animate" style="--v:${perc_produtiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-success)">${perc_produtiva.toFixed(2)}%</div>
+                </div>
+                <div class="d-inline-block">
+                    <b class="d-block mb-2">Km Improdutiva</b>
+                    <small class="d-block mb-3"><b>${formatCur(km_improdutiva)}</b> km</small>
+                    <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
+                </div>
+                <div class="d-inline-block mt-3">
+                    <table class="text-start mb-2">
+                        <tbody>
+                        <tr><td style="padding-right: 10px;">Condutores:</td><td><b id="March_summaryWorkersQtde">${summary2.workers}</b></td></tr>
+                        <tr><td style="padding-right: 10px;">H Normais:</td><td><b>${min2Hour(summary2.normalTime, false)}</b></td></tr>
+                        <tr><td style="padding-right: 10px;">H Extras:</td><td><b>${min2Hour(summary2.overtime, false)}</b></td></tr>
+                        </tbody>
+                    </table>
+                    <div id="March_summaryWorkerControls"></div>
+                </div>
             </div>
-            <div class="d-inline-block">
-                <b class="d-block mb-2">Km Improdutiva</b>
-                <small class="d-block mb-3"><b>${formatCur(km_improdutiva)}</b> km</small>
-                <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
-            </div>
-            <div class="d-inline-block mt-3">
-                <table class="text-start mb-2">
+            <div style="flex: 1 1 0px;" id="March_summaryBlock3Container">
+                <table class="fs-7">
                     <tbody>
-                    <tr><td style="padding-right: 10px;">Condutores:</td><td><b id="March_summaryWorkersQtde">${summary2.workers}</b></td></tr>
-                    <tr><td style="padding-right: 10px;">H Normais:</td><td><b>${min2Hour(summary2.normalTime, false)}</b></td></tr>
-                    <tr><td style="padding-right: 10px;">H Extras:</td><td><b>${min2Hour(summary2.overtime, false)}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Projeto:</td><td><b class="text-secondary">${this.project.name}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Linha:</td><td><b class="text-secondary">${this.project.route.prefix}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Nome:</td><td><b class="text-secondary">${this.project.route.name}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Status:</td><td><b class="text-secondary" id="March_summaryActiveLabel">${this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>'}</b></td></tr>
+                        <tr><td colspan="2"><hr class="my-2"></td></tr>
+                        <tr><td colspan="2" class="text-secondary">${this.project.desc}</td></tr>
                     </tbody>
                 </table>
-                <div id="March_summaryWorkerControls"></div>
             </div>
         </div>
-        <div style="flex: 1 1 0px;" id="March_summaryBlock3Container">
-        <table class="fs-7">
-        <tbody>
-        <tr><td style="padding-right: 20px;">Projeto:</td><td><b class="text-secondary">${this.project.name}</b></td></tr>
-        <tr><td style="padding-right: 20px;">Linha:</td><td><b class="text-secondary">${this.project.route.prefix}</b></td></tr>
-        <tr><td style="padding-right: 20px;">Nome:</td><td><b class="text-secondary">${this.project.route.name}</b></td></tr>
-        <tr><td style="padding-right: 20px;">Status:</td><td><b class="text-secondary" id="March_summaryActiveLabel">${this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>'}</b></td></tr>
-        <tr><td colspan="2"><hr class="my-2"></td></tr>
-        <tr><td colspan="2" class="text-secondary">${this.project.desc}</td></tr>
-        </tbody>
-        </table>
-        </div>
-        </div>
+        <hr>
+        <h6>Oferta x Demanda</h6>
+        <div style="height: 200px;"><canvas id="March_summaryOD_canvas"></canvas></div>
         `;
         let summaryProjectActivate = document.createElement('input');summaryProjectActivate.type = 'checkbox';summaryProjectActivate.role = 'switch';summaryProjectActivate.id = 'March_summaryProjectActivate';summaryProjectActivate.checked = this.project.active;
         summaryProjectActivate.onclick = () => {
@@ -1710,6 +1714,53 @@ class MarchUI{
         let summaryProjectExport = document.createElement('button');summaryProjectExport.type = 'button';summaryProjectExport.classList = 'btn btn-sm btn-phanton mt-3 me-2 float-end fw-bold';summaryProjectExport.id = 'March_summaryProjectExport';summaryProjectExport.innerHTML = 'Exportar';
         summaryProjectExport.onclick = () => {this.project.exportJson()}
         document.getElementById('March_summaryBlock3Container').appendChild(summaryProjectExport);
+
+        // Gera Grafico de oferta e demanda (requer chartJS)
+        let od = this.project.supplyNDemand();
+        let evolucao_chart = new Chart(document.getElementById('March_summaryOD_canvas'), {
+            data: {
+                datasets: [{
+                    type: 'line',
+                    label: 'Meta',
+                    data: od[1].fromDemand,
+                    pointBorderWidth: 4,
+                    hoverBorderWidth: 8,
+                    pointHitRadius: 8,
+                    borderColor: '#C0504D',
+                },{
+                    type: 'bar',
+                    label: 'Oferta',
+                    data: od[1].fromSuply,
+                    backgroundColor: ['#6C757D'],
+                    borderColor: ['blue'],
+                    maxBarThickness: 50,
+                }],
+                labels: Object.keys(od[0]),
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        // grace: 1,
+                        ticks: {
+                            // stepSize: 1,
+                            // precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {display:false, position: 'bottom'},
+                    title: {
+                        display: false,
+                        text:'EVOLUÇÃO INDICADOR',
+                        align: 'start',
+                        font: {size: 13},
+                        padding: {top: 6,bottom: 10}
+                    },
+                }
+            }
+        });
+
         
         this.summaryModal.showModal();
     }
@@ -2107,6 +2158,15 @@ class MarchUI{
             else{this.addInterv();this.__updateTripDisplay();}
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'a', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Acesso à todos', desc: 'Adiciona acesso para todos os carros', run: ()=>{
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            let increment = true; // addAccess por padrao incrementa o this.tripIndex, deve incrementar somente para o carro em foco
+            for(let i = 0; i < this.project.cars.length; i++){
+                let r = this.addAccess(i, 0, increment); // Tenta adicionar recolhe na ultima viagem de cada carro
+                increment = false;
+                if(r){this.project.cars[i].schedules = [];} // Limpa schedules do carro
+            }
+        }})
         appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{
             if(this.__gridIsBlock() || !this.tripFocus){return false;}
             if(this.project.cars[this.fleetIndex].schedules.length > 0){
@@ -2128,6 +2188,13 @@ class MarchUI{
                 })
             }
             else{this.addRecall();this.__updateTripDisplay();}
+        }})
+        appKeyMap.bind({group: 'March_stage1', key: 'e', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recolher todos', desc: 'Recolhe todos os carros', run: (ev)=>{
+            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            for(let i = 0; i < this.project.cars.length; i++){
+                let r = this.addRecall(i, this.project.cars[i].trips.length - 1); // Tenta adicionar recolhe na ultima viagem de cada carro
+                if(r){this.project.cars[i].schedules = [];} // Limpa schedules do carro
+            }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextTrip();}})
         appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousTrip();}})

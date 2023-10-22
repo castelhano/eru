@@ -32,16 +32,18 @@ class jsELConnector{
         let toH = this.to.offsetHeight;
         let toE = this.to.offsetLeft + this.to.offsetWidth;
 
-        let deltaX = x2 - fromE;
+        let deltaX = (x2 - this.toGap) - (fromE + this.fromGap);
         if(this.style == 'linear'){
-            let gap = (toE - fromE) / 4;
-            let rotate = (Math.atan(((y2 - toH / 2) - y1) / (x2 - x1 + gap)) * 100);
+            // let gap = (toE - fromE) / 4;
+            let gap = 0;
+            let rotate = 0;
+            // let rotate = (Math.atan(((y2 - toH / 2) - y1) / (x2 - x1 + gap)) * 100);
             let radius = 0;
             let deltaY = ((y2 + toH) - y1) / 2;
             let line = document.createElement('div'); line.style.height = this.lineH;line.style.position = 'absolute';line.style.backgroundColor = this.lineC;line.style.zIndex = '90';
             line.style.top = `${deltaY + y1}px`;
             line.style.left = `${fromE + this.fromGap}px`;
-            line.style.width = `${deltaX - this.fromGap - this.toGap}px`;
+            line.style.width = `${deltaX}px`;
             line.style.transform = `skewY(${rotate}deg)`
             
             this.container.appendChild(line);
