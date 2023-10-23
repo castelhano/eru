@@ -1,0 +1,40 @@
+<script>
+
+    const menuCadastro = new canvasNavDropdown({
+        name: '<b>C</b>adastro',
+        icon: 'bi bi-list',
+        itens: [
+        {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: {visible: false, key: 'l', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click()}}}},{% endif %}
+        {% if perms.trafegi.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: {visible: false, key: 'o', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();}}}}, {% endif %}
+        ],
+        keybind: {
+            key:'c',
+            alt: true,
+            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Cadastro',
+            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+                canvasNavActive(true); // Exibe o canvasNav (caso oculto)
+                menuCadastro.click();
+                setTimeout(()=>{menuCadastro.focus()}, 340);
+            },
+            desc:'Abre menu de cadastro'
+        }
+    })
+    {% if perms.trafego.view_planejamento %}
+    const menuPlanejamento = new canvasNavLink({
+        name: '<b>P</b>lanejamento',
+        id: 'menu_planejamento',
+        class: 'text-purple',
+        icon: 'bi bi-shuffle',
+        href: '{% url 'trafego_planejamentos' %}',
+        keybind:{
+            key: 'p',
+            alt: true,
+            name: '<b>Trafego:</b>&nbsp;&nbsp;Planejamento',
+            desc: 'Abre página de planejamentos',
+            run: ()=>{
+                document.getElementById('menu_planejamento').click();
+            }
+        }
+    })
+    {% endif %}
+</script>

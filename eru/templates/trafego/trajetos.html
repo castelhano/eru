@@ -1,0 +1,175 @@
+{% extends "layout/dot.html" %}
+{% load static %}
+{% load tag_extra %}
+{% block title %}Trajetos{% endblock %}
+{% block model %}Tráfego{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block style_src %}
+<link rel="stylesheet" href="{% static 'css/timeline.css' %}">
+<link rel="stylesheet" href="{% static 'css/vendor/tagin.css' %}">
+{% endblock%}
+
+{% block content_fluid %}
+<a class="d-none" id="clear" href="{% url 'trafego_trajetos' linha.id|safe %}"></a>
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linha_id' linha.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <div class="row">
+      <div class="col">
+        <h5 class="card-title mb-0">Trajetos: <b class="text-purple">{{linha.codigo}}</b></h5>
+        <span class="mb-2">{{linha.nome}}</span>
+      </div>
+      {% if perms.trafego.change_linha %}
+      <div class="col-auto"><a id="add" class="btn btn-sm btn-success" data-bs-toggle="collapse" href="#form_fields" onclick="setTimeout(function(){document.getElementById('id_sentido').focus();},200);" role="button"><i class="bi bi-plus-lg mx-3"></i></a></div>
+      {% endif %}
+    </div>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      {% if perms.trafego.change_linha %}
+      <form id="app_form" action="{% url 'trafego_trajetos' linha.id|safe %}" method="POST" autocomplete="off">
+        {% csrf_token %}
+        <div id="form_fields" class="row mt-2 collapse">
+          <div class="col">
+            <div class="row g-1">
+              <div class="form-floating mb-lg-1 col-lg-auto">
+                <select class="form-select pe-5" id="id_sentido" name="sentido">
+                  <option value="I" selected>Ida</option>
+                  <option value="V">Volta</option>
+                  <option value="U">Unico</option>
+                </select>
+                <label for="id_sentido">Sentido</label>
+              </div>
+              {% include "_component/field/localidade.html" with required=True breakpoint='mb-lg-1 col-lg' %}
+              <div class="form-floating col col-lg-4 mb-2">
+                <input type="text" class="form-control tagin" name="labels" id="id_labels">
+                <label for="id_labels">Tags</label>
+              </div>
+            </div>
+            <div class="row g-1">
+              <div class="col-auto order-1 pe-5">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" name="fechado" id="id_fechado" tabindex="-1">
+                  <label for="id_fechado" class="fs-7 user-select-none">Fechado</label>
+                </div>
+              </div>
+              <div class="col-lg order-3 order-lg-2"><input type="text" class="form-control form-control-sm" name="detalhe" id="id_detalhe" value="" placeholder="Detalhe fechamento" tabindex="-1"></div>
+              <div class="col col-lg-auto order-2 order-lg-3"><input type="number" class="form-control form-control-sm bg-light ms-auto" name="seq" id="id_seq" style="width: 100px;" min="1" max="199" tabindex="-1" placeholder="Seq"></div>
+              <div class="col-lg-auto order-4"><button id="submit" type="submit" class="btn btn-sm btn-primary"><b>G</b>ravar</button></div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" name="linha" value="{{linha.id|safe}}">
+      </form>
+      {% endif %}
+      <div class="row mt-1 g-2">
+        {% if ida %}
+        <div class="col-lg-6">
+          <div class="callout callout-primary">
+            <div class="body">
+              <h5 class="mb-3 text-body-secondary"><i class="bi bi-arrow-left-right fs-6 me-2"></i>Ida</h5>
+              <ul class="timeline timeline-sm ms-2">
+                {% for p in ida %}
+                <li class="event{% if p.fechado %} event-danger{% endif %}">
+                  {{p.local.nome|truncatechars:20}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help position-absolute fs-5" style="margin-top:-5px;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{p.detalhe}}"></i>{% endif %}
+                  <div class="event-controls">
+                    {% with p.labels|split:"," as labels %}
+                    {% for label in labels %}
+                    <span class="btn btn-sm btn-purple py-0 disabled border-transparent">{{label}}</span>
+                    {% endfor %}
+                    {% endwith %}
+                    <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
+                    {% if perms.trafego.change_linha %}
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% if volta %}
+        <div class="col-lg-6">
+          <div class="callout callout-secondary">
+            <div class="body">
+              <h5 class="mb-3 text-body-secondary"><i class="bi bi-arrow-left-right fs-6 me-2"></i>Volta</h5>
+              <ul class="timeline timeline-sm ms-2">
+                {% for p in volta %}
+                <li class="event{% if p.fechado %} event-danger{% endif %}">
+                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
+                  <div class="event-controls">
+                    {% with p.labels|split:"," as labels %}
+                    {% for label in labels %}
+                    <span class="btn btn-sm btn-purple py-0 disabled border-transparent">{{label}}</span>
+                    {% endfor %}
+                    {% endwith %}
+                    <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
+                    {% if perms.trafego.change_linha %}
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% if unico %}
+        <div class="col-lg-6">
+          <div class="callout callout-primary">
+            <div class="body">
+              <h5 class="mb-3 text-body-secondary"><i class="bi bi-arrow-left-right fs-6 me-2"></i>Trajeto Único</h5>
+              <ul class="timeline timeline-sm ms-2">
+                {% for p in unico %}
+                <li class="event{% if p.fechado %} event-danger{% endif %}">
+                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
+                  <div class="event-controls">
+                    {% with p.labels|split:"," as labels %}
+                    {% for label in labels %}
+                    <span class="btn btn-sm btn-purple py-0 disabled border-transparent">{{label}}</span>
+                    {% endfor %}
+                    {% endwith %}
+                    <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
+                    {% if perms.trafego.change_linha %}
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>    
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/vendor/tagin.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  var TAB_ON_ENTER = true;
+  tooltipActivate();
+  
+  var labels = new Tagin(document.getElementById('id_labels'), {
+    placeholder: 'Separar por virgula',
+    transform: 'input => input.toUpperCase()',
+    tagColor: 'purple'
+  })
+
+  {% if sentido %}document.getElementById('id_sentido').value = '{{sentido}}';{% endif %}
+  
+  {% endblock %}
+</script>

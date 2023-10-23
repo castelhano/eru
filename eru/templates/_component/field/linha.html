@@ -1,0 +1,47 @@
+<div class="row g-1" id="linha_container"{% if hide %} style="display:none"{% endif %}>
+  <div class="form-floating mb-1 col" style="max-width: 130px;">
+    <input type="text" class="form-control" name="codigo_linha" maxlength="5" id="id_codigo_linha" value="{{codigo}}" placeholder="" onfocusout="getLinha();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
+    <label for="id_codigo_linha">Linha</label>
+  </div>
+  <div class="form-floating mb-1 col">
+    <input type="text" class="form-control" name="nome_linha" id="id_nome_linha" value="{{nome}}" disabled>
+    <label for="id_nome_linha">Nome Linha</label>
+  </div>
+  <input type="hidden" name="linha" id="id_linha" value="{{id}}">
+</div>
+<script>
+  
+  function cleanLinha(){
+    document.getElementById('id_linha').value = '';
+    document.getElementById('id_codigo_linha').value = '';
+    document.getElementById('id_codigo_linha').classList.remove('is-invalid');
+    document.getElementById('id_nome_linha').value = '';
+  };  
+  
+  function getLinha() {
+    empresa = document.getElementById('id_empresa') != null ? document.getElementById('id_empresa').value : 'None';
+    codigo = document.getElementById('id_codigo_linha');
+    nome = document.getElementById("id_nome_linha");
+    linha = document.getElementById("id_linha");
+    if(codigo.value != ''){
+      var xhttp = new XMLHttpRequest();
+    	xhttp.onreadystatechange = function() {
+    		if(this.readyState == 4 && this.status == 200){
+    			if(this.responseText == ''){
+            document.getElementById("id_codigo_linha").classList.add('is-invalid');
+            document.getElementById("id_nome_linha").value = 'Linha não cadastrada / habilitada';
+            linha.value = '';
+          }
+    			else{
+            codigo.classList.remove('is-invalid');
+            nome.value = this.responseText.split(';')[1];
+            linha.value = this.responseText.split(';')[0];
+          }
+    		}
+    	};
+    	xhttp.open("GET", "{% url 'trafego_get_linha' %}?empresa=" + empresa + "&codigo=" + codigo.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
+    	xhttp.send();  
+    }
+    else{cleanLinha();}
+  }  
+</script>

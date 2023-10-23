@@ -1,0 +1,40 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Linha{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
+<style media="screen">
+  {% block style %}
+  @media(min-width: 992px){
+    .codigo_container{width: 150px;}
+  }
+  {% endblock %}
+</style>
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_empresa').focus();},220);" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
+      <li class="nav-item"><a id="tab_link_extensoes" class="nav-link" data-bs-toggle="tab" data-bs-target="#extensoes" onclick="setTimeout(function(){document.getElementById('id_extensao_ida').focus();},220);" href="#"><i class="bi bi-rulers"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'trafego_linha_add' %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'trafego/_form_linha.html' %}
+  </form>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  const form = new jsForm(document.getElementById('app_form'), {})
+  appKeyMap.bind({key: '1', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Base', desc: 'Exibe aba com campos básicos', run: ()=>{document.getElementById('tab_link_base').click()}})
+  appKeyMap.bind({key: '2', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Métricas', desc: 'Exibe aba com métricas da linha', run: ()=>{document.getElementById('tab_link_extensoes').click()}})
+  {% endblock %}
+</script>

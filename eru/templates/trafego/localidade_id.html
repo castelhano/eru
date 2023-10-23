@@ -1,0 +1,119 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Localidade{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-dark" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal">Historico</a></li>
+          {% if perms.trafego.delete_localidade %}
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal">Excluir Localidade</a></li>
+          {% endif %}
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <form id="trafego_form" action="{% url 'trafego_localidade_update' localidade.id|safe %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    <div class="card-body tab-content">
+      <h5 class="card-title mb-3">Cadastro de Localidade</h5>
+      <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row g-1">
+          <div class="form-floating mb-lg-1 col-lg-6">
+            {{ form.nome }}
+            <label for="id_nome">Nome</label>
+          </div>
+        </div>
+        <div class="form-check form-switch mt-2">
+        	{{form.eh_garagem}}
+        	<label class="form-check-label" for="id_eh_garagem">Garagem</label>
+        </div>
+        <div class="form-check form-switch">
+        	{{form.troca_turno}}
+        	<label class="form-check-label" for="id_troca_turno">Troca Turno</label>
+        </div>
+        <div class="form-check form-switch">
+        	{{form.ponto_de_controle}}
+        	<label class="form-check-label" for="id_ponto_de_controle">Ponto de controle</label>
+        </div>
+      </div>
+      <!-- CONTROLES DO FORM -->
+      <div class="row mt-3">
+        <div class="col">
+          <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"><b>G</b>ravar</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if perms.trafego.delete_localidade %}
+<div class="modal fade" id="delete_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Excluir Registro</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego_localidade_delete' localidade.id|safe %}">Excluir</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="modal fade" id="history_modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Operação</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody class="fs-7">
+            {% for i in localidade.ultimas_alteracoes %}
+            <tr>
+              <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
+              <td>{{i.mensagem}}</td>
+              <td>{{i.usuario.username|upper}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  const form = new jsForm(document.getElementById('app_form'), {})
+  {% endblock %}
+</script>

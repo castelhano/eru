@@ -1,0 +1,71 @@
+<div class="form-floating {{breakpoint|default:'col-lg-12 mb-1'}}">
+	<input type="hidden" id="id_{{field_name|default:'local'}}" name="{{field_name|default:'local'}}" value="{{id|safe}}">
+	<input type="text" autocomplete="off" class="form-control" list="{{field_name|default:'local'}}_datalist" id="id_{{field_name|default:'local'}}_nome" data-target="{{field_name|default:'local'}}" value="{{nome}}" onkeyup="localidadeOnkeyup(event)" onblur="if(this.value.length > 0){validadeLocalidade(this.dataset.target)}" onfocus="this.select()"{% if required %} required{% endif %} placeholder=" ">
+	<label for="id_{{field_name|default:'local'}}_nome">{{label|default:'Local'}}</label>
+	<datalist id="{{field_name|default:'local'}}_datalist"></datalist>
+	<div id="{{field_name|default:'local'}}_spinner" class="spinner-grow text-success d-none" style="position: absolute; top:12px; right:15px; z-index:10;"></div>
+</div>
+
+<script>
+	var local_urlTimeout = null; // Armazena o timeout para realizar consulta ajax
+	var local_urlDelay = 600; // Delay em milisegundos entre os inputs para realizar a consulta ajax
+	
+	function cleanLocalID(target){document.getElementById(`id_${target}`).value = ''}
+	
+	function localidadeOnkeyup(e){
+		if(e != undefined && [9,13,16,17,18,19,20,27,33,34,35,36,37,38,39,40,45,91,93,112,113,114,115,116,117,118,119,120,121,122,123,144,145].includes(e.keyCode)){return false;} // Nao busca registros caso tecla nao seja de input
+		cleanLocalID(e.target.dataset.target);
+		clearTimeout(local_urlTimeout);
+		local_urlTimeout = setTimeout(()=>{localidadeGetList(e.target.dataset.target)}, local_urlDelay)
+	}
+	
+	function localidadeGetList(target, onloading=false){
+		let el = document.getElementById(`id_${target}_nome`);
+		let dl = document.getElementById(`${target}_datalist`);
+		if(el.value.length > 2){
+			if(!onloading){localidadeShowSpinner(target)}
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if(this.readyState == 4 && this.status == 200){
+					if(this.responseText == '' || this.responseText == '{}'){
+						el.classList.add('is-invalid');
+					}
+					else{
+						el.classList.remove('is-invalid');
+						let obj = JSON.parse(this.responseText);
+						dl.innerHTML = '';
+						for(key in obj){dl.innerHTML += '<option value="' + obj[key].Nome + '" data-id="' + obj[key]['#'] + '">'}
+					}
+					localidadeShowSpinner(target, true); // Oculta spinner
+					if(!onloading && document.activeElement != el){validadeLocalidade(target)}; // Se usuario registrar valor antes do retorno no ajax, chama novamente validador
+				}
+			};
+			xhttp.open("GET", "{% url 'trafego_get_localidades' %}?filtro={{filtro}}&pesquisa=" + el.value, true);
+			xhttp.send();
+		}
+		else{dl.innerHTML = '';el.classList.remove('is-invalid');}
+	}
+
+	function localidadeShowSpinner(target, done=false){
+		let spinner = document.getElementById(`${target}_spinner`);
+		if(done){spinner.classList.add('d-none')}
+		else{spinner.classList.remove('d-none')}
+	}
+		
+	function validadeLocalidade(target){
+		let el_id = document.getElementById(`id_${target}`);
+		let el_nome = document.getElementById(`id_${target}_nome`);
+		let dl = document.getElementById(`${target}_datalist`);
+		if(el_nome.value != ''){
+			let options = dl.getElementsByTagName('option');
+			let valid = false, i = 0;
+			while(!valid && i < options.length){
+				if(options[i].value == el_nome.value){valid = true;el_id.value = options[i].dataset.id;};
+				i++;
+			}
+			if(!valid){el_nome.classList.add('is-invalid');}
+		}
+	}
+	// ***
+	if({% if field_name %}true{% else %}false{% endif %}){localidadeGetList('{{field_name|default:'local'}}', true)}
+	</script>

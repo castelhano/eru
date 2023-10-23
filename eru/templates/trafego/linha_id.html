@@ -1,0 +1,162 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Linha{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
+<style media="screen">
+  {% block style %}
+  @media(min-width: 992px){
+    .codigo_container{width: 150px;}
+  }
+  {% endblock %}
+</style>
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_empresa').focus();},220);" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
+      <li class="nav-item"><a id="tab_link_extensoes" class="nav-link" data-bs-toggle="tab" data-bs-target="#extensoes" onclick="setTimeout(function(){document.getElementById('id_extensao_ida').focus();},220);" href="#"><i class="bi bi-rulers"></i></a></li>
+      <li class="nav-item ms-1"><a id="tab_link_trajetos" class="nav-link text-purple active" href="{% url 'trafego_trajetos' linha.id|safe %}" title="Trajetos [Ctrl + 3]"><i class="bi bi-arrow-left-right"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal">Historico</a></li>
+          {% if perms.trafego.delete_linha %}
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal">Excluir Linha</a></li>
+          {% endif %}
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <form id="trafego_form" action="{% url 'trafego_linha_update' linha.id|safe %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    {% include 'trafego/_form_linha.html' %}
+  </form>
+</div>
+
+{% if perms.trafego.delete_linha %}
+<div class="modal fade" id="delete_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Excluir Registro</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego_linha_delete' linha.id|safe %}">Excluir</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="modal fade" id="history_modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Operação</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody class="fs-7">
+            {% for i in linha.ultimas_alteracoes %}
+            <tr>
+              <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
+              <td>{{i.mensagem}}</td>
+              <td>{{i.usuario.username|upper}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% if perms.trafego.change_patamar %}
+<div class="modal fade" id="patamar_modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Patamares de Operação</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'trafego_patamar_update' %}" method="post">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col">
+              <div class="row g-1">
+                <div class="form-floating mb-1 col-6 col-sm-3">
+                  <input type="number" class="form-control" name="inicial" id="id_inicial" min="0" max="23" value="" onfocus="this.select()" required>
+                  <label for="id_inicial">Inicio</label>
+                </div>
+                <div class="form-floating mb-1 col-6 col-sm-3">
+                  <input type="number" class="form-control" name="final" id="id_final" min="0" max="23" value="" onfocus="this.select()" required>
+                  <label for="id_final">Fim</label>
+                </div>
+                <div class="form-floating mb-1 col-6 col-sm-3">
+                  <input type="number" class="form-control" name="ida" id="id_ida" min="1" max="540" value="50" onfocus="this.select()" required>
+                  <label for="id_ida">Ida</label>
+                </div>
+                <div class="form-floating mb-1 col-6 col-sm-3">
+                  <input type="number" class="form-control" name="volta" id="id_volta" min="1" max="540" value="50" onfocus="this.select()" required>
+                  <label for="id_volta">Volta</label>
+                </div>
+              </div>
+              <input type="hidden" name="linha" id="id_linha" value="{{linha.id}}">
+              <input type="hidden" name="patamar" id="id_patamar" value="">
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col text-end">
+              <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+              <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Gravar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% endblock%}
+
+{% block add_script_src %}{% endblock %}
+
+<script>
+  {% block add_script %}
+
+  appKeyMap.bind({key: '1', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Base', desc: 'Exibe aba com campos básicos', run: ()=>{document.getElementById('tab_link_base').click()}})
+  appKeyMap.bind({key: '2', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Métricas', desc: 'Exibe aba com métricas da linha', run: ()=>{document.getElementById('tab_link_extensoes').click()}})
+  appKeyMap.bind({key: '3', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Trajetos', desc: 'Exibe página de trajetos da linha', run: ()=>{document.getElementById('tab_link_trajetos').click()}})
+  
+  var modal_patamar = new bootstrap.Modal(document.getElementById('patamar_modal'), {keyboard: true});
+  function patamarUpdate(inicial='', final='', ida=50, volta=45, patamar=''){
+    document.getElementById('id_inicial').value = inicial;
+    document.getElementById('id_final').value = final;
+    document.getElementById('id_ida').value = ida;
+    document.getElementById('id_volta').value = volta;
+    document.getElementById('id_patamar').value = patamar;
+    modal_patamar.show();
+    setTimeout(function(){document.getElementById('id_inicial').select();},480);
+  }
+  {% endblock %}
+</script>

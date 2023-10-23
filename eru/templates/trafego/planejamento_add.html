@@ -1,0 +1,79 @@
+{% extends "layout/dot.html" %}
+{% load static %}
+{% block title %}Plan{% endblock %}
+{% block model %}Tráfego{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+
+{% block content_fluid %}
+<a class="d-none" id="clear" href="{% url 'trafego_planejamento_add' %}"></a>
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_planejamentos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <form id="app_form" action="{% url 'trafego_planejamento_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off" onsubmit="return submitForm()">
+    {% csrf_token %}
+    <div class="card-body tab-content">
+      <h5 class="card-title mb-3">Novo Planejamento</h5>
+      <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row g-1">
+          <div class="col-lg-4">{% include "_component/field/empresa.html" with empresa_atual=planejamento.empresa.id|safe breakpoint='mb-lg-1 col-lg' attrs='onchange="cleanLinha()" autofocus' %}</div>
+          <div class="form-floating mb-1 col-lg-2">
+        		{{ form.dia_tipo }}
+        		<label for="id_dia_tipo">Tipo dia</label>
+        	</div>
+        </div>
+        <div class="row g-1"><div class="col-lg-6">{% include "_component/field/linha.html" with id=planejamento.linha.id codigo=planejamento.linha.codigo nome=planejamento.linha.nome required=True %}</div></div>
+        <div class="row g-1">
+        	<div class="form-floating mb-lg-1 col-lg-2">
+        		{{ form.codigo }}
+        		<label for="id_codigo">Código</label>
+        	</div>
+        	<div class="form-floating mb-1 col-lg-4">
+        		{{ form.descricao }}
+        		<label for="id_descricao">Descrição</label>
+        	</div>
+        </div>
+        <div class="row g-1">
+        	<div class="my-2 col-lg-6">
+            <label for="id_viagens" class="fs-8 ps-1"><i class="fas fa-upload text-primary me-2"></i>Carregar viagens</label>
+        		<input type="file" class="form-control" id="id_viagens" name="viagens" value="" accept=".txt,.json">
+            <small>Gerador Excel: <b>develop / trafego / importarPlanejamentoVx.xlsx</b></small>
+        	</div>
+        </div>
+        <div class="form-check form-switch mt-2">
+        	{{form.ativo}}
+        	<label class="form-check-label" for="id_ativo">Planejamento ativo</label>
+        </div>
+        <div class="form-check form-switch">
+        	{{form.pin}}
+        	<label class="form-check-label" for="id_pin">Fixar planejamento</label>
+        </div>
+      </div>
+      <!-- CONTROLES DO FORM -->
+      <div class="row mt-3">
+        <div class="col">
+          <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"><b>G</b>ravar</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% include "_component/modal/loading.html" with message='Salvando....' %}
+{% endblock%}
+
+{% block add_script_src %}{% endblock %}
+
+<script>
+  {% block add_script %}
+  var TAB_ON_ENTER = true;
+  SHORTCUT_MAP['.TFF'] = () => {document.getElementById('cadastro_planejamento').click()};
+  
+  var modal_loading = new bootstrap.Modal(document.getElementById('modal_loading'), {keyboard: false});
+  function submitForm(){modal_loading.show();return true;}
+  {% endblock %}
+</script>

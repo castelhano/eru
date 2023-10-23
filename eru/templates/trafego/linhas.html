@@ -1,0 +1,112 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Linhas{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      {% if perms.trafego.add_linha %}
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'trafego_linha_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      {% endif %}
+      {% if perms.core.view_log %}
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=trafego.linha&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+        </ul>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title mb-2">Linhas</h5>
+    
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      <table id="main_table" class="table border table-striped table-hover">
+        <caption>
+          <div class="row">
+            <div class="col">
+              <div class=" d-flex">
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"><span class="d-none d-md-inline">Empresa: <b>{{metrics.empresa_display|default:'Todas'}}</b></span><span class="d-inline d-md-none px-1"><i class="bi bi-house-fill"></i></span></button>
+                  <ul class="dropdown-menu fs-7" id="id_empresa">
+                    <li><a class="dropdown-item pointer" onclick="urlClean(['empresa'])">Todas</a></li>
+                  </ul>
+                </div>
+                <div class="dropdown ms-1">
+                  <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">Status: <b>{{metrics.status_display|default:'Ativas'}}</b></button>
+                  <ul class="dropdown-menu fs-7" id="id_cargos">
+                    <li><a class="dropdown-item pointer" onclick="urlFilter('status','A')">Ativas</a></li>
+                    <li><a class="dropdown-item pointer" onclick="urlFilter('status','I')">Inativas</a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </caption>
+        <thead>
+          <tr>
+            <th class="d-none">#</th>
+ 						<th class="d-none d-lg-table-cell">Empresa</th>
+            <th>Cod</th>
+ 						<th class="">Nome</th>
+ 						<th class="d-none">Classificação</th>
+ 						<th class="d-none d-lg-table-cell">Origem</th>
+ 						<th class="d-none d-lg-table-cell">Destino</th>
+ 						<th class="d-none d-sm-table-cell">Status</th>
+            {% if perms.trafego.change_linha %}
+            <th>&nbsp;</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for linha in linhas %}
+          <tr class="{% if linha.status == 'I' %}table-caution{% endif %}">
+            <td class="d-none">{{linha.id|safe}}</td>
+ 						<td class="d-none d-lg-table-cell">{{linha.empresa.nome}}</td>
+ 						<td>{{linha.codigo}}</td>
+ 						<td>{{linha.nome}}</td>
+ 						<td class="d-none">{{linha.get_classificacao_display}}</td>
+            <td class="d-none d-lg-table-cell">{{linha.origem.nome}}</td>
+            <td class="d-none d-lg-table-cell">{{linha.destino.nome}}</td>
+            <td class="d-none d-sm-table-cell">{{linha.get_status_display}}</td>
+            {% if perms.trafego.change_linha %}
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_linha_id' linha.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+{% block add_script %}
+
+const table = new jsTable(document.getElementById('main_table'), {
+  canFilter: true,
+  filterCols: ['Cod', 'Nome', 'Origem', 'Destino'],
+  enablePaginate: true,
+  canExportJson: true,
+  fileName: 'linhas'  
+});
+
+const empresas = new selectPopulate({
+  target: document.getElementById("id_empresa"),
+  url: '{% url "core_get_empresas" %}',
+
+})
+{% endblock %}
+</script>

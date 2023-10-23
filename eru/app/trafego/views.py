@@ -24,8 +24,8 @@ def localidades(request):
 @login_required
 @permission_required('trafego.view_linha', login_url="/handler/403")
 def linhas(request):
-    status = request.GET.get('status', 'A')
-    linhas = Linha.objects.filter(status=status).order_by('codigo')
+    inativa = request.GET.get('inativa', False)
+    linhas = Linha.objects.filter(inativa=inativa).order_by('codigo')
     if request.GET.get('empresa', None):
         try:
             empresa = request.user.profile.empresas.filter(id=request.GET.get('empresa', None)).get()
@@ -37,7 +37,7 @@ def linhas(request):
     else:
         empresa_display = 'Todas'
         linhas = linhas.filter(empresa__in=request.user.profile.empresas.all())
-    metrics = dict(status_display='Ativas' if status == 'A' else 'Inativas', empresa_display = empresa_display)
+    metrics = dict(status_display='Ativas' if inativa == True else 'Inativas', empresa_display = empresa_display)
     return render(request,'trafego/linhas.html', {'linhas' : linhas, 'metrics':metrics})
 
 @login_required

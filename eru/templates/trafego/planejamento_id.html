@@ -1,0 +1,210 @@
+{% extends "layout/dot.html" %}
+{% load tag_extra %}
+{% block title %}Plan{% endblock %}
+{% block model %}Tráfego{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+
+
+<style media="screen">
+  {% block style %}
+  dt,dd{margin:0px;}
+  {% endblock %}
+</style>
+
+{% block content_fluid %}
+<a class="d-none" id="clear" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}" onclick="submitForm()"></a>
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_planejamentos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <form id="app_form" action="{% url 'trafego_planejamento_update' planejamento.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off" onsubmit="return submitForm()">
+      {% csrf_token %}
+      <h5 class="card-title mb-3">Planejamento: <span class="text-purple">{{planejamento.codigo}}</span></h5>
+      <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row g-2">
+          {% if ativo %}
+          <div id="container_plan_ativo" class="col-lg-4 d-none">
+            <div class="card py-2 px-3 bg-light border fs-7 rounded">
+              <div class="row">
+                <div class="col"><h6 class="text-success mt-1">Planejamento Ativo: <b>{{ativo.codigo}}</b></h6></div>
+                <div class="col-auto pe-1">
+                  <a class="btn btn-sm btn-purple" href="{% url 'trafego_planejamento_id' ativo.id|safe %}"><i class="fas fa-link"></i></a>
+                </div>
+              </div>
+              <dl class="row">
+                <dt class="col-4">Frota</dt><dd class="col-8">{{ativo.qtd_carros|zfill:2}}</dd>
+                <dt class="col-4">Condutores</dt><dd class="col-8">--</dd>
+                <dt class="col-4">Viagens</dt><dd class="col-8">{{ativo.qtd_viagens|zfill:3}}</dd>
+                <dt class="col-4 text-body-secondary">Produtivas</dt><dd class="col-8 text-body-secondary">{{ativo.qtd_viagens_produtivas|zfill:3}}</dd>
+                <dt class="col-4 text-body-secondary">Improdutivas</dt><dd class="col-8 text-body-secondary">{{ativo.qtd_viagens_improdutivas|zfill:3}}</dd>
+                <dt class="col-4">Km</dt><dd class="col-8">{{ativo.km_planejada}}</dd>
+                <dt class="col-4 text-body-secondary">Ociosa</dt><dd class="col-8 text-body-secondary">{{ativo.km_ociosa}} <span class="text-orange ms-2">{{ativo.km_ociosa|percentual:ativo.km_planejada|floatformat:1}}%</span></dd>
+                <dt class="col-4">Horas OP</dt><dd class="col-8">--</dd>
+                <dt class="col-4 text-purple">IPK</dt><dd class="col-8 text-purple">--</dd>
+                <dt class="col-4 text-purple">HVD</dt><dd class="col-8 text-purple">--</dd>
+              </dl>
+              <hr class="mb-2">
+              <dl class="row mt-2">
+                <dt class="col-4">Empresa</dt><dd class="col-8">{{ativo.empresa.nome}}</dd>
+                <dt class="col-4">Linha</dt><dd class="col-8">{{ativo.linha.codigo}}</dd>
+                <dt class="col-4">Nome</dt><dd class="col-8">{{ativo.linha.nome}}</dd>
+                <dt class="col-4">Criação</dt><dd class="col-8">{{ativo.data_criacao|date:'d/m/Y'}}</dd>
+                <dt class="col-4">Responsável</dt><dd class="col-8">{{ativo.usuario.username|title}}</dd>
+                <dt class="col-4">Status</dt><dd class="col-8"><b class="text-success">Ativo</b></dd>
+              </dl>
+              <div class="row g-1">
+                <div class="mb-1 col-lg-12">
+                  <textarea name="descricao" class="form-control fs-7" rows="2" placeholder="Descrição" disabled></textarea>
+                </div>
+              </div>            
+            </div>
+          </div>
+          {% endif %}
+          <div class="col-lg-4">
+            <div class="card py-2 px-3 bg-light border fs-7 rounded">
+              <div class="row">
+                <div class="col"><h6 class="text-body-secondary mt-1">Detalhes Planejamento</h6></div>
+                <div class="col-auto pe-1">
+                  {% if ativo %}
+                  <button type="button" id="btn_comparar" class="btn btn-sm btn-purple" name="button" onclick="compararPlanejamentos()" title="Comparar com atual [ALT X]"><i class="fas fa-clone px-2"></i></button>
+                  {% endif %}
+                  <a class="btn btn-sm btn-purple" data-bs-toggle="dropdown" data-bs-offset="0,5" href="#" role="button"><i class="fas fa-caret-down"></i></a>
+                  <ul class="dropdown-menu dropdown-menu-end fs-7">
+                    <li><a class="dropdown-item" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"><i class="bi bi-list fa-fw"></i>Horários</a></li>
+                    {% if perms.trafego.delete_planejamento %}
+                    <li><span class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="fas fa-trash fa-fw"></i>Excluir</span></li>
+                    {% endif %}
+                  </ul>                
+                </div>
+              </div>
+              <dl class="row">
+                <dt class="col-4">Frota</dt><dd class="col-8">{{planejamento.qtd_carros|zfill:2}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_carros|sub:ativo.qtd_carros|zfill:2}} ]</span>{% endif %}</dd>
+                <dt class="col-4">Condutores</dt><dd class="col-8">--</dd>
+                <dt class="col-4">Viagens</dt><dd class="col-8">{{planejamento.qtd_viagens|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens|sub:ativo.qtd_viagens|zfill:3}} ]{% endif %}</span></dd>
+                <dt class="col-4 text-body-secondary">Produtivas</dt><dd class="col-8 text-body-secondary">{{planejamento.qtd_viagens_produtivas|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens_produtivas|sub:ativo.qtd_viagens_produtivas|zfill:3}} ]{% endif %}</span></dd>
+                <dt class="col-4 text-body-secondary">Improdutivas</dt><dd class="col-8 text-body-secondary">{{planejamento.qtd_viagens_improdutivas|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens_improdutivas|sub:ativo.qtd_viagens_improdutivas|zfill:3}} ]{% endif %}</span></dd>
+                <dt class="col-4">Km</dt><dd class="col-8">{{planejamento.km_planejada}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.km_planejada|sub:ativo.km_planejada}} ]{% endif %}</span></dd>
+                <dt class="col-4 text-body-secondary">Ociosa</dt><dd class="col-8 text-body-secondary">{{planejamento.km_ociosa}} <span class="text-orange ms-2">{{planejamento.km_ociosa|percentual:planejamento.km_planejada|floatformat:1}}%</span></dd>
+                <dt class="col-4">Horas OP</dt><dd class="col-8">--</dd>
+                <dt class="col-4 text-purple">IPK</dt><dd class="col-8 text-purple">--</dd>
+                <dt class="col-4 text-purple">HVD</dt><dd class="col-8 text-purple">--</dd>
+              </dl>
+              <hr class="mb-2">
+              <dl class="row mt-2">
+                <dt class="col-4">Empresa</dt><dd class="col-8">{{planejamento.empresa.nome}}</dd>
+                <dt class="col-4">Linha</dt><dd class="col-8">{{planejamento.linha.codigo}}</dd>
+                <dt class="col-4">Nome</dt><dd class="col-8">{{planejamento.linha.nome}}</dd>
+                <dt class="col-4">Criação</dt><dd class="col-8">{{planejamento.data_criacao|date:'d/m/Y'}}</dd>
+                <dt class="col-4">Responsável</dt><dd class="col-8">{{planejamento.usuario.username|title}}</dd>
+                <dt class="col-4">Status</dt><dd class="col-8">{{planejamento.ativo|yesno:'<b class="text-success">Ativo</b>,<b class="text-secondary">Inativo</b>'|safe}}</dd>
+              </dl>
+              <div class="row g-1">
+                <div class="mb-1 col-lg-12">
+                  <textarea name="descricao" class="form-control fs-7" rows="2" placeholder="Descrição">{{planejamento.descricao}}</textarea>
+                </div>
+              </div>
+            </div>            
+          </div>
+          
+          <div class="col-lg-4">
+            <div class="row g-1">
+              <div class="form-floating mb-1 col-lg-3">
+                {{ form.codigo }}
+                <label for="id_codigo">Código</label>
+              </div>
+            </div>
+            <div class="row g-1">
+              <div class="form-floating mb-3 col-lg-3">
+                {{ form.dia_tipo }}
+                <label for="id_dia_tipo">Dia Tipo</label>
+              </div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="pin" id="id_pin"{% if planejamento.pin %} checked{% endif %}>
+              <label class="form-check-label" for="id_pin"><i class="fas fa-thumbtack fa-fw text-body-secondary"></i>Fixar Planejamento</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="ativo" id="id_ativo"{% if planejamento.ativo %} checked{% endif %}>
+              <label class="form-check-label" for="id_ativo"><i class="fas fa-check fa-fw text-success"></i>Ativar</label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" name="carregar_viagens" id="id_carregar_viagens" onclick="importarViagens()">
+              <label class="form-check-label" for="id_carregar_viagens"><i class="fas fa-random fa-fw text-body-secondary"></i>Importar viagens</label>
+            </div>
+            <small id="label_alert_sobregravar" class="d-none"><b class="text-danger">Atenção!</b> Importar viagens irá apagar o planejamento atual, este processo não pode ser desfeito.</small>
+            <input type="file" class="form-control mt-2" name="viagens" id="id_viagens" disabled>
+            <small>Gerador Excel: <b>develop / trafego / importarPlanejamentoVx.xlsx</b></small>
+            <div class="row mt-3">
+              <div class="col"><button type="submit" id="submit" class="btn btn-primary" name="button"><b>G</b>ravar</button></div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      <input type="hidden" name="empresa" value="{{planejamento.empresa.id|safe}}">
+      <input type="hidden" name="linha" value="{{planejamento.linha.id|safe}}">
+    </form>
+  </div>
+  
+</div>
+
+{% if perms.trafego.delete_planejamento %}
+<div class="modal fade" id="delete_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Excluir Planejamento</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        {% if planejamento.ativo %}
+        <p><i class="fas fa-info text-warning me-2"></i> Não é possivel excluir um <b>planejamento ativo</b>.</p>
+        <p>Desative o planejamento atual (ou ative outro planejamento) antes de excluir este registro.</p>
+        {% else %}
+        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do planejamento?</p>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego_planejamento_delete' planejamento.id|safe %}">Excluir</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% include "_component/modal/loading.html" with message='Processando requisição....' %}
+{% endblock%}
+
+{% block add_script_src %}{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  SHORTCUT_MAP['xTFF'] = () => {try{document.getElementById('btn_comparar').click()}catch(e){}};
+  SHORTCUT_MAP['.TFF'] = () => {document.getElementById('cadastro_planejamento').click()};
+  
+  var modal_loading = new bootstrap.Modal(document.getElementById('modal_loading'), {keyboard: false});
+  function submitForm(){modal_loading.show();return true;}
+  
+  function compararPlanejamentos(){
+    let labels = document.querySelectorAll('.switch-view');
+    for(i=0;i < labels.length;i++){labels[i].classList.toggle('d-none');}
+    document.getElementById('container_plan_ativo').classList.toggle('d-none');
+  }
+  
+  function importarViagens(){
+    document.getElementById('label_alert_sobregravar').classList.toggle('d-none');
+    if(document.getElementById('id_viagens').disabled){document.getElementById('id_viagens').disabled = false;}
+    else{document.getElementById('id_viagens').disabled = true;}
+  }
+  
+  {% endblock %}
+</script>

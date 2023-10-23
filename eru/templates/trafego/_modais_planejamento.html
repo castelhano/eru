@@ -1,0 +1,99 @@
+<div class="modal fade" id="planejamento_modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-arrow-left-right text-primary me-2"></i> Cadastro Planejamento</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <form id="planejamento_form" action="{% url 'trafego_planejamento_update' planejamento.id|safe %}" method="POST" autocomplete="off">
+          {% csrf_token %}
+        <div class="row g-1">
+          <div class="col-lg-8">{% include "_component/field/empresa.html" with empresa_atual=planejamento.empresa.id|safe attrs='onchange="cleanLinha()" autofocus' %}</div>
+          <div class="form-floating mb-1 col-lg-4">
+        		{{ form.dia_tipo }}
+        		<label for="id_dia_tipo">Tipo dia</label>
+        	</div>
+        </div>
+        {% include "_component/field/linha.html" with id=planejamento.linha.id|safe codigo=planejamento.linha.codigo nome=planejamento.linha.nome required=True %}
+        <div class="row g-1">
+        	<div class="form-floating mb-lg-1 col-lg-3">
+        		{{ form.codigo }}
+        		<label for="id_codigo">Código</label>
+        	</div>
+        	<div class="form-floating mb-1 col-lg-9">
+        		{{ form.descricao }}
+        		<label for="id_descricao">Descrição</label>
+        	</div>
+        </div>
+        <div class="form-check form-switch mt-2">
+        	{{form.ativo}}
+        	<label class="form-check-label" for="id_ativo">Planejamento ativo</label>
+        </div>
+        <div class="form-check form-switch">
+        	{{form.pin}}
+        	<label class="form-check-label" for="id_pin">Fixar planejamento</label>
+        </div>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <button type="submit" id="submit_form_button" class="btn btn-primary">Gravar</button>
+          </div>
+        </div>
+        <input type="hidden" name="patamares" id="id_patamares" value="{{planejamento.patamares|safe}}">
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% if perms.trafego.delete_planejamento %}
+<div class="modal fade" id="delete_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Excluir Registro</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
+        <div class="row mt-2">
+          <div class="col text-end">
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego_planejamento_delete' planejamento.id|safe %}">Excluir</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="modal fade" id="history_modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Operação</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody class="fs-7">
+            {% for i in planejamento.ultimas_alteracoes %}
+            <tr>
+              <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
+              <td>{{i.mensagem}}</td>
+              <td>{{i.usuario.username|upper}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+{% extends "layout/dot.html" %}
+{% load static %}
+{% block title %}Horários{% endblock %}
+{% block model %}Tráfego{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+
+{% block content_fluid %}
+<a class="d-none" id="clear" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"></a>
+
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title">{{planejamento.codigo}} - {{planejamento.ativo|yesno:'<b class="text-success">ATIVO</b>,<b class="text-secondary">INATIVO</b>'|safe}}</h5>
+        <small>Linha: <b>{{planejamento.linha.codigo}}</b> - {{planejamento.linha.nome}}</small>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-3 order-2 order-lg-1">
+                    <h5 class="text-center mt-3 pt-1 pb-2 border bg-body-secondary">Horários Corridos</h5>
+                    <table id="horarios_corridos" class="table table-sm table-hover table-sticky mt-3 text-center">
+                        <thead>
+                            <tr>
+                                <th>IDA</th>
+                                <th>VOLTA</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="col-lg order-1 order-lg-2">
+                    <div class="position-sticky" style="top: 45px;">
+                        <h5 class="ps-2 mt-3 pt-1 pb-2 border bg-body-secondary text-center text-lg-start">Resumo</h5>
+                        <div class="row">
+                            <div class="col-auto">
+                                <ul class="list-unstyled">
+                                    <li>Empresa:</li>
+                                    <li>Linha:</li>
+                                    <li>Origem:</li>
+                                    <li>Destino:</li>
+                                    <li>Dia Tipo:</li>
+                                    <li>Frota:</li>
+                                    <li>Viagens:</li>
+                                </ul>
+                            </div>
+                            <div class="col">
+                                <ul class="list-unstyled fw-bold">
+                                    <li>{{planejamento.empresa.nome}}</li>
+                                    <li>{{planejamento.linha.codigo}}</li>
+                                    <li>{{planejamento.linha.origem.nome|default:'--'}}</li>
+                                    <li>{{planejamento.linha.destino.nome|default:'--'}}</li>
+                                    <li>{{planejamento.get_dia_tipo_display}}</li>
+                                    <li>{{planejamento.qtd_carros}}</li>
+                                    <li>{{planejamento.qtd_viagens_produtivas}}</li>
+                                    <li>{{planejamento.descricao}}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+{% endblock %}
+
+
+<script>
+{% block add_script %}
+let viagens = [];
+{% for viagem in planejamento.viagens %}
+viagens.push({tipo:'{{viagem.tipo}}', sentido:'{{viagem.sentido}}',inicio:'{{viagem.inicio}}', fim:'{{viagem.fim}}'})
+{% endfor%}
+
+let viagens_ida = viagens.filter(el => el.sentido == 'I' && el.tipo == '1').sort(function(a, b) { return a.inicio > b.inicio ? 1 : -1;});
+let viagens_volta = viagens.filter(el => el.sentido == 'V' && el.tipo == '1').sort(function(a, b) { return a.inicio > b.inicio ? 1 : -1;});
+
+let rows = Math.max(viagens_ida.length,viagens_volta.length);
+
+const tbody = document.getElementById('horarios_corridos').querySelector('tbody');
+
+for(i = 0; i < rows; i++){
+    let tr = document.createElement('tr');
+    let td_ida = document.createElement('td');td_ida.innerHTML = viagens_ida.length > i ? viagens_ida[i].inicio : '';
+    let td_volta = document.createElement('td');td_volta.innerHTML = viagens_volta.length > i ? viagens_volta[i].inicio : '';
+    tr.appendChild(td_ida);
+    tr.appendChild(td_volta);
+    tbody.appendChild(tr);
+}
+
+const table = new jsTable(document.getElementById('horarios_corridos'),{
+    canExportJson: true,
+    canFilter:true,
+    filterCols: ['IDA', 'VOLTA']
+});
+{% endblock %}
+</script>

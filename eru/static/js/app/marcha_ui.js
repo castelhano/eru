@@ -1690,7 +1690,10 @@ class MarchUI{
         </div>
         <hr>
         <h6>Oferta x Demanda</h6>
-        <div style="height: 200px;"><canvas id="March_summaryOD_canvas"></canvas></div>
+        <div class="bg-body-tertiary text-center">IDA</div>
+        <div style="height: 200px;"><canvas id="March_summaryOD_IDA_canvas"></canvas></div>
+        <div class="bg-body-tertiary text-center">VOLTA</div>
+        <div style="height: 200px;margin-bottom: 60px;"><canvas id="March_summaryOD_VOLTA_canvas"></canvas></div>
         `;
         let summaryProjectActivate = document.createElement('input');summaryProjectActivate.type = 'checkbox';summaryProjectActivate.role = 'switch';summaryProjectActivate.id = 'March_summaryProjectActivate';summaryProjectActivate.checked = this.project.active;
         summaryProjectActivate.onclick = () => {
@@ -1717,11 +1720,11 @@ class MarchUI{
 
         // Gera Grafico de oferta e demanda (requer chartJS)
         let od = this.project.supplyNDemand();
-        let evolucao_chart = new Chart(document.getElementById('March_summaryOD_canvas'), {
+        let od_idaChart = new Chart(document.getElementById('March_summaryOD_IDA_canvas'), {
             data: {
                 datasets: [{
                     type: 'line',
-                    label: 'Meta',
+                    label: 'Demanda',
                     data: od[1].fromDemand,
                     pointBorderWidth: 4,
                     hoverBorderWidth: 8,
@@ -1748,16 +1751,39 @@ class MarchUI{
                         }
                     }
                 },
-                plugins: {
-                    legend: {display:false, position: 'bottom'},
-                    title: {
-                        display: false,
-                        text:'EVOLUÇÃO INDICADOR',
-                        align: 'start',
-                        font: {size: 13},
-                        padding: {top: 6,bottom: 10}
-                    },
-                }
+            }
+        });
+        let od_voltaChart = new Chart(document.getElementById('March_summaryOD_VOLTA_canvas'), {
+            data: {
+                datasets: [{
+                    type: 'line',
+                    label: 'Demanda',
+                    data: od[1].toDemand,
+                    pointBorderWidth: 4,
+                    hoverBorderWidth: 8,
+                    pointHitRadius: 8,
+                    borderColor: '#C0504D',
+                },{
+                    type: 'bar',
+                    label: 'Oferta',
+                    data: od[1].toSuply,
+                    backgroundColor: ['#6C757D'],
+                    borderColor: ['blue'],
+                    maxBarThickness: 50,
+                }],
+                labels: Object.keys(od[0]),
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        // grace: 1,
+                        ticks: {
+                            // stepSize: 1,
+                            // precision: 0
+                        }
+                    }
+                },
             }
         });
 

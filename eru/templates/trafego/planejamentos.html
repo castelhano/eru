@@ -1,0 +1,108 @@
+{% extends "layout/dot.html" %}
+{% load static %}
+{% load tag_extra %}
+{% block title %}Plan{% endblock %}
+{% block model %}Tráfego{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+
+{% block content_fluid %}
+<a class="d-none" id="clear" href="{% url 'trafego_planejamentos' %}"></a>
+
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a class="nav-link pointer" id="search" data-bs-toggle="modal" data-bs-target="#search_modal" onclick="setTimeout(function(){document.getElementById('id_pesquisa').focus();},480);" title="CTRL + /"><i class="fas fa-search"></i></a></li>
+      {% if perms.trafego.add_planejamento %}
+      <li class="nav-item"><a class="nav-link border" id="add" href="{% url 'trafego_planejamento_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      {% endif %}
+      {% if perms.core.view_log %}
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-dark" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=trafego.planejamento&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+        </ul>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title mb-0">Planejamentos</h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      <table id="main_table" class="table border table-striped table-hover table-sortable">
+        <thead>
+          <tr>
+            <th class="d-none d-lg-table-cell">Empresa</th>
+            <th>Codigo</th>
+            <th class="d-none d-md-table-cell">Linha</th>
+            <th>Dia</th>
+            <th>Ativo</th>
+            <th class="d-none d-lg-table-cell">Criado em</th>
+            <th class="d-none d-lg-table-cell">Responsável</th>
+            {% if perms.trafego.change_planejamento %}
+            <th>&nbsp;</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for planejamento in planejamentos %}
+          <tr>
+            <td class="d-none d-lg-table-cell">{{planejamento.empresa.nome}}</td>
+            <td>{{planejamento.codigo}}</td>
+            <td class="d-none d-md-table-cell">{{planejamento.linha.codigo}}</td>
+            <td>{{planejamento.get_dia_tipo_display}}</td>
+            <td class="{% if planejamento.ativo %}text-success{% else %}text-secondary{% endif %}">{{planejamento.ativo|yesno:'Ativo,Inativo'}}</td>
+            <td class="d-none d-lg-table-cell">{{planejamento.data_criacao|date:'d/m/Y'}}</td>
+            <td class="d-none d-lg-table-cell">{{planejamento.usuario.username|title}}</td>
+            {% if perms.trafego.change_planejamento %}
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_planejamento_id' planejamento.id %}"><i class="fas fa-fw me-0 {% if planejamento.pin %}fa-thumbtack{% else %}fa-pen{% endif %}"></i></a></td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <!-- <div class="tab-pane fade" id="param" role="tabpanel">param</div> -->
+  </div>
+</div>
+
+<div class="modal fade" id="search_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="row">
+        <div class="col"><h5 class="ms-3 mt-3">Pesquisa</h5></div>
+        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      </div>
+      <div class="modal-body">
+        <form id="trafego_form" action="{% url 'trafego_planejamentos' %}" method="GET" autocomplete="off">
+          <div class="row g-1">
+            <div class="form-floating mb-1 col-lg-12">
+              <input type="text" class="form-control" name="pesquisa" value="" id="id_pesquisa" placeholder="">
+              <label for="id_pesquisa">Código / Linha</label>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
+{% endblock %}
+
+  
+<script>
+{% block add_script %}
+const table = new jsTable(document.getElementById('main_table'), {
+  enablePaginate: true
+});
+SHORTCUT_MAP['.TFF'] = () => {};
+SHORTCUT_MAP['arrowdownFTF'] = () => {table.nextRow();}
+SHORTCUT_MAP['arrowupFTF'] = () => {table.previousRow();};
+SHORTCUT_MAP['enterFTF'] = () => {table.enterRow();}
+{% endblock %}
+</script>
