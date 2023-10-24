@@ -1,17 +1,17 @@
-{% extends "layout/dot.html" %}
+{% extends "layout/app.html" %}
 {% load static %}
 {% load tag_extra %}
 {% block title %}Trajetos{% endblock %}
-{% block model %}Tráfego{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
-{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/timeline.css' %}">
 <link rel="stylesheet" href="{% static 'css/vendor/tagin.css' %}">
 {% endblock%}
 
 {% block content_fluid %}
-<a class="d-none" id="clear" href="{% url 'trafego_trajetos' linha.id|safe %}"></a>
+<a href="{% url 'trafego_trajetos' linha.id|safe %}"></a>
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
@@ -45,7 +45,11 @@
                 <label for="id_sentido">Sentido</label>
               </div>
               {% include "_component/field/localidade.html" with required=True breakpoint='mb-lg-1 col-lg' %}
-              <div class="form-floating col col-lg-4 mb-2">
+              <div class="form-floating col col-1 mb-2">
+                <input type="number" class="form-control" min="0" max="500" value="0" name="delta" id="id_delta" onfocus="this.select()">
+                <label for="id_delta">Delta</label>
+              </div>
+              <div class="form-floating col col-lg-3 mb-2">
                 <input type="text" class="form-control tagin" name="labels" id="id_labels">
                 <label for="id_labels">Tags</label>
               </div>
@@ -58,7 +62,7 @@
                 </div>
               </div>
               <div class="col-lg order-3 order-lg-2"><input type="text" class="form-control form-control-sm" name="detalhe" id="id_detalhe" value="" placeholder="Detalhe fechamento" tabindex="-1"></div>
-              <div class="col col-lg-auto order-2 order-lg-3"><input type="number" class="form-control form-control-sm bg-light ms-auto" name="seq" id="id_seq" style="width: 100px;" min="1" max="199" tabindex="-1" placeholder="Seq"></div>
+              <div class="col col-lg-auto order-2 order-lg-3"><input type="number" class="form-control form-control-sm ms-auto" name="seq" id="id_seq" style="width: 100px;" min="1" max="199" tabindex="-1" placeholder="Seq"></div>
               <div class="col-lg-auto order-4"><button id="submit" type="submit" class="btn btn-sm btn-primary"><b>G</b>ravar</button></div>
             </div>
           </div>
@@ -66,7 +70,7 @@
         <input type="hidden" name="linha" value="{{linha.id|safe}}">
       </form>
       {% endif %}
-      <div class="row mt-1 g-2">
+      <div class="row mt-1 g-2 fs-7">
         {% if ida %}
         <div class="col-lg-6">
           <div class="callout callout-primary">
@@ -75,16 +79,17 @@
               <ul class="timeline timeline-sm ms-2">
                 {% for p in ida %}
                 <li class="event{% if p.fechado %} event-danger{% endif %}">
-                  {{p.local.nome|truncatechars:20}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help position-absolute fs-5" style="margin-top:-5px;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{p.detalhe}}"></i>{% endif %}
+                  {{p.local.nome|truncatechars:20}}{% if p.detalhe != '' %}<i class="bi bi-info-circle-fill text-purple ms-2 help position-absolute fs-5" style="margin-top:-5px;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{p.detalhe}}"></i>{% endif %}
                   <div class="event-controls">
+                    {% if p.delta > 0 %}<span class="me-1">[ <b class="text-secondary">{{p.delta}}</b> ]</span>{% endif %}
                     {% with p.labels|split:"," as labels %}
                     {% for label in labels %}
-                    <span class="btn btn-sm btn-purple py-0 disabled border-transparent">{{label}}</span>
+                    <span class="btn btn-sm btn-purple py-0 disabled border-0">{{label}}</span>
                     {% endfor %}
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
                     {% endif %}
                   </div>
                 </li>
@@ -102,7 +107,7 @@
               <ul class="timeline timeline-sm ms-2">
                 {% for p in volta %}
                 <li class="event{% if p.fechado %} event-danger{% endif %}">
-                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
+                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="bi bi-info-circle-fill text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
                   <div class="event-controls">
                     {% with p.labels|split:"," as labels %}
                     {% for label in labels %}
@@ -111,7 +116,7 @@
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
                     {% endif %}
                   </div>
                 </li>
@@ -129,7 +134,7 @@
               <ul class="timeline timeline-sm ms-2">
                 {% for p in unico %}
                 <li class="event{% if p.fechado %} event-danger{% endif %}">
-                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="fas fa-info-circle text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
+                  {{p.local.nome}}{% if p.detalhe != '' %}<i class="bi bi-info-circle-fill text-purple ms-2 help" title="{{p.detalhe}}"></i>{% endif %}
                   <div class="event-controls">
                     {% with p.labels|split:"," as labels %}
                     {% for label in labels %}
@@ -138,12 +143,12 @@
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="fas fa-times"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x-lg"></i></a>
                     {% endif %}
                   </div>
                 </li>
                 {% endfor %}
-              </ul>
+              </ul>m
             </div>
           </div>
         </div>
@@ -160,7 +165,6 @@
 
 <script>
   {% block add_script %}
-  var TAB_ON_ENTER = true;
   tooltipActivate();
   
   var labels = new Tagin(document.getElementById('id_labels'), {

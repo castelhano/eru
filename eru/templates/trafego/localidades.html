@@ -13,9 +13,9 @@
       <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'trafego_localidade_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       <li id="modelos_auxiliares_container" class="nav-item dropdown ms-1">
-        <a class="nav-link dropdown-toggle text-dark" id="sac_extra" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <a class="nav-link dropdown-toggle text-body" id="sac_extra" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul id="modelos_auxiliares_list" class="dropdown-menu fs-7">
-          <li><a class="dropdown-item" href="{% url 'trafego_localidades' %}?showAll=true"><i class="bi bi-list fa-fw"></i>Mostrar todos</a></li>
+          <li><a class="dropdown-item" href="{% url 'trafego_localidades' %}?showAll=true"><i class="bi bi-list me-2"></i>Mostrar todos</a></li>
         </ul>
       </li>
       {% if perms.core.view_log %}

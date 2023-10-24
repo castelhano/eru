@@ -2,6 +2,7 @@ from django.db import models
 from datetime import datetime
 from core.models import Empresa, Log
 from django.contrib.auth.models import User
+import json
 
 
 
@@ -44,6 +45,7 @@ class Linha(models.Model):
     recolhe_origem_minutos = models.PositiveIntegerField(blank=True, null=True)
     recolhe_destino_minutos = models.PositiveIntegerField(blank=True, null=True)
     inativa = models.BooleanField(default=False)
+    demanda = models.TextField(blank=True)
     detalhe = models.TextField(blank=True)
     def __str__(self):
         return self.codigo
@@ -52,10 +54,21 @@ class Linha(models.Model):
         return reversed(logs)
     def patamares(self):
         return Patamar.objects.filter(linha=self).order_by('inicial')
+    def params(self): # Retorna detalhamento dos patamares em formato JSON para integracao com jsMarch ex: {0:{fromMin: 55, toMin: 40, ...}}
+        params = {}
+        for p in self.patamares():
+            for i in range(p.inicial, p.final + 1, 1):
+                params[i] = {'fromMin': p.ida, 'toMin': p.volta, 'fromInterv': p.intervalo_ida, 'toInterv': p.intervalo_volta}
+        return json.dumps(params)
+
     def trajeto(self, sentido='I'):
-        return Trajeto.objects.filter(linha=self,sentido=sentido).order_by('seq')
+        return Trajeto.objects.filter(linha=self, sentido=sentido).order_by('seq')
     def circular(self):
         return self.classificacao == 'CR'
+    def rendicoes_ida(self):
+        return Trajeto.objects.filter(linha=self, sentido='I', local__troca_turno=True, delta__gt=0).exclude(local=self.origem).exclude(local=self.destino)
+    def rendicoes_volta(self):
+        return Trajeto.objects.filter(linha=self, sentido='V', local__troca_turno=True, delta__gt=0).exclude(local=self.origem).exclude(local=self.destino)
     class Meta:
         permissions = [
             ("dop_linha", "Pode acessar DOP"),
@@ -71,6 +84,7 @@ class Trajeto(models.Model):
     sentido = models.CharField(max_length=3,choices=SENTIDO_CHOICES, blank=True, default='I')
     seq = models.PositiveIntegerField(default=1)
     local = models.ForeignKey(Localidade, on_delete=models.RESTRICT)
+    delta = models.PositiveIntegerField(default=0)
     labels = models.CharField(max_length=250, blank=True)
     fechado = models.BooleanField(default=False)
     detalhe = models.CharField(max_length=250, blank=True)

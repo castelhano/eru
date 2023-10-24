@@ -1,25 +1,22 @@
-{% extends "layout/dot.html" %}
+{% extends "layout/app.html" %}
 {% load static %}
 {% load tag_extra %}
 {% block title %}Plan{% endblock %}
-{% block model %}Tráfego{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
-{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
 
 {% block content_fluid %}
-<a class="d-none" id="clear" href="{% url 'trafego_planejamentos' %}"></a>
-
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link pointer" id="search" data-bs-toggle="modal" data-bs-target="#search_modal" onclick="setTimeout(function(){document.getElementById('id_pesquisa').focus();},480);" title="CTRL + /"><i class="fas fa-search"></i></a></li>
+      <li class="nav-item"><a class="nav-link pointer" id="search" data-bs-toggle="modal" data-bs-target="#search_modal" onclick="setTimeout(function(){document.getElementById('id_pesquisa').focus();},480);" title="CTRL + /"><i class="bi bi-search"></i></a></li>
       {% if perms.trafego.add_planejamento %}
       <li class="nav-item"><a class="nav-link border" id="add" href="{% url 'trafego_planejamento_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
-        <a class="nav-link dropdown-toggle border text-dark" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
           <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=trafego.planejamento&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
         </ul>
@@ -63,7 +60,6 @@
         </tbody>
       </table>
     </div>
-    <!-- <div class="tab-pane fade" id="param" role="tabpanel">param</div> -->
   </div>
 </div>
 
@@ -78,7 +74,7 @@
         <form id="trafego_form" action="{% url 'trafego_planejamentos' %}" method="GET" autocomplete="off">
           <div class="row g-1">
             <div class="form-floating mb-1 col-lg-12">
-              <input type="text" class="form-control" name="pesquisa" value="" id="id_pesquisa" placeholder="">
+              <input type="search" class="form-control" name="pesquisa" value="" id="id_pesquisa" placeholder=" ">
               <label for="id_pesquisa">Código / Linha</label>
             </div>
           </div>
@@ -97,12 +93,9 @@
   
 <script>
 {% block add_script %}
+appKeyMap.tabOnEnter = false;
 const table = new jsTable(document.getElementById('main_table'), {
   enablePaginate: true
 });
-SHORTCUT_MAP['.TFF'] = () => {};
-SHORTCUT_MAP['arrowdownFTF'] = () => {table.nextRow();}
-SHORTCUT_MAP['arrowupFTF'] = () => {table.previousRow();};
-SHORTCUT_MAP['enterFTF'] = () => {table.enterRow();}
 {% endblock %}
 </script>

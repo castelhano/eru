@@ -10,7 +10,7 @@
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       <li class="nav-item dropdown ms-auto">
-        <a class="nav-link dropdown-toggle border text-dark" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
           <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal">Historico</a></li>
           {% if perms.trafego.delete_localidade %}
@@ -114,6 +114,6 @@
 
 <script>
   {% block add_script %}
-  const form = new jsForm(document.getElementById('app_form'), {})
+  const form = new jsForm(document.getElementById('trafego_form'), {})
   {% endblock %}
 </script>

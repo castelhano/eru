@@ -40,8 +40,8 @@
                 <div class="dropdown ms-1">
                   <button class="btn btn-sm btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">Status: <b>{{metrics.status_display|default:'Ativas'}}</b></button>
                   <ul class="dropdown-menu fs-7" id="id_cargos">
-                    <li><a class="dropdown-item pointer" onclick="urlFilter('status','A')">Ativas</a></li>
-                    <li><a class="dropdown-item pointer" onclick="urlFilter('status','I')">Inativas</a></li>
+                    <li><a class="dropdown-item pointer" onclick="urlFilter('inativa','False')">Ativas</a></li>
+                    <li><a class="dropdown-item pointer" onclick="urlFilter('inativa','True')">Inativas</a></li>
                   </ul>
                 </div>
               </div>
@@ -73,7 +73,7 @@
  						<td class="d-none">{{linha.get_classificacao_display}}</td>
             <td class="d-none d-lg-table-cell">{{linha.origem.nome}}</td>
             <td class="d-none d-lg-table-cell">{{linha.destino.nome}}</td>
-            <td class="d-none d-sm-table-cell">{{linha.get_status_display}}</td>
+            <td class="d-none d-sm-table-cell">{{linha.inativa|yesno:'<b class="text-secondary">Inativa</b>,<b class="text-success">Ativa</b>'|safe}}</td>
             {% if perms.trafego.change_linha %}
             <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_linha_id' linha.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
             {% endif %}

@@ -1,0 +1,86 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Marcha{% endblock %}
+{% block nav_title %}Planejamento <span class="text-purple">{{planejamento.codigo}}</span>{% endblock %}
+
+{% block style_src %}
+<link rel="stylesheet" href="{% static 'css/charts.css' %}">
+{% endblock %}
+
+{% block add_script_src %}
+<script src="{% static 'js/app/marcha_model.js' %}"></script>
+<script src="{% static 'js/app/marcha_ui.js' %}"></script>
+<script src="{% static 'js/elConnector.js' %}"></script>
+<script src="{% static 'js/vendor/chart.min.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div id="march_container"></div>
+<a id="back"
+data-appConfirm="true" 
+data-appConfirmTitle="<i class='bi bi-info-circle-fill me-2'></i>Retornar" 
+data-appConfirmMessage="Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?" 
+data-appConfirmText="Voltar"
+class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"></a>
+{% endblock %}
+{% block canvasNav %}<div id="marchSettings_container"></div>{% endblock %}
+
+
+<script>
+    {% block add_script %}
+    const model = new March({
+        id: {{planejamento.id|safe}},
+        name: '{{planejamento.codigo}}',
+        desc: '{{planejamento.descricao}}',
+        dayType: '{{planejamento.dia_tipo}}',
+        active: {{planejamento.ativo|yesno:'true,false'}},
+        route: new Route({
+            id: {{planejamento.linha.id|safe}},
+            prefix: '{{planejamento.linha.codigo}}',
+            name: '{{planejamento.linha.nome}}',
+            circular: {{planejamento.linha.circular|yesno:'true,false'}},
+            from: new Locale({id: {{planejamento.linha.origem.id|safe}}, name: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', surrender: {{planejamento.linha.origem.surrender|yesno:'true,false'|default:'true'}}}),
+            to: new Locale({id: {{planejamento.linha.destino.id|safe}}, name: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', surrender: {{planejamento.linha.destino.surrender|yesno:'true,false'|default:'true'}}}),
+            fromExtension: {{planejamento.linha.extensao_ida|safe}},
+            toExtension: {{planejamento.linha.extensao_volta|safe}},
+            param: {{planejamento.linha.params|safe}},
+            metrics: {
+                fromMinAccess: {{planejamento.linha.acesso_origem_minutos|safe}},
+                toMinAccess: {{planejamento.linha.acesso_destino_minutos|safe}},
+                fromMinRecall: {{planejamento.linha.recolhe_origem_minutos|safe}},
+                toMinRecall: {{planejamento.linha.recolhe_destino_minutos|safe}},
+                fromKmAccess: {{planejamento.linha.acesso_origem_km|safe}},
+                toKmAccess: {{planejamento.linha.acesso_destino_km|safe}},
+                fromKmRecall: {{planejamento.linha.recolhe_origem_km|safe}},
+                toKmRecall: {{planejamento.linha.recolhe_destino_km|safe}},
+            },
+            refs: {
+                from:[
+                    {% for trajeto in planejamento.linha.rendicoes_ida %}
+                        {local: new Locale({id: {{trajeto.local.id|safe}}, name: '{{trajeto.local.nome}}', surrender: true}), delta: {{trajeto.delta}}}
+                    {% endfor %}
+                ],
+                to:[
+                {% for trajeto in planejamento.linha.rendicoes_volta %}
+                    {local: new Locale({id: {{trajeto.local.id|safe}}, name: '{{trajeto.local.nome}}', surrender: true}), delta: {{trajeto.delta}}}
+                {% endfor %}
+                ]
+            }
+        })
+    });
+    {% if planejamento.linha.demanda != '' %}
+    // Carrega a ultima demanda registrada da linha por faixa horaria
+    const demanda = {{planejamento.linha.demanda}};
+    for(let i in demanda){
+        model.route.param[i].fromDemand = demanda[i].fromDemand;
+        model.route.param[i].toDemand = demanda[i].toDemand;
+    }
+    {% endif %}
+    const project = new MarchUI({
+        container: document.getElementById('march_container'),
+        settingsContainer: document.getElementById('marchSettings_container'),
+        project: model,
+        initialView: 240,
+    });
+    {% endblock %}
+</script>

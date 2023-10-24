@@ -17,6 +17,7 @@ urlpatterns = [
     path('trafego_planejamentos',views.planejamentos,name='trafego_planejamentos'),
     path('trafego_planejamento_add',views.planejamento_add,name='trafego_planejamento_add'),
     path('trafego_planejamento_id/<int:id>',views.planejamento_id,name='trafego_planejamento_id'),
+    path('trafego_planejamento_grid/<int:id>',views.planejamento_grid,name='trafego_planejamento_grid'),
     path('trafego_planejamento_horarios/<int:id>',views.planejamento_horarios,name='trafego_planejamento_horarios'),
     path('trafego_planejamento_update/<int:id>',views.planejamento_update,name='trafego_planejamento_update'),
     path('trafego_planejamento_delete/<int:id>/delete',views.planejamento_delete,name='trafego_planejamento_delete'),

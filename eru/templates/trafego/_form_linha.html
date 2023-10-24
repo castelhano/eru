@@ -34,8 +34,7 @@
             <label for="id_extensao_ida">Extensão Ida</label>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
-            {{ form.intervalo_ida }}
-            <label for="id_intervalo_ida">Intervalo Ida</label>
+            <input type="text" class="form-control" id="empty_1" disabled>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.acesso_origem_minutos }}
@@ -52,8 +51,7 @@
             <label for="id_extensao_volta">Extensão Volta</label>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
-            {{ form.intervalo_volta }}
-            <label for="id_intervalo_ida">Intervalo Volta</label>
+            <input type="text" class="form-control" id="empty_2" disabled>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.acesso_destino_minutos }}
@@ -113,6 +111,8 @@
               <th>Final</th>
               <th>Ida</th>
               <th>Volta</th>
+              <th>Int Ida</th>
+              <th>Int Volta</th>
               {% if perms.trafego.change_patamar %}<th>&nbsp;</th>{% endif %}
             </tr>
           </thead>
@@ -123,6 +123,8 @@
               <td class="bg-body-secondary">{{patamar.final}}</td>  
               <td>{{patamar.ida}}</td>  
               <td>{{patamar.volta}}</td>  
+              <td>{{patamar.intervalo_ida}}</td>  
+              <td>{{patamar.intervalo_volta}}</td>  
               {% if perms.trafego.change_patamar %}
               <td class="fit py-1 text-end"><a class="btn btn-sm btn-dark pointer" style="width: 35px;" onclick="patamarUpdate({{patamar.inicial}}, {{patamar.final}}, {{patamar.ida}}, {{patamar.volta}}, {{patamar.id}});"><i class="bi bi-pen-fill"></i></a></td>
               {% endif %}

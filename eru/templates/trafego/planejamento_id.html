@@ -1,9 +1,8 @@
-{% extends "layout/dot.html" %}
+{% extends "layout/app.html" %}
 {% load tag_extra %}
 {% block title %}Plan{% endblock %}
-{% block model %}Tráfego{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
-{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
 
 
 <style media="screen">
@@ -13,7 +12,7 @@
 </style>
 
 {% block content_fluid %}
-<a class="d-none" id="clear" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}" onclick="submitForm()"></a>
+<!-- <a class="d-none" id="clear" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"></a> -->
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
@@ -22,7 +21,7 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <form id="app_form" action="{% url 'trafego_planejamento_update' planejamento.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off" onsubmit="return submitForm()">
+    <form id="app_form" action="{% url 'trafego_planejamento_update' planejamento.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off">
       {% csrf_token %}
       <h5 class="card-title mb-3">Planejamento: <span class="text-purple">{{planejamento.codigo}}</span></h5>
       <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -33,7 +32,7 @@
               <div class="row">
                 <div class="col"><h6 class="text-success mt-1">Planejamento Ativo: <b>{{ativo.codigo}}</b></h6></div>
                 <div class="col-auto pe-1">
-                  <a class="btn btn-sm btn-purple" href="{% url 'trafego_planejamento_id' ativo.id|safe %}"><i class="fas fa-link"></i></a>
+                  <a class="btn btn-sm btn-purple" href="{% url 'trafego_planejamento_id' ativo.id|safe %}"><i class="bi bi-link"></i></a>
                 </div>
               </div>
               <dl class="row">
@@ -66,18 +65,18 @@
           </div>
           {% endif %}
           <div class="col-lg-4">
-            <div class="card py-2 px-3 bg-light border fs-7 rounded">
+            <div class="card py-2 px-3 bg-body-tertiary border fs-7 rounded">
               <div class="row">
                 <div class="col"><h6 class="text-body-secondary mt-1">Detalhes Planejamento</h6></div>
                 <div class="col-auto pe-1">
                   {% if ativo %}
-                  <button type="button" id="btn_comparar" class="btn btn-sm btn-purple" name="button" onclick="compararPlanejamentos()" title="Comparar com atual [ALT X]"><i class="fas fa-clone px-2"></i></button>
+                  <button type="button" id="btn_comparar" class="btn btn-sm btn-purple" name="button" onclick="compararPlanejamentos()" title="Comparar com atual [ALT X]"><i class="bi bi-copy px-2"></i></button>
                   {% endif %}
-                  <a class="btn btn-sm btn-purple" data-bs-toggle="dropdown" data-bs-offset="0,5" href="#" role="button"><i class="fas fa-caret-down"></i></a>
+                  <a class="btn btn-sm btn-phanton" data-bs-toggle="dropdown" data-bs-offset="0,5" href="#" role="button"><i class="bi bi-caret-down-fill"></i></a>
                   <ul class="dropdown-menu dropdown-menu-end fs-7">
-                    <li><a class="dropdown-item" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"><i class="bi bi-list fa-fw"></i>Horários</a></li>
+                    <li><a class="dropdown-item" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"><i class="bi bi-list me-2"></i>Horários</a></li>
                     {% if perms.trafego.delete_planejamento %}
-                    <li><span class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="fas fa-trash fa-fw"></i>Excluir</span></li>
+                    <li><span class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="bi bi-trash-fill me-2"></i>Excluir</span></li>
                     {% endif %}
                   </ul>                
                 </div>
@@ -126,21 +125,24 @@
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="pin" id="id_pin"{% if planejamento.pin %} checked{% endif %}>
-              <label class="form-check-label" for="id_pin"><i class="fas fa-thumbtack fa-fw text-body-secondary"></i>Fixar Planejamento</label>
+              <label class="form-check-label" for="id_pin"><i class="fas fa-thumbtack me-2 text-body-secondary"></i>Fixar Planejamento</label>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="ativo" id="id_ativo"{% if planejamento.ativo %} checked{% endif %}>
-              <label class="form-check-label" for="id_ativo"><i class="fas fa-check fa-fw text-success"></i>Ativar</label>
+              <label class="form-check-label" for="id_ativo"><i class="fas fa-check me-2 text-success"></i>Ativar</label>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="carregar_viagens" id="id_carregar_viagens" onclick="importarViagens()">
-              <label class="form-check-label" for="id_carregar_viagens"><i class="fas fa-random fa-fw text-body-secondary"></i>Importar viagens</label>
+              <label class="form-check-label" for="id_carregar_viagens"><i class="fas fa-random me-2 text-body-secondary"></i>Importar viagens</label>
             </div>
             <small id="label_alert_sobregravar" class="d-none"><b class="text-danger">Atenção!</b> Importar viagens irá apagar o planejamento atual, este processo não pode ser desfeito.</small>
             <input type="file" class="form-control mt-2" name="viagens" id="id_viagens" disabled>
             <small>Gerador Excel: <b>develop / trafego / importarPlanejamentoVx.xlsx</b></small>
             <div class="row mt-3">
-              <div class="col"><button type="submit" id="submit" class="btn btn-primary" name="button"><b>G</b>ravar</button></div>
+              <div class="col">
+                <button type="submit" id="submit" class="btn btn-sm btn-primary"><b>G</b>ravar</button>
+                <a role="button" id="planejamento_grid" class="btn btn-sm btn-dark" href="{% url 'trafego_planejamento_grid' planejamento.id|safe %}"><i class="bi bi-shuffle me-2"></i>Gri<b>d</b></a>
+              </div>
             </div>
             
           </div>
@@ -179,26 +181,23 @@
   </div>
 </div>
 {% endif %}
-
-{% include "_component/modal/loading.html" with message='Processando requisição....' %}
 {% endblock%}
 
 {% block add_script_src %}{% endblock %}
 
 <script>
   {% block add_script %}
+  appKeyMap.bind({key: 'd', alt: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Grid', desc: 'Abre a interfaçe grid', run:()=>{document.getElementById('planejamento_grid').click()}})
   
-  SHORTCUT_MAP['xTFF'] = () => {try{document.getElementById('btn_comparar').click()}catch(e){}};
-  SHORTCUT_MAP['.TFF'] = () => {document.getElementById('cadastro_planejamento').click()};
-  
-  var modal_loading = new bootstrap.Modal(document.getElementById('modal_loading'), {keyboard: false});
-  function submitForm(){modal_loading.show();return true;}
+  {% if ativo %}
+  appKeyMap.bind({key: 'x', alt: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Comparar', desc: 'Compara planejamento com ativo atualmente', run:()=>{document.getElementById('btn_comparar').click()}})
   
   function compararPlanejamentos(){
     let labels = document.querySelectorAll('.switch-view');
     for(i=0;i < labels.length;i++){labels[i].classList.toggle('d-none');}
     document.getElementById('container_plan_ativo').classList.toggle('d-none');
   }
+  {% endif %}
   
   function importarViagens(){
     document.getElementById('label_alert_sobregravar').classList.toggle('d-none');

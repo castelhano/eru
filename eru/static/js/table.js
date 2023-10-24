@@ -692,7 +692,7 @@ class jsTable{
         appKeyMap.bind({key: 'arrowdown', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Próxima linha', desc:'Navega para próxima linha', run: () => {this.nextRow()}})
         appKeyMap.bind({key: 'arrowup', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Linha anterior', desc:'Navega para linha anterior', run: () => {this.previousRow()}})
         if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind({key: 'enter', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Acessa registro', desc:'Acessa registro em foco', run: () => {this.enterRow()}})}
-        if(this.canFilter){appKeyMap.bind({key: 'f', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Pesquisar', desc:'Foca caixa de pesquisa tabela', run: () => {this.filterInput.select()}})}
+        if(this.canFilter || this.dataUrl){appKeyMap.bind({key: 'f', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Pesquisar', desc:'Foca caixa de pesquisa tabela', run: () => {this.filterInput.select()}})}
         if(this.canExportCsv){appKeyMap.bind({key: 'd', alt: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Baixar CSV', desc:'Baixa registros em formato CSV', run: () => {this.exportButtonCSV.click()}})}
         if(this.enablePaginate){
             appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Próxima página', desc:'Exibe próxima página da tabela', run: () => {this.nextPage()}})

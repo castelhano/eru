@@ -1,6 +1,6 @@
 <div class="form-floating {{breakpoint|default:'col-lg-12 mb-1'}}">
 	<input type="hidden" id="id_{{field_name|default:'local'}}" name="{{field_name|default:'local'}}" value="{{id|safe}}">
-	<input type="text" autocomplete="off" class="form-control" list="{{field_name|default:'local'}}_datalist" id="id_{{field_name|default:'local'}}_nome" data-target="{{field_name|default:'local'}}" value="{{nome}}" onkeyup="localidadeOnkeyup(event)" onblur="if(this.value.length > 0){validadeLocalidade(this.dataset.target)}" onfocus="this.select()"{% if required %} required{% endif %} placeholder=" ">
+	<input data-jsform="novalidate" type="text" autocomplete="off" class="form-control" list="{{field_name|default:'local'}}_datalist" id="id_{{field_name|default:'local'}}_nome" data-target="{{field_name|default:'local'}}" value="{{nome}}" onkeyup="localidadeOnkeyup(event)" onblur="if(this.value.length > 0){validadeLocalidade(this.dataset.target)}" onfocus="this.select()"{% if required %} required{% endif %} placeholder=" ">
 	<label for="id_{{field_name|default:'local'}}_nome">{{label|default:'Local'}}</label>
 	<datalist id="{{field_name|default:'local'}}_datalist"></datalist>
 	<div id="{{field_name|default:'local'}}_spinner" class="spinner-grow text-success d-none" style="position: absolute; top:12px; right:15px; z-index:10;"></div>

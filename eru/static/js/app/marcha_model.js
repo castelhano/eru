@@ -519,13 +519,13 @@ class March{
         this.desc = options?.desc || '';
         this.route = options?.route || new Route({});
         this.cars = options?.cars || [];
-        this.user = options?.user || null;
         this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dayType = options?.dayType || UTIL;
         this.workHours = options?.workHours || 420; // Jornada de trabalho normal 07:00 = 420 | 07:20 = 440
         this.active = options?.active || options?.active == true;
         this.transferArea = options?.transferArea || []; // Area de armazenamento de viagens
         this.sumInterGaps = options?.sumInterGaps || options?.sumInterGaps == true;
+        this.save = options?.save != undefined ? options.save : function(){console.log('jsMarch: Nenhuma funcao definida para save, nas opcoes marque {save: suaFuncao}')}; // Funcao de salvamento do projeto
     }
     addFleet(options){ // Adiciona carro no projeto ja inserindo uma viagem (sentido ida)
         if(this.cars.length > 0){

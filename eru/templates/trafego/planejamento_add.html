@@ -1,12 +1,11 @@
-{% extends "layout/dot.html" %}
+{% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Plan{% endblock %}
-{% block model %}Tráfego{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
-{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
 
 {% block content_fluid %}
-<a class="d-none" id="clear" href="{% url 'trafego_planejamento_add' %}"></a>
+<!-- <a class="d-none" id="clear" href="{% url 'trafego_planejamento_add' %}"></a> -->
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
@@ -14,7 +13,7 @@
       <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_planejamentos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'trafego_planejamento_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off" onsubmit="return submitForm()">
+  <form id="app_form" action="{% url 'trafego_planejamento_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off">
     {% csrf_token %}
     <div class="card-body tab-content">
       <h5 class="card-title mb-3">Novo Planejamento</h5>
@@ -39,7 +38,8 @@
         </div>
         <div class="row g-1">
         	<div class="my-2 col-lg-6">
-            <label for="id_viagens" class="fs-8 ps-1"><i class="fas fa-upload text-primary me-2"></i>Carregar viagens</label>
+            <i class="bi bi-upload me-1"></i>
+            <label for="id_viagens" class="fs-8">Carregar viagens</label>
         		<input type="file" class="form-control" id="id_viagens" name="viagens" value="" accept=".txt,.json">
             <small>Gerador Excel: <b>develop / trafego / importarPlanejamentoVx.xlsx</b></small>
         	</div>
@@ -62,18 +62,11 @@
     </div>
   </form>
 </div>
-
-{% include "_component/modal/loading.html" with message='Salvando....' %}
 {% endblock%}
 
 {% block add_script_src %}{% endblock %}
 
 <script>
   {% block add_script %}
-  var TAB_ON_ENTER = true;
-  SHORTCUT_MAP['.TFF'] = () => {document.getElementById('cadastro_planejamento').click()};
-  
-  var modal_loading = new bootstrap.Modal(document.getElementById('modal_loading'), {keyboard: false});
-  function submitForm(){modal_loading.show();return true;}
   {% endblock %}
 </script>

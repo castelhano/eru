@@ -14,7 +14,7 @@ class LocalidadeForm(forms.ModelForm):
 class TrajetoForm(forms.ModelForm):
     class Meta:
         model = Trajeto
-        fields = ['linha','sentido','seq','local','labels','fechado','detalhe']
+        fields = ['linha','sentido','seq','local','delta','labels','fechado','detalhe']
     sentido = forms.ChoiceField(choices=Trajeto.SENTIDO_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     seq = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'1','max':'199', 'onfocus':'this.select();'}))
     fechado = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
@@ -24,7 +24,7 @@ class TrajetoForm(forms.ModelForm):
 class LinhaForm(forms.ModelForm):
     class Meta:
         model = Linha
-        fields = ['empresa','codigo','nome','classificacao','origem','destino','acesso_origem_km','acesso_destino_km','acesso_origem_minutos','acesso_destino_minutos','recolhe_origem_km','recolhe_destino_km','recolhe_origem_minutos','recolhe_destino_minutos','extensao_ida','extensao_volta','intervalo_ida','intervalo_volta', 'detalhe']
+        fields = ['empresa','codigo','nome','classificacao','origem','destino','acesso_origem_km','acesso_destino_km','acesso_origem_minutos','acesso_destino_minutos','recolhe_origem_km','recolhe_destino_km','recolhe_origem_minutos','recolhe_destino_minutos','extensao_ida','extensao_volta','demanda', 'detalhe']
     codigo = forms.CharField(error_messages={'required': 'Campo Código OBRIGATÓRIO'},max_length=8,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' '}))
     nome = forms.CharField(error_messages={'required': 'É necessário informar um noma para linha'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     classificacao = forms.ChoiceField(choices=Linha.CLASSIFICACAO_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
@@ -38,8 +38,6 @@ class LinhaForm(forms.ModelForm):
     acesso_destino_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
     recolhe_origem_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
     recolhe_destino_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
-    intervalo_ida = forms.IntegerField(required=False,initial=5, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'1','max':'60', 'onfocus':'this.select();'}))
-    intervalo_volta = forms.IntegerField(required=False,initial=5, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'1','max':'60', 'onfocus':'this.select();'}))
     detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'rows':4}))
 
 class PlanejamentoForm(forms.ModelForm):

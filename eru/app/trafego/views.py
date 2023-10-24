@@ -5,7 +5,7 @@ from django.http import HttpResponse
 # from django.db.models import Q
 from core.models import Empresa, Log
 from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Viagem
-from .forms import LinhaForm, LocalidadeForm, TrajetoForm
+from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm
 # from .validators import validate_file_extension
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
@@ -220,6 +220,12 @@ def planejamento_id(request,id):
 
 @login_required
 @permission_required('trafego.view_planejamento', login_url="/handler/403")
+def planejamento_grid(request, id):
+    planejamento = Planejamento.objects.get(pk=id)
+    return render(request,'trafego/planejamento_grid.html',{'planejamento':planejamento})
+
+@login_required
+@permission_required('trafego.view_planejamento', login_url="/handler/403")
 def planejamento_horarios(request, id):
     planejamento = Planejamento.objects.get(pk=id)
     return render(request,'trafego/planejamento_horarios.html',{'planejamento':planejamento})
@@ -281,6 +287,8 @@ def patamar_update(request):
             patamar.final = int(request.POST['final'])
             patamar.ida = int(request.POST['ida'])
             patamar.volta = int(request.POST['volta'])
+            patamar.intervalo_ida = int(request.POST['intervalo_ida'])
+            patamar.intervalo_volta = int(request.POST['intervalo_volta'])
             has_errors = []
             has_errors.append(patamar.inicial > patamar.final)
             has_errors.append(patamar.inicial < 0 or patamar.final < 0)
@@ -327,6 +335,8 @@ def patamar_tratar_conflitos(patamar, patamares):
                 n.final = c.final
                 n.ida = c.ida
                 n.volta = c.volta
+                n.intervalo_ida = c.intervalo_ida
+                n.intervalo_volta = c.intervalo_volta
                 n.save()
                 c.final = patamar.inicial - 1
                 changed = True
@@ -478,15 +488,15 @@ def get_linha(request):
     try:
         empresa = request.GET.get('empresa',None)
         codigo = request.GET.get('codigo',None)
-        incluir_inativos = request.GET.get('incluir_inativos',None)
+        incluir_inativos = request.GET.get('incluir_inativos', None)
         multiempresa = request.GET.get('multiempresa', None)
         params  = dict(codigo=codigo)
         if not multiempresa or multiempresa != 'True':
             params['empresa__id'] = empresa
         linha = Linha.objects.get(**params)
-        if incluir_inativos != 'True' and linha.status != 'A':
+        if incluir_inativos != 'True' and linha.inativa == True:
             raise Exception('')
-        return HttpResponse(str(linha.id) + ';' + str(linha.nome) + ';' + str(linha.status) + ';' + str(linha.empresa.id))
+        return HttpResponse(str(linha.id) + ';' + str(linha.nome) + ';' + str(linha.inativa) + ';' + str(linha.empresa.id))
     except:
         return HttpResponse('')
 
