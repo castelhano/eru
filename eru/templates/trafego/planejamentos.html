@@ -53,7 +53,7 @@
             <td class="d-none d-lg-table-cell">{{planejamento.data_criacao|date:'d/m/Y'}}</td>
             <td class="d-none d-lg-table-cell">{{planejamento.usuario.username|title}}</td>
             {% if perms.trafego.change_planejamento %}
-            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_planejamento_id' planejamento.id %}"><i class="fas fa-fw me-0 {% if planejamento.pin %}fa-thumbtack{% else %}fa-pen{% endif %}"></i></a></td>
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_planejamento_id' planejamento.id %}"><i class="bi {% if planejamento.pin %}bi-pin-fill{% else %}bi-pen-fill{% endif %}"></i></a></td>
             {% endif %}
           </tr>
           {% endfor %}

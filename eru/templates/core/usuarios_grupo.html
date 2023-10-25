@@ -33,7 +33,7 @@
                         <td>{{usuario.username}}</td>
                         <td>{{usuario.is_active|yesno:'<b class="text-success">ATIVO</b>,<b class="text-danger">INATIVO</b>'|safe}}</td>
                         {% if perms.auth.change_user %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'core_usuario_id' usuario.id|safe %}"><i class="fas fa-link"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'core_usuario_id' usuario.id|safe %}"><i class="bi bi-link"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

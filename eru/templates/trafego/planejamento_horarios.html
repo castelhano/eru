@@ -1,13 +1,10 @@
-{% extends "layout/dot.html" %}
+{% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Horários{% endblock %}
-{% block model %}Tráfego{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
-{% block model_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
+{% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
 
 {% block content_fluid %}
-<a class="d-none" id="clear" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"></a>
-
 <div class="card mt-2">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
@@ -77,20 +74,28 @@
 {% block add_script %}
 let viagens = [];
 {% for viagem in planejamento.viagens %}
-viagens.push({tipo:'{{viagem.tipo}}', sentido:'{{viagem.sentido}}',inicio:'{{viagem.inicio}}', fim:'{{viagem.fim}}'})
+viagens.push({tipo:'{{viagem.tipo}}', sentido:'{{viagem.sentido}}',inicio:'{{viagem.inicio|safe}}', fim:'{{viagem.fim|safe}}'})
 {% endfor%}
 
-let viagens_ida = viagens.filter(el => el.sentido == 'I' && el.tipo == '1').sort(function(a, b) { return a.inicio > b.inicio ? 1 : -1;});
-let viagens_volta = viagens.filter(el => el.sentido == 'V' && el.tipo == '1').sort(function(a, b) { return a.inicio > b.inicio ? 1 : -1;});
+let viagens_ida = viagens.filter(el => el.sentido == 'I' && el.tipo == '1').sort(function(a, b) { return parseInt(a.inicio) > parseInt(b.inicio) ? 1 : -1;});
+let viagens_volta = viagens.filter(el => el.sentido == 'V' && el.tipo == '1').sort(function(a, b) { return parseInt(a.inicio) > parseInt(b.inicio) ? 1 : -1;});
 
 let rows = Math.max(viagens_ida.length,viagens_volta.length);
 
 const tbody = document.getElementById('horarios_corridos').querySelector('tbody');
 
+function min2Hour(min, reset=true){ // Converte minutos (int) em hora (hh:mm)
+    let time = min / 60;
+    let h = Math.floor(time);
+    let m = Math.round((time - h) * 60);
+    if(reset && h >= 24){h -= 24}
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
 for(i = 0; i < rows; i++){
     let tr = document.createElement('tr');
-    let td_ida = document.createElement('td');td_ida.innerHTML = viagens_ida.length > i ? viagens_ida[i].inicio : '';
-    let td_volta = document.createElement('td');td_volta.innerHTML = viagens_volta.length > i ? viagens_volta[i].inicio : '';
+    let td_ida = document.createElement('td');td_ida.innerHTML = viagens_ida.length > i ? min2Hour(viagens_ida[i].inicio) : '';
+    let td_volta = document.createElement('td');td_volta.innerHTML = viagens_volta.length > i ? min2Hour(viagens_volta[i].inicio) : '';
     tr.appendChild(td_ida);
     tr.appendChild(td_volta);
     tbody.appendChild(tr);
@@ -101,5 +106,7 @@ const table = new jsTable(document.getElementById('horarios_corridos'),{
     canFilter:true,
     filterCols: ['IDA', 'VOLTA']
 });
+
+
 {% endblock %}
 </script>

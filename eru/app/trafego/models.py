@@ -173,8 +173,8 @@ class Carro(models.Model):
 
 class Viagem(models.Model):
     SENTIDO_CHOICES = (
-    ('1','Ida'),
-    ('2','Volta'),
+    ('I','Ida'),
+    ('V','Volta'),
     )
     TIPO_CHOICES = (
     ('1','1 Produtiva'),
@@ -184,7 +184,6 @@ class Viagem(models.Model):
     ('5','5 Acesso'),
     ('6','6 Recolhe'),
     ('7','7 Intervalo'),
-    ('8','8 T Turno'),
     ('9','9 Reservado'),
     )
     carro = models.ForeignKey(Carro, blank=False, null=False, on_delete=models.CASCADE)
@@ -194,6 +193,7 @@ class Viagem(models.Model):
     tipo = models.CharField(max_length=3,choices=TIPO_CHOICES, blank=True, default='1')
     origem = models.ForeignKey(Localidade,related_name='viagem_origem', blank=True, null=True, on_delete=models.RESTRICT)
     destino = models.ForeignKey(Localidade,related_name='viagem_destino', blank=True, null=True, on_delete=models.RESTRICT)
+    encerrar = models.BooleanField(default=False)
     detalhe = models.CharField(max_length=10, blank=True)
     class Meta:
         default_permissions = []

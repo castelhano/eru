@@ -39,8 +39,8 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
             prefix: '{{planejamento.linha.codigo}}',
             name: '{{planejamento.linha.nome}}',
             circular: {{planejamento.linha.circular|yesno:'true,false'}},
-            from: new Locale({id: {{planejamento.linha.origem.id|safe}}, name: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', surrender: {{planejamento.linha.origem.surrender|yesno:'true,false'|default:'true'}}}),
-            to: new Locale({id: {{planejamento.linha.destino.id|safe}}, name: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', surrender: {{planejamento.linha.destino.surrender|yesno:'true,false'|default:'true'}}}),
+            from: new Locale({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', name: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', surrender: {{planejamento.linha.origem.surrender|yesno:'true,false'|default:'true'}}}),
+            to: new Locale({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', name: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', surrender: {{planejamento.linha.destino.surrender|yesno:'true,false'|default:'true'}}}),
             fromExtension: {{planejamento.linha.extensao_ida|safe}},
             toExtension: {{planejamento.linha.extensao_volta|safe}},
             param: {{planejamento.linha.params|safe}},
@@ -68,6 +68,19 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
             }
         })
     });
+
+    let trips;
+    {% for carro in planejamento.carros %}
+        trips = [];
+        {% for viagem in carro.viagens %}
+            trips.push(new Trip({start: {{viagem.inicio|safe}}, end: {{viagem.fim|safe}}, shut: false, way: '{{viagem.sentido}}', type: '{{viagem.tipo}}', shut: {{viagem.encerrar|yesno:'true,false'}}}));
+        {% endfor %}
+        model.cars.push(new Car({classification: '{{carro.classificacao}}', trips: trips}));
+    {% endfor %}
+
+
+
+
     {% if planejamento.linha.demanda != '' %}
     // Carrega a ultima demanda registrada da linha por faixa horaria
     const demanda = {{planejamento.linha.demanda}};

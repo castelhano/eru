@@ -53,7 +53,7 @@
               {% for usuario in usuarios %}
               <tr>
                 <td class="d-none d-sm-table-cell">{{usuario.id|safe}}</td>
-                <td class="d-none d-md-table-cell">{{usuario.profile.force_password_change|yesno:'<i class="fas fa-sync" title="Trocar senha proximo login"></i>,'|safe}}</td>
+                <td class="d-none d-md-table-cell">{{usuario.profile.force_password_change|yesno:'<i class="bi bi-arrow-repeat" title="Trocar senha proximo login"></i>,'|safe}}</td>
                 <td>{{usuario.username}}{% if usuario.is_superuser %} <sup class="badge bg-secondary-subtle text-secondary-emphasis fs-9" style="width: 35px;" title="Super Usuário">SU</sup>{% endif %}{% if usuario.is_staff %} <sup class="badge bg-primary-subtle text-secondary-emphasis fs-9" title="Membro de equipe">ME</sup>{% endif %}</td>
                 <td class="d-none d-md-table-cell">{{usuario.first_name}}</td>
                 <td class="d-none d-md-table-cell">{{usuario.last_name}}</td>

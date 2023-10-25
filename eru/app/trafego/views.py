@@ -155,13 +155,18 @@ def planejamento_add(request):
             if request.FILES.get('viagens', None):
                 try:
                     viagens = json.load(request.FILES['viagens'])
-                    viagens.sort(key=lambda x: x["carro"])
+                    viagens.sort(key=lambda x: int(x["carro"]))
                 except Exception as e:
                     messages.error(request,'<b>Erro</b> O arquivo anexado não é válido')
                     return render(request,'trafego/planejamento_id.html',{'form':form,'planejamento':planejamento})
                 last_carro_seq = None
+                last_viagem = None
                 carro = None
                 for v in viagens:
+                    if v['tipo'] == '8':
+                        last_viagem.encerrar = True
+                        last_viagem.save()
+                        continue
                     if not last_carro_seq or last_carro_seq != v['carro']:
                         carro = Carro()
                         carro.planejamento = registro
@@ -169,7 +174,7 @@ def planejamento_add(request):
                         last_carro_seq = v['carro']
                     v['carro'] = carro
                     try:
-                        Viagem.objects.create(**v)
+                        last_viagem = Viagem.objects.create(**v)
                     except Exception as e:
                         messages.error(request,f'<b>Erro</b>{e}, algumas viagens NÃO foram importadas')
                         return redirect('trafego_planejamento_add')
@@ -366,14 +371,19 @@ def planejamento_update(request,id):
         if request.FILES.get('viagens', None):
             try:
                 viagens = json.load(request.FILES['viagens'])
-                viagens.sort(key=lambda x: x["carro"])
+                viagens.sort(key=lambda x: int(x["carro"]))
             except Exception as e:
                 messages.error(request,'<b>Erro</b> O arquivo anexado não é válido')
                 return render(request,'trafego/planejamento_id.html',{'form':form,'planejamento':planejamento})
             Carro.objects.filter(planejamento=registro).delete() # Limpa viagens atuais (caso exista)
             last_carro_seq = None
+            last_viagem = None
             carro = None
             for v in viagens:
+                if v['tipo'] == '8':
+                    last_viagem.encerrar = True
+                    last_viagem.save()
+                    continue
                 if not last_carro_seq or last_carro_seq != v['carro']:
                     carro = Carro()
                     carro.planejamento = registro
@@ -381,7 +391,7 @@ def planejamento_update(request,id):
                     last_carro_seq = v['carro']
                 v['carro'] = carro
                 try:
-                    Viagem.objects.create(**v)
+                    last_viagem = Viagem.objects.create(**v)
                 except Exception as e:
                     messages.error(request,f'<b>Erro</b>{e}, algumas viagens NÃO foram importadas')
                     return redirect('trafego_planejamento_id', planejamento.id)

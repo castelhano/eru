@@ -28,7 +28,7 @@
         <div class="row g-2">
           {% if ativo %}
           <div id="container_plan_ativo" class="col-lg-4 d-none">
-            <div class="card py-2 px-3 bg-light border fs-7 rounded">
+            <div class="card py-2 px-3 bg-body-tertiary border fs-7 rounded">
               <div class="row">
                 <div class="col"><h6 class="text-success mt-1">Planejamento Ativo: <b>{{ativo.codigo}}</b></h6></div>
                 <div class="col-auto pe-1">
@@ -125,15 +125,15 @@
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="pin" id="id_pin"{% if planejamento.pin %} checked{% endif %}>
-              <label class="form-check-label" for="id_pin"><i class="fas fa-thumbtack me-2 text-body-secondary"></i>Fixar Planejamento</label>
+              <label class="form-check-label" for="id_pin"><i class="bi bi-pin-fill me-2 text-body-secondary"></i>Fixar Planejamento</label>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="ativo" id="id_ativo"{% if planejamento.ativo %} checked{% endif %}>
-              <label class="form-check-label" for="id_ativo"><i class="fas fa-check me-2 text-success"></i>Ativar</label>
+              <label class="form-check-label" for="id_ativo"><i class="bi bi-check-square-fill me-2 text-success"></i>Ativar</label>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" name="carregar_viagens" id="id_carregar_viagens" onclick="importarViagens()">
-              <label class="form-check-label" for="id_carregar_viagens"><i class="fas fa-random me-2 text-body-secondary"></i>Importar viagens</label>
+              <label class="form-check-label" for="id_carregar_viagens"><i class="bi bi-shuffle me-2 text-body-secondary"></i>Importar viagens</label>
             </div>
             <small id="label_alert_sobregravar" class="d-none"><b class="text-danger">Atenção!</b> Importar viagens irá apagar o planejamento atual, este processo não pode ser desfeito.</small>
             <input type="file" class="form-control mt-2" name="viagens" id="id_viagens" disabled>
@@ -165,7 +165,7 @@
       </div>
       <div class="modal-body">
         {% if planejamento.ativo %}
-        <p><i class="fas fa-info text-warning me-2"></i> Não é possivel excluir um <b>planejamento ativo</b>.</p>
+        <p><i class="bi bi-info text-warning me-2"></i> Não é possivel excluir um <b>planejamento ativo</b>.</p>
         <p>Desative o planejamento atual (ou ative outro planejamento) antes de excluir este registro.</p>
         {% else %}
         <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do planejamento?</p>

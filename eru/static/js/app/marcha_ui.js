@@ -71,7 +71,7 @@ class MarchUI{
             tripToColor: '#98D3F0',
         }
 
-        // PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', TROCA_TURNO = '8', RESERVADO = '9';
+        // PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', RESERVADO = '9';
         this.typePattern = { // Ajusta style da viagem baseado no tipo da viagem
             '2':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
             '3':'repeating-linear-gradient(90deg, COLOR, COLOR 6px, var(--bs-secondary-bg) 5px, var(--bs-secondary-bg) 15px)',
@@ -94,8 +94,8 @@ class MarchUI{
             '9': '<span class="text-orange">RESERVADO</span>',
         }
         this.translateWay = {
-            '1': 'IDA',
-            '2': 'VOLTA',
+            'I': 'IDA',
+            'V': 'VOLTA',
         }
         
         this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.fleetHeight));

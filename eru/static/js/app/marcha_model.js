@@ -1,8 +1,8 @@
 // TODO: CRUD referencias
 // ------------------
 // Constantes de classificacao
-const IDA = 1, VOLTA = 2;
-const PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', TROCA_TURNO = '8', RESERVADO = '9';
+const IDA = 'I', VOLTA = 'V';
+const PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', RESERVADO = '9';
 var ACESSO_PADRAO = 20, RECOLHE_PADRAO = 20, CICLO_BASE = 50, FREQUENCIA_BASE = 10, INTERVALO_IDA = 5, INTERVALO_VOLTA = 1, INICIO_OPERACAO = 290;
 // Constantes para projeto
 var UTIL = 'U', SABADO = 'S', DOMINGO = 'D', ESPECIAL = 'E', FERIAS = 'F';
