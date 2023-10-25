@@ -22,38 +22,38 @@
     {% block add_script %}
 
     let interestPoints = []
-    interestPoints.push(new Locale({id: 12, name: 'Jd Vitoria', surrender: true}));
-    interestPoints.push(new Locale({id: 55, name: 'Peg Lev'}));
-    interestPoints.push(new Locale({id: 82, name: 'Hosp Cancer'}));
-    interestPoints.push(new Locale({id: 65, name: 'Igreja Matriz', surrender: true}));
+    interestPoints.push(new Localidade({id: 12, nome: 'Jd Vitoria', surrender: true}));
+    interestPoints.push(new Localidade({id: 55, nome: 'Peg Lev'}));
+    interestPoints.push(new Localidade({id: 82, nome: 'Hosp Cancer'}));
+    interestPoints.push(new Localidade({id: 65, nome: 'Igreja Matriz', surrender: true}));
 
     const model = new March({
-        route: new Route({
+        linha: new Linha({
             id: 5,
             prefixo: '301',
-            name: 'Jd Vitoria x Centro',
+            nome: 'Jd Vitoria x Centro',
             circular: false,
-            from: interestPoints[0],
-            to: interestPoints[1],
-            fromExtension: 23.22,
-            toExtension: 21.10,
+            origem: interestPoints[0],
+            destino: interestPoints[1],
+            extensao_ida: 23.22,
+            extensao_volta: 21.10,
             metrics: {
-                fromMinAccess: 20,
-                toMinAccess: 25,
-                fromMinRecall: 18,
-                toMinRecall: 16,
-                fromKmAccess: 4.22,
-                toKmAccess: 5,
-                fromKmRecall: 4.63,
-                toKmRecall: 3.36,
+                acesso_origem_minutos: 20,
+                acesso_destino_minutos: 25,
+                recolhe_origem_minutos: 18,
+                recolhe_destino_minutos: 16,
+                acesso_origem_km: 4.22,
+                acesso_destino_km: 5,
+                recolhe_origem_km: 4.63,
+                recolhe_destino_km: 3.36,
             },
-            refs: {from:[{local: interestPoints[2], delta: 20}], to:[{local: interestPoints[3], delta: 35}]}
+            refs: {origem:[{local: interestPoints[2], delta: 20}], destino:[{local: interestPoints[3], delta: 35}]}
         })
     });
-    model.route.param[4].fromDemand = 450;
-    model.route.param[4].toDemand = 85;
-    model.route.param[5].fromDemand = 520;
-    model.route.param[5].toDemand = 122;
+    model.linha.param[4].demanda_ida = 450;
+    model.linha.param[4].demanda_volta = 85;
+    model.linha.param[5].demanda_ida = 520;
+    model.linha.param[5].demanda_volta = 122;
     const project = new MarchUI({
         container: document.getElementById('march_container'),
         settingsContainer: document.getElementById('marchSettings_container'),

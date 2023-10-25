@@ -3,25 +3,25 @@ class MarchUI{
         this.sw = screen.width;
         this.sh = window.innerHeight;
         this.gridLocked = false; // Se true desativa atalhos de edicao do grid
-        this.fleetIndex = -1;
-        this.tripIndex = -1;
-        this.fleetSelection = -1; // Indice do carro onde foi iniciado selecao
-        this.startSelection = -1; // Viagem inicial selecionada
-        this.endSelection = -1; // Viagem final selecionada
-        this.fleetFocus = null;
-        this.tripFocus = null;
-        this.scheduleFocus = null;
-        this.scheduleSelection = null;
-        this.fleetLabels = []; // Lista com apontadores das labels dos carros
+        this.carroIndice = -1;
+        this.viagemIndice = -1;
+        this.carroSelecao = -1; // Indice do carro onde foi iniciado selecao
+        this.inicioSelecao = -1; // Viagem inicial selecionada
+        this.fimSelecao = -1; // Viagem final selecionada
+        this.carroFocus = null;
+        this.viagemFocus = null;
+        this.escalaFocus = null;
+        this.escalaSelecao = null;
+        this.carroLabels = []; // Lista com apontadores das labels dos carros
         this.grid = {}; // Dicionario Todos os elementos do grid (carros e viagens) serao armazenados aqui
         this.freqGrid = {}; // Dicionario com item da regua de frequencia
-        this.scheduleGrid = {}; // Dicionario com os schedules
-        this.scheduleArrowsGrid = {}; // Lista com elementos arrows
+        this.escalaGrid = {}; // Dicionario com os escalas
+        this.escalaArrowsGrid = {}; // Lista com elementos arrows
         this.arrowsVisible = true; 
-        this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
+        this.spotsGrid = {}; // Dicionario com os pontos de rfimicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
-        this.endMinutsMargin = options?.endMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
-        this.initialFleetView = 0; // Indice do primeiro carro sendo exibido no grid
+        this.fimMinutsMargin = options?.fimMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
+        this.initialCarroView = 0; // Indice do primeiro carro sfimo exibido no grid
         // Verifica se foi repassado initialView como hora em string ex '04:30', se sim converte em minutos
         if(typeof this.initialView == 'string'){this.initialView = hour2Min(this.initialView)}
 
@@ -38,9 +38,9 @@ class MarchUI{
 
         this.cursorClasslist = options?.cursorClasslist || 'bi bi-caret-down-fill fs-2';
 
-        this.fleetTagWidth = options?.fleetTagWidth || '35px';
-        this.fleetTagColor = options?.fleetTagColor || '#bcbcbc';
-        this.fleetHeight = options?.fleetHeight || '45px'; // height do carro
+        this.carroTagWidth = options?.carroTagWidth || '35px';
+        this.carroTagColor = options?.carroTagColor || '#bcbcbc';
+        this.carroHeight = options?.carroHeight || '45px'; // height do carro
         
         this.rulerHeight = options?.rulerHeight || '25px';
         this.rulerNumColor = options?.rulerNumColor || '#888';
@@ -58,17 +58,17 @@ class MarchUI{
         this.rulerMediumHeight = options?.rulerMediumHeight || '15px';
         this.rulerMediumUnit = options?.rulerMediumUnit || 60;
 
-        this.tripStyle = options?.tripStyle || 'height: 8px;border-radius: 10px;';
+        this.viagemStyle = options?.viagemStyle || 'height: 8px;border-radius: 10px;';
         
-        this.tripFromColor = options?.tripFromColor || '#4080A0';
-        this.tripToColor = options?.tripToColor || '#98D3F0';
-        this.tripHeight = options?.tripHeight || '8px';
+        this.viagemOrigemColor = options?.viagemOrigemColor || '#4080A0';
+        this.viagemDestinoColor = options?.viagemDestinoColor || '#98D3F0';
+        this.viagemHeight = options?.viagemHeight || '8px';
 
         this.defaultSettings = {
             rulerUnit: '4px',
             rulerMediumUnit: 30,
-            tripFromColor: '#4080A0',
-            tripToColor: '#98D3F0',
+            viagemOrigemColor: '#4080A0',
+            viagemDestinoColor: '#98D3F0',
         }
 
         // PRODUTIVA = '1', EXPRESSO = '2', SEMIEXPRESSO = '3', EXTRA = '4', ACESSO = '5', RECOLHE = '6', INTERVALO = '7', RESERVADO = '9';
@@ -81,7 +81,7 @@ class MarchUI{
             '9':`repeating-linear-gradient(-45deg, COLOR, COLOR 5px, var(--bs-secondary-bg) 3px, var(--bs-secondary-bg) 10px)`,
         }
         
-        this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 start-0 border-top';
+        this.footerClasslist = options?.footerClasslist || 'bg-body-secondary text-body-secondary w-100 position-fixed bottom-0 inicio-0 border-top';
         this.footerHeight = options?.footerHeight || '70px';
 
         this.translateType = {
@@ -98,14 +98,14 @@ class MarchUI{
             'V': 'VOLTA',
         }
         
-        this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.fleetHeight));
+        this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.carroHeight));
         
         // Carrega configuracoes do usuario para o grid
         if(localStorage['marchUiSettings']){
             let s = JSON.parse(localStorage['marchUiSettings']);
             this.project.sumInterGaps = s.sumInterGaps;
-            this.tripFromColor = s.tripFromColor;
-            this.tripToColor = s.tripToColor;
+            this.viagemOrigemColor = s.viagemOrigemColor;
+            this.viagemDestinoColor = s.viagemDestinoColor;
         }
 
         this.__buildStyles();
@@ -115,7 +115,7 @@ class MarchUI{
         if(this.settingsContainer){this.__builSettingsUI()}
         
         // Se projeto vazio verifica se nao existe previa salvo localmente, se sim carrega previa
-        if(this.project.cars.length == 0 && localStorage['marchCurrentProject']){
+        if(this.project.carros.length == 0 && localStorage['marchCurrentProject']){
             this.project.load(JSON.parse(localStorage.marchCurrentProject)); // Carrega modelo com projeto salvo localmente
         }
         this.switchStage(this.project.viewStage); // Carrega interface do respectivo viewStage
@@ -123,8 +123,8 @@ class MarchUI{
     __buildStyles(){
         let style = document.createElement('style');
         style.innerHTML = `
-        .trip-shut{border-radius: 5px 0 0 5px!important;}
-        .trip-shut::after{
+        .viagem-encerrar{border-radius: 5px 0 0 5px!important;}
+        .viagem-encerrar::after{
             content: '|';
             font-weight: bolder;
             position: relative;
@@ -143,10 +143,10 @@ class MarchUI{
         // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.classList = this.rulerClasslist;
-        this.rulerTop.style.zIndex = 100;
+        this.rulerTop.style.zIndice = 100;
         this.rulerTop.style.position = 'relative';
         this.rulerTop.style.height = this.rulerHeight;
-        this.rulerTop.style.paddingLeft = this.fleetTagWidth;
+        this.rulerTop.style.paddingLeft = this.carroTagWidth;
         // ----
         this.container.appendChild(this.rulerTop);
         this.rulerTop.after(this.canvas);
@@ -166,15 +166,15 @@ class MarchUI{
         this.cursor.style.position = 'absolute';
         this.cursor.style.left = '-300px';
         this.cursor.style.top = '-300px';
-        this.cursor.style.zIndex = '98';
+        this.cursor.style.zIndice = '98';
         this.canvas.appendChild(this.cursor);
     }
     __buildRuler(){ // Cria (ou atualiza) regua
         this.rulerSmallMarginRight = (parseFloat(this.rulerUnit) - parseInt(this.rulerSmallWidth)) + 'px';
         this.rulerMediumMarginRight = (parseFloat(this.rulerUnit) - parseInt(this.rulerMediumWidth)) + 'px';
-        this.maxMinutsVisible = parseInt((this.sw - parseInt(this.fleetTagWidth)) / parseFloat(this.rulerUnit));
+        this.maxMinutsVisible = parseInt((this.sw - parseInt(this.carroTagWidth)) / parseFloat(this.rulerUnit));
         this.rulerTop.innerHTML = '';
-        let start = this.initialView;
+        let inicio = this.initialView;
         let reset = 0; // contador para testar tamanho da liha a ser utulizada (small, medium) 
         for(let i = 0; i < this.maxMinutsVisible; i++){
             let d = document.createElement('span');
@@ -202,16 +202,16 @@ class MarchUI{
                 num.style.fontSize = this.rulerNumSize;
                 num.style.paddingLeft = this.rulerNumPaddingStart;
                 num.style.paddingTop = this.rulerNumPaddingTop;
-                num.innerHTML = min2Hour(start);
+                num.innerHTML = min2Hour(inicio);
                 this.rulerTop.appendChild(d);
                 this.rulerTop.appendChild(num);
             }
             reset++;
-            start++;
+            inicio++;
         }
     }
     __buildFooter(){ // Cria elementos do footer
-        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndex = '100';
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndice = '100';
         this.displayStart = document.createElement('h5');this.displayStart.style.width = '70px';this.displayStart.style.position = 'absolute';this.displayStart.style.top = '5px';this.displayStart.style.left = '10px';this.displayStart.innerHTML = '--:--';
         this.displayEnd = document.createElement('h5');this.displayEnd.style.width = '70px';this.displayEnd.style.position = 'absolute';this.displayEnd.style.bottom = '5px';this.displayEnd.style.left = '10px';this.displayEnd.innerHTML = '--:--';
         this.displayCycle = document.createElement('h5');this.displayCycle.style.position = 'absolute';this.displayCycle.style.top = '5px';this.displayCycle.style.left = '70px';this.displayCycle.innerHTML = '--';
@@ -220,53 +220,53 @@ class MarchUI{
         let freqLabel = document.createElement('small');freqLabel.style.position = 'absolute';freqLabel.style.bottom = '10px';freqLabel.style.left = '110px';freqLabel.innerHTML = 'FREQ';
         this.displayInterv = document.createElement('h5');this.displayInterv.style.position = 'absolute';this.displayInterv.style.top = '5px';this.displayInterv.style.left = '150px';this.displayInterv.innerHTML = '--';
         let intervLabel = document.createElement('small');intervLabel.style.position = 'absolute';intervLabel.style.bottom = '10px';intervLabel.style.left = '150px';intervLabel.innerHTML = 'INTERV';
-        this.displayTripType = document.createElement('h6');this.displayTripType.classList.add('text-secondary');this.displayTripType.style.position = 'absolute';this.displayTripType.style.top = '10px';this.displayTripType.style.left = '210px';this.displayTripType.innerHTML = '';
-        this.displayTripType.ondblclick = () => { // No double click, transforma span em select para alterar tipo da viagem
-            if([INTERVALO, ACESSO, RECOLHE].includes(this.tripFocus.type)){return false;} // Nao pode ser alterado tipos de intervalo, acesso e recolhe
+        this.displayViagemTipo = document.createElement('h6');this.displayViagemTipo.classList.add('text-secondary');this.displayViagemTipo.style.position = 'absolute';this.displayViagemTipo.style.top = '10px';this.displayViagemTipo.style.left = '210px';this.displayViagemTipo.innerHTML = '';
+        this.displayViagemTipo.ondblclick = () => { // No double click, transforma span em select para alterar tipo da viagem
+            if([INTERVALO, ACESSO, RECOLHE].includes(this.viagemFocus.tipo)){return false;} // Nao pode ser alterado tipos de intervalo, acesso e recolhe
             this.gridLocked = true;
-            this.displayTripType.style.display = 'none';
-            let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayTripType.style.left};top: ${this.displayTripType.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
+            this.displayViagemTipo.style.display = 'none';
+            let select = document.createElement('select');select.style = `position: absolute;left: ${this.displayViagemTipo.style.left};top: ${this.displayViagemTipo.style.top};border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;
             let options = {'1': 'Produtiva', '9': 'Reservado', '2': 'Expresso', '3': 'Semiexpresso'};
             for(let key in options){
                 let opt = document.createElement('option');
                 opt.value = key;opt.innerHTML = options[key];
-                if(opt.value == this.tripFocus.type){opt.selected = true;}
+                if(opt.value == this.viagemFocus.tipo){opt.selected = true;}
                 select.appendChild(opt);
             }
-            this.displayTripType.after(select);
+            this.displayViagemTipo.after(select);
             let confirm = document.createElement('button');confirm.type = 'button';confirm.innerHTML = 'OK';
             confirm.style = `position: absolute;left: ${select.offsetLeft + select.offsetWidth + 2}px;top: ${select.style.top};border: 1px solid var(--bs-border-color);font-size: 0.8rem;padding: 1px 5px;border-radius: 2px;background-color: var(--bs-dark-bg-subtle);`;
             confirm.onclick = () => {
-                this.project.cars[this.fleetIndex].trips[this.tripIndex].type = select.value;
+                this.project.carros[this.carroIndice].viagens[this.viagemIndice].tipo = select.value;
                 if(select.value != PRODUTIVA){
-                    let c = this.tripFocus.way == IDA ? this.tripFromColor : this.tripToColor;
-                    this.grid[this.fleetIndex][this.tripIndex].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
+                    let c = this.viagemFocus.sentido == IDA ? this.viagemOrigemColor : this.viagemDestinoColor;
+                    this.grid[this.carroIndice][this.viagemIndice].style.background = this.typePattern[select.value].replaceAll('COLOR', c);
                 }
                 else{
-                    if(this.tripFocus.way == IDA){
-                        this.grid[this.fleetIndex][this.tripIndex].style.background = ''; // Limpa patterns (caso exista)
-                        this.grid[this.fleetIndex][this.tripIndex].style.backgroundColor = this.tripFromColor; // Ajusta cor da linha
+                    if(this.viagemFocus.sentido == IDA){
+                        this.grid[this.carroIndice][this.viagemIndice].style.background = ''; // Limpa patterns (caso exista)
+                        this.grid[this.carroIndice][this.viagemIndice].style.backgroundColor = this.viagemOrigemColor; // Ajusta cor da linha
                     }
                     else{
-                        this.grid[this.fleetIndex][this.tripIndex].style.background = ''; // Limpa patterns (caso exista)
-                        this.grid[this.fleetIndex][this.tripIndex].style.backgroundColor = this.tripToColor; // Ajusta cor da linha
+                        this.grid[this.carroIndice][this.viagemIndice].style.background = ''; // Limpa patterns (caso exista)
+                        this.grid[this.carroIndice][this.viagemIndice].style.backgroundColor = this.viagemDestinoColor; // Ajusta cor da linha
                     }
                 }
                 // Se viagem foi alterada p reservada, deixa de aparecer no freqRule
-                this.freqGrid[this.fleetIndex][this.tripIndex].style.visibility = select.value == RESERVADO ? 'hidden' : 'visible';
+                this.freqGrid[this.carroIndice][this.viagemIndice].style.visibility = select.value == RESERVADO ? 'hidden' : 'visible';
                 select.remove();
                 confirm.remove();
-                this.displayTripType.style.display = 'inline';
-                this.__updateTripDisplay();
+                this.displayViagemTipo.style.display = 'inline';
+                this.__updateViagemDisplay();
                 this.gridLocked = false;
             }
             select.after(confirm);
         }
-        this.displayTripWay = document.createElement('h5');this.displayTripWay.classList = 'text-body-tertiary';this.displayTripWay.style.position = 'absolute';this.displayTripWay.style.bottom = '5px';this.displayTripWay.style.left = '210px';this.displayTripWay.innerHTML = '';
-        this.displayTripWay.ondblclick = () => {if(this.tripFocus){this.switchWay();}}
+        this.displayViagemWay = document.createElement('h5');this.displayViagemWay.classList = 'text-body-tertiary';this.displayViagemWay.style.position = 'absolute';this.displayViagemWay.style.bottom = '5px';this.displayViagemWay.style.left = '210px';this.displayViagemWay.innerHTML = '';
+        this.displayViagemWay.ondblclick = () => {if(this.viagemFocus){this.switchWay();}}
         let vr = document.createElement('div');vr.classList = 'vr';vr.style = 'position: absolute; left: 375px;top: 10px;height: 50px;'
-        this.displayTripsCount = document.createElement('h5');this.displayTripsCount.style.position = 'absolute';this.displayTripsCount.style.top = '10px';this.displayTripsCount.style.left = '390px';this.displayTripsCount.innerHTML = '';
-        let tripsCountLabel = document.createElement('small');tripsCountLabel.style.position = 'absolute';tripsCountLabel.style.bottom = '10px';tripsCountLabel.style.left = '390px';tripsCountLabel.innerHTML = 'VIAGENS';
+        this.displayViagemsCount = document.createElement('h5');this.displayViagemsCount.style.position = 'absolute';this.displayViagemsCount.style.top = '10px';this.displayViagemsCount.style.left = '390px';this.displayViagemsCount.innerHTML = '';
+        let viagensCountLabel = document.createElement('small');viagensCountLabel.style.position = 'absolute';viagensCountLabel.style.bottom = '10px';viagensCountLabel.style.left = '390px';viagensCountLabel.innerHTML = 'VIAGENS';
         this.displayJorney = document.createElement('h5');this.displayJorney.style.position = 'absolute';this.displayJorney.style.top = '10px';this.displayJorney.style.left = '455px';this.displayJorney.innerHTML = '';
         let jorneyLabel = document.createElement('small');jorneyLabel.style.position = 'absolute';jorneyLabel.style.bottom = '10px';jorneyLabel.style.left = '455px';jorneyLabel.innerHTML = 'JORNADA';
         this.displayInterv2 = document.createElement('h5');this.displayInterv2.style.position = 'absolute';this.displayInterv2.style.top = '10px';this.displayInterv2.style.left = '530px';this.displayInterv2.innerHTML = '';
@@ -282,11 +282,11 @@ class MarchUI{
         this.footer.appendChild(freqLabel);
         this.footer.appendChild(this.displayInterv);
         this.footer.appendChild(intervLabel);
-        this.footer.appendChild(this.displayTripType);
-        this.footer.appendChild(this.displayTripWay);
+        this.footer.appendChild(this.displayViagemTipo);
+        this.footer.appendChild(this.displayViagemWay);
         this.footer.appendChild(vr);
-        this.footer.appendChild(this.displayTripsCount);
-        this.footer.appendChild(tripsCountLabel);
+        this.footer.appendChild(this.displayViagemsCount);
+        this.footer.appendChild(viagensCountLabel);
         this.footer.appendChild(this.displayJorney);
         this.footer.appendChild(jorneyLabel);
         this.footer.appendChild(this.displayInterv2);
@@ -312,31 +312,31 @@ class MarchUI{
         
         this.settingsContainer.appendChild(this.__settingsAddDivisor());
         
-        this.settingstripFromColor = document.createElement('input');this.settingstripFromColor.type = `color`;this.settingstripFromColor.value = this.tripFromColor;
-        this.settingstripFromColor.onchange = () => {
-            this.tripFromColor = this.settingstripFromColor.value;
-            for(let i = 0; i < this.project.cars.length; i++){
-                for(let j = 0; j < this.project.cars[i].trips.length;j++){
-                    if(this.project.cars[i].trips[j].way == IDA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
+        this.settingsviagemOrigemColor = document.createElement('input');this.settingsviagemOrigemColor.type = `color`;this.settingsviagemOrigemColor.value = this.viagemOrigemColor;
+        this.settingsviagemOrigemColor.onchange = () => {
+            this.viagemOrigemColor = this.settingsviagemOrigemColor.value;
+            for(let i = 0; i < this.project.carros.length; i++){
+                for(let j = 0; j < this.project.carros[i].viagens.length;j++){
+                    if(this.project.carros[i].viagens[j].sentido == IDA){this.__updateViagemStyle(this.project.carros[i].viagens[j], this.grid[i][j])}
                 }
             }
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingstripFromColor);
-        let fromColorLabel = document.createElement('small');fromColorLabel.innerHTML = `IDA`;fromColorLabel.style.position = 'relative';fromColorLabel.style.top = '-7px';fromColorLabel.style.left = '5px';
-        this.settingsContainer.appendChild(fromColorLabel);
+        this.settingsContainer.appendChild(this.settingsviagemOrigemColor);
+        let origemColorLabel = document.createElement('small');origemColorLabel.innerHTML = `IDA`;origemColorLabel.style.position = 'relative';origemColorLabel.style.top = '-7px';origemColorLabel.style.left = '5px';
+        this.settingsContainer.appendChild(origemColorLabel);
         
-        this.settingstripToColor = document.createElement('input');this.settingstripToColor.type = `color`;this.settingstripToColor.style.marginLeft = `25px`;this.settingstripToColor.value = this.tripToColor;
-        this.settingstripToColor.onchange = () => {
-            this.tripToColor = this.settingstripToColor.value;
-            for(let i = 0; i < this.project.cars.length; i++){
-                for(let j = 0; j < this.project.cars[i].trips.length;j++){
-                    if(this.project.cars[i].trips[j].way == VOLTA){this.__updateTripStyle(this.project.cars[i].trips[j], this.grid[i][j])}
+        this.settingsviagemDestinoColor = document.createElement('input');this.settingsviagemDestinoColor.type = `color`;this.settingsviagemDestinoColor.style.marginLeft = `25px`;this.settingsviagemDestinoColor.value = this.viagemDestinoColor;
+        this.settingsviagemDestinoColor.onchange = () => {
+            this.viagemDestinoColor = this.settingsviagemDestinoColor.value;
+            for(let i = 0; i < this.project.carros.length; i++){
+                for(let j = 0; j < this.project.carros[i].viagens.length;j++){
+                    if(this.project.carros[i].viagens[j].sentido == VOLTA){this.__updateViagemStyle(this.project.carros[i].viagens[j], this.grid[i][j])}
                 }
             }
             this.__saveUISettings();
         }
-        this.settingsContainer.appendChild(this.settingstripToColor);
+        this.settingsContainer.appendChild(this.settingsviagemDestinoColor);
         let toColorLabel = document.createElement('small');toColorLabel.innerHTML = `VOLTA`;toColorLabel.style.position = 'relative';toColorLabel.style.top = '-7px';toColorLabel.style.left = '5px';
         this.settingsContainer.appendChild(toColorLabel);
         
@@ -351,7 +351,7 @@ class MarchUI{
             this.settingsrulerUnit.classList.remove('is-invalid');
             this.rulerUnit = `${this.settingsrulerUnit.value}px`;
             this.__buildRuler(); // Refaz a regua com novos valores
-            if(this.tripFocus){ // Se tiver viagem inserida ajusta posicionamento do canvas
+            if(this.viagemFocus){ // Se tiver viagem inserida ajusta posicionamento do canvas
                 this.__canvasRebuild(); // Limpa p canvas e refazer todas as viagens com novos parametros
                 this.__cursorMove(); // Move o cursor para ajustar view
             }
@@ -375,23 +375,23 @@ class MarchUI{
         this.settingsContainer.appendChild(this.settingsrulerMediumUnit);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerMediumUnit, 'Display de minutos [ 10 a 180 ]'));
 
-        this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.id = 'March_settingsProjectName';this.settingsProjectName.value = this.project.name;
+        this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.id = 'March_settingsProjectName';this.settingsProjectName.value = this.project.nome;
         this.settingsProjectName.disabled = true;
-        // this.settingsProjectName.onchange = ()=>{this.project.name = this.settingsProjectName.value;}
+        // this.settingsProjectName.onchange = ()=>{this.project.nome = this.settingsProjectName.value;}
         this.settingsContainer.appendChild(this.settingsProjectName);
         this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectName, 'Nome Projeto'));
         
-        this.settingsDayType = document.createElement('select');this.settingsDayType.classList = 'flat-select';this.settingsDayType.id = 'March_settingsDayType';
-        this.settingsDayType.disabled = true;
+        this.settingsDayTipo = document.createElement('select');this.settingsDayTipo.classList = 'flat-select';this.settingsDayTipo.id = 'March_settingsDayTipo';
+        this.settingsDayTipo.disabled = true;
         let dayTypeOpts = {'U': 'Util', 'S': 'Sabado', 'D': 'Domingo', 'E': 'Especial', 'F': 'Ferias'}
         for(let key in dayTypeOpts){
             let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
             if(this.project.dayType == key){opt.selected = true}
-            this.settingsDayType.appendChild(opt);
+            this.settingsDayTipo.appendChild(opt);
         }
-        // this.settingsDayType.onchange = ()=>{this.project.dayType = this.settingsDayType.value}
-        this.settingsContainer.appendChild(this.settingsDayType);
-        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsDayType, 'Dia Tipo'));
+        // this.settingsDayTipo.onchange = ()=>{this.project.dayType = this.settingsDayTipo.value}
+        this.settingsContainer.appendChild(this.settingsDayTipo);
+        this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsDayTipo, 'Dia Tipo'));
 
         this.settingsProjectDesc = document.createElement('textarea');this.settingsProjectDesc.placeholder = ' ';this.settingsProjectDesc.classList = 'flat-textarea';this.settingsProjectDesc.id = 'March_settingsProjectDesc';this.settingsProjectDesc.value = this.project.desc;
         this.settingsProjectDesc.disabled = true;
@@ -427,73 +427,73 @@ class MarchUI{
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
     __settingsUpdateBaselines(){ // Atualiza tabela com patamares cadastrados
-        let baseline = this.project.route.getBaselines();
+        let baseline = this.project.linha.getBaselines();
         this.settingsBaselineTable.innerHTML = '<thead><tr><th colspan="2">Faixa</th><th colspan="2">Ciclo</th><th colspan="2">Intervalo</th><th colspan="2">Frequência</th></tr><tr><th>Inicio</th><th>Fim</th><th>Ida</th><th>Volta</th><th>Ida</th><th>Volta</th><th>Frota</th><th>Freq</th></tr></thead>';
         for(let i = 0; i < baseline.length; i++){
             let onclick = `if(parseInt(this.innerHTML) > 0){this.nextSibling.innerHTML = parseFloat((parseInt(this.parentNode.childNodes[2].innerHTML) + parseInt(this.parentNode.childNodes[3].innerHTML) + parseInt(this.parentNode.childNodes[4].innerHTML) + parseInt(this.parentNode.childNodes[5].innerHTML)) / parseInt(this.innerHTML)).toFixed(2)}else{this.nextSibling.innerHTML = ''}`;
-            let tr = `<tr><td>${baseline[i].start}</td><td>${baseline[i].end}</td><td>${baseline[i].fromMin}</td><td>${baseline[i].toMin}</td><td>${baseline[i].fromInterv}</td><td>${baseline[i].toInterv}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
+            let tr = `<tr><td>${baseline[i].inicio}</td><td>${baseline[i].fim}</td><td>${baseline[i].origemMin}</td><td>${baseline[i].destinoMin}</td><td>${baseline[i].origemInterv}</td><td>${baseline[i].destinoInterv}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
             this.settingsBaselineTable.innerHTML += tr;
         }
     }
     __settingsUpdateFreqSimulate(){ // Calcula frequencia (exibe na label) baseado nos dados do patamar
-        if(this.settingsFleetSimulate.value == '' || this.settingsFleetSimulate.value == 0){this.settingsFreqSimulate.innerHTML = '--'; return false;}
-        if(!this.project.route.circular){
-            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineToMin.value) + parseInt(this.settingsBaselineFromInterv.value) + parseInt(this.settingsBaselineToInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+        if(this.settingsCarroSimulate.value == '' || this.settingsCarroSimulate.value == 0){this.settingsFreqSimulate.innerHTML = '--'; return false;}
+        if(!this.project.linha.circular){
+            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineOrigemMin.value) + parseInt(this.settingsBaselineToMin.value) + parseInt(this.settingsBaselineOrigemInterv.value) + parseInt(this.settingsBaselineToInterv.value)) / parseInt(this.settingsCarroSimulate.value)).toFixed(2);
         }
         else{
-            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineFromMin.value) + parseInt(this.settingsBaselineFromInterv.value)) / parseInt(this.settingsFleetSimulate.value)).toFixed(2);
+            this.settingsFreqSimulate.innerHTML = ((parseInt(this.settingsBaselineOrigemMin.value) + parseInt(this.settingsBaselineOrigemInterv.value)) / parseInt(this.settingsCarroSimulate.value)).toFixed(2);
         }
     }
-    addFleet(car=null, seq=this.project.cars.length + 1){
-        car = car || this.project.addFleet({route: this.project.route});
+    addCarro(car=null, seq=this.project.carros.length + 1){
+        car = car || this.project.addCarro({linha: this.project.linha});
         let carLabel = document.createElement('span');
-        carLabel.style.width = this.fleetTagWidth;
-        carLabel.style.color = this.fleetTagColor;
-        carLabel.style.height = this.fleetHeight;
+        carLabel.style.width = this.carroTagWidth;
+        carLabel.style.color = this.carroTagColor;
+        carLabel.style.height = this.carroHeight;
         carLabel.style.paddingLeft = '3px';
         carLabel.style.position = 'absolute';
         carLabel.style.backgroundColor = 'var(--bs-body-bg)';
-        carLabel.style.zIndex = '95';
+        carLabel.style.zIndice = '95';
         carLabel.innerHTML = String(seq).padStart(2,'0');
-        carLabel.style.top = `calc(${this.fleetHeight} * ${seq})`;
+        carLabel.style.top = `calc(${this.carroHeight} * ${seq})`;
         carLabel.style.left = 0;
-        this.fleetLabels.push(carLabel);
+        this.carroLabels.push(carLabel);
         this.container.appendChild(carLabel);
         this.grid[seq - 1] = []; // Adiciona entrada para o carro no dicionario de grid
         this.freqGrid[seq - 1] = []; // Adiciona entrada para o carro no dicionario de freqGrid
-        for(let i = 0; i < car.trips.length; i++){
-            let v = this.addTrip(car.trips[i], seq - 1);
+        for(let i = 0; i < car.viagens.length; i++){
+            let v = this.addViagem(car.viagens[i], seq - 1);
         }
-        if(this.tripFocus == null){ // Se nenhuma viagem em foco, aponta para primeira viagem do primeiro carro
-            this.fleetIndex = 0;
-            this.tripIndex = 0;
-            this.fleetFocus = car;
-            this.tripFocus = car.trips[0];
+        if(this.viagemFocus == null){ // Se nenhuma viagem em foco, aponta para primeira viagem do primeiro carro
+            this.carroIndice = 0;
+            this.viagemIndice = 0;
+            this.carroFocus = car;
+            this.viagemFocus = car.viagens[0];
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
     }
-    addTrip(trip=null, seq=this.fleetIndex, confirmed=false){
-        this.__clearSelection();
-        trip = trip || this.project.cars[this.fleetIndex].addTrip(this.project.route);
+    addViagem(viagem=null, seq=this.carroIndice, confirmed=false){
+        this.__clearSelecao();
+        viagem = viagem || this.project.carros[this.carroIndice].addViagem(this.project.linha);
         let v = document.createElement('div'); // Elemento viagem (grid)
-        v.style = this.tripStyle;
-        this.__updateTripStyle(trip, v);
+        v.style = this.viagemStyle;
+        this.__updateViagemStyle(viagem, v);
         v.style.position = 'absolute';
-        v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-        v.style.top = `calc(${this.fleetHeight} * ${seq + 1} - 17px)`;
-        v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
+        v.style.width = `calc(${this.rulerUnit} * ${viagem.getCycle()})`;
+        v.style.top = `calc(${this.carroHeight} * ${seq + 1} - 17px)`;
+        v.style.left = `calc(${this.carroTagWidth} + ${viagem.inicio} * ${this.rulerUnit})`;
         this.grid[seq].push(v);
         this.canvas.appendChild(v);
         let vf = document.createElement('div'); // Dot na regua de frequencia
         vf.style.position = 'absolute';
         vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
-        vf.style.top = trip.way == IDA ? '5px' : '30px';
+        vf.style.top = viagem.sentido == IDA ? '5px' : '30px';
         vf.style.width = this.rulerSmallWidth;
         vf.style.height = this.rulerSmallHeight;
         vf.style.backgroundColor = this.rulerSmallColor;
         vf.style.marginRight = this.rulerSmallMarginRight;
-        if([INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(trip.type)){
+        if([INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(viagem.tipo)){
             vf.style.visibility = 'hidden';
         }
         this.freqGrid[seq].push(vf);
@@ -517,31 +517,31 @@ class MarchUI{
         modal.showModal();
     }
 
-    addTripAt(){ // Exibe modal com entrada para hora de inicio de viagem
-        this.__clearSelection();
+    addViagemAt(){ // Exibe modal com entrada para hora de inicio de viagem
+        this.__clearSelecao();
         this.gridLocked = true;
         let modal = document.createElement('dialog');modal.innerHTML = '<h6>Adicionar viagem as:</h6>'
-        let startAt = document.createElement('input');startAt.type = 'time';startAt.style.width = '100px';startAt.style.textAlign = 'center';startAt.style.display = 'block';startAt.style.marginLeft = 'auto';startAt.style.marginRight = 'auto';
+        let inicioAt = document.createElement('input');inicioAt.type = 'time';inicioAt.style.width = '100px';inicioAt.style.textAlign = 'center';inicioAt.style.display = 'block';inicioAt.style.marginLeft = 'auto';inicioAt.style.marginRight = 'auto';
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-dark mt-2 float-end';confirm.innerHTML = 'Confirmar';
         confirm.onclick = () => {
-            let time = hour2Min(startAt.value)
+            let time = hour2Min(inicioAt.value)
             if(time){
-                let v = this.project.addTrip(this.fleetIndex, time);
-                if(v){ // Se viagem atende requisitos, insere viagem no grid
-                    this.addTrip(v, this.fleetIndex);
+                let v = this.project.addViagem(this.carroIndice, time);
+                if(v){ // Se viagem atfime requisitos, insere viagem no grid
+                    this.addViagem(v, this.carroIndice);
                     // Ao inserir viagem com horario predefinido move o foco para esta viagem
-                    this.tripFocus = v;
-                    this.tripIndex = this.project.cars[this.fleetIndex].trips.indexOf(this.tripFocus);
+                    this.viagemFocus = v;
+                    this.viagemIndice = this.project.carros[this.carroIndice].viagens.indexOf(this.viagemFocus);
                     // Ao inserir viagem com horario predefinido a viagem sera inserida na ordem de inicio
                     // necessario reordenar tambem grid para corresponder indices de viagens
-                    this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
-                    this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+                    this.grid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+                    this.freqGrid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
                     this.__cursorMove();
-                    this.__updateTripDisplay();
+                    this.__updateViagemDisplay();
                 }
                 cancel.click(); // Fecha modal
             }
-            else{startAt.style.border = '2px solid var(--bs-form-invalid-color)'}
+            else{inicioAt.style.border = '2px solid var(--bs-form-invalid-color)'}
         }
         let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-secondary mt-2 me-1 float-end';cancel.innerHTML = 'Cancelar';
         cancel.onclick = () => { // Libera o grid e destroi o modal
@@ -550,108 +550,108 @@ class MarchUI{
         }
         modal.addEventListener('close', ()=>{this.gridLocked = false;})
 
-        modal.appendChild(startAt);
+        modal.appendChild(inicioAt);
         modal.appendChild(confirm);
         modal.appendChild(cancel);
         document.body.appendChild(modal);
         modal.showModal();
     }
     addInterv(){
-        this.__clearSelection();
-        let trip = this.project.cars[this.fleetIndex].addInterv(this.tripIndex);
-        if(trip){
+        this.__clearSelecao();
+        let viagem = this.project.carros[this.carroIndice].addInterv(this.viagemIndice);
+        if(viagem){
             let v = document.createElement('div'); // Elemento viagem (grid)
-            v.style = this.tripStyle;
+            v.style = this.viagemStyle;
             v.style.background = this.typePattern[INTERVALO];
             v.style.position = 'absolute';
-            v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-            v.style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
-            v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-            this.grid[this.fleetIndex].push(v);
+            v.style.width = `calc(${this.rulerUnit} * ${viagem.getCycle()})`;
+            v.style.top = `calc(${this.carroHeight} * ${this.carroIndice + 1} - 17px)`;
+            v.style.left = `calc(${this.carroTagWidth} + ${viagem.inicio} * ${this.rulerUnit})`;
+            this.grid[this.carroIndice].push(v);
             this.canvas.appendChild(v);
-            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.grid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
-            vf.style.top = trip.way == IDA ? '5px' : '30px';
+            vf.style.top = viagem.sentido == IDA ? '5px' : '30px';
             vf.style.width = this.rulerSmallWidth;
             vf.style.height = this.rulerSmallHeight;
             vf.style.backgroundColor = this.rulerSmallColor;
             vf.style.marginRight = this.rulerSmallMarginRight;
             vf.style.visibility = 'hidden'; // Intervalos nao sao vistos na freqRule
-            this.freqGrid[this.fleetIndex].push(vf);
+            this.freqGrid[this.carroIndice].push(vf);
             this.rulerFreq.appendChild(vf);
-            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.freqGrid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
     }
-    addAccess(fleetIndex=this.fleetIndex, tripIndex=this.tripIndex, incrementIndex=true){
-        this.__clearSelection();
-        let trip = this.project.cars[fleetIndex].addAccess(tripIndex, this.project.route.metrics);
-        if(trip){
+    addAccess(carroIndice=this.carroIndice, viagemIndice=this.viagemIndice, incrementIndice=true){
+        this.__clearSelecao();
+        let viagem = this.project.carros[carroIndice].addAccess(viagemIndice, this.project.linha.metrics);
+        if(viagem){
             let v = document.createElement('div'); // Elemento viagem (grid)
-            v.style = this.tripStyle;
+            v.style = this.viagemStyle;
             v.style.background = this.typePattern[ACESSO];
             v.style.position = 'absolute';
-            v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-            v.style.top = `calc(${this.fleetHeight} * ${fleetIndex + 1} - 17px)`;
-            v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-            this.grid[fleetIndex].push(v);
+            v.style.width = `calc(${this.rulerUnit} * ${viagem.getCycle()})`;
+            v.style.top = `calc(${this.carroHeight} * ${carroIndice + 1} - 17px)`;
+            v.style.left = `calc(${this.carroTagWidth} + ${viagem.inicio} * ${this.rulerUnit})`;
+            this.grid[carroIndice].push(v);
             this.canvas.appendChild(v);
-            this.grid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.grid[carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
-            vf.style.top = trip.way == IDA ? '5px' : '30px';
+            vf.style.top = viagem.sentido == IDA ? '5px' : '30px';
             vf.style.width = this.rulerSmallWidth;
             vf.style.height = this.rulerSmallHeight;
             vf.style.backgroundColor = this.rulerSmallColor;
             vf.style.marginRight = this.rulerSmallMarginRight;
             vf.style.visibility = 'hidden';; // Acesso nao sao vistos na freqRule
-            this.freqGrid[fleetIndex].push(vf);
+            this.freqGrid[carroIndice].push(vf);
             this.rulerFreq.appendChild(vf);
-            this.freqGrid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
-            if(incrementIndex){this.tripIndex++}
+            this.freqGrid[carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            if(incrementIndice){this.viagemIndice++}
         }
     }
-    addRecall(fleetIndex=this.fleetIndex, tripIndex=this.tripIndex){ // Adiciona recolhida na viagem em foco
-        this.__clearSelection();
-        let trip = this.project.cars[fleetIndex].addRecall(tripIndex, this.project.route.metrics);
-        if(trip){
+    addRecall(carroIndice=this.carroIndice, viagemIndice=this.viagemIndice){ // Adiciona recolhida na viagem em foco
+        this.__clearSelecao();
+        let viagem = this.project.carros[carroIndice].addRecall(viagemIndice, this.project.linha.metrics);
+        if(viagem){
             let v = document.createElement('div'); // Elemento viagem (grid)
-            v.style = this.tripStyle;
+            v.style = this.viagemStyle;
             v.style.background = this.typePattern[RECOLHE];
             v.style.position = 'absolute';
-            v.style.width = `calc(${this.rulerUnit} * ${trip.getCycle()})`;
-            v.style.top = `calc(${this.fleetHeight} * ${fleetIndex + 1} - 17px)`;
-            v.style.left = `calc(${this.fleetTagWidth} + ${trip.start} * ${this.rulerUnit})`;
-            this.grid[fleetIndex].push(v);
+            v.style.width = `calc(${this.rulerUnit} * ${viagem.getCycle()})`;
+            v.style.top = `calc(${this.carroHeight} * ${carroIndice + 1} - 17px)`;
+            v.style.left = `calc(${this.carroTagWidth} + ${viagem.inicio} * ${this.rulerUnit})`;
+            this.grid[carroIndice].push(v);
             this.canvas.appendChild(v);
-            this.grid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.grid[carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             let vf = document.createElement('div'); // Dot na regua de frequencia
             vf.style.position = 'absolute';
             vf.style.left = v.style.left; // Assume mesmo posicionamento da viagem
-            vf.style.top = trip.way == IDA ? '5px' : '30px';
+            vf.style.top = viagem.sentido == IDA ? '5px' : '30px';
             vf.style.width = this.rulerSmallWidth;
             vf.style.height = this.rulerSmallHeight;
             vf.style.backgroundColor = this.rulerSmallColor;
             vf.style.marginRight = this.rulerSmallMarginRight;
             vf.style.visibility = 'hidden';; // Recolhe nao sao vistos na freqRule
             this.rulerFreq.appendChild(vf);
-            this.freqGrid[fleetIndex].push(vf);
-            this.freqGrid[fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.freqGrid[carroIndice].push(vf);
+            this.freqGrid[carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
             return true;
         }
         return false;
     }
-    tripShut(){ // Encerra turno na viagem em foco
-        let v = this.fleetFocus.tripShut(this.tripIndex);
+    viagemShut(){ // Encerra turno na viagem em foco
+        let v = this.carroFocus.viagemShut(this.viagemIndice);
         if(v){
-            this.__updateTripStyle(this.tripFocus, this.grid[this.fleetIndex][this.tripIndex]);
+            this.__updateViagemStyle(this.viagemFocus, this.grid[this.carroIndice][this.viagemIndice]);
         }
     }
     switchWay(){ // Abre modal para alteracao do sentido da viagem
         let dialog = document.createElement('dialog');
-        dialog.innerHTML = `<p>Deseja altera o sentido da viagem para <b class="text-purple">${this.tripFocus.way  == IDA ? 'VOLTA' : 'IDA'}</b>?</p>`
+        dialog.innerHTML = `<p>Deseja altera o sentido da viagem para <b class="text-purple">${this.viagemFocus.sentido  == IDA ? 'VOLTA' : 'IDA'}</b>?</p>`
         let check = document.createElement('input');check.id = 'March_switchWayCheck';check.checked = 'true'
         dialog.appendChild(this.__settingsContainerSwitch(check, 'Alterar demais viagens'));
         let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-phanton text-secondary float-end';cancel.innerHTML = 'Cancelar';
@@ -661,193 +661,193 @@ class MarchUI{
         }
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-phanton float-end';confirm.innerHTML = 'Gravar';
         confirm.onclick = () => {
-            this.project.cars[this.fleetIndex].switchWay(this.tripIndex, check.checked);
-            this.__updateTripStyle(this.project.cars[this.fleetIndex].trips[this.tripIndex], this.grid[this.fleetIndex][this.tripIndex]);
+            this.project.carros[this.carroIndice].switchWay(this.viagemIndice, check.checked);
+            this.__updateViagemStyle(this.project.carros[this.carroIndice].viagens[this.viagemIndice], this.grid[this.carroIndice][this.viagemIndice]);
             if(check.checked){
-                for(let i = this.tripIndex + 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                    this.__updateTripStyle(this.project.cars[this.fleetIndex].trips[i], this.grid[this.fleetIndex][i]);
+                for(let i = this.viagemIndice + 1; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                    this.__updateViagemStyle(this.project.carros[this.carroIndice].viagens[i], this.grid[this.carroIndice][i]);
                 }
             }
             cancel.click();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
         dialog.appendChild(confirm);
         dialog.appendChild(cancel);
         document.body.appendChild(dialog);
         dialog.showModal();
     }
-    __updateTripStyle(model, target){ // Ajusta stilo da viagem
-        target.style.backgroundColor = model.way == IDA ? this.tripFromColor : this.tripToColor;
+    __updateViagemStyle(model, target){ // Ajusta stilo da viagem
+        target.style.backgroundColor = model.sentido == IDA ? this.viagemOrigemColor : this.viagemDestinoColor;
         target.style.color = target.style.backgroundColor;
-        if(model.type != PRODUTIVA){
-            let c = model.way == IDA ? this.tripFromColor : this.tripToColor;
-            target.style.background = this.typePattern[model.type].replaceAll('COLOR', c);
+        if(model.tipo != PRODUTIVA){
+            let c = model.sentido == IDA ? this.viagemOrigemColor : this.viagemDestinoColor;
+            target.style.background = this.typePattern[model.tipo].replaceAll('COLOR', c);
         }
-        if(model.shut){target.classList.add('trip-shut')}
-        else{target.classList.remove('trip-shut')}
+        if(model.encerrar){target.classList.add('viagem-encerrar')}
+        else{target.classList.remove('viagem-encerrar')}
     }
     plus(cascade=true){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].plus(this.tripIndex, cascade); // Icrementa 1 minuto no final na viagem foco e no inicio e fim das posteriores
-            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].plus(this.viagemIndice, cascade); // Icrementa 1 minuto no final na viagem foco e no inicio e fim das posteriores
+            this.grid[this.carroIndice][this.viagemIndice].style.width = `calc(${this.project.carros[this.carroIndice].viagens[this.viagemIndice].getCycle()} * ${this.rulerUnit})`;
             if(cascade){
-                for(let i = 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                    this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
-                    this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
-                    this.freqGrid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                for(let i = 1; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                    this.grid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
+                    this.grid[this.carroIndice][i].style.width = `calc(${this.project.carros[this.carroIndice].viagens[i].getCycle()} * ${this.rulerUnit})`;
+                    this.freqGrid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
                 }
             }
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
     }
     sub(cascade=true){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].sub(this.tripIndex, cascade); // Subtrai 1 minuto no final na viagem foco e no inicio e fim das posteriores
-            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].sub(this.viagemIndice, cascade); // Subtrai 1 minuto no final na viagem foco e no inicio e fim das posteriores
+            this.grid[this.carroIndice][this.viagemIndice].style.width = `calc(${this.project.carros[this.carroIndice].viagens[this.viagemIndice].getCycle()} * ${this.rulerUnit})`;
             if(cascade){
-                for(let i = 1; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                    this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
-                    this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
-                    this.freqGrid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+                for(let i = 1; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                    this.grid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
+                    this.grid[this.carroIndice][i].style.width = `calc(${this.project.carros[this.carroIndice].viagens[i].getCycle()} * ${this.rulerUnit})`;
+                    this.freqGrid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
                 }
             }
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
     }
     moveStart(){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].moveStart(this.tripIndex); // Aumenta 1 minuto no final na viagem foco
-            this.grid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
-            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
-            this.freqGrid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
-            this.__updateTripDisplay();
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].moveStart(this.viagemIndice); // Aumenta 1 minuto no final na viagem foco
+            this.grid[this.carroIndice][this.viagemIndice].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[this.viagemIndice].inicio} * ${this.rulerUnit})`;
+            this.grid[this.carroIndice][this.viagemIndice].style.width = `calc(${this.project.carros[this.carroIndice].viagens[this.viagemIndice].getCycle()} * ${this.rulerUnit})`;
+            this.freqGrid[this.carroIndice][this.viagemIndice].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[this.viagemIndice].inicio} * ${this.rulerUnit})`;
+            this.__updateViagemDisplay();
         }
 
     }
     backStart(){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].backStart(this.tripIndex);
-            this.grid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
-            this.grid[this.fleetIndex][this.tripIndex].style.width = `calc(${this.project.cars[this.fleetIndex].trips[this.tripIndex].getCycle()} * ${this.rulerUnit})`;
-            this.freqGrid[this.fleetIndex][this.tripIndex].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[this.tripIndex].start} * ${this.rulerUnit})`;
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].backStart(this.viagemIndice);
+            this.grid[this.carroIndice][this.viagemIndice].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[this.viagemIndice].inicio} * ${this.rulerUnit})`;
+            this.grid[this.carroIndice][this.viagemIndice].style.width = `calc(${this.project.carros[this.carroIndice].viagens[this.viagemIndice].getCycle()} * ${this.rulerUnit})`;
+            this.freqGrid[this.carroIndice][this.viagemIndice].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[this.viagemIndice].inicio} * ${this.rulerUnit})`;
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
     }
     advance(){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].advance(this.tripIndex);
-            for(let i = this.tripIndex; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
-                this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
-                this.freqGrid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].advance(this.viagemIndice);
+            for(let i = this.viagemIndice; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                this.grid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
+                this.grid[this.carroIndice][i].style.width = `calc(${this.project.carros[this.carroIndice].viagens[i].getCycle()} * ${this.rulerUnit})`;
+                this.freqGrid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
             }
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
 
     }
     back(){
-        if(this.tripFocus != null){
-            this.project.cars[this.fleetIndex].back(this.tripIndex);
-            for(let i = this.tripIndex; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                this.grid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
-                this.grid[this.fleetIndex][i].style.width = `calc(${this.project.cars[this.fleetIndex].trips[i].getCycle()} * ${this.rulerUnit})`;
-                this.freqGrid[this.fleetIndex][i].style.left = `calc(${this.fleetTagWidth} + ${this.project.cars[this.fleetIndex].trips[i].start} * ${this.rulerUnit})`;
+        if(this.viagemFocus != null){
+            this.project.carros[this.carroIndice].back(this.viagemIndice);
+            for(let i = this.viagemIndice; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                this.grid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
+                this.grid[this.carroIndice][i].style.width = `calc(${this.project.carros[this.carroIndice].viagens[i].getCycle()} * ${this.rulerUnit})`;
+                this.freqGrid[this.carroIndice][i].style.left = `calc(${this.carroTagWidth} + ${this.project.carros[this.carroIndice].viagens[i].inicio} * ${this.rulerUnit})`;
             }
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }
 
     }
-    removeFleet(){
-        if(!this.fleetFocus){return false}
-        let r = this.project.removeFleet(this.fleetIndex);
+    removeCarro(){
+        if(!this.carroFocus){return false}
+        let r = this.project.removeCarro(this.carroIndice);
         if(r){this.__loadStage1()} // Ao remover carro, todo o grid eh reconstruido
     }
-    removeTrip(cascade=true){ // Remove viagem em foco e se cascade=true as seguintes
-        if(this.tripFocus){
+    removeViagem(cascade=true){ // Remove viagem em foco e se cascade=true as seguintes
+        if(this.viagemFocus){
             let r;
             // Se itens selecionados, apaga as viagens selecionadas
-            if(this.startSelection >= 0 && this.endSelection >= 0){r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, false, this.endSelection - this.startSelection + 1)}
-            else{r = this.project.cars[this.fleetIndex].removeTrip(this.tripIndex, cascade)}
+            if(this.inicioSelecao >= 0 && this.fimSelecao >= 0){r = this.project.carros[this.carroIndice].removeViagem(this.viagemIndice, false, this.fimSelecao - this.inicioSelecao + 1)}
+            else{r = this.project.carros[this.carroIndice].removeViagem(this.viagemIndice, cascade)}
             if(r){
-                if(this.startSelection >= 0 && this.endSelection >= 0){
-                    let ajustedStart = this.startSelection - (r[1] ? 1 : 0);
-                    let ajustedEnd = this.endSelection + (r[2] ? 1 : 0);
+                if(this.inicioSelecao >= 0 && this.fimSelecao >= 0){
+                    let ajustedStart = this.inicioSelecao - (r[1] ? 1 : 0);
+                    let ajustedEnd = this.fimSelecao + (r[2] ? 1 : 0);
                     for(let i = ajustedEnd; i >= ajustedStart; i--){
-                        this.grid[this.fleetSelection][i].remove(); // Apaga viagem no grid
-                        this.freqGrid[this.fleetSelection][i].remove(); // Apaga viagem no freqGrid
+                        this.grid[this.carroSelecao][i].remove(); // Apaga viagem no grid
+                        this.freqGrid[this.carroSelecao][i].remove(); // Apaga viagem no freqGrid
                     }
-                    this.grid[this.fleetSelection].splice(ajustedStart, ajustedEnd - ajustedStart + 1); // Apaga entradas no grid
-                    this.freqGrid[this.fleetSelection].splice(this.tripIndex, ajustedEnd - ajustedStart + 1); // Apaga entradas no freqGrid
+                    this.grid[this.carroSelecao].splice(ajustedStart, ajustedEnd - ajustedStart + 1); // Apaga entradas no grid
+                    this.freqGrid[this.carroSelecao].splice(this.viagemIndice, ajustedEnd - ajustedStart + 1); // Apaga entradas no freqGrid
                 }
                 else if(!cascade){
-                    let ajustedStart = this.tripIndex - (r[1] ? 1 : 0);
-                    let ajustedEnd = this.tripIndex + (r[2] ? 1 : 0);
+                    let ajustedStart = this.viagemIndice - (r[1] ? 1 : 0);
+                    let ajustedEnd = this.viagemIndice + (r[2] ? 1 : 0);
                     for(let i = ajustedEnd; i >= ajustedStart; i--){
-                        this.grid[this.fleetIndex][i].remove(); // Apaga elemento do canvas
-                        this.freqGrid[this.fleetIndex][i].remove(); // Apaga elemento no ruleFreq
+                        this.grid[this.carroIndice][i].remove(); // Apaga elemento do canvas
+                        this.freqGrid[this.carroIndice][i].remove(); // Apaga elemento no ruleFreq
                     }
-                    this.grid[this.fleetIndex].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga entrada no grid
-                    this.freqGrid[this.fleetIndex].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga viagem no freqGrid
+                    this.grid[this.carroIndice].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga entrada no grid
+                    this.freqGrid[this.carroIndice].splice(ajustedStart, 1 + (r[1] ? 1 : 0) + (r[2] ? 1 : 0)); // Apaga viagem no freqGrid
                 }
                 else{
-                    let ajustedStart = this.tripIndex - (r[1] ? 1 : 0);
-                    for(let i = this.grid[this.fleetIndex].length - 1; i >= ajustedStart; i--){
-                        this.grid[this.fleetIndex][i].remove(); // Apaga viagem no grid
-                        this.freqGrid[this.fleetIndex][i].remove(); // Apaga viagem no freqGrid
+                    let ajustedStart = this.viagemIndice - (r[1] ? 1 : 0);
+                    for(let i = this.grid[this.carroIndice].length - 1; i >= ajustedStart; i--){
+                        this.grid[this.carroIndice][i].remove(); // Apaga viagem no grid
+                        this.freqGrid[this.carroIndice][i].remove(); // Apaga viagem no freqGrid
                     }
-                    this.grid[this.fleetIndex].splice(ajustedStart, this.grid[this.fleetIndex].length - ajustedStart); // Apaga entradas no grid
-                    this.freqGrid[this.fleetIndex].splice(ajustedStart, this.freqGrid[this.fleetIndex].length - ajustedStart); // Apaga entradas no freqGrid
+                    this.grid[this.carroIndice].splice(ajustedStart, this.grid[this.carroIndice].length - ajustedStart); // Apaga entradas no grid
+                    this.freqGrid[this.carroIndice].splice(ajustedStart, this.freqGrid[this.carroIndice].length - ajustedStart); // Apaga entradas no freqGrid
                 }
-                this.__clearSelection();
+                this.__clearSelecao();
                 // Muda o foco para viagem anterior (se existir) ou posterior
-                this.tripIndex = this.tripIndex == 0 || (this.tripIndex == 1 && r[1]) ? 0 : this.tripIndex - (r[1] ? 2 : 1);
-                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                this.viagemIndice = this.viagemIndice == 0 || (this.viagemIndice == 1 && r[1]) ? 0 : this.viagemIndice - (r[1] ? 2 : 1);
+                this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }
     }
-    moveTrips(){
-        if(this.fleetSelection == this.fleetIndex || this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false;}
-        let resp = this.project.moveTrips(this.fleetSelection, this.fleetIndex, this.startSelection, this.endSelection);
+    moveViagems(){
+        if(this.carroSelecao == this.carroIndice || this.carroSelecao < 0 || this.inicioSelecao < 0 || this.fimSelecao < 0){return false;}
+        let resp = this.project.moveViagems(this.carroSelecao, this.carroIndice, this.inicioSelecao, this.fimSelecao);
         if(resp){
-            for(let i = this.startSelection; i <= this.endSelection;i++){ // Ajusta posicao top das viagens alvo para novo carro no canvas
-                this.grid[this.fleetSelection][i].style.top = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 17px)`;
+            for(let i = this.inicioSelecao; i <= this.fimSelecao;i++){ // Ajusta posicao top das viagens alvo para novo carro no canvas
+                this.grid[this.carroSelecao][i].style.top = `calc(${this.carroHeight} * ${this.carroIndice + 1} - 17px)`;
             }
-            this.grid[this.fleetIndex] = this.grid[this.fleetIndex].concat(this.grid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1));
-            this.grid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
-            this.freqGrid[this.fleetIndex] = this.freqGrid[this.fleetIndex].concat(this.freqGrid[this.fleetSelection].splice(this.startSelection, this.endSelection - this.startSelection + 1));
-            this.freqGrid[this.fleetIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
-            this.__clearSelection();
-            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.grid[this.carroIndice] = this.grid[this.carroIndice].concat(this.grid[this.carroSelecao].splice(this.inicioSelecao, this.fimSelecao - this.inicioSelecao + 1));
+            this.grid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.freqGrid[this.carroIndice] = this.freqGrid[this.carroIndice].concat(this.freqGrid[this.carroSelecao].splice(this.inicioSelecao, this.fimSelecao - this.inicioSelecao + 1));
+            this.freqGrid[this.carroIndice].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.__clearSelecao();
+            this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
         }
         else{appNotify('warning', '<b>Atenção:</b> Conflito de horário ou você tentou mover todas as viagens do veiculo')}
     }
     addToTransferArea(){
-        if(this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false};
-        let r = this.project.addToTransferArea(this.fleetSelection, this.startSelection, this.endSelection);
+        if(this.carroSelecao < 0 || this.inicioSelecao < 0 || this.fimSelecao < 0){return false};
+        let r = this.project.addToTransferArea(this.carroSelecao, this.inicioSelecao, this.fimSelecao);
         if(r){
-            for(let i = this.startSelection; i <= this.endSelection; i++){ // Remove itens do grid e freqGrid
-                let v = this.project.cars[this.fleetSelection].trips[i];
-                this.grid[this.fleetSelection][i].remove();
-                this.freqGrid[this.fleetSelection][i].remove();
+            for(let i = this.inicioSelecao; i <= this.fimSelecao; i++){ // Remove itens do grid e freqGrid
+                let v = this.project.carros[this.carroSelecao].viagens[i];
+                this.grid[this.carroSelecao][i].remove();
+                this.freqGrid[this.carroSelecao][i].remove();
             }
-            this.grid[this.fleetSelection].splice(this.startSelection, r.length);
-            this.freqGrid[this.fleetSelection].splice(this.startSelection, r.length);
-            if(this.startSelection > 0){
-                this.tripIndex = this.startSelection - 1;
-                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.grid[this.carroSelecao].splice(this.inicioSelecao, r.length);
+            this.freqGrid[this.carroSelecao].splice(this.inicioSelecao, r.length);
+            if(this.inicioSelecao > 0){
+                this.viagemIndice = this.inicioSelecao - 1;
+                this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             }
             else{
-                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             }
             this.__cursorMove();
-            this.__updateTripDisplay();
-            this.__clearSelection();
+            this.__updateViagemDisplay();
+            this.__clearSelecao();
             this.__addToTransferAddLabel()
         }
     }
@@ -855,23 +855,23 @@ class MarchUI{
         // Adiciona icone identificando que existe viagens na area de transferencia
         this.transferAreaIcon = document.createElement('div');
         this.transferAreaIcon.style = 'position: absolute; top: 90px; right: 20px; border:1px solid var(--bs-border-color); border-radius: 10px;padding: 4px 10px; background-color: var(--bs-secondary-bg);opacity: 0.7; cursor: pointer;';
-        this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${this.project.transferArea.length}</b>`;
-        this.transferAreaIcon.title = `Inicio: ${this.project.transferArea[0].getStart()} | Fim: ${this.project.transferArea[this.project.transferArea.length - 1].getEnd()}`;
+        this.transferAreaIcon.innerHTML = `<i class="bi bi-copy fs-5 me-1"></i> <b>${this.project.area_transferencia.length}</b>`;
+        this.transferAreaIcon.title = `Inicio: ${this.project.area_transferencia[0].getStart()} | Fim: ${this.project.area_transferencia[this.project.area_transferencia.length - 1].getEnd()}`;
         document.body.appendChild(this.transferAreaIcon);
     }
     pasteTransfer(){ // 
-        let r = this.project.pasteTransfer(this.fleetIndex);
+        let r = this.project.pasteTransfer(this.carroIndice);
         if(r){
-            for(let i = 0; i < this.grid[this.fleetIndex].length; i++){
-                this.grid[this.fleetIndex][i].remove(); // Limpa a viagem do grid
-                this.freqGrid[this.fleetIndex][i].remove(); // Limpa a viagem do freqGrid
+            for(let i = 0; i < this.grid[this.carroIndice].length; i++){
+                this.grid[this.carroIndice][i].remove(); // Limpa a viagem do grid
+                this.freqGrid[this.carroIndice][i].remove(); // Limpa a viagem do freqGrid
             }
-            this.grid[this.fleetIndex] = []; // Limpa o grid
-            this.freqGrid[this.fleetIndex] = []; // Limpa o freqGrid
-            for(let i = 0; i < this.project.cars[this.fleetIndex].trips.length; i++){
-                this.addTrip(this.project.cars[this.fleetIndex].trips[i]); // Adiciona as viagens ajustadas do carro no grid
+            this.grid[this.carroIndice] = []; // Limpa o grid
+            this.freqGrid[this.carroIndice] = []; // Limpa o freqGrid
+            for(let i = 0; i < this.project.carros[this.carroIndice].viagens.length; i++){
+                this.addViagem(this.project.carros[this.carroIndice].viagens[i]); // Adiciona as viagens ajustadas do carro no grid
             }
-            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
             this.transferAreaIcon.remove();
         }
@@ -879,165 +879,165 @@ class MarchUI{
 
 
     }
-    __addToSelection(){ // Seleciona viagens
-        if(!this.tripFocus || this.project.cars[this.fleetIndex].trips.length <= this.endSelection + 1){return false}
-        if(this.fleetSelection >= 0 &&  this.startSelection >= 0){ // Selecao ja iniciada
-            this.endSelection++;
-            let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
-            this.selectTripsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
+    __addToSelecao(){ // Seleciona viagens
+        if(!this.viagemFocus || this.project.carros[this.carroIndice].viagens.length <= this.fimSelecao + 1){return false}
+        if(this.carroSelecao >= 0 &&  this.inicioSelecao >= 0){ // Selecao ja iniciada
+            this.fimSelecao++;
+            let wd = this.project.carros[this.carroIndice].viagens[this.fimSelecao].fim - this.project.carros[this.carroIndice].viagens[this.inicioSelecao].inicio;
+            this.selectViagemsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
 
         }
         else{
-            this.fleetSelection = this.fleetIndex;
-            this.startSelection = this.tripIndex;
-            this.endSelection = this.tripIndex;
-            this.selectTripsBox = document.createElement('div');
-            let selectWd = `calc(${this.tripFocus.getCycle()} * ${this.rulerUnit} + 10px)`;
-            let selectSt = `calc(${this.fleetTagWidth} + ${this.tripFocus.start} * ${this.rulerUnit} - 5px)`;
-            let selectTp = `calc(${this.fleetHeight} * ${this.fleetIndex + 1} - 22px)`;
-            this.selectTripsBox.style = `border:1px solid #b72a2a;height: calc(${this.tripHeight} + 10px);border-radius: 10px;width: ${selectWd};position: absolute; top: ${selectTp}; left: ${selectSt}`;
-            this.canvas.appendChild(this.selectTripsBox);
+            this.carroSelecao = this.carroIndice;
+            this.inicioSelecao = this.viagemIndice;
+            this.fimSelecao = this.viagemIndice;
+            this.selectViagemsBox = document.createElement('div');
+            let selectWd = `calc(${this.viagemFocus.getCycle()} * ${this.rulerUnit} + 10px)`;
+            let selectSt = `calc(${this.carroTagWidth} + ${this.viagemFocus.inicio} * ${this.rulerUnit} - 5px)`;
+            let selectTp = `calc(${this.carroHeight} * ${this.carroIndice + 1} - 22px)`;
+            this.selectViagemsBox.style = `border:1px solid #b72a2a;height: calc(${this.viagemHeight} + 10px);border-radius: 10px;width: ${selectWd};position: absolute; top: ${selectTp}; left: ${selectSt}`;
+            this.canvas.appendChild(this.selectViagemsBox);
         }
         
     }
-    __subToSelection(){
-        if(!this.tripFocus || this.fleetSelection < 0 || this.startSelection < 0 || this.endSelection < 0){return false}
-        if(this.endSelection == this.startSelection){this.__clearSelection();return false} // Se existe apenas uma viagem selecionada apenasremove a selecao e encerra bloco
-        this.endSelection--;
-        let wd = this.project.cars[this.fleetIndex].trips[this.endSelection].end - this.project.cars[this.fleetIndex].trips[this.startSelection].start;
-        this.selectTripsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
+    __subToSelecao(){
+        if(!this.viagemFocus || this.carroSelecao < 0 || this.inicioSelecao < 0 || this.fimSelecao < 0){return false}
+        if(this.fimSelecao == this.inicioSelecao){this.__clearSelecao();return false} // Se existe apenas uma viagem selecionada apenasremove a selecao e encerra bloco
+        this.fimSelecao--;
+        let wd = this.project.carros[this.carroIndice].viagens[this.fimSelecao].fim - this.project.carros[this.carroIndice].viagens[this.inicioSelecao].inicio;
+        this.selectViagemsBox.style.width = `calc(${wd} * ${this.rulerUnit} + 10px)`;
     }
-    __clearSelection(){
-        if(!this.selectTripsBox){return false}
-        this.fleetSelection = -1;
-        this.startSelection = -1;
-        this.endSelection = -1;
-        this.selectTripsBox.remove();
+    __clearSelecao(){
+        if(!this.selectViagemsBox){return false}
+        this.carroSelecao = -1;
+        this.inicioSelecao = -1;
+        this.fimSelecao = -1;
+        this.selectViagemsBox.remove();
     }
-    nextTrip(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
-        let v = this.project.nextTrip(this.tripFocus);
+    nextViagem(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
+        let v = this.project.nextViagem(this.viagemFocus);
         if(v){
-            this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-            this.fleetIndex = v[0];
-            this.tripIndex = v[1];
-            this.tripFocus = v[2];
-            this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
-            this.fleetFocus = this.project.cars[this.fleetIndex];
+            this.carroLabels[this.carroIndice].style.color = 'inherit';
+            this.carroIndice = v[0];
+            this.viagemIndice = v[1];
+            this.viagemFocus = v[2];
+            this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
+            this.carroFocus = this.project.carros[this.carroIndice];
             this.__cursorMove();
-            this.__updateTripDisplay();
-            this.__clearFleetDisplay();
+            this.__updateViagemDisplay();
+            this.__clearCarroDisplay();
         }
     }
-    previousTrip(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
-        let v = this.project.previousTrip(this.tripFocus);
+    previousViagem(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
+        let v = this.project.previousViagem(this.viagemFocus);
         if(v){
-            this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-            this.fleetIndex = v[0];
-            this.tripIndex = v[1];
-            this.tripFocus = v[2];
-            this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
-            this.fleetFocus = this.project.cars[this.fleetIndex];
+            this.carroLabels[this.carroIndice].style.color = 'inherit';
+            this.carroIndice = v[0];
+            this.viagemIndice = v[1];
+            this.viagemFocus = v[2];
+            this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
+            this.carroFocus = this.project.carros[this.carroIndice];
             this.__cursorMove();
-            this.__updateTripDisplay();
-            this.__clearFleetDisplay();
+            this.__updateViagemDisplay();
+            this.__clearCarroDisplay();
         }
     }
-    __updateTripDisplay(){
-        if(this.tripFocus == null){return false;}
-        this.displayTripType.innerHTML = this.translateType[this.tripFocus.type];
-        if(this.tripFocus.type != INTERVALO){
-            this.displayStart.innerHTML = this.tripFocus.getStart();
-            this.displayEnd.innerHTML = this.tripFocus.getEnd();
-            this.displayCycle.innerHTML = this.tripFocus.getCycle();
-            this.displayFreq.innerHTML = this.tripFocus.type != RESERVADO ? this.project.getHeadway(this.tripFocus) || '--' : '--';
-            this.displayInterv.innerHTML = this.project.cars[this.fleetIndex].getInterv(this.tripIndex) || '--';
-            this.displayTripWay.innerHTML = this.translateWay[this.tripFocus.way];
+    __updateViagemDisplay(){
+        if(this.viagemFocus == null){return false;}
+        this.displayViagemTipo.innerHTML = this.translateType[this.viagemFocus.tipo];
+        if(this.viagemFocus.tipo != INTERVALO){
+            this.displayStart.innerHTML = this.viagemFocus.getStart();
+            this.displayEnd.innerHTML = this.viagemFocus.getEnd();
+            this.displayCycle.innerHTML = this.viagemFocus.getCycle();
+            this.displayFreq.innerHTML = this.viagemFocus.tipo != RESERVADO ? this.project.getHeadway(this.viagemFocus) || '--' : '--';
+            this.displayInterv.innerHTML = this.project.carros[this.carroIndice].getInterv(this.viagemIndice) || '--';
+            this.displayViagemWay.innerHTML = this.translateWay[this.viagemFocus.sentido];
         }
         else{
-            this.displayStart.innerHTML = min2Hour(this.tripFocus.start - 1);
-            this.displayEnd.innerHTML = min2Hour(this.tripFocus.end + 1);
-            this.displayCycle.innerHTML = this.tripFocus.getCycle() + 2;
+            this.displayStart.innerHTML = min2Hour(this.viagemFocus.inicio - 1);
+            this.displayEnd.innerHTML = min2Hour(this.viagemFocus.fim + 1);
+            this.displayCycle.innerHTML = this.viagemFocus.getCycle() + 2;
             this.displayFreq.innerHTML = '--';
             this.displayInterv.innerHTML = '--';
-            this.displayTripWay.innerHTML = '';
+            this.displayViagemWay.innerHTML = '';
         }
     }
-    __updateFleetDisplay(){
-        if(this.tripFocus == null){return false;}
-        this.displayTripsCount.innerHTML = this.project.cars[this.fleetIndex].countTrips();
-        this.displayJorney.innerHTML = min2Hour(this.project.getJourney(this.fleetIndex), false);
-        this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.fleetIndex), false);
-        this.fleetDisplayClassification = document.createElement('select');this.fleetDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplayClassification.id = 'March_footerFleetDisplayClassification';
-        this.fleetDisplayClassification.onchange = () => {this.project.cars[this.fleetIndex].classification = this.fleetDisplayClassification.value;}
+    __updateCarroDisplay(){
+        if(this.viagemFocus == null){return false;}
+        this.displayViagemsCount.innerHTML = this.project.carros[this.carroIndice].countViagens();
+        this.displayJorney.innerHTML = min2Hour(this.project.getJourney(this.carroIndice), false);
+        this.displayInterv2.innerHTML = min2Hour(this.project.getIntervs(this.carroIndice), false);
+        this.carroDisplayClassification = document.createElement('select');this.carroDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.carroDisplayClassification.id = 'March_footerCarroDisplayClassification';
+        this.carroDisplayClassification.onchange = () => {this.project.carros[this.carroIndice].classification = this.carroDisplayClassification.value;}
         let classOptions = {'CV': 'Convencional', 'PD': 'Padron', 'MC': 'Microonibus', 'AT': 'Articulado', 'BI': 'Biarticulado'};
         for(let key in classOptions){
             let opt = document.createElement('option');
             opt.value = key;opt.innerHTML = classOptions[key];
-            if(opt.value == this.fleetFocus.classification){opt.selected = true;}
-            this.fleetDisplayClassification.appendChild(opt);
+            if(opt.value == this.carroFocus.classification){opt.selected = true;}
+            this.carroDisplayClassification.appendChild(opt);
         }
-        this.footer.appendChild(this.fleetDisplayClassification);
+        this.footer.appendChild(this.carroDisplayClassification);
         
-        this.fleetDisplaySpecification = document.createElement('select');this.fleetDisplaySpecification.style = `position: absolute;left: 600px;bottom: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.fleetDisplaySpecification.id = 'March_footerFleetDisplaySpecification';
-        this.fleetDisplaySpecification.onchange = () => {this.project.cars[this.fleetIndex].specification = this.fleetDisplaySpecification.value;}
+        this.carroDisplaySpecification = document.createElement('select');this.carroDisplaySpecification.style = `position: absolute;left: 600px;bottom: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.carroDisplaySpecification.id = 'March_footerCarroDisplaySpecification';
+        this.carroDisplaySpecification.onchange = () => {this.project.carros[this.carroIndice].specification = this.carroDisplaySpecification.value;}
         let specOptions = {'0': '---', '1': 'Porta LE'};
         for(let key in specOptions){
             let opt = document.createElement('option');
             opt.value = key;opt.innerHTML = specOptions[key];
-            if(opt.value == this.fleetFocus.specification){opt.selected = true;}
-            this.fleetDisplaySpecification.appendChild(opt);
+            if(opt.value == this.carroFocus.specification){opt.selected = true;}
+            this.carroDisplaySpecification.appendChild(opt);
         }
-        this.footer.appendChild(this.fleetDisplaySpecification);
+        this.footer.appendChild(this.carroDisplaySpecification);
     }
-    __clearTripDisplay(){
+    __clearViagemDisplay(){
         this.displayStart.innerHTML = '--:--';
         this.displayEnd.innerHTML = '--:--';
         this.displayCycle.innerHTML = '--';
         this.displayFreq.innerHTML = '--';
         this.displayInterv.innerHTML = '--';
-        this.displayTripWay.innerHTML = '';
-        this.displayTripType.innerHTML = '';
+        this.displayViagemWay.innerHTML = '';
+        this.displayViagemTipo.innerHTML = '';
     }
-    __clearFleetDisplay(){
-        this.displayTripsCount.innerHTML = '';
+    __clearCarroDisplay(){
+        this.displayViagemsCount.innerHTML = '';
         this.displayJorney.innerHTML = '';
         this.displayInterv2.innerHTML = '';
         try{
-            this.fleetDisplayClassification.remove();
-            this.fleetDisplaySpecification.remove();
+            this.carroDisplayClassification.remove();
+            this.carroDisplaySpecification.remove();
         }catch(e){}
     }
     __cursorMove(){ // Movimenta o cursor para carro e viagem em foco, se cursor atingir limites (vertical ou horiontal) move canvas para ajustar voualizacao
-        this.cursor.style.top = `calc(${this.fleetIndex + 1} * ${this.fleetHeight} - ${this.fleetTagWidth} - 17px)`;
-        this.cursor.style.left = `calc((${this.tripFocus.start}) * ${this.rulerUnit} + ${this.fleetTagWidth} - 13px)`;
+        this.cursor.style.top = `calc(${this.carroIndice + 1} * ${this.carroHeight} - ${this.carroTagWidth} - 17px)`;
+        this.cursor.style.left = `calc((${this.viagemFocus.inicio}) * ${this.rulerUnit} + ${this.carroTagWidth} - 13px)`;
         // Ajusta estilo na freqRule dando enfase a viagem em foco
         this.rulerFreq.querySelectorAll('[data-selected=true]').forEach((el)=>{
             el.removeAttribute('data-selected');
             el.style.height = this.rulerSmallHeight;
             el.style.backgroundColor = this.rulerSmallColor;
         })
-        if(![INTERVALO, ACESSO, RECOLHE].includes(this.tripFocus.type)){ // Identifica viagem na rulerFreq se viagem for produtiva
-            this.freqGrid[this.fleetIndex][this.tripIndex].setAttribute('data-selected', true);
-            this.freqGrid[this.fleetIndex][this.tripIndex].style.backgroundColor = this.freqRulerSelectColor;
-            this.freqGrid[this.fleetIndex][this.tripIndex].style.height = this.freqRulerSelectHeight;
+        if(![INTERVALO, ACESSO, RECOLHE].includes(this.viagemFocus.tipo)){ // Identifica viagem na rulerFreq se viagem for produtiva
+            this.freqGrid[this.carroIndice][this.viagemIndice].setAttribute('data-selected', true);
+            this.freqGrid[this.carroIndice][this.viagemIndice].style.backgroundColor = this.freqRulerSelectColor;
+            this.freqGrid[this.carroIndice][this.viagemIndice].style.height = this.freqRulerSelectHeight;
         }
         // --
-        if(this.tripFocus.start < this.initialView){ // Verifica se cursor esta atingindo o limite horizontal a esquerda, se sim ajusta canvas
-            let x = Math.ceil((this.initialView - this.tripFocus.start) / this.rulerMediumUnit) * this.rulerMediumUnit;
+        if(this.viagemFocus.inicio < this.initialView){ // Verifica se cursor esta atingindo o limite horizontal a esquerda, se sim ajusta canvas
+            let x = Math.ceil((this.initialView - this.viagemFocus.inicio) / this.rulerMediumUnit) * this.rulerMediumUnit;
             this.canvasMove(x * -1);
         }
-        else if(this.tripFocus.start > this.__getCanvasEndMargin()){// Verifica se cursor esta atingindo o limite horizontal a direita, se sim ajusta canvas
-            let x = Math.ceil((this.tripFocus.start - this.__getCanvasEndMargin()) / this.rulerMediumUnit) * this.rulerMediumUnit;
+        else if(this.viagemFocus.inicio > this.__getCanvasEndMargin()){// Verifica se cursor esta atingindo o limite horizontal a direita, se sim ajusta canvas
+            let x = Math.ceil((this.viagemFocus.inicio - this.__getCanvasEndMargin()) / this.rulerMediumUnit) * this.rulerMediumUnit;
             this.canvasMove(x);
         }
-        if(this.fleetIndex < this.initialFleetView){ // Verifica se cursor esta atingindo o limite vertical superior, se sim ajusta canvas
-            let y = (this.initialFleetView - this.fleetIndex) * parseInt(this.fleetHeight);
-            this.initialFleetView = this.fleetIndex;
+        if(this.carroIndice < this.initialCarroView){ // Verifica se cursor esta atingindo o limite vertical superior, se sim ajusta canvas
+            let y = (this.initialCarroView - this.carroIndice) * parseInt(this.carroHeight);
+            this.initialCarroView = this.carroIndice;
             this.canvasMove(0, y);            
         }
-        else if(this.fleetIndex > (this.initialFleetView + this.maxCarsVisible - 1)){ // Verifica se cursor esta atingindo o limite vertical inferior, se sim ajusta canvas
-            let y = this.fleetIndex - (this.initialFleetView + this.maxCarsVisible - 1);
-            this.initialFleetView += y;
+        else if(this.carroIndice > (this.initialCarroView + this.maxCarsVisible - 1)){ // Verifica se cursor esta atingindo o limite vertical inferior, se sim ajusta canvas
+            let y = this.carroIndice - (this.initialCarroView + this.maxCarsVisible - 1);
+            this.initialCarroView += y;
             this.canvasMove(0, y * -1);            
         }
     }
@@ -1047,7 +1047,7 @@ class MarchUI{
     }
     canvasMove(x=0, y=0){ // Ajusta regua e move canvas em x e/ou y unidades
         // X valor em unidades (int) a ser movido o canvas
-        // Y valor em unidades (int) representando os carros (2 = this.fleetIndex += 2)
+        // Y valor em unidades (int) representando os carros (2 = this.carroIndice += 2)
         if(x == 0 && y == 0){return false}
         if(x != 0){
             let actualView = this.initialView;
@@ -1061,9 +1061,9 @@ class MarchUI{
             this.rulerFreq.style.left = this.canvas.style.left;
         }
         if(y != 0){
-            this.canvas.style.top = `calc(${this.fleetHeight} * ${this.initialFleetView} * ${y > 0 ? 1 : -1})`;
-            this.fleetLabels.forEach((el)=>{ // Move as labels dos carros no eixo y
-                el.style.top = `calc(${el.style.top} + (${this.fleetHeight} * ${y > 0 ? 1 : -1}))`;
+            this.canvas.style.top = `calc(${this.carroHeight} * ${this.initialCarroView} * ${y > 0 ? 1 : -1})`;
+            this.carroLabels.forEach((el)=>{ // Move as labels dos carros no eixo y
+                el.style.top = `calc(${el.style.top} + (${this.carroHeight} * ${y > 0 ? 1 : -1}))`;
             })
         }
     }
@@ -1074,14 +1074,14 @@ class MarchUI{
         this.__buildCursor(); // Refaz cursor
         this.grid = {};
         this.freqGrid = {};
-        for(let i = 0; i < this.project.cars.length;i++){
+        for(let i = 0; i < this.project.carros.length;i++){
             this.grid[i] = [];
             this.freqGrid[i] = [];
-            for(let j = 0; j < this.project.cars[i].trips.length; j++){
-                this.addTrip(this.project.cars[i].trips[j], i);
+            for(let j = 0; j < this.project.carros[i].viagens.length; j++){
+                this.addViagem(this.project.carros[i].viagens[j], i);
             } 
         }
-        this.fleetFocus = this.project.cars[this.fleetIndex]
+        this.carroFocus = this.project.carros[this.carroIndice]
     }
     __clearGrid(){
         for(let i in this.grid){ // Apaga todos os elementos do grid
@@ -1093,10 +1093,10 @@ class MarchUI{
         this.grid = {};
         this.freqGrid = {};
     }
-    __clearScheduleGrid(){ // Limpa toda interface de escala
-        for(let i in this.scheduleGrid){ // Apaga todos os elementos do grid
-            for(let j = 0; j < this.scheduleGrid[i].length; j++){
-                this.scheduleGrid[i][j].remove(); // Apaga escalas
+    __clearEscalaGrid(){ // Limpa toda interface de escala
+        for(let i in this.escalaGrid){ // Apaga todos os elementos do grid
+            for(let j = 0; j < this.escalaGrid[i].length; j++){
+                this.escalaGrid[i][j].remove(); // Apaga escalas
             }
         }
         for(let i in this.spotsGrid){ // Apaga todos os elementos do grid
@@ -1104,29 +1104,29 @@ class MarchUI{
                 this.spotsGrid[i][j].remove(); // Apaga spots
             }
         }
-        this.scheduleGrid = {};
+        this.escalaGrid = {};
         this.spotsGrid = {};
-        this.canvas.innerHTML = ''; // Limpa restante dos componentes (fleet e fleet_tags)
+        this.canvas.innerHTML = ''; // Limpa restante dos componentes (carro e carro_tags)
     }
-    __clearFleetLabels(){
-        this.fleetLabels.forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
-        this.fleetLabels = [];
+    __clearCarroLabels(){
+        this.carroLabels.forEach((el)=>{el.remove()}); // Apaga todos os labels de frota
+        this.carroLabels = [];
     }
     __getCanvasEndMargin(){ // Retorna (em minutos) a margem maxima a direita (usado para verificar limite antes do canvas movimentar)
-        return this.initialView + this.maxMinutsVisible - this.endMinutsMargin;
+        return this.initialView + this.maxMinutsVisible - this.fimMinutsMargin;
     }
-    __showTripPatterns(){
+    __showViagemPatterns(){
         if(this.patternsDialog){this.patternsDialog.close(); return false;} // Se modal ja esta aberto, fecha modal
         this.gridLocked = true; // Trava edicao do grid enquanto modal esta aberto
         this.patternsDialog = document.createElement('dialog');
-        this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripFromColor};"></div>
-        VOLTA <div id="volta" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripToColor}"></div>
-        RESERVADO <div id="reservado" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RESERVADO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        EXPRESSO <div id="expresso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[EXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        SEMIEXPRESSO <div id="semi" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        ACESSO <div id="acesso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.tripFromColor)};"></div>
-        RECOLHE <div id="recolhe" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.tripFromColor)};"></div>
-        INTERVALO <div id="refeicao" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[INTERVALO].replaceAll('COLOR', this.tripFromColor)};"></div>`;
+        this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.viagemOrigemColor};"></div>
+        VOLTA <div id="volta" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.viagemDestinoColor}"></div>
+        RESERVADO <div id="reservado" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RESERVADO].replaceAll('COLOR', this.viagemOrigemColor)};"></div>
+        EXPRESSO <div id="expresso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[EXPRESSO].replaceAll('COLOR', this.viagemOrigemColor)};"></div>
+        SEMIEXPRESSO <div id="semi" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMIEXPRESSO].replaceAll('COLOR', this.viagemOrigemColor)};"></div>
+        ACESSO <div id="acesso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[ACESSO].replaceAll('COLOR', this.viagemOrigemColor)};"></div>
+        RECOLHE <div id="recolhe" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[RECOLHE].replaceAll('COLOR', this.viagemOrigemColor)};"></div>
+        INTERVALO <div id="refeicao" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[INTERVALO].replaceAll('COLOR', this.viagemOrigemColor)};"></div>`;
         this.patternsDialog.addEventListener("close", (e) => {this.gridLocked = false;this.patternsDialog = null;}); // AO fechar destrava grid
         document.body.appendChild(this.patternsDialog);
         this.patternsDialog.showModal();
@@ -1136,14 +1136,14 @@ class MarchUI{
         this.gridLocked = true;
         let dialog = document.createElement('dialog'); dialog.style.minWidth = '600px';dialog.style.display = 'flex';dialog.style.columnGap = '15px';
         dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove();})
-        let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.project.route.prefix} ${this.project.route.name}</span></h6>`;
+        let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.project.linha.prefix} ${this.project.linha.nome}</span></h6>`;
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
         // Adicionado os controles das metricas
-        let routeCirc = document.createElement('input');routeCirc.type = 'checkbox';routeCirc.id = 'March_routeCircControl';routeCirc.checked = this.project.route.circular;
-        routeCirc.disabled = true;
-        // routeCirc.onchange = () => {
-        //     this.project.route.circular = routeCirc.checked;
-        //     if(routeCirc.checked){
+        let linhaCirc = document.createElement('input');linhaCirc.type = 'checkbox';linhaCirc.id = 'March_linhaCircControl';linhaCirc.checked = this.project.linha.circular;
+        linhaCirc.disabled = true;
+        // linhaCirc.onchange = () => {
+        //     this.project.linha.circular = linhaCirc.checked;
+        //     if(linhaCirc.checked){
         //         this.settingsBaselineToMin.disabled = true;
         //         this.settingsBaselineToInterv.disabled = true;
         //     }
@@ -1152,24 +1152,24 @@ class MarchUI{
         //         this.settingsBaselineToInterv.disabled = false;
         //     }
         // }
-        col1.appendChild(this.__settingsContainerSwitch(routeCirc, 'Linha circular', '10px'));
+        col1.appendChild(this.__settingsContainerSwitch(linhaCirc, 'Linha circular', '10px'));
         let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
-        this.settingsFromExtension = document.createElement('input');this.settingsFromExtension.type = 'number';this.settingsFromExtension.classList = 'flat-input';this.settingsFromExtension.min = 0;this.settingsFromExtension.max = 300;this.settingsFromExtension.value = this.project.route.fromExtension;this.settingsFromExtension.id = 'March_settingsFromExtension';this.settingsFromExtension.placeholder = ' ';
-        this.settingsFromExtension.disabled = true;
-        // this.settingsFromExtension.onchange = ()=>{
-        //     if(this.settingsFromExtension.value == '' || parseInt(this.settingsFromExtension.value) < this.settingsFromExtension.min || parseInt(this.settingsFromExtension.value) > this.settingsFromExtension.max){
-        //         this.settingsFromExtension.classList.add('is-invalid');
+        this.settingsOrigemExtension = document.createElement('input');this.settingsOrigemExtension.type = 'number';this.settingsOrigemExtension.classList = 'flat-input';this.settingsOrigemExtension.min = 0;this.settingsOrigemExtension.max = 300;this.settingsOrigemExtension.value = this.project.linha.extensao_ida;this.settingsOrigemExtension.id = 'March_settingsOrigemExtension';this.settingsOrigemExtension.placeholder = ' ';
+        this.settingsOrigemExtension.disabled = true;
+        // this.settingsOrigemExtension.onchange = ()=>{
+        //     if(this.settingsOrigemExtension.value == '' || parseInt(this.settingsOrigemExtension.value) < this.settingsOrigemExtension.min || parseInt(this.settingsOrigemExtension.value) > this.settingsOrigemExtension.max){
+        //         this.settingsOrigemExtension.classList.add('is-invalid');
         //         return false;
         //     }
-        //     this.settingsFromExtension.classList.remove('is-invalid');
-        //     this.project.route.fromExtension = parseInt(this.settingsFromExtension.value);
+        //     this.settingsOrigemExtension.classList.remove('is-invalid');
+        //     this.project.linha.extensao_ida = parseInt(this.settingsOrigemExtension.value);
         // }
-        col11.appendChild(this.settingsFromExtension);
-        col11.appendChild(this.__settingsAddCustomLabel(this.settingsFromExtension, 'Extensão Ida (km)'));
+        col11.appendChild(this.settingsOrigemExtension);
+        col11.appendChild(this.__settingsAddCustomLabel(this.settingsOrigemExtension, 'Extensão Ida (km)'));
         col1.appendChild(col11);
         
         let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
-        this.settingsToExtension = document.createElement('input');this.settingsToExtension.type = 'number';this.settingsToExtension.classList = 'flat-input';this.settingsToExtension.min = 0;this.settingsToExtension.max = 300;this.settingsToExtension.value = this.project.route.toExtension;this.settingsToExtension.id = 'March_settingsToExtension';this.settingsToExtension.placeholder = ' ';
+        this.settingsToExtension = document.createElement('input');this.settingsToExtension.type = 'number';this.settingsToExtension.classList = 'flat-input';this.settingsToExtension.min = 0;this.settingsToExtension.max = 300;this.settingsToExtension.value = this.project.linha.extensao_volta;this.settingsToExtension.id = 'March_settingsToExtension';this.settingsToExtension.placeholder = ' ';
         this.settingsToExtension.disabled = true;
         // this.settingsToExtension.onchange = ()=>{
         //     if(this.settingsToExtension.value == '' || parseInt(this.settingsToExtension.value) < this.settingsToExtension.min || parseInt(this.settingsToExtension.value) > this.settingsToExtension.max){
@@ -1177,29 +1177,29 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsToExtension.classList.remove('is-invalid');
-        //     this.project.route.toExtension = parseInt(this.settingsToExtension.value);
+        //     this.project.linha.extensao_volta = parseInt(this.settingsToExtension.value);
         // }
         col12.appendChild(this.settingsToExtension);
         col12.appendChild(this.__settingsAddCustomLabel(this.settingsToExtension, 'Extensão Volta (km)'));
         col1.appendChild(col12);
         
         let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
-        this.settingsAccessFromMin = document.createElement('input');this.settingsAccessFromMin.type = 'number';this.settingsAccessFromMin.classList = 'flat-input';this.settingsAccessFromMin.min = 1;this.settingsAccessFromMin.max = 300;this.settingsAccessFromMin.value = this.project.route.metrics.fromMinAccess;this.settingsAccessFromMin.id = 'March_settingsAccessFromMin';this.settingsAccessFromMin.placeholder = ' ';
-        this.settingsAccessFromMin.disabled = true;
-        // this.settingsAccessFromMin.onchange = ()=>{
-        //     if(this.settingsAccessFromMin.value == '' || parseInt(this.settingsAccessFromMin.value) < this.settingsAccessFromMin.min || parseInt(this.settingsAccessFromMin.value) > this.settingsAccessFromMin.max){
-        //         this.settingsAccessFromMin.classList.add('is-invalid');
+        this.settingsAccessOrigemMin = document.createElement('input');this.settingsAccessOrigemMin.type = 'number';this.settingsAccessOrigemMin.classList = 'flat-input';this.settingsAccessOrigemMin.min = 1;this.settingsAccessOrigemMin.max = 300;this.settingsAccessOrigemMin.value = this.project.linha.metrics.origemMinAccess;this.settingsAccessOrigemMin.id = 'March_settingsAccessOrigemMin';this.settingsAccessOrigemMin.placeholder = ' ';
+        this.settingsAccessOrigemMin.disabled = true;
+        // this.settingsAccessOrigemMin.onchange = ()=>{
+        //     if(this.settingsAccessOrigemMin.value == '' || parseInt(this.settingsAccessOrigemMin.value) < this.settingsAccessOrigemMin.min || parseInt(this.settingsAccessOrigemMin.value) > this.settingsAccessOrigemMin.max){
+        //         this.settingsAccessOrigemMin.classList.add('is-invalid');
         //         return false;
         //     }
-        //     this.settingsAccessFromMin.classList.remove('is-invalid');
-        //     this.project.route.metrics.fromMinAccess = parseInt(this.settingsAccessFromMin.value);
+        //     this.settingsAccessOrigemMin.classList.remove('is-invalid');
+        //     this.project.linha.metrics.origemMinAccess = parseInt(this.settingsAccessOrigemMin.value);
         // }
-        col13.appendChild(this.settingsAccessFromMin);
-        col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessFromMin, 'Acesso PT1 (min)'));
+        col13.appendChild(this.settingsAccessOrigemMin);
+        col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemMin, 'Acesso PT1 (min)'));
         col1.appendChild(col13);
         
         let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
-        this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.route.metrics.toMinAccess;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
+        this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.linha.metrics.destinoMinAccess;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
         this.settingsAccessToMin.disabled = true;
         // this.settingsAccessToMin.onchange = ()=>{
         //     if(this.settingsAccessToMin.value == '' || parseInt(this.settingsAccessToMin.value) < this.settingsAccessToMin.min || parseInt(this.settingsAccessToMin.value) > this.settingsAccessToMin.max){
@@ -1207,29 +1207,29 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessToMin.classList.remove('is-invalid');
-        //     this.project.route.metrics.toMinAccess = parseInt(this.settingsAccessToMin.value);
+        //     this.project.linha.metrics.destinoMinAccess = parseInt(this.settingsAccessToMin.value);
         // }
         col14.appendChild(this.settingsAccessToMin);
         col14.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToMin, 'Acesso PT2 (min)'));
         col1.appendChild(col14);
         
         let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
-        this.settingsRecallFromMin = document.createElement('input');this.settingsRecallFromMin.type = 'number';this.settingsRecallFromMin.classList = 'flat-input';this.settingsRecallFromMin.min = 1;this.settingsRecallFromMin.max = 300;this.settingsRecallFromMin.value = this.project.route.metrics.fromMinRecall;this.settingsRecallFromMin.id = 'March_settingsRecallFromMin';this.settingsRecallFromMin.placeholder = ' ';
-        this.settingsRecallFromMin.disabled = true;
-        // this.settingsRecallFromMin.onchange = ()=>{
-        //     if(this.settingsRecallFromMin.value == '' || parseInt(this.settingsRecallFromMin.value) < this.settingsRecallFromMin.min || parseInt(this.settingsRecallFromMin.value) > this.settingsRecallFromMin.max){
-        //         this.settingsRecallFromMin.classList.add('is-invalid');
+        this.settingsRecallOrigemMin = document.createElement('input');this.settingsRecallOrigemMin.type = 'number';this.settingsRecallOrigemMin.classList = 'flat-input';this.settingsRecallOrigemMin.min = 1;this.settingsRecallOrigemMin.max = 300;this.settingsRecallOrigemMin.value = this.project.linha.metrics.origemMinRecall;this.settingsRecallOrigemMin.id = 'March_settingsRecallOrigemMin';this.settingsRecallOrigemMin.placeholder = ' ';
+        this.settingsRecallOrigemMin.disabled = true;
+        // this.settingsRecallOrigemMin.onchange = ()=>{
+        //     if(this.settingsRecallOrigemMin.value == '' || parseInt(this.settingsRecallOrigemMin.value) < this.settingsRecallOrigemMin.min || parseInt(this.settingsRecallOrigemMin.value) > this.settingsRecallOrigemMin.max){
+        //         this.settingsRecallOrigemMin.classList.add('is-invalid');
         //         return false;
         //     }
-        //     this.settingsRecallFromMin.classList.remove('is-invalid');
-        //     this.project.route.metrics.fromMinRecall = parseInt(this.settingsRecallFromMin.value);
+        //     this.settingsRecallOrigemMin.classList.remove('is-invalid');
+        //     this.project.linha.metrics.origemMinRecall = parseInt(this.settingsRecallOrigemMin.value);
         // }
-        col15.appendChild(this.settingsRecallFromMin);
-        col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallFromMin, 'Recolhe PT1 (min)'));
+        col15.appendChild(this.settingsRecallOrigemMin);
+        col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemMin, 'Recolhe PT1 (min)'));
         col1.appendChild(col15);
         
         let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
-        this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.route.metrics.toMinRecall;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
+        this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.linha.metrics.destinoMinRecall;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
         this.settingsRecallToMin.disabled = true;
         // this.settingsRecallToMin.onchange = ()=>{
         //     if(this.settingsRecallToMin.value == '' || parseInt(this.settingsRecallToMin.value) < this.settingsRecallToMin.min || parseInt(this.settingsRecallToMin.value) > this.settingsRecallToMin.max){
@@ -1237,29 +1237,29 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallToMin.classList.remove('is-invalid');
-        //     this.project.route.metrics.toMinRecall = parseInt(this.settingsRecallToMin.value);
+        //     this.project.linha.metrics.destinoMinRecall = parseInt(this.settingsRecallToMin.value);
         // }
         col16.appendChild(this.settingsRecallToMin);
         col16.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToMin, 'Recolhe PT2 (min)'));
         col1.appendChild(col16);
         
         let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
-        this.settingsAccessFromKm = document.createElement('input');this.settingsAccessFromKm.type = 'number';this.settingsAccessFromKm.classList = 'flat-input';this.settingsAccessFromKm.min = 0;this.settingsAccessFromKm.max = 300;this.settingsAccessFromKm.value = this.project.route.metrics.fromKmAccess;this.settingsAccessFromKm.id = 'March_settingsAccessFromKm';this.settingsAccessFromKm.placeholder = ' ';
-        this.settingsAccessFromKm.disabled = true;
-        // this.settingsAccessFromKm.onchange = ()=>{
-        //     if(this.settingsAccessFromKm.value == '' || parseInt(this.settingsAccessFromKm.value) < this.settingsAccessFromKm.min || parseInt(this.settingsAccessFromKm.value) > this.settingsAccessFromKm.max){
-        //         this.settingsAccessFromKm.classList.add('is-invalid');
+        this.settingsAccessOrigemKm = document.createElement('input');this.settingsAccessOrigemKm.type = 'number';this.settingsAccessOrigemKm.classList = 'flat-input';this.settingsAccessOrigemKm.min = 0;this.settingsAccessOrigemKm.max = 300;this.settingsAccessOrigemKm.value = this.project.linha.metrics.origemKmAccess;this.settingsAccessOrigemKm.id = 'March_settingsAccessOrigemKm';this.settingsAccessOrigemKm.placeholder = ' ';
+        this.settingsAccessOrigemKm.disabled = true;
+        // this.settingsAccessOrigemKm.onchange = ()=>{
+        //     if(this.settingsAccessOrigemKm.value == '' || parseInt(this.settingsAccessOrigemKm.value) < this.settingsAccessOrigemKm.min || parseInt(this.settingsAccessOrigemKm.value) > this.settingsAccessOrigemKm.max){
+        //         this.settingsAccessOrigemKm.classList.add('is-invalid');
         //         return false;
         //     }
-        //     this.settingsAccessFromKm.classList.remove('is-invalid');
-        //     this.project.route.metrics.fromKmAccess = parseInt(this.settingsAccessFromKm.value);
+        //     this.settingsAccessOrigemKm.classList.remove('is-invalid');
+        //     this.project.linha.metrics.origemKmAccess = parseInt(this.settingsAccessOrigemKm.value);
         // }
-        col17.appendChild(this.settingsAccessFromKm);
-        col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessFromKm, 'Acesso PT1 (km)'));
+        col17.appendChild(this.settingsAccessOrigemKm);
+        col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemKm, 'Acesso PT1 (km)'));
         col1.appendChild(col17);
         
         let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
-        this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.route.metrics.toKmAccess;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
+        this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.linha.metrics.destinoKmAccess;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
         this.settingsAccessToKm.disabled = true;
         // this.settingsAccessToKm.onchange = ()=>{
         //     if(this.settingsAccessToKm.value == '' || parseInt(this.settingsAccessToKm.value) < this.settingsAccessToKm.min || parseInt(this.settingsAccessToKm.value) > this.settingsAccessToKm.max){
@@ -1267,29 +1267,29 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessToKm.classList.remove('is-invalid');
-        //     this.project.route.metrics.toKmAccess = parseInt(this.settingsAccessToKm.value);
+        //     this.project.linha.metrics.destinoKmAccess = parseInt(this.settingsAccessToKm.value);
         // }
         col18.appendChild(this.settingsAccessToKm);
         col18.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToKm, 'Acesso PT2 (km)'));
         col1.appendChild(col18);
         
         let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
-        this.settingsRecallFromKm = document.createElement('input');this.settingsRecallFromKm.type = 'number';this.settingsRecallFromKm.classList = 'flat-input';this.settingsRecallFromKm.min = 0;this.settingsRecallFromKm.max = 300;this.settingsRecallFromKm.value = this.project.route.metrics.fromKmRecall;this.settingsRecallFromKm.id = 'March_settingsRecallFromKm';this.settingsRecallFromKm.placeholder = ' ';
-        this.settingsRecallFromKm.disabled = true;
-        // this.settingsRecallFromKm.onchange = ()=>{
-        //     if(this.settingsRecallFromKm.value == '' || parseInt(this.settingsRecallFromKm.value) < this.settingsRecallFromKm.min || parseInt(this.settingsRecallFromKm.value) > this.settingsRecallFromKm.max){
-        //         this.settingsRecallFromKm.classList.add('is-invalid');
+        this.settingsRecallOrigemKm = document.createElement('input');this.settingsRecallOrigemKm.type = 'number';this.settingsRecallOrigemKm.classList = 'flat-input';this.settingsRecallOrigemKm.min = 0;this.settingsRecallOrigemKm.max = 300;this.settingsRecallOrigemKm.value = this.project.linha.metrics.origemKmRecall;this.settingsRecallOrigemKm.id = 'March_settingsRecallOrigemKm';this.settingsRecallOrigemKm.placeholder = ' ';
+        this.settingsRecallOrigemKm.disabled = true;
+        // this.settingsRecallOrigemKm.onchange = ()=>{
+        //     if(this.settingsRecallOrigemKm.value == '' || parseInt(this.settingsRecallOrigemKm.value) < this.settingsRecallOrigemKm.min || parseInt(this.settingsRecallOrigemKm.value) > this.settingsRecallOrigemKm.max){
+        //         this.settingsRecallOrigemKm.classList.add('is-invalid');
         //         return false;
         //     }
-        //     this.settingsRecallFromKm.classList.remove('is-invalid');
-        //     this.project.route.metrics.fromKmRecall = parseInt(this.settingsRecallFromKm.value);
+        //     this.settingsRecallOrigemKm.classList.remove('is-invalid');
+        //     this.project.linha.metrics.origemKmRecall = parseInt(this.settingsRecallOrigemKm.value);
         // }
-        col19.appendChild(this.settingsRecallFromKm);
-        col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallFromKm, 'Recolhe PT1 (km)'));
+        col19.appendChild(this.settingsRecallOrigemKm);
+        col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemKm, 'Recolhe PT1 (km)'));
         col1.appendChild(col19);
         
         let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
-        this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.route.metrics.toKmRecall;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
+        this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.linha.metrics.destinoKmRecall;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
         this.settingsRecallToKm.disabled = true;
         // this.settingsRecallToKm.onchange = ()=>{
         //     if(this.settingsRecallToKm.value == '' || parseInt(this.settingsRecallToKm.value) < this.settingsRecallToKm.min || parseInt(this.settingsRecallToKm.value) > this.settingsRecallToKm.max){
@@ -1297,7 +1297,7 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallToKm.classList.remove('is-invalid');
-        //     this.project.route.metrics.toKmRecall = parseInt(this.settingsRecallToKm.value);
+        //     this.project.linha.metrics.destinoKmRecall = parseInt(this.settingsRecallToKm.value);
         // }
         col20.appendChild(this.settingsRecallToKm);
         col20.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToKm, 'Recolhe PT2 (km)'));
@@ -1317,10 +1317,10 @@ class MarchUI{
         col2.appendChild(col22);
         
         let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '12%';
-        this.settingsBaselineFromMin = document.createElement('input');this.settingsBaselineFromMin.type = 'number';this.settingsBaselineFromMin.classList = 'flat-input';this.settingsBaselineFromMin.min = 1;this.settingsBaselineFromMin.max = 300;this.settingsBaselineFromMin.value = CICLO_BASE;this.settingsBaselineFromMin.id = 'March_settingsBaselineFromMin';this.settingsBaselineFromMin.placeholder = ' ';
-        this.settingsBaselineFromMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col23.appendChild(this.settingsBaselineFromMin);
-        col23.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineFromMin, 'Ciclo Ida'));
+        this.settingsBaselineOrigemMin = document.createElement('input');this.settingsBaselineOrigemMin.type = 'number';this.settingsBaselineOrigemMin.classList = 'flat-input';this.settingsBaselineOrigemMin.min = 1;this.settingsBaselineOrigemMin.max = 300;this.settingsBaselineOrigemMin.value = CICLO_BASE;this.settingsBaselineOrigemMin.id = 'March_settingsBaselineOrigemMin';this.settingsBaselineOrigemMin.placeholder = ' ';
+        this.settingsBaselineOrigemMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
+        col23.appendChild(this.settingsBaselineOrigemMin);
+        col23.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineOrigemMin, 'Ciclo Ida'));
         col2.appendChild(col23);
         
         let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '12%';
@@ -1331,15 +1331,15 @@ class MarchUI{
         col2.appendChild(col24);
         
         let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '12%';
-        this.settingsBaselineFromInterv = document.createElement('input');this.settingsBaselineFromInterv.type = 'number';this.settingsBaselineFromInterv.classList = 'flat-input';this.settingsBaselineFromInterv.min = 1;this.settingsBaselineFromInterv.max = 300;this.settingsBaselineFromInterv.value = 10;this.settingsBaselineFromInterv.id = 'March_settingsBaselineFromInterv';this.settingsBaselineFromInterv.placeholder = ' ';
-        this.settingsBaselineFromInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col25.appendChild(this.settingsBaselineFromInterv);
-        col25.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineFromInterv, 'Intervalo Ida'));
+        this.settingsBaselineOrigemInterv = document.createElement('input');this.settingsBaselineOrigemInterv.type = 'number';this.settingsBaselineOrigemInterv.classList = 'flat-input';this.settingsBaselineOrigemInterv.min = 1;this.settingsBaselineOrigemInterv.max = 300;this.settingsBaselineOrigemInterv.value = 10;this.settingsBaselineOrigemInterv.id = 'March_settingsBaselineOrigemInterv';this.settingsBaselineOrigemInterv.placeholder = ' ';
+        this.settingsBaselineOrigemInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
+        col25.appendChild(this.settingsBaselineOrigemInterv);
+        col25.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineOrigemInterv, 'Intervalo Ida'));
         col2.appendChild(col25);
         
         let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '12%';
         this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
-        if(this.project.route.circular){
+        if(this.project.linha.circular){
             this.settingsBaselineToMin.disabled = true;
             this.settingsBaselineToInterv.disabled = true;
         }
@@ -1349,10 +1349,10 @@ class MarchUI{
         col2.appendChild(col26);
         
         let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '12%';
-        this.settingsFleetSimulate = document.createElement('input');this.settingsFleetSimulate.type = 'number';this.settingsFleetSimulate.classList = 'flat-input w-auto';this.settingsFleetSimulate.min = 0;this.settingsFleetSimulate.max = 30;this.settingsFleetSimulate.value = 0;this.settingsFleetSimulate.id = 'March_settingsFleetSimulate';this.settingsFleetSimulate.placeholder = ' ';
-        this.settingsFleetSimulate.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col27.appendChild(this.settingsFleetSimulate);
-        col27.appendChild(this.__settingsAddCustomLabel(this.settingsFleetSimulate, 'Frota (simulada)'));
+        this.settingsCarroSimulate = document.createElement('input');this.settingsCarroSimulate.type = 'number';this.settingsCarroSimulate.classList = 'flat-input w-auto';this.settingsCarroSimulate.min = 0;this.settingsCarroSimulate.max = 30;this.settingsCarroSimulate.value = 0;this.settingsCarroSimulate.id = 'March_settingsCarroSimulate';this.settingsCarroSimulate.placeholder = ' ';
+        this.settingsCarroSimulate.onchange = () => {this.__settingsUpdateFreqSimulate()}
+        col27.appendChild(this.settingsCarroSimulate);
+        col27.appendChild(this.__settingsAddCustomLabel(this.settingsCarroSimulate, 'Frota (simulada)'));
         
         this.settingsFreqSimulate = document.createElement('b');this.settingsFreqSimulate.style.paddingLeft = '20px';;this.settingsFreqSimulate.innerHTML = '--';
         col27.appendChild(this.settingsFreqSimulate);
@@ -1371,10 +1371,10 @@ class MarchUI{
             })
             if(has_error){return false}
             for(let i = parseInt(this.settingsBaselineStart.value); i <= parseInt(this.settingsBaselineEnd.value); i++){
-                this.project.route.param[i].fromMin = parseInt(this.settingsBaselineFromMin.value);
-                this.project.route.param[i].toMin = parseInt(this.settingsBaselineToMin.value);
-                this.project.route.param[i].fromInterv = parseInt(this.settingsBaselineFromInterv.value);
-                this.project.route.param[i].toInterv = parseInt(this.settingsBaselineToInterv.value);
+                this.project.linha.param[i].origemMin = parseInt(this.settingsBaselineOrigemMin.value);
+                this.project.linha.param[i].destinoMin = parseInt(this.settingsBaselineToMin.value);
+                this.project.linha.param[i].origemInterv = parseInt(this.settingsBaselineOrigemInterv.value);
+                this.project.linha.param[i].destinoInterv = parseInt(this.settingsBaselineToInterv.value);
             }
             this.__settingsUpdateBaselines();
         }
@@ -1406,8 +1406,8 @@ class MarchUI{
     __saveUISettings(){ // Salva no localStorage algumas variaveis de interface
         localStorage.marchUiSettings = JSON.stringify({
             sumInterGaps: this.project.sumInterGaps,
-            tripFromColor: this.tripFromColor,
-            tripToColor: this.tripToColor,
+            viagemOrigemColor: this.viagemOrigemColor,
+            viagemDestinoColor: this.viagemDestinoColor,
         })
     }
     __generate(){
@@ -1418,9 +1418,9 @@ class MarchUI{
         let col2 = document.createElement('div');col2.style.width = '25%';col2.style.display = 'inline-block';col2.style.paddingLeft = '5px';
         let col3 = document.createElement('div');col3.style.width = '25%';col3.style.display = 'inline-block';col3.style.paddingLeft = '5px';
         let col4 = document.createElement('div');col4.style.width = '25%';col4.style.display = 'inline-block';col4.style.paddingLeft = '5px';col4.style.marginBottom = '10px';
-        let fleet = document.createElement('input');fleet.type = 'number';fleet.min = '1';fleet.max = '40';fleet.classList = 'flat-input';fleet.placeholder = ' ';fleet.id = 'March_generateFleet'
-        let startOperation = document.createElement('input');startOperation.type = 'time';startOperation.value = min2Hour(INICIO_OPERACAO);startOperation.classList = 'flat-input';startOperation.placeholder = ' ';startOperation.id = 'March_generateStartOperation';
-        let endOperation = document.createElement('input');endOperation.type = 'time';endOperation.value = '23:00';endOperation.classList = 'flat-input';endOperation.placeholder = ' ';endOperation.id = 'March_generateEndOperation';
+        let carro = document.createElement('input');carro.type = 'number';carro.min = '1';carro.max = '40';carro.classList = 'flat-input';carro.placeholder = ' ';carro.id = 'March_generateCarro'
+        let inicioOperation = document.createElement('input');inicioOperation.type = 'time';inicioOperation.value = min2Hour(INICIO_OPERACAO);inicioOperation.classList = 'flat-input';inicioOperation.placeholder = ' ';inicioOperation.id = 'March_generateStartOperation';
+        let fimOperation = document.createElement('input');fimOperation.type = 'time';fimOperation.value = '23:00';fimOperation.classList = 'flat-input';fimOperation.placeholder = ' ';fimOperation.id = 'March_generateEndOperation';
         let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton-warning px-3 ms-4';submit.innerHTML = 'Gerar';
         submit.onclick = async () => {
             dialog.close(); // Ao fechar lock do grid sera destravado (manter para tratar esc quando foco no modal)
@@ -1430,12 +1430,12 @@ class MarchUI{
             document.body.appendChild(loading);
             loading.showModal();
             let metrics = {
-                fleet: parseInt(fleet.value),
-                start: hour2Min(startOperation.value),
-                end: hour2Min(endOperation.value),
+                carro: parseInt(carro.value),
+                inicio: hour2Min(inicioOperation.value),
+                fim: hour2Min(fimOperation.value),
                 addAccess: addAccess.checked
             }
-            if(metrics.fleet < 1 || !metrics.start || !metrics.end){return false;}
+            if(metrics.carro < 1 || !metrics.inicio || !metrics.fim){return false;}
             let r = await this.project.generate(metrics);
             if(r){
                 this.__loadStage1();
@@ -1445,12 +1445,12 @@ class MarchUI{
             loading.remove();
             this.gridLocked = false;
         }
-        col1.appendChild(fleet);
-        col1.appendChild(this.__settingsAddCustomLabel(fleet, 'Frota'));
-        col2.appendChild(startOperation);
-        col2.appendChild(this.__settingsAddCustomLabel(startOperation, 'Hora Inicial'));
-        col3.appendChild(endOperation);
-        col3.appendChild(this.__settingsAddCustomLabel(endOperation, 'Hora Final'));
+        col1.appendChild(carro);
+        col1.appendChild(this.__settingsAddCustomLabel(carro, 'Frota'));
+        col2.appendChild(inicioOperation);
+        col2.appendChild(this.__settingsAddCustomLabel(inicioOperation, 'Hora Inicial'));
+        col3.appendChild(fimOperation);
+        col3.appendChild(this.__settingsAddCustomLabel(fimOperation, 'Hora Final'));
         col4.appendChild(submit);
         let addAccess = document.createElement('input');addAccess.type = 'checkbox';addAccess.checked = true;addAccess.id = 'March_generateAddAccess';
         // --
@@ -1512,54 +1512,54 @@ class MarchUI{
         dialog.showModal();
     }
     __loadStage1(){ // Refaz grid
-        this.scheduleFocus = null;
-        this.initialFleetView = 0;
+        this.escalaFocus = null;
+        this.initialCarroView = 0;
         if(this.summaryModal){this.summaryModal.remove()}
         if(this.transferAreaIcon){this.transferAreaIcon.remove()}
-        this.__clearScheduleGrid();
+        this.__clearEscalaGrid();
         this.__canvasRebuild();
         if(!this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         this.footer.style.display = 'block';
         this.rulerTop.style.display = 'block';
-        this.__clearTripDisplay();
-        this.__clearFleetDisplay();
+        this.__clearViagemDisplay();
+        this.__clearCarroDisplay();
         appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
         this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
-        this.__clearFleetLabels(); // Apaga as labels dos carros
-        this.__clearSelection(); // Limpa selecao (caso exista)
+        this.__clearCarroLabels(); // Apaga as labels dos carros
+        this.__clearSelecao(); // Limpa selecao (caso exista)
         this.rulerUnit = this.defaultSettings.rulerUnit;
         this.rulerMediumUnit = this.defaultSettings.rulerMediumUnit;
         this.settingsrulerUnit.value = parseInt(this.defaultSettings.rulerUnit);
         this.settingsrulerMediumUnit.value = this.defaultSettings.rulerMediumUnit;
-        for(let i = 0; i < this.project.cars.length; i++){ // Recria todos os carros e viagens
-            this.addFleet(this.project.cars[i], i + 1);
+        for(let i = 0; i < this.project.carros.length; i++){ // Recria todos os carros e viagens
+            this.addCarro(this.project.carros[i], i + 1);
         }
-        if(this.project.cars.length > 0){ // Se projeto ja iniciado aponta para primeira viagem do primeiro carro
-            this.fleetFocus = this.project.cars[0];
-            this.tripFocus = this.project.cars[0].trips[0];
-            this.fleetIndex = 0;
-            this.tripIndex = 0;
+        if(this.project.carros.length > 0){ // Se projeto ja iniciado aponta para primeira viagem do primeiro carro
+            this.carroFocus = this.project.carros[0];
+            this.viagemFocus = this.project.carros[0].viagens[0];
+            this.carroIndice = 0;
+            this.viagemIndice = 0;
             this.__cursorMove();
-            this.__updateTripDisplay();
-            this.initialView = min2Range(this.project.cars[0].trips[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
+            this.__updateViagemDisplay();
+            this.initialView = min2Range(this.project.carros[0].viagens[0].inicio) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
             this.canvasFit();
             this.__buildRuler();
-            this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
-            if(this.project.transferArea.length > 0)(this.__addToTransferAddLabel()) // Se existe viagem na area de transferencia, adiciona label
+            this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
+            if(this.project.area_transferencia.length > 0)(this.__addToTransferAddLabel()) // Se existe viagem na area de transferencia, adiciona label
         }
         else{
-            this.fleetFocus = null;
-            this.tripFocus = null;
-            this.fleetIndex = -1;
-            this.tripIndex = -1;
+            this.carroFocus = null;
+            this.viagemFocus = null;
+            this.carroIndice = -1;
+            this.viagemIndice = -1;
             this.cursor.style.left = '-200px'
             this.canvasFit();
             this.__buildRuler();
         }
     }
     __loadStage2(){ // Carrega interface para manipulacao das escalas
-        this.initialFleetView = 0;
+        this.initialCarroView = 0;
         this.canvas.style.top = '0px';
         this.footer.style.display = 'none';
         this.rulerTop.style.display = 'block';
@@ -1569,77 +1569,77 @@ class MarchUI{
         appKeyMap.unbindGroup(['March_stage1','March_stage3']);
         this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
-        this.__clearFleetLabels(); // Apaga as labels dos carros
+        this.__clearCarroLabels(); // Apaga as labels dos carros
         if(this.cursor){this.cursor.remove();} // Remove o cursor
         this.rulerUnit = '2px';
         this.rulerMediumUnit = 60;
         this.settingsrulerUnit.value = 2;
         this.settingsrulerMediumUnit.value = 60;
-        if(this.project.cars.length > 0){
-            this.initialView = min2Range(this.project.getFirstTrip()[0].start) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
+        if(this.project.carros.length > 0){
+            this.initialView = min2Range(this.project.getFirstViagem()[0].inicio) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
         }
         this.__buildRuler();
         this.canvasFit();
         // --
-        for(let i = 0; i < this.project.cars.length; i++){ // Constroi os schedules do carro
-            let blocks = this.project.cars[i].getFleetSchedulesBlock(this.project.route);
-            this.scheduleGrid[i] = []; // Incicia array para armazenar schedules do carro
+        for(let i = 0; i < this.project.carros.length; i++){ // Constroi os escalas do carro
+            let blocks = this.project.carros[i].getCarroEscalasBlock(this.project.linha);
+            this.escalaGrid[i] = []; // Incicia array para armazenar escalas do carro
             this.spotsGrid[i] = []; // Incicia array para armazenar elements spots
             for(let y = 0; y < blocks.length; y++){
-                let fleet = document.createElement('div');fleet.style = 'position:absolute;display: flex;height: 45px;border:1px solid #495057;border-radius: 3px;'
-                fleet.style.width = `calc(${this.rulerUnit} * ${blocks[y].size})`;
-                fleet.style.top = `calc(${this.fleetHeight} * ${i + 1} - ${this.fleetHeight} + 10px)`;
-                fleet.style.left = `calc(${this.fleetTagWidth} + (${blocks[y].start} * ${this.rulerUnit}))`;
-                this.canvas.appendChild(fleet);
-                // Adiciona pontos de rendicao de cada bloco
+                let carro = document.createElement('div');carro.style = 'position:absolute;display: flex;height: 45px;border:1px solid #495057;border-radius: 3px;'
+                carro.style.width = `calc(${this.rulerUnit} * ${blocks[y].size})`;
+                carro.style.top = `calc(${this.carroHeight} * ${i + 1} - ${this.carroHeight} + 10px)`;
+                carro.style.left = `calc(${this.carroTagWidth} + (${blocks[y].inicio} * ${this.rulerUnit}))`;
+                this.canvas.appendChild(carro);
+                // Adiciona pontos de rfimicao de cada bloco
                 for(let x = 0; x < blocks[y].spots.length; x++){
-                    let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndex = '80';
+                    let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndice = '80';
                     sp.style.opacity = '10%';
-                    sp.style.top = `calc(${this.fleetHeight} * ${i + 1} - 12px)`;
-                    sp.style.left = `calc(${this.fleetTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
-                    sp.title = blocks[y].spots[x].locale.name;
-                    if(blocks[y].spots[x].type == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
+                    sp.style.top = `calc(${this.carroHeight} * ${i + 1} - 12px)`;
+                    sp.style.left = `calc(${this.carroTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
+                    sp.title = blocks[y].spots[x].locale.nome;
+                    if(blocks[y].spots[x].tipo == 'viagemEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {
-                        if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
+                        if(this.escalaFocus == null || this.escalaFocus[0] != i || this.escalaFocus[2] != y){return false}
                         let r;
-                        if(blocks[y].spots[x].type == 'tripEnd'){
-                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].startIndex, blocks[y].endIndex);
+                        if(blocks[y].spots[x].tipo == 'viagemEnd'){
+                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndice, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndice, blocks[y].fimIndice);
                         }
                         else{
-                            r = this.project.cars[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{end: blocks[y].spots[x].tripIndex, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].startIndex, blocks[y].endIndex);
+                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndice, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].inicioIndice, blocks[y].fimIndice);
                         }
                         if(r){  // Ajustar para atualizar o blocks
-                            this.__cleanScheduleGrid(i);
-                            this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+                            this.__cleanEscalaGrid(i);
+                            this.__updateCarroEscalas(i, this.project.carros[i].getCarroEscalasBlock(this.project.linha))
                         }
                     }
                     this.canvas.appendChild(sp);
                     this.spotsGrid[i].push(sp);                    
                 }
             }
-            let fleet_tag = document.createElement('div');fleet_tag.style = 'position: absolute; user-select: none;';
-            fleet_tag.style.top = `calc(${this.fleetHeight} * ${i + 1} - 25px)`;
-            fleet_tag.style.left = `calc(${this.fleetTagWidth} + (${blocks[0].start} * ${this.rulerUnit}) - 22px)`;
-            fleet_tag.innerHTML = String(i + 1).padStart(2,'0');
-            this.__updateFleetSchedules(i, blocks);
-            this.canvas.appendChild(fleet_tag);
+            let carro_tag = document.createElement('div');carro_tag.style = 'position: absolute; user-select: none;';
+            carro_tag.style.top = `calc(${this.carroHeight} * ${i + 1} - 25px)`;
+            carro_tag.style.left = `calc(${this.carroTagWidth} + (${blocks[0].inicio} * ${this.rulerUnit}) - 22px)`;
+            carro_tag.innerHTML = String(i + 1).padStart(2,'0');
+            this.__updateCarroEscalas(i, blocks);
+            this.canvas.appendChild(carro_tag);
         }
-        this.__updateScheduleArrows(); // Adiciona arrows nas schedules
-        if(this.project.cars.length > 0){
-            this.scheduleFocus = [0,0,0];
-            this.scheduleGrid[0][0].style.backgroundColor = '#032830'
+        this.__updateEscalaArrows(); // Adiciona arrows nas escalas
+        if(this.project.carros.length > 0){
+            this.escalaFocus = [0,0,0];
+            this.escalaGrid[0][0].style.backgroundColor = '#032830'
         }
     }
     __loadStage3(){ // Carrega interface de conclusao e resumo do projeto
-        this.scheduleFocus = null;
+        this.escalaFocus = null;
         this.canvas.style.top = '0px';
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
-        this.__clearScheduleGrid();
+        this.__clearEscalaGrid();
         if(this.summaryModal){this.summaryModal.remove()}
         this.footer.style.display = 'none';
-        this.__clearFleetLabels(); // Apaga as labels dos carros
-        this.__clearSelection(); // Limpa selecao (caso exista)
+        this.__clearCarroLabels(); // Apaga as labels dos carros
+        this.__clearSelecao(); // Limpa selecao (caso exista)
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         this.rulerTop.style.display = 'none';
         if(this.cursor){this.cursor.remove();} // Remove o cursor
@@ -1647,26 +1647,26 @@ class MarchUI{
         // ****
         this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; position: absolute; top: 60px';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
-        let summary1 = this.project.countTrips(); // Gera resumo das viagens planejadas
+        let summary1 = this.project.countViagens(); // Gera resumo das viagens planejadas
         let summary2 = this.project.countOperatores(); // Gera resumo de mao de obra
-        let km_produtiva = parseFloat((summary1.from * this.project.route.fromExtension) + (summary1.to * this.project.route.toExtension));
-        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.route.metrics.fromKmAccess) + (summary1.accessTo * this.project.route.metrics.toKmAccess) + (summary1.lazyFrom * this.project.route.fromExtension) + (summary1.lazyTo * this.project.route.toExtension));
+        let km_produtiva = parseFloat((summary1.origem * this.project.linha.extensao_ida) + (summary1.destino * this.project.linha.extensao_volta));
+        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.linha.metrics.acesso_origem_km) + (summary1.accessTo * this.project.linha.metrics.acesso_destino_km) + (summary1.lazyFrom * this.project.linha.extensao_ida) + (summary1.lazyTo * this.project.linha.extensao_volta));
         let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
         let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100 || 0;
         this.summaryModal.innerHTML = `
-        <h6>Resumo de Projeto<span id="March_summaryProjectActivateContainer" class="float-end"></span></h6><hr>
+        <h6>Resumo de Projeto</h6><hr>
         <div style="display: flex;gap: 10px;">
             <table>
                 <tbody>
-                    <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.cars.length}</td></tr>
-                    <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${summary1.from + summary1.to}</td></tr>
+                    <tr><td style="padding-right: 10px;">Frota</td><td>${this.project.carros.length}</td></tr>
+                    <tr><td style="padding-right: 10px;">Viagens Produtivas</td><td>${summary1.origem + summary1.destino}</td></tr>
                     <tr><td style="padding-right: 10px;">Viagens Reservadas</td><td>${summary1.lazyFrom + summary1.lazyTo}</td></tr>
                     <tr><td style="padding-right: 10px;">Km planejada</td><td>${formatCur(km_produtiva + km_improdutiva)}</td></tr>
                     <tr><td colspan="2"><hr class="m-0"></td></tr>
-                    <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${summary1.from}</td></tr>
-                    <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${summary1.to}</td></tr>
-                    <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${summary1.express}</td></tr>
-                    <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${summary1.semiexpress}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Ida</td><td>${summary1.origem}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Volta</td><td>${summary1.destino}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Expresso</td><td>${summary1.expresso}</td></tr>
+                    <tr><td style="padding-right: 10px;text-align: right;">Semiexpresso</td><td>${summary1.semiexpresso}</td></tr>
                     <tr><td style="padding-right: 10px;text-align: right;">Acesso</td><td>${summary1.accessFrom + summary1.accessTo}</td></tr>
                     <tr><td style="padding-right: 10px;text-align: right;">Recolhidas</td><td>${summary1.recallFrom + summary1.recallTo}</td></tr>
                 </tbody>
@@ -1683,7 +1683,7 @@ class MarchUI{
                     <div class="semipie animate" style="--v:${perc_improdutiva.toFixed(0)};--w:120px;--b:20px;--c:var(--bs-danger)">${perc_improdutiva.toFixed(2)}%</div>
                 </div>
                 <div class="d-inline-block mt-3">
-                    <table class="text-start mb-2">
+                    <table class="text-inicio mb-2">
                         <tbody>
                         <tr><td style="padding-right: 10px;">Condutores:</td><td><b id="March_summaryWorkersQtde">${summary2.workers}</b></td></tr>
                         <tr><td style="padding-right: 10px;">H Normais:</td><td><b>${min2Hour(summary2.normalTime, false)}</b></td></tr>
@@ -1696,9 +1696,9 @@ class MarchUI{
             <div style="flex: 1 1 0px;" id="March_summaryBlock3Container">
                 <table class="fs-7">
                     <tbody>
-                        <tr><td style="padding-right: 20px;">Projeto:</td><td><b class="text-secondary">${this.project.name}</b></td></tr>
-                        <tr><td style="padding-right: 20px;">Linha:</td><td><b class="text-secondary">${this.project.route.prefix}</b></td></tr>
-                        <tr><td style="padding-right: 20px;">Nome:</td><td><b class="text-secondary">${this.project.route.name}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Projeto:</td><td><b class="text-secondary">${this.project.nome}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Linha:</td><td><b class="text-secondary">${this.project.linha.codigo}</b></td></tr>
+                        <tr><td style="padding-right: 20px;">Nome:</td><td><b class="text-secondary">${this.project.linha.nome}</b></td></tr>
                         <tr><td style="padding-right: 20px;">Status:</td><td><b class="text-secondary" id="March_summaryActiveLabel">${this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>'}</b></td></tr>
                         <tr><td colspan="2"><hr class="my-2"></td></tr>
                         <tr><td colspan="2" class="text-secondary">${this.project.desc}</td></tr>
@@ -1713,12 +1713,6 @@ class MarchUI{
         <div class="bg-body-tertiary text-center">VOLTA</div>
         <div style="height: 200px;margin-bottom: 60px;"><canvas id="March_summaryOD_VOLTA_canvas"></canvas></div>
         `;
-        let summaryProjectActivate = document.createElement('input');summaryProjectActivate.type = 'checkbox';summaryProjectActivate.role = 'switch';summaryProjectActivate.id = 'March_summaryProjectActivate';summaryProjectActivate.checked = this.project.active;
-        summaryProjectActivate.onclick = () => {
-            this.project.active = summaryProjectActivate.checked;
-            document.getElementById('March_summaryActiveLabel').innerHTML = this.project.active ? '<b class="text-success">Ativo</b>' : '<b class="text-secondary">Inativo</b>';
-        }
-        
         let summaryWorkerControl = document.createElement('input');summaryWorkerControl.type = 'checkbox';summaryWorkerControl.role = 'switch';summaryWorkerControl.id = 'March_summaryWorkerControl';
         summaryWorkerControl.onclick = () => {
             if(summaryWorkerControl.checked){document.getElementById('March_summaryWorkersQtde').innerHTML = summary2.workers + summary2.half;}
@@ -1726,7 +1720,6 @@ class MarchUI{
         }
         document.body.appendChild(this.summaryModal);
         
-        document.getElementById('March_summaryProjectActivateContainer').appendChild(this.__settingsContainerSwitch(summaryProjectActivate, 'Ativar projeto'));
         document.getElementById('March_summaryWorkerControls').appendChild(this.__settingsContainerSwitch(summaryWorkerControl, 'Contar aproveitamentos'));
         
         let summaryProjectSumbit = document.createElement('button');summaryProjectSumbit.type = 'button';summaryProjectSumbit.classList = 'btn btn-sm btn-phanton-success mt-3 float-end fw-bold';summaryProjectSumbit.id = 'March_summaryProjectSubmit';summaryProjectSumbit.innerHTML = 'Gravar e Fechar'
@@ -1747,7 +1740,7 @@ class MarchUI{
                 datasets: [{
                     type: 'line',
                     label: 'Demanda',
-                    data: od[1].fromDemand,
+                    data: od[1].demanda_ida,
                     pointBorderWidth: 4,
                     hoverBorderWidth: 8,
                     pointHitRadius: 8,
@@ -1755,7 +1748,7 @@ class MarchUI{
                 },{
                     type: 'bar',
                     label: 'Oferta',
-                    data: od[1].fromSuply,
+                    data: od[1].oferta_ida,
                     backgroundColor: ['#6C757D'],
                     borderColor: ['blue'],
                     maxBarThickness: 50,
@@ -1780,7 +1773,7 @@ class MarchUI{
                 datasets: [{
                     type: 'line',
                     label: 'Demanda',
-                    data: od[1].toDemand,
+                    data: od[1].demanda_volta,
                     pointBorderWidth: 4,
                     hoverBorderWidth: 8,
                     pointHitRadius: 8,
@@ -1788,7 +1781,7 @@ class MarchUI{
                 },{
                     type: 'bar',
                     label: 'Oferta',
-                    data: od[1].toSuply,
+                    data: od[1].oferta_volta,
                     backgroundColor: ['#6C757D'],
                     borderColor: ['blue'],
                     maxBarThickness: 50,
@@ -1810,66 +1803,66 @@ class MarchUI{
         });        
         this.summaryModal.show();
     }
-    __scheduleAddContent(options){
+    __escalaAddContent(options){
         let inicio, fim;
-        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaStart > 0){
-            inicio = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].start - 1].start + this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaStart);
+        if(this.project.carros[options.carro_index].escalas[options.escala_index].deltaStart > 0){
+            inicio = min2Hour(this.project.carros[options.carro_index].viagens[this.project.carros[options.carro_index].escalas[options.escala_index].inicio - 1].inicio + this.project.carros[options.carro_index].escalas[options.escala_index].deltaStart);
         }
-        else{inicio = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].start].start)}
+        else{inicio = min2Hour(this.project.carros[options.carro_index].viagens[this.project.carros[options.carro_index].escalas[options.escala_index].inicio].inicio)}
         // ---
-        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaEnd > 0){
-            fim = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].end].start + this.project.cars[options.fleet_index].schedules[options.schedule_index].deltaEnd - 1);
+        if(this.project.carros[options.carro_index].escalas[options.escala_index].deltaEnd > 0){
+            fim = min2Hour(this.project.carros[options.carro_index].viagens[this.project.carros[options.carro_index].escalas[options.escala_index].fim].inicio + this.project.carros[options.carro_index].escalas[options.escala_index].deltaEnd - 1);
         }
-        else{fim = min2Hour(this.project.cars[options.fleet_index].trips[this.project.cars[options.fleet_index].schedules[options.schedule_index].end].end)}
-        let jornada = this.project.cars[options.fleet_index].getScheduleJourney(options.schedule_index);
+        else{fim = min2Hour(this.project.carros[options.carro_index].viagens[this.project.carros[options.carro_index].escalas[options.escala_index].fim].fim)}
+        let jornada = this.project.carros[options.carro_index].getEscalaJourney(options.escala_index);
         let previous, next;
 
-        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].next?.externalProject){ // Verifica se existe complmento de jornada em outra linha posterior a esta
-            next = {name: `[ ${this.project.cars[options.fleet_index].schedules[options.schedule_index].next.externalProject} ]`}
+        if(this.project.carros[options.carro_index].escalas[options.escala_index].next?.externalProject){ // Verifica se existe complmento de jornada em outra linha posterior a esta
+            next = {nome: `[ ${this.project.carros[options.carro_index].escalas[options.escala_index].next.externalProject} ]`}
         }
-        if(this.project.cars[options.fleet_index].schedules[options.schedule_index].previous?.externalProject){ // Verifica se existe complemento de jornada em outra linha anterior a esta
-            previous = {name: `[ ${this.project.cars[options.fleet_index].schedules[options.schedule_index].previous.externalProject} ]`}
+        if(this.project.carros[options.carro_index].escalas[options.escala_index].previous?.externalProject){ // Verifica se existe complemento de jornada em outra linha anterior a esta
+            previous = {nome: `[ ${this.project.carros[options.carro_index].escalas[options.escala_index].previous.externalProject} ]`}
         }
-        return `<div><b data-type="schedule-next" class="ms-1">${previous ? previous.name + ' <i class="bi bi-arrow-left me-1"></i>': ''}</b><b data-type="schedule-name" class="me-2">${this.project.cars[options.fleet_index].schedules[options.schedule_index].name}</b>${min2Hour(jornada)}<b data-type="schedule-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.name : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
+        return `<div><b data-type="escala-next" class="ms-1">${previous ? previous.nome + ' <i class="bi bi-arrow-left me-1"></i>': ''}</b><b data-type="escala-nome" class="me-2">${this.project.carros[options.carro_index].escalas[options.escala_index].nome}</b>${min2Hour(jornada)}<b data-type="escala-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.nome : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
-    __updateFleetSchedules(fleet_index, blocks){ // Refaz schedules do carro informado
-        this.scheduleGrid[fleet_index].forEach((el) => {el.remove()});
-        this.scheduleGrid[fleet_index] = []; // Incicia array para armazenar schedules do carro
-        for(let j = 0; j < this.project.cars[fleet_index].schedules.length; j++){ // Percorre todos os schedules ja definidos e adiciona no fleet
-            let metrics = this.project.cars[fleet_index].getScheduleJourney(j, true);
-            let bg = this.scheduleFocus && JSON.stringify([this.scheduleFocus[0], this.scheduleFocus[1]]) == JSON.stringify([fleet_index, j]) ? '#032830' : '#1a1d20';
+    __updateCarroEscalas(carro_index, blocks){ // Refaz escalas do carro informado
+        this.escalaGrid[carro_index].forEach((el) => {el.remove()});
+        this.escalaGrid[carro_index] = []; // Incicia array para armazenar escalas do carro
+        for(let j = 0; j < this.project.carros[carro_index].escalas.length; j++){ // Percorre todos os escalas ja definidos e adiciona no carro
+            let metrics = this.project.carros[carro_index].getEscalaJourney(j, true);
+            let bg = this.escalaFocus && JSON.stringify([this.escalaFocus[0], this.escalaFocus[1]]) == JSON.stringify([carro_index, j]) ? '#032830' : '#1a1d20';
             let sq = document.createElement('div');sq.setAttribute('data-bs-theme', 'dark'); sq.style = `height: 43px;border-right: 2px solid #495057;text-align: center;background-color: ${bg};color: #ced4da;user-select: none; position: absolute;z-index: 50;`;
-            sq.style.left = `calc(${metrics[1]} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
-            sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
-            sq.innerHTML = this.__scheduleAddContent({fleet_index: fleet_index, schedule_index: j});
+            sq.style.left = `calc(${metrics[1]} * ${this.rulerUnit} + ${this.carroTagWidth} + 1px)`;
+            sq.style.top = `calc(${this.carroHeight} * ${carro_index + 1} - ${this.carroHeight} + 11px)`;
+            sq.innerHTML = this.__escalaAddContent({carro_index: carro_index, escala_index: j});
             sq.style.width = `calc(${metrics[0]} * ${this.rulerUnit} - 1px)`;
             sq.onclick = () => {
-                if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
+                if(this.escalaFocus){this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = '#1a1d20';}
                 sq.style.backgroundColor = '#032830';
                 let target_block = null;
                 for(let x = 0; x < blocks.length; x++){ // Verifica a qual bloco a viagem pertence
-                    if(project.project.cars[fleet_index].schedules[j].start >= blocks[x].startIndex && project.project.cars[fleet_index].schedules[j].end <= blocks[x].endIndex){ target_block = x}
+                    if(project.project.carros[carro_index].escalas[j].inicio >= blocks[x].inicioIndice && project.project.carros[carro_index].escalas[j].fim <= blocks[x].fimIndice){ target_block = x}
                 }
-                this.scheduleFocus = [fleet_index, j, target_block];
+                this.escalaFocus = [carro_index, j, target_block];
             }
-            if(this.project.cars[fleet_index].schedules[j].previous == null){
+            if(this.project.carros[carro_index].escalas[j].previous == null){
                 let previous = document.createElement('i');previous.classList = 'bi bi-arrow-bar-left px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
                 previous.onclick = (ev) => {
                     ev.stopImmediatePropagation();
-                    if(!this.scheduleSelection){
-                        this.scheduleSelection = [fleet_index, j, previous];
-                        this.__scheduleExternalControl('previous', blocks); // Adiciona controle para externalProject
+                    if(!this.escalaSelecao){
+                        this.escalaSelecao = [carro_index, j, previous];
+                        this.__escalaExternalControl('previous', blocks); // Adiciona controle para externalProject
                     }
-                    if(this.scheduleSelection[0] != fleet_index || this.scheduleSelection[1] != j){
-                        let start = this.project.cars[fleet_index].trips[this.project.cars[fleet_index].schedules[j].start];
-                        let end = this.project.cars[this.scheduleSelection[0]].trips[this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].end];
-                        if(end.end > start.start){return false}
-                        this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]].next = {externalProject: null, fleet: fleet_index, schedule: j};
-                        this.project.cars[fleet_index].schedules[j].previous = {externalProject: null, fleet: this.scheduleSelection[0], schedule: this.scheduleSelection[1]};
-                        this.__updateFleetSchedules(fleet_index, blocks);
-                        if(this.scheduleSelection[0] != fleet_index){this.__updateFleetSchedules(this.scheduleSelection[0], blocks);}
-                        this.__updateScheduleArrows();
-                        this.scheduleSelection = null;
+                    if(this.escalaSelecao[0] != carro_index || this.escalaSelecao[1] != j){
+                        let inicio = this.project.carros[carro_index].viagens[this.project.carros[carro_index].escalas[j].inicio];
+                        let fim = this.project.carros[this.escalaSelecao[0]].viagens[this.project.carros[this.escalaSelecao[0]].escalas[this.escalaSelecao[1]].fim];
+                        if(fim.fim > inicio.inicio){return false}
+                        this.project.carros[this.escalaSelecao[0]].escalas[this.escalaSelecao[1]].next = {externalProject: null, carro: carro_index, escala: j};
+                        this.project.carros[carro_index].escalas[j].previous = {externalProject: null, carro: this.escalaSelecao[0], escala: this.escalaSelecao[1]};
+                        this.__updateCarroEscalas(carro_index, blocks);
+                        if(this.escalaSelecao[0] != carro_index){this.__updateCarroEscalas(this.escalaSelecao[0], blocks);}
+                        this.__updateEscalaArrows();
+                        this.escalaSelecao = null;
                         this.externalControl.remove();
                     }
                 }
@@ -1880,33 +1873,33 @@ class MarchUI{
                 previous.onclick = (ev)=>{
                     ev.stopImmediatePropagation();
                     let destiny;
-                    if(!this.project.cars[fleet_index].schedules[j].previous.externalProject){
-                        destiny = this.project.cars[fleet_index].schedules[j].previous;
-                        this.project.cars[destiny.fleet].schedules[destiny.schedule].next = null;
+                    if(!this.project.carros[carro_index].escalas[j].previous.externalProject){
+                        destiny = this.project.carros[carro_index].escalas[j].previous;
+                        this.project.carros[destiny.carro].escalas[destiny.escala].next = null;
                     }
-                    if(!this.project.cars[fleet_index].schedules[j].previous.externalProject && fleet_index != destiny.fleet){
-                        this.__updateFleetSchedules(destiny.fleet, blocks);
+                    if(!this.project.carros[carro_index].escalas[j].previous.externalProject && carro_index != destiny.carro){
+                        this.__updateCarroEscalas(destiny.carro, blocks);
                     }
-                    this.project.cars[fleet_index].schedules[j].previous = null;
-                    this.__updateFleetSchedules(fleet_index, blocks);
-                    this.__updateScheduleArrows();
+                    this.project.carros[carro_index].escalas[j].previous = null;
+                    this.__updateCarroEscalas(carro_index, blocks);
+                    this.__updateEscalaArrows();
                 }
                 sq.appendChild(previous);
             }
-            if(this.project.cars[fleet_index].schedules[j].next == null){
+            if(this.project.carros[carro_index].escalas[j].next == null){
                 let next = document.createElement('i');next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
                 next.onclick = (ev) => {
                     ev.stopImmediatePropagation();
-                    if(this.scheduleSelection && (this.scheduleSelection[0] != fleet_index || this.scheduleSelection[1] != j)){return null} // So seleciona caso nao existe schedule selecionada
-                    if(this.scheduleSelection && this.scheduleSelection[0] == fleet_index && this.scheduleSelection[1] == j){ // Se precionar novamente cancela selecao de schedule
+                    if(this.escalaSelecao && (this.escalaSelecao[0] != carro_index || this.escalaSelecao[1] != j)){return null} // So seleciona caso nao existe escala selecionada
+                    if(this.escalaSelecao && this.escalaSelecao[0] == carro_index && this.escalaSelecao[1] == j){ // Se precionar novamente cancela selecao de escala
                         next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';
-                        this.scheduleSelection = null;
+                        this.escalaSelecao = null;
                         this.externalControl.remove();
                     }
                     else{
                         next.classList = 'bi bi-arrow-left-right py-1 pe-1 fs-5 pointer';
-                        this.scheduleSelection = [fleet_index, j, next];
-                        this.__scheduleExternalControl('next', blocks); // Adiciona controle para externalProject
+                        this.escalaSelecao = [carro_index, j, next];
+                        this.__escalaExternalControl('next', blocks); // Adiciona controle para externalProject
                     }
                 }
                 sq.appendChild(next);
@@ -1916,69 +1909,69 @@ class MarchUI{
                 next.onclick = (ev) => { // Remove o apontamento de next do alvo e o previous do correlato
                     ev.stopImmediatePropagation();
                     let destiny;
-                    if(!this.project.cars[fleet_index].schedules[j].next.externalProject){
-                        destiny = this.project.cars[fleet_index].schedules[j].next;
-                        this.project.cars[destiny.fleet].schedules[destiny.schedule].previous = null;
+                    if(!this.project.carros[carro_index].escalas[j].next.externalProject){
+                        destiny = this.project.carros[carro_index].escalas[j].next;
+                        this.project.carros[destiny.carro].escalas[destiny.escala].previous = null;
                     }
-                    if(!this.project.cars[fleet_index].schedules[j].next.externalProject && fleet_index != destiny.fleet){
-                        this.__updateFleetSchedules(destiny.fleet, blocks);
+                    if(!this.project.carros[carro_index].escalas[j].next.externalProject && carro_index != destiny.carro){
+                        this.__updateCarroEscalas(destiny.carro, blocks);
                     }
-                    this.project.cars[fleet_index].schedules[j].next = null;
-                    this.__updateFleetSchedules(fleet_index, blocks);
-                    this.__updateScheduleArrows();
+                    this.project.carros[carro_index].escalas[j].next = null;
+                    this.__updateCarroEscalas(carro_index, blocks);
+                    this.__updateEscalaArrows();
                 }
                 sq.appendChild(next);
             }
             this.canvas.appendChild(sq);
-            this.scheduleGrid[fleet_index].push(sq);
+            this.escalaGrid[carro_index].push(sq);
         }
         // Se existe viagens sem escala no bloco, insere bloco empty
         for(let i = 0; i < blocks.length; i++){
             if(blocks[i].emptyStart == undefined){continue}
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
-            sq.setAttribute('data-type', 'emptySchedule');
+            sq.setAttribute('data-type', 'emptyEscala');
             let left;
-            if(blocks[i].deltaEnd == 0){left = this.project.cars[fleet_index].trips[blocks[i].emptyStart].start}
+            if(blocks[i].deltaEnd == 0){left = this.project.carros[carro_index].viagens[blocks[i].emptyStart].inicio}
             else{
-                left = this.project.cars[fleet_index].trips[blocks[i].emptyStart - 1].start + blocks[i].deltaEnd;
+                left = this.project.carros[carro_index].viagens[blocks[i].emptyStart - 1].inicio + blocks[i].deltaEnd;
             }
-            sq.style.left = `calc(${left} * ${this.rulerUnit} + ${this.fleetTagWidth} + 1px)`;
-            sq.style.top = `calc(${this.fleetHeight} * ${fleet_index + 1} - ${this.fleetHeight} + 11px)`;
+            sq.style.left = `calc(${left} * ${this.rulerUnit} + ${this.carroTagWidth} + 1px)`;
+            sq.style.top = `calc(${this.carroHeight} * ${carro_index + 1} - ${this.carroHeight} + 11px)`;
             sq.innerHTML = '<i class="bi bi-plus-lg fs-5 text-secondary"></i>';
             
-            let jornada = blocks[i].start + blocks[i].size - left;
+            let jornada = blocks[i].inicio + blocks[i].size - left;
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
-                if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                let r = this.project.addSchedule(fleet_index, {start: blocks[i].emptyStart, end: blocks[i].endIndex, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
-                this.scheduleFocus = [fleet_index, r, i];
-                this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route))
+                if(this.escalaFocus){this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = '#1a1d20';}
+                let r = this.project.addEscala(carro_index, {inicio: blocks[i].emptyStart, fim: blocks[i].fimIndice, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
+                this.escalaFocus = [carro_index, r, i];
+                this.__updateCarroEscalas(carro_index, this.project.carros[carro_index].getCarroEscalasBlock(this.project.linha))
             }
             this.canvas.appendChild(sq);
-            this.scheduleGrid[fleet_index].push(sq);
-            this.scheduleGrid[fleet_index].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.escalaGrid[carro_index].push(sq);
+            this.escalaGrid[carro_index].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
     }
-    __updateScheduleArrows(){
-        for(let i in this.scheduleArrowsGrid){ // Apaga todos as arrows do canvas
-            this.scheduleArrowsGrid[i].forEach((el)=>{el.destroy();});
+    __updateEscalaArrows(){
+        for(let i in this.escalaArrowsGrid){ // Apaga todos as arrows do canvas
+            this.escalaArrowsGrid[i].forEach((el)=>{el.destroy();});
         }
-        for(let i = 0; i < this.project.cars.length; i++){ // Monta arrows
-            this.scheduleArrowsGrid[i] = []; // Reinicia dicionario
-            for(let j = 0; j < this.project.cars[i].schedules.length; j++){
-                if(this.project.cars[i].schedules[j].next && !this.project.cars[i].schedules[j].next.externalProject){
+        for(let i = 0; i < this.project.carros.length; i++){ // Monta arrows
+            this.escalaArrowsGrid[i] = []; // Reinicia dicionario
+            for(let j = 0; j < this.project.carros[i].escalas.length; j++){
+                if(this.project.carros[i].escalas[j].next && !this.project.carros[i].escalas[j].next.externalProject){
                     let arrow = new jsELConnector({
-                        from: this.scheduleGrid[i][j],
-                        to: this.scheduleGrid[this.project.cars[i].schedules[j].next.fleet][this.project.cars[i].schedules[j].next.schedule],
+                        from: this.escalaGrid[i][j],
+                        to: this.escalaGrid[this.project.carros[i].escalas[j].next.carro][this.project.carros[i].escalas[j].next.escala],
                         container: this.canvas,               
                     });
-                    this.scheduleArrowsGrid[i].push(arrow);
+                    this.escalaArrowsGrid[i].push(arrow);
                 }
             }
         }
     }
-    __scheduleExternalControl(position, blocks){ // Exibe modal para adicao de externalProject na schedule
-        let el = this.scheduleGrid[this.scheduleSelection[0]][this.scheduleSelection[1]];
+    __escalaExternalControl(position, blocks){ // Exibe modal para adicao de externalProject na escala
+        let el = this.escalaGrid[this.escalaSelecao[0]][this.escalaSelecao[1]];
         this.externalControl = document.createElement('button');this.externalControl.type = 'button';this.externalControl.classList = 'btn btn-sm btn-phanton'; this.externalControl.innerHTML = 'Externo';
         this.externalControl.style = `position: absolute; top: ${el.offsetTop + 5}px;left: ${el.offsetLeft + el.offsetWidth + 5}px;z-index: 200;`;
         this.externalControl.onclick = () => {
@@ -1988,7 +1981,7 @@ class MarchUI{
                 this.gridLocked = false;
                 if(position == 'previous'){
                     this.externalControl.remove();
-                    this.scheduleSelection = null;
+                    this.escalaSelecao = null;
                 }
                 modal.remove();
             })
@@ -2007,12 +2000,12 @@ class MarchUI{
                 if(name.value.trim() == '' || name.value.trim().length < 3){name.classList.add('is-invalid')}else{name.classList.remove('is-invalid')};
                 if(tabela.value.trim() == '' || tabela.value.trim().length < 2){tabela.classList.add('is-invalid')}else{tabela.classList.remove('is-invalid')};
                 if(jornada.value.trim() == '' || jornada.value.trim().length < 5){jornada.classList.add('is-invalid')}else{jornada.classList.remove('is-invalid')};
-                let s = {externalProject: `${name.value}:${tabela.value}`, fleet: null, schedule: null, journey: hour2Min(jornada.value)}
+                let s = {externalProject: `${name.value}:${tabela.value}`, carro: null, escala: null, journey: hour2Min(jornada.value)}
                 if(!s.journey){jornada.classList.add('is-invalid')}
                 if(modal.querySelectorAll('.is-invalid').length > 0){return false}
-                this.project.cars[this.scheduleSelection[0]].schedules[this.scheduleSelection[1]][position] = s;
-                this.__updateFleetSchedules(this.scheduleSelection[0], blocks);
-                this.scheduleSelection = null;
+                this.project.carros[this.escalaSelecao[0]].escalas[this.escalaSelecao[1]][position] = s;
+                this.__updateCarroEscalas(this.escalaSelecao[0], blocks);
+                this.escalaSelecao = null;
                 this.gridLocked = false;
                 modal.remove();
                 this.externalControl.remove();
@@ -2031,13 +2024,13 @@ class MarchUI{
     __toggleArrowVisibility(){
         this.arrowsVisible = this.arrowsVisible == false;
         let v = this.arrowsVisible ? 'visible' : 'hidden';
-        for(let i in this.scheduleArrowsGrid){
-            this.scheduleArrowsGrid[i].forEach((el) => {el.setVisibility(v)});
+        for(let i in this.escalaArrowsGrid){
+            this.escalaArrowsGrid[i].forEach((el) => {el.setVisibility(v)});
         }
     }
-    __cleanScheduleGrid(fleet_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
-        for(let i in this.scheduleGrid[fleet_index]){
-            this.scheduleGrid[fleet_index][i].remove();
+    __cleanEscalaGrid(carro_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
+        for(let i in this.escalaGrid[carro_index]){
+            this.escalaGrid[carro_index][i].remove();
     }}
     uploadProject(){
         let loadInput = document.createElement('input');loadInput.type = 'file';loadInput.setAttribute('accept', '.json');loadInput.style.display = 'none';
@@ -2079,271 +2072,281 @@ class MarchUI{
         }})
     }
     __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
-        appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addFleet()}})
+        appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addCarro()}})
         appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.addTrip();
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.addViagem();
                 })
             }
-            else{this.addTrip();}
+            else{this.addViagem();}
         }})
         appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.addTripAt()
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.addViagemAt()
                 })
             }
-            else{this.addTripAt();}
+            else{this.addViagemAt();}
         }})
 
         appKeyMap.bind({group: 'March_stage1', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            if(this.project.cars[this.fleetIndex].trips.length > this.tripIndex + 1){
-                this.tripIndex++;
-                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            if(this.project.carros[this.carroIndice].viagens.length > this.viagemIndice + 1){
+                this.viagemIndice++;
+                this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
                 
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            if(this.tripIndex > 0){
-                this.tripIndex--;
-                this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            if(this.viagemIndice > 0){
+                this.viagemIndice--;
+                this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
-            if(this.project.cars.length > this.fleetIndex + 1){
-                this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-                this.fleetIndex++;
-                this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
-                this.fleetFocus = this.project.cars[this.fleetIndex];
+            this.__clearCarroDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
+            if(this.project.carros.length > this.carroIndice + 1){
+                this.carroLabels[this.carroIndice].style.color = 'inherit';
+                this.carroIndice++;
+                this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
+                this.carroFocus = this.project.carros[this.carroIndice];
                 // Identifica viagem mais proxima do proximo carro para mover cursor
-                let bestMatch = this.project.cars[this.fleetIndex].trips[0];
-                let start = this.tripFocus.start;
+                let bestMatch = this.project.carros[this.carroIndice].viagens[0];
+                let inicio = this.viagemFocus.inicio;
                 let escape = false;
-                this.tripIndex = 0;
+                this.viagemIndice = 0;
                 while(!escape){
                     // Percorre viagens do proximo carro ate final ou ate achar melhor correspondente
                     // Se viagem analisada inicia apos (ou no mesmo horario) de bestMatch termina execucao
-                    if( this.project.cars[this.fleetIndex].trips.length == this.tripIndex + 1 ||
-                        this.project.cars[this.fleetIndex].trips[this.tripIndex + 1].start >= start){escape = true}
+                    if( this.project.carros[this.carroIndice].viagens.length == this.viagemIndice + 1 ||
+                        this.project.carros[this.carroIndice].viagens[this.viagemIndice + 1].inicio >= inicio){escape = true}
                     else{
-                        this.tripIndex++;
-                        bestMatch = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                        this.viagemIndice++;
+                        bestMatch = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                     }
                 }
-                this.tripFocus = bestMatch;
+                this.viagemFocus = bestMatch;
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: (ev) => {
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            this.__clearFleetDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
-            if(this.fleetIndex > 0){
-                this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-                this.fleetIndex--;
-                this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
-                this.fleetFocus = this.project.cars[this.fleetIndex];
+            this.__clearCarroDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
+            if(this.carroIndice > 0){
+                this.carroLabels[this.carroIndice].style.color = 'inherit';
+                this.carroIndice--;
+                this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
+                this.carroFocus = this.project.carros[this.carroIndice];
                 // Identifica viagem mais proxima do proximo carro para mover cursor
-                let bestMatch = this.project.cars[this.fleetIndex].trips[0];
-                let start = this.tripFocus.start;
+                let bestMatch = this.project.carros[this.carroIndice].viagens[0];
+                let inicio = this.viagemFocus.inicio;
                 let escape = false;
-                this.tripIndex = 0;
+                this.viagemIndice = 0;
                 while(!escape){
                     // Percorre viagens do proximo carro ate final ou ate achar melhor correspondente
                     // Se viagem analisada inicia apos (ou no mesmo horario) de bestMatch termina execucao
-                    if( this.project.cars[this.fleetIndex].trips.length == this.tripIndex + 1 ||
-                        this.project.cars[this.fleetIndex].trips[this.tripIndex + 1].start > start){escape = true}
+                    if( this.project.carros[this.carroIndice].viagens.length == this.viagemIndice + 1 ||
+                        this.project.carros[this.carroIndice].viagens[this.viagemIndice + 1].inicio > inicio){escape = true}
                     else{
-                        this.tripIndex++;
-                        bestMatch = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+                        this.viagemIndice++;
+                        bestMatch = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                     }
                 }
-                this.tripFocus = bestMatch;
+                this.viagemFocus = bestMatch;
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
-        appKeyMap.bind({group: 'March_stage1', key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.plus();}})
-        appKeyMap.bind({group: 'March_stage1', key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.plus(false)}})
-        appKeyMap.bind({group: 'March_stage1', key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.sub();}})
-        appKeyMap.bind({group: 'March_stage1', key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.sub(false)}})
-        appKeyMap.bind({group: 'March_stage1', key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.advance();}})
-        appKeyMap.bind({group: 'March_stage1', key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}
+        appKeyMap.bind({group: 'March_stage1', key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.plus();}})
+        appKeyMap.bind({group: 'March_stage1', key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.plus(false)}})
+        appKeyMap.bind({group: 'March_stage1', key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.sub();}})
+        appKeyMap.bind({group: 'March_stage1', key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.sub(false)}})
+        appKeyMap.bind({group: 'March_stage1', key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.advance();}})
+        appKeyMap.bind({group: 'March_stage1', key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}
             this.moveStart();
             this.__cursorMove();
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.back()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.backStart()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.back()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.backStart()}})
         appKeyMap.bind({group: 'March_stage1', key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.project.carros[this.carroIndice].escalas = [];
                     this.addInterv();
-                    this.__updateTripDisplay();
+                    this.__updateViagemDisplay();
                 })
             }
-            else{this.addInterv();this.__updateTripDisplay();}
+            else{this.addInterv();this.__updateViagemDisplay();}
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{if(!this.tripFocus || this.__gridIsBlock()){return false}this.addAccess();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
+                this.__modalConfirmationChangeProject(()=>{
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.addAccess();
+                    this.__updateViagemDisplay();
+                })
+            }
+            else{this.addAccess();this.__updateViagemDisplay();}
+        }})
         appKeyMap.bind({group: 'March_stage1', key: 'a', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Acesso à todos', desc: 'Adiciona acesso para todos os carros', run: ()=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
-            let increment = true; // addAccess por padrao incrementa o this.tripIndex, deve incrementar somente para o carro em foco
-            for(let i = 0; i < this.project.cars.length; i++){
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            let increment = true; // addAccess por padrao incrementa o this.viagemIndice, deve incrementar somente para o carro em foco
+            for(let i = 0; i < this.project.carros.length; i++){
                 let r = this.addAccess(i, 0, increment); // Tenta adicionar recolhe na ultima viagem de cada carro
                 increment = false;
-                if(r){this.project.cars[i].schedules = [];} // Limpa schedules do carro
+                if(r){this.project.carros[i].escalas = [];} // Limpa escalas do carro
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.tripShut();
-                    this.__updateTripDisplay();
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.viagemShut();
+                    this.__updateViagemDisplay();
                 })
             }
-            else{this.tripShut();this.__updateTripDisplay();}
+            else{this.viagemShut();this.__updateViagemDisplay();}
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
+                    this.project.carros[this.carroIndice].escalas = [];
                     this.addRecall();
-                    this.__updateTripDisplay();
+                    this.__updateViagemDisplay();
                 })
             }
-            else{this.addRecall();this.__updateTripDisplay();}
+            else{this.addRecall();this.__updateViagemDisplay();}
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'e', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recolher todos', desc: 'Recolhe todos os carros', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
-            for(let i = 0; i < this.project.cars.length; i++){
-                let r = this.addRecall(i, this.project.cars[i].trips.length - 1); // Tenta adicionar recolhe na ultima viagem de cada carro
-                if(r){this.project.cars[i].schedules = [];} // Limpa schedules do carro
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            for(let i = 0; i < this.project.carros.length; i++){
+                let r = this.addRecall(i, this.project.carros[i].viagens.length - 1); // Tenta adicionar recolhe na ultima viagem de cada carro
+                if(r){this.project.carros[i].escalas = [];} // Limpa escalas do carro
             }
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextTrip();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.tripFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousTrip();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextViagem();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousViagem();}})
         appKeyMap.bind({group: 'March_stage1', key: 'home', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem carro', desc: 'Foca primeira viagem do carro', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            this.tripIndex = 0;
-            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.viagemIndice = 0;
+            this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'end', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
+        appKeyMap.bind({group: 'March_stage1', key: 'fim', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
-            this.tripIndex = this.project.cars[this.fleetIndex].trips.length - 1;
-            this.tripFocus = this.project.cars[this.fleetIndex].trips[this.tripIndex];
+            this.viagemIndice = this.project.carros[this.carroIndice].viagens.length - 1;
+            this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
-            this.__updateTripDisplay();
+            this.__updateViagemDisplay();
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'home', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem sentido', desc: 'Foca primeira viagem no mesmo sentido', run: ()=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
-            let resp = this.project.getFirstTrip(this.tripFocus.way);
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            let resp = this.project.getFirstViagem(this.viagemFocus.sentido);
             if(resp){
-                this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-                this.tripFocus = resp[0];
-                this.fleetIndex = resp[1];
-                this.tripIndex = resp[2];
-                this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
+                this.carroLabels[this.carroIndice].style.color = 'inherit';
+                this.viagemFocus = resp[0];
+                this.carroIndice = resp[1];
+                this.viagemIndice = resp[2];
+                this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'end', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
-            if(!this.tripFocus || this.__gridIsBlock()){return false}
-            let resp = this.project.getLastTrip(this.tripFocus.way);
+        appKeyMap.bind({group: 'March_stage1', key: 'fim', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
+            if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            let resp = this.project.getLastViagem(this.viagemFocus.sentido);
             if(resp){
-                this.fleetLabels[this.fleetIndex].style.color = 'inherit';
-                this.tripFocus = resp[0];
-                this.fleetIndex = resp[1];
-                this.tripIndex = resp[2];
-                this.fleetLabels[this.fleetIndex].style.color = 'var(--bs-link-color)';
+                this.carroLabels[this.carroIndice].style.color = 'inherit';
+                this.viagemFocus = resp[0];
+                this.carroIndice = resp[1];
+                this.viagemIndice = resp[2];
+                this.carroLabels[this.carroIndice].style.color = 'var(--bs-link-color)';
                 this.__cursorMove();
-                this.__updateTripDisplay();
+                this.__updateViagemDisplay();
             }
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelection();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelection();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelection();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelecao();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelecao();}})
+        appKeyMap.bind({group: 'March_stage1', key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelecao();}})
         appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{
-            if(this.__gridIsBlock() || this.startSelection < 0){return false;}
-            if(this.project.cars[this.fleetSelection].schedules.length > 0 || this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || this.inicioSelecao < 0){return false;}
+            if(this.project.carros[this.carroSelecao].escalas.length > 0 || this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetSelection].schedules = [];
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.moveTrips()
+                    this.project.carros[this.carroSelecao].escalas = [];
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.moveViagems()
                 })
             }
-            else{this.moveTrips()}
+            else{this.moveViagems()}
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{
-            if(this.__gridIsBlock() || this.startSelection < 0 || this.project.transferArea.length > 0){return false;}
-            if(this.project.cars[this.fleetSelection].schedules.length > 0){
+            if(this.__gridIsBlock() || this.inicioSelecao < 0 || this.project.area_transferencia.length > 0){return false;}
+            if(this.project.carros[this.carroSelecao].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetSelection].schedules = [];
+                    this.project.carros[this.carroSelecao].escalas = [];
                     this.addToTransferArea()
                 })
             }
             else{this.addToTransferArea()}
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{
-            if(this.project.transferArea.length == 0){return false}
+            if(this.project.area_transferencia.length == 0){return false}
             this.pasteTransfer()
         }})
         appKeyMap.bind({group: 'March_stage1', key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
-            if(this.tripFocus){
-                this.initialView = this.tripFocus.start - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
+            if(this.viagemFocus){
+                this.initialView = this.viagemFocus.inicio - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
                 this.__buildRuler();
                 this.canvasFit();
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.project.cars[this.fleetIndex].schedules.length > 0){
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.removeTrip(false)
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.removeViagem(false)
                 })
             }
-            else{this.removeTrip(false)}
+            else{this.removeViagem(false)}
         }})
-        appKeyMap.bind({group: 'March_stage1', role: 'removeFleet', key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
-            if(this.__gridIsBlock() || !this.tripFocus){return false;}
-            if(this.tripIndex == 0){this.removeFleet()}
-            else if(this.project.cars[this.fleetIndex].schedules.length > 0){
+        appKeyMap.bind({group: 'March_stage1', role: 'removeCarro', key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
+            if(this.__gridIsBlock() || !this.viagemFocus){return false;}
+            if(this.viagemIndice == 0){this.removeCarro()}
+            else if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
-                    this.project.cars[this.fleetIndex].schedules = [];
-                    this.removeTrip();
+                    this.project.carros[this.carroIndice].escalas = [];
+                    this.removeViagem();
                 })
             }
-            else{this.removeTrip()} 
+            else{this.removeViagem()} 
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateFleetDisplay()}})
+        appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legfima viagens', desc: 'Exibe legfima dos tipos de viagens', run: ()=>{this.__showViagemPatterns()}})
+        appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateCarroDisplay()}})
         appKeyMap.bind({group: 'March_stage1', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: (ev)=>{ev.preventDefault();this.__showRouteMetrics()}})
         appKeyMap.bind({group: 'March_stage1', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: (ev)=>{ev.preventDefault();this.__generate()}})
         appKeyMap.bind({group: 'March_stage1', key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
@@ -2359,44 +2362,44 @@ class MarchUI{
     }
     __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
         appKeyMap.bind({group: 'March_stage2', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próxima escala', desc: 'Seleciona próxima escala', run: (ev)=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.escalaFocus){return false}
             ev.preventDefault();
-            if(this.scheduleGrid[this.scheduleFocus[0]].length - 1 > this.scheduleFocus[1]){
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
-                this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] + 1, this.scheduleFocus[2]];
+            if(this.escalaGrid[this.escalaFocus[0]].length - 1 > this.escalaFocus[1]){
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.escalaFocus = [this.escalaFocus[0], this.escalaFocus[1] + 1, this.escalaFocus[2]];
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar escala anterior', desc: 'Seleciona escala anterior', run: (ev)=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.escalaFocus){return false}
             ev.preventDefault();
-            if(this.scheduleFocus[1] > 0){
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
-                this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] - 1, this.scheduleFocus[2]];
+            if(this.escalaFocus[1] > 0){
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.escalaFocus = [this.escalaFocus[0], this.escalaFocus[1] - 1, this.escalaFocus[2]];
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próximo carro', desc: 'Seleciona escala do próximo carro', run: (ev)=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.escalaFocus){return false}
             ev.preventDefault();
-            if(this.scheduleGrid[this.scheduleFocus[0] + 1]){
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
-                this.scheduleGrid[this.scheduleFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
-                this.scheduleFocus = [this.scheduleFocus[0] + 1, 0 , 0];
+            if(this.escalaGrid[this.escalaFocus[0] + 1]){
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+                this.escalaGrid[this.escalaFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.escalaFocus = [this.escalaFocus[0] + 1, 0 , 0];
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar carro anterior', desc: 'Seleciona escala do carro anterior', run: (ev)=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
+            if(this.__gridIsBlock() || !this.escalaFocus){return false}
             ev.preventDefault();
-            if(this.scheduleFocus[0] > 0){
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
-                this.scheduleGrid[this.scheduleFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
-                this.scheduleFocus = [this.scheduleFocus[0] - 1, 0 , 0];
+            if(this.escalaFocus[0] > 0){
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+                this.escalaGrid[this.escalaFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
+                this.escalaFocus = [this.escalaFocus[0] - 1, 0 , 0];
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'arrowdown', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para baixo', desc: 'Move grid para baixo', run: ()=>{
             if(this.__gridIsBlock()){return false}
-            if(this.canvas.offsetTop > (this.maxCarsVisible - this.project.cars.length) * 45){
+            if(this.canvas.offsetTop > (this.maxCarsVisible - this.project.carros.length) * 45){
                 this.canvas.style.top = `calc(${this.canvas.style.top} - 45px)`;
             }
         }})
@@ -2408,8 +2411,8 @@ class MarchUI{
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'enter', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerar escala', desc: 'Inicia escala no espaço em foco', run: (ev)=>{
             ev.preventDefault();
-            if(this.__gridIsBlock() || !this.scheduleFocus){return false}
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].click();
+            if(this.__gridIsBlock() || !this.escalaFocus){return false}
+            this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].click();
         }})
         appKeyMap.bind({group: 'March_stage2', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Conexões Escalas', desc: 'Exibe ou oculta conexões entre escalas', run: ()=>{
             if(this.__gridIsBlock()){return false}
@@ -2417,29 +2420,29 @@ class MarchUI{
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
             ev.preventDefault();
-            if(this.__gridIsBlock() || this.project.cars.length == 0){return false}
-            this.project.autoGenerateSchedules();
-            this.scheduleFocus = [0, 0, 0]; // Seleciona primeira viagem do primeiro carro
-            for(let i = 0; i < this.project.cars.length; i++){
-                this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+            if(this.__gridIsBlock() || this.project.carros.length == 0){return false}
+            this.project.autoGenerateEscalas();
+            this.escalaFocus = [0, 0, 0]; // Seleciona primeira viagem do primeiro carro
+            for(let i = 0; i < this.project.carros.length; i++){
+                this.__updateCarroEscalas(i, this.project.carros[i].getCarroEscalasBlock(this.project.linha))
             }
-            this.__updateScheduleArrows();
+            this.__updateEscalaArrows();
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
             ev.preventDefault();
-            if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
+            if(this.__gridIsBlock() || !this.escalaFocus || this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala'){return false}
             this.gridLocked = true;
             let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';modal.style.position = 'relative';
             modal.addEventListener('close', ()=>{modal.remove(); this.gridLocked = false;})
-            let nameInput = document.createElement('input');nameInput.type = 'text';nameInput.classList = 'flat-input';nameInput.id = 'March_renameScheduleName';
-            nameInput.value = this.project.cars[this.scheduleFocus[0]].schedules[this.scheduleFocus[1]].name;
+            let nameInput = document.createElement('input');nameInput.type = 'text';nameInput.classList = 'flat-input';nameInput.id = 'March_renameEscalaName';
+            nameInput.value = this.project.carros[this.escalaFocus[0]].escalas[this.escalaFocus[1]].name;
             nameInput.onfocus = ()=>{nameInput.select()}
             nameInput.addEventListener('keydown', (ev)=>{if(ev.key == 'Enter'){submit.click()}})
             let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton position-absolute';submit.innerHTML = 'Gravar';submit.style = 'top:56px; right: 10px;'
             submit.onclick = () => {
                 if(nameInput.value == '' || nameInput.value.length < 2){nameInput.classList.add('is-invalid'); return false;}
-                this.project.cars[this.scheduleFocus[0]].schedules[this.scheduleFocus[1]].name = nameInput.value;
-                this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].querySelector('[data-type=schedule-name]').innerHTML = nameInput.value;
+                this.project.carros[this.escalaFocus[0]].escalas[this.escalaFocus[1]].name = nameInput.value;
+                this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].querySelector('[data-type=escala-name]').innerHTML = nameInput.value;
                 modal.close();
             }
             modal.appendChild(nameInput)
@@ -2449,27 +2452,27 @@ class MarchUI{
             modal.showModal();
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Apagar Escala', desc: 'Exclui a escala em foco', run: ()=>{
-            if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
-            let r = this.project.deleteSchedule(this.scheduleFocus[0], this.scheduleFocus[1]);
+            if(this.__gridIsBlock() || !this.escalaFocus || this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala'){return false}
+            let r = this.project.deleteEscala(this.escalaFocus[0], this.escalaFocus[1]);
             if(r){
-                let fleet_index = this.scheduleFocus[0];
-                this.scheduleFocus = null;
-                if(this.scheduleGrid[0].length > 0){
-                    this.scheduleFocus = [0,0,0];
-                    this.scheduleGrid[0][0].style.backgroundColor = '#032830';
+                let carro_index = this.escalaFocus[0];
+                this.escalaFocus = null;
+                if(this.escalaGrid[0].length > 0){
+                    this.escalaFocus = [0,0,0];
+                    this.escalaGrid[0][0].style.backgroundColor = '#032830';
                 }
-                this.__updateFleetSchedules(fleet_index, this.project.cars[fleet_index].getFleetSchedulesBlock(this.project.route));
-                r.forEach(el => {this.__updateFleetSchedules(el, this.project.cars[el].getFleetSchedulesBlock(this.project.route))});
-                this.__updateScheduleArrows();
+                this.__updateCarroEscalas(carro_index, this.project.carros[carro_index].getCarroEscalasBlock(this.project.linha));
+                r.forEach(el => {this.__updateCarroEscalas(el, this.project.carros[el].getCarroEscalasBlock(this.project.linha))});
+                this.__updateEscalaArrows();
             }
         }})
         appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
             if(this.__gridIsBlock()){return false}
-            for(let i = 0; i < this.project.cars.length; i++){
-                this.project.cars[i].schedules = [];
-                this.__updateFleetSchedules(i, this.project.cars[i].getFleetSchedulesBlock(this.project.route))
+            for(let i = 0; i < this.project.carros.length; i++){
+                this.project.carros[i].escalas = [];
+                this.__updateCarroEscalas(i, this.project.carros[i].getCarroEscalasBlock(this.project.linha))
             }
-            this.__updateScheduleArrows();
+            this.__updateEscalaArrows();
         }})
     }
 }
