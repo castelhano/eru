@@ -337,8 +337,8 @@ class Car{
             // Adiciona spots de viagem do bloco
             if(![ACESSO, INTERVALO].includes(this.trips[i].type)){
                 let time = this.trips[i].end + (this.trips[i].shut ? 0 : this.getInterv(i));
-                if(this.trips[i].way == IDA && route.to.surrender){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
-                else if(this.trips[i].way == VOLTA && route.from.surrender){block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
+                if(this.trips[i].way == IDA){block.spots.push({locale: route.to, time: time, type: 'tripEnd', tripIndex: i, way: this.trips[i].way, delta: 0})}
+                else if(this.trips[i].way == VOLTA){block.spots.push({locale: route.from, time: time, type: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
             if(this.trips[i].shut || this.trips[i].type == RECOLHE || this.trips.length - 1 == i){
