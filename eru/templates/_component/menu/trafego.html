@@ -5,7 +5,7 @@
         icon: 'bi bi-list',
         itens: [
         {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: {visible: false, key: 'l', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click()}}}},{% endif %}
-        {% if perms.trafegi.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: {visible: false, key: 'o', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();}}}}, {% endif %}
+        {% if perms.trafego.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: {visible: false, key: 'o', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();}}}}, {% endif %}
         ],
         keybind: {
             key:'c',
