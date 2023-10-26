@@ -18,7 +18,7 @@ class MarchUI{
         this.escalaGrid = {}; // Dicionario com os escalas
         this.escalaArrowsGrid = {}; // Lista com elementos arrows
         this.arrowsVisible = true; 
-        this.spotsGrid = {}; // Dicionario com os pontos de rfimicao dos carros
+        this.spotsGrid = {}; // Dicionario com os pontos de rendicao dos carros
         this.initialView = options?.initialView || 0; // Inicio da regua (em minutos)
         this.fimMinutsMargin = options?.fimMinutsMargin || 15; // Margem (em minutos) final antes de rolar o canvas
         this.initialCarroView = 0; // Indice do primeiro carro sfimo exibido no grid
@@ -143,7 +143,7 @@ class MarchUI{
         // Regua superior
         this.rulerTop = document.createElement('div');
         this.rulerTop.classList = this.rulerClasslist;
-        this.rulerTop.style.zIndice = 100;
+        this.rulerTop.style.zIndex = 100;
         this.rulerTop.style.position = 'relative';
         this.rulerTop.style.height = this.rulerHeight;
         this.rulerTop.style.paddingLeft = this.carroTagWidth;
@@ -166,7 +166,7 @@ class MarchUI{
         this.cursor.style.position = 'absolute';
         this.cursor.style.left = '-300px';
         this.cursor.style.top = '-300px';
-        this.cursor.style.zIndice = '98';
+        this.cursor.style.zIndex = '98';
         this.canvas.appendChild(this.cursor);
     }
     __buildRuler(){ // Cria (ou atualiza) regua
@@ -211,7 +211,7 @@ class MarchUI{
         }
     }
     __buildFooter(){ // Cria elementos do footer
-        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndice = '100';
+        this.footer = document.createElement('div');this.footer.classList = this.footerClasslist;this.footer.classList.add('user-select-none');this.footer.style.height = this.footerHeight;this.footer.style.zIndex = '100';
         this.displayStart = document.createElement('h5');this.displayStart.style.width = '70px';this.displayStart.style.position = 'absolute';this.displayStart.style.top = '5px';this.displayStart.style.left = '10px';this.displayStart.innerHTML = '--:--';
         this.displayEnd = document.createElement('h5');this.displayEnd.style.width = '70px';this.displayEnd.style.position = 'absolute';this.displayEnd.style.bottom = '5px';this.displayEnd.style.left = '10px';this.displayEnd.innerHTML = '--:--';
         this.displayCycle = document.createElement('h5');this.displayCycle.style.position = 'absolute';this.displayCycle.style.top = '5px';this.displayCycle.style.left = '70px';this.displayCycle.innerHTML = '--';
@@ -431,7 +431,7 @@ class MarchUI{
         this.settingsBaselineTable.innerHTML = '<thead><tr><th colspan="2">Faixa</th><th colspan="2">Ciclo</th><th colspan="2">Intervalo</th><th colspan="2">Frequência</th></tr><tr><th>Inicio</th><th>Fim</th><th>Ida</th><th>Volta</th><th>Ida</th><th>Volta</th><th>Frota</th><th>Freq</th></tr></thead>';
         for(let i = 0; i < baseline.length; i++){
             let onclick = `if(parseInt(this.innerHTML) > 0){this.nextSibling.innerHTML = parseFloat((parseInt(this.parentNode.childNodes[2].innerHTML) + parseInt(this.parentNode.childNodes[3].innerHTML) + parseInt(this.parentNode.childNodes[4].innerHTML) + parseInt(this.parentNode.childNodes[5].innerHTML)) / parseInt(this.innerHTML)).toFixed(2)}else{this.nextSibling.innerHTML = ''}`;
-            let tr = `<tr><td>${baseline[i].inicio}</td><td>${baseline[i].fim}</td><td>${baseline[i].origemMin}</td><td>${baseline[i].destinoMin}</td><td>${baseline[i].origemInterv}</td><td>${baseline[i].destinoInterv}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
+            let tr = `<tr><td>${baseline[i].inicio}</td><td>${baseline[i].fim}</td><td>${baseline[i].ida}</td><td>${baseline[i].volta}</td><td>${baseline[i].intervalo_ida}</td><td>${baseline[i].intervalo_volta}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
             this.settingsBaselineTable.innerHTML += tr;
         }
     }
@@ -453,7 +453,7 @@ class MarchUI{
         carLabel.style.paddingLeft = '3px';
         carLabel.style.position = 'absolute';
         carLabel.style.backgroundColor = 'var(--bs-body-bg)';
-        carLabel.style.zIndice = '95';
+        carLabel.style.zIndex = '95';
         carLabel.innerHTML = String(seq).padStart(2,'0');
         carLabel.style.top = `calc(${this.carroHeight} * ${seq})`;
         carLabel.style.left = 0;
@@ -586,7 +586,7 @@ class MarchUI{
     }
     addAccess(carroIndice=this.carroIndice, viagemIndice=this.viagemIndice, incrementIndice=true){
         this.__clearSelecao();
-        let viagem = this.project.carros[carroIndice].addAccess(viagemIndice, this.project.linha.metrics);
+        let viagem = this.project.carros[carroIndice].addAccess(viagemIndice, this.project.linha);
         if(viagem){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.viagemStyle;
@@ -615,7 +615,7 @@ class MarchUI{
     }
     addRecall(carroIndice=this.carroIndice, viagemIndice=this.viagemIndice){ // Adiciona recolhida na viagem em foco
         this.__clearSelecao();
-        let viagem = this.project.carros[carroIndice].addRecall(viagemIndice, this.project.linha.metrics);
+        let viagem = this.project.carros[carroIndice].addRecall(viagemIndice, this.project.linha);
         if(viagem){
             let v = document.createElement('div'); // Elemento viagem (grid)
             v.style = this.viagemStyle;
@@ -1136,7 +1136,7 @@ class MarchUI{
         this.gridLocked = true;
         let dialog = document.createElement('dialog'); dialog.style.minWidth = '600px';dialog.style.display = 'flex';dialog.style.columnGap = '15px';
         dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove();})
-        let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.project.linha.prefix} ${this.project.linha.nome}</span></h6>`;
+        let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.project.linha.codigo} ${this.project.linha.nome}</span></h6>`;
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
         // Adicionado os controles das metricas
         let linhaCirc = document.createElement('input');linhaCirc.type = 'checkbox';linhaCirc.id = 'March_linhaCircControl';linhaCirc.checked = this.project.linha.circular;
@@ -1184,7 +1184,7 @@ class MarchUI{
         col1.appendChild(col12);
         
         let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
-        this.settingsAccessOrigemMin = document.createElement('input');this.settingsAccessOrigemMin.type = 'number';this.settingsAccessOrigemMin.classList = 'flat-input';this.settingsAccessOrigemMin.min = 1;this.settingsAccessOrigemMin.max = 300;this.settingsAccessOrigemMin.value = this.project.linha.metrics.origemMinAccess;this.settingsAccessOrigemMin.id = 'March_settingsAccessOrigemMin';this.settingsAccessOrigemMin.placeholder = ' ';
+        this.settingsAccessOrigemMin = document.createElement('input');this.settingsAccessOrigemMin.type = 'number';this.settingsAccessOrigemMin.classList = 'flat-input';this.settingsAccessOrigemMin.min = 1;this.settingsAccessOrigemMin.max = 300;this.settingsAccessOrigemMin.value = this.project.linha.acesso_origem_minutos;this.settingsAccessOrigemMin.id = 'March_settingsAccessOrigemMin';this.settingsAccessOrigemMin.placeholder = ' ';
         this.settingsAccessOrigemMin.disabled = true;
         // this.settingsAccessOrigemMin.onchange = ()=>{
         //     if(this.settingsAccessOrigemMin.value == '' || parseInt(this.settingsAccessOrigemMin.value) < this.settingsAccessOrigemMin.min || parseInt(this.settingsAccessOrigemMin.value) > this.settingsAccessOrigemMin.max){
@@ -1192,14 +1192,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessOrigemMin.classList.remove('is-invalid');
-        //     this.project.linha.metrics.origemMinAccess = parseInt(this.settingsAccessOrigemMin.value);
+        //     this.project.linha.acesso_origem_minutos = parseInt(this.settingsAccessOrigemMin.value);
         // }
         col13.appendChild(this.settingsAccessOrigemMin);
         col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemMin, 'Acesso PT1 (min)'));
         col1.appendChild(col13);
         
         let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
-        this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.linha.metrics.destinoMinAccess;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
+        this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.linha.acesso_destino_minutos;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
         this.settingsAccessToMin.disabled = true;
         // this.settingsAccessToMin.onchange = ()=>{
         //     if(this.settingsAccessToMin.value == '' || parseInt(this.settingsAccessToMin.value) < this.settingsAccessToMin.min || parseInt(this.settingsAccessToMin.value) > this.settingsAccessToMin.max){
@@ -1207,14 +1207,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessToMin.classList.remove('is-invalid');
-        //     this.project.linha.metrics.destinoMinAccess = parseInt(this.settingsAccessToMin.value);
+        //     this.project.linha.acesso_destino_minutos = parseInt(this.settingsAccessToMin.value);
         // }
         col14.appendChild(this.settingsAccessToMin);
         col14.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToMin, 'Acesso PT2 (min)'));
         col1.appendChild(col14);
         
         let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
-        this.settingsRecallOrigemMin = document.createElement('input');this.settingsRecallOrigemMin.type = 'number';this.settingsRecallOrigemMin.classList = 'flat-input';this.settingsRecallOrigemMin.min = 1;this.settingsRecallOrigemMin.max = 300;this.settingsRecallOrigemMin.value = this.project.linha.metrics.origemMinRecall;this.settingsRecallOrigemMin.id = 'March_settingsRecallOrigemMin';this.settingsRecallOrigemMin.placeholder = ' ';
+        this.settingsRecallOrigemMin = document.createElement('input');this.settingsRecallOrigemMin.type = 'number';this.settingsRecallOrigemMin.classList = 'flat-input';this.settingsRecallOrigemMin.min = 1;this.settingsRecallOrigemMin.max = 300;this.settingsRecallOrigemMin.value = this.project.linha.recolhe_origem_minutos;this.settingsRecallOrigemMin.id = 'March_settingsRecallOrigemMin';this.settingsRecallOrigemMin.placeholder = ' ';
         this.settingsRecallOrigemMin.disabled = true;
         // this.settingsRecallOrigemMin.onchange = ()=>{
         //     if(this.settingsRecallOrigemMin.value == '' || parseInt(this.settingsRecallOrigemMin.value) < this.settingsRecallOrigemMin.min || parseInt(this.settingsRecallOrigemMin.value) > this.settingsRecallOrigemMin.max){
@@ -1222,14 +1222,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallOrigemMin.classList.remove('is-invalid');
-        //     this.project.linha.metrics.origemMinRecall = parseInt(this.settingsRecallOrigemMin.value);
+        //     this.project.linha.recolhe_origem_minutos = parseInt(this.settingsRecallOrigemMin.value);
         // }
         col15.appendChild(this.settingsRecallOrigemMin);
         col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemMin, 'Recolhe PT1 (min)'));
         col1.appendChild(col15);
         
         let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
-        this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.linha.metrics.destinoMinRecall;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
+        this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.linha.recolhe_destino_minutos;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
         this.settingsRecallToMin.disabled = true;
         // this.settingsRecallToMin.onchange = ()=>{
         //     if(this.settingsRecallToMin.value == '' || parseInt(this.settingsRecallToMin.value) < this.settingsRecallToMin.min || parseInt(this.settingsRecallToMin.value) > this.settingsRecallToMin.max){
@@ -1237,14 +1237,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallToMin.classList.remove('is-invalid');
-        //     this.project.linha.metrics.destinoMinRecall = parseInt(this.settingsRecallToMin.value);
+        //     this.project.linha.recolhe_destino_minutos = parseInt(this.settingsRecallToMin.value);
         // }
         col16.appendChild(this.settingsRecallToMin);
         col16.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToMin, 'Recolhe PT2 (min)'));
         col1.appendChild(col16);
         
         let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
-        this.settingsAccessOrigemKm = document.createElement('input');this.settingsAccessOrigemKm.type = 'number';this.settingsAccessOrigemKm.classList = 'flat-input';this.settingsAccessOrigemKm.min = 0;this.settingsAccessOrigemKm.max = 300;this.settingsAccessOrigemKm.value = this.project.linha.metrics.origemKmAccess;this.settingsAccessOrigemKm.id = 'March_settingsAccessOrigemKm';this.settingsAccessOrigemKm.placeholder = ' ';
+        this.settingsAccessOrigemKm = document.createElement('input');this.settingsAccessOrigemKm.type = 'number';this.settingsAccessOrigemKm.classList = 'flat-input';this.settingsAccessOrigemKm.min = 0;this.settingsAccessOrigemKm.max = 300;this.settingsAccessOrigemKm.value = this.project.linha.acesso_origem_km;this.settingsAccessOrigemKm.id = 'March_settingsAccessOrigemKm';this.settingsAccessOrigemKm.placeholder = ' ';
         this.settingsAccessOrigemKm.disabled = true;
         // this.settingsAccessOrigemKm.onchange = ()=>{
         //     if(this.settingsAccessOrigemKm.value == '' || parseInt(this.settingsAccessOrigemKm.value) < this.settingsAccessOrigemKm.min || parseInt(this.settingsAccessOrigemKm.value) > this.settingsAccessOrigemKm.max){
@@ -1252,14 +1252,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessOrigemKm.classList.remove('is-invalid');
-        //     this.project.linha.metrics.origemKmAccess = parseInt(this.settingsAccessOrigemKm.value);
+        //     this.project.linha.acesso_origem_km = parseInt(this.settingsAccessOrigemKm.value);
         // }
         col17.appendChild(this.settingsAccessOrigemKm);
         col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemKm, 'Acesso PT1 (km)'));
         col1.appendChild(col17);
         
         let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
-        this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.linha.metrics.destinoKmAccess;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
+        this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.linha.acesso_destino_km;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
         this.settingsAccessToKm.disabled = true;
         // this.settingsAccessToKm.onchange = ()=>{
         //     if(this.settingsAccessToKm.value == '' || parseInt(this.settingsAccessToKm.value) < this.settingsAccessToKm.min || parseInt(this.settingsAccessToKm.value) > this.settingsAccessToKm.max){
@@ -1267,14 +1267,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsAccessToKm.classList.remove('is-invalid');
-        //     this.project.linha.metrics.destinoKmAccess = parseInt(this.settingsAccessToKm.value);
+        //     this.project.linha.acesso_destino_km = parseInt(this.settingsAccessToKm.value);
         // }
         col18.appendChild(this.settingsAccessToKm);
         col18.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToKm, 'Acesso PT2 (km)'));
         col1.appendChild(col18);
         
         let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
-        this.settingsRecallOrigemKm = document.createElement('input');this.settingsRecallOrigemKm.type = 'number';this.settingsRecallOrigemKm.classList = 'flat-input';this.settingsRecallOrigemKm.min = 0;this.settingsRecallOrigemKm.max = 300;this.settingsRecallOrigemKm.value = this.project.linha.metrics.origemKmRecall;this.settingsRecallOrigemKm.id = 'March_settingsRecallOrigemKm';this.settingsRecallOrigemKm.placeholder = ' ';
+        this.settingsRecallOrigemKm = document.createElement('input');this.settingsRecallOrigemKm.type = 'number';this.settingsRecallOrigemKm.classList = 'flat-input';this.settingsRecallOrigemKm.min = 0;this.settingsRecallOrigemKm.max = 300;this.settingsRecallOrigemKm.value = this.project.linha.recolhe_origem_km;this.settingsRecallOrigemKm.id = 'March_settingsRecallOrigemKm';this.settingsRecallOrigemKm.placeholder = ' ';
         this.settingsRecallOrigemKm.disabled = true;
         // this.settingsRecallOrigemKm.onchange = ()=>{
         //     if(this.settingsRecallOrigemKm.value == '' || parseInt(this.settingsRecallOrigemKm.value) < this.settingsRecallOrigemKm.min || parseInt(this.settingsRecallOrigemKm.value) > this.settingsRecallOrigemKm.max){
@@ -1282,14 +1282,14 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallOrigemKm.classList.remove('is-invalid');
-        //     this.project.linha.metrics.origemKmRecall = parseInt(this.settingsRecallOrigemKm.value);
+        //     this.project.linha.recolhe_origem_km = parseInt(this.settingsRecallOrigemKm.value);
         // }
         col19.appendChild(this.settingsRecallOrigemKm);
         col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemKm, 'Recolhe PT1 (km)'));
         col1.appendChild(col19);
         
         let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
-        this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.linha.metrics.destinoKmRecall;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
+        this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.linha.recolhe_destino_km;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
         this.settingsRecallToKm.disabled = true;
         // this.settingsRecallToKm.onchange = ()=>{
         //     if(this.settingsRecallToKm.value == '' || parseInt(this.settingsRecallToKm.value) < this.settingsRecallToKm.min || parseInt(this.settingsRecallToKm.value) > this.settingsRecallToKm.max){
@@ -1297,7 +1297,7 @@ class MarchUI{
         //         return false;
         //     }
         //     this.settingsRecallToKm.classList.remove('is-invalid');
-        //     this.project.linha.metrics.destinoKmRecall = parseInt(this.settingsRecallToKm.value);
+        //     this.project.linha.recolhe_destino_km = parseInt(this.settingsRecallToKm.value);
         // }
         col20.appendChild(this.settingsRecallToKm);
         col20.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToKm, 'Recolhe PT2 (km)'));
@@ -1371,10 +1371,10 @@ class MarchUI{
             })
             if(has_error){return false}
             for(let i = parseInt(this.settingsBaselineStart.value); i <= parseInt(this.settingsBaselineEnd.value); i++){
-                this.project.linha.param[i].origemMin = parseInt(this.settingsBaselineOrigemMin.value);
-                this.project.linha.param[i].destinoMin = parseInt(this.settingsBaselineToMin.value);
-                this.project.linha.param[i].origemInterv = parseInt(this.settingsBaselineOrigemInterv.value);
-                this.project.linha.param[i].destinoInterv = parseInt(this.settingsBaselineToInterv.value);
+                this.project.linha.param[i].ida = parseInt(this.settingsBaselineOrigemMin.value);
+                this.project.linha.param[i].volta = parseInt(this.settingsBaselineToMin.value);
+                this.project.linha.param[i].intervalo_ida = parseInt(this.settingsBaselineOrigemInterv.value);
+                this.project.linha.param[i].intervalo_volta = parseInt(this.settingsBaselineToInterv.value);
             }
             this.__settingsUpdateBaselines();
         }
@@ -1591,9 +1591,9 @@ class MarchUI{
                 carro.style.top = `calc(${this.carroHeight} * ${i + 1} - ${this.carroHeight} + 10px)`;
                 carro.style.left = `calc(${this.carroTagWidth} + (${blocks[y].inicio} * ${this.rulerUnit}))`;
                 this.canvas.appendChild(carro);
-                // Adiciona pontos de rfimicao de cada bloco
+                // Adiciona pontos de rendicao de cada bloco
                 for(let x = 0; x < blocks[y].spots.length; x++){
-                    let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndice = '80';
+                    let sp = document.createElement('i');sp.style.position = 'absolute';sp.style.zIndex = '80';
                     sp.style.opacity = '10%';
                     sp.style.top = `calc(${this.carroHeight} * ${i + 1} - 12px)`;
                     sp.style.left = `calc(${this.carroTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
@@ -1604,10 +1604,10 @@ class MarchUI{
                         if(this.escalaFocus == null || this.escalaFocus[0] != i || this.escalaFocus[2] != y){return false}
                         let r;
                         if(blocks[y].spots[x].tipo == 'viagemEnd'){
-                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndice, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndice, blocks[y].fimIndice);
+                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
                         }
                         else{
-                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndice, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].inicioIndice, blocks[y].fimIndice);
+                            r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndex, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
                         }
                         if(r){  // Ajustar para atualizar o blocks
                             this.__cleanEscalaGrid(i);
@@ -1650,7 +1650,7 @@ class MarchUI{
         let summary1 = this.project.countViagens(); // Gera resumo das viagens planejadas
         let summary2 = this.project.countOperatores(); // Gera resumo de mao de obra
         let km_produtiva = parseFloat((summary1.origem * this.project.linha.extensao_ida) + (summary1.destino * this.project.linha.extensao_volta));
-        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.linha.metrics.acesso_origem_km) + (summary1.accessTo * this.project.linha.metrics.acesso_destino_km) + (summary1.lazyFrom * this.project.linha.extensao_ida) + (summary1.lazyTo * this.project.linha.extensao_volta));
+        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.linha.acesso_origem_km) + (summary1.accessTo * this.project.linha.acesso_destino_km) + (summary1.lazyFrom * this.project.linha.extensao_ida) + (summary1.lazyTo * this.project.linha.extensao_volta));
         let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
         let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100 || 0;
         this.summaryModal.innerHTML = `
@@ -1853,7 +1853,7 @@ class MarchUI{
                         this.escalaSelecao = [carro_index, j, previous];
                         this.__escalaExternalControl('previous', blocks); // Adiciona controle para externalProject
                     }
-                    if(this.escalaSelecao[0] != carro_index || this.escalaSelecao[1] != j){
+                    else if(this.escalaSelecao[0] != carro_index || this.escalaSelecao[1] != j){
                         let inicio = this.project.carros[carro_index].viagens[this.project.carros[carro_index].escalas[j].inicio];
                         let fim = this.project.carros[this.escalaSelecao[0]].viagens[this.project.carros[this.escalaSelecao[0]].escalas[this.escalaSelecao[1]].fim];
                         if(fim.fim > inicio.inicio){return false}
@@ -1943,7 +1943,7 @@ class MarchUI{
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.escalaFocus){this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = '#1a1d20';}
-                let r = this.project.addEscala(carro_index, {inicio: blocks[i].emptyStart, fim: blocks[i].fimIndice, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
+                let r = this.project.addEscala(carro_index, {inicio: blocks[i].emptyStart, fim: blocks[i].fimIndex, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
                 this.escalaFocus = [carro_index, r, i];
                 this.__updateCarroEscalas(carro_index, this.project.carros[carro_index].getCarroEscalasBlock(this.project.linha))
             }
@@ -2255,7 +2255,7 @@ class MarchUI{
             this.__cursorMove();
             this.__updateViagemDisplay();
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'fim', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'end', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             ev.preventDefault();
             this.viagemIndice = this.project.carros[this.carroIndice].viagens.length - 1;
@@ -2276,7 +2276,7 @@ class MarchUI{
                 this.__updateViagemDisplay();
             }
         }})
-        appKeyMap.bind({group: 'March_stage1', key: 'fim', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
+        appKeyMap.bind({group: 'March_stage1', key: 'end', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getLastViagem(this.viagemFocus.sentido);
             if(resp){

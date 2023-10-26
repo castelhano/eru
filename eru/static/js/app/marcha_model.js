@@ -75,16 +75,14 @@ class Linha{
         this.extensao_ida = options?.extensao_ida || 0; // Extensao de ida (em km)
         this.extensao_volta = options?.extensao_volta || 0; // Extensao de volta (em km)
         this.param = options?.param || defaultParam(); // Parametros de operacao (tempo de ciclo, acesso, recolhe, km, etc..)
-        this.metrics = options?.metrics || { // Metricas adicionais (tempos de acesso, recolhe e extensao de acesso e recolhe)
-            acesso_origem_minutos: ACESSO_PADRAO,
-            acesso_destino_minutos: ACESSO_PADRAO,
-            recolhe_origem_minutos: RECOLHE_PADRAO,
-            recolhe_destino_minutos: RECOLHE_PADRAO,
-            acesso_origem_km: 0,
-            acesso_destino_km: 0,
-            recolhe_origem_km: 0,
-            recolhe_destino_km: 0,
-        }; 
+        this.acesso_origem_minutos = options.acesso_origem_minutos || ACESSO_PADRAO;
+        this.acesso_destino_minutos = options.acesso_destino_minutos || ACESSO_PADRAO;
+        this.recolhe_origem_minutos = options.recolhe_origem_minutos || RECOLHE_PADRAO;
+        this.recolhe_destino_minutos = options.recolhe_destino_minutos || RECOLHE_PADRAO;
+        this.acesso_origem_km = options.acesso_origem_km || 0;
+        this.acesso_destino_km = options.acesso_destino_km || 0;
+        this.recolhe_origem_km = options.recolhe_origem_km || 0;
+        this.recolhe_destino_km = options.recolhe_destino_km || 0;
         this.refs = options?.refs || {origem:[], destino:[]}; // Armazena os pontos de referencia por sentido
     }
     getBaselines(){ // Retorna json com resumo dos patamares {inicio: 4, fim: 8, ida: 50, volta: 45, ...}
@@ -171,7 +169,6 @@ class Viagem{
 class Carro{
     constructor(options){
         this.classificacao = options?.classificacao || CONVENCIONAL; // Tipo de tecnologia a ser usada
-        this.especificacao = options?.especificacao || '0'; // Especificacao adicional para carro (porta lado esquerdo, etc..)
         this.viagens = options?.viagens || []; // Armazena as viagens do carro
         this.escalas = options?.escalas || []; // Armazena as tabelas (escalas) para o carro
         if(this.viagens.length == 0){this.addViagem(options.linha, options['inicioAt'])} // Necessario pelo menos uma viagem no carro
@@ -235,11 +232,11 @@ class Carro{
         this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
         return v;
     }
-    addAccess(viagem_indice, metrics){
+    addAccess(viagem_indice, linha){
         // Acesso somente inserido se viagem for produtiva
         if([INTERVALO, ACESSO, RECOLHE].includes(this.viagens[viagem_indice].tipo)){return false}
         let sentidoAccess = this.viagens[viagem_indice].sentido == IDA ? 'acesso_origem_minutos' : 'acesso_destino_minutos';
-        let accessMin = metrics[sentidoAccess];
+        let accessMin = linha[sentidoAccess];
         let v = new Viagem({inicio: this.viagens[viagem_indice].inicio - accessMin - 1, fim: this.viagens[viagem_indice].inicio - 1, tipo: ACESSO, sentido: this.viagens[viagem_indice].sentido})
         if(this.__viagemIsValid(v)){
             this.viagens.push(v);
@@ -248,11 +245,11 @@ class Carro{
         }
         return false;
     }
-    addRecall(viagem_indice, metrics){
+    addRecall(viagem_indice, linha){
         // Recolhe somente inserido se viagem for produtiva ou tiver sido encerrada
         if([INTERVALO, ACESSO, RECOLHE].includes(this.viagens[viagem_indice].tipo) || this.viagens[viagem_indice].encerrar){return false}
         let sentidoRecall = this.viagens[viagem_indice].sentido == IDA ? 'recolhe_origem_minutos' : 'recolhe_destino_minutos';
-        let recallMin = metrics[sentidoRecall];
+        let recallMin = linha[sentidoRecall];
         let v = new Viagem({inicio: this.viagens[viagem_indice].fim + 1, fim: this.viagens[viagem_indice].fim + recallMin + 1, tipo: RECOLHE, sentido: this.viagens[viagem_indice].sentido})
         if(this.__viagemIsValid(v)){
             this.viagens.push(v);
@@ -701,7 +698,7 @@ class March{
             }
             if(metrics?.addAccess){
                 for(let i = 0; i < metrics.carro; i++){ // Adiciona acesso para todos os carros
-                    this.carros[i].addAccess(0, this.linha.metrics);
+                    this.carros[i].addAccess(0, this.linha);
                 }
             }
             resolve(true);

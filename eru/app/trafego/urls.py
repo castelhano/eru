@@ -21,6 +21,7 @@ urlpatterns = [
     path('trafego_planejamento_horarios/<int:id>',views.planejamento_horarios,name='trafego_planejamento_horarios'),
     path('trafego_planejamento_update/<int:id>',views.planejamento_update,name='trafego_planejamento_update'),
     path('trafego_planejamento_delete/<int:id>/delete',views.planejamento_delete,name='trafego_planejamento_delete'),
+    path('trafego_planejamento_grid_update/<int:id>',views.planejamento_grid_update,name='trafego_planejamento_grid_update'),
     path('trafego_patamar_update',views.patamar_update,name='trafego_patamar_update'),
     path('trafego_get_linha',views.get_linha,name='trafego_get_linha'),
     path('trafego_get_linhas_empresa',views.get_linhas_empresa,name='trafego_get_linhas_empresa'),

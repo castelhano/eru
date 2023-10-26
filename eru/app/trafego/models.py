@@ -58,7 +58,7 @@ class Linha(models.Model):
         params = {}
         for p in self.patamares():
             for i in range(p.inicial, p.final + 1, 1):
-                params[i] = {'fromMin': p.ida, 'toMin': p.volta, 'fromInterv': p.intervalo_ida, 'toInterv': p.intervalo_volta}
+                params[i] = {'ida': p.ida, 'volta': p.volta, 'intervalo_ida': p.intervalo_ida, 'intervalo_volta': p.intervalo_volta, 'demanda_ida': 0, 'demanda_volta': 0}
         return json.dumps(params)
 
     def trajeto(self, sentido='I'):
@@ -165,6 +165,7 @@ class Carro(models.Model):
     )
     planejamento = models.ForeignKey(Planejamento, blank=False, null=False, on_delete=models.CASCADE)
     classificacao = models.CharField(max_length=3,choices=CLASSIFICACAO_CHOICES, default='CV', blank=True)
+    escalas = models.TextField(blank=True)
     labels = models.CharField(max_length=250, blank=True)
     def viagens(self):
         return Viagem.objects.filter(carro=self)

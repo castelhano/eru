@@ -414,6 +414,22 @@ def planejamento_update(request,id):
     else:
         return render(request,'trafego/planejamento_id.html',{'form':form,'planejamento':planejamento})
 
+@login_required
+@permission_required('trafego.change_planejamento', login_url="/handler/403")
+def planejamento_grid_update(request, id):
+    if request.method == 'POST':
+        planejamento = Planejamento.objects.get(id=id)
+        carros = json.loads(request.POST['planejamento'])
+        Carro.objects.filter(planejamento=planejamento).delete() # Limpa viagens atuais (caso exista)
+        for carro in carros:
+            car = Carro.objects.create(**{'planejamento': planejamento, 'classificacao': carro['classificacao'], 'escalas':carro['escalas']})
+            for viagem in carro['viagens']:
+                del viagem['__id']
+                viagem['carro'] = car
+                Viagem.objects.create(**viagem)
+        messages.success(request,'Success....')
+    return redirect('trafego_planejamento_id', id)
+
 # METODOS DELETE
 @login_required
 @permission_required('trafego.delete_localidade', login_url="/handler/403")

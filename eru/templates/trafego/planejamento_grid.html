@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load tag_extra %}
 {% block title %}Marcha{% endblock %}
 {% block nav_title %}Planejamento <span class="text-purple">{{planejamento.codigo}}</span>{% endblock %}
 
@@ -22,71 +23,76 @@ data-appConfirmTitle="<i class='bi bi-info-circle-fill me-2'></i>Retornar"
 data-appConfirmMessage="Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?" 
 data-appConfirmText="Voltar"
 class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"></a>
+<form id="grid_form" action="{% url 'trafego_planejamento_grid_update' planejamento.id|safe %}" method="POST" autocomplete="off">
+    {% csrf_token %}
+    <input type="hidden" name="planejamento" id="id_planejamento" value="">
+</form>
 {% endblock %}
 {% block canvasNav %}<div id="marchSettings_container"></div>{% endblock %}
 
 
 <script>
     {% block add_script %}
+
     const model = new March({
         id: {{planejamento.id|safe}},
-        name: '{{planejamento.codigo}}',
+        nome: '{{planejamento.codigo}}',
         desc: '{{planejamento.descricao}}',
-        dayType: '{{planejamento.dia_tipo}}',
-        active: {{planejamento.ativo|yesno:'true,false'}},
-        route: new Route({
+        dia_tipo: '{{planejamento.dia_tipo}}',
+        ativo: {{planejamento.ativo|yesno:'true,false'}},
+        linha: new Linha({
             id: {{planejamento.linha.id|safe}},
-            prefix: '{{planejamento.linha.codigo}}',
-            name: '{{planejamento.linha.nome}}',
+            codigo: '{{planejamento.linha.codigo}}',
+            nome: '{{planejamento.linha.nome}}',
             circular: {{planejamento.linha.circular|yesno:'true,false'}},
-            from: new Locale({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', name: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', surrender: {{planejamento.linha.origem.surrender|yesno:'true,false'|default:'true'}}}),
-            to: new Locale({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', name: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', surrender: {{planejamento.linha.destino.surrender|yesno:'true,false'|default:'true'}}}),
-            fromExtension: {{planejamento.linha.extensao_ida|safe}},
-            toExtension: {{planejamento.linha.extensao_volta|safe}},
+            origem: new Localidade({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', nome: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', troca_turno: {{planejamento.linha.origem.troca_turno|yesno:'true,false'|default:'true'}}}),
+            destino: new Localidade({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', nome: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', troca_turno: {{planejamento.linha.destino.troca_turno|yesno:'true,false'|default:'true'}}}),
+            extensao_ida: {{planejamento.linha.extensao_ida|safe}},
+            extensao_volta: {{planejamento.linha.extensao_volta|safe}},
             param: {{planejamento.linha.params|safe}},
-            metrics: {
-                fromMinAccess: {{planejamento.linha.acesso_origem_minutos|safe}},
-                toMinAccess: {{planejamento.linha.acesso_destino_minutos|safe}},
-                fromMinRecall: {{planejamento.linha.recolhe_origem_minutos|safe}},
-                toMinRecall: {{planejamento.linha.recolhe_destino_minutos|safe}},
-                fromKmAccess: {{planejamento.linha.acesso_origem_km|safe}},
-                toKmAccess: {{planejamento.linha.acesso_destino_km|safe}},
-                fromKmRecall: {{planejamento.linha.recolhe_origem_km|safe}},
-                toKmRecall: {{planejamento.linha.recolhe_destino_km|safe}},
-            },
+            acesso_origem_minutos: {{planejamento.linha.acesso_origem_minutos|safe}},
+            acesso_destino_minutos: {{planejamento.linha.acesso_destino_minutos|safe}},
+            recolhe_origem_minutos: {{planejamento.linha.recolhe_origem_minutos|safe}},
+            recolhe_destino_minutos: {{planejamento.linha.recolhe_destino_minutos|safe}},
+            acesso_origem_km: {{planejamento.linha.acesso_origem_km|safe}},
+            acesso_destino_km: {{planejamento.linha.acesso_destino_km|safe}},
+            recolhe_origem_km: {{planejamento.linha.recolhe_origem_km|safe}},
+            recolhe_destino_km: {{planejamento.linha.recolhe_destino_km|safe}},
             refs: {
-                from:[
+                origem:[
                     {% for trajeto in planejamento.linha.rendicoes_ida %}
-                        {local: new Locale({id: {{trajeto.local.id|safe}}, name: '{{trajeto.local.nome}}', surrender: true}), delta: {{trajeto.delta}}}
+                        {local: new Localidade({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
                     {% endfor %}
                 ],
-                to:[
+                destino:[
                 {% for trajeto in planejamento.linha.rendicoes_volta %}
-                    {local: new Locale({id: {{trajeto.local.id|safe}}, name: '{{trajeto.local.nome}}', surrender: true}), delta: {{trajeto.delta}}}
+                    {local: new Localidade({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
                 {% endfor %}
                 ]
             }
-        })
+        }),
+        save: ()=>{
+            document.getElementById('id_planejamento').value = JSON.stringify(model.carros);
+            document.getElementById('grid_form').submit();            
+        }
     });
 
     let trips;
     {% for carro in planejamento.carros %}
         trips = [];
         {% for viagem in carro.viagens %}
-            trips.push(new Trip({start: {{viagem.inicio|safe}}, end: {{viagem.fim|safe}}, shut: false, way: '{{viagem.sentido}}', type: '{{viagem.tipo}}', shut: {{viagem.encerrar|yesno:'true,false'}}}));
+            trips.push(new Viagem({inicio: {{viagem.inicio|safe}}, fim: {{viagem.fim|safe}}, sentido: '{{viagem.sentido}}', tipo: '{{viagem.tipo}}', encerrar: {{viagem.encerrar|yesno:'true,false'}}}));
         {% endfor %}
-        model.cars.push(new Car({classification: '{{carro.classificacao}}', trips: trips}));
+        model.carros.push(new Carro({classificacao: '{{carro.classificacao}}', viagens: trips, escalas: {{carro.escalas|replace:'None,null'|safe|default:'[]'}}}));
     {% endfor %}
-
-
 
 
     {% if planejamento.linha.demanda != '' %}
     // Carrega a ultima demanda registrada da linha por faixa horaria
     const demanda = {{planejamento.linha.demanda}};
     for(let i in demanda){
-        model.route.param[i].fromDemand = demanda[i].fromDemand;
-        model.route.param[i].toDemand = demanda[i].toDemand;
+        model.linha.param[i].demanda_ida = demanda[i].demanda_ida;
+        model.linha.param[i].demanda_volta = demanda[i].demanda_volta;
     }
     {% endif %}
     const project = new MarchUI({
