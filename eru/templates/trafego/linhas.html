@@ -55,6 +55,7 @@
             <th>Cod</th>
  						<th class="">Nome</th>
  						<th class="d-none">Classificação</th>
+ 						<th class="d-none">Garagem</th>
  						<th class="d-none d-lg-table-cell">Origem</th>
  						<th class="d-none d-lg-table-cell">Destino</th>
  						<th class="d-none d-sm-table-cell">Status</th>
@@ -71,6 +72,7 @@
  						<td>{{linha.codigo}}</td>
  						<td>{{linha.nome}}</td>
  						<td class="d-none">{{linha.get_classificacao_display}}</td>
+            <td class="d-none">{{linha.garagem.nome}}</td>
             <td class="d-none d-lg-table-cell">{{linha.origem.nome}}</td>
             <td class="d-none d-lg-table-cell">{{linha.destino.nome}}</td>
             <td class="d-none d-sm-table-cell">{{linha.inativa|yesno:'<b class="text-secondary">Inativa</b>,<b class="text-success">Ativa</b>'|safe}}</td>

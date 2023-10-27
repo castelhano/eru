@@ -790,7 +790,7 @@ class March{
                 let c = 0, p = 0, n = 0, nt = 0, ot = 0, chain = this.carros[i].escalas[j].next; // Current sched, previous e next, normal_time e overtime, chain marca proxima escala encadeada
                 c = this.carros[i].getEscalaJourney(j);
                 while(chain){ // Corre escalas procurando proximo elo
-                    n += this.carros[i].escalas[j].next.externalProject ? hour2Min(chain.journey) : this.carros[chain.carro].getEscalaJourney(chain.escala);
+                    n += this.carros[i].escalas[j].next.externalProject ? chain.journey : this.carros[chain.carro].getEscalaJourney(chain.escala);
                     chain = this.carros[i].escalas[j].next.externalProject ? false : this.carros[chain.carro].escalas[chain.escala].next;
                 }
                 if(this.carros[i].escalas[j].previous && this.carros[i].escalas[j].previous.externalProject){p = this.carros[i].escalas[j].previous.journey}
