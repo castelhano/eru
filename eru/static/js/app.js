@@ -95,11 +95,6 @@ function confirmOnClick(options){
 // Listeners / Configuracoes gerais
 // **
 
-
-
-
-
-
 // Exibe modal de carregamento antes de sair da pagina
 window.onbeforeunload = () => {appModalLoading.show()}
 
@@ -124,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.getElementById('appModalConfirm_link').href = el.href;
         if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_link').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
         if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_link').innerHTML = el.getAttribute('data-appConfirmText')}
-        setTimeout(()=>{document.getElementById('appModalConfirm_link').focus();}, 465);
+        setTimeout(()=>{document.getElementById('appModalConfirm_link').focus();}, 500);
       }
       else if(el.hasAttribute('onclick')){
         if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
@@ -132,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         document.getElementById('appModalConfirm_link').classList.add('d-none');
         document.getElementById('appModalConfirm_button').classList.remove('d-none');
         document.getElementById('appModalConfirm_button').onclick = options.onclick;
-        setTimeout(()=>{document.getElementById('appModalConfirm_button').focus();}, 465);
+        setTimeout(()=>{document.getElementById('appModalConfirm_button').focus();}, 500);
       }
       if(el.hasAttribute('data-appConfirmDelay')){
         span = document.createElement('span');

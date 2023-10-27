@@ -70,6 +70,7 @@ class Linha{
         this.codigo = options?.codigo || '0.00';
         this.nome = options?.nome || 'Linha indefinida';
         this.circular = options?.circular || options?.circular == true;
+        this.garagem = options?.garagem || new Localidade({}); // Garagem de referencia da linha
         this.origem = options?.origem || new Localidade({}); // Ponto inicial da linha (PT1)
         this.destino = options?.destino || new Localidade({}); // Ponto final da linha (PT2)
         this.extensao_ida = options?.extensao_ida || 0; // Extensao de ida (em km)
@@ -122,6 +123,8 @@ class Viagem{
         if(this.fim <= this.inicio){this.fim = this.inicio + CICLO_BASE} // Final tem que ser maior (pelo menos 1 min) que inicio 
         this.__id = March_nextViagemId;
         this.encerrar = options?.encerrar || options?.encerrar == true; // Define encerramento de viagem, usado para encerrar turno onde nao ocorre a recolhida do veiculo
+        this.origem = options?.origem || ''; // Id local de origem da viagem
+        this.destino = options?.destino || ''; // Id local de destino da viagem
         March_nextViagemId++;
 
         this.sentido = options?.sentido || IDA; // Sentido da viagem (ida, volta)
@@ -237,7 +240,13 @@ class Carro{
         if([INTERVALO, ACESSO, RECOLHE].includes(this.viagens[viagem_indice].tipo)){return false}
         let sentidoAccess = this.viagens[viagem_indice].sentido == IDA ? 'acesso_origem_minutos' : 'acesso_destino_minutos';
         let accessMin = linha[sentidoAccess];
-        let v = new Viagem({inicio: this.viagens[viagem_indice].inicio - accessMin - 1, fim: this.viagens[viagem_indice].inicio - 1, tipo: ACESSO, sentido: this.viagens[viagem_indice].sentido})
+        let v = new Viagem({
+            inicio: this.viagens[viagem_indice].inicio - accessMin - 1, 
+            fim: this.viagens[viagem_indice].inicio - 1, 
+            tipo: ACESSO, sentido: this.viagens[viagem_indice].sentido, 
+            origem: linha.garagem.id,
+            destino: this.viagens[viagem_indice].sentido == IDA ? linha.origem.id : linha.destino.id
+        })
         if(this.__viagemIsValid(v)){
             this.viagens.push(v);
             this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
@@ -250,7 +259,13 @@ class Carro{
         if([INTERVALO, ACESSO, RECOLHE].includes(this.viagens[viagem_indice].tipo) || this.viagens[viagem_indice].encerrar){return false}
         let sentidoRecall = this.viagens[viagem_indice].sentido == IDA ? 'recolhe_origem_minutos' : 'recolhe_destino_minutos';
         let recallMin = linha[sentidoRecall];
-        let v = new Viagem({inicio: this.viagens[viagem_indice].fim + 1, fim: this.viagens[viagem_indice].fim + recallMin + 1, tipo: RECOLHE, sentido: this.viagens[viagem_indice].sentido})
+        let v = new Viagem({
+            inicio: this.viagens[viagem_indice].fim + 1, 
+            fim: this.viagens[viagem_indice].fim + recallMin + 1, 
+            tipo: RECOLHE, sentido: this.viagens[viagem_indice].sentido,
+            origem: this.viagens[viagem_indice].sentido == IDA ? linha.origem.id : linha.destino.id,
+            destino: linha.garagem.id
+        })
         if(this.__viagemIsValid(v)){
             this.viagens.push(v);
             this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);

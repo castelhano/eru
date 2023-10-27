@@ -32,6 +32,7 @@ class Linha(models.Model):
     codigo = models.CharField(max_length=8, unique=True, blank=False)
     nome = models.CharField(max_length=80, blank=False)
     classificacao = models.CharField(max_length=3,choices=CLASSIFICACAO_CHOICES, blank=True)
+    garagem = models.ForeignKey(Localidade,related_name='local_garagem', blank=True, null=True, on_delete=models.RESTRICT)
     origem = models.ForeignKey(Localidade,related_name='local_origem', blank=True, null=True, on_delete=models.RESTRICT)
     destino = models.ForeignKey(Localidade,related_name='local_destino', blank=True, null=True, on_delete=models.RESTRICT)
     extensao_ida = models.DecimalField(default=0, max_digits=10, decimal_places=2)

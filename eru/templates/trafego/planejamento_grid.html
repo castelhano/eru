@@ -45,6 +45,7 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
             codigo: '{{planejamento.linha.codigo}}',
             nome: '{{planejamento.linha.nome}}',
             circular: {{planejamento.linha.circular|yesno:'true,false'}},
+            garagem: new Localidade({id: '{{planejamento.linha.garagem.id|safe|default:'new'}}', nome: '{{planejamento.linha.garagem.nome|default:'Sem garagem'}}', troca_turno: false}),
             origem: new Localidade({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', nome: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', troca_turno: {{planejamento.linha.origem.troca_turno|yesno:'true,false'|default:'true'}}}),
             destino: new Localidade({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', nome: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', troca_turno: {{planejamento.linha.destino.troca_turno|yesno:'true,false'|default:'true'}}}),
             extensao_ida: {{planejamento.linha.extensao_ida|safe}},
@@ -77,19 +78,29 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
         }
     });
 
-    let trips;
+    let trips, origem, destino;
     {% for carro in planejamento.carros %}
         trips = [];
         {% for viagem in carro.viagens %}
-            trips.push(new Viagem({inicio: {{viagem.inicio|safe}}, fim: {{viagem.fim|safe}}, sentido: '{{viagem.sentido}}', tipo: '{{viagem.tipo}}', encerrar: {{viagem.encerrar|yesno:'true,false'}}}));
+            trips.push(new Viagem({
+                inicio: {{viagem.inicio|safe}}, 
+                fim: {{viagem.fim|safe}}, 
+                sentido: '{{viagem.sentido}}', 
+                tipo: '{{viagem.tipo}}', 
+                origem: {{viagem.origem.id|safe}},
+                destino: {{viagem.destino.id|safe}},
+                encerrar: {{viagem.encerrar|yesno:'true,false'}}
+            }));
         {% endfor %}
-        model.carros.push(new Carro({classificacao: '{{carro.classificacao}}', viagens: trips, escalas: {{carro.escalas|replace:'None,null'|safe|default:'[]'}}}));
+        if(trips.length > 0){
+            model.carros.push(new Carro({classificacao: '{{carro.classificacao}}', viagens: trips, escalas: {{carro.escalas|replace:'None,null'|replace:'False,false'|replace:'True,true'|safe|default:'[]'}}}));
+        }
     {% endfor %}
 
 
     {% if planejamento.linha.demanda != '' %}
     // Carrega a ultima demanda registrada da linha por faixa horaria
-    const demanda = {{planejamento.linha.demanda}};
+    const demanda = {{planejamento.linha.demanda|safe}};
     for(let i in demanda){
         model.linha.param[i].demanda_ida = demanda[i].demanda_ida;
         model.linha.param[i].demanda_volta = demanda[i].demanda_volta;

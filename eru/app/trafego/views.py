@@ -426,8 +426,17 @@ def planejamento_grid_update(request, id):
             for viagem in carro['viagens']:
                 del viagem['__id']
                 viagem['carro'] = car
+                viagem['origem'] = Localidade.objects.get(id=viagem['origem'])
+                viagem['destino'] = Localidade.objects.get(id=viagem['destino'])
                 Viagem.objects.create(**viagem)
-        messages.success(request,'Success....')
+        l = Log()
+        l.modelo = "trafego.planejamento"
+        l.objeto_id = planejamento.id
+        l.objeto_str = planejamento.codigo
+        l.usuario = request.user
+        l.mensagem = "UPDATED GRID"
+        l.save()
+        messages.success(request,f'Planejamento <b>{planejamento.codigo}</b> atualizado')
     return redirect('trafego_planejamento_id', id)
 
 # METODOS DELETE

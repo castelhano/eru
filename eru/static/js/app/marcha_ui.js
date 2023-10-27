@@ -48,7 +48,7 @@ class MarchUI{
         this.rulerNumPaddingStart = options?.rulerNumPaddingStart || '4px';
         this.rulerNumPaddingTop = options?.rulerNumPaddingTop || '2px';
         
-        this.rulerUnit = options?.rulerUnit || '4px';
+        this.rulerUnit = options?.rulerUnit || '2px';
         this.rulerClasslist = options?.rulerClasslist || 'bg-body';
         this.rulerSmallWidth = options?.rulerSmallWidth || '1px';
         this.rulerSmallColor = options?.rulerSmallColor || '#666';
@@ -65,7 +65,7 @@ class MarchUI{
         this.viagemHeight = options?.viagemHeight || '8px';
 
         this.defaultSettings = {
-            rulerUnit: '4px',
+            rulerUnit: '2px',
             rulerMediumUnit: 30,
             viagemOrigemColor: '#4080A0',
             viagemDestinoColor: '#98D3F0',
@@ -1601,7 +1601,7 @@ class MarchUI{
                     if(blocks[y].spots[x].tipo == 'viagemEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {
-                        if(this.escalaFocus == null || this.escalaFocus[0] != i || this.escalaFocus[2] != y){return false}
+                        if(this.escalaFocus == null || this.escalaFocus[0] != i || this.escalaFocus[2] != y){console.log('NULO, vazando');return false}
                         let r;
                         if(blocks[y].spots[x].tipo == 'viagemEnd'){
                             r = this.project.carros[this.escalaFocus[0]].updateEscala(this.escalaFocus[1],{fim: blocks[y].spots[x].viagemIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
@@ -1650,7 +1650,7 @@ class MarchUI{
         let summary1 = this.project.countViagens(); // Gera resumo das viagens planejadas
         let summary2 = this.project.countOperatores(); // Gera resumo de mao de obra
         let km_produtiva = parseFloat((summary1.origem * this.project.linha.extensao_ida) + (summary1.destino * this.project.linha.extensao_volta));
-        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.linha.acesso_origem_km) + (summary1.accessTo * this.project.linha.acesso_destino_km) + (summary1.lazyFrom * this.project.linha.extensao_ida) + (summary1.lazyTo * this.project.linha.extensao_volta));
+        let km_improdutiva = parseFloat((summary1.accessFrom * this.project.linha.acesso_origem_km) + (summary1.accessTo * this.project.linha.acesso_destino_km) + (summary1.recallFrom * this.project.linha.recolhe_origem_km) + (summary1.recallTo * this.project.linha.recolhe_destino_km) + (summary1.lazyFrom * this.project.linha.extensao_ida) + (summary1.lazyTo * this.project.linha.extensao_volta));
         let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
         let perc_improdutiva = km_improdutiva / (km_produtiva + km_improdutiva) * 100 || 0;
         this.summaryModal.innerHTML = `
@@ -1841,7 +1841,7 @@ class MarchUI{
                 sq.style.backgroundColor = '#032830';
                 let target_block = null;
                 for(let x = 0; x < blocks.length; x++){ // Verifica a qual bloco a viagem pertence
-                    if(project.project.carros[carro_index].escalas[j].inicio >= blocks[x].inicioIndice && project.project.carros[carro_index].escalas[j].fim <= blocks[x].fimIndice){ target_block = x}
+                    if(project.project.carros[carro_index].escalas[j].inicio >= blocks[x].inicioIndex && project.project.carros[carro_index].escalas[j].fim <= blocks[x].fimIndex){target_block = x;break;}
                 }
                 this.escalaFocus = [carro_index, j, target_block];
             }
