@@ -105,10 +105,22 @@ const table = new jsTable(document.getElementById('main_table'), {
   fileName: 'linhas'  
 });
 
-const empresas = new selectPopulate({
-  target: document.getElementById("id_empresa"),
-  url: '{% url "core_get_empresas" %}',
+function getEmpresas() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if(this.readyState == 4 && this.status == 200){
+      if(this.responseText == ''){}
+      else{
+        let obj = JSON.parse(this.responseText);
+        let empresas = document.getElementById("id_empresa");
+        for(key in obj){empresas.innerHTML += `<li><span class="dropdown-item" onclick="urlFilter('empresa', ${obj[key].id})">${obj[key].nome}</span></li>`;}
+      }
+    }
+  };
+  xhttp.open("GET", "{% url 'core_get_empresas' %}", true);
+  xhttp.send();
+}
+getEmpresas();
 
-})
 {% endblock %}
 </script>

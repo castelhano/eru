@@ -225,7 +225,7 @@ class jsForm{
 */
 class selectPopulate{
     constructor(options){
-        if(!options.target || !options.url){console.log('jsform: target e url são obrigatórios');return false}
+        if(!options.target || !options.url){console.log('selectPopulate: target e url são obrigatórios');return false}
         this.target = options.target;
         this.data = []; // Json com dados retornados
         this.url = options.url;
@@ -273,8 +273,6 @@ class selectPopulate{
     }
 
 }
-
-
 
 // Configuracoes / Listeners ao carregar pagina
 // **

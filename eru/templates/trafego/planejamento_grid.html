@@ -35,10 +35,10 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
     {% block add_script %}
 
     const model = new March({
-        id: {{planejamento.id|safe}},
         nome: '{{planejamento.codigo}}',
         desc: '{{planejamento.descricao}}',
         dia_tipo: '{{planejamento.dia_tipo}}',
+        param: {{planejamento.params|safe}},
         ativo: {{planejamento.ativo|yesno:'true,false'}},
         linha: new Linha({
             id: {{planejamento.linha.id|safe}},
@@ -73,7 +73,8 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
             }
         }),
         save: ()=>{
-            document.getElementById('id_planejamento').value = JSON.stringify(model.carros);
+            model.patamares = model.linha.getBaselines();
+            document.getElementById('id_planejamento').value = JSON.stringify(model);
             document.getElementById('grid_form').submit();            
         }
     });

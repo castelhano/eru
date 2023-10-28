@@ -427,11 +427,11 @@ class MarchUI{
     __settingsAddDivisor(){return document.createElement('hr')}
     __settingsAddBreak(){return document.createElement('br')}
     __settingsUpdateBaselines(){ // Atualiza tabela com patamares cadastrados
-        let baseline = this.project.linha.getBaselines();
+        let baseline = this.project.param ? this.project.getBaselines() : this.project.linha.getBaselines();
         this.settingsBaselineTable.innerHTML = '<thead><tr><th colspan="2">Faixa</th><th colspan="2">Ciclo</th><th colspan="2">Intervalo</th><th colspan="2">Frequência</th></tr><tr><th>Inicio</th><th>Fim</th><th>Ida</th><th>Volta</th><th>Ida</th><th>Volta</th><th>Frota</th><th>Freq</th></tr></thead>';
         for(let i = 0; i < baseline.length; i++){
             let onclick = `if(parseInt(this.innerHTML) > 0){this.nextSibling.innerHTML = parseFloat((parseInt(this.parentNode.childNodes[2].innerHTML) + parseInt(this.parentNode.childNodes[3].innerHTML) + parseInt(this.parentNode.childNodes[4].innerHTML) + parseInt(this.parentNode.childNodes[5].innerHTML)) / parseInt(this.innerHTML)).toFixed(2)}else{this.nextSibling.innerHTML = ''}`;
-            let tr = `<tr><td>${baseline[i].inicio}</td><td>${baseline[i].fim}</td><td>${baseline[i].ida}</td><td>${baseline[i].volta}</td><td>${baseline[i].intervalo_ida}</td><td>${baseline[i].intervalo_volta}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
+            let tr = `<tr><td>${baseline[i].inicial}</td><td>${baseline[i].final}</td><td>${baseline[i].ida}</td><td>${baseline[i].volta}</td><td>${baseline[i].intervalo_ida}</td><td>${baseline[i].intervalo_volta}</td><td class="bg-body-secondary" contenteditable="true" oninput="${onclick}"></td><td></td></tr>`;
             this.settingsBaselineTable.innerHTML += tr;
         }
     }
@@ -475,7 +475,7 @@ class MarchUI{
     }
     addViagem(viagem=null, seq=this.carroIndice, confirmed=false){
         this.__clearSelecao();
-        viagem = viagem || this.project.carros[this.carroIndice].addViagem(this.project.linha);
+        viagem = viagem || this.project.carros[this.carroIndice].addViagem(this.project.linha, false, this.project.param || this.project.linha.param);
         let v = document.createElement('div'); // Elemento viagem (grid)
         v.style = this.viagemStyle;
         this.__updateViagemStyle(viagem, v);
@@ -1138,32 +1138,16 @@ class MarchUI{
         dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove();})
         let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.project.linha.codigo} ${this.project.linha.nome}</span></h6>`;
         let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
+        let dialogDismiss = document.createElement('i'); dialogDismiss.classList = 'bi bi-x-lg position-absolute pointer';dialogDismiss.style.top = '8px'; dialogDismiss.style.right = '15px';
+        dialogDismiss.onclick = ()=>{dialog.close()}
+        dialog.appendChild(dialogDismiss);
         // Adicionado os controles das metricas
         let linhaCirc = document.createElement('input');linhaCirc.type = 'checkbox';linhaCirc.id = 'March_linhaCircControl';linhaCirc.checked = this.project.linha.circular;
         linhaCirc.disabled = true;
-        // linhaCirc.onchange = () => {
-        //     this.project.linha.circular = linhaCirc.checked;
-        //     if(linhaCirc.checked){
-        //         this.settingsBaselineToMin.disabled = true;
-        //         this.settingsBaselineToInterv.disabled = true;
-        //     }
-        //     else{
-        //         this.settingsBaselineToMin.disabled = false;
-        //         this.settingsBaselineToInterv.disabled = false;
-        //     }
-        // }
         col1.appendChild(this.__settingsContainerSwitch(linhaCirc, 'Linha circular', '10px'));
         let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
         this.settingsOrigemExtension = document.createElement('input');this.settingsOrigemExtension.type = 'number';this.settingsOrigemExtension.classList = 'flat-input';this.settingsOrigemExtension.min = 0;this.settingsOrigemExtension.max = 300;this.settingsOrigemExtension.value = this.project.linha.extensao_ida;this.settingsOrigemExtension.id = 'March_settingsOrigemExtension';this.settingsOrigemExtension.placeholder = ' ';
         this.settingsOrigemExtension.disabled = true;
-        // this.settingsOrigemExtension.onchange = ()=>{
-        //     if(this.settingsOrigemExtension.value == '' || parseInt(this.settingsOrigemExtension.value) < this.settingsOrigemExtension.min || parseInt(this.settingsOrigemExtension.value) > this.settingsOrigemExtension.max){
-        //         this.settingsOrigemExtension.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsOrigemExtension.classList.remove('is-invalid');
-        //     this.project.linha.extensao_ida = parseInt(this.settingsOrigemExtension.value);
-        // }
         col11.appendChild(this.settingsOrigemExtension);
         col11.appendChild(this.__settingsAddCustomLabel(this.settingsOrigemExtension, 'Extensão Ida (km)'));
         col1.appendChild(col11);
@@ -1171,14 +1155,6 @@ class MarchUI{
         let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
         this.settingsToExtension = document.createElement('input');this.settingsToExtension.type = 'number';this.settingsToExtension.classList = 'flat-input';this.settingsToExtension.min = 0;this.settingsToExtension.max = 300;this.settingsToExtension.value = this.project.linha.extensao_volta;this.settingsToExtension.id = 'March_settingsToExtension';this.settingsToExtension.placeholder = ' ';
         this.settingsToExtension.disabled = true;
-        // this.settingsToExtension.onchange = ()=>{
-        //     if(this.settingsToExtension.value == '' || parseInt(this.settingsToExtension.value) < this.settingsToExtension.min || parseInt(this.settingsToExtension.value) > this.settingsToExtension.max){
-        //         this.settingsToExtension.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsToExtension.classList.remove('is-invalid');
-        //     this.project.linha.extensao_volta = parseInt(this.settingsToExtension.value);
-        // }
         col12.appendChild(this.settingsToExtension);
         col12.appendChild(this.__settingsAddCustomLabel(this.settingsToExtension, 'Extensão Volta (km)'));
         col1.appendChild(col12);
@@ -1186,14 +1162,6 @@ class MarchUI{
         let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
         this.settingsAccessOrigemMin = document.createElement('input');this.settingsAccessOrigemMin.type = 'number';this.settingsAccessOrigemMin.classList = 'flat-input';this.settingsAccessOrigemMin.min = 1;this.settingsAccessOrigemMin.max = 300;this.settingsAccessOrigemMin.value = this.project.linha.acesso_origem_minutos;this.settingsAccessOrigemMin.id = 'March_settingsAccessOrigemMin';this.settingsAccessOrigemMin.placeholder = ' ';
         this.settingsAccessOrigemMin.disabled = true;
-        // this.settingsAccessOrigemMin.onchange = ()=>{
-        //     if(this.settingsAccessOrigemMin.value == '' || parseInt(this.settingsAccessOrigemMin.value) < this.settingsAccessOrigemMin.min || parseInt(this.settingsAccessOrigemMin.value) > this.settingsAccessOrigemMin.max){
-        //         this.settingsAccessOrigemMin.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsAccessOrigemMin.classList.remove('is-invalid');
-        //     this.project.linha.acesso_origem_minutos = parseInt(this.settingsAccessOrigemMin.value);
-        // }
         col13.appendChild(this.settingsAccessOrigemMin);
         col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemMin, 'Acesso PT1 (min)'));
         col1.appendChild(col13);
@@ -1201,14 +1169,6 @@ class MarchUI{
         let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
         this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.project.linha.acesso_destino_minutos;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
         this.settingsAccessToMin.disabled = true;
-        // this.settingsAccessToMin.onchange = ()=>{
-        //     if(this.settingsAccessToMin.value == '' || parseInt(this.settingsAccessToMin.value) < this.settingsAccessToMin.min || parseInt(this.settingsAccessToMin.value) > this.settingsAccessToMin.max){
-        //         this.settingsAccessToMin.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsAccessToMin.classList.remove('is-invalid');
-        //     this.project.linha.acesso_destino_minutos = parseInt(this.settingsAccessToMin.value);
-        // }
         col14.appendChild(this.settingsAccessToMin);
         col14.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToMin, 'Acesso PT2 (min)'));
         col1.appendChild(col14);
@@ -1216,14 +1176,6 @@ class MarchUI{
         let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
         this.settingsRecallOrigemMin = document.createElement('input');this.settingsRecallOrigemMin.type = 'number';this.settingsRecallOrigemMin.classList = 'flat-input';this.settingsRecallOrigemMin.min = 1;this.settingsRecallOrigemMin.max = 300;this.settingsRecallOrigemMin.value = this.project.linha.recolhe_origem_minutos;this.settingsRecallOrigemMin.id = 'March_settingsRecallOrigemMin';this.settingsRecallOrigemMin.placeholder = ' ';
         this.settingsRecallOrigemMin.disabled = true;
-        // this.settingsRecallOrigemMin.onchange = ()=>{
-        //     if(this.settingsRecallOrigemMin.value == '' || parseInt(this.settingsRecallOrigemMin.value) < this.settingsRecallOrigemMin.min || parseInt(this.settingsRecallOrigemMin.value) > this.settingsRecallOrigemMin.max){
-        //         this.settingsRecallOrigemMin.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsRecallOrigemMin.classList.remove('is-invalid');
-        //     this.project.linha.recolhe_origem_minutos = parseInt(this.settingsRecallOrigemMin.value);
-        // }
         col15.appendChild(this.settingsRecallOrigemMin);
         col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemMin, 'Recolhe PT1 (min)'));
         col1.appendChild(col15);
@@ -1231,14 +1183,6 @@ class MarchUI{
         let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
         this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.project.linha.recolhe_destino_minutos;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
         this.settingsRecallToMin.disabled = true;
-        // this.settingsRecallToMin.onchange = ()=>{
-        //     if(this.settingsRecallToMin.value == '' || parseInt(this.settingsRecallToMin.value) < this.settingsRecallToMin.min || parseInt(this.settingsRecallToMin.value) > this.settingsRecallToMin.max){
-        //         this.settingsRecallToMin.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsRecallToMin.classList.remove('is-invalid');
-        //     this.project.linha.recolhe_destino_minutos = parseInt(this.settingsRecallToMin.value);
-        // }
         col16.appendChild(this.settingsRecallToMin);
         col16.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToMin, 'Recolhe PT2 (min)'));
         col1.appendChild(col16);
@@ -1246,14 +1190,6 @@ class MarchUI{
         let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
         this.settingsAccessOrigemKm = document.createElement('input');this.settingsAccessOrigemKm.type = 'number';this.settingsAccessOrigemKm.classList = 'flat-input';this.settingsAccessOrigemKm.min = 0;this.settingsAccessOrigemKm.max = 300;this.settingsAccessOrigemKm.value = this.project.linha.acesso_origem_km;this.settingsAccessOrigemKm.id = 'March_settingsAccessOrigemKm';this.settingsAccessOrigemKm.placeholder = ' ';
         this.settingsAccessOrigemKm.disabled = true;
-        // this.settingsAccessOrigemKm.onchange = ()=>{
-        //     if(this.settingsAccessOrigemKm.value == '' || parseInt(this.settingsAccessOrigemKm.value) < this.settingsAccessOrigemKm.min || parseInt(this.settingsAccessOrigemKm.value) > this.settingsAccessOrigemKm.max){
-        //         this.settingsAccessOrigemKm.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsAccessOrigemKm.classList.remove('is-invalid');
-        //     this.project.linha.acesso_origem_km = parseInt(this.settingsAccessOrigemKm.value);
-        // }
         col17.appendChild(this.settingsAccessOrigemKm);
         col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemKm, 'Acesso PT1 (km)'));
         col1.appendChild(col17);
@@ -1261,14 +1197,6 @@ class MarchUI{
         let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
         this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.project.linha.acesso_destino_km;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
         this.settingsAccessToKm.disabled = true;
-        // this.settingsAccessToKm.onchange = ()=>{
-        //     if(this.settingsAccessToKm.value == '' || parseInt(this.settingsAccessToKm.value) < this.settingsAccessToKm.min || parseInt(this.settingsAccessToKm.value) > this.settingsAccessToKm.max){
-        //         this.settingsAccessToKm.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsAccessToKm.classList.remove('is-invalid');
-        //     this.project.linha.acesso_destino_km = parseInt(this.settingsAccessToKm.value);
-        // }
         col18.appendChild(this.settingsAccessToKm);
         col18.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToKm, 'Acesso PT2 (km)'));
         col1.appendChild(col18);
@@ -1276,14 +1204,6 @@ class MarchUI{
         let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
         this.settingsRecallOrigemKm = document.createElement('input');this.settingsRecallOrigemKm.type = 'number';this.settingsRecallOrigemKm.classList = 'flat-input';this.settingsRecallOrigemKm.min = 0;this.settingsRecallOrigemKm.max = 300;this.settingsRecallOrigemKm.value = this.project.linha.recolhe_origem_km;this.settingsRecallOrigemKm.id = 'March_settingsRecallOrigemKm';this.settingsRecallOrigemKm.placeholder = ' ';
         this.settingsRecallOrigemKm.disabled = true;
-        // this.settingsRecallOrigemKm.onchange = ()=>{
-        //     if(this.settingsRecallOrigemKm.value == '' || parseInt(this.settingsRecallOrigemKm.value) < this.settingsRecallOrigemKm.min || parseInt(this.settingsRecallOrigemKm.value) > this.settingsRecallOrigemKm.max){
-        //         this.settingsRecallOrigemKm.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsRecallOrigemKm.classList.remove('is-invalid');
-        //     this.project.linha.recolhe_origem_km = parseInt(this.settingsRecallOrigemKm.value);
-        // }
         col19.appendChild(this.settingsRecallOrigemKm);
         col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemKm, 'Recolhe PT1 (km)'));
         col1.appendChild(col19);
@@ -1291,14 +1211,6 @@ class MarchUI{
         let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
         this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.project.linha.recolhe_destino_km;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
         this.settingsRecallToKm.disabled = true;
-        // this.settingsRecallToKm.onchange = ()=>{
-        //     if(this.settingsRecallToKm.value == '' || parseInt(this.settingsRecallToKm.value) < this.settingsRecallToKm.min || parseInt(this.settingsRecallToKm.value) > this.settingsRecallToKm.max){
-        //         this.settingsRecallToKm.classList.add('is-invalid');
-        //         return false;
-        //     }
-        //     this.settingsRecallToKm.classList.remove('is-invalid');
-        //     this.project.linha.recolhe_destino_km = parseInt(this.settingsRecallToKm.value);
-        // }
         col20.appendChild(this.settingsRecallToKm);
         col20.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToKm, 'Recolhe PT2 (km)'));
         col1.appendChild(col20);
@@ -1380,9 +1292,9 @@ class MarchUI{
         }
         col28.appendChild(this.settingsBaselineSubmit);
         
-        this.settingsBaselineCancel = document.createElement('button');this.settingsBaselineCancel.type = 'button';this.settingsBaselineCancel.classList  = 'btn btn-sm btn-dark ms-1';this.settingsBaselineCancel.innerHTML = 'Cancelar'; 
-        this.settingsBaselineCancel.onclick = ()=>{dialog.close();dialog.remove();}
-        col28.appendChild(this.settingsBaselineCancel);
+        this.settingsBaselineRestore = document.createElement('button');this.settingsBaselineRestore.type = 'button';this.settingsBaselineRestore.classList  = 'btn btn-sm btn-phanton-orange ms-1';this.settingsBaselineRestore.innerHTML = 'Padrão Linha';
+        this.settingsBaselineRestore.onclick = ()=>{this.project.param = null;this.__settingsUpdateBaselines();}
+        col28.appendChild(this.settingsBaselineRestore);
         col2.appendChild(col28);
         
         this.settingsBaselineContainer = document.createElement('div');

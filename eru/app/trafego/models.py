@@ -61,7 +61,6 @@ class Linha(models.Model):
             for i in range(p.inicial, p.final + 1, 1):
                 params[i] = {'ida': p.ida, 'volta': p.volta, 'intervalo_ida': p.intervalo_ida, 'intervalo_volta': p.intervalo_volta, 'demanda_ida': 0, 'demanda_volta': 0}
         return json.dumps(params)
-
     def trajeto(self, sentido='I'):
         return Trajeto.objects.filter(linha=self, sentido=sentido).order_by('seq')
     def circular(self):
@@ -151,6 +150,17 @@ class Planejamento(models.Model):
         recolhes_ida = Viagem.objects.filter(carro__planejamento=self, sentido='I', tipo='6').count()
         recolhes_volta = Viagem.objects.filter(carro__planejamento=self, sentido='V', tipo='6').count()
         return (acessos_ida * self.linha.acesso_origem_km) + (acessos_volta * self.linha.acesso_destino_km) + (recolhes_ida * self.linha.recolhe_origem_km) + (recolhes_volta * self.linha.recolhe_destino_km)
+    def params(self): # Retorna detalhamento dos patamares em formato JSON para integracao com jsMarch ex: {0:{fromMin: 55, toMin: 40, ...}}
+        if self.patamares == '':
+            return 'false'
+        params = {}
+        print('PASSEI')
+        print(self.patamares)
+        patamares = json.loads(self.patamares)
+        for p in patamares:
+            for i in range(p['inicial'], p['final'] + 1, 1):
+                params[i] = {'ida': p['ida'], 'volta': p['volta'], 'intervalo_ida': p['intervalo_ida'], 'intervalo_volta': p['intervalo_volta'], 'demanda_ida': 0, 'demanda_volta': 0}
+        return json.dumps(params)
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='trafego.planejamento',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)

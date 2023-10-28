@@ -89,21 +89,21 @@ class Linha{
     getBaselines(){ // Retorna json com resumo dos patamares {inicio: 4, fim: 8, ida: 50, volta: 45, ...}
         let paramKeys = ['ida','volta','intervalo_ida','intervalo_volta'];
         let baseline = [];
-        let inicio = 0;
-        let fim = 0;
+        let inicial = 0;
+        let final = 0;
         let last_entry = {};
         for(let i in this.param){
             let entry = {};
             for(let j = 0; j < paramKeys.length;j++){entry[paramKeys[j]] = this.param[i][paramKeys[j]]} // Carrega os attrs em entry
             if(i == 0){ // Na primeira iteracao, cria a entrada do primeiro patamar
                 last_entry = {...entry}
-                baseline.push(Object.assign({inicio: 0, fim: 0}, entry));
+                baseline.push(Object.assign({inicial: 0, final: 0}, entry));
             }
-            else if(JSON.stringify(last_entry) == JSON.stringify(entry)){ // Se nova entrada for igual entrada anterior, apenas aumenta fim em 1
-                baseline[baseline.length - 1].fim += 1;
+            else if(JSON.stringify(last_entry) == JSON.stringify(entry)){ // Se nova entrada for igual entrada anterior, apenas aumenta final em 1
+                baseline[baseline.length - 1].final += 1;
             }
             else{ // Se encontrou diferenca no patamar, fecha entry e carrega na baseline
-                baseline.push(Object.assign({inicio: parseInt(i), fim: parseInt(i)}, entry));
+                baseline.push(Object.assign({inicial: parseInt(i), final: parseInt(i)}, entry));
                 last_entry = {...entry};
             }
         }
@@ -174,10 +174,11 @@ class Carro{
         this.classificacao = options?.classificacao || CONVENCIONAL; // Tipo de tecnologia a ser usada
         this.viagens = options?.viagens || []; // Armazena as viagens do carro
         this.escalas = options?.escalas || []; // Armazena as tabelas (escalas) para o carro
-        if(this.viagens.length == 0){this.addViagem(options.linha, options['inicioAt'])} // Necessario pelo menos uma viagem no carro
+        if(this.viagens.length == 0){this.addViagem(options.linha, options['inicioAt'], options.param)} // Necessario pelo menos uma viagem no carro
     }
-    addViagem(linha=null, inicioAt=null){ // Adiciona viagem apos ultima viagem
+    addViagem(linha=null, inicioAt=null, param=null){ // Adiciona viagem apos ultima viagem
         let opt = {}; // Dados da viagem
+        console.log(param);
         if(this.viagens.length > 0){
             let last = null;
             if(!inicioAt){last = this.viagens[this.viagens.length - 1]} // Se nao informado inicioAt insere apos ultima viagem
@@ -198,12 +199,14 @@ class Carro{
             else{faixa = 0} // Em teoria se nao definido inicioAt, sempre deve existir uma viagem anterior
             
             // let faixa = min2Range(last.fim);
-            let intervalo = last?.sentido == VOLTA || linha.circular == true ? linha.param[faixa].intervalo_ida : linha.param[faixa].intervalo_volta;
-            let ciclo = last?.sentido == VOLTA || linha.circular == true ? linha.param[faixa].ida : linha.param[faixa].volta;
+            let intervalo = last?.sentido == VOLTA || linha.circular == true ? param[faixa].intervalo_ida : param[faixa].intervalo_volta;
+            let ciclo = last?.sentido == VOLTA || linha.circular == true ? param[faixa].ida : param[faixa].volta;
             opt = {
                 inicio: inicioAt ? inicioAt : last.fim + intervalo,
                 fim: inicioAt ? inicioAt + intervalo + ciclo : last.fim + intervalo + ciclo,
-                sentido: last?.sentido == VOLTA || linha.circular == true ? IDA : VOLTA,
+                sentido: last.sentido == VOLTA || linha.circular == true ? IDA : VOLTA,
+                origem: last.sentido == VOLTA || linha.circular == true ? linha.origem.id : linha.destino.id,
+                destino: last.sentido == IDA || linha.circular == true ? linha.origem.id : linha.destino.id,
                 tipo: PRODUTIVA
             }
         }
@@ -211,8 +214,10 @@ class Carro{
             let faixa = min2Range(INICIO_OPERACAO);
             opt = {
                 inicio: inicioAt ? inicioAt : INICIO_OPERACAO,
-                fim: inicioAt ? inicioAt + linha.param[faixa].ida : INICIO_OPERACAO + linha.param[faixa].ida,
+                fim: inicioAt ? inicioAt + param[faixa].ida : INICIO_OPERACAO + param[faixa].ida,
                 sentido: IDA,
+                origem: linha.origem.id,
+                destino: linha.circular == true ? linha.origem.id : linha.destino.id,
                 tipo: PRODUTIVA
             }
         }
@@ -528,6 +533,7 @@ class March{
         this.nome = options?.nome || 'Novo Projeto';
         this.desc = options?.desc || '';
         this.linha = options?.linha || new Linha({});
+        this.param = options?.param || null;
         this.carros = options?.carros || [];
         this.viewStage = options?.viewStage || 1; // View 1: Diagrama de Marcha, 2: Editor de Escalas, 3: Resumo e definicoes
         this.dia_tipo = options?.dia_tipo || UTIL;
@@ -541,11 +547,12 @@ class March{
         if(this.carros.length > 0){
             options['inicioAt'] = this.carros[this.carros.length - 1].firstViagem().inicio + (options?.freq || FREQUENCIA_BASE);
         }
+        options.param = this.param || this.linha.param;
         this.carros.push(new Carro(options));
         return this.carros.slice(-1)[0]; // Retorna carro inserido 
     }
     addViagem(car_indice, inicioAt=null){
-        return this.carros[car_indice].addViagem(this.linha, inicioAt);
+        return this.carros[car_indice].addViagem(this.linha, inicioAt, this.param || this.linha.param);
     }
     removeCarro(carro_indice){
         return this.carros.splice(carro_indice, 1);
@@ -624,6 +631,29 @@ class March{
         this.carros[carro_indice].deleteEscala(escala_indice);
         return chain;
     }
+    getBaselines(){ // Retorna json com resumo dos patamares {inicio: 4, fim: 8, ida: 50, volta: 45, ...}
+        let paramKeys = ['ida','volta','intervalo_ida','intervalo_volta'];
+        let baseline = [];
+        let inicial = 0;
+        let final = 0;
+        let last_entry = {};
+        for(let i in this.param){
+            let entry = {};
+            for(let j = 0; j < paramKeys.length;j++){entry[paramKeys[j]] = this.param[i][paramKeys[j]]} // Carrega os attrs em entry
+            if(i == 0){ // Na primeira iteracao, cria a entrada do primeiro patamar
+                last_entry = {...entry}
+                baseline.push(Object.assign({inicial: 0, final: 0}, entry));
+            }
+            else if(JSON.stringify(last_entry) == JSON.stringify(entry)){ // Se nova entrada for igual entrada anterior, apenas aumenta final em 1
+                baseline[baseline.length - 1].final += 1;
+            }
+            else{ // Se encontrou diferenca no patamar, fecha entry e carrega na baseline
+                baseline.push(Object.assign({inicial: parseInt(i), final: parseInt(i)}, entry));
+                last_entry = {...entry};
+            }
+        }
+        return baseline;
+    }
     getIntervs(car_indice=null){ // Retorna a soma de intervalos do carro informado
         if(car_indice != null){
             return this.carros[car_indice].getIntervs(this.somar_intervalo_entre_viagens);
@@ -699,15 +729,16 @@ class March{
             this.carros = []; // Limpa planejamento atual
             let faixa = min2Range(metrics.inicio);
             let ciclo;
-            if(this.linha.circular){ciclo = this.linha.param[faixa].ida + this.linha.param[faixa].intervalo_ida}
-            else{ciclo = this.linha.param[faixa].ida + this.linha.param[faixa].volta + this.linha.param[faixa].intervalo_ida + this.linha.param[faixa].intervalo_volta}
+            let param = this.param ? this.param : this.linha.param; // Se parametros para o planejamento atual usa este, se nao usa os da linha
+            if(this.linha.circular){ciclo = param[faixa].ida + param[faixa].intervalo_ida}
+            else{ciclo = param[faixa].ida + param[faixa].volta + param[faixa].intervalo_ida + param[faixa].intervalo_volta}
             let freq = Math.ceil(ciclo / metrics.carro);
             INICIO_OPERACAO = metrics.inicio; // Ajusta inicio de operacao para hora informada
             for(let i = 0; i < metrics.carro; i++){
                 let c = this.addCarro({linha: this.linha, freq: freq});
                 let j = 0;
                 while(c.viagens[j].inicio < metrics.fim){
-                    c.addViagem(this.linha);
+                    c.addViagem(this.linha, false, this.param || this.linha.param);
                     j++;
                 }
             }

@@ -127,6 +127,7 @@ def linha_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
+                Patamar.objects.create(**{'linha': registro, 'inicial': 0, 'final': 23, 'ida': 50, 'volta': 50, 'intervalo_ida': 10, 'intervalo_volta': 1}) # Inicia patamares da linha
                 l = Log()
                 l.modelo = "trafego.linha"
                 l.objeto_id = registro.id
@@ -137,7 +138,7 @@ def linha_add(request):
                 messages.success(request,f'Linha <b>{registro.codigo}</b> criada')
                 return redirect('trafego_linha_id',registro.id)
             except:
-                pass
+                messages.error(request,'<b>Erro</b> ao salvar linha, comunique ao administrador do sistema')
     else:
         form = LinhaForm()
     return render(request,'trafego/linha_add.html',{'form':form})
@@ -419,7 +420,11 @@ def planejamento_update(request,id):
 def planejamento_grid_update(request, id):
     if request.method == 'POST':
         planejamento = Planejamento.objects.get(id=id)
-        carros = json.loads(request.POST['planejamento'])
+        plan = json.loads(request.POST['planejamento'])
+        if 'patamares' in plan:
+            planejamento.patamares = json.dumps(plan['patamares'])
+            planejamento.save()
+        carros = plan['carros']
         Carro.objects.filter(planejamento=planejamento).delete() # Limpa viagens atuais (caso exista)
         for carro in carros:
             car = Carro.objects.create(**{'planejamento': planejamento, 'classificacao': carro['classificacao'], 'escalas':carro['escalas']})
