@@ -33,6 +33,10 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
 
 <script>
     {% block add_script %}
+    document.getElementById('home').setAttribute('data-appConfirm', 'true');
+    document.getElementById('home').setAttribute('data-appConfirmTitle', '<i class="bi bi-info-circle-fill me-2"></i>Página Inicial');
+    document.getElementById('home').setAttribute('data-appConfirmMessage', 'Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?');
+    document.getElementById('home').setAttribute('data-appConfirmText', 'Página Inicial');
 
     const model = new March({
         nome: '{{planejamento.codigo}}',
@@ -75,7 +79,7 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
         save: ()=>{
             model.patamares = model.linha.getBaselines();
             document.getElementById('id_planejamento').value = JSON.stringify(model);
-            document.getElementById('grid_form').submit();            
+            document.getElementById('grid_form').submit();
         }
     });
 

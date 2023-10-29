@@ -147,7 +147,9 @@
 {% endif %}
 {% endblock%}
 
-{% block add_script_src %}{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
 
 <script>
   {% block add_script %}
@@ -155,6 +157,7 @@
   appKeyMap.bind({key: '1', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Base', desc: 'Exibe aba com campos básicos', run: ()=>{document.getElementById('tab_link_base').click()}})
   appKeyMap.bind({key: '2', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Métricas', desc: 'Exibe aba com métricas da linha', run: ()=>{document.getElementById('tab_link_extensoes').click()}})
   appKeyMap.bind({key: '3', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Trajetos', desc: 'Exibe página de trajetos da linha', run: ()=>{document.getElementById('tab_link_trajetos').click()}})
+  const form = new jsForm(document.getElementById('trafego_form'), {});
   
   var modal_patamar = new bootstrap.Modal(document.getElementById('patamar_modal'), {keyboard: true});
   function patamarUpdate(inicial='', final='', ida=50, volta=45, patamar=''){

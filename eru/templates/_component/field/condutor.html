@@ -1,6 +1,6 @@
 <div class="row g-1" id="condutor_container"{% if hide %} style="display:none"{% endif %}>
   <div class="form-floating mb-1 col" style="max-width: 130px;">
-    <input type="text" class="form-control" name="matricula" maxlength="6" id="id_matricula_condutor" value="{{matricula}}" placeholder="" onfocusout="getCondutor();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
+    <input type="text" class="form-control" name="matricula" maxlength="6" id="id_matricula_condutor" value="{{matricula}}"  data-form="novalidate" placeholder=" " onfocusout="getCondutor();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
     <label for="id_matricula_condutor">Condutor</label>
   </div>
   <div class="form-floating mb-1 col">

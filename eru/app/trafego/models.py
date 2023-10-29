@@ -132,6 +132,21 @@ class Planejamento(models.Model):
         return Carro.objects.filter(planejamento=self).count()
     def viagens(self):
         return Viagem.objects.filter(carro__planejamento=self)
+    def qtd_condutores(self):
+        condutores = 0
+        aproveitamentos = 0
+        for carro in self.carros():
+            if carro.escalas == '[]':
+                continue
+            escalas = json.loads(carro.escalas)
+            for escala in escalas:
+                if escala['previous'] and not escala['previous']['externalProject']:
+                    continue
+                if not escala['previous']:
+                    condutores += 1 # Se escala nao tiver apontamento anterior, incrementa motorista
+                else:
+                    aproveitamentos += 1
+        return {"condutores": condutores, "aproveitamentos":aproveitamentos}
     def qtd_viagens(self):
         return Viagem.objects.filter(carro__planejamento=self).count()
     def qtd_viagens_produtivas(self):

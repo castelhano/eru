@@ -1,4 +1,5 @@
 {% extends "layout/app.html" %}
+{% load static %}
 {% load tag_extra %}
 {% block title %}Plan{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
@@ -47,7 +48,10 @@
               </div>
               <dl class="row">
                 <dt class="col-4">Frota</dt><dd class="col-8">{{ativo.qtd_carros|zfill:2}}</dd>
-                <dt class="col-4">Condutores</dt><dd class="col-8">--</dd>
+                {% with quadro=ativo.qtd_condutores %}
+                <dt class="col-4">Condutores</dt><dd class="col-8">{{quadro.condutores}}</dd>
+                <dt class="col-4">Aproveitamentos</dt><dd class="col-8">{{quadro.aproveitamentos}}</dd>
+                {% endwith %}
                 <dt class="col-4">Viagens</dt><dd class="col-8">{{ativo.qtd_viagens|zfill:3}}</dd>
                 <dt class="col-4 text-body-secondary">Produtivas</dt><dd class="col-8 text-body-secondary">{{ativo.qtd_viagens_produtivas|zfill:3}}</dd>
                 <dt class="col-4 text-body-secondary">Improdutivas</dt><dd class="col-8 text-body-secondary">{{ativo.qtd_viagens_improdutivas|zfill:3}}</dd>
@@ -93,7 +97,10 @@
               </div>
               <dl class="row">
                 <dt class="col-4">Frota</dt><dd class="col-8">{{planejamento.qtd_carros|zfill:2}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_carros|sub:ativo.qtd_carros|zfill:2}} ]</span>{% endif %}</dd>
-                <dt class="col-4">Condutores</dt><dd class="col-8">--</dd>
+                {% with quadro=planejamento.qtd_condutores %}
+                <dt class="col-4">Condutores</dt><dd class="col-8">{{quadro.condutores}}</dd>
+                <dt class="col-4">Aproveitamentos</dt><dd class="col-8">{{quadro.aproveitamentos}}</dd>
+                {% endwith %}
                 <dt class="col-4">Viagens</dt><dd class="col-8">{{planejamento.qtd_viagens|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens|sub:ativo.qtd_viagens|zfill:3}} ]{% endif %}</span></dd>
                 <dt class="col-4 text-body-secondary">Produtivas</dt><dd class="col-8 text-body-secondary">{{planejamento.qtd_viagens_produtivas|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens_produtivas|sub:ativo.qtd_viagens_produtivas|zfill:3}} ]{% endif %}</span></dd>
                 <dt class="col-4 text-body-secondary">Improdutivas</dt><dd class="col-8 text-body-secondary">{{planejamento.qtd_viagens_improdutivas|zfill:3}} {% if ativo %}<span class="ms-3 switch-view d-none">[ {{planejamento.qtd_viagens_improdutivas|sub:ativo.qtd_viagens_improdutivas|zfill:3}} ]{% endif %}</span></dd>
@@ -223,11 +230,14 @@
 {% endif %}
 {% endblock%}
 
-{% block add_script_src %}{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
 
 <script>
   {% block add_script %}
   appKeyMap.bind({key: 'd', alt: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Grid', desc: 'Abre a interfaçe grid', run:()=>{document.getElementById('planejamento_grid').click()}})
+  const form = new jsForm(document.getElementById('app_form'), {});
   
   {% if ativo %}
   appKeyMap.bind({key: 'x', alt: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Comparar', desc: 'Compara planejamento com ativo atualmente', run:()=>{document.getElementById('btn_comparar').click()}})

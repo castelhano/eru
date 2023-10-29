@@ -143,13 +143,13 @@ class jsForm{
     validate(){ // PAREI AQUI< FALTA ADICIONAR __validateListeners
         cleanNotify(); // Limpa area de notificacao
         // Valida status required, maxlength e minlength
-        this.form.querySelectorAll('[required]:not([type=number]):not([type=email]),[minlength]:not([type=email]),[maxlength]:not([type=email])').forEach((el)=>{this.__validateRequired(el)})
+        this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{this.__validateRequired(el)})
 
         // Valida inputs NUMBER quanto ao MIN e MAX e required
-        this.form.querySelectorAll('input[type=number]').forEach((el)=>{this.__validateNumber(el)})
+        this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{this.__validateNumber(el)})
 
         // Valida email fields
-        this.form.querySelectorAll('input[type=email]').forEach((el)=>{ this.__validateEmail(el); })
+        this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{ this.__validateEmail(el); })
 
         // Verifica se existe validacao adicional na pagina de origem
         for(let i in this.customValidation){
@@ -201,13 +201,13 @@ class jsForm{
         }
     }
     __validateListeners(){
-        this.form.querySelectorAll('[required]:not([type=number]):not([type=email]),[minlength]:not([type=email]),[maxlength]:not([type=email])').forEach((el)=>{
+        this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
             el.onblur = () => {this.__validateRequired(el, false)}
         })
-        this.form.querySelectorAll('input[type=number][min], input[type=number][max]').forEach((el)=>{
+        this.form.querySelectorAll('input[type=number][min]:not([data-form=novalidate]), input[type=number][max]:not([data-form=novalidate])').forEach((el)=>{
             el.onblur = () => {this.__validateNumber(el, false)}  
         })
-        this.form.querySelectorAll('input[type=email]').forEach((el)=>{
+        this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{
             el.onblur = () => {this.__validateEmail(el, false)}
         })
     }

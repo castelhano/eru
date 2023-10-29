@@ -95,7 +95,9 @@
 {% block add_script %}
 appKeyMap.tabOnEnter = false;
 const table = new jsTable(document.getElementById('main_table'), {
-  enablePaginate: true
+  enablePaginate: true,
+  canFilter: true,
+  filterCols: ['Empresa','Linha', 'Dia']
 });
 {% endblock %}
 </script>

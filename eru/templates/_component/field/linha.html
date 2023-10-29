@@ -1,6 +1,6 @@
 <div class="row g-1" id="linha_container"{% if hide %} style="display:none"{% endif %}>
   <div class="form-floating mb-1 col" style="max-width: 130px;">
-    <input type="text" class="form-control" name="codigo_linha" maxlength="5" id="id_codigo_linha" value="{{codigo}}" placeholder="" onfocusout="getLinha();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
+    <input type="text" class="form-control" name="codigo_linha" maxlength="5" id="id_codigo_linha" value="{{codigo}}" data-form="novalidate" placeholder=" " onfocusout="getLinha();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
     <label for="id_codigo_linha">Linha</label>
   </div>
   <div class="form-floating mb-1 col">
@@ -19,10 +19,10 @@
   };  
   
   function getLinha() {
-    empresa = document.getElementById('id_empresa') != null ? document.getElementById('id_empresa').value : 'None';
-    codigo = document.getElementById('id_codigo_linha');
-    nome = document.getElementById("id_nome_linha");
-    linha = document.getElementById("id_linha");
+    let empresa = document.getElementById('id_empresa') != null ? document.getElementById('id_empresa').value : 'None';
+    let codigo = document.getElementById('id_codigo_linha');
+    let nome = document.getElementById("id_nome_linha");
+    let linha = document.getElementById("id_linha");
     if(codigo.value != ''){
       var xhttp = new XMLHttpRequest();
     	xhttp.onreadystatechange = function() {
@@ -42,6 +42,9 @@
     	xhttp.open("GET", "{% url 'trafego_get_linha' %}?empresa=" + empresa + "&codigo=" + codigo.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
     	xhttp.send();  
     }
-    else{cleanLinha();}
+    else{
+      cleanLinha();
+      if(codigo.required){codigo.classList.add('is-invalid')}else{codigo.classList.remove('is-invalid')}
+    }
   }  
 </script>

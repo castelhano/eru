@@ -424,10 +424,10 @@ def planejamento_grid_update(request, id):
         if 'patamares' in plan:
             planejamento.patamares = json.dumps(plan['patamares'])
             planejamento.save()
-        carros = plan['carros']
         Carro.objects.filter(planejamento=planejamento).delete() # Limpa viagens atuais (caso exista)
+        carros = plan['carros']
         for carro in carros:
-            car = Carro.objects.create(**{'planejamento': planejamento, 'classificacao': carro['classificacao'], 'escalas':carro['escalas']})
+            car = Carro.objects.create(**{'planejamento': planejamento, 'classificacao': carro['classificacao'], 'escalas':json.dumps(carro['escalas'])})
             for viagem in carro['viagens']:
                 del viagem['__id']
                 viagem['carro'] = car
