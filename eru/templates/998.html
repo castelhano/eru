@@ -8,10 +8,13 @@
 {% endblock %}
 
 {% block add_script_src %}
-<script src="{% static 'js/app/marcha_model.js' %}"></script>
-<script src="{% static 'js/app/marcha_ui.js' %}"></script>
-<script src="{% static 'js/elConnector.js' %}"></script>
-<script src="{% static 'js/vendor/chart.min.js' %}"></script>
+<script type="module">
+    import { metrics as $ } from '{% static 'js/app/trafego/marcha_metrics.js' %}';
+    import { jsMarcha } from '{% static 'js/app/trafego/marcha_model.js' %}';
+    import { jsMarchaUI } from '{% static 'js/app/trafego/marchaUI.js' %}';
+    const model = new jsMarcha({})
+    const ui = new jsMarchaUI({})
+</script>
 {% endblock %}
 
 {% block content %}<div id="march_container"></div>{% endblock %}
@@ -21,47 +24,50 @@
 <script>
     {% block add_script %}
 
-    let interestPoints = []
-    interestPoints.push(new Localidade({id: 12, nome: 'Jd Vitoria', surrender: true}));
-    interestPoints.push(new Localidade({id: 55, nome: 'Peg Lev'}));
-    interestPoints.push(new Localidade({id: 82, nome: 'Hosp Cancer'}));
-    interestPoints.push(new Localidade({id: 65, nome: 'Igreja Matriz', surrender: true}));
 
-    const model = new March({
-        linha: new Linha({
-            id: 5,
-            prefixo: '301',
-            nome: 'Jd Vitoria x Centro',
-            circular: false,
-            origem: interestPoints[0],
-            destino: interestPoints[1],
-            extensao_ida: 23.22,
-            extensao_volta: 21.10,
-            metrics: {
-                acesso_origem_minutos: 20,
-                acesso_destino_minutos: 25,
-                recolhe_origem_minutos: 18,
-                recolhe_destino_minutos: 16,
-                acesso_origem_km: 4.22,
-                acesso_destino_km: 5,
-                recolhe_origem_km: 4.63,
-                recolhe_destino_km: 3.36,
-            },
-            refs: {origem:[{local: interestPoints[2], delta: 20}], destino:[{local: interestPoints[3], delta: 35}]}
-        })
-    });
-    model.linha.param[4].demanda_ida = 450;
-    model.linha.param[4].demanda_volta = 85;
-    model.linha.param[5].demanda_ida = 520;
-    model.linha.param[5].demanda_volta = 122;
-    const project = new MarchUI({
-        container: document.getElementById('march_container'),
-        settingsContainer: document.getElementById('marchSettings_container'),
-        project: model,
-        // initialView: 240,
-        initialView: '05:00'
-        // rulerUnit: '2px',
-        // rulerMediumUnit: 120,
-    });
+    // const marcha = new jsMarcha();
+
+    // let interestPoints = []
+    // interestPoints.push(new Localidade({id: 12, nome: 'Jd Vitoria', surrender: true}));
+    // interestPoints.push(new Localidade({id: 55, nome: 'Peg Lev'}));
+    // interestPoints.push(new Localidade({id: 82, nome: 'Hosp Cancer'}));
+    // interestPoints.push(new Localidade({id: 65, nome: 'Igreja Matriz', surrender: true}));
+
+    // const model = new March({
+    //     linha: new Linha({
+    //         id: 5,
+    //         prefixo: '301',
+    //         nome: 'Jd Vitoria x Centro',
+    //         circular: false,
+    //         origem: interestPoints[0],
+    //         destino: interestPoints[1],
+    //         extensao_ida: 23.22,
+    //         extensao_volta: 21.10,
+    //         metrics: {
+    //             acesso_origem_minutos: 20,
+    //             acesso_destino_minutos: 25,
+    //             recolhe_origem_minutos: 18,
+    //             recolhe_destino_minutos: 16,
+    //             acesso_origem_km: 4.22,
+    //             acesso_destino_km: 5,
+    //             recolhe_origem_km: 4.63,
+    //             recolhe_destino_km: 3.36,
+    //         },
+    //         refs: {origem:[{local: interestPoints[2], delta: 20}], destino:[{local: interestPoints[3], delta: 35}]}
+    //     })
+    // });
+    // model.linha.param[4].demanda_ida = 450;
+    // model.linha.param[4].demanda_volta = 85;
+    // model.linha.param[5].demanda_ida = 520;
+    // model.linha.param[5].demanda_volta = 122;
+    // const project = new MarchUI({
+    //     container: document.getElementById('march_container'),
+    //     settingsContainer: document.getElementById('marchSettings_container'),
+    //     project: model,
+    //     // initialView: 240,
+    //     initialView: '05:00'
+    //     // rulerUnit: '2px',
+    //     // rulerMediumUnit: 120,
+    // });
     {% endblock %}
 </script>
