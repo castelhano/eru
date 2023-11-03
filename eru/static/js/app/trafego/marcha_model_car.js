@@ -1,5 +1,6 @@
 import { metrics as $, min2Range, defaultParam } from './marcha_metrics.js';
-import { Route } from './marcha_model_trip.js';
+import { Route } from './marcha_model_route.js';
+import { Trip } from './marcha_model_trip.js';
 
 class Car{
     constructor(options){
