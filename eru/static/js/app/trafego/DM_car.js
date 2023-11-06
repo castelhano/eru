@@ -1,6 +1,6 @@
-import { metrics as $, min2Range, defaultParam } from './marcha_metrics.js';
-import { Route } from './marcha_model_route.js';
-import { Trip } from './marcha_model_trip.js';
+import { metrics as $, min2Range, defaultParam } from './DM_metrics.js';
+import { Route } from './DM_route.js';
+import { Trip } from './DM_trip.js';
 
 class Car{
     constructor(options){
@@ -9,14 +9,14 @@ class Car{
         this.escalas = options?.escalas || []; // Armazena as tabelas (escalas) para o carro
         if(options.initialize != false && this.viagens.length == 0){ // Por padrao insere primeira viagem no carro
             this.addTrip({
-                route: options.route,
+                linha: options.linha,
                 startAt: options.startAt,
                 param: options.param,
             })
         }
     }
     addTrip(options){ // Adiciona viagem, se omitido options insere apos ultima viagem
-        let route = options?.route || new Route({});
+        let route = options?.linha || new Route({});
         let startAt = options?.startAt || null;
         let param = options?.param || defaultParam();
         let opt = {}; // Dados da viagem
@@ -62,7 +62,7 @@ class Car{
             }
         }
         let v = new Trip(opt);
-        if(startAt && !this.__viagemIsValid(v)){ // Se definido startAt e viagem entra em conflito com outras viagens, cancela operacao
+        if(startAt && !this.__tripIsValid(v)){ // Se definido startAt e viagem entra em conflito com outras viagens, cancela operacao
             appNotify('warning','jsMarch: Conflito com <b>outras viagens</b>');
             return false;
         }
@@ -70,55 +70,55 @@ class Car{
         this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
         return v;
     }
-    addInterv(trip_index){ // Adiciona viagem do tipo intervalo entre duas viagens
+    addInterv(tripIndex){ // Adiciona viagem do tipo intervalo entre duas viagens
         // Necessario ter viagem valida (produtiva) antes e depois do intervalo, e mais de um minuto entre as viagens
-        if(trip_index == this.viagens.length - 1 || [$.INTERVALO, $.RECOLHE].includes(this.viagens[trip_index].tipo) || [$.INTERVALO, $.ACESSO].includes(this.viagens[trip_index + 1].tipo) || this.viagens[trip_index + 1].inicio <= this.viagens[trip_index].fim + 1){return false}
-        let current = this.viagens[trip_index];
-        let next = this.viagens[trip_index + 1];
+        if(tripIndex == this.viagens.length - 1 || [$.INTERVALO, $.RECOLHE].includes(this.viagens[tripIndex].tipo) || [$.INTERVALO, $.ACESSO].includes(this.viagens[tripIndex + 1].tipo) || this.viagens[tripIndex + 1].inicio <= this.viagens[tripIndex].fim + 1){return false}
+        let current = this.viagens[tripIndex];
+        let next = this.viagens[tripIndex + 1];
         let v = new Trip({inicio: current.fim + 1, fim: next.inicio - 1, tipo: $.INTERVALO, sentido: current.sentido})
         this.viagens.push(v);
         this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
         return v;
     }
-    addAccess(trip_index, route){
+    addAccess(tripIndex, route){
         // Acesso somente inserido se viagem for produtiva
-        if([$.INTERVALO, $.ACESSO, $.RECOLHE].includes(this.viagens[trip_index].tipo)){return false}
-        let sentidoAccess = this.viagens[trip_index].sentido == $.IDA ? 'acesso_origem_minutos' : 'acesso_destino_minutos';
+        if([$.INTERVALO, $.ACESSO, $.RECOLHE].includes(this.viagens[tripIndex].tipo)){return false}
+        let sentidoAccess = this.viagens[tripIndex].sentido == $.IDA ? 'acesso_origem_minutos' : 'acesso_destino_minutos';
         let accessMin = route[sentidoAccess];
         let v = new Trip({
-            inicio: this.viagens[trip_index].inicio - accessMin - 1, 
-            fim: this.viagens[trip_index].inicio - 1, 
-            tipo: $.ACESSO, sentido: this.viagens[trip_index].sentido, 
+            inicio: this.viagens[tripIndex].inicio - accessMin - 1, 
+            fim: this.viagens[tripIndex].inicio - 1, 
+            tipo: $.ACESSO, sentido: this.viagens[tripIndex].sentido, 
             origem: route.garagem.id,
-            destino: this.viagens[trip_index].sentido == $.IDA ? route.origem.id : route.destino.id
+            destino: this.viagens[tripIndex].sentido == $.IDA ? route.origem.id : route.destino.id
         })
-        if(this.__viagemIsValid(v)){
+        if(this.__tripIsValid(v)){
             this.viagens.push(v);
             this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
             return v;
         }
         return false;
     }
-    addRecall(trip_index, route){
+    addRecall(tripIndex, route){
         // Recolhe somente inserido se viagem for produtiva ou tiver sido encerrada
-        if([$.INTERVALO, $.ACESSO, $.RECOLHE].includes(this.viagens[trip_index].tipo) || this.viagens[trip_index].encerrar){return false}
-        let sentidoRecall = this.viagens[trip_index].sentido == $.IDA ? 'recolhe_origem_minutos' : 'recolhe_destino_minutos';
+        if([$.INTERVALO, $.ACESSO, $.RECOLHE].includes(this.viagens[tripIndex].tipo) || this.viagens[tripIndex].encerrar){return false}
+        let sentidoRecall = this.viagens[tripIndex].sentido == $.IDA ? 'recolhe_origem_minutos' : 'recolhe_destino_minutos';
         let recallMin = route[sentidoRecall];
         let v = new Trip({
-            inicio: this.viagens[trip_index].fim + 1, 
-            fim: this.viagens[trip_index].fim + recallMin + 1, 
-            tipo: RECOLHE, sentido: this.viagens[trip_index].sentido,
-            origem: this.viagens[trip_index].sentido == IDA ? route.origem.id : route.destino.id,
+            inicio: this.viagens[tripIndex].fim + 1, 
+            fim: this.viagens[tripIndex].fim + recallMin + 1, 
+            tipo: $.RECOLHE, sentido: this.viagens[tripIndex].sentido,
+            origem: this.viagens[tripIndex].sentido == $.IDA ? route.origem.id : route.destino.id,
             destino: route.garagem.id
         })
-        if(this.__viagemIsValid(v)){
+        if(this.__tripIsValid(v)){
             this.viagens.push(v);
             this.viagens.sort((a, b) => a.inicio > b.inicio ? 1 : -1);
             return v;
         }
         return false;
     }
-    __viagemIsValid(viagem){ // Valida se viagem pode ser inserida no carro sem gerar conflito com outras viagens
+    __tripIsValid(viagem){ // Valida se viagem pode ser inserida no carro sem gerar conflito com outras viagens
         let conflict = false;
         let i = 0;
         while(!conflict && i < this.viagens.length){
@@ -137,66 +137,66 @@ class Car{
             this.escalas.push(options)
             this.escalas.sort((a, b) => a.inicio > b.inicio ? 1 : -1); // Reordena escalas pelo inicio
             let indice = this.escalas.indexOf(options);
-            if(indice > 0 && (![RECOLHE, INTERVALO].includes(this.viagens[this.escalas[indice].fim].tipo) || !this.viagens[this.escalas[indice].fim].encerrar)){
+            if(indice > 0 && (![$.RECOLHE, $.INTERVALO].includes(this.viagens[this.escalas[indice].fim].tipo) || !this.viagens[this.escalas[indice].fim].encerrar)){
                 this.escalas[indice].deltaStart = this.escalas[indice - 1].deltaEnd;
             }
         }
         return this.escalas.indexOf(options);
     }
-    updateSchedule(escala_indice, options, blockStartIndex, blockEndIndex){
+    updateSchedule(scheduleIndex, options, blockStartIndex, blockEndIndex){
         // Aborta operacao caso o novo fim informado seja menor que o inicio da escala, ou se o novo fim ser igual ao atual fim
-        if(this.escalas[escala_indice].inicio > options.fim || (this.escalas[escala_indice].fim == options.fim && this.escalas[escala_indice].deltaStart == options.deltaStart && this.escalas[escala_indice].deltaEnd == options.deltaEnd)){return false}
+        if(this.escalas[scheduleIndex].inicio > options.fim || (this.escalas[scheduleIndex].fim == options.fim && this.escalas[scheduleIndex].deltaStart == options.deltaStart && this.escalas[scheduleIndex].deltaEnd == options.deltaEnd)){return false}
         for(let key in options){
-            this.escalas[escala_indice][key] = options[key]; // Atualiza os valores da escala
+            this.escalas[scheduleIndex][key] = options[key]; // Atualiza os valores da escala
         }
         // Se existir escala depois da editada, verifica se ser necessario ajustar posteriores
-        if(this.escalas.length > escala_indice + 1 && options.fim != undefined && this.escalas[escala_indice + 1].inicio <= blockEndIndex){
-            if(this.escalas[escala_indice].fim == this.escalas[escala_indice + 1].fim){ // Novo final ocupa todo espaco da proxima escala, apaga a proxima
-                this.escalas.splice(escala_indice + 1, 1)
+        if(this.escalas.length > scheduleIndex + 1 && options.fim != undefined && this.escalas[scheduleIndex + 1].inicio <= blockEndIndex){
+            if(this.escalas[scheduleIndex].fim == this.escalas[scheduleIndex + 1].fim){ // Novo final ocupa todo espaco da proxima escala, apaga a proxima
+                this.escalas.splice(scheduleIndex + 1, 1)
             }
-            else if(this.escalas[escala_indice].fim > this.escalas[escala_indice + 1].fim){ // Se novo final ocupe mais que o final da proxima viagem, apaga toda as demais
-                this.escalas.splice(escala_indice + 1, this.escalas.length - 1 - escala_indice)
+            else if(this.escalas[scheduleIndex].fim > this.escalas[scheduleIndex + 1].fim){ // Se novo final ocupe mais que o final da proxima viagem, apaga toda as demais
+                this.escalas.splice(scheduleIndex + 1, this.escalas.length - 1 - scheduleIndex)
             }
             else{
-                if(!this.viagens[this.escalas[escala_indice].fim].tipo == RECOLHE || !this.viagens[this.escalas[escala_indice].encerrar]){
-                    this.escalas[escala_indice + 1].inicio = Math.max(blockStartIndex, this.escalas[escala_indice].fim + 1);
-                    this.escalas[escala_indice + 1].deltaStart = this.escalas[escala_indice].deltaEnd;
+                if(!this.viagens[this.escalas[scheduleIndex].fim].tipo == $.RECOLHE || !this.viagens[this.escalas[scheduleIndex].encerrar]){
+                    this.escalas[scheduleIndex + 1].inicio = Math.max(blockStartIndex, this.escalas[scheduleIndex].fim + 1);
+                    this.escalas[scheduleIndex + 1].deltaStart = this.escalas[scheduleIndex].deltaEnd;
                 }
             }
         }
         return true;
     }
-    deleteSchedule(escala_indice){
-        this.escalas.splice(escala_indice, 1);
+    deleteSchedule(scheduleIndex){
+        this.escalas.splice(scheduleIndex, 1);
         return true;
     }
-    getCarroSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou viagem.encerrar
+    getCarSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou viagem.encerrar
         let blocks = [];
         let block = {inicio: this.viagens[0].inicio, inicioIndex: 0, fimIndex: 0, size:0, spots: []};
         let origemRefs = route.getSurrfimerRefs(IDA);
         let destinoRefs = route.getSurrfimerRefs(VOLTA);
         for(let i = 0; i < this.viagens.length; i++){
             // Adiciona spot de referencia do bloco
-            if(this.viagens[i].sentido == IDA && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO].includes(this.viagens[i].tipo)){
+            if(this.viagens[i].sentido == $.IDA && [$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO].includes(this.viagens[i].tipo)){
                 for(let j = 0; j < origemRefs.length; j++){
                     let time = this.viagens[i].inicio + origemRefs[j].delta;
-                    block.spots.push({locale: origemRefs[j].local, time: time, tipo: 'reference', viagemIndex: i, sentido: IDA, delta: origemRefs[j].delta})
+                    block.spots.push({locale: origemRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: IDA, delta: origemRefs[j].delta})
                 }
             }
-            else if(this.viagens[i].sentido == VOLTA && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO].includes(this.viagens[i].tipo)){
+            else if(this.viagens[i].sentido == $.VOLTA && [$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO].includes(this.viagens[i].tipo)){
                 for(let j = 0; j < destinoRefs.length; j++){
                     let time = this.viagens[i].inicio + destinoRefs[j].delta;
-                    block.spots.push({locale: destinoRefs[j].local, time: time, tipo: 'reference', viagemIndex: i, sentido: VOLTA, delta: destinoRefs[j].delta})
+                    block.spots.push({locale: destinoRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: VOLTA, delta: destinoRefs[j].delta})
                 }
             }
             // Adiciona spots de viagem do bloco
-            if(![ACESSO, INTERVALO].includes(this.viagens[i].tipo)){
+            if(![$.ACESSO, $.INTERVALO].includes(this.viagens[i].tipo)){
                 let time = this.viagens[i].fim + (this.viagens[i].encerrar ? 0 : this.getInterv(i));
-                if(this.viagens[i].sentido == IDA){block.spots.push({locale: route.destino, time: time, tipo: 'viagemEnd', viagemIndex: i, sentido: this.viagens[i].sentido, delta: 0})}
-                else if(this.viagens[i].sentido == VOLTA){block.spots.push({locale: route.origem, time: time, tipo: 'viagemEnd', viagemIndex: i})}
+                if(this.viagens[i].sentido == $.IDA){block.spots.push({locale: route.destino, time: time, tipo: 'viagemEnd', tripIndex: i, sentido: this.viagens[i].sentido, delta: 0})}
+                else if(this.viagens[i].sentido == $.VOLTA){block.spots.push({locale: route.origem, time: time, tipo: 'viagemEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
-            if(this.viagens[i].encerrar || this.viagens[i].tipo == RECOLHE || this.viagens.length - 1 == i){
+            if(this.viagens[i].encerrar || this.viagens[i].tipo == $.RECOLHE || this.viagens.length - 1 == i){
                 block.fimIndex = i;
                 block.size += this.viagens[i].getCycle();
                 blocks.push(Object.assign({}, this.__blockAddEmpty(block)));
@@ -234,25 +234,25 @@ class Car{
     }
     cleanSchedule(indice=null){ // Limpa escala, se nao informado indice limpa todas as escalas
     }
-    getScheduleJourney(escala_indice, allMetrics=false){
-        let inicio = this.viagens[this.escalas[escala_indice].inicio].inicio;
-        let fim = this.viagens[this.escalas[escala_indice].fim].fim;
-        if(this.escalas[escala_indice].deltaStart > 0){
-            inicio = this.viagens[this.escalas[escala_indice - 1].fim].inicio + this.escalas[escala_indice].deltaStart;
+    getScheduleJourney(scheduleIndex, allMetrics=false){
+        let inicio = this.viagens[this.escalas[scheduleIndex].inicio].inicio;
+        let fim = this.viagens[this.escalas[scheduleIndex].fim].fim;
+        if(this.escalas[scheduleIndex].deltaStart > 0){
+            inicio = this.viagens[this.escalas[scheduleIndex - 1].fim].inicio + this.escalas[scheduleIndex].deltaStart;
         }
-        if(this.escalas[escala_indice].deltaEnd > 0){
-            fim = this.viagens[this.escalas[escala_indice].fim].inicio + this.escalas[escala_indice].deltaEnd;
+        if(this.escalas[scheduleIndex].deltaEnd > 0){
+            fim = this.viagens[this.escalas[scheduleIndex].fim].inicio + this.escalas[scheduleIndex].deltaEnd;
         }
         else{
-            fim += this.getInterv(this.escalas[escala_indice].fim);
+            fim += this.getInterv(this.escalas[scheduleIndex].fim);
         }
         return allMetrics ? [fim - inicio, inicio, fim] : fim - inicio;
     }
     removeTrip(indice, cascade=true, count=1){ // Remove a viagem com indice informado e todas as subsequentes (se cascade = true)
-        if(this.viagens.length == 1 || indice == 0 && cascade){return false} // Carro precisa de pelo menos uma viagem
+        if(this.viagens.length == 1 || indice == 0 && cascade){return false} // Car precisa de pelo menos uma viagem
         let removed = [];
-        let before = indice > 0 && [ACESSO, INTERVALO].includes(this.viagens[indice - 1].tipo) ? true : false;
-        let after = indice < this.viagens.length - 1 && [RECOLHE, INTERVALO].includes(this.viagens[indice + 1].tipo) ? true : false;
+        let before = indice > 0 && [$.ACESSO, $.INTERVALO].includes(this.viagens[indice - 1].tipo) ? true : false;
+        let after = indice < this.viagens.length - 1 && [$.RECOLHE, $.INTERVALO].includes(this.viagens[indice + 1].tipo) ? true : false;
         if(cascade){
             let count = (this.viagens.length - indice) + (before ? 1 : 0);
             if(this.viagens.length <= count){return false} // Valida se vai sobrar pelo menos uma viagem no carro
@@ -264,20 +264,20 @@ class Car{
         }
         return [removed, before, after];
     }
-    switchWay(trip_index, cascade=true){ // Altera o sentido da viagem, se cascade altera tbm das seguintes
-        this.viagens[trip_index].sentido = this.viagens[trip_index].sentido == IDA ? VOLTA : IDA;
+    switchWay(tripIndex, cascade=true){ // Altera o sentido da viagem, se cascade altera tbm das seguintes
+        this.viagens[tripIndex].sentido = this.viagens[tripIndex].sentido == $.IDA ? $.VOLTA : $.IDA;
         if(cascade){
-            for(let i = trip_index + 1; i < this.viagens.length; i++){
-                this.viagens[i].sentido = this.viagens[i].sentido == IDA ? VOLTA : IDA;
+            for(let i = tripIndex + 1; i < this.viagens.length; i++){
+                this.viagens[i].sentido = this.viagens[i].sentido == $.IDA ? $.VOLTA : $.IDA;
             }
         }
         return true;
     }
-    viagemShut(trip_index){ // Encerra (ou cancela encerramento) viagem informada
-        if(this.viagens[trip_index].encerrar){this.viagens[trip_index].encerrar = false; return true;} // Para cancelar encerramnto nao existe validacao
+    viagemShut(tripIndex){ // Encerra (ou cancela encerramento) viagem informada
+        if(this.viagens[tripIndex].encerrar){this.viagens[tripIndex].encerrar = false; return true;} // Para cancelar encerramnto nao existe validacao
         // Retorna false se viagem nao for produtiva e/ou se viagem posterior nao for produtiva ou acesso
-        if([ACESSO, RECOLHE, INTERVALO].includes(this.viagens[trip_index].tipo) || (trip_index < this.viagens.length - 1 &&  [RECOLHE, INTERVALO].includes(this.viagens[trip_index + 1].tipo))){return false}
-        this.viagens[trip_index].encerrar = true;
+        if([$.ACESSO, $.RECOLHE, $.INTERVALO].includes(this.viagens[tripIndex].tipo) || (tripIndex < this.viagens.length - 1 &&  [$.RECOLHE, $.INTERVALO].includes(this.viagens[tripIndex + 1].tipo))){return false}
+        this.viagens[tripIndex].encerrar = true;
         return true;
     }
     plus(indice, cascade=true){ // Aumenta um minuto no final da viagem e no inicio e fim das viagens subsequentes (se cascade=true)
@@ -322,35 +322,35 @@ class Car{
     }
     firstTrip(){ // Retorna a primeira viagem produtiva do carro
         for(let i = 0; i < this.viagens.length; i++){
-            if(![ACESSO, RECOLHE, INTERVALO, RESERVADO].includes(this.viagens[i].tipo)){return this.viagens[i]}
+            if(![$.ACESSO, $.RECOLHE, $.INTERVALO, $.RESERVADO].includes(this.viagens[i].tipo)){return this.viagens[i]}
         }
         return false;
     }
     lastTrip(){ // Retorna a ultima viagem produtiva do carro
         for(let i = this.viagens.length - 1; i >= 0; i--){
-            if(![ACESSO, RECOLHE, INTERVALO, RESERVADO].includes(this.viagens[i].tipo)){return this.viagens[i]}
+            if(![$.ACESSO, $.RECOLHE, $.INTERVALO, $.RESERVADO].includes(this.viagens[i].tipo)){return this.viagens[i]}
         }
         return false;
     }
     countViagens(){ // Retorna a quantidade de viagens do carro (viagens produtivas), ignora acessos, recolhidas e intervalos
         let count = 0;
         for(let i = 0; i < this.viagens.length; i++){
-            if([PRODUTIVA, EXPRESSO, SEMIEXPRESSO, RESERVADO].includes(this.viagens[i].tipo)){count++}
+            if([$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO, $.RESERVADO].includes(this.viagens[i].tipo)){count++}
         }
         return count;
     }
-    getInterv(viagemIndex){ // Retorna o intervalo entre a viagem informada e a proxima (se for produtiva)
-        if(viagemIndex == this.viagens.length - 1){return 0}
+    getInterv(tripIndex){ // Retorna o intervalo entre a viagem informada e a proxima (se for produtiva)
+        if(tripIndex == this.viagens.length - 1){return 0}
         // Se viagem atual NAO for recolhe e proxima viagem for produtiva retorna intervalo entre viagens
-        if(![RECOLHE,INTERVALO].includes(this.viagens[viagemIndex].tipo) && !this.viagens[viagemIndex].encerrar && [PRODUTIVA, EXPRESSO, SEMIEXPRESSO, RECOLHE].includes(this.viagens[viagemIndex + 1].tipo)){
-            return this.viagens[viagemIndex + 1].inicio - this.viagens[viagemIndex].fim;
+        if(![$.RECOLHE, $.INTERVALO].includes(this.viagens[tripIndex].tipo) && !this.viagens[tripIndex].encerrar && [$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO, $.RECOLHE].includes(this.viagens[tripIndex + 1].tipo)){
+            return this.viagens[tripIndex + 1].inicio - this.viagens[tripIndex].fim;
         }
         return 0;
     }
     getJourney(gaps=true){ // Retorna jornada total do carro
         let sum = this.getIntervs(true, false); // Retorna soma dos intervalos
         for(let i = 0; i < this.viagens.length;i++){
-            if(this.viagens[i].tipo != INTERVALO){
+            if(this.viagens[i].tipo != $.INTERVALO){
                 sum += this.viagens[i].getCycle();
             }
         }
@@ -359,9 +359,11 @@ class Car{
     getIntervs(gaps=true, intervs=true){ // Retorna total de intervalos do carro
         let sum = 0;
         for(let i = 0; i < this.viagens.length; i++){
-            if(intervs && this.viagens[i].tipo == INTERVALO){sum += this.viagens[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
+            if(intervs && this.viagens[i].tipo == $.INTERVALO){sum += this.viagens[i].getCycle() + 2} // Soma 'viagens' do tipo INTERVALO, soma 2 para considerar os gaps antes e depois do intervalo
             else if(gaps){sum += this.getInterv(i)} // Se gaps soma os intervalos entre viagens
         }
         return sum;
     }
 }
+
+export { Car }

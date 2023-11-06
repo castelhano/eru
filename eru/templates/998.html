@@ -9,11 +9,42 @@
 
 {% block add_script_src %}
 <script type="module">
-    import { metrics as $ } from '{% static 'js/app/trafego/marcha_metrics.js' %}';
-    import { jsMarcha } from '{% static 'js/app/trafego/marcha_model.js' %}';
-    import { jsMarchaUI } from '{% static 'js/app/trafego/marchaUI.js' %}';
-    const model = new jsMarcha({})
-    const ui = new jsMarchaUI({})
+    import { metrics as $ } from '{% static 'js/app/trafego/DM_metrics.js' %}';
+    import { jsGaitDiagram } from '{% static 'js/app/trafego/DM_main.js' %}';
+    import { Route } from '{% static 'js/app/trafego/DM_route.js' %}';
+    import { Locale } from '{% static 'js/app/trafego/DM_locale.js' %}';
+    import { jsGaitDiagramUI } from '{% static 'js/app/trafego/UI_main.js' %}';
+    
+    const model = new jsGaitDiagram({
+        linha: new Route({
+            id: 5,
+            prefixo: '301',
+            nome: 'Jd Vitoria x Centro',
+            circular: true,
+            origem: new Locale({id: 12, nome: 'Jd Vitoria', troca_turno: true}),
+            destino: new Locale({id: 22, nome: 'Peg Lev', troca_turno: true}),
+            extensao_ida: 23.22,
+            extensao_volta: 21.10,
+            acesso_origem_minutos: 20,
+            acesso_destino_minutos: 25,
+            recolhe_origem_minutos: 18,
+            recolhe_destino_minutos: 16,
+            acesso_origem_km: 4.22,
+            acesso_destino_km: 5,
+            recolhe_origem_km: 4.63,
+            recolhe_destino_km: 3.36,
+            refs: {
+                origem:[{local: new Locale({id: 35, nome: 'Hosp Cancer', troca_turno: true}), delta: 20}],
+                destino:[{local: new Locale({id: 19, nome: 'Shop Pantanal', troca_turno: false}), delta: 35}]
+            }
+        })
+    })
+    const ui = new jsGaitDiagramUI({
+        project: model,
+        settingsContainer: document.getElementById('marchSettings_container'),
+    })
+    window.model = model;  // #DEV: Torna modelo disponivel no console.. comentar essa linha em producao
+    window.ui = ui;        // #DEV: Torna ui disponivel no console.. comentar essa linha em producao
 </script>
 {% endblock %}
 
