@@ -8,8 +8,7 @@ function __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (
     appKeyMap.bind({group: 'March_general', key: '2', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exibe Escalas', desc: 'Altera visualização para Escalas', run: ()=>{this.switchStage(2)}})
     appKeyMap.bind({group: 'March_general', key: '3', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exibe Resumo', desc: 'Altera visualização para resumo', run: ()=>{this.switchStage(3)}})
     appKeyMap.bind({group: 'March_general', key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
-        this.__saveLocal();
-        appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')
+        appNotify('warning', '<i class="bi bi-check2-square me-2"></i> Em desenvolvimento....')
     }})
     appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
         this.projects[this.projectIndex].reset();
@@ -64,7 +63,6 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
     appKeyMap.bind({group: 'March_stage1', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: (ev)=>{
         if(!this.tripFocus() || this.__gridIsBlock()){return false}
         ev.preventDefault();
-        this.__clearCarDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
         if(this.projects[this.projectIndex].carros.length > this.carIndex + 1){
             let inicio = this.tripFocus().inicio;
             this.carLabels[this.carIndex].style.color = 'inherit';
@@ -85,12 +83,12 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
             }
             this.__cursorMove();
             this.__updateTripDisplay();
+            this.__updateCarDisplay();
         }
     }})
     appKeyMap.bind({group: 'March_stage1', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: (ev) => {
         if(!this.tripFocus() || this.__gridIsBlock()){return false}
         ev.preventDefault();
-        this.__clearCarDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
         if(this.carIndex > 0){
             let inicio = this.tripFocus().inicio;
             this.carLabels[this.carIndex].style.color = 'inherit';
@@ -112,6 +110,7 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
                 }
                 this.__cursorMove();
                 this.__updateTripDisplay();
+                this.__updateCarDisplay();
             }
         }})
         appKeyMap.bind({group: 'March_stage1', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
@@ -283,7 +282,6 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
         else{this.removeTrip()} 
     }})
     appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legfima viagens', desc: 'Exibe legfima dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
-    appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateCarDisplay()}})
     appKeyMap.bind({group: 'March_stage1', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: (ev)=>{ev.preventDefault();this.__showRouteMetrics()}})
     appKeyMap.bind({group: 'March_stage1', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: (ev)=>{ev.preventDefault();this.__generate()}})
     appKeyMap.bind({group: 'March_stage1', key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
@@ -302,7 +300,7 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         ev.preventDefault();
         if(this.scheduleGrid[this.scheduleFocus[0]].length - 1 > this.scheduleFocus[1]){
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
             this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
             this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] + 1, this.scheduleFocus[2]];
         }
@@ -311,7 +309,7 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         ev.preventDefault();
         if(this.scheduleFocus[1] > 0){
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
             this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
             this.scheduleFocus = [this.scheduleFocus[0], this.scheduleFocus[1] - 1, this.scheduleFocus[2]];
         }
@@ -320,7 +318,7 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         ev.preventDefault();
         if(this.scheduleGrid[this.scheduleFocus[0] + 1]){
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
             this.scheduleGrid[this.scheduleFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
             this.scheduleFocus = [this.scheduleFocus[0] + 1, 0 , 0];
         }
@@ -329,7 +327,7 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         ev.preventDefault();
         if(this.scheduleFocus[0] > 0){
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
             this.scheduleGrid[this.scheduleFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
             this.scheduleFocus = [this.scheduleFocus[0] - 1, 0 , 0];
         }
@@ -358,16 +356,16 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
     appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
         ev.preventDefault();
         if(this.__gridIsBlock() || this.projects[this.projectIndex].carros.length == 0){return false}
-        this.projects[this.projectIndex].autoGenerateEscalas();
+        this.projects[this.projectIndex].autoGenerateSchedules();
         this.scheduleFocus = [0, 0, 0]; // Seleciona primeira viagem do primeiro carro
         for(let i = 0; i < this.projects[this.projectIndex].carros.length; i++){
-            this.__updateCarEscalas(i, this.projects[this.projectIndex].carros[i].getCarEscalasBlock(this.projects[this.projectIndex].linha))
+            this.__updateCarSchedules(i, this.projects[this.projectIndex].carros[i].getCarSchedulesBlock(this.projects[this.projectIndex].linha))
         }
-        this.__updateEscalaArrows();
+        this.__updateScheduleArrows();
     }})
     appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
         ev.preventDefault();
-        if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala'){return false}
+        if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
         this.gridLocked = true;
         let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';modal.style.position = 'relative';
         modal.addEventListener('close', ()=>{modal.remove(); this.gridLocked = false;})
@@ -389,8 +387,8 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         modal.showModal();
     }})
     appKeyMap.bind({group: 'March_stage2', key: 'delete', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Apagar Escala', desc: 'Exclui a escala em foco', run: ()=>{
-        if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptyEscala'){return false}
-        let r = this.projects[this.projectIndex].deleteEscala(this.scheduleFocus[0], this.scheduleFocus[1]);
+        if(this.__gridIsBlock() || !this.scheduleFocus || this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].dataset.type == 'emptySchedule'){return false}
+        let r = this.projects[this.projectIndex].deleteSchedule(this.scheduleFocus[0], this.scheduleFocus[1]);
         if(r){
             let carro_index = this.scheduleFocus[0];
             this.scheduleFocus = null;
@@ -398,18 +396,18 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
                 this.scheduleFocus = [0,0,0];
                 this.scheduleGrid[0][0].style.backgroundColor = '#032830';
             }
-            this.__updateCarEscalas(carro_index, this.projects[this.projectIndex].carros[carro_index].getCarEscalasBlock(this.projects[this.projectIndex].linha));
-            r.forEach(el => {this.__updateCarEscalas(el, this.projects[this.projectIndex].carros[el].getCarEscalasBlock(this.projects[this.projectIndex].linha))});
-            this.__updateEscalaArrows();
+            this.__updateCarSchedules(carro_index, this.projects[this.projectIndex].carros[carro_index].getCarSchedulesBlock(this.projects[this.projectIndex].linha));
+            r.forEach(el => {this.__updateCarSchedules(el, this.projects[this.projectIndex].carros[el].getCarSchedulesBlock(this.projects[this.projectIndex].linha))});
+            this.__updateScheduleArrows();
         }
     }})
     appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
         if(this.__gridIsBlock()){return false}
         for(let i = 0; i < this.projects[this.projectIndex].carros.length; i++){
             this.projects[this.projectIndex].carros[i].escalas = [];
-            this.__updateCarEscalas(i, this.projects[this.projectIndex].carros[i].getCarEscalasBlock(this.projects[this.projectIndex].linha))
+            this.__updateCarSchedules(i, this.projects[this.projectIndex].carros[i].getCarSchedulesBlock(this.projects[this.projectIndex].linha))
         }
-        this.__updateEscalaArrows();
+        this.__updateScheduleArrows();
     }})
 }
 

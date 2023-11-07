@@ -7,6 +7,7 @@ class Car{
         this.classificacao = options?.classificacao || $.CONVENCIONAL; // Tipo de tecnologia a ser usada
         this.viagens = options?.viagens || []; // Armazena as viagens do carro
         this.escalas = options?.escalas || []; // Armazena as tabelas (escalas) para o carro
+        this.labels = options?.labels || ''; // Tags de identificaao do carro separados por comma
         if(options.initialize != false && this.viagens.length == 0){ // Por padrao insere primeira viagem no carro
             this.addTrip({
                 linha: options.linha,
@@ -173,27 +174,27 @@ class Car{
     getCarSchedulesBlock(route){ // Retorna array com blocos de viagens, cada bloco terminando com RECOLHE ou viagem.encerrar
         let blocks = [];
         let block = {inicio: this.viagens[0].inicio, inicioIndex: 0, fimIndex: 0, size:0, spots: []};
-        let origemRefs = route.getSurrfimerRefs(IDA);
-        let destinoRefs = route.getSurrfimerRefs(VOLTA);
+        let origemRefs = route.getSurrenderRefs($.IDA);
+        let destinoRefs = route.getSurrenderRefs($.VOLTA);
         for(let i = 0; i < this.viagens.length; i++){
             // Adiciona spot de referencia do bloco
             if(this.viagens[i].sentido == $.IDA && [$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO].includes(this.viagens[i].tipo)){
                 for(let j = 0; j < origemRefs.length; j++){
                     let time = this.viagens[i].inicio + origemRefs[j].delta;
-                    block.spots.push({locale: origemRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: IDA, delta: origemRefs[j].delta})
+                    block.spots.push({locale: origemRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: $.IDA, delta: origemRefs[j].delta})
                 }
             }
             else if(this.viagens[i].sentido == $.VOLTA && [$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO].includes(this.viagens[i].tipo)){
                 for(let j = 0; j < destinoRefs.length; j++){
                     let time = this.viagens[i].inicio + destinoRefs[j].delta;
-                    block.spots.push({locale: destinoRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: VOLTA, delta: destinoRefs[j].delta})
+                    block.spots.push({locale: destinoRefs[j].local, time: time, tipo: 'reference', tripIndex: i, sentido: $.VOLTA, delta: destinoRefs[j].delta})
                 }
             }
             // Adiciona spots de viagem do bloco
             if(![$.ACESSO, $.INTERVALO].includes(this.viagens[i].tipo)){
                 let time = this.viagens[i].fim + (this.viagens[i].encerrar ? 0 : this.getInterv(i));
-                if(this.viagens[i].sentido == $.IDA){block.spots.push({locale: route.destino, time: time, tipo: 'viagemEnd', tripIndex: i, sentido: this.viagens[i].sentido, delta: 0})}
-                else if(this.viagens[i].sentido == $.VOLTA){block.spots.push({locale: route.origem, time: time, tipo: 'viagemEnd', tripIndex: i})}
+                if(this.viagens[i].sentido == $.IDA){block.spots.push({locale: route.destino, time: time, tipo: 'tripEnd', tripIndex: i, sentido: this.viagens[i].sentido, delta: 0})}
+                else if(this.viagens[i].sentido == $.VOLTA){block.spots.push({locale: route.origem, time: time, tipo: 'tripEnd', tripIndex: i})}
             }
             // Ajusta bloco inicio, fim e dimensao
             if(this.viagens[i].encerrar || this.viagens[i].tipo == $.RECOLHE || this.viagens.length - 1 == i){
@@ -332,7 +333,7 @@ class Car{
         }
         return false;
     }
-    countViagens(){ // Retorna a quantidade de viagens do carro (viagens produtivas), ignora acessos, recolhidas e intervalos
+    countTrips(){ // Retorna a quantidade de viagens do carro (viagens produtivas), ignora acessos, recolhidas e intervalos
         let count = 0;
         for(let i = 0; i < this.viagens.length; i++){
             if([$.PRODUTIVA, $.EXPRESSO, $.SEMIEXPRESSO, $.RESERVADO].includes(this.viagens[i].tipo)){count++}

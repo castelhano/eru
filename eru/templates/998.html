@@ -8,6 +8,10 @@
 {% endblock %}
 
 {% block add_script_src %}
+<script src="{% static 'js/app/marcha_model.js' %}"></script>
+<script src="{% static 'js/app/marcha_ui.js' %}"></script>
+<script src="{% static 'js/elConnector.js' %}"></script>
+<script src="{% static 'js/vendor/chart.min.js' %}"></script>
 <script type="module">
     import { metrics as $ } from '{% static 'js/app/trafego/DM_metrics.js' %}';
     import { jsGaitDiagram } from '{% static 'js/app/trafego/DM_main.js' %}';
@@ -20,7 +24,7 @@
             id: 5,
             prefixo: '301',
             nome: 'Jd Vitoria x Centro',
-            circular: true,
+            circular: false,
             origem: new Locale({id: 12, nome: 'Jd Vitoria', troca_turno: true}),
             destino: new Locale({id: 22, nome: 'Peg Lev', troca_turno: true}),
             extensao_ida: 23.22,
@@ -41,6 +45,7 @@
     })
     const ui = new jsGaitDiagramUI({
         project: model,
+        container: document.getElementById('march_container'),
         settingsContainer: document.getElementById('marchSettings_container'),
     })
     window.model = model;  // #DEV: Torna modelo disponivel no console.. comentar essa linha em producao

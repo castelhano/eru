@@ -48,7 +48,7 @@ class jsGaitDiagram{
         for(let i = 0; i < this.carros.length; i++){
             let curTrips = this.carros[i].viagens.filter((el) => el != viagem && el.sentido == viagem.sentido);
             for(let j = 0; j < curTrips.length; j++){
-                if(!bestMatch && ![INTERVALO, ACESSO, RECOLHE, RESERVADO].includes(curTrips[j].tipo) && curTrips[j].inicio >= viagem.inicio || ![$.INTERVALO, $.ACESSO, $.RECOLHE, $.RESERVADO].includes(curTrips[j].tipo) && curTrips[j].inicio < bestMatch?.inicio && curTrips[j].inicio >= viagem.inicio){
+                if(!bestMatch && ![$.INTERVALO, $.ACESSO, $.RECOLHE, $.RESERVADO].includes(curTrips[j].tipo) && curTrips[j].inicio >= viagem.inicio || ![$.INTERVALO, $.ACESSO, $.RECOLHE, $.RESERVADO].includes(curTrips[j].tipo) && curTrips[j].inicio < bestMatch?.inicio && curTrips[j].inicio >= viagem.inicio){
                     bestMatch = curTrips[j];
                     carIndex = i;
                 }
@@ -134,7 +134,7 @@ class jsGaitDiagram{
         }
         return baseline;
     }
-    getIntervs(carIndex=null){ // Retorna a soma de intervalos do carro informado
+    getIntervs(carIndex=null){ // Retorna a soma de intervalos do carro informado (ou soma total do projeto)
         if(carIndex != null){
             return this.carros[carIndex].getIntervs(this.somar_intervalo_entre_viagens);
         }
@@ -218,7 +218,7 @@ class jsGaitDiagram{
                 let c = this.addCar({linha: this.linha, freq: freq});
                 let j = 0;
                 while(c.viagens[j].inicio < metrics.fim){
-                    c.addTrip(this.linha, false, this.param || this.linha.param);
+                    c.addTrip({linha: this.linha, param: param});
                     j++;
                 }
             }
@@ -322,13 +322,13 @@ class jsGaitDiagram{
             for(let j = 0; j < this.carros[i].viagens.length; j++){
                 let faixa = min2Range(this.carros[i].viagens[j].inicio);
                 if(![$.ACESSO, $.RECOLHE, $.INTERVALO, $.RESERVADO].includes(this.carros[i].viagens[j].tipo)){ // Se for viagem produtiva
-                    if(this.carros[i].viagens[j].sentido == IDA){
+                    if(this.carros[i].viagens[j].sentido == $.IDA){
                         od[faixa].viagens_ida++; // Incrementa contador de viagens da faixa/sentido
-                        od[faixa].oferta_ida += classificacaoLoad[this.carros[i].classificacao]; // Incrementa contator de oferta para faixa/sentido
+                        od[faixa].oferta_ida += $.CAPACIDADE_CARREGAMENTO[this.carros[i].classificacao]; // Incrementa contator de oferta para faixa/sentido
                     }
                     else if(this.carros[i].viagens[j].sentido == $.VOLTA){
                         od[faixa].destinoTrips++; // Incrementa contador de viagens da faixa/sentido
-                        od[faixa].oferta_volta += classificacaoLoad[this.carros[i].classificacao]; // Incrementa contator de oferta para faixa/sentido
+                        od[faixa].oferta_volta += $.CAPACIDADE_CARREGAMENTO[this.carros[i].classificacao]; // Incrementa contator de oferta para faixa/sentido
                     }
                 }
             }

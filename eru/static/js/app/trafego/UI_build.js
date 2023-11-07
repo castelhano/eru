@@ -154,8 +154,18 @@ function __buildFooter(){ // Cria elementos do footer
     let jorneyLabel = document.createElement('small');jorneyLabel.style.position = 'absolute';jorneyLabel.style.bottom = '10px';jorneyLabel.style.left = '455px';jorneyLabel.innerHTML = 'JORNADA';
     this.displayInterv2 = document.createElement('h5');this.displayInterv2.style.position = 'absolute';this.displayInterv2.style.top = '10px';this.displayInterv2.style.left = '530px';this.displayInterv2.innerHTML = '';
     let intervLabel2 = document.createElement('small');intervLabel2.style.position = 'absolute';intervLabel2.style.bottom = '10px';intervLabel2.style.left = '530px';intervLabel2.innerHTML = 'INTERV';
-    
-    
+    this.carDisplayClassification = document.createElement('select');this.carDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.carDisplayClassification.id = 'March_footerCarDisplayClassification';
+    this.carDisplayClassification.style.display = 'none';
+    this.carDisplayClassification.onchange = () => {
+        this.projects[this.projectIndex].carros[this.carIndex].classificacao = this.carDisplayClassification.value;
+        this.carDisplayClassification.blur();
+    }
+    let classOptions = {'CV': 'Convencional', 'PD': 'Padron', 'MC': 'Microonibus', 'AT': 'Articulado', 'BI': 'Biarticulado'};
+    for(let key in classOptions){
+        let opt = document.createElement('option');
+        opt.value = key;opt.innerHTML = classOptions[key];
+        this.carDisplayClassification.appendChild(opt);
+    }
     // ---
     this.footer.appendChild(this.displayStart);
     this.footer.appendChild(this.displayEnd);
@@ -174,6 +184,7 @@ function __buildFooter(){ // Cria elementos do footer
     this.footer.appendChild(jorneyLabel);
     this.footer.appendChild(this.displayInterv2);
     this.footer.appendChild(intervLabel2);
+    this.footer.appendChild(this.carDisplayClassification);   
     this.canvas.after(this.footer);
 }
 

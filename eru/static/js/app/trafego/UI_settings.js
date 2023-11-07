@@ -7,11 +7,10 @@ function __builSettingsUI(){
     }
     this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsShowFreqRule, 'Exibir régua de frequência'));
     
-    this.settingsSumIntervGaps = document.createElement('input');this.settingsSumIntervGaps.id = `March_settingsSumIntervGaps`;this.settingsSumIntervGaps.checked = this.projects[this.projectIndex].sumInterGaps;
+    this.settingsSumIntervGaps = document.createElement('input');this.settingsSumIntervGaps.id = `March_settingsSumIntervGaps`;this.settingsSumIntervGaps.checked = this.projects[this.projectIndex].somar_intervalo_entre_viagens;
     this.settingsSumIntervGaps.onclick = () => {
-        if(this.settingsSumIntervGaps.checked){this.projects[this.projectIndex].sumInterGaps = true;}
-        else{this.projects[this.projectIndex].sumInterGaps = false;}
-        this.__saveUISettings();
+        if(this.settingsSumIntervGaps.checked){this.projects[this.projectIndex].somar_intervalo_entre_viagens = true;}
+        else{this.projects[this.projectIndex].somar_intervalo_entre_viagens = false;}
     }
     this.settingsContainer.appendChild(this.__settingsContainerSwitch(this.settingsSumIntervGaps, 'Somar tempo parado aos intervalos'));
     
@@ -22,10 +21,9 @@ function __builSettingsUI(){
         this.tripOrigemColor = this.settingstripOrigemColor.value;
         for(let i = 0; i < this.projects[this.projectIndex].carros.length; i++){
             for(let j = 0; j < this.projects[this.projectIndex].carros[i].viagens.length;j++){
-                if(this.projects[this.projectIndex].carros[i].viagens[j].sentido == IDA){this.__updateTripStyle(this.projects[this.projectIndex].carros[i].viagens[j], this.carGrid[i][j])}
+                if(this.projects[this.projectIndex].carros[i].viagens[j].sentido == $.IDA){this.__updateTripStyle(this.projects[this.projectIndex].carros[i].viagens[j], this.carGrid[i][j])}
             }
         }
-        this.__saveUISettings();
     }
     this.settingsContainer.appendChild(this.settingstripOrigemColor);
     let origemColorLabel = document.createElement('small');origemColorLabel.innerHTML = `IDA`;origemColorLabel.style.position = 'relative';origemColorLabel.style.top = '-7px';origemColorLabel.style.left = '5px';
@@ -36,10 +34,9 @@ function __builSettingsUI(){
         this.tripDestinoColor = this.settingstripDestinoColor.value;
         for(let i = 0; i < this.projects[this.projectIndex].carros.length; i++){
             for(let j = 0; j < this.projects[this.projectIndex].carros[i].viagens.length;j++){
-                if(this.projects[this.projectIndex].carros[i].viagens[j].sentido == VOLTA){this.__updateTripStyle(this.projects[this.projectIndex].carros[i].viagens[j], this.carGrid[i][j])}
+                if(this.projects[this.projectIndex].carros[i].viagens[j].sentido == $.VOLTA){this.__updateTripStyle(this.projects[this.projectIndex].carros[i].viagens[j], this.carGrid[i][j])}
             }
         }
-        this.__saveUISettings();
     }
     this.settingsContainer.appendChild(this.settingstripDestinoColor);
     let toColorLabel = document.createElement('small');toColorLabel.innerHTML = `VOLTA`;toColorLabel.style.position = 'relative';toColorLabel.style.top = '-7px';toColorLabel.style.left = '5px';
@@ -56,12 +53,11 @@ function __builSettingsUI(){
         this.settingsrulerUnit.classList.remove('is-invalid');
         this.rulerUnit = `${this.settingsrulerUnit.value}px`;
         this.__buildRuler(); // Refaz a regua com novos valores
-        if(this.viagemFocus){ // Se tiver viagem inserida ajusta posicionamento do canvas
+        if(this.tripIndex >= 0){ // Se tiver viagem inserida ajusta posicionamento do canvas
             this.__canvasRebuild(); // Limpa p canvas e refazer todas as viagens com novos parametros
             this.__cursorMove(); // Move o cursor para ajustar view
         }
         this.canvasFit(); // Ajusta posicao do canvas com novas definicoes
-        this.__saveUISettings();
     }
     this.settingsContainer.appendChild(this.settingsrulerUnit);
     this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerUnit, 'Unidade (em px) [ 2 a 6 ]'));
@@ -75,34 +71,9 @@ function __builSettingsUI(){
         this.settingsrulerMediumUnit.classList.remove('is-invalid');
         this.rulerMediumUnit = this.settingsrulerMediumUnit.value;
         this.__buildRuler();
-        this.__saveUISettings();
     }
     this.settingsContainer.appendChild(this.settingsrulerMediumUnit);
     this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsrulerMediumUnit, 'Display de minutos [ 10 a 180 ]'));
-    
-    this.settingsProjectName = document.createElement('input');this.settingsProjectName.placeholder = ' ';this.settingsProjectName.classList = 'flat-input';this.settingsProjectName.id = 'March_settingsProjectName';this.settingsProjectName.value = this.projects[this.projectIndex].nome;
-    this.settingsProjectName.disabled = true;
-    // this.settingsProjectName.onchange = ()=>{this.projects[this.projectIndex].nome = this.settingsProjectName.value;}
-    this.settingsContainer.appendChild(this.settingsProjectName);
-    this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectName, 'Nome Projeto'));
-    
-    this.settingsDayTipo = document.createElement('select');this.settingsDayTipo.classList = 'flat-select';this.settingsDayTipo.id = 'March_settingsDayTipo';
-    this.settingsDayTipo.disabled = true;
-    let dayTypeOpts = {'U': 'Util', 'S': 'Sabado', 'D': 'Domingo', 'E': 'Especial', 'F': 'Ferias'}
-    for(let key in dayTypeOpts){
-        let opt = document.createElement('option');opt.value = key; opt.innerHTML = dayTypeOpts[key];
-        if(this.projects[this.projectIndex].dayType == key){opt.selected = true}
-        this.settingsDayTipo.appendChild(opt);
-    }
-    // this.settingsDayTipo.onchange = ()=>{this.projects[this.projectIndex].dayType = this.settingsDayTipo.value}
-    this.settingsContainer.appendChild(this.settingsDayTipo);
-    this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsDayTipo, 'Dia Tipo'));
-    
-    this.settingsProjectDesc = document.createElement('textarea');this.settingsProjectDesc.placeholder = ' ';this.settingsProjectDesc.classList = 'flat-textarea';this.settingsProjectDesc.id = 'March_settingsProjectDesc';this.settingsProjectDesc.value = this.projects[this.projectIndex].desc;
-    this.settingsProjectDesc.disabled = true;
-    // this.settingsProjectDesc.onchange = ()=>{this.projects[this.projectIndex].desc = this.settingsProjectDesc.value;}
-    this.settingsContainer.appendChild(this.settingsProjectDesc);
-    this.settingsContainer.appendChild(this.__settingsAddCustomLabel(this.settingsProjectDesc, 'Descrição'));
     
     this.settingsUploadProjectControl = document.createElement('button');this.settingsUploadProjectControl.type = 'button';this.settingsUploadProjectControl.classList = 'btn btn-sm btn-dark';this.settingsUploadProjectControl.innerHTML = 'Carregar Arquivo';
     this.settingsUploadProjectControl.onclick = ()=>{this.uploadProject();}

@@ -3,6 +3,7 @@ import { jsGaitDiagram } from "./DM_main.js";
 import { __buildStyles, __build, __buildCursor, __buildRuler, __buildFooter } from "./UI_build.js";
 import { __addGeneralListeners, __addStage1Listeners, __addStage2Listeners } from "./UI_listeners.js";
 import { __builSettingsUI, __settingsAddCustomLabel, __settingsContainerSwitch, __settingsUpdateBaselines, __settingsUpdateFreqSimulate} from "./UI_settings.js";
+import { __showRouteMetrics } from "./UI_routeMetrics.js";
 import { loadStage1 } from "./UI_stage1.js";
 
 class jsGaitDiagramUI{
@@ -108,6 +109,10 @@ class jsGaitDiagramUI{
         
         this.maxCarsVisible = Math.floor((this.sh - parseInt(this.canvasMarginTop) - parseInt(this.rulerHeight) - parseInt(this.footerHeight)) / parseInt(this.carHeight));
         
+        // Ao navegar pelas viagens/carros so atualiza display de carros apos alguns segundos de delay (para evitar processamento desnecessario)
+        this.updateCarDisplayDelay = 300;
+        this.updateCarDisplayTimeout = null;
+        
         // Associando modulos secundarios a instancia principal
         this.__buildCursor = __buildCursor;
         this.__buildRuler = __buildRuler;
@@ -122,6 +127,7 @@ class jsGaitDiagramUI{
         this.__settingsContainerSwitch = __settingsContainerSwitch;
         this.__settingsUpdateBaselines = __settingsUpdateBaselines;
         this.__settingsUpdateFreqSimulate = __settingsUpdateFreqSimulate;
+        this.__showRouteMetrics = __showRouteMetrics;
         
         // Construindo componentes da interface
         __buildStyles();
@@ -165,6 +171,7 @@ class jsGaitDiagramUI{
             this.tripIndex = 0;
             this.__cursorMove();
             this.__updateTripDisplay();
+            this.__updateCarDisplay();
         }
     }
     addTrip(viagem=null, seq=this.carIndex, confirmed=false){
@@ -192,6 +199,7 @@ class jsGaitDiagramUI{
         }
         this.freqGrid[seq].push(vf);
         this.rulerFreq.appendChild(vf);
+        this.__updateCarDisplay();
         return v;
     }
     __modalConfirmationChangeProject(resolve, reject=null){
@@ -275,6 +283,7 @@ class jsGaitDiagramUI{
             this.freqGrid[this.carIndex].push(vf);
             this.rulerFreq.appendChild(vf);
             this.freqGrid[this.carIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.__updateCarDisplay();
         }
     }
     addAccess(carIndex=this.carIndex, tripIndex=this.tripIndex, incrementIndice=true){
@@ -609,7 +618,7 @@ class jsGaitDiagramUI{
             this.carLabels[this.carIndex].style.color = 'var(--bs-link-color)';
             this.__cursorMove();
             this.__updateTripDisplay();
-            this.__clearCarDisplay();
+            this.__updateCarDisplay();
         }
     }
     previousTrip(){ // Move foco para proxima viagem no mesmo sentido (indiferente do carro)
@@ -621,7 +630,7 @@ class jsGaitDiagramUI{
             this.carLabels[this.carIndex].style.color = 'var(--bs-link-color)';
             this.__cursorMove();
             this.__updateTripDisplay();
-            this.__clearCarDisplay();
+            this.__updateCarDisplay();
         }
     }
     __updateTripDisplay(){
@@ -645,31 +654,16 @@ class jsGaitDiagramUI{
         }
     }
     __updateCarDisplay(){
-        if(this.tripFocus() == null){return false;}
-        this.displayTripsCount.innerHTML = this.projects[this.projectIndex].carros[this.carIndex].countViagens();
+        if(this.tripIndex < 0){return false;}
+        clearTimeout(this.updateCarDisplayTimeout);
+        this.updateCarDisplayTimeout = setTimeout(()=>{this.__updateCarDisplayRun()}, this.updateCarDisplayDelay);
+    }
+    __updateCarDisplayRun(){
+        this.displayTripsCount.innerHTML = this.projects[this.projectIndex].carros[this.carIndex].countTrips();
         this.displayJorney.innerHTML = min2Hour(this.projects[this.projectIndex].getJourney(this.carIndex), false);
         this.displayInterv2.innerHTML = min2Hour(this.projects[this.projectIndex].getIntervs(this.carIndex), false);
-        this.carroDisplayClassification = document.createElement('select');this.carroDisplayClassification.style = `position: absolute;left: 600px;top: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.carroDisplayClassification.id = 'March_footerCarDisplayClassification';
-        this.carroDisplayClassification.onchange = () => {this.projects[this.projectIndex].carros[this.carIndex].classification = this.carroDisplayClassification.value;}
-        let classOptions = {'CV': 'Convencional', 'PD': 'Padron', 'MC': 'Microonibus', 'AT': 'Articulado', 'BI': 'Biarticulado'};
-        for(let key in classOptions){
-            let opt = document.createElement('option');
-            opt.value = key;opt.innerHTML = classOptions[key];
-            if(opt.value == this.carFocus().classification){opt.selected = true;}
-            this.carroDisplayClassification.appendChild(opt);
-        }
-        this.footer.appendChild(this.carroDisplayClassification);
-        
-        this.carroDisplaySpecification = document.createElement('select');this.carroDisplaySpecification.style = `position: absolute;left: 600px;bottom: 7px;width: 128px;border: 1px solid var(--bs-border-color);background-color: var(--bs-dark-bg-subtle);`;this.carroDisplaySpecification.id = 'March_footerCarDisplaySpecification';
-        this.carroDisplaySpecification.onchange = () => {this.projects[this.projectIndex].carros[this.carIndex].specification = this.carroDisplaySpecification.value;}
-        let specOptions = {'0': '---', '1': 'Porta LE'};
-        for(let key in specOptions){
-            let opt = document.createElement('option');
-            opt.value = key;opt.innerHTML = specOptions[key];
-            if(opt.value == this.carFocus().specification){opt.selected = true;}
-            this.carroDisplaySpecification.appendChild(opt);
-        }
-        this.footer.appendChild(this.carroDisplaySpecification);
+        this.carDisplayClassification.style.display = 'block';
+        this.carDisplayClassification.value = this.projects[this.projectIndex].carros[this.carIndex].classificacao;
     }
     __clearTripDisplay(){
         this.displayStart.innerHTML = '--:--';
@@ -686,7 +680,6 @@ class jsGaitDiagramUI{
         this.displayInterv2.innerHTML = '';
         try{
             this.carroDisplayClassification.remove();
-            this.carroDisplaySpecification.remove();
         }catch(e){}
     }
     __cursorMove(){ // Movimenta o cursor para carro e viagem em foco, se cursor atingir limites (vertical ou horiontal) move canvas para ajustar voualizacao
@@ -713,9 +706,9 @@ class jsGaitDiagramUI{
             this.canvasMove(x);
         }
         if(this.carIndex < this.initialCarView){ // Verifica se cursor esta atingindo o limite vertical superior, se sim ajusta canvas
-            let y = (this.initialCarView - this.carIndex) * parseInt(this.carHeight);
-            this.initialCarView = this.carIndex;
-            this.canvasMove(0, y);            
+            let y = this.initialCarView - this.carIndex;
+            this.initialCarView -= y;
+            this.canvasMove(0, y);
         }
         else if(this.carIndex > (this.initialCarView + this.maxCarsVisible - 1)){ // Verifica se cursor esta atingindo o limite vertical inferior, se sim ajusta canvas
             let y = this.carIndex - (this.initialCarView + this.maxCarsVisible - 1);
@@ -743,9 +736,9 @@ class jsGaitDiagramUI{
             this.rulerFreq.style.left = this.canvas.style.left;
         }
         if(y != 0){
-            this.canvas.style.top = `calc(${this.carHeight} * ${this.initialCarView} * ${y > 0 ? 1 : -1})`;
+            this.canvas.style.top = `calc(${this.canvas.style.top} + (${this.carHeight} * ${y}))`;
             this.carLabels.forEach((el)=>{ // Move as labels dos carros no eixo y
-                el.style.top = `calc(${el.style.top} + (${this.carHeight} * ${y > 0 ? 1 : -1}))`;
+                el.style.top = `calc(${el.style.top} + (${this.carHeight} * ${y}))`;
             })
         }
     }
@@ -802,194 +795,17 @@ class jsGaitDiagramUI{
         this.patternsDialog = document.createElement('dialog');
         this.patternsDialog.innerHTML = `<h6>Padrão de Viagens<h6>IDA <div id="ida" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripOrigemColor};"></div>
         VOLTA <div id="volta" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background-color: ${this.tripDestinoColor}"></div>
-        $.RESERVADO <div id="reservado" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.RESERVADO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
-        $.EXPRESSO <div id="expresso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.EXPRESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
-        SEMI$.EXPRESSO <div id="semi" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[SEMI$.EXPRESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
-        $.ACESSO <div id="acesso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.ACESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
-        $.RECOLHE <div id="recolhe" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.RECOLHE].replaceAll('COLOR', this.tripOrigemColor)};"></div>
-        $.INTERVALO <div id="refeicao" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.INTERVALO].replaceAll('COLOR', this.tripOrigemColor)};"></div>`;
+        RESERVADO <div id="reservado" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.RESERVADO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
+        EXPRESSO <div id="expresso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.EXPRESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
+        SEMIEXPRESSO <div id="semi" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.SEMIEXPRESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
+        ACESSO <div id="acesso" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.ACESSO].replaceAll('COLOR', this.tripOrigemColor)};"></div>
+        RECOLHE <div id="recolhe" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.RECOLHE].replaceAll('COLOR', this.tripOrigemColor)};"></div>
+        INTERVALO <div id="refeicao" style="margin-bottom:6px;width: 150px;height: 8px;border-radius: 10px;background: ${this.typePattern[$.INTERVALO].replaceAll('COLOR', this.tripOrigemColor)};"></div>`;
         this.patternsDialog.addEventListener("close", (e) => {this.gridLocked = false;this.patternsDialog = null;}); // AO fechar destrava grid
         document.body.appendChild(this.patternsDialog);
         this.patternsDialog.showModal();
     }
-    __showRouteMetrics(){
-        canvasNavActive(false);
-        this.gridLocked = true;
-        let dialog = document.createElement('dialog'); dialog.style.minWidth = '600px';dialog.style.display = 'flex';dialog.style.columnGap = '15px';
-        dialog.addEventListener('close', ()=>{this.gridLocked = false;dialog.remove();})
-        let col1 = document.createElement('div'); col1.style.display = 'inline-block';col1.style.width = '25%';col1.innerHTML = `<h6 class="mb-2">Métricas - <span class="text-purple">${this.projects[this.projectIndex].linha.codigo} ${this.projects[this.projectIndex].linha.nome}</span></h6>`;
-        let col2 = document.createElement('div'); col2.style.display = 'inline-block';col2.style.width = '75%';col2.style.borderLeft = '1px solid var(--bs-secondary-bg)';col2.style.paddingLeft = '15px';col2.innerHTML = '<h6 class="mb-2">Patamares de Operação</h6>'
-        let dialogDismiss = document.createElement('i'); dialogDismiss.classList = 'bi bi-x-lg position-absolute pointer';dialogDismiss.style.top = '8px'; dialogDismiss.style.right = '15px';
-        dialogDismiss.onclick = ()=>{dialog.close()}
-        dialog.appendChild(dialogDismiss);
-        // Adicionado os controles das metricas
-        let linhaCirc = document.createElement('input');linhaCirc.type = 'checkbox';linhaCirc.id = 'March_linhaCircControl';linhaCirc.checked = this.projects[this.projectIndex].linha.circular;
-        linhaCirc.disabled = true;
-        col1.appendChild(this.__settingsContainerSwitch(linhaCirc, 'Linha circular', '10px'));
-        let col11 = document.createElement('div'); col11.style.display = 'inline-block';col11.style.width = '50%';
-        this.settingsOrigemExtension = document.createElement('input');this.settingsOrigemExtension.type = 'number';this.settingsOrigemExtension.classList = 'flat-input';this.settingsOrigemExtension.min = 0;this.settingsOrigemExtension.max = 300;this.settingsOrigemExtension.value = this.projects[this.projectIndex].linha.extensao_ida;this.settingsOrigemExtension.id = 'March_settingsOrigemExtension';this.settingsOrigemExtension.placeholder = ' ';
-        this.settingsOrigemExtension.disabled = true;
-        col11.appendChild(this.settingsOrigemExtension);
-        col11.appendChild(this.__settingsAddCustomLabel(this.settingsOrigemExtension, 'Extensão Ida (km)'));
-        col1.appendChild(col11);
-        
-        let col12 = document.createElement('div'); col12.style.display = 'inline-block';col12.style.width = '50%';
-        this.settingsToExtension = document.createElement('input');this.settingsToExtension.type = 'number';this.settingsToExtension.classList = 'flat-input';this.settingsToExtension.min = 0;this.settingsToExtension.max = 300;this.settingsToExtension.value = this.projects[this.projectIndex].linha.extensao_volta;this.settingsToExtension.id = 'March_settingsToExtension';this.settingsToExtension.placeholder = ' ';
-        this.settingsToExtension.disabled = true;
-        col12.appendChild(this.settingsToExtension);
-        col12.appendChild(this.__settingsAddCustomLabel(this.settingsToExtension, 'Extensão Volta (km)'));
-        col1.appendChild(col12);
-        
-        let col13 = document.createElement('div'); col13.style.display = 'inline-block';col13.style.width = '50%';
-        this.settingsAccessOrigemMin = document.createElement('input');this.settingsAccessOrigemMin.type = 'number';this.settingsAccessOrigemMin.classList = 'flat-input';this.settingsAccessOrigemMin.min = 1;this.settingsAccessOrigemMin.max = 300;this.settingsAccessOrigemMin.value = this.projects[this.projectIndex].linha.acesso_origem_minutos;this.settingsAccessOrigemMin.id = 'March_settingsAccessOrigemMin';this.settingsAccessOrigemMin.placeholder = ' ';
-        this.settingsAccessOrigemMin.disabled = true;
-        col13.appendChild(this.settingsAccessOrigemMin);
-        col13.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemMin, 'Acesso PT1 (min)'));
-        col1.appendChild(col13);
-        
-        let col14 = document.createElement('div'); col14.style.display = 'inline-block';col14.style.width = '50%';
-        this.settingsAccessToMin = document.createElement('input');this.settingsAccessToMin.type = 'number';this.settingsAccessToMin.classList = 'flat-input';this.settingsAccessToMin.min = 1;this.settingsAccessToMin.max = 300;this.settingsAccessToMin.value = this.projects[this.projectIndex].linha.acesso_destino_minutos;this.settingsAccessToMin.id = 'March_settingsAccessToMin';this.settingsAccessToMin.placeholder = ' ';
-        this.settingsAccessToMin.disabled = true;
-        col14.appendChild(this.settingsAccessToMin);
-        col14.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToMin, 'Acesso PT2 (min)'));
-        col1.appendChild(col14);
-        
-        let col15 = document.createElement('div'); col15.style.display = 'inline-block';col15.style.width = '50%';
-        this.settingsRecallOrigemMin = document.createElement('input');this.settingsRecallOrigemMin.type = 'number';this.settingsRecallOrigemMin.classList = 'flat-input';this.settingsRecallOrigemMin.min = 1;this.settingsRecallOrigemMin.max = 300;this.settingsRecallOrigemMin.value = this.projects[this.projectIndex].linha.recolhe_origem_minutos;this.settingsRecallOrigemMin.id = 'March_settingsRecallOrigemMin';this.settingsRecallOrigemMin.placeholder = ' ';
-        this.settingsRecallOrigemMin.disabled = true;
-        col15.appendChild(this.settingsRecallOrigemMin);
-        col15.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemMin, 'Recolhe PT1 (min)'));
-        col1.appendChild(col15);
-        
-        let col16 = document.createElement('div'); col16.style.display = 'inline-block';col16.style.width = '50%';
-        this.settingsRecallToMin = document.createElement('input');this.settingsRecallToMin.type = 'number';this.settingsRecallToMin.classList = 'flat-input';this.settingsRecallToMin.min = 1;this.settingsRecallToMin.max = 300;this.settingsRecallToMin.value = this.projects[this.projectIndex].linha.recolhe_destino_minutos;this.settingsRecallToMin.id = 'March_settingsRecallToMin';this.settingsRecallToMin.placeholder = ' ';
-        this.settingsRecallToMin.disabled = true;
-        col16.appendChild(this.settingsRecallToMin);
-        col16.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToMin, 'Recolhe PT2 (min)'));
-        col1.appendChild(col16);
-        
-        let col17 = document.createElement('div'); col17.style.display = 'inline-block';col17.style.width = '50%';
-        this.settingsAccessOrigemKm = document.createElement('input');this.settingsAccessOrigemKm.type = 'number';this.settingsAccessOrigemKm.classList = 'flat-input';this.settingsAccessOrigemKm.min = 0;this.settingsAccessOrigemKm.max = 300;this.settingsAccessOrigemKm.value = this.projects[this.projectIndex].linha.acesso_origem_km;this.settingsAccessOrigemKm.id = 'March_settingsAccessOrigemKm';this.settingsAccessOrigemKm.placeholder = ' ';
-        this.settingsAccessOrigemKm.disabled = true;
-        col17.appendChild(this.settingsAccessOrigemKm);
-        col17.appendChild(this.__settingsAddCustomLabel(this.settingsAccessOrigemKm, 'Acesso PT1 (km)'));
-        col1.appendChild(col17);
-        
-        let col18 = document.createElement('div'); col18.style.display = 'inline-block';col18.style.width = '50%';
-        this.settingsAccessToKm = document.createElement('input');this.settingsAccessToKm.type = 'number';this.settingsAccessToKm.classList = 'flat-input';this.settingsAccessToKm.min = 0;this.settingsAccessToKm.max = 300;this.settingsAccessToKm.value = this.projects[this.projectIndex].linha.acesso_destino_km;this.settingsAccessToKm.id = 'March_settingsAccessToKm';this.settingsAccessToKm.placeholder = ' ';
-        this.settingsAccessToKm.disabled = true;
-        col18.appendChild(this.settingsAccessToKm);
-        col18.appendChild(this.__settingsAddCustomLabel(this.settingsAccessToKm, 'Acesso PT2 (km)'));
-        col1.appendChild(col18);
-        
-        let col19 = document.createElement('div'); col19.style.display = 'inline-block';col19.style.width = '50%';
-        this.settingsRecallOrigemKm = document.createElement('input');this.settingsRecallOrigemKm.type = 'number';this.settingsRecallOrigemKm.classList = 'flat-input';this.settingsRecallOrigemKm.min = 0;this.settingsRecallOrigemKm.max = 300;this.settingsRecallOrigemKm.value = this.projects[this.projectIndex].linha.recolhe_origem_km;this.settingsRecallOrigemKm.id = 'March_settingsRecallOrigemKm';this.settingsRecallOrigemKm.placeholder = ' ';
-        this.settingsRecallOrigemKm.disabled = true;
-        col19.appendChild(this.settingsRecallOrigemKm);
-        col19.appendChild(this.__settingsAddCustomLabel(this.settingsRecallOrigemKm, 'Recolhe PT1 (km)'));
-        col1.appendChild(col19);
-        
-        let col20 = document.createElement('div'); col20.style.display = 'inline-block';col20.style.width = '50%';
-        this.settingsRecallToKm = document.createElement('input');this.settingsRecallToKm.type = 'number';this.settingsRecallToKm.classList = 'flat-input';this.settingsRecallToKm.min = 0;this.settingsRecallToKm.max = 300;this.settingsRecallToKm.value = this.projects[this.projectIndex].linha.recolhe_destino_km;this.settingsRecallToKm.id = 'March_settingsRecallToKm';this.settingsRecallToKm.placeholder = ' ';
-        this.settingsRecallToKm.disabled = true;
-        col20.appendChild(this.settingsRecallToKm);
-        col20.appendChild(this.__settingsAddCustomLabel(this.settingsRecallToKm, 'Recolhe PT2 (km)'));
-        col1.appendChild(col20);
-        
-        // Adicionando os controles dos patamares
-        let col21 = document.createElement('div'); col21.style.display = 'inline-block';col21.style.width = '12%';
-        this.settingsBaselineStart = document.createElement('input');this.settingsBaselineStart.type = 'number';this.settingsBaselineStart.classList = 'flat-input';this.settingsBaselineStart.min = 0;this.settingsBaselineStart.max = 23;this.settingsBaselineStart.value = 0;this.settingsBaselineStart.id = 'March_settingsBaselineStart';this.settingsBaselineStart.placeholder = ' ';
-        col21.appendChild(this.settingsBaselineStart);
-        col21.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineStart, 'Faixa Inicio'));
-        col2.appendChild(col21);
-        
-        let col22 = document.createElement('div'); col22.style.display = 'inline-block';col22.style.width = '12%';
-        this.settingsBaselineEnd = document.createElement('input');this.settingsBaselineEnd.type = 'number';this.settingsBaselineEnd.classList = 'flat-input';this.settingsBaselineEnd.min = 1;this.settingsBaselineEnd.max = 23;this.settingsBaselineEnd.value = 23;this.settingsBaselineEnd.id = 'March_settingsBaselineEnd';this.settingsBaselineEnd.placeholder = ' ';
-        col22.appendChild(this.settingsBaselineEnd);
-        col22.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineEnd, 'Faixa Fim'));
-        col2.appendChild(col22);
-        
-        let col23 = document.createElement('div'); col23.style.display = 'inline-block';col23.style.width = '12%';
-        this.settingsBaselineOrigemMin = document.createElement('input');this.settingsBaselineOrigemMin.type = 'number';this.settingsBaselineOrigemMin.classList = 'flat-input';this.settingsBaselineOrigemMin.min = 1;this.settingsBaselineOrigemMin.max = 300;this.settingsBaselineOrigemMin.value = $.CICLO_BASE;this.settingsBaselineOrigemMin.id = 'March_settingsBaselineOrigemMin';this.settingsBaselineOrigemMin.placeholder = ' ';
-        this.settingsBaselineOrigemMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col23.appendChild(this.settingsBaselineOrigemMin);
-        col23.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineOrigemMin, 'Ciclo Ida'));
-        col2.appendChild(col23);
-        
-        let col24 = document.createElement('div'); col24.style.display = 'inline-block';col24.style.width = '12%';
-        this.settingsBaselineToMin = document.createElement('input');this.settingsBaselineToMin.type = 'number';this.settingsBaselineToMin.classList = 'flat-input';this.settingsBaselineToMin.min = 1;this.settingsBaselineToMin.max = 300;this.settingsBaselineToMin.value = $.CICLO_BASE;this.settingsBaselineToMin.id = 'March_settingsBaselineToMin';this.settingsBaselineToMin.placeholder = ' ';
-        this.settingsBaselineToMin.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col24.appendChild(this.settingsBaselineToMin);
-        col24.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineToMin, 'Ciclo Volta'));
-        col2.appendChild(col24);
-        
-        let col25 = document.createElement('div'); col25.style.display = 'inline-block';col25.style.width = '12%';
-        this.settingsBaselineOrigemInterv = document.createElement('input');this.settingsBaselineOrigemInterv.type = 'number';this.settingsBaselineOrigemInterv.classList = 'flat-input';this.settingsBaselineOrigemInterv.min = 1;this.settingsBaselineOrigemInterv.max = 300;this.settingsBaselineOrigemInterv.value = 10;this.settingsBaselineOrigemInterv.id = 'March_settingsBaselineOrigemInterv';this.settingsBaselineOrigemInterv.placeholder = ' ';
-        this.settingsBaselineOrigemInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col25.appendChild(this.settingsBaselineOrigemInterv);
-        col25.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineOrigemInterv, 'Intervalo Ida'));
-        col2.appendChild(col25);
-        
-        let col26 = document.createElement('div'); col26.style.display = 'inline-block';col26.style.width = '12%';
-        this.settingsBaselineToInterv = document.createElement('input');this.settingsBaselineToInterv.type = 'number';this.settingsBaselineToInterv.classList = 'flat-input';this.settingsBaselineToInterv.min = 1;this.settingsBaselineToInterv.max = 300;this.settingsBaselineToInterv.value = 1;this.settingsBaselineToInterv.id = 'March_settingsBaselineToInterv';this.settingsBaselineToInterv.placeholder = ' ';
-        if(this.projects[this.projectIndex].linha.circular){
-            this.settingsBaselineToMin.disabled = true;
-            this.settingsBaselineToInterv.disabled = true;
-        }
-        this.settingsBaselineToInterv.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col26.appendChild(this.settingsBaselineToInterv);
-        col26.appendChild(this.__settingsAddCustomLabel(this.settingsBaselineToInterv, 'Intervalo Volta'));
-        col2.appendChild(col26);
-        
-        let col27 = document.createElement('div'); col27.style.display = 'inline-block';col27.style.width = '12%';
-        this.settingsCarSimulate = document.createElement('input');this.settingsCarSimulate.type = 'number';this.settingsCarSimulate.classList = 'flat-input w-auto';this.settingsCarSimulate.min = 0;this.settingsCarSimulate.max = 30;this.settingsCarSimulate.value = 0;this.settingsCarSimulate.id = 'March_settingsCarSimulate';this.settingsCarSimulate.placeholder = ' ';
-        this.settingsCarSimulate.onchange = () => {this.__settingsUpdateFreqSimulate()}
-        col27.appendChild(this.settingsCarSimulate);
-        col27.appendChild(this.__settingsAddCustomLabel(this.settingsCarSimulate, 'Frota (simulada)'));
-        
-        this.settingsFreqSimulate = document.createElement('b');this.settingsFreqSimulate.style.paddingLeft = '20px';;this.settingsFreqSimulate.innerHTML = '--';
-        col27.appendChild(this.settingsFreqSimulate);
-        
-        col2.appendChild(col27);
-        
-        let col28 = document.createElement('div'); col28.style.display = 'inline-block';col28.style.width = '16%';col28.style.textAlign  = 'right';
-        this.settingsBaselineSubmit = document.createElement('button');this.settingsBaselineSubmit.type = 'button';this.settingsBaselineSubmit.classList  = 'btn btn-sm btn-dark ms-2';this.settingsBaselineSubmit.innerHTML = 'Gravar'; 
-        this.settingsBaselineSubmit.onclick = ()=>{
-            let has_error = false
-            col2.querySelectorAll('input').forEach((el)=>{ // Valida entradas nos inputs
-                if(el.value == '' || parseInt(el.value) < el.min || parseInt(el.value) > el.max){
-                    el.classList.add('is-invalid');
-                    has_error = true;
-                }
-            })
-            if(has_error){return false}
-            for(let i = parseInt(this.settingsBaselineStart.value); i <= parseInt(this.settingsBaselineEnd.value); i++){
-                this.projects[this.projectIndex].linha.param[i].ida = parseInt(this.settingsBaselineOrigemMin.value);
-                this.projects[this.projectIndex].linha.param[i].volta = parseInt(this.settingsBaselineToMin.value);
-                this.projects[this.projectIndex].linha.param[i].intervalo_ida = parseInt(this.settingsBaselineOrigemInterv.value);
-                this.projects[this.projectIndex].linha.param[i].intervalo_volta = parseInt(this.settingsBaselineToInterv.value);
-            }
-            this.__settingsUpdateBaselines();
-        }
-        col28.appendChild(this.settingsBaselineSubmit);
-        
-        this.settingsBaselineRestore = document.createElement('button');this.settingsBaselineRestore.type = 'button';this.settingsBaselineRestore.classList  = 'btn btn-sm btn-phanton-orange ms-1';this.settingsBaselineRestore.innerHTML = 'Padrão Linha';
-        this.settingsBaselineRestore.onclick = ()=>{this.projects[this.projectIndex].param = null;this.__settingsUpdateBaselines();}
-        col28.appendChild(this.settingsBaselineRestore);
-        col2.appendChild(col28);
-        
-        this.settingsBaselineContainer = document.createElement('div');
-        this.settingsBaselineTable = document.createElement('table');this.settingsBaselineTable.classList = 'table table-sm table-border text-center fs-7 mt-2';
-        this.settingsBaselineContainer.appendChild(this.settingsBaselineTable);
-        col2.appendChild(this.settingsBaselineContainer);
-        this.__settingsUpdateBaselines();
-        
-        // ****
-        dialog.appendChild(col1);
-        dialog.appendChild(col2);
-        document.body.appendChild(dialog);
-        dialog.showModal();
-    }
+    
     __gridIsBlock(){
         return this.gridLocked || canvasNavActive() || appKeyMap.modal.open;        
     }
@@ -1123,6 +939,7 @@ class jsGaitDiagramUI{
             this.tripIndex = 0;
             this.__cursorMove();
             this.__updateTripDisplay();
+            this.__updateCarDisplay();
             this.initialView = min2Range(this.projects[this.projectIndex].carros[0].viagens[0].inicio) * 60; // Ajusta a visao inicial do grid para a faixa da primeira viagem do projeto
             this.canvasFit();
             this.__buildRuler();
@@ -1177,16 +994,17 @@ class jsGaitDiagramUI{
                     sp.style.top = `calc(${this.carHeight} * ${i + 1} - 12px)`;
                     sp.style.left = `calc(${this.carTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
                     sp.title = blocks[y].spots[x].locale.nome;
-                    if(blocks[y].spots[x].tipo == 'viagemEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
+                    if(blocks[y].spots[x].tipo == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {
                         if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
                         let r;
-                        if(blocks[y].spots[x].tipo == 'viagemEnd'){
-                            r = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{fim: blocks[y].spots[x].viagemIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
+                        if(blocks[y].spots[x].tipo == 'tripEnd'){
+                            console.log(blocks[y]);
+                            r = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1], {fim: blocks[y].spots[x].tripIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
                         }
                         else{
-                            r = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{fim: blocks[y].spots[x].viagemIndex, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
+                            r = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1],{fim: blocks[y].spots[x].tripIndex, deltaEnd: blocks[y].spots[x].delta, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
                         }
                         if(r){  // Ajustar para atualizar o blocks
                             this.__cleanScheduleGrid(i);
@@ -1226,8 +1044,8 @@ class jsGaitDiagramUI{
         // ****
         this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; position: absolute; top: 60px';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
-        let summary1 = this.projects[this.projectIndex].countViagens(); // Gera resumo das viagens planejadas
-        let summary2 = this.projects[this.projectIndex].countOperatores(); // Gera resumo de mao de obra
+        let summary1 = this.projects[this.projectIndex].countTrips(); // Gera resumo das viagens planejadas
+        let summary2 = this.projects[this.projectIndex].countWorkers(); // Gera resumo de mao de obra
         let km_produtiva = parseFloat((summary1.origem * this.projects[this.projectIndex].linha.extensao_ida) + (summary1.destino * this.projects[this.projectIndex].linha.extensao_volta));
         let km_improdutiva = parseFloat((summary1.accessFrom * this.projects[this.projectIndex].linha.acesso_origem_km) + (summary1.accessTo * this.projects[this.projectIndex].linha.acesso_destino_km) + (summary1.recallFrom * this.projects[this.projectIndex].linha.recolhe_origem_km) + (summary1.recallTo * this.projects[this.projectIndex].linha.recolhe_destino_km) + (summary1.lazyFrom * this.projects[this.projectIndex].linha.extensao_ida) + (summary1.lazyTo * this.projects[this.projectIndex].linha.extensao_volta));
         let perc_produtiva = km_produtiva / (km_produtiva + km_improdutiva) * 100 || 0;
@@ -1383,62 +1201,62 @@ class jsGaitDiagramUI{
     }
     __escalaAddContent(options){
         let inicio, fim;
-        if(this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].deltaStart > 0){
-            inicio = min2Hour(this.projects[this.projectIndex].carros[options.carro_index].viagens[this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].inicio - 1].inicio + this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].deltaStart);
+        if(this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].deltaStart > 0){
+            inicio = min2Hour(this.projects[this.projectIndex].carros[options.carIndex].viagens[this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].inicio - 1].inicio + this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].deltaStart);
         }
-        else{inicio = min2Hour(this.projects[this.projectIndex].carros[options.carro_index].viagens[this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].inicio].inicio)}
+        else{inicio = min2Hour(this.projects[this.projectIndex].carros[options.carIndex].viagens[this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].inicio].inicio)}
         // ---
-        if(this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].deltaEnd > 0){
-            fim = min2Hour(this.projects[this.projectIndex].carros[options.carro_index].viagens[this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].fim].inicio + this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].deltaEnd - 1);
+        if(this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].deltaEnd > 0){
+            fim = min2Hour(this.projects[this.projectIndex].carros[options.carIndex].viagens[this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].fim].inicio + this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].deltaEnd - 1);
         }
-        else{fim = min2Hour(this.projects[this.projectIndex].carros[options.carro_index].viagens[this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].fim].fim)}
-        let jornada = this.projects[this.projectIndex].carros[options.carro_index].getScheduleJourney(options.escala_index);
+        else{fim = min2Hour(this.projects[this.projectIndex].carros[options.carIndex].viagens[this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].fim].fim)}
+        let jornada = this.projects[this.projectIndex].carros[options.carIndex].getScheduleJourney(options.escala_index);
         let previous, next;
         
-        if(this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].next?.externalProject){ // Verifica se existe complmento de jornada em outra linha posterior a esta
-            next = {nome: `[ ${this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].next.externalProject} ]`}
+        if(this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].next?.externalProject){ // Verifica se existe complmento de jornada em outra linha posterior a esta
+            next = {nome: `[ ${this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].next.externalProject} ]`}
         }
-        if(this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].previous?.externalProject){ // Verifica se existe complemento de jornada em outra linha anterior a esta
-            previous = {nome: `[ ${this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].previous.externalProject} ]`}
+        if(this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].previous?.externalProject){ // Verifica se existe complemento de jornada em outra linha anterior a esta
+            previous = {nome: `[ ${this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].previous.externalProject} ]`}
         }
-        return `<div><b data-type="escala-next" class="ms-1">${previous ? previous.nome + ' <i class="bi bi-arrow-left me-1"></i>': ''}</b><b data-type="escala-nome" class="me-2">${this.projects[this.projectIndex].carros[options.carro_index].escalas[options.escala_index].nome}</b>${min2Hour(jornada)}<b data-type="escala-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.nome : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
+        return `<div><b data-type="escala-next" class="ms-1">${previous ? previous.nome + ' <i class="bi bi-arrow-left me-1"></i>': ''}</b><b data-type="escala-nome" class="me-2">${this.projects[this.projectIndex].carros[options.carIndex].escalas[options.escala_index].nome}</b>${min2Hour(jornada)}<b data-type="escala-next" class="ms-1">${next ? '<i class="bi bi-arrow-right ms-1"></i> ' + next.nome : ''}</b><div class="fs-8 text-center text-secondary">${inicio}&nbsp;&nbsp;&nbsp;${fim}</div></div>`;
     }
-    __updateCarSchedules(carro_index, blocks){ // Refaz escalas do carro informado
-        this.scheduleGrid[carro_index].forEach((el) => {el.remove()});
-        this.scheduleGrid[carro_index] = []; // Incicia array para armazenar escalas do carro
-        for(let j = 0; j < this.projects[this.projectIndex].carros[carro_index].escalas.length; j++){ // Percorre todos os escalas ja definidos e adiciona no carro
-            let metrics = this.projects[this.projectIndex].carros[carro_index].getScheduleJourney(j, true);
-            let bg = this.scheduleFocus && JSON.stringify([this.scheduleFocus[0], this.scheduleFocus[1]]) == JSON.stringify([carro_index, j]) ? '#032830' : '#1a1d20';
+    __updateCarSchedules(carIndex, blocks){ // Refaz escalas do carro informado
+        this.scheduleGrid[carIndex].forEach((el) => {el.remove()});
+        this.scheduleGrid[carIndex] = []; // Incicia array para armazenar escalas do carro
+        for(let j = 0; j < this.projects[this.projectIndex].carros[carIndex].escalas.length; j++){ // Percorre todos os escalas ja definidos e adiciona no carro
+            let metrics = this.projects[this.projectIndex].carros[carIndex].getScheduleJourney(j, true);
+            let bg = this.scheduleFocus && JSON.stringify([this.scheduleFocus[0], this.scheduleFocus[1]]) == JSON.stringify([carIndex, j]) ? '#032830' : '#1a1d20';
             let sq = document.createElement('div');sq.setAttribute('data-bs-theme', 'dark'); sq.style = `height: 43px;border-right: 2px solid #495057;text-align: center;background-color: ${bg};color: #ced4da;user-select: none; position: absolute;z-index: 50;`;
             sq.style.left = `calc(${metrics[1]} * ${this.rulerUnit} + ${this.carTagWidth} + 1px)`;
-            sq.style.top = `calc(${this.carHeight} * ${carro_index + 1} - ${this.carHeight} + 11px)`;
-            sq.innerHTML = this.__escalaAddContent({carro_index: carro_index, escala_index: j});
+            sq.style.top = `calc(${this.carHeight} * ${carIndex + 1} - ${this.carHeight} + 11px)`;
+            sq.innerHTML = this.__escalaAddContent({carIndex: carIndex, escala_index: j});
             sq.style.width = `calc(${metrics[0]} * ${this.rulerUnit} - 1px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
                 sq.style.backgroundColor = '#032830';
                 let target_block = null;
                 for(let x = 0; x < blocks.length; x++){ // Verifica a qual bloco a viagem pertence
-                    if(project.project.carros[carro_index].escalas[j].inicio >= blocks[x].inicioIndex && project.project.carros[carro_index].escalas[j].fim <= blocks[x].fimIndex){target_block = x;break;}
+                    if(this.projects[this.projectIndex].carros[carIndex].escalas[j].inicio >= blocks[x].inicioIndex && this.projects[this.projectIndex].carros[carIndex].escalas[j].fim <= blocks[x].fimIndex){target_block = x;break;}
                 }
-                this.scheduleFocus = [carro_index, j, target_block];
+                this.scheduleFocus = [carIndex, j, target_block];
             }
-            if(this.projects[this.projectIndex].carros[carro_index].escalas[j].previous == null){
+            if(this.projects[this.projectIndex].carros[carIndex].escalas[j].previous == null){
                 let previous = document.createElement('i');previous.classList = 'bi bi-arrow-bar-left px-1 py-1 fs-5 pointer';previous.style.position = 'absolute';previous.style.left = '5px';previous.style.top = '3px';
                 previous.onclick = (ev) => {
                     ev.stopImmediatePropagation();
                     if(!this.scheduleSelect){
-                        this.scheduleSelect = [carro_index, j, previous];
+                        this.scheduleSelect = [carIndex, j, previous];
                         this.__scheduleExternalControl('previous', blocks); // Adiciona controle para externalProject
                     }
-                    else if(this.scheduleSelect[0] != carro_index || this.scheduleSelect[1] != j){
-                        let inicio = this.projects[this.projectIndex].carros[carro_index].viagens[this.projects[this.projectIndex].carros[carro_index].escalas[j].inicio];
+                    else if(this.scheduleSelect[0] != carIndex || this.scheduleSelect[1] != j){
+                        let inicio = this.projects[this.projectIndex].carros[carIndex].viagens[this.projects[this.projectIndex].carros[carIndex].escalas[j].inicio];
                         let fim = this.projects[this.projectIndex].carros[this.scheduleSelect[0]].viagens[this.projects[this.projectIndex].carros[this.scheduleSelect[0]].escalas[this.scheduleSelect[1]].fim];
                         if(fim.fim > inicio.inicio){return false}
-                        this.projects[this.projectIndex].carros[this.scheduleSelect[0]].escalas[this.scheduleSelect[1]].next = {externalProject: null, carro: carro_index, escala: j};
-                        this.projects[this.projectIndex].carros[carro_index].escalas[j].previous = {externalProject: null, carro: this.scheduleSelect[0], escala: this.scheduleSelect[1]};
-                        this.__updateCarSchedules(carro_index, blocks);
-                        if(this.scheduleSelect[0] != carro_index){this.__updateCarSchedules(this.scheduleSelect[0], blocks);}
+                        this.projects[this.projectIndex].carros[this.scheduleSelect[0]].escalas[this.scheduleSelect[1]].next = {externalProject: null, carro: carIndex, escala: j};
+                        this.projects[this.projectIndex].carros[carIndex].escalas[j].previous = {externalProject: null, carro: this.scheduleSelect[0], escala: this.scheduleSelect[1]};
+                        this.__updateCarSchedules(carIndex, blocks);
+                        if(this.scheduleSelect[0] != carIndex){this.__updateCarSchedules(this.scheduleSelect[0], blocks);}
                         this.__updateScheduleArrows();
                         this.scheduleSelect = null;
                         this.externalControl.remove();
@@ -1451,32 +1269,32 @@ class jsGaitDiagramUI{
                 previous.onclick = (ev)=>{
                     ev.stopImmediatePropagation();
                     let destiny;
-                    if(!this.projects[this.projectIndex].carros[carro_index].escalas[j].previous.externalProject){
-                        destiny = this.projects[this.projectIndex].carros[carro_index].escalas[j].previous;
+                    if(!this.projects[this.projectIndex].carros[carIndex].escalas[j].previous.externalProject){
+                        destiny = this.projects[this.projectIndex].carros[carIndex].escalas[j].previous;
                         this.projects[this.projectIndex].carros[destiny.carro].escalas[destiny.escala].next = null;
                     }
-                    if(!this.projects[this.projectIndex].carros[carro_index].escalas[j].previous.externalProject && carro_index != destiny.carro){
+                    if(!this.projects[this.projectIndex].carros[carIndex].escalas[j].previous.externalProject && carIndex != destiny.carro){
                         this.__updateCarSchedules(destiny.carro, blocks);
                     }
-                    this.projects[this.projectIndex].carros[carro_index].escalas[j].previous = null;
-                    this.__updateCarSchedules(carro_index, blocks);
+                    this.projects[this.projectIndex].carros[carIndex].escalas[j].previous = null;
+                    this.__updateCarSchedules(carIndex, blocks);
                     this.__updateScheduleArrows();
                 }
                 sq.appendChild(previous);
             }
-            if(this.projects[this.projectIndex].carros[carro_index].escalas[j].next == null){
+            if(this.projects[this.projectIndex].carros[carIndex].escalas[j].next == null){
                 let next = document.createElement('i');next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';next.style.position = 'absolute';next.style.right = '5px';next.style.top = '3px';
                 next.onclick = (ev) => {
                     ev.stopImmediatePropagation();
-                    if(this.scheduleSelect && (this.scheduleSelect[0] != carro_index || this.scheduleSelect[1] != j)){return null} // So seleciona caso nao existe escala selecionada
-                    if(this.scheduleSelect && this.scheduleSelect[0] == carro_index && this.scheduleSelect[1] == j){ // Se precionar novamente cancela selecao de escala
+                    if(this.scheduleSelect && (this.scheduleSelect[0] != carIndex || this.scheduleSelect[1] != j)){return null} // So seleciona caso nao existe escala selecionada
+                    if(this.scheduleSelect && this.scheduleSelect[0] == carIndex && this.scheduleSelect[1] == j){ // Se precionar novamente cancela selecao de escala
                         next.classList = 'bi bi-arrow-bar-right px-1 py-1 fs-5 pointer';
                         this.scheduleSelect = null;
                         this.externalControl.remove();
                     }
                     else{
                         next.classList = 'bi bi-arrow-left-right py-1 pe-1 fs-5 pointer';
-                        this.scheduleSelect = [carro_index, j, next];
+                        this.scheduleSelect = [carIndex, j, next];
                         this.__scheduleExternalControl('next', blocks); // Adiciona controle para externalProject
                     }
                 }
@@ -1487,21 +1305,21 @@ class jsGaitDiagramUI{
                 next.onclick = (ev) => { // Remove o apontamento de next do alvo e o previous do correlato
                     ev.stopImmediatePropagation();
                     let destiny;
-                    if(!this.projects[this.projectIndex].carros[carro_index].escalas[j].next.externalProject){
-                        destiny = this.projects[this.projectIndex].carros[carro_index].escalas[j].next;
+                    if(!this.projects[this.projectIndex].carros[carIndex].escalas[j].next.externalProject){
+                        destiny = this.projects[this.projectIndex].carros[carIndex].escalas[j].next;
                         this.projects[this.projectIndex].carros[destiny.carro].escalas[destiny.escala].previous = null;
                     }
-                    if(!this.projects[this.projectIndex].carros[carro_index].escalas[j].next.externalProject && carro_index != destiny.carro){
+                    if(!this.projects[this.projectIndex].carros[carIndex].escalas[j].next.externalProject && carIndex != destiny.carro){
                         this.__updateCarSchedules(destiny.carro, blocks);
                     }
-                    this.projects[this.projectIndex].carros[carro_index].escalas[j].next = null;
-                    this.__updateCarSchedules(carro_index, blocks);
+                    this.projects[this.projectIndex].carros[carIndex].escalas[j].next = null;
+                    this.__updateCarSchedules(carIndex, blocks);
                     this.__updateScheduleArrows();
                 }
                 sq.appendChild(next);
             }
             this.canvas.appendChild(sq);
-            this.scheduleGrid[carro_index].push(sq);
+            this.scheduleGrid[carIndex].push(sq);
         }
         // Se existe viagens sem escala no bloco, insere bloco empty
         for(let i = 0; i < blocks.length; i++){
@@ -1509,25 +1327,25 @@ class jsGaitDiagramUI{
             let sq = document.createElement('div');sq.style = `height: 43px;text-align: center;user-select: none; position: absolute;z-index: 50; padding-top: 5px`;
             sq.setAttribute('data-type', 'emptySchedule');
             let left;
-            if(blocks[i].deltaEnd == 0){left = this.projects[this.projectIndex].carros[carro_index].viagens[blocks[i].emptyStart].inicio}
+            if(blocks[i].deltaEnd == 0){left = this.projects[this.projectIndex].carros[carIndex].viagens[blocks[i].emptyStart].inicio}
             else{
-                left = this.projects[this.projectIndex].carros[carro_index].viagens[blocks[i].emptyStart - 1].inicio + blocks[i].deltaEnd;
+                left = this.projects[this.projectIndex].carros[carIndex].viagens[blocks[i].emptyStart - 1].inicio + blocks[i].deltaEnd;
             }
             sq.style.left = `calc(${left} * ${this.rulerUnit} + ${this.carTagWidth} + 1px)`;
-            sq.style.top = `calc(${this.carHeight} * ${carro_index + 1} - ${this.carHeight} + 11px)`;
+            sq.style.top = `calc(${this.carHeight} * ${carIndex + 1} - ${this.carHeight} + 11px)`;
             sq.innerHTML = '<i class="bi bi-plus-lg fs-5 text-secondary"></i>';
             
             let jornada = blocks[i].inicio + blocks[i].size - left;
             sq.style.width = `calc(${jornada} * ${this.rulerUnit} - 2px)`;
             sq.onclick = () => {
                 if(this.scheduleFocus){this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].style.backgroundColor = '#1a1d20';}
-                let r = this.projects[this.projectIndex].addSchedule(carro_index, {inicio: blocks[i].emptyStart, fim: blocks[i].fimIndex, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
-                this.scheduleFocus = [carro_index, r, i];
-                this.__updateCarSchedules(carro_index, this.projects[this.projectIndex].carros[carro_index].getCarSchedulesBlock(this.projects[this.projectIndex].linha))
+                let r = this.projects[this.projectIndex].addSchedule(carIndex, {inicio: blocks[i].emptyStart, fim: blocks[i].fimIndex, deltaEnd: 0, deltaStart: 0, next: null, previous: null})
+                this.scheduleFocus = [carIndex, r, i];
+                this.__updateCarSchedules(carIndex, this.projects[this.projectIndex].carros[carIndex].getCarSchedulesBlock(this.projects[this.projectIndex].linha))
             }
             this.canvas.appendChild(sq);
-            this.scheduleGrid[carro_index].push(sq);
-            this.scheduleGrid[carro_index].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
+            this.scheduleGrid[carIndex].push(sq);
+            this.scheduleGrid[carIndex].sort((a, b) => a.offsetLeft > b.offsetLeft ? 1 : -1);
         }
     }
     __updateScheduleArrows(){
@@ -1606,9 +1424,9 @@ class jsGaitDiagramUI{
             this.arrowsGrid[i].forEach((el) => {el.setVisibility(v)});
         }
     }
-    __cleanScheduleGrid(carro_index){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
-        for(let i in this.scheduleGrid[carro_index]){
-            this.scheduleGrid[carro_index][i].remove();
+    __cleanScheduleGrid(carIndex){ // Limpa as escalas do carro informado (nao remove nem carro nem spots)
+        for(let i in this.scheduleGrid[carIndex]){
+            this.scheduleGrid[carIndex][i].remove();
         }
     }
     uploadProject(){
