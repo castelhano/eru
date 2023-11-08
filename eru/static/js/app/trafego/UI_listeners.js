@@ -281,18 +281,9 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
         }
         else{this.removeTrip()} 
     }})
-    appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legfima viagens', desc: 'Exibe legfima dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
+    appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legenda viagens', desc: 'Exibe legenda dos tipos de viagens', run: ()=>{this.__showTripPatterns()}})
     appKeyMap.bind({group: 'March_stage1', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: (ev)=>{ev.preventDefault();this.__showRouteMetrics()}})
     appKeyMap.bind({group: 'March_stage1', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: (ev)=>{ev.preventDefault();this.__generate()}})
-    appKeyMap.bind({group: 'March_stage1', key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
-        for(let key in this.defaultSettings){
-            this[key] = this.defaultSettings[key]; // Retorna valor padrao a variavel de ambiente
-            this[`settings${key}`].value = this.defaultSettings[key]; // Retorna valor padrao ao controle no painel de configuracoes
-        }
-        this.__buildRuler(); // Refaz Regua
-        this.__loadStage1(false); // Ajusta viagens
-        this.canvasFit(); // Centraliza canvas na viagem em foco
-    }})
 }
 
 function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
@@ -370,14 +361,14 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';modal.style.position = 'relative';
         modal.addEventListener('close', ()=>{modal.remove(); this.gridLocked = false;})
         let nameInput = document.createElement('input');nameInput.type = 'text';nameInput.classList = 'flat-input';nameInput.id = 'March_renameEscalaName';
-        nameInput.value = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].escalas[this.scheduleFocus[1]].name;
+        nameInput.value = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].escalas[this.scheduleFocus[1]].nome;
         nameInput.onfocus = ()=>{nameInput.select()}
         nameInput.addEventListener('keydown', (ev)=>{if(ev.key == 'Enter'){submit.click()}})
         let submit = document.createElement('button');submit.type = 'button';submit.classList = 'btn btn-sm btn-phanton position-absolute';submit.innerHTML = 'Gravar';submit.style = 'top:56px; right: 10px;'
         submit.onclick = () => {
             if(nameInput.value == '' || nameInput.value.length < 2){nameInput.classList.add('is-invalid'); return false;}
-            this.projects[this.projectIndex].carros[this.scheduleFocus[0]].escalas[this.scheduleFocus[1]].name = nameInput.value;
-            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].querySelector('[data-type=escala-name]').innerHTML = nameInput.value;
+            this.projects[this.projectIndex].carros[this.scheduleFocus[0]].escalas[this.scheduleFocus[1]].nome = nameInput.value;
+            this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].querySelector('[data-type=escala-nome]').innerHTML = nameInput.value;
             modal.close();
         }
         modal.appendChild(nameInput)

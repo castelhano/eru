@@ -223,10 +223,10 @@ class jsGaitDiagramUI{
         this.__clearSelecao();
         this.gridLocked = true;
         let modal = document.createElement('dialog');modal.innerHTML = '<h6>Adicionar viagem as:</h6>'
-        let inicioAt = document.createElement('input');inicioAt.type = 'time';inicioAt.style.width = '100px';inicioAt.style.textAlign = 'center';inicioAt.style.display = 'block';inicioAt.style.marginLeft = 'auto';inicioAt.style.marginRight = 'auto';
+        let startAt = document.createElement('input');startAt.type = 'time';startAt.style.width = '100px';startAt.style.textAlign = 'center';startAt.style.display = 'block';startAt.style.marginLeft = 'auto';startAt.style.marginRight = 'auto';
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-dark mt-2 float-end';confirm.innerHTML = 'Confirmar';
         confirm.onclick = () => {
-            let time = hour2Min(inicioAt.value)
+            let time = hour2Min(startAt.value)
             if(time){
                 let v = this.projects[this.projectIndex].addTrip(this.carIndex, time);
                 if(v){ // Se viagem atfime requisitos, insere viagem no grid
@@ -242,7 +242,7 @@ class jsGaitDiagramUI{
                 }
                 cancel.click(); // Fecha modal
             }
-            else{inicioAt.style.border = '2px solid var(--bs-form-invalid-color)'}
+            else{startAt.style.border = '2px solid var(--bs-form-invalid-color)'}
         }
         let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-secondary mt-2 me-1 float-end';cancel.innerHTML = 'Cancelar';
         cancel.onclick = () => { // Libera o grid e destroi o modal
@@ -251,7 +251,7 @@ class jsGaitDiagramUI{
         }
         modal.addEventListener('close', ()=>{this.gridLocked = false;})
         
-        modal.appendChild(inicioAt);
+        modal.appendChild(startAt);
         modal.appendChild(confirm);
         modal.appendChild(cancel);
         document.body.appendChild(modal);
@@ -883,7 +883,7 @@ class jsGaitDiagramUI{
             this.switchStage(1);
             dialog.close();
         };
-        let stage2 = document.createElement('button');stage2.type = 'button';stage2.classList = 'btn btn-sm btn-phanton';stage2.innerHTML = 'Schedule';
+        let stage2 = document.createElement('button');stage2.type = 'button';stage2.classList = 'btn btn-sm btn-phanton';stage2.innerHTML = 'Escalas';
         stage2.onclick = ()=>{
             this.switchStage(2)
             dialog.close();
@@ -1437,10 +1437,11 @@ class jsGaitDiagramUI{
             let fr = new FileReader();
             fr.onload = (function(){
                 let r = JSON.parse(fr.result);
-                if(r.version != obj.project.version){appNotify('warning', `O arquivo carregado <code>${r.version}</code> tem versão diferente da aplicação <code>${obj.project.version}</code>, o que pode gerar incompatibilidade e/ou erros de execução.`, false)}
-                obj.project.load(JSON.parse(fr.result));
-                obj.project.viewStage = 1;
+                if(r.version != obj.projects[obj.projectIndex].version){appNotify('warning', `O arquivo carregado <code>${r.version}</code> tem versão diferente da aplicação <code>${obj.projects[obj.projectIndex].version}</code>, o que pode gerar incompatibilidade e/ou erros de execução.`, false)}
+                obj.projects[obj.projectIndex].load(JSON.parse(fr.result));
+                obj.projects[obj.projectIndex].viewStage = 1;
                 obj.switchStage(1);
+                canvasNavActive(false);
             });
             fr.readAsText(loadInput.files[0]);
         }

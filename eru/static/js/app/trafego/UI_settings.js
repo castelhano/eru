@@ -55,8 +55,8 @@ function __builSettingsUI(){
         this.__buildRuler(); // Refaz a regua com novos valores
         if(this.tripIndex >= 0){ // Se tiver viagem inserida ajusta posicionamento do canvas
             this.__canvasRebuild(); // Limpa p canvas e refazer todas as viagens com novos parametros
-            this.__cursorMove(); // Move o cursor para ajustar view
         }
+        this.__cursorMove(); // Move o cursor para ajustar view
         this.canvasFit(); // Ajusta posicao do canvas com novas definicoes
     }
     this.settingsContainer.appendChild(this.settingsrulerUnit);

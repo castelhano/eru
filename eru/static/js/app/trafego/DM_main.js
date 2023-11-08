@@ -32,7 +32,7 @@ class jsGaitDiagram{
         return this.carros.slice(-1)[0]; // Retorna carro inserido 
     }
     addTrip(carIndex, startAt=null){
-        return this.carros[carIndex].addTrip(this.linha, startAt, this.param || this.linha.param);
+        return this.carros[carIndex].addTrip({linha: this.linha, startAt: startAt, param: this.param || this.linha.param});
     }
     removeCar(carIndex){
         return this.carros.splice(carIndex, 1);
