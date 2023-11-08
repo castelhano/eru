@@ -11,19 +11,13 @@
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
 <link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}">
-<!-- <link rel="stylesheet" href="{% static 'css/charts.css' %}"> -->
+<link rel="stylesheet" href="{% static 'css/vendor/tagin.css' %}">
 {% endblock %}
 
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<div id="box1" style="width: 150px;height: 120px;position: absolute;top: 150px; left: 20px;" class="bg-info">Box 1</div>
-<div id="box2" style="width: 150px;height: 120px;position: absolute;top: 650px; right: 20px;" class="bg-warning">Box 2</div>
-
-
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<input type="text" name="foo" id="id_foo" class="tagin box-shadow-none" value="foo,bar">
 
 
 
@@ -141,10 +135,9 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 {% block add_script_src %}
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
-<!-- <script src="{% static 'js/table.js' %}"></script> -->
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
-<script src="{% static 'js/elConnector.js' %}"></script>
+<script src="{% static 'js/vendor/tagin.js' %}"></script>
 {% endblock %}
 
 
@@ -166,10 +159,10 @@ const form = new jsForm(document.getElementById('my_form'), {
     }
 })
 
-const seta = new jsELConnector({
-    from: document.getElementById('box1'),
-    to: document.getElementById('box2'),
+const foo = new Tagin(document.getElementById('id_foo'), {
+    placeholder: 'Tags...'
 })
+
 
 {% endblock %}
 </script>

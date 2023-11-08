@@ -166,6 +166,8 @@ function __buildFooter(){ // Cria elementos do footer
         opt.value = key;opt.innerHTML = classOptions[key];
         this.carDisplayClassification.appendChild(opt);
     }
+    this.displayCarLabels = document.createElement('input');this.displayCarLabels.classList = 'tagin box-shadow-none';this.displayCarLabels.style.position = 'absolute';this.displayCarLabels.style.bottom = '10px';this.displayCarLabels.style.left = '600px';
+    // PAREI AQUIIII
     // ---
     this.footer.appendChild(this.displayStart);
     this.footer.appendChild(this.displayEnd);
