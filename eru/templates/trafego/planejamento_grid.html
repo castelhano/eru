@@ -9,10 +9,100 @@
 {% endblock %}
 
 {% block add_script_src %}
-<script src="{% static 'js/app/marcha_model.js' %}"></script>
-<script src="{% static 'js/app/marcha_ui.js' %}"></script>
 <script src="{% static 'js/elConnector.js' %}"></script>
 <script src="{% static 'js/vendor/chart.min.js' %}"></script>
+
+<script type="module">
+    import { metrics as $ } from '{% static 'js/app/trafego/DM_metrics.js' %}';
+    import { jsGaitDiagram } from '{% static 'js/app/trafego/DM_main.js' %}';
+    import { Route } from '{% static 'js/app/trafego/DM_route.js' %}';
+    import { Locale } from '{% static 'js/app/trafego/DM_locale.js' %}';
+    import { Car } from '{% static 'js/app/trafego/DM_car.js' %}';
+    import { Trip } from '{% static 'js/app/trafego/DM_trip.js' %}';
+    import { jsGaitDiagramUI } from '{% static 'js/app/trafego/UI_main.js' %}';
+
+    const model = new jsGaitDiagram({
+        nome: '{{planejamento.codigo}}',
+        desc: '{{planejamento.descricao}}',
+        dia_tipo: '{{planejamento.dia_tipo}}',
+        param: {{planejamento.params|safe}},
+        ativo: {{planejamento.ativo|yesno:'true,false'}},
+        linha: new Route({
+            id: {{planejamento.linha.id|safe}},
+            codigo: '{{planejamento.linha.codigo}}',
+            nome: '{{planejamento.linha.nome}}',
+            circular: {{planejamento.linha.circular|yesno:'true,false'}},
+            garagem: new Locale({id: '{{planejamento.linha.garagem.id|safe|default:'new'}}', nome: '{{planejamento.linha.garagem.nome|default:'Sem garagem'}}', troca_turno: false}),
+            origem: new Locale({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', nome: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', troca_turno: {{planejamento.linha.origem.troca_turno|yesno:'true,false'|default:'true'}}}),
+            destino: new Locale({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', nome: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', troca_turno: {{planejamento.linha.destino.troca_turno|yesno:'true,false'|default:'true'}}}),
+            extensao_ida: {{planejamento.linha.extensao_ida|safe}},
+            extensao_volta: {{planejamento.linha.extensao_volta|safe}},
+            param: {{planejamento.linha.params|safe}},
+            acesso_origem_minutos: {{planejamento.linha.acesso_origem_minutos|safe}},
+            acesso_destino_minutos: {{planejamento.linha.acesso_destino_minutos|safe}},
+            recolhe_origem_minutos: {{planejamento.linha.recolhe_origem_minutos|safe}},
+            recolhe_destino_minutos: {{planejamento.linha.recolhe_destino_minutos|safe}},
+            acesso_origem_km: {{planejamento.linha.acesso_origem_km|safe}},
+            acesso_destino_km: {{planejamento.linha.acesso_destino_km|safe}},
+            recolhe_origem_km: {{planejamento.linha.recolhe_origem_km|safe}},
+            recolhe_destino_km: {{planejamento.linha.recolhe_destino_km|safe}},
+            refs: {
+                origem:[
+                    {% for trajeto in planejamento.linha.rendicoes_ida %}
+                        {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
+                    {% endfor %}
+                ],
+                destino:[
+                {% for trajeto in planejamento.linha.rendicoes_volta %}
+                    {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
+                {% endfor %}
+                ]
+            }
+        }),
+        save: ()=>{
+            model.patamares = model.param ? model.getBaselines() : model.linha.getBaselines();
+            document.getElementById('id_planejamento').value = JSON.stringify(model);
+            document.getElementById('grid_form').submit();
+        }
+    });
+
+    let trips, origem, destino;
+    {% for carro in planejamento.carros %}
+        trips = [];
+        {% for viagem in carro.viagens %}
+            trips.push(new Trip({
+                inicio: {{viagem.inicio|safe}}, 
+                fim: {{viagem.fim|safe}}, 
+                sentido: '{{viagem.sentido}}', 
+                tipo: '{{viagem.tipo}}', 
+                origem: {{viagem.origem.id|safe}},
+                destino: {{viagem.destino.id|safe}},
+                encerrar: {{viagem.encerrar|yesno:'true,false'}}
+            }));
+        {% endfor %}
+        if(trips.length > 0){
+            model.carros.push(new Car({classificacao: '{{carro.classificacao}}', viagens: trips, escalas: {{carro.escalas|replace:'None,null'|replace:'False,false'|replace:'True,true'|safe|default:'[]'}}}));
+        }
+    {% endfor %}
+
+
+    {% if planejamento.linha.demanda != '' %}
+    // Carrega a ultima demanda registrada da linha por faixa horaria
+    const demanda = {{planejamento.linha.demanda|safe}};
+    for(let i in demanda){
+        model.linha.param[i].demanda_ida = demanda[i].demanda_ida;
+        model.linha.param[i].demanda_volta = demanda[i].demanda_volta;
+    }
+    {% endif %}
+    const ui = new jsGaitDiagramUI({
+        container: document.getElementById('march_container'),
+        settingsContainer: document.getElementById('marchSettings_container'),
+        project: model,
+        initialView: 240,
+    });
+
+
+</script>
 {% endblock %}
 
 {% block content %}
@@ -37,85 +127,5 @@ class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"><
     document.getElementById('home').setAttribute('data-appConfirmTitle', '<i class="bi bi-info-circle-fill me-2"></i>Página Inicial');
     document.getElementById('home').setAttribute('data-appConfirmMessage', 'Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?');
     document.getElementById('home').setAttribute('data-appConfirmText', 'Página Inicial');
-
-    const model = new March({
-        nome: '{{planejamento.codigo}}',
-        desc: '{{planejamento.descricao}}',
-        dia_tipo: '{{planejamento.dia_tipo}}',
-        param: {{planejamento.params|safe}},
-        ativo: {{planejamento.ativo|yesno:'true,false'}},
-        linha: new Linha({
-            id: {{planejamento.linha.id|safe}},
-            codigo: '{{planejamento.linha.codigo}}',
-            nome: '{{planejamento.linha.nome}}',
-            circular: {{planejamento.linha.circular|yesno:'true,false'}},
-            garagem: new Localidade({id: '{{planejamento.linha.garagem.id|safe|default:'new'}}', nome: '{{planejamento.linha.garagem.nome|default:'Sem garagem'}}', troca_turno: false}),
-            origem: new Localidade({id: '{{planejamento.linha.origem.id|safe|default:'new'}}', nome: '{{planejamento.linha.origem.nome|default:'Sem origem'}}', troca_turno: {{planejamento.linha.origem.troca_turno|yesno:'true,false'|default:'true'}}}),
-            destino: new Localidade({id: '{{planejamento.linha.destino.id|safe|default:'new'}}', nome: '{{planejamento.linha.destino.nome|default:'Sem destino'}}', troca_turno: {{planejamento.linha.destino.troca_turno|yesno:'true,false'|default:'true'}}}),
-            extensao_ida: {{planejamento.linha.extensao_ida|safe}},
-            extensao_volta: {{planejamento.linha.extensao_volta|safe}},
-            param: {{planejamento.linha.params|safe}},
-            acesso_origem_minutos: {{planejamento.linha.acesso_origem_minutos|safe}},
-            acesso_destino_minutos: {{planejamento.linha.acesso_destino_minutos|safe}},
-            recolhe_origem_minutos: {{planejamento.linha.recolhe_origem_minutos|safe}},
-            recolhe_destino_minutos: {{planejamento.linha.recolhe_destino_minutos|safe}},
-            acesso_origem_km: {{planejamento.linha.acesso_origem_km|safe}},
-            acesso_destino_km: {{planejamento.linha.acesso_destino_km|safe}},
-            recolhe_origem_km: {{planejamento.linha.recolhe_origem_km|safe}},
-            recolhe_destino_km: {{planejamento.linha.recolhe_destino_km|safe}},
-            refs: {
-                origem:[
-                    {% for trajeto in planejamento.linha.rendicoes_ida %}
-                        {local: new Localidade({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
-                    {% endfor %}
-                ],
-                destino:[
-                {% for trajeto in planejamento.linha.rendicoes_volta %}
-                    {local: new Localidade({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
-                {% endfor %}
-                ]
-            }
-        }),
-        save: ()=>{
-            model.patamares = model.linha.getBaselines();
-            document.getElementById('id_planejamento').value = JSON.stringify(model);
-            document.getElementById('grid_form').submit();
-        }
-    });
-
-    let trips, origem, destino;
-    {% for carro in planejamento.carros %}
-        trips = [];
-        {% for viagem in carro.viagens %}
-            trips.push(new Viagem({
-                inicio: {{viagem.inicio|safe}}, 
-                fim: {{viagem.fim|safe}}, 
-                sentido: '{{viagem.sentido}}', 
-                tipo: '{{viagem.tipo}}', 
-                origem: {{viagem.origem.id|safe}},
-                destino: {{viagem.destino.id|safe}},
-                encerrar: {{viagem.encerrar|yesno:'true,false'}}
-            }));
-        {% endfor %}
-        if(trips.length > 0){
-            model.carros.push(new Carro({classificacao: '{{carro.classificacao}}', viagens: trips, escalas: {{carro.escalas|replace:'None,null'|replace:'False,false'|replace:'True,true'|safe|default:'[]'}}}));
-        }
-    {% endfor %}
-
-
-    {% if planejamento.linha.demanda != '' %}
-    // Carrega a ultima demanda registrada da linha por faixa horaria
-    const demanda = {{planejamento.linha.demanda|safe}};
-    for(let i in demanda){
-        model.linha.param[i].demanda_ida = demanda[i].demanda_ida;
-        model.linha.param[i].demanda_volta = demanda[i].demanda_volta;
-    }
-    {% endif %}
-    const project = new MarchUI({
-        container: document.getElementById('march_container'),
-        settingsContainer: document.getElementById('marchSettings_container'),
-        project: model,
-        initialView: 240,
-    });
     {% endblock %}
 </script>
