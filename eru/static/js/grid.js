@@ -131,7 +131,14 @@ class jsGrid{
         if(options?.menu){
             this.__addControler(el, options.menu, options?.color || '');
         }
-        if(options?.keybind){appKeyMap.bind(options.keybind)} // Se informado keybind, adiciona ao mapa (Keywatch class)
+        // Se informado keybind, adiciona ao mapa (Keywatch class)
+        if(options?.keybind){
+            appKeyMap.bind(options.keybind);
+            if(!options.onclick){ // Se nao especificado outro onclick para elemento, aplica onclick para a funcao atribuida em run
+                console.log(options);
+                el.onclick = () => {options.run};
+            }
+        }
         this.gridItems.push(el);
         this.container.appendChild(el);
     }

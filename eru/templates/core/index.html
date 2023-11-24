@@ -20,10 +20,11 @@
 
 const grid = new jsGrid({
   container: document.getElementById('grid_container'),
-  // size: 'xl',
+  // size: 'lg',
   items: [
     {icon: 'bi bi-sign-merge-left-fill', color: 'primary', href: '{% url 'trafego_linhas' %}', desc: 'Linhas'},
     {icon: 'bi bi-shuffle', color: 'primary', href: '{% url 'trafego_planejamentos' %}', desc: 'Planejamento'},
+    {icon: 'bi bi-person', desc: 'Keybind', keybind: {key: '8', alt: true, name: 'Meu foo', run: ()=>{appNotify('danger', 'Fui cricado...')}}},
     // {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
     // {
     //   icon: 'bi bi-ubuntu',

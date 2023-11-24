@@ -993,14 +993,15 @@ class jsGaitDiagramUI{
                     sp.style.opacity = '10%';
                     sp.style.top = `calc(${this.carHeight} * ${i + 1} - 12px)`;
                     sp.style.left = `calc(${this.carTagWidth} + ${blocks[y].spots[x].time} * ${this.rulerUnit} - 9px)`;
-                    sp.title = blocks[y].spots[x].locale.nome;
-                    if(blocks[y].spots[x].tipo == 'tripEnd'){sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';}
+                    sp.title = `${min2Hour(blocks[y].spots[x].time)} ${blocks[y].spots[x].locale.nome}`;
+                    if(blocks[y].spots[x].tipo == 'tripEnd'){
+                        sp.classList = 'bi bi-caret-down-fill marchSpot pt-1';
+                    }
                     else{sp.classList = 'bi bi-pin-map-fill marchSpot';}
                     sp.onclick = () => {
                         if(this.scheduleFocus == null || this.scheduleFocus[0] != i || this.scheduleFocus[2] != y){return false}
                         let r;
                         if(blocks[y].spots[x].tipo == 'tripEnd'){
-                            console.log(blocks[y]);
                             r = this.projects[this.projectIndex].carros[this.scheduleFocus[0]].updateSchedule(this.scheduleFocus[1], {fim: blocks[y].spots[x].tripIndex, deltaEnd: 0, local: blocks[y].spots[x].locale}, blocks[y].inicioIndex, blocks[y].fimIndex);
                         }
                         else{

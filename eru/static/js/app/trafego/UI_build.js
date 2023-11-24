@@ -11,6 +11,7 @@ function __buildStyles(){
         top: -16px;
         left: calc(100% - 3.6px);
     }
+    .box-shadow-none{box-shadow: none!important;}
     .marchSpot{cursor: pointer;z-index: 50;}
     .marchSpot:hover{opacity: 100!important;}`;
     document.getElementsByTagName('head')[0].appendChild(style);
@@ -166,7 +167,11 @@ function __buildFooter(){ // Cria elementos do footer
         opt.value = key;opt.innerHTML = classOptions[key];
         this.carDisplayClassification.appendChild(opt);
     }
-    this.displayCarLabels = document.createElement('input');this.displayCarLabels.classList = 'tagin box-shadow-none';this.displayCarLabels.style.position = 'absolute';this.displayCarLabels.style.bottom = '10px';this.displayCarLabels.style.left = '600px';
+    this.displayCarLabels = document.createElement('input');this.displayCarLabels.classList = 'tagin box-shadow-none border-0 bg-transparent';this.displayCarLabels.style.position = 'absolute';this.displayCarLabels.style.bottom = '10px';this.displayCarLabels.style.left = '600px';
+    if(this.carIndex >= 0){this.displayCarLabels.value = this.carFocus().labels;}
+    this.footer.appendChild(this.displayCarLabels);
+    // this.displayCarLabels.addEventListener('change', ()=>{this.carFocus().labels = })
+
     // PAREI AQUIIII
     // ---
     this.footer.appendChild(this.displayStart);

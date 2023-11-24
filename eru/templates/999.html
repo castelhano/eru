@@ -162,7 +162,9 @@ const form = new jsForm(document.getElementById('my_form'), {
 const foo = new Tagin(document.getElementById('id_foo'), {
     placeholder: 'Tags...'
 })
-
+document.getElementById('id_foo').addEventListener('change', ()=>{
+    appNotify('success', 'Modificado')
+})
 
 {% endblock %}
 </script>

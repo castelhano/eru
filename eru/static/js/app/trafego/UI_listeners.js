@@ -20,7 +20,7 @@ function __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (
 
 function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
     appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addCar()}})
-    appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Trip', desc: 'Insere viagem ao final do carro', run: ()=>{
+    appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{
         if(this.__gridIsBlock() || !this.tripFocus()){return false}
         if(this.projects[this.projectIndex].carros[this.carIndex].escalas.length > 0){
             this.__modalConfirmationChangeProject(()=>{
@@ -30,7 +30,7 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
         }
         else{this.addTrip();}
     }})
-    appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Trip AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{
+    appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem *', desc: 'Insere viagem para carro informando inicio', run: ()=>{
         if(this.__gridIsBlock() || !this.tripFocus()){return false;}
         if(this.projects[this.projectIndex].carros[this.carIndex].escalas.length > 0){
             this.__modalConfirmationChangeProject(()=>{
