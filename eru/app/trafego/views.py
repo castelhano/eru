@@ -1,15 +1,13 @@
-# import os
 import json
+import threading
+import csv
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-# from django.db.models import Q
 from core.models import Empresa, Log
-from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Viagem
-from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm
-# from .validators import validate_file_extension
+from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Viagem, Passageiro
+from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm, PassageiroForm
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-# from datetime import date, datetime
 
 
 # METODOS SHOW
@@ -194,6 +192,43 @@ def planejamento_add(request):
     else:
         form = PlanejamentoForm()
     return render(request,'trafego/planejamento_add.html',{'form':form})
+
+@login_required
+@permission_required('trafego.add_passageiro', login_url="/handler/403")
+def passageiros_import(request):
+    if request.method == 'POST':
+        options = {'request':request}
+        fn = threading.Thread(target=passageiros_import_run, args=(options,))
+        fn.start()
+        messages.info(request,'<b>Enviado:</b> Arquivo está sendo processado, uma mensagem será enviada na página principal do sistema quando finalizado')
+    form = PassageiroForm()
+    return render(request, 'trafego/passageiros_import.html', {'form':form})
+
+# Funcao thread para processamento do arquivo
+def passageiros_import_run(options):
+    f = options['request'].FILES['arquivo']
+    reader = csv.DictReader(f.read().decode('ISO-8859-1').splitlines(), delimiter=';')
+    erros = []
+    for i, row in enumerate(reader):
+        try:
+            opt = {
+                'empresa': Empresa.objects.get(id=options['request'].POST['empresa']),
+                'embarque': row['HORARIO'],
+                'referencia': options['request'].POST['referencia'],
+                'dia_tipo': options['request'].POST['dia_tipo'],
+                'linha': Linha.objects.get(codigo=row['LINHA']),
+                'veiculo': row['VEICULO'],
+                'cartao': row['CARTAO'],
+                'cartao': row['CARTAO'],
+                'aplicacao': row['APLICACAO'],
+                'tipo': row['TIPO'],
+                'tarifa': row['TARIFA'].replace(',','.'),
+            }
+            Passageiro.objects.create(**opt)
+        except Exception as e:
+            print('EROOO')
+            erros.append({'line': i, 'message': e})
+        print(erros)
 
 # METODOS GET
 @login_required

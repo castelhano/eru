@@ -26,4 +26,5 @@ urlpatterns = [
     path('trafego_get_linha',views.get_linha,name='trafego_get_linha'),
     path('trafego_get_linhas_empresa',views.get_linhas_empresa,name='trafego_get_linhas_empresa'),
     path('trafego_get_localidades',views.get_localidades,name='trafego_get_localidades'),
+    path('trafego_passageiros_import',views.passageiros_import,name='trafego_passageiros_import'),
 ]

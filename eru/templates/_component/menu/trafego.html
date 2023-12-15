@@ -19,6 +19,24 @@
             desc:'Abre menu de cadastro'
         }
     })
+    const menuImportar = new canvasNavDropdown({
+        name: 'Impor<b>t</b>ação',
+        icon: 'bi bi-person-fill-up',
+        itens: [
+        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: {visible: false, key: 'p', run: ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click()}}}},{% endif %}
+        ],
+        keybind: {
+            key:'t',
+            alt: true,
+            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Importação',
+            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+                canvasNavActive(true); // Exibe o canvasNav (caso oculto)
+                menuImportar.click();
+                setTimeout(()=>{menuImportar.focus()}, 340);
+            },
+            desc:'Abre menu de importação'
+        }
+    })
     {% if perms.trafego.view_planejamento %}
     const menuPlanejamento = new canvasNavLink({
         name: '<b>P</b>lanejamento',

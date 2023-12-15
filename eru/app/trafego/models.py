@@ -224,3 +224,23 @@ class Viagem(models.Model):
     detalhe = models.CharField(max_length=10, blank=True)
     class Meta:
         default_permissions = []
+
+
+class Passageiro(models.Model):
+    DIA_TIPO = (
+    ('U','Util'),
+    ('S','Sabado'),
+    ('D','Domingo'),
+    ('F','Ferias'),
+    ('E','Especial'),
+    )
+    empresa = models.ForeignKey(Empresa, blank=False, null=False, on_delete=models.RESTRICT)
+    embarque = models.DateTimeField()
+    referencia = models.DateField()
+    dia_tipo = models.CharField(max_length=3,choices=DIA_TIPO, blank=True, default='U')
+    linha = models.ForeignKey(Linha, blank=False, null=False, on_delete=models.RESTRICT)
+    veiculo = models.CharField(max_length=30, blank=True)
+    cartao = models.CharField(max_length=60, blank=True)
+    aplicacao = models.CharField(max_length=60, blank=True)
+    tipo = models.CharField(max_length=60, blank=True)
+    tarifa = models.DecimalField(default=0, max_digits=10, decimal_places=2)

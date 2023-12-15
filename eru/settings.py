@@ -88,5 +88,5 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'success',
     messages.INFO: 'info',
     messages.WARNING: 'warning',
-    messages.DEBUG: 'warning'
+    messages.DEBUG: 'dark'
 }

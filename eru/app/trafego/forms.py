@@ -1,5 +1,6 @@
 from django import forms
-from .models import Linha, Localidade, Trajeto, Planejamento
+from .models import Linha, Localidade, Trajeto, Planejamento, Passageiro
+from datetime import date
 
 
 class LocalidadeForm(forms.ModelForm):
@@ -51,3 +52,10 @@ class PlanejamentoForm(forms.ModelForm):
     pin = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     def clean_codigo(self):
         return self.cleaned_data['codigo'].upper()
+
+class PassageiroForm(forms.ModelForm):
+    class Meta:
+        model = Passageiro
+        fields = ['empresa','embarque','referencia','dia_tipo','linha','veiculo','cartao','aplicacao','tipo','tarifa']
+    dia_tipo = forms.ChoiceField(choices=Passageiro.DIA_TIPO, widget=forms.Select(attrs={'class':'form-select'}))
+    referencia = forms.DateField(error_messages={'required': 'Informe a data de referência'}, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))

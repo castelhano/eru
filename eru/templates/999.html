@@ -17,10 +17,6 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<input type="text" name="foo" id="id_foo" class="tagin box-shadow-none" value="foo,bar">
-
-
-
 <div class="alert alert-dark">
     <div class="row">
         <div class="col">Foo</div>
@@ -137,7 +133,6 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
-<script src="{% static 'js/vendor/tagin.js' %}"></script>
 {% endblock %}
 
 
@@ -158,13 +153,5 @@ const form = new jsForm(document.getElementById('my_form'), {
         }
     }
 })
-
-const foo = new Tagin(document.getElementById('id_foo'), {
-    placeholder: 'Tags...'
-})
-document.getElementById('id_foo').addEventListener('change', ()=>{
-    appNotify('success', 'Modificado')
-})
-
 {% endblock %}
 </script>
