@@ -3,11 +3,13 @@ import threading
 import csv
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from core.models import Empresa, Log
+from core.models import Empresa, Log, Job
 from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Viagem, Passageiro
 from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm, PassageiroForm
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
 
 
 # METODOS SHOW
@@ -197,8 +199,14 @@ def planejamento_add(request):
 @permission_required('trafego.add_passageiro', login_url="/handler/403")
 def passageiros_import(request):
     if request.method == 'POST':
-        options = {'request':request}
+        j = Job()
+        j.usuario = request.user
+        j.modulo = "trafego.passageiro"
+        j.referencia = f"Import {request.POST['referencia']}"
+        j.save()
+        options = {'request':request, 'job':j}
         fn = threading.Thread(target=passageiros_import_run, args=(options,))
+        fn.setDaemon(True)
         fn.start()
         messages.info(request,'<b>Enviado:</b> Arquivo está sendo processado, uma mensagem será enviada na página principal do sistema quando finalizado')
     form = PassageiroForm()
@@ -208,12 +216,13 @@ def passageiros_import(request):
 def passageiros_import_run(options):
     f = options['request'].FILES['arquivo']
     reader = csv.DictReader(f.read().decode('ISO-8859-1').splitlines(), delimiter=';')
-    erros = []
+    erros = ''
+    ultima_linha = None
     for i, row in enumerate(reader):
         try:
             opt = {
                 'empresa': Empresa.objects.get(id=options['request'].POST['empresa']),
-                'embarque': row['HORARIO'],
+                'embarque': datetime.strptime(row['HORARIO'], '%d/%m/%Y  %H:%M:%S'),
                 'referencia': options['request'].POST['referencia'],
                 'dia_tipo': options['request'].POST['dia_tipo'],
                 'linha': Linha.objects.get(codigo=row['LINHA']),
@@ -225,10 +234,15 @@ def passageiros_import_run(options):
                 'tarifa': row['TARIFA'].replace(',','.'),
             }
             Passageiro.objects.create(**opt)
+        except DoesNotExist:
+            erros += 'Linha %s não localizada para empresa informada' % (row['LINHA'])
         except Exception as e:
-            print('EROOO')
-            erros.append({'line': i, 'message': e})
-        print(erros)
+            erros += str(e).replace("'","").replace('"','') + ';'
+    # Atualiza entrada do job
+    options['job'].erros = erros
+    options['job'].status = '<span class="text-success">Concluido</span>' if len(erros) == 0 else '<span class="text-danger">Concluido com Erro</span">'
+    options['job'].termino = datetime.now()
+    options['job'].save()
 
 # METODOS GET
 @login_required

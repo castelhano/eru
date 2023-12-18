@@ -9,6 +9,7 @@ urlpatterns = [
     path('authenticate',views.authenticate,name='authenticate'),
     path('change_password',views.change_password,name='change_password'),
     path('logs',views.logs,name='logs'),
+    path('jobs',views.jobs,name='jobs'),
     path('handler/<int:code>',views.handler,name='handler'),
     path('core_usuarios',views.usuarios,name='core_usuarios'),
     path('core_usuario_add',views.usuario_add,name='core_usuario_add'),

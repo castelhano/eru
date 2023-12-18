@@ -67,6 +67,18 @@ class Log(models.Model):
     class Meta:
         default_permissions = ('view',)
 
+class Job(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
+    modulo = models.CharField(max_length=60, blank=False)
+    referencia = models.CharField(max_length=60, blank=False)
+    inicio = models.DateTimeField(default=datetime.now)
+    termino = models.DateTimeField(blank=True, null=True)
+    erros = models.TextField(blank=True)
+    anexo = models.FileField(upload_to="core/jobs/", blank=True)
+    status = models.CharField(max_length=60, default='<span class="text-secondary">Processando</span>')
+    class Meta:
+        default_permissions = []
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     empresas = models.ManyToManyField(Empresa)

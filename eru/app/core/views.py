@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
-from .models import Empresa, Log, Settings
+from .models import Empresa, Log, Settings, Job
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -73,6 +73,11 @@ def logs(request):
     if related:
         logs = logs.filter(objeto_related=related)
     return render(request,'core/logs.html',{'logs':logs})
+
+@login_required
+def jobs(request):
+    jobs = Job.objects.filter(usuario=request.user).order_by('-inicio')
+    return render(request,'core/jobs.html',{'jobs':jobs})
 
 @login_required
 @permission_required('core.view_settings', login_url="/handler/403")
