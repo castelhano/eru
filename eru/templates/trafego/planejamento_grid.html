@@ -4,6 +4,15 @@
 {% block title %}Marcha{% endblock %}
 {% block nav_title %}Planejamento <span class="text-purple">{{planejamento.codigo}}</span>{% endblock %}
 
+<script>
+
+    {% block script_preload %}
+if(__sw < 768){ // Acesso somente em dispositivos de tela grande (lg ou >)
+    window.location.href = '{% url 'handler' 110 %}';
+}
+{% endblock %}
+</script>
+
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/charts.css' %}">
 {% endblock %}
