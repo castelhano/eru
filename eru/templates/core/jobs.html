@@ -37,8 +37,8 @@
                             {% if job.anexo %}
                                 <a class="btn btn-sm btn-phanton" href=""><i class="bi bi-paperclip"></i></a>
                             {% endif %}
-                            {% if job.erros|replace:'",'|length > 0 %}
-                                <button role="button" class="btn btn-sm btn-phanton-danger" onclick="exibirErros('{{ job.erros|safe }}')"><i class="bi bi-bug-fill"></i></button>
+                            {% if job.erros %}
+                                <a class="btn btn-sm btn-phanton-danger" href="{{job.erros.url}}" target="_blank"><i class="bi bi-bug-fill"></i></a>
                             {% endif %}
                         </td>
                     </tr>
@@ -69,10 +69,16 @@
         rowsPerPage: 20,
     });
 
-    function exibirErros(msg){
-        document.getElementById('erros_list').innerHTML = msg.replaceAll(';','<br>');
-        erros.showModal();
-    }
+
+
+    // function exibirErros(id){
+    //     let ul = document.createElement('ul');
+    //     for(let i = 0; i < erros[id].length; i++){
+    //         ul.appendChild(document.createEleme)
+
+    //     }
+    //     erros.showModal();
+    // }
     
     {% endblock %}
 </script>

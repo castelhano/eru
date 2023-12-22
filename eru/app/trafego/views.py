@@ -1,6 +1,8 @@
+import os
 import json
 import threading
 import csv
+from pathlib import Path
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from core.models import Empresa, Log, Job
@@ -8,6 +10,7 @@ from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Vi
 from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm, PassageiroForm
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.conf import settings
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -216,7 +219,7 @@ def passageiros_import(request):
 def passageiros_import_run(options):
     f = options['request'].FILES['arquivo']
     reader = csv.DictReader(f.read().decode('ISO-8859-1').splitlines(), delimiter=';')
-    erros = ''
+    txtLog = ''
     ultima_linha = None
     for i, row in enumerate(reader):
         try:
@@ -234,13 +237,22 @@ def passageiros_import_run(options):
                 'tarifa': row['TARIFA'].replace(',','.'),
             }
             Passageiro.objects.create(**opt)
-        except DoesNotExist:
-            erros += 'Linha %s não localizada para empresa informada' % (row['LINHA'])
+        except ObjectDoesNotExist:
+            # erros.append('Linha %s nao localizada para empresa informada' % (row['LINHA']))
+            txtLog += 'Linha %s não localizada para empresa informada\n' % (row['LINHA'])
         except Exception as e:
-            erros += str(e).replace("'","").replace('"','') + ';'
-    # Atualiza entrada do job
-    options['job'].erros = erros
-    options['job'].status = '<span class="text-success">Concluido</span>' if len(erros) == 0 else '<span class="text-danger">Concluido com Erro</span">'
+            # erros.append(str(e).replace("'","").replace('"','').replace('%',''))
+            txtLog += str(e) + '\n'
+    # Atualiza entrada do job ''
+    if txtLog != '':
+        file_path = '%s/core/job' % (settings.MEDIA_ROOT)
+        if not os.path.exists(file_path):
+            Path(file_path).mkdir(parents=True, exist_ok=True)
+        with open('%s/log_%s.txt' % (file_path, options['job'].id), 'wb') as f:
+            f.write(txtLog.encode('ISO-8859-1'))
+            f.close()
+        options['job'].erros = f'{file_path}/log_%s.txt' % (options['job'].id)
+    options['job'].status = '<span class="text-success">Concluido</span>' if txtLog == '' else '<span class="text-danger">Concluido com Erro</span">'
     options['job'].termino = datetime.now()
     options['job'].save()
 

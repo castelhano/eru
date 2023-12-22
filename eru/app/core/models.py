@@ -73,7 +73,7 @@ class Job(models.Model):
     referencia = models.CharField(max_length=60, blank=False)
     inicio = models.DateTimeField(default=datetime.now)
     termino = models.DateTimeField(blank=True, null=True)
-    erros = models.TextField(blank=True)
+    erros = models.FileField(upload_to="core/jobs/", blank=True)
     anexo = models.FileField(upload_to="core/jobs/", blank=True)
     status = models.CharField(max_length=60, default='<span class="text-secondary">Processando</span>')
     class Meta:
