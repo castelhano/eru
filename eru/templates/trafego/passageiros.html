@@ -1,0 +1,63 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Carregamento{% endblock %}
+{% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <form id="filter_form" action="{% url 'trafego_passageiros' %}" method="GET" autocomplete="off">
+      <div class="row">
+        <div class="col-lg">
+          <h5 class="card-title mb-2">Análise de Carregamento</h5>
+        </div>
+        <div class="col-lg-auto">
+          <div class="input-group">
+            <select class="form-select form-select-sm" name="empresa" id="id_empresa" style="width: 140px;" autofocus></select>
+            <input type="date" class="form-control form-control-sm" id="id_data" name="data" value="" style="width: 110px;">
+            <button type="submit" class="btn btn-sm btn-purple"><i class="bi bi-search"></i></button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+      <p class="text-secondary">Selecione empresa e data</p>
+    </div>
+  </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/url.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  dateToday({
+    native: true,
+    target: document.getElementById('id_data')
+  })
+  
+  let form = new jsForm(document.getElementById('filter_form'), {
+    selectPopulate: [
+    {
+      target: document.getElementById('id_empresa'), 
+      url: '{% url 'core_get_empresas' %}', 
+      then: ()=>{if(urlGet('empresa') != null){document.getElementById('id_empresa').value = urlGet('empresa')}}
+    }
+    ]
+  })
+  
+  function submitSearch(empresa_id=null){}
+  
+  
+  {% endblock %}
+</script>

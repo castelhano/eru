@@ -244,3 +244,5 @@ class Passageiro(models.Model):
     aplicacao = models.CharField(max_length=60, blank=True)
     tipo = models.CharField(max_length=60, blank=True)
     tarifa = models.DecimalField(default=0, max_digits=10, decimal_places=2)
+    class Meta:
+        default_permissions = ('view','import','delete',)

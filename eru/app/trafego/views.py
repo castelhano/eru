@@ -98,6 +98,11 @@ def planejamentos(request):
         planejamentos = planejamentos.filter(pin=True)
     return render(request,'trafego/planejamentos.html', {'planejamentos':planejamentos})
 
+@login_required
+@permission_required('trafego.view_passageiro', login_url="/handler/403")
+def passageiros(request):
+    return render(request, 'trafego/passageiros.html')    
+
 # METODOS ADD
 @login_required
 @permission_required('trafego.add_localidade', login_url="/handler/403")

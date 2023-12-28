@@ -55,4 +55,22 @@
         }
     })
     {% endif %}
+    {% if perms.trafego.view_passageiro %}
+    const menuPassageiro = new canvasNavLink({
+        name: 'P<b>a</b>ssageiros',
+        id: 'menu_passageiro',
+        class: 'text-purple',
+        icon: 'bi bi-graph-up-arrow',
+        href: '{% url 'trafego_passageiros' %}',
+        keybind:{
+            key: 'a',
+            alt: true,
+            name: '<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Passageiros',
+            desc: 'Abre página de análise de carregamento',
+            run: ()=>{
+                document.getElementById('menu_passageiro').click();
+            }
+        }
+    })
+    {% endif %}
 </script>
