@@ -205,13 +205,13 @@ def passageiros_import(request):
         j = Job()
         j.usuario = request.user
         j.modulo = "trafego.passageiro"
-        j.referencia = f"Import {request.POST['referencia']}"
+        j.referencia = f"Import passageiro {request.POST['referencia']}"
         j.save()
         options = {'request':request, 'job':j}
         fn = threading.Thread(target=passageiros_import_run, args=(options,))
         fn.setDaemon(True)
         fn.start()
-        messages.info(request,'<b>Enviado:</b> Arquivo está sendo processado, uma mensagem será enviada na página principal do sistema quando finalizado')
+        messages.info(request,'<b>Enviado:</b> Arquivo está sendo processado, verifique na seção de jobs o status do processo.')
     form = PassageiroForm()
     return render(request, 'trafego/passageiros_import.html', {'form':form})
 
@@ -246,12 +246,13 @@ def passageiros_import_run(options):
     # Atualiza entrada do job ''
     if txtLog != '':
         file_path = '%s/core/job' % (settings.MEDIA_ROOT)
+        file_name = '%s_log_%s.txt' % (options['request'].user.id , options['job'].id)
         if not os.path.exists(file_path):
             Path(file_path).mkdir(parents=True, exist_ok=True)
-        with open('%s/log_%s.txt' % (file_path, options['job'].id), 'wb') as f:
+        with open(f'{file_path}/{file_name}', 'wb') as f:
             f.write(txtLog.encode('ISO-8859-1'))
             f.close()
-        options['job'].erros = f'{file_path}/log_%s.txt' % (options['job'].id)
+        options['job'].erros = f'{file_path}/{file_name}'
     options['job'].status = '<span class="text-success">Concluido</span>' if txtLog == '' else '<span class="text-danger">Concluido com Erro</span">'
     options['job'].termino = datetime.now()
     options['job'].save()

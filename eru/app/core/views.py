@@ -1,5 +1,4 @@
-import re
-import json
+import re, os, json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
@@ -78,6 +77,31 @@ def logs(request):
 def jobs(request):
     jobs = Job.objects.filter(usuario=request.user).order_by('-inicio')
     return render(request,'core/jobs.html',{'jobs':jobs})
+
+@login_required
+def jobs_download(request, id):
+    job = Job.objects.get(pk=id)
+    if request.GET['type'] == 'erros':
+        file = job.erros
+    else:
+        file = job.anexo
+    filename = file.name.split('/')[-1]
+    response = HttpResponse(file.file)
+    response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+    return response
+
+@login_required
+def jobs_clean(request):
+    # jobs = Job.objects.filter(id=32)
+    jobs = Job.objects.filter(usuario=request.user)
+    for job in jobs:
+        if job.erros:
+            os.remove(job.erros.path) # REMOVE ARQUIVO FISICO
+        if job.anexo:
+            os.remove(job.anexo.path) # REMOVE ARQUIVO FISICO
+        job.delete()
+    messages.warning(request,'Registros <b>removidos</b> do servidor')
+    return redirect('jobs')
 
 @login_required
 @permission_required('core.view_settings', login_url="/handler/403")

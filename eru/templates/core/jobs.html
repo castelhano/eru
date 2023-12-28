@@ -12,11 +12,19 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">Processos de Servidor</h5>
+        <div class="row">
+            <div class="col">
+                <h5 class="card-title">Processos de Servidor</h5>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'jobs_clean' %}" class="btn btn-sm btn-danger">Limpar</a>
+            </div>
+        </div>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table table-sm border table-striped table-hover">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Modulo</th>
                         <th>Referência</th>
                         <th class="d-none d-md-table-cell">Inicio</th>
@@ -28,17 +36,18 @@
                 <tbody>
                     {% for job in jobs %}
                     <tr>
+                        <td>{{job.id|safe}}</td>
                         <td>{{job.modulo}}</td>
                         <td>{{job.referencia}}</td>
                         <td class="d-none d-md-table-cell">{{job.inicio|date:'d/m H:i:s'}}</td>
                         <td class="d-none d-lg-table-cell">{{job.termino|date:'d/m H:i:s'}}</td>
                         <td>{{job.status|safe}}</td>
-                        <td>
-                            {% if job.anexo %}
+                        <td class="text-end">
+                            {% if job.anexo or True %}
                                 <a class="btn btn-sm btn-phanton" href=""><i class="bi bi-paperclip"></i></a>
                             {% endif %}
                             {% if job.erros %}
-                                <a class="btn btn-sm btn-phanton-danger" href="{{job.erros.url}}" target="_blank"><i class="bi bi-bug-fill"></i></a>
+                                <a class="btn btn-sm btn-phanton-danger" href="{% url 'jobs_download' job.id|safe %}?type=erros" target="_blank"><i class="bi bi-bug-fill"></i></a>
                             {% endif %}
                         </td>
                     </tr>
