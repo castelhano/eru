@@ -220,29 +220,39 @@ def passageiros_import_run(options):
     f = options['request'].FILES['arquivo']
     reader = csv.DictReader(f.read().decode('ISO-8859-1').splitlines(), delimiter=';')
     txtLog = ''
-    ultima_linha = None
-    for i, row in enumerate(reader):
-        try:
-            opt = {
-                'empresa': Empresa.objects.get(id=options['request'].POST['empresa']),
-                'embarque': datetime.strptime(row['HORARIO'], '%d/%m/%Y  %H:%M:%S'),
-                'referencia': options['request'].POST['referencia'],
-                'dia_tipo': options['request'].POST['dia_tipo'],
-                'linha': Linha.objects.get(codigo=row['LINHA']),
-                'veiculo': row['VEICULO'],
-                'cartao': row['CARTAO'],
-                'cartao': row['CARTAO'],
-                'aplicacao': row['APLICACAO'],
-                'tipo': row['TIPO'],
-                'tarifa': row['TARIFA'].replace(',','.'),
-            }
-            Passageiro.objects.create(**opt)
-        except ObjectDoesNotExist:
-            # erros.append('Linha %s nao localizada para empresa informada' % (row['LINHA']))
-            txtLog += 'Linha %s não localizada para empresa informada\n' % (row['LINHA'])
-        except Exception as e:
-            # erros.append(str(e).replace("'","").replace('"','').replace('%',''))
-            txtLog += str(e) + '\n'
+    empresa = Empresa.objects.get(id=options['request'].POST['empresa'])
+    linha = None
+    rows = list(reader)
+    size = len(rows) - 1
+    if size > 0:
+        for i, row in enumerate(rows):
+            try:
+                if not linha or linha.codigo != row['LINHA']:
+                    linha = Linha.objects.get(codigo=row['LINHA'], empresa=empresa)
+                opt = {
+                    'empresa': empresa,
+                    'embarque': datetime.strptime(row['HORARIO'], '%d/%m/%Y  %H:%M:%S'),
+                    'referencia': options['request'].POST['referencia'],
+                    'dia_tipo': options['request'].POST['dia_tipo'],
+                    'linha': linha,
+                    'veiculo': row['VEICULO'],
+                    'cartao': row['CARTAO'],
+                    'cartao': row['CARTAO'],
+                    'aplicacao': row['APLICACAO'],
+                    'tipo': row['TIPO'],
+                    'tarifa': row['TARIFA'].replace(',','.'),
+                }
+                Passageiro.objects.create(**opt)
+            except ObjectDoesNotExist:
+                log = 'Linha %s não localizada para empresa informada' % (row['LINHA'])
+                if not log in txtLog:
+                    txtLog += '%s - %s\n' % (i, log)
+            except Exception as e:
+                if not str(e) in txtLog:
+                    txtLog += f'{i} - ' + str(e) + '\n'
+            print('trafego.passageiro.import: %s de %s  %s%%' % (i, size, round((i / size) * 100, 1)))
+    else:
+        txtLog = 'Arquivo enviado vazio'
     # Atualiza entrada do job ''
     if txtLog != '':
         file_path = '%s/core/job' % (settings.MEDIA_ROOT)
@@ -253,7 +263,7 @@ def passageiros_import_run(options):
             f.write(txtLog.encode('ISO-8859-1'))
             f.close()
         options['job'].erros = f'{file_path}/{file_name}'
-    options['job'].status = '<span class="text-success">Concluido</span>' if txtLog == '' else '<span class="text-danger">Concluido com Erro</span">'
+    options['job'].status = '<span class="text-success">Concluido</span>' if txtLog == '' else '<span class="text-orange">Concluido com Erro</span">'
     options['job'].termino = datetime.now()
     options['job'].save()
 

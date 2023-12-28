@@ -17,7 +17,14 @@
                 <h5 class="card-title">Processos de Servidor</h5>
             </div>
             <div class="col-auto">
-                <a href="{% url 'jobs_clean' %}" class="btn btn-sm btn-danger">Limpar</a>
+                <a 
+                href="{% url 'jobs_clean' %}" 
+                class="btn btn-sm btn-danger"
+                data-appConfirm="true"
+                data-appConfirmMessage="Ao confirmar todo histórico <b>dos processos concluidos</b> serão removidos, confirma operação?"
+                data-appConfirmText="Limpar"
+                data-appConfirmColor="danger"
+                >Limpar</a>
             </div>
         </div>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -43,8 +50,8 @@
                         <td class="d-none d-lg-table-cell">{{job.termino|date:'d/m H:i:s'}}</td>
                         <td>{{job.status|safe}}</td>
                         <td class="text-end">
-                            {% if job.anexo or True %}
-                                <a class="btn btn-sm btn-phanton" href=""><i class="bi bi-paperclip"></i></a>
+                            {% if job.anexo %}
+                                <a class="btn btn-sm btn-phanton" href="{% url 'jobs_download' job.id|safe %}?type=anexo"><i class="bi bi-paperclip"></i></a>
                             {% endif %}
                             {% if job.erros %}
                                 <a class="btn btn-sm btn-phanton-danger" href="{% url 'jobs_download' job.id|safe %}?type=erros" target="_blank"><i class="bi bi-bug-fill"></i></a>

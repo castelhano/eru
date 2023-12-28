@@ -42,7 +42,6 @@ def grupos(request):
 def usuarios_grupo(request, id):
     grupo = Group.objects.get(pk=id)
     usuarios = User.objects.filter(groups=grupo)
-    print(usuarios)
     return render(request, 'core/usuarios_grupo.html',{'grupo':grupo,'usuarios':usuarios})
 
 
@@ -92,8 +91,7 @@ def jobs_download(request, id):
 
 @login_required
 def jobs_clean(request):
-    # jobs = Job.objects.filter(id=32)
-    jobs = Job.objects.filter(usuario=request.user)
+    jobs = Job.objects.filter(usuario=request.user).exclude(termino=None)
     for job in jobs:
         if job.erros:
             os.remove(job.erros.path) # REMOVE ARQUIVO FISICO
