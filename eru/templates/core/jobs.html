@@ -51,10 +51,10 @@
                         <td>{{job.status|safe}}</td>
                         <td class="text-end">
                             {% if job.anexo %}
-                                <a class="btn btn-sm btn-phanton" href="{% url 'jobs_download' job.id|safe %}?type=anexo"><i class="bi bi-paperclip"></i></a>
+                                <a class="btn btn-sm btn-phantom" href="{% url 'jobs_download' job.id|safe %}?type=anexo"><i class="bi bi-paperclip"></i></a>
                             {% endif %}
                             {% if job.erros %}
-                                <a class="btn btn-sm btn-phanton-danger" href="{% url 'jobs_download' job.id|safe %}?type=erros" target="_blank"><i class="bi bi-bug-fill"></i></a>
+                                <a class="btn btn-sm btn-phantom-danger" href="{% url 'jobs_download' job.id|safe %}?type=erros" target="_blank"><i class="bi bi-bug-fill"></i></a>
                             {% endif %}
                         </td>
                     </tr>

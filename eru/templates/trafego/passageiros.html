@@ -8,27 +8,105 @@
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
-      <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      <li class="nav-item"><a id="tab_link_chart" class="nav-link active" data-bs-toggle="tab" data-bs-target="#chart" href="#" title="Resumo"><i class="bi bi-bar-chart-line-fill"></i></a></li>
+      <li class="nav-item ms-1"><a id="tab_link_detalhe" class="nav-link" href="#" title="Baixar detalhado"><i class="bi bi-list"></i></a></li>
     </ul>
   </div>
   <div class="card-body tab-content">
-    <form id="filter_form" action="{% url 'trafego_passageiros' %}" method="GET" autocomplete="off">
-      <div class="row">
-        <div class="col-lg">
-          <h5 class="card-title mb-2">Análise de Carregamento</h5>
-        </div>
-        <div class="col-lg-auto">
-          <div class="input-group">
-            <select class="form-select form-select-sm" name="empresa" id="id_empresa" style="width: 140px;" autofocus></select>
-            <input type="date" class="form-control form-control-sm" id="id_data" name="data" value="" style="width: 110px;">
-            <button type="submit" class="btn btn-sm btn-purple"><i class="bi bi-search"></i></button>
+    <div class="row">
+      <div class="col"><h5 class="card-title mb-2">Análise de Carregamento</h5></div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-phantom" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-funnel-fill"></i></button>
+      </div>
+    </div>
+    <div class="collapse{% if not passageiros %} show{% endif %}" id="filters">
+      <form id="filter_form" action="{% url 'trafego_passageiros' %}" method="POST" autocomplete="off">
+        {% csrf_token %}
+        <div class="row g-1">
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <select name="layout" id="id_layout" class="form-select" autofocus>
+              <option value="linha_diario">Linha Diário</option>
+            </select>
+            <label for="id_layout">Layout</label>
+          </div>
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <select name="empresa" id="id_empresa" class="form-select"></select>
+            <label for="id_empresa">Empresa</label>
+          </div>
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <input type="date" class="form-control" name="data_inicio" id="id_data_inicio" value="{{request.POST.data_inicio}}">
+            <label for="id_data_inicio">Data Inicio</label>
+          </div>
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <input type="date" class="form-control" name="data_fim" id="id_data_fim" value="{{request.POST.data_fim}}">
+            <label for="id_data_fim">Data Fim</label>
+          </div>
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <input type="text" class="form-control" name="linha_inicio" id="id_linha_inicio" value="{{request.POST.linha_inicio}}">
+            <label for="id_linha_inicio">Linha Inicio</label>
+          </div>
+          <div class="col-lg-2 mb-1 form-floating">
+            <input type="text" class="form-control" name="linha_fim" id="id_linha_fim" value="{{request.POST.linha_fim}}">
+            <label for="id_linha_fim">Linha Fim</label>
           </div>
         </div>
-      </div>
-    </form>
-    <div class="tab-pane fade show active" id="base" role="tabpanel">
-      <p class="text-secondary">Selecione empresa e data</p>
+
+        <div class="row g-1">
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <input type="text" class="form-control" name="veiculo_inicio" id="id_veiculo_inicio" value="{{request.POST.veiculo_inicio}}">
+            <label for="id_veiculo_inicio">Veiculo Inicio</label>
+          </div>
+          <div class="col-lg-2 mb-lg-1 form-floating">
+            <input type="text" class="form-control" name="veiculo_fim" id="id_veiculo_fim" value="{{request.POST.veiculo_fim}}">
+            <label for="id_veiculo_fim">Veiculo Fim</label>
+          </div>
+          <div class="col-lg-4 mb-1 form-floating">
+            <input type="text" class="form-control" name="cartao" id="id_cartao" value="{{request.POST.cartao}}">
+            <label for="id_cartao">Número do cartão</label>
+          </div>
+          <div class="col">
+            <button type="submit" id="submit" class="btn btn-dark">Buscar</button>
+          </div>
+        </div>
+      </form>
+
     </div>
+    <div class="tab-pane fade show active mt-2" id="chart" role="tabpanel">
+      <p>
+      </p>
+    </div>
+    <!-- <div class="tab-pane fade" id="detalhe" role="tabpanel">
+      <table id="demanda_table" class="table table-sm border table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Embarque</th>
+            <th>Referência</th>
+            <th>Dia Tipo</th>
+            <th>Linha</th>
+            <th>Carro</th>
+            <th>Cartao</th>
+            <th>Aplicação</th>
+            <th>Tipo</th>
+            <th>Tarifa</th>
+          </tr>
+        </thead>
+        <tbody>
+          { for passageiro in passageiros }
+          <tr>
+            <td>%%passageiro.embarque|date:'d/m/Y H:i'%%</td>
+            <td>%%passageiro.referencia|date:'d/m/Y'%%</td>
+            <td>%%passageiro.get_dia_tipo_display%%</td>
+            <td>%%passageiro.linha.codigo%%</td>
+            <td>%%passageiro.veiculo.prefixo%%</td>
+            <td>%%passageiro.cartao%%</td>
+            <td>%%passageiro.aplicacao%%</td>
+            <td>%%passageiro.tipo%%</td>
+            <td>%%passageiro.tarifa%%</td>
+          </tr>            
+          { endfor }
+        </tbody>
+      </table>
+    </div> -->
   </div>
 </div>
 {% endblock%}
@@ -40,24 +118,31 @@
 
 <script>
   {% block add_script %}
-  
-  dateToday({
-    native: true,
-    target: document.getElementById('id_data')
-  })
+
+  console.log({{passageiros|safe}});
+
+  if(document.getElementById('id_data_inicio').value == ''){dateToday({native: true, days: -1, target: document.getElementById('id_data_inicio')})}
+  if(document.getElementById('id_data_fim').value == ''){dateToday({native: true, target: document.getElementById('id_data_fim')})}
+  appKeyMap.map['gTFF'].desc = 'Realiza busca com filtros informados';
   
   let form = new jsForm(document.getElementById('filter_form'), {
     selectPopulate: [
     {
       target: document.getElementById('id_empresa'), 
-      url: '{% url 'core_get_empresas' %}', 
+      url: '{% url 'core_get_empresas' %}',
+      emptyRow: true,
+      emptyRowText: 'Geral',
       then: ()=>{if(urlGet('empresa') != null){document.getElementById('id_empresa').value = urlGet('empresa')}}
     }
-    ]
+    ],
+    customValidation: {
+      'data_fim': () => {
+        return [
+          document.getElementById('id_data_inicio').value <= document.getElementById('id_data_fim').value,
+          'Data final deve ser maior que data inicial'
+        ]
+      }
+    }
   })
-  
-  function submitSearch(empresa_id=null){}
-  
-  
   {% endblock %}
 </script>

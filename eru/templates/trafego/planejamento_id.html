@@ -86,7 +86,7 @@
                   {% if ativo %}
                   <button type="button" id="btn_comparar" class="btn btn-sm btn-purple" name="button" onclick="compararPlanejamentos()" title="Comparar com atual [ALT X]"><i class="bi bi-copy px-2"></i></button>
                   {% endif %}
-                  <a class="btn btn-sm btn-phanton" data-bs-toggle="dropdown" data-bs-offset="0,5" href="#" role="button"><i class="bi bi-caret-down-fill"></i></a>
+                  <a class="btn btn-sm btn-phantom" data-bs-toggle="dropdown" data-bs-offset="0,5" href="#" role="button"><i class="bi bi-caret-down-fill"></i></a>
                   <ul class="dropdown-menu dropdown-menu-end fs-7">
                     <li><a class="dropdown-item" href="{% url 'trafego_planejamento_horarios' planejamento.id|safe %}"><i class="bi bi-list me-2"></i>Horários</a></li>
                     {% if perms.trafego.delete_planejamento %}

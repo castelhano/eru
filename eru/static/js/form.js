@@ -1,3 +1,13 @@
+/*
+* jsForm    Implementa operacoes com formularios (validacao, conversao, busca via ajax, etc)
+*
+* @version  1.8
+* @since    03/06/2023
+* @release  04/01/2024 [add beforeSubmit]
+* @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
+* @example  const form = new jsForm(document.getElementById('my_form'), {});
+*/
+
 class jsForm{
     constructor(form, options){
         this.form = form;
@@ -5,6 +15,8 @@ class jsForm{
         this.imask = options?.imask || [];
         this.imaskFieldNames = [];
         this.selectPopulate = options?.selectPopulate || [];
+        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
+        this.beforeSubmit = options?.beforeSubmit != undefined ? options.beforeSubmit : () => { return true };
         this.selects = {}; // Armazena instancias de selectPopulate
         // customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
         // deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
@@ -23,12 +35,16 @@ class jsForm{
         }
         if(!this.novalidate){
             this.form.setAttribute('novalidate', null); // Desativa validacao pelo navegador
-            this.form.onsubmit = ()=>{return this.validate()} ; // Chama funcao de validacao ao submeter form
+            this.form.onsubmit = ()=>{ // Chama funcao de validacao ao submeter form
+                if(this.validate()){return this.beforeSubmit()}
+                return false;
+            };
             this.__imaskValidate(); // Adiciona validacao para elementos imask
             this.__validateListeners(); // Adiciona listeners (onblur) nos fields
         }
-
-
+        else { // Roda metodo antes de submeter form
+            this.form.onsubmit = ()=>{return this.beforeSubmit()};
+        }
     }
     load(data, ignore=[]){
         this.imask.forEach((el)=>{ // Ajusta elementos imask
@@ -225,7 +241,7 @@ class jsForm{
 */
 class selectPopulate{
     constructor(options){
-        if(!options.target || !options.url){console.log('selectPopulate: target e url são obrigatórios');return false}
+        if(!options.target || !options.url){console.log('selectPopulate: target e url sao obrigatórios');return false}
         this.target = options.target;
         this.data = []; // Json com dados retornados
         this.url = options.url;
@@ -276,7 +292,7 @@ class selectPopulate{
 
 // Configuracoes / Listeners ao carregar pagina
 // **
-// Evita tabulação em elementos select com classe readonly
+// Evita tabulacao em elementos select com classe readonly
 document.querySelectorAll('select.readonly').forEach((e) => {e.tabIndex = -1});
 
 // Adiciona eventos auxiliares a input:date ([t => today()], [+ currentday + 1], [- currentday - 1])

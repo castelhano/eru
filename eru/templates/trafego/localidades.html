@@ -33,9 +33,9 @@
     <div class="tab-pane fade show active" id="base" role="tabpanel">
       <table id="main_table" class="table border table-striped table-hover">
         <caption>
-          <button id="id_garagem" data-value="false" type="button" class="btn btn-sm btn-phanton" onclick="setAdicionalFilters(this)">Garagem</button>
-          <button id="id_tturno" data-value="false" type="button" class="btn btn-sm btn-phanton" onclick="setAdicionalFilters(this)">T Turno</button>
-          <button id="id_controle" data-value="false" type="button" class="btn btn-sm btn-phanton" onclick="setAdicionalFilters(this)">Controle</button>
+          <button id="id_garagem" data-value="false" type="button" class="btn btn-sm btn-phantom" onclick="setAdicionalFilters(this)">Garagem</button>
+          <button id="id_tturno" data-value="false" type="button" class="btn btn-sm btn-phantom" onclick="setAdicionalFilters(this)">T Turno</button>
+          <button id="id_controle" data-value="false" type="button" class="btn btn-sm btn-phantom" onclick="setAdicionalFilters(this)">Controle</button>
         </caption>
         <thead>
           <tr>
@@ -91,13 +91,13 @@
   function setAdicionalFilters(el){
     if(el.dataset.value == 'false'){
       el.dataset.value = 'true';
-      el.classList.remove('btn-phanton');
+      el.classList.remove('btn-phantom');
       el.classList.add('btn-success');
     }
     else{
       el.dataset.value = 'false';
       el.classList.remove('btn-success');
-      el.classList.add('btn-phanton');
+      el.classList.add('btn-phantom');
     }
     adicional_filters = garagem.dataset.value == 'true' ? '&garagem=True' : '';
     adicional_filters += controle.dataset.value == 'true' ? '&controle=True' : '';
