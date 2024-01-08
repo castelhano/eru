@@ -42,7 +42,7 @@ def linhas(request):
     else:
         empresa_display = 'Todas'
         linhas = linhas.filter(empresa__in=request.user.profile.empresas.all())
-    metrics = dict(status_display='Ativas' if inativa == True else 'Inativas', empresa_display = empresa_display)
+    metrics = dict(status_display = 'Inativas' if inativa == 'True' else 'Ativas', empresa_display = empresa_display)
     return render(request,'trafego/linhas.html', {'linhas' : linhas, 'metrics':metrics})
 
 @login_required
@@ -654,7 +654,7 @@ def get_localidades(request):
         for item in localidades:
             item_dict = {'#':item.id, 'Nome':item.nome, 'GAR': 'GAR' if item.eh_garagem else '', 'T Turno': 'T Turno' if item.troca_turno else '', 'Controle': 'Controle' if item.ponto_de_controle else ''}
             if request.user.has_perm('trafego.change_localidade'):
-                item_dict['cnt'] = f'<a class="btn btn-sm btn-dark float-end" href="/trafego_localidade_id/{item.id}"><i class="fas fa-pen"></i></a>'
+                item_dict['cnt'] = f'<a class="btn btn-sm btn-dark float-end" href="/trafego_localidade_id/{item.id}"><i class="bi bi-pen-fill"></i></a>'
             itens.append(item_dict)
         dataJSON = json.dumps(itens)
         return HttpResponse(dataJSON)

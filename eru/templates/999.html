@@ -17,15 +17,34 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<div class="alert alert-dark">
-    <div class="row">
-        <div class="col">Foo</div>
-        <div class="col-auto">
-            <button class="btn btn-phantom" style="margin: -8px 0;"><i class="bi bi-person-fill"></i></button>
-            <button class="btn btn-phantom btn-phantom-success" style="margin: -8px 0;"><i class="bi bi-info-circle-fill"></i></button>
-        </div>
-    </div>
-</div>
+<table class="table" id="foo_table">
+    <thead>
+        <tr>
+            <th>Foo</th>
+            <th>Bar</th>
+            <th>Nin</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Rafael</td>
+            <td>55</td>
+            <td>M</td>
+        </tr>
+        <tr>
+            <td>Maria</td>
+            <td>52</td>
+            <td>F</td>
+        </tr>
+        <tr>
+            <td>Joaquim</td>
+            <td>55</td>
+            <td>M</td>
+        </tr>
+    </tbody>
+
+
+</table>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -133,6 +152,8 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/table_ajax.js' %}"></script>
 {% endblock %}
 
 
@@ -152,6 +173,11 @@ const form = new jsForm(document.getElementById('my_form'), {
             return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
         }
     }
+})
+
+const table = new jsTableAjax(document.getElementById('foo_table'), {
+    canFilter: true,
+    filterCols: ['Bar', 'Nin']
 })
 {% endblock %}
 </script>
