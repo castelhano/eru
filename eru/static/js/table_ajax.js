@@ -11,15 +11,16 @@ class jsTableAjax extends jsTable{
         options['canFilter'] = true;
         options['filterCols'] = ['ajax'];
         super(target, options);
-        this.container = options?.container || document.body; // parentNode da tabela, usado na construcao de tabela pelo evento createTable(), caso nao informado append nova tabela no body
         this.data = options?.data || []; // Json com dados para popular tabela
         this.dataUrl = options?.dataUrl || null; // URL para buscar registros (via ajax)
         this.dataUrlKeyName = options?.dataUrlKeyName || 'pesquisa'; // Nome da variavel usada na consulta ajax
+        this.loadingMessage = options?.loadingMessage || '<div class="text-center"><div class="spinner-border text-warning"></div></div>'; // Mensagem ao carregar dados do servidor
         this.dataUrlAdicionalFilters = options?.dataUrlAdicionalFilters || ''; // Filtros adicionais a serem adicionados na consulta ajax
         this.dataUrlMinDigits = options?.dataUrlMinDigits != undefined ? options.dataUrlMinDigits : 3; // Busca ajax eh acionada com no minimo de digitos setado em dataUrlMinDigits
         this.dataUrlDelay = options?.dataUrlDelay || 800; // Delay em milisegundos entre os inputs para realizar a consulta ajax
         this.filterInput.onkeyup = (e) => {this.dataUrlKeyup(e)};
         this.filterInput.onkeydown = (e) => {this.dataUrlKeydown(e)};
+        
     }
     dataUrlKeyup(e){
         clearTimeout(this.dataUrlTimeout);
@@ -31,7 +32,7 @@ class jsTableAjax extends jsTable{
     dataUrlGet(){ // Funcao (overwritten) chamada no keyup do filterInput
         let criterio = this.filterInput.value.trim();
         if(criterio.length >= this.dataUrlMinDigits){ // Aciona o ajax somente se tiver um minimo de caracteres digitados
-            this.cleanRows();
+            this.loading();
             let self = this;
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function(){
@@ -67,5 +68,9 @@ class jsTableAjax extends jsTable{
         if(this.enablePaginate){this.paginate()}
         else{for(let i = 0; i < data_size; i++){this.tbody.appendChild(this.raw[i]);}}
         if(this.showCounterLabel){this.rowsCountLabel.innerHTML = data_size};
+    }
+    loading(){
+        this.cleanRows();
+        this.tbody.innerHTML = `<tr class="emptyRow"><td data-type="emptyRow" colspan="${this.headers.length}">${this.loadingMessage}</td></tr>`;
     }
 }

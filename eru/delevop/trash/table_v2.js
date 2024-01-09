@@ -442,7 +442,6 @@ class jsTable{
     goToPage(page){this.activePage = page;this.paginate();}
     previousPage(){if(!this.enablePaginate || this.activePage == 1){return false}this.activePage--;this.paginate();}
     nextPage(){if(!this.enablePaginate || this.activePage == this.lastPage){return false}this.activePage++;this.paginate();}
-    clearRowFocus(){}
     nextRow(){
         let tableRowsCount = this.tbody.querySelectorAll('tr:not(.emptyRow)').length;
         if(tableRowsCount == 0){return false;} // Se tabela vazia nao executa codigo

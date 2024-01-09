@@ -48,7 +48,6 @@ class jsTable{
         this.activePage = options?.activePage || 1; // Informa pagina exibida no momento (ou pode ser setada na criacao do objeto)
         this.maxPagesButtons = options?.maxPagesButtons || 6; // Quantidade maxima de botoes a serem exibidos 
         // Estilizacao ********
-        this.tableClasslist = options?.tableClasslist || 'table border table-striped table-hover caption-top mb-2';
         this.rowsCountLabelClasslist = options?.rowsCountLabelClasslist || 'btn btn-sm bg-body-secondary';
         this.activeRowClass = options?.activeRowClass || 'selected';
         this.pgControlClasslist = options?.pgControlClasslist || 'pagination justify-content-end'; 
@@ -59,7 +58,7 @@ class jsTable{
         this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-right"></i>';
         this.emptyTableMessage = options?.emptyTableMessage || 'Nenhum registro a exibir';
         
-        this.validateTable();
+        if(!options?.noValidate){this.validateTable()}
         this.buildControls();
         this.buildListeners();
         
@@ -112,14 +111,14 @@ class jsTable{
             capFilter.appendChild(this.filterInput);
             capRow.appendChild(capFilter);
         }
-        let capControlsGroup = document.createElement('div'); // Inicia btn-group
-        capControlsGroup.classList = 'btn-group';
+        this.controlsGroup = document.createElement('div'); // Inicia btn-group
+        this.controlsGroup.classList = 'btn-group';
         if(this.showCounterLabel){
             this.rowsCountLabel = document.createElement('button'); // Cria elemento que vai armazenar a quantidade de registros na tabela
             this.rowsCountLabel.classList = this.rowsCountLabelClasslist;
             this.rowsCountLabel.disabled = true;
             this.rowsCountLabel.innerHTML = this.raw.length;
-            capControlsGroup.appendChild(this.rowsCountLabel);
+            this.controlsGroup.appendChild(this.rowsCountLabel);
         }
         if(this.canExportCsv){
             this.exportButtonCSV = document.createElement('button');
@@ -127,18 +126,18 @@ class jsTable{
             this.exportButtonCSV.onclick = (e) => this.exportCsv(e);
             this.exportButtonCSV.innerHTML = 'CSV';
             this.exportButtonCSV.id = 'jsTableDownloadCSV';
-            capControlsGroup.appendChild(this.exportButtonCSV);
+            this.controlsGroup.appendChild(this.exportButtonCSV);
         }
         if(this.canExportJson){
             let btn = document.createElement('button');
             btn.classList = 'btn btn-sm btn-outline-secondary';
             btn.onclick = (e) => this.exportJson(e);
             btn.innerHTML = 'JSON';
-            capControlsGroup.appendChild(btn);
+            this.controlsGroup.appendChild(btn);
         }
         let capControls = document.createElement('div');
         capControls.classList = 'col-auto ms-auto';
-        capControls.appendChild(capControlsGroup);
+        capControls.appendChild(this.controlsGroup);
         capRow.appendChild(capControls);
         this.table.caption.appendChild(capRow);
     }
