@@ -16,11 +16,13 @@ class jsTableJson extends jsTable{
         fakeTable.appendChild(document.createElement('tbody'));
         // ********************
         super(fakeTable, options);
-        this.container = options?.container || document.body; // parentNode da tabela, usado na construcao de tabela pelo evento createTable(), caso nao informado, faz append no body
+        this.container = options?.container || document.body; // container para tabela, caso nao informado, faz append no body
         this.container.appendChild(this.table);
+        if(this.enablePaginate){this.table.after(this.pgControlsContainer)}
         this.data = options?.data || []; // Json com dados para popular tabela
         this.trash = []; // Ao deletar row, registro eh movido para o trash (permitndo retornar registro)
         this.editableCols = options?.editableCols || [];
+        this.ignoredCols = options?.ignoredCols || []; // ex: ignoredCols: ['detalhe', 'senha'] campos informados aqui nao serao importados na tabela
         this.restoreButton = null; // Armazena o botao para restaurar linha do trash, necessario para exibir e ocultar baseado na existencia de itens no trash
         this.saveBtn = null;
         // ****************
@@ -41,9 +43,11 @@ class jsTableJson extends jsTable{
         this.restoreButtonClasslist = options?.restoreButtonClasslist || 'btn btn-sm btn-outline-secondary d-none';
         this.restoreButtonText = options?.restoreButtonText || '<i class="bi bi-clock-history px-1"></i>';
         // ****************
+        
         this.buildHeaders();
         this.updateControls();
         this.buildRows();
+        if(this.enablePaginate){this.paginate();}
     }
     updateControls(){
         if(this.canAddRow){
@@ -72,7 +76,7 @@ class jsTableJson extends jsTable{
         let tr = document.createElement('tr');
         for(let i = 0;i < this.data.length;i++){
             for(let j in this.data[i]){
-                if(!this.headers.includes(j)){
+                if(!this.headers.includes(j) && !this.ignoredCols.includes(j)){
                     this.headers.push(j);
                     let th = document.createElement('th');
                     th.setAttribute('data-key',j);
@@ -123,6 +127,13 @@ class jsTableJson extends jsTable{
             controls.appendChild(deleteBtn);
             row.appendChild(controls);
         }
+    }
+    rowsReset(){ // Popula tbody conforme conteudo de this.raw
+        let size = this.raw.length;
+        this.cleanTbody();
+        if(this.enablePaginate){this.paginate()}
+        else{for(let i = 0; i < size; i++){this.tbody.appendChild(this.raw[i]);}}
+        if(this.showCounterLabel){this.rowsCountLabel.innerHTML = size};
     }
     loadData(json){ // Carrega dados na tabela (!! Limpa dados atuais)
         this.data = json;

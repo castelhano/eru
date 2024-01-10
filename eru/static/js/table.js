@@ -69,7 +69,7 @@ class jsTable{
         this.table.classList.add('caption-top'); // Adiciona a classe caption top (caso nao exista)
         if(this.canSort){this.table.classList.add('table-sortable')}
         if(this.enablePaginate){ // Cria os controles gerais para paginacao (first, next e previous)
-            let pgNav = this.pgControlContainer || document.createElement('nav'); // Container principal dos controles de navegacao da tabela
+            this.pgControlsContainer = this.pgControlContainer || document.createElement('nav'); // Container principal dos controles de navegacao da tabela
             this.pgControls = document.createElement('ul'); // Controles de navegacao
             this.pgControls.classList = this.pgControlClasslist;
             let first = document.createElement('li');
@@ -87,8 +87,8 @@ class jsTable{
             this.pgControls.appendChild(first); // Adiciona o botao para primeira pagina no pgControls
             this.pgControls.appendChild(previous); // Adiciona o botao para pagina anterior no pgControls
             this.pgControls.appendChild(next); // Adiciona o botao para proxima pagina no pgControls
-            pgNav.appendChild(this.pgControls); // Adiciona o pgControls no container de navegacao
-            if(!this.pgControlContainer){this.table.after(pgNav);} // Insere nav (caso nao definido container na instancia da clsse) com controles de paginacao no fim da tabela
+            this.pgControlsContainer.appendChild(this.pgControls); // Adiciona o pgControls no container de navegacao
+            if(!this.pgControlContainer){this.table.after(this.pgControlsContainer);} // Insere nav (caso nao definido container na instancia da clsse) com controles de paginacao no fim da tabela
         }
         // Controles do caption (filter input, addRow, export, save etc...)
         let capRow = document.createElement('div');capRow.classList = 'row g-2 align-items-end'; // Inicia row

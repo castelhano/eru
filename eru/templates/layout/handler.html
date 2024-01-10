@@ -17,11 +17,6 @@
 			.texto{max-width: 370px;}
 		}
 	</style>
-	<script>
-		var page = {% block page_code %}window.location.pathname.split('/').pop().split('?')[0];{% endblock %}
-		if(!['110','403','404','500','999'].includes(page)){page = '500'}
-
-	</script>
 </head>
 <body class="bg-body-tertiary">
 	<div class="container-fluid">
@@ -38,9 +33,7 @@
 		</div>
 	</div>
 	<script src="{% static 'js/listener.js' %}"></script>
-	<script src="{% static 'js/interpolate.js' %}"></script>
 	<script> 
-		appPlot({page: page});
         appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Inicio', key:'i', alt: true, run: () => {try{document.getElementById('home').click()}catch(e){}}, desc:'Retorna à página inicial'})
         appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymapModal()}, desc:'Mostra atalhos disponiveis na página'})
 		if(localStorage.theme){
