@@ -3,7 +3,7 @@ class Keywatch{
         this.map = {};                                  // Mapa com todos os atalhos cadastrados
         this.filteredMap = [];                          // Mapa filtrado
         this.tabOnEnter = true;                         // Ativa tabulacao ao precionar enter (dentro de formularios <form>)
-        // Eh possivel exibir modal com atalhos, requer lib jsTable
+        // Adiciona estilo e configuracoes para modal com lista de atalhos
         this.__addStyles();
         this.modal = document.createElement('dialog');  // Cria modal para exibir atalhos
         this.modal.classList.add('keywatch_modal');
