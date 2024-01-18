@@ -1,3 +1,5 @@
+import { metrics as $, defaultParam } from './DM_metrics.js';
+
 function __builSettingsUI(){
     this.settingsContainer.innerHTML = `<small class="text-secondary">Version: <b>${this.projects[this.projectIndex].version}</b></small>`;
     this.settingsShowFreqRule = document.createElement('input');this.settingsShowFreqRule.id = `March_settingsShowFreqRule`;this.settingsShowFreqRule.checked = true;
