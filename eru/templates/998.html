@@ -4,35 +4,24 @@
 {% block nav_title %}998{% endblock %}
 
 {% block content_fluid %}
-<div id="table_container">
-    <!-- <table id="table" class="table table-sm border">
-        <thead>
-            <tr>
-                <th>Foo</th>
-                <th>Bar</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>25</td>
-                <td>Rafael</td>
-            </tr>
-            <tr>
-                <td>22</td>
-                <td>Joao</td>
-            </tr>
-        </tbody>
-        
-    </table> -->
-</div>
+
+<div id="from" style="" class="position-absolute bg-info border p-4">FOO</div>
+<div id="to" style="top: 800px; right: 20px;" class="position-absolute bg-success border p-4">BAR</div>
 {% endblock %}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/elConnector.js' %}"></script>
 {% endblock %}
 
 <script>
     {% block add_script %}
+
+const arrow = new jsELConnector({
+    from: document.getElementById('from'),
+    to: document.getElementById('to'),
+    style: 'linear',
+    // lineH: '22px'
+})
     
     {% endblock %}
 </script>
