@@ -57,7 +57,7 @@ class Keywatch{
             }catch(e){}
         }
     }
-    getScope(ev){
+    getScope(ev){ // Funcao auxiliar, retorna mascara do atalho. Ex: cFTF (Ctrl C), f1TTF (Alt + Ctrl + F1), etc... usado na montagem do dicionario map
         if(!ev.key){return null}
         let cmd = ev.key.toLowerCase();
         cmd += ev.altKey || ev.alt ? 'T': 'F';
@@ -65,7 +65,7 @@ class Keywatch{
         cmd += ev.shiftKey || ev.shift ? 'T': 'F';
         return cmd;
     }
-    getHumanize(entry){
+    getHumanize(entry){ // Recebe atalho e retorna legenda. Ex: appKeyMap.getHumanize({alt: true, key:'c', ....}); retorno Alt C
         let comb = entry.alt ? 'Alt ' : '';
         comb += entry.ctrl ? 'Ctrl ' : '';
         comb += entry.shift ? 'Shift ' : '';
@@ -73,6 +73,7 @@ class Keywatch{
         return comb;        
     }
     getEntryByRole(role, onlyHumanizeScope=false){
+    // Retorna entrada (primeira localizada) com atributo role fornecido, 2o parametro posicional (bool) define se retorno sera entrada ou string de legenda do atalho
         let entry = Object.entries(this.map).filter(([k,v]) => v?.role == role)[0];
         if(!onlyHumanizeScope){return entry}
         return this.getHumanize(entry[1]);
@@ -81,8 +82,8 @@ class Keywatch{
         if(typeof target == 'string'){try{delete this.map[target]}catch(e){}}
         else if(typeof target == 'object'){try{delete this.map[this.getScope(target)]}catch(e){}}
     }
-    unbindAll(){this.map = {}}
-    unbindGroup(group){
+    unbindAll(){this.map = {}} // Limpa todas as entradas de atalho
+    unbindGroup(group){ // Limpa todas as entradas do grupos especificado. Ex: appKeyMap.unbindGroup('cadastro')
         let l;
         if(typeof group == 'object'){l = Object.entries(this.map).filter(([k,v]) => group.includes(v?.group))}
         else{l = Object.entries(this.map).filter(([k,v]) => v?.group == group)}
@@ -90,17 +91,20 @@ class Keywatch{
             delete this.map[l[i][0]];
         }
     }
-    getMap(){return Object.values(this.map)}
-    hide(target=null){
-        if(!target){for(let i in this.map){this.map[i].visible = false}} // Se nao informado, oculta todos os eventos
+    getGroup(groupName){ // Retorna lista com entradas associadas ao grupo fornecido
+        return Object.entries(this.map).filter(([k,v]) => v?.group == groupName);
+    }
+    getMap(){return Object.values(this.map)} // Retorna lista com todas as entradas de atalhos
+    hide(target=null){ // Oculta um atalho (ou todos), se nao informado parametro oculta todos os atalhos, pode ser informado 'alias' do atalho ou entrada (dict)
+        if(!target){for(let i in this.map){this.map[i].visible = false}} // Se nao informado, oculta todos os atalhos
         else if(typeof target == 'string'){try{this.map[target].visible = false;}catch(e){}}
         else if(typeof target == 'object'){try{this.map[this.getScope(target)].visible = false;}catch(e){}}
     }
-    showKeymap(){
+    showKeymap(){ // Exibe modal com atalhos disponiveis
         this.__tableRefresh();
         this.modal.showModal();
     }
-    __filterMapsTable(e, criterio=null){
+    __filterMapTable(e, criterio=null){
         if(this.map.length == 0){return false}
         this.filteredMap = [];
         if([37, 38, 39, 40, 13].includes(e.keyCode)){return false;} // Nao busca registros caso tecla seja enter ou arrows
@@ -127,11 +131,13 @@ class Keywatch{
                 let tr = `<tr><td>${map[item].name || ''}</td><td class="keywatch_table_combination_td"><code>${comb}</code></td><td>${map[item].desc || ''}</td></tr>`
                 this.modalTableTbody.innerHTML += tr;
             }
+            // Se nenhum atalho visivel apos loop, adiciona linha informativa
+            if(this.modalTableTbody.childNodes.length == 0){this.modalTableTbody.innerHTML = '<tr><td colspan="3">Nenhum atalho localizado</td></tr>'}
         }
     }
     __buildTable(){ // Cria tabela no modal (roda apenas ao carregar a pagina)
         this.searchInput = document.createElement('input');this.searchInput.type = 'search';this.searchInput.classList = 'form-control form-control-sm bg-body-tertiary mb-1';this.searchInput.placeholder = 'Criterio pesquisa';this.searchInput.id = 'Listener_searchInput';
-        this.searchInput.oninput = (ev)=>{this.__filterMapsTable(ev)}
+        this.searchInput.oninput = (ev)=>{this.__filterMapTable(ev)}
         this.modalTable = document.createElement('table');
         this.modalTable.classList = 'keywatch_table table table-sm table-striped table-hover border fs-7 mb-0';
         this.modalTableThead = document.createElement('thead');
