@@ -2,7 +2,7 @@ import os
 import json
 import threading
 import csv
-from django.db.models import Count, F
+from django.db.models import Count
 from pathlib import Path
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.conf import settings
 from datetime import datetime
-from django.core.serializers import serialize
+# from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -104,14 +104,10 @@ def planejamentos(request):
 @permission_required('trafego.view_passageiro', login_url="/handler/403")
 def passageiros(request):
     if request.method == 'POST':
+        dados = Passageiro.objects.filter(referencia__range=[request.POST['data_inicio'],request.POST['data_fim']])
         if request.POST['layout'] == 'linha_diario':
-            qs = Passageiro.objects.filter(referencia__range=[request.POST['data_inicio'],request.POST['data_fim']]).annotate(qtde=Count('aplicacao'), Linha=F('linha__codigo')).values('Linha', 'aplicacao')
-            print(qs)
-            # pivot_table = pivot(qs, 'aplicacao', 'linha__codigo', 'linha__codigo', aggregation=Count, include_total=True) 
-            # passageiros_pd = pd.DataFrame.from_records(passageiros.values())
-            # pivot = pd.pivot_table(data=passageiros_pd, index=['linha_id'])
-            # print(pivot)
-        return render(request, 'trafego/passageiros.html', {'passageiros':None})
+            dados = dados.values('empresa_id', 'empresa__nome', 'linha_id', 'linha__codigo', 'linha__nome', 'aplicacao', 'tipo').annotate(qtde=Count('linha_id'))
+        return render(request, 'trafego/passageiros.html', {'dados':dados, 'layout':request.POST['layout']})
     return render(request, 'trafego/passageiros.html')
 
 # METODOS ADD

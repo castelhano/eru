@@ -16,16 +16,17 @@
     <div class="row">
       <div class="col"><h5 class="card-title mb-2">Análise de Carregamento</h5></div>
       <div class="col-auto">
-        <button class="btn btn-sm btn-phantom" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-funnel-fill"></i></button>
+        <button class="btn btn-sm btn-phantom" id="filters_btn" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-funnel-fill"></i></button>
       </div>
     </div>
-    <div class="collapse{% if not passageiros %} show{% endif %}" id="filters">
+    <div class="collapse{% if not dados %} show{% endif %}" id="filters">
       <form id="filter_form" action="{% url 'trafego_passageiros' %}" method="POST" autocomplete="off">
         {% csrf_token %}
         <div class="row g-1">
           <div class="col-lg-2 mb-lg-1 form-floating">
             <select name="layout" id="id_layout" class="form-select" autofocus>
               <option value="linha_diario">Linha Diário</option>
+              <option value="carregamento_faixa">Carregamento por Faixa</option>
             </select>
             <label for="id_layout">Layout</label>
           </div>
@@ -34,11 +35,11 @@
             <label for="id_empresa">Empresa</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
-            <input type="date" class="form-control" name="data_inicio" id="id_data_inicio" value="{{request.POST.data_inicio}}">
+            <input type="date" class="form-control" name="data_inicio" id="id_data_inicio" value="{{request.POST.data_inicio}}" required>
             <label for="id_data_inicio">Data Inicio</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
-            <input type="date" class="form-control" name="data_fim" id="id_data_fim" value="{{request.POST.data_fim}}">
+            <input type="date" class="form-control" name="data_fim" id="id_data_fim" value="{{request.POST.data_fim}}" required>
             <label for="id_data_fim">Data Fim</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
@@ -72,41 +73,8 @@
 
     </div>
     <div class="tab-pane fade show active mt-2" id="chart" role="tabpanel">
-      <p>
-      </p>
+      <div id="table_result"></div>
     </div>
-    <!-- <div class="tab-pane fade" id="detalhe" role="tabpanel">
-      <table id="demanda_table" class="table table-sm border table-striped table-hover">
-        <thead>
-          <tr>
-            <th>Embarque</th>
-            <th>Referência</th>
-            <th>Dia Tipo</th>
-            <th>Linha</th>
-            <th>Carro</th>
-            <th>Cartao</th>
-            <th>Aplicação</th>
-            <th>Tipo</th>
-            <th>Tarifa</th>
-          </tr>
-        </thead>
-        <tbody>
-          { for passageiro in passageiros }
-          <tr>
-            <td>%%passageiro.embarque|date:'d/m/Y H:i'%%</td>
-            <td>%%passageiro.referencia|date:'d/m/Y'%%</td>
-            <td>%%passageiro.get_dia_tipo_display%%</td>
-            <td>%%passageiro.linha.codigo%%</td>
-            <td>%%passageiro.veiculo.prefixo%%</td>
-            <td>%%passageiro.cartao%%</td>
-            <td>%%passageiro.aplicacao%%</td>
-            <td>%%passageiro.tipo%%</td>
-            <td>%%passageiro.tarifa%%</td>
-          </tr>            
-          { endfor }
-        </tbody>
-      </table>
-    </div> -->
   </div>
 </div>
 {% endblock%}
@@ -118,13 +86,20 @@
 
 <script>
   {% block add_script %}
+  // Seleciona layout baseado na ultima busca
+  document.getElementById('id_layout').value = '{{layout|default:'linha_diario'}}';
 
-  console.log({{passageiros|safe}});
-
+  // Precarrega campos de data com data atual
   if(document.getElementById('id_data_inicio').value == ''){dateToday({native: true, days: -1, target: document.getElementById('id_data_inicio')})}
   if(document.getElementById('id_data_fim').value == ''){dateToday({native: true, target: document.getElementById('id_data_fim')})}
-  appKeyMap.map['gTFF'].desc = 'Realiza busca com filtros informados';
   
+  appKeyMap.map['gTFF'].desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
+  appKeyMap.bind({key: ';', alt: true, run: ()=>{document.getElementById('filters_btn').click()}})
+
+  // Move foco para layout sempre q exibido lista de filtros
+  document.querySelector('.collapse').addEventListener('shown.bs.collapse', ()=>{document.getElementById('id_layout').focus()})
+  
+  // Cria instancia para o form
   let form = new jsForm(document.getElementById('filter_form'), {
     selectPopulate: [
     {
@@ -144,5 +119,27 @@
       }
     }
   })
+
+  {% if dados %}
+    {% if layout == 'linha_diario' %}
+      // Cria dicionario com dados pesquisados
+      const dados = [
+      {% for d in dados %}
+        {empresa_id: {{d.empresa_id}}, empresa_nome: '{{d.empresa__nome}}', linha_id: {{d.linha_id}}, linha_codigo: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', aplicacao: '{{d.aplicacao}}', tipo: '{{d.tipo}}', qtde: {{d.qtde|safe}}},
+      {% endfor %}
+      ]
+      
+      let total = 0;
+      for(let i=0; i < dados.length; i++){total += dados[i].qtde}
+    {% endif %}  
+  {% endif %}
+
+
+  // const linha_diario = new jsTableJson('linha_diario', {
+  //   data: dados,
+  //   container: document.getElementById('table_result'),
+  // })
+
+
   {% endblock %}
 </script>

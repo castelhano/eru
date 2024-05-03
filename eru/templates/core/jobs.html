@@ -46,8 +46,8 @@
                         <td>{{job.id|safe}}</td>
                         <td>{{job.modulo}}</td>
                         <td>{{job.referencia}}</td>
-                        <td class="d-none d-md-table-cell">{{job.inicio|date:'d/m H:i:s'}}</td>
-                        <td class="d-none d-lg-table-cell">{{job.termino|date:'d/m H:i:s'}}</td>
+                        <td class="d-none d-md-table-cell">{{job.inicio|date:'d/m/Y H:i:s'}}</td>
+                        <td class="d-none d-lg-table-cell">{{job.termino|date:'d/m/Y H:i:s'}}</td>
                         <td>{{job.status|safe}}</td>
                         <td class="text-end">
                             {% if job.anexo %}
