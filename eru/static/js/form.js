@@ -12,20 +12,21 @@ class jsForm{
     constructor(form, options){
         this.form = form;
         this.common = []; // Lista vai armazenar os fields comuns (sem maskara)
-        this.imask = options?.imask || [];
-        this.imaskFieldNames = [];
-        this.selectPopulate = options?.selectPopulate || [];
+        this.imask = options?.imask || []; // Lista elementos Imask presentes no form
+        this.imaskFieldNames = []; // Lista com nomes dos elementos Imask
+        this.selectPopulate = options?.selectPopulate || []; // Lista com selects para preenchimento via ajax
         // Funcao a ser chamada antes de submeter form, deve retornar true ou false
         this.beforeSubmit = options?.beforeSubmit != undefined ? options.beforeSubmit : () => { return true };
         this.selects = {}; // Armazena instancias de selectPopulate
+        this.customValidation = options?.customValidation || {};
         // customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
         // deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
-        this.customValidation = options?.customValidation || {};
-        this.novalidate = options?.novalidate != undefined ? options.novalidate : false;
+        this.novalidate = options?.novalidate != undefined ? options.novalidate : false; // Setar {novalidate: true} vala desativar validacao do formulario
         this.imask.forEach((el)=>{ // Carrega list com nomes dos imaskFields
-            this.imaskFieldNames.push(el.el.input.name); // Popula list com names dos campos imask (usado no for do dicionario data)
+            this.imaskFieldNames.push(el.el.input.name); // Popula list com names dos campos imask
         })
-        for(let i = 0; i < this.form.elements.length; i++){ // Carrega list dos elementos do form comuns (sem mascara) alem de liberar acesso dos elementos como instance.field_name (ex. form.cpf)
+        for(let i = 0; i < this.form.elements.length; i++){
+        // Carrega list dos elementos do form comuns (sem mascara) alem de liberar acesso dos elementos como instance.field_name (ex. form.cpf)
             if(this.form.elements[i]?.name){this[this.form.elements[i].name] = this.form.elements[i];}
             if(this.imaskFieldNames.includes(this.form.elements[i].name)){continue}
             this.common.push(this.form.elements[i]);
@@ -34,9 +35,9 @@ class jsForm{
             this.selects[this.selectPopulate[i].target.name] = new selectPopulate(this.selectPopulate[i]);
         }
         if(!this.novalidate){
-            this.form.setAttribute('novalidate', null); // Desativa validacao pelo navegador
+            this.form.setAttribute('novalidate', null); // Desativa validacao nativa do navegador
             this.form.onsubmit = ()=>{ // Chama funcao de validacao ao submeter form
-                if(this.validate()){return this.beforeSubmit()}
+                if(this.validate()){return this.beforeSubmit()} // Se passou na validacao, chama funcao beforeSubmit
                 return false;
             };
             this.__imaskValidate(); // Adiciona validacao para elementos imask
@@ -46,7 +47,7 @@ class jsForm{
             this.form.onsubmit = ()=>{return this.beforeSubmit()};
         }
     }
-    load(data, ignore=[]){
+    load(data, ignore=[]){ // Metodo carrega dados no form, deve recebe um dicionario. Ex. form.load({nome: 'Maria', idade: 25}) 
         this.imask.forEach((el)=>{ // Ajusta elementos imask
             if(data.hasOwnProperty(el.el.input.name)){el.value = data[el.el.input.name]}; // Carrega valores ajustados em campos imask
         })

@@ -6,7 +6,7 @@
 
 <script>
 
-    {% block script_preload %}
+{% block script_preload %}
 if(__sw < 768){ // Acesso somente em dispositivos de tela grande (lg ou >)
     window.location.href = '{% url 'handler' 110 %}';
 }
@@ -58,12 +58,12 @@ if(__sw < 768){ // Acesso somente em dispositivos de tela grande (lg ou >)
             refs: {
                 origem:[
                     {% for trajeto in planejamento.linha.rendicoes_ida %}
-                        {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
+                        {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}},
                     {% endfor %}
                 ],
                 destino:[
                 {% for trajeto in planejamento.linha.rendicoes_volta %}
-                    {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}}
+                    {local: new Locale({id: {{trajeto.local.id|safe}}, nome: '{{trajeto.local.nome}}', troca_turno: true}), delta: {{trajeto.delta}}},
                 {% endfor %}
                 ]
             }
