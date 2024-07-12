@@ -1,4 +1,3 @@
-
 const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
 
@@ -25,7 +24,7 @@ function cleanNotify(){document.getElementById('notify_container').innerHTML = '
 
 
 // Busca dados no servidor (espera um json como resposta), retorna promise
-// Ex: appGetData({url: '...'}).then(()=>{...do something})
+// Ex: appGetData({url: '...'}).then((resp)=>{...do something})
 function appGetData(options) {
   return new Promise(function(resolve, reject) {
     let xhr = new XMLHttpRequest();
@@ -47,10 +46,10 @@ function formatCur(value, precision=2){return value.toLocaleString('pt-br', {min
 function tooltipActivate(){let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {return new bootstrap.Tooltip(tooltipTriggerEl)})}
 
 
-// dataToday({})                        Retorna data atual no formato dd/mm/aaaa
-// dataToday({native: true})            Retorna data atual no formato aaaa-mm-dd  
-// dataToday({days: 2, months:1})       Retorna data atual somando 2 dias e 1 mes
-// dataToday({target: element})         Altera o elemento informado (no value ou innerHTML) com a data atual
+// dateToday({})                        Retorna data atual no formato dd/mm/aaaa
+// dateToday({native: true})            Retorna data atual no formato aaaa-mm-dd  
+// dateToday({days: 2, months:1})       Retorna data atual somando 2 dias e 1 mes
+// dateToday({target: element})         Altera o elemento informado (no value ou innerHTML) com a data atual
 function dateToday(opt={}){
   let today = new Date();
   if(opt.days){today.setDate(today.getDate() + opt.days)}
@@ -67,7 +66,7 @@ function dateToday(opt={}){
 }
 
 // timeNow({})                        Retorna hora atual hh:mm
-// timeNow({hours: 3})                Retorna hora atual somando 3 horas
+// timeNow({hours: 3, minutes: 22})   Retorna hora atual somando 3 horas e 22 minutos
 // timeNow({showSeconds: true})       Retorna hora atual no formado hh:mm:ss
 // timeNow({target: element})         Altera o elemento informado (no value ou innerHTML) com a hora atual
 function timeNow(opt={}){
