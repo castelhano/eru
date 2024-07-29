@@ -1,3 +1,13 @@
+/*
+* Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
+*
+* @version  4.0
+* @since    02/03/2022
+* @release  20/08/2023
+* @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
+* @example  appKeyMap.bind({key: 'e', ctrl: true, run: ()=>{...do something}})
+* @example  appKeyMap.bind({key: 'e', alt:true, ctrl: true, run: ()=>{...do something}, group: 'cadastro'})
+*/
 class Keywatch{
     constructor(){
         this.map = {};                                  // Mapa com todos os atalhos cadastrados
