@@ -8,10 +8,24 @@
 </head>
 <body>
     <h1>Ola mundo</h1>
+    <form action="">
+        <label for="">pressed</label>
+        <input type="text" id="pressed">
+        <label for="">sequence</label>
+        <input type="text" id="sequence">
+        <label for="">schema</label>
+        <input type="text" id="schema">
+        <button type="button" onclick="clean()">FOO</button>
+    </form>
     
     <script src="{% static 'js/keywatch.js' %}"></script>
     <script>
-        const foo = new Keywatch();
+        const foo = new Keywatch({shortcutMaplist: false});
+        function clean(){
+            document.getElementById('pressed').value = '';
+            document.getElementById('sequence').value = '';
+            document.getElementById('schema').value = '';
+        }
     </script>
 </body>
 </html>
