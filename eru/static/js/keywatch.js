@@ -7,31 +7,35 @@
 class Keywatch{
     constructor(options={}){
         let defaultOptions = { 
-            tabOnEnter: true,                   // Se true (default) implementa tabulacao para formularios ao precionar Enter
-            customStyle: false,                 // Se true (default) cria stilo basico para tabela de atalhos, altere para false para usar estilo personalizado
-            shortcutMaplist: "alt+k",           // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
-            maplistShowCommands: false,         // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
-            delay: 600,                         // Delay em milissegundos para limpar o historico de sequencia
+            tabOnEnter: true,                                           // Se true (default) implementa tabulacao para formularios ao precionar Enter
+            customStyle: false,                                         // Se true (default) cria stilo basico para tabela de atalhos, altere para false para usar estilo personalizado
+            shortcutMaplist: "alt+k",                                   // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
+            maplistShowCommands: false,                                 // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
+            shortcutPrompt: "f2",                                       // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
+            delay: 600,                                                 // Delay em milissegundos para limpar o historico de sequencia
+            promptModalClasslist: 'keywatch_prompt_modal',              // Classlist para modal do prompt
+            promptInputClasslist: 'form-control bg-body-tertiary mb-1', // Classlist para input do prompt
+
         }
-        this.map = {all: {}, default:{}};       // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
-        this.entries = {all: {}, default:{}};   // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
-        this.sequences = {all: {}, default:{}}; // Dicionario com apontadores para this.map de sequencia "q,w,e" "q,w,e;u"
-        this.sequence = [];                     // Sequencia com entrada parcial existente em this.sequences, aguardando conclusao
-        this.commands = {};                     // Dicionario com apontadores para this.map que implementa acionamento de atalho por comando, comandos ignoram contexto
-        this.pressed = [];                      // Lista com teclas precionadas
-        this.contexts = {                       // Armazena contextos disponiveis e uma breve descricao que sera usada no modal showKeyMap
+        this.map = {all: {}, default:{}};                               // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
+        this.entries = {all: {}, default:{}};                           // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
+        this.sequences = {all: {}, default:{}};                         // Dicionario com apontadores para this.map de sequencia "q,w,e" "q,w,e;u"
+        this.sequence = [];                                             // Sequencia com entrada parcial existente em this.sequences, aguardando conclusao
+        this.commands = {};                                             // Dicionario com apontadores para this.map que implementa acionamento de atalho por comando, comandos ignoram contexto
+        this.pressed = [];                                              // Lista com teclas precionadas
+        this.contexts = {                                               // Armazena contextos disponiveis e uma breve descricao que sera usada no modal showKeyMap
             all: "Atalhos Globais",
             default: "Atalhos Base",
         };
-        this.context = 'default';               // Contexto ativo (shortcut no context all serao executados em todos os contextos)
-        for(let key in defaultOptions){         // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
+        this.context = 'default';                                       // Contexto ativo (shortcut no context all serao executados em todos os contextos)
+        for(let key in defaultOptions){                                 // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
             this[key] = options.hasOwnProperty(key) ? options[key] : defaultOptions[key];
         }
         if(this.shortcutMaplist){this.bind(this.shortcutMaplist, this.showKeymap)}
         // ------
         window.addEventListener('keydown', (ev)=>{this._onKeyDown(ev, this)});
         window.addEventListener('keyup', (ev)=>{this._onKeyUp(ev, this)});
-        window.addEventListener('focus', (ev)=>{this.pressed = []}); // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
+        window.addEventListener('focus', (ev)=>{this.pressed = []});    // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
     }
     bind(shortcut, run, options={}){ // Adiciona novo shortcut
         // shortcut: String com teclas a serem tratadas. Ex: "control+u" "ctrl+alt+x" "ctrl+u;alt+y" "q+x,e"
@@ -61,7 +65,13 @@ class Keywatch{
             }
         }
     }
-    unbind(entry, context='default'){ // Remove shortcut
+    unbind(entry, context=null){ // Remove shortcut, se nao informado contexto remove de todos os contextos
+        if(!context){ // Se nao informado contexto, chama recursivamente metodo para todos os contextos
+            for(let c in this.contexts){
+                this.unbind(entry, c);
+            }
+            return;
+        }
         if(!this.contexts.hasOwnProperty(context)){return} // Se contexto informado nao existe, termina bloco
         let entries = this._getEntries(entry); // Separa os grupos de shortcut (caso multiplo shortcut)
         for(let i = 0; i < entries.length; i++){ // Percorre parciais no shortcut
@@ -79,7 +89,16 @@ class Keywatch{
                     if(this.sequences[context][entries[i]].options.hasOwnProperty('command')){ // Se shortcut tem comando associado, atualiza apontador
                         this.commands[this.sequences[context][entries[i]].options.command] = this.map[context][residue];
                     }
-                    this.sequences[context][residue] = this.map[context][residue]; // Refaz apontador para nova entrada
+                    // resisue pode conter mais de um apontador, neste caso eh necessario iterar entre todos para atualizar referencia em this.map
+                    let residues = this._getEntries(residue);
+                    for(let j = 0; j < residues.length; j++){
+                        if(this._hasSequence(residues[j])){
+                            this.sequences[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                        }
+                        else{
+                            this.entries[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                        }
+                    }                    
                     delete this.map[context][this.sequences[context][entries[i]].schema]; // Apaga entrada antiga
                 }
                 delete this.sequences[context][entries[i]]; // Apaga entrada de this.sequences
@@ -98,19 +117,43 @@ class Keywatch{
                     if(this.entries[context][entries[i]].options.hasOwnProperty('command')){ // Se shortcut tem comando associado, atualiza apontador
                         this.commands[this.entries[context][entries[i]].options.command] = this.map[context][residue];
                     }
-                    this.entries[context][residue] = this.map[context][residue]; // Refaz apontador para nova entrada
+                    // resisue pode conter mais de um apontador, neste caso eh necessario iterar entre todos para atualizar referencia em this.map
+                    let residues = this._getEntries(residue);
+                    for(let j = 0; j < residues.length; j++){
+                        if(this._hasSequence(residues[j])){
+                            this.sequences[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                        }
+                        else{
+                            this.entries[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                        }
+                    }
                     delete this.map[context][this.entries[context][entries[i]].schema]; // Apaga entrada antiga
                 }
                 delete this.entries[context][entries[i]]; // Apaga entrada de this.sequences
             }
         }
     }
-    unbindContext(context){
-        // PAREI AQUI !!!!!!!!
+    unbindContext(context){ // Apaga todas as entradas do contexto
         if(!this.contexts.hasOwnProperty(context)){return}
-        let commands = this.map[context].filter(k,v => v.options.hasOwnProperty('command'))
-        console.log(commands);
-
+        let commands = Object.fromEntries(Object.entries(this.map[context]).filter(([k,v]) => v.options.hasOwnProperty('command'))); // Filtra entrada com comando
+        for(let key in commands){delete this.commands[commands[key].options.command]} // Apaga entradas em commands
+        this.map[context] = {};
+        this.entries[context] = {};
+        this.sequences[context] = {};
+    }
+    unbindGroup(group, context=null){
+        if(!group || context && !this.contexts.hasOwnProperty(context)){return} // Se nao informado grupo ou se contexto informado inexistente termina bloco
+        if(context){ // Se informado contexto, apaga entradas do grupo somente no contexto informado
+            let groups = Object.fromEntries(Object.entries(this.map[context]).filter(([k,v]) => v.options.hasOwnProperty('group') && v.options.group == group)); // Filtra entrada com grupo informado
+            for(let key in groups){ // Percorre os grupos para proceder com o unbind
+                this.unbind(key, context);
+            }
+        }
+        else{ // Se nao informado contexto, apaga todas as entradas do grupo em todos os contextos
+            for(let c in this.contexts){ // Percorre todos so contextos e chama this.unbindGroup (recursivo)
+                this.unbindGroup(group, c);
+            }
+        }
     }
     _onKeyDown(ev, instance){
         clearTimeout(instance._sequenceTimeout);
@@ -134,9 +177,13 @@ class Keywatch{
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
         let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
-        if(this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target)){
-        // Verifica se existe shortcut em this.entries, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
-            resp = this.entries[this.context][schema].run(ev);
+        let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
+        let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
+        if(findOnAll || findOnEntries){
+        // Verifica se existe shortcut em this.entries no contexto ativo ou no all, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
+            // TODO: FALTA AJUSTAR AQUI. RESP DEVE VALER FALSE SE QUALQUER UM DOS CASOS RETORNAR FALSE 
+            if(findOnAll){resp = !(this.entries[this.context][schema].run(ev) == false)}
+            if(findOnEntries){resp = !(this.entries[this.context][schema].run(ev) == false)}
             if(!resp){ev.preventDefault()}
             this.sequence = []; // Limpa sequencia
         }
@@ -215,4 +262,9 @@ class Keywatch{
         this.contexts[context] = desc;
     }
     showKeymap(){console.log('mostrando mapa de atalhos');}
+    _createComponents(){ // Cria modais e demais elementos para tabela de atalhos alem de prompt para entarda de comando
+        // this.promptModal = document.createElement('dialog');
+        // this.promptModal.classList = ;
+
+    }
 }
