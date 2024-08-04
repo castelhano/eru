@@ -5,26 +5,34 @@
 class Keywatch{
     constructor(options={}){
         let defaultOptions = { 
-            tabOnEnter: true,                                           // Se true (default) implementa tabulacao para formularios ao precionar Enter
-            shortcutMaplist: "alt+k",                                   // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
-            maplistShowCommands: false,                                 // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
-            shortcutPrompt: "f2",                                       // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
-            customStyle: false,                                         // Altere para true para nao criar estilizacao padrao (class .keywatch_modal deve ser definida na pagina de origem)
-            delay: 600,                                                 // Delay em milissegundos para limpar o historico de sequencia
-            promptModalClasslist: 'keywatch_prompt_modal',              // Classlist para modal do prompt
-            promptInputClasslist: 'form-control bg-body-tertiary mb-1', // Classlist para input do prompt
-
+            tabOnEnter: true,                       // Se true (default) implementa tabulacao para formularios ao precionar Enter
+            shortcutMaplist: "alt+k",               // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
+            shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+            maplistShowCommands: false,             // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
+            shortcutPrompt: "f2",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
+            shortcutPromptDesc: "Exibe prompt para entrada de comando",
+            delay: 600,                             // Delay em milissegundos para limpar o historico de sequencia
+            //Definicoes de estilizacao
+            promptModalClasslist: 'border-1 border-secondary rounded mt-3 p-2',
+            promptInputClasslist: 'form-control form-control-sm',
+            promptInputPlaceholder: 'Comando',
+            shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
+            searchInputClasslist: 'form-control form-control-sm',
+            searchInputPlaceholder: 'Criterio pesquisa',
+            modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
+            modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary',
+            commandLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle user-select-all',
         }
-        this._aliases = { // Dicionario com valores de conversao (alias), aplicado antes do bind
+        this._aliases = {                           // Dicionario com valores de conversao (alias), aplicado antes do bind
             'ctrl': 'control',
         }
-        this.map = {all: {}, default:{}};                               // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
-        this.entries = {all: {}, default:{}};                           // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
-        this.sequences = {all: {}, default:{}};                         // Dicionario com apontadores para this.map de sequencia "q,w,e" "q,w,e;u"
-        this.sequence = [];                                             // Sequencia com entrada parcial existente em this.sequences, aguardando conclusao
-        this.commands = {};                                             // Dicionario com apontadores para this.map que implementa acionamento de atalho por comando, comandos ignoram contexto
-        this.pressed = [];                                              // Lista com teclas precionadas
-        this.contexts = {                                               // Armazena contextos disponiveis e uma breve descricao que sera usada no modal showKeyMap
+        this.map = {all: {}, default:{}};           // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
+        this.entries = {all: {}, default:{}};       // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
+        this.sequences = {all: {}, default:{}};     // Dicionario com apontadores para this.map de sequencia "q,w,e" "q,w,e;u"
+        this.sequence = [];                         // Sequencia com entrada parcial existente em this.sequences, aguardando conclusao
+        this.commands = {};                         // Dicionario com apontadores para this.map que implementa acionamento de atalho por comando, comandos ignoram contexto
+        this.pressed = [];                          // Lista com teclas precionadas
+        this.contexts = {                           // Armazena contextos disponiveis e uma breve descricao que sera usada no modal showKeyMap
             all: "Atalhos Globais",
             default: "Atalhos Base",
         };
@@ -32,23 +40,17 @@ class Keywatch{
         for(let key in defaultOptions){                                 // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
             this[key] = options.hasOwnProperty(key) ? options[key] : defaultOptions[key];
         }
-        if(!this.customStyle){this._addStyles()}
         this._createComponents();
 
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this._refreshMapTable();this.showKeymap();}, {desc: this.shortcutMaplistDesc})}
         if(this.shortcutPrompt){
-            this.bind(this.shortcutPrompt, ()=>{this.showPrompt()}, {context: 'all'}); // Cria atalho para abrir modal do prompt
-            this.bind('enter', ()=>{this.runCommand();}, {element: this.promptInput, context: 'all'}); // Acerta atalho para comando ao precionar enter
+            this.bind(this.shortcutPrompt, ()=>{this.showPrompt()}, {context: 'all', desc: this.shortcutPromptDesc}); // Cria atalho para abrir modal do prompt
+            this.bind('enter', ()=>{this.runCommand();}, {element: this.promptInput, context: 'all', visible: false}); // Acerta atalho para comando ao precionar enter
         }
         // ------
         window.addEventListener('keydown', (ev)=>{this._onKeyDown(ev, this)});
         window.addEventListener('keyup', (ev)=>{this._onKeyUp(ev, this)});
         window.addEventListener('focus', (ev)=>{this.pressed = []});    // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
-    }
-    _addStyles(){
-        let style = document.createElement('style');
-        style.innerHTML = '.keywatch_prompt_modal{margin-top: 20px;padding: 8px;border: 0;border-radius: 10px;width: 100%;}.keywatch_modal{padding: 8px;width: 100%;}@media (min-width: 576px){.keywatch_modal{max-width: 800px;} .keywatch_prompt_modal{max-width: 500px;}}';
-        document.getElementsByTagName('head')[0].appendChild(style);
     }
     bind(shortcut, run, options={}){ // Adiciona novo shortcut
         // shortcut: String com teclas a serem tratadas. Ex: "control+u" "ctrl+alt+x" "ctrl+u;alt+y" "q+x,e"
@@ -81,6 +83,7 @@ class Keywatch{
             }
         }
     }
+    bindCommand(command, run, options={}){}
     unbind(entry, context=null){ // Remove shortcut, se nao informado contexto remove de todos os contextos
         if(!context){ // Se nao informado contexto, chama recursivamente metodo para todos os contextos
             for(let c in this.contexts){
@@ -186,7 +189,12 @@ class Keywatch{
             instance.pressed.splice(instance.pressed.indexOf(ev.key.toLowerCase())); // Libera tecla de this.pressed
             instance.sequence.push(ev.key.toLowerCase()); // Adiciona tecla em this.sequence
             let schema = instance.pressed.length > 0 ? instance.pressed.join('+') + '+' + instance.sequence.join(',') : instance.sequence.join(',');
-            if(Object.keys(instance.sequences[instance.context]).filter(k => k.startsWith(schema)).length == 0){instance.sequence = []}
+            // if(Object.keys(instance.sequences[instance.context]).filter(k => k.startsWith(schema)).length == 0){instance.sequence = []}
+            if(
+                Object.keys(instance.sequences[instance.context]).filter(k => k.startsWith(schema)).length == 0 &&
+                Object.keys(instance.sequences['all']).filter(k => k.startsWith(schema)).length == 0
+            ){instance.sequence = [];
+            }
             instance._runKeyup(ev, schema);
             instance._sequenceTimeout = setTimeout(()=>{instance.sequence = []}, instance.delay); // Limpa this.sequence apos delay definido
         } catch (e){}
@@ -199,8 +207,8 @@ class Keywatch{
         let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
         // Verifica se existe shortcut em this.entries no contexto ativo ou no all, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
-            if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev))&& resp}
-            if(findOnEntries){resp = this.entries[this.context][schema].run(ev) == undefined  && resp}
+            if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp}
+            if(findOnEntries){resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp}
             if(!resp){ev.preventDefault();
             }
             this.sequence = []; // Limpa sequencia
@@ -227,20 +235,23 @@ class Keywatch{
     }
     _runKeyup(ev, schema){
         let resp = true;
-        if(this.sequences[this.context].hasOwnProperty(schema) && (!this.sequences[this.context][schema].options.hasOwnProperty('element') || this.sequences[this.context][schema].options.element == ev.target)){
-        // Verifica se existe sequencia correspondente em this.sequences
+        // Verifica se existe sequencia correspondente em this.sequences (contexto atual ou no all)
+        let findOnSequences = this.sequences[this.context].hasOwnProperty(schema) && (!this.sequences[this.context][schema].options.hasOwnProperty('element') || this.sequences[this.context][schema].options.element == ev.target);
+        let findOnAll = this.sequences['all'].hasOwnProperty(schema) && (!this.sequences['all'][schema].options.hasOwnProperty('element') || this.sequences['all'][schema].options.element == ev.target);
+        if(findOnSequences){
             resp = this.sequences[this.context][schema].run(ev);
+            if(!resp){ev.preventDefault()}
+            this.sequence = []; // Limpa sequencia
+        }
+        if(findOnAll){
+            resp = this.sequences['all'][schema].run(ev);
             if(!resp){ev.preventDefault()}
             this.sequence = []; // Limpa sequencia
         }
     }
     runCommand(command=null){ // Aciona atalho pelo respectivo comando, se nao informado comando usa valor inserido em this.commandInput 
-        if(command){
-            if(this.commands.hasOwnProperty(command)){this.commands[command].run()}
-        }
-        else {
-            if(this.commands.hasOwnProperty(this.promptInput.value)){this.commands[this.promptInput.value].run()}
-        }
+        if(command){if(this.commands.hasOwnProperty(command)){this.commands[command].run();this.promptModal.close();}}
+        else{if(this.commands.hasOwnProperty(this.promptInput.value)){this.commands[this.promptInput.value].run();this.promptModal.close();}}
     }
     _hasSequence(shortcut){ // Verifica se existe sequencia no shortcut, se sim retorna array com sequencias, se nao retorna false
         if(!shortcut.includes(',')){return false} // Nao existe , no shortcut, retorna falso
@@ -256,19 +267,29 @@ class Keywatch{
     _getEntries(shortcut){ // Retorna lista de strings com triggers (usado em multiplos apontadores para mesmo shortcut). _getEntries('ctrl+u;alt+u') = ['ctrl+u','alt+u']
         let keys = shortcut.split(';'); // Cria array com blocos
         let index = keys.lastIndexOf('');
-        for(; index >= 0;){ // Trata existencia de ; no shortcut "ctrl+;"
+        for(; index >= 0;){ // Trata existencia de ; no shortcut ex: "ctrl+;"
             keys[index - 1] += ';';
             keys.splice(index, 1);
             index = keys.lastIndexOf('');
         }
         return keys;
     }
+    _splitEntry(entry){ // Retorna lista de caracteres de um shortcut. ex: 'g+i' = ['g', 'i'] alem do separador usado
+        let separator = this._hasSequence(entry) ? ',' : '+';
+        let keys = entry.split(separator); // Cria array com blocos
+        let index = keys.lastIndexOf('');
+        for(; index >= 0;){ // Trata existencia de [';','+'] no shortcut ex: "ctrl+;" ou "alt++"
+            keys[index - 1] += separator;
+            keys.splice(index, 1);
+            index = keys.lastIndexOf('');
+        }
+        return [keys, separator];
+    }
     _removeEntry(entry, shortcut){ // Funcao auxiliar, remove parcial de um shortcut e retorna restante. ex: _removeEntry('g+i', 'g+i;a+i') = 'a+i'
         let entries = shortcut.split(';'); // Separa parciais num array
         entries.splice(entries.indexOf(entry), 1); // Remove parcial informada em entry
         return entries.join(';');
     }
-    humanize(entry){}
     getContext(){return this.context}
     setContext(context='default', desc=''){
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
@@ -283,7 +304,9 @@ class Keywatch{
         this.sequences[context] = {};
         this.contexts[context] = desc;
     }
-    showKeymap(){console.log('mostrando mapa de atalhos');}
+    showKeymap(){
+        this.shortcutModal.showModal();        
+    }
     showPrompt(){ // Exibe modal para entrada de comando
         this.commandDataList.innerHTML = '';
         for(let key in this.commands){ // Atualiza os comandos disponiveis no datalist
@@ -293,13 +316,66 @@ class Keywatch{
 
         this.promptModal.showModal();
     }
+    _filterMapTable(ev){
+        // PAREI AQ
+        // let term = this.shortcutSearchInput.value.toLowerCase();
+        // this.filteredMap = {};
+        // for(let context in )
+        // this._refreshMapTable();
+    }
+    _refreshMapTable(source=this.map){
+        this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
+        for(let context in source){ // Filtra todos os atalhos visiveis
+            for(let entry in source[context]){
+                if(source[context][entry].options?.visible == false){continue}
+                let command = source[context][entry].options?.command ? `<span class="${this.commandLabelClasslist}">${source[context][entry].options.command}</span>` : '';                
+                let tr = `
+                <tr>
+                <td${!this.sourcelistShowCommands ? ' style="display: none;"' : ''}>${command}</td>
+                <td>${this._humanize(entry)}</td>
+                <td>${source[context][entry].options?.desc || ''}</td>
+                <td>${this.contexts[context]}</td>
+                </tr>`;
+                this.shortcutModalTableTbody.innerHTML += tr;
+            }
+        }
+    }
+    _humanize(entry){ // Recebe um schema de atalho e formata para exibicao na tabela de atalhos
+        let entries = this._getEntries(entry);
+        let formated = '';
+        for(let i = 0; i < entries.length; i++){
+            let [schema,separator] = this._splitEntry(entries[i]);
+            for(let j = 0; j < schema.length; j++){
+                formated += `<small class="${this.modalTableLabelClasslist}">${schema[j].toUpperCase()}</small>`;
+                if(j < schema.length - 1){formated += ` ${separator} `;}
+            }
+            if(i < entries.length - 1){formated += '&nbsp;&nbsp;ou&nbsp;&nbsp;';}
+        }
+        return formated;
+    }
     _createComponents(){ // Cria modais e demais elementos para tabela de atalhos alem de prompt para entarda de comando
+        // Criando prompt
         this.promptModal = document.createElement('dialog'); this.promptModal.classList = this.promptModalClasslist;
-        this.promptModal.oncancel = ()=>{this.promptInput.value = ''} // Limpa input ao fechar modal
+        this.promptModal.onclose = ()=>{this.promptInput.value = ''} // Limpa input ao fechar modal
         this.commandDataList = document.createElement('datalist');this.commandDataList.id = 'keywatch_datalist';
-        this.promptInput = document.createElement('input');this.promptInput.type = 'search';this.promptInput.classList = this.promptInputClasslist;this.promptInput.placeholder = 'Comando';this.promptInput.setAttribute('list', 'keywatch_datalist');
+        this.promptInput = document.createElement('input');this.promptInput.type = 'search';this.promptInput.classList = this.promptInputClasslist;this.promptInput.placeholder = this.promptInputPlaceholder;this.promptInput.setAttribute('list', 'keywatch_datalist');
         this.promptModal.appendChild(this.commandDataList);
         this.promptModal.appendChild(this.promptInput);
         document.body.appendChild(this.promptModal);
+        // Criando shortcutList
+        this.shortcutModal = document.createElement('dialog'); this.shortcutModal.classList = this.shortcutModalClasslist;
+        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = ''} // Limpa input ao fechar modal
+        this.shortcutSearchInput = document.createElement('input');this.shortcutSearchInput.type = 'search';this.shortcutSearchInput.classList = this.searchInputClasslist;this.shortcutSearchInput.placeholder = this.searchInputPlaceholder;this.shortcutSearchInput.id = 'keywatch_shortcutSearchInput';
+        this.shortcutSearchInput.oninput = (ev)=>{this._filterMapTable(ev)}
+        this.shortcutModalTable = document.createElement('table');
+        this.shortcutModalTable.classList = this.modalTableClasslist;
+        this.shortcutModalTableThead = document.createElement('thead');
+        this.shortcutModalTableTbody = document.createElement('tbody');
+        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Command</th><th>Shortcut</th><th>Descrição</th><th>Contexto</th></tr>`;
+        this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
+        this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
+        this.shortcutModal.appendChild(this.shortcutSearchInput);
+        this.shortcutModal.appendChild(this.shortcutModalTable);
+        document.body.appendChild(this.shortcutModal);
     }
 }
