@@ -807,7 +807,7 @@ class jsGaitDiagramUI{
     }
     
     __gridIsBlock(){
-        return this.gridLocked || canvasNavActive() || appKeyMap.modal.open;        
+        return this.gridLocked || canvasNavActive() || appKeyMap.shortcutModal.open;        
     }
     __generate(){
         this.gridLocked = true;

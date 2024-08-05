@@ -6,7 +6,7 @@ import { Locale } from './DM_locale.js';
 
 class jsGaitDiagram{
     constructor(options){
-        this.version = '1.1.322';
+        this.version = '1.1.322'; // Versao usada para tratamento de planejamentos exportados, sempre que alterado extrutura do objeto deve ser atualizado versao para comparacao
         this.id = options?.id || 'new';
         this.nome = options?.nome || 'Novo Projeto';
         this.desc = options?.desc || '';
