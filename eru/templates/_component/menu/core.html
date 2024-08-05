@@ -4,21 +4,19 @@
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', keybind: {visible: false, key: 'e', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}}},{% endif %}
-        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', keybind: {visible: false, key: 'u', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click();}}}}, {% endif %}
-        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', keybind: {visible: false, key: 'g', run: ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click();}}}}, {% endif %}
+        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {visible: false}]},{% endif %}
+        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {visible: false}]}, {% endif %}
+        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {visible: false}]}, {% endif %}
         ],
-        keybind: {
-            key:'c',
-            alt: true,
-            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Cadastro',
-            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+        keybind: [
+            'alt+c',
+            (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
                 canvasNavActive(true); // Exibe o canvasNav (caso oculto)
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            desc:'Abre menu de cadastro'
-        }
+            {desc:'Abre menu de cadastro'}
+        ]
     })
     {% if perms.core.view_settings %}
     const settings = new canvasNavLink({
@@ -27,15 +25,11 @@
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'core_settings' %}',
-        keybind:{
-            key: 's',
-            alt: true,
-            name: '<b>CORE:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Settings',
-            desc: 'Configurações gerais do sistema',
-            run: ()=>{
-                document.getElementById('menu_settings').click();
-            }
-        }
+        keybind: [
+            'alt+s',
+            ()=>{document.getElementById('menu_settings').click()},
+            {desc: 'Configurações gerais do sistema'}
+        ]
     })
     {% endif %}
 </script>

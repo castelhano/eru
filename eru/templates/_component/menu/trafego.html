@@ -4,38 +4,36 @@
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: {visible: false, key: 'l', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click()}}}},{% endif %}
-        {% if perms.trafego.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: {visible: false, key: 'o', run: ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();}}}}, {% endif %}
+        {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: ['l', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click();return false;}}, {visible: false}]},{% endif %}
+        {% if perms.trafego.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();return false;}}, {visible: false}]}, {% endif %}
         ],
-        keybind: {
-            key:'c',
-            alt: true,
-            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Cadastro',
-            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+        keybind: [
+            'alt+c',
+            (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
                 canvasNavActive(true); // Exibe o canvasNav (caso oculto)
                 menuCadastro.click();
                 setTimeout(()=>{menuCadastro.focus()}, 340);
+                return false;
             },
-            desc:'Abre menu de cadastro'
-        }
+            {desc:'Abre menu de cadastro'}
+        ]
     })
     const menuImportar = new canvasNavDropdown({
         name: 'Impor<b>t</b>ação',
         icon: 'bi bi-person-fill-up',
         itens: [
-        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: {visible: false, key: 'p', run: ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click()}}}},{% endif %}
+        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();return false;}}, {visible: false}]},{% endif %}
         ],
-        keybind: {
-            key:'t',
-            alt: true,
-            name:'<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Importação',
-            run: (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+        keybind: [
+            'alt+t',
+            (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
                 canvasNavActive(true); // Exibe o canvasNav (caso oculto)
                 menuImportar.click();
                 setTimeout(()=>{menuImportar.focus()}, 340);
+                return false;
             },
-            desc:'Abre menu de importação'
-        }
+            {desc:'Abre menu de importação'}
+        ]
     })
     {% if perms.trafego.view_planejamento %}
     const menuPlanejamento = new canvasNavLink({
@@ -44,15 +42,14 @@
         class: 'text-purple',
         icon: 'bi bi-shuffle',
         href: '{% url 'trafego_planejamentos' %}',
-        keybind:{
-            key: 'p',
-            alt: true,
-            name: '<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Planejamento',
-            desc: 'Abre página de planejamentos',
-            run: ()=>{
+        keybind:[
+            'alt+p',
+            ()=>{
                 document.getElementById('menu_planejamento').click();
-            }
-        }
+                return false;
+            },
+            {desc: 'Abre página de planejamentos'}
+        ]
     })
     {% endif %}
     {% if perms.trafego.view_passageiro %}
@@ -62,15 +59,14 @@
         class: 'text-purple',
         icon: 'bi bi-graph-up-arrow',
         href: '{% url 'trafego_passageiros' %}',
-        keybind:{
-            key: 'a',
-            alt: true,
-            name: '<b class="text-purple">MENU:</b>&nbsp;&nbsp;&nbsp;&nbsp;Passageiros',
-            desc: 'Abre página de análise de carregamento',
-            run: ()=>{
+        keybind:[
+            'alt+a',
+            ()=>{
                 document.getElementById('menu_passageiro').click();
-            }
-        }
+                return false;
+            },
+            {desc: 'Abre página de análise de carregamento'}
+        ]
     })
     {% endif %}
 </script>

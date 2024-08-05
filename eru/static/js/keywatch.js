@@ -1,7 +1,19 @@
 /**
- * showKeyMap
+ * TODO: ajusta ctrl+alt+e sendo que os precionados nao importa ordem
  */
 
+/*
+* Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
+*
+* @version  5.0
+* @since    02/03/2022
+* @release  05/08/2024
+* @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
+* @example  appKeyMap = new Keywatch();
+* @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
+* @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', group: 'meuGrupo'})
+* @example  appKeyMap.bind('q,w,e', ()=>{...do something}, {element: el, command: 'rodarRotina'}) (responde na sequencia qwe)
+*/
 class Keywatch{
     constructor(options={}){
         let defaultOptions = { 
@@ -20,11 +32,12 @@ class Keywatch{
             searchInputClasslist: 'form-control form-control-sm',
             searchInputPlaceholder: 'Criterio pesquisa',
             modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
-            modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary',
-            commandLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle user-select-all',
+            modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary font-monospace',
+            commandLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle user-select-all font-monospace',
         }
         this._aliases = {                           // Dicionario com valores de conversao (alias), aplicado antes do bind
             'ctrl': 'control',
+            '[ _ ]': ' '
         }
         this.map = {all: {}, default:{}};           // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
         this.entries = {all: {}, default:{}};       // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
@@ -42,10 +55,10 @@ class Keywatch{
         }
         this._createComponents();
 
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this._refreshMapTable();this.showKeymap();}, {desc: this.shortcutMaplistDesc})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap();return false;}, {desc: this.shortcutMaplistDesc})}
         if(this.shortcutPrompt){
-            this.bind(this.shortcutPrompt, ()=>{this.showPrompt()}, {context: 'all', desc: this.shortcutPromptDesc}); // Cria atalho para abrir modal do prompt
-            this.bind('enter', ()=>{this.runCommand();}, {element: this.promptInput, context: 'all', visible: false}); // Acerta atalho para comando ao precionar enter
+            this.bind(this.shortcutPrompt, ()=>{this.showPrompt();return false;}, {context: 'all', desc: this.shortcutPromptDesc}); // Cria atalho para abrir modal do prompt
+            this.bind('enter', ()=>{this.runCommand();return false;}, {element: this.promptInput, context: 'all', visible: false}); // Acerta atalho para comando ao precionar enter
         }
         // ------
         window.addEventListener('keydown', (ev)=>{this._onKeyDown(ev, this)});
@@ -163,8 +176,8 @@ class Keywatch{
     unbindGroup(group, context=null){
         if(!group || context && !this.contexts.hasOwnProperty(context)){return} // Se nao informado grupo ou se contexto informado inexistente termina bloco
         if(context){ // Se informado contexto, apaga entradas do grupo somente no contexto informado
-            let groups = Object.fromEntries(Object.entries(this.map[context]).filter(([k,v]) => v.options.hasOwnProperty('group') && v.options.group == group)); // Filtra entrada com grupo informado
-            for(let key in groups){ // Percorre os grupos para proceder com o unbind
+            let entries = Object.fromEntries(Object.entries(this.map[context]).filter(([k,v]) => v.options.hasOwnProperty('group') && v.options.group == group)); // Filtra entrada com grupo informado
+            for(let key in entries){ // Percorre os grupos para proceder com o unbind
                 this.unbind(key, context);
             }
         }
@@ -214,9 +227,12 @@ class Keywatch{
             this.sequence = []; // Limpa sequencia
         }
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
-        // Se tecla Enter em input dentro de form, implementa tabulacao (ao instanciar defina {tabOnEnter: false} para desativar) ou no input defina attr data-escape_tab=false
+        // Se tecla Enter em input dentro de form, implementa tabulacao (ao instanciar defina {tabOnEnter: false} para desativar) ou no input defina attr data-escape_tab
         // logica trata elemento nao visiveis e/ou com index menor que zero e busca proximo elemento 
             try{
+                if(ev.target.dataset?.keywatch == 'submit'){return false} // Adicione attr data-keywatch='default' no input para assumir evento padrao (submit do form)
+                ev.preventDefault();
+                if(ev.target.dataset?.keywatch == 'none'){return false} // Adicione attr data-keywatch='none' no input que queira evitar tabulacao no enter mais nao submeter
                 let form = ev.target.form;
                 let index = Array.prototype.indexOf.call(form, ev.target);
                 if(form.elements[index + 1].disabled == false && !form.elements[index + 1]?.readOnly == true && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
@@ -305,6 +321,7 @@ class Keywatch{
         this.contexts[context] = desc;
     }
     showKeymap(){
+        this._refreshMapTable();
         this.shortcutModal.showModal();        
     }
     showPrompt(){ // Exibe modal para entrada de comando
@@ -316,12 +333,22 @@ class Keywatch{
 
         this.promptModal.showModal();
     }
+    showCommands(bool=true){ // Apos instanciar objeto, usar esse metodo para habilitar / desabilitar a exibicao de comandos no maplist
+        this.maplistShowCommands = bool;
+        let th = this.shortcutModalTableThead.childNodes[0].childNodes[0];
+        th.style.display = bool ? 'table-cell' : 'none';
+    }
     _filterMapTable(ev){
-        // PAREI AQ
-        // let term = this.shortcutSearchInput.value.toLowerCase();
-        // this.filteredMap = {};
-        // for(let context in )
-        // this._refreshMapTable();
+        let term = this.shortcutSearchInput.value.toLowerCase();
+        let trs = this.shortcutModalTableTbody.querySelectorAll('tr');
+        for(let i = 0; i < trs.length; i++){
+            let tds = trs[i].querySelectorAll('td');
+            let rowValue = tds[0].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            rowValue += tds[1].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            rowValue += tds[2].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            if(rowValue.replaceAll(/&nbsp;| /g,'').indexOf(term) < 0){trs[i].style.display = 'none'}
+            else{trs[i].style.display = 'table-row'}
+        }
     }
     _refreshMapTable(source=this.map){
         this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
@@ -329,10 +356,13 @@ class Keywatch{
             for(let entry in source[context]){
                 if(source[context][entry].options?.visible == false){continue}
                 let command = source[context][entry].options?.command ? `<span class="${this.commandLabelClasslist}">${source[context][entry].options.command}</span>` : '';                
+                let shortcut = entry;
+                for(let key in this._aliases){shortcut = shortcut.replaceAll(this._aliases[key].toUpperCase(), key.toUpperCase())} // Ajusta alias para versao abreviada ex (control = ctrl)
+                shortcut = this._humanize(shortcut);
                 let tr = `
                 <tr>
-                <td${!this.sourcelistShowCommands ? ' style="display: none;"' : ''}>${command}</td>
-                <td>${this._humanize(entry)}</td>
+                <td${!this.maplistShowCommands ? ' style="display: none;"' : ''}>${command}</td>
+                <td>${shortcut}</td>
                 <td>${source[context][entry].options?.desc || ''}</td>
                 <td>${this.contexts[context]}</td>
                 </tr>`;

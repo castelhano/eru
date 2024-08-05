@@ -133,10 +133,10 @@ class jsGrid{
         }
         // Se informado keybind, adiciona ao mapa (Keywatch class)
         if(options?.keybind){
-            appKeyMap.bind(options.keybind);
+            appKeyMap.bind(...options.keybind);
             if(!options.onclick){ // Se nao especificado outro onclick para elemento, aplica onclick para a funcao atribuida em run
                 console.log(options);
-                el.onclick = () => {options.run};
+                el.onclick = () => {options[1]};
             }
         }
         this.gridItems.push(el);
@@ -182,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próximo item', run: ()=>{this.previousItem()}, desc:'Seleciona próximo item'})
-        appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item anterior', run: ()=>{this.nextItem()}, desc: 'Seleciona item anterior'})
-        appKeyMap.bind({key: 'arrowdown', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item abaixo', run: ()=>{this.itemBelow()}, desc: 'Seleciona item abaixo'})
-        appKeyMap.bind({key: 'arrowup', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Item acima', run: ()=>{this.itemAbove()}, desc: 'Seleciona item acima'})
-        appKeyMap.bind({key: 'enter', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Acessar item', run: ()=>{this.enterItem()}, desc: 'Tenta acessar o ite selecionado'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {desc:'Seleciona próximo item'})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {desc: 'Seleciona item anterior'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {desc: 'Seleciona item abaixo'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {desc: 'Seleciona item acima'})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {desc: 'Tenta acessar o ite selecionado'})
     }
 }
 

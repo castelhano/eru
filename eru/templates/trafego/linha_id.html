@@ -154,9 +154,9 @@
 <script>
   {% block add_script %}
 
-  appKeyMap.bind({key: '1', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Base', desc: 'Exibe aba com campos básicos', run: ()=>{document.getElementById('tab_link_base').click()}})
-  appKeyMap.bind({key: '2', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Métricas', desc: 'Exibe aba com métricas da linha', run: ()=>{document.getElementById('tab_link_extensoes').click()}})
-  appKeyMap.bind({key: '3', ctrl: true, name: '<b>Trafego:</b>&nbsp;&nbsp;Trajetos', desc: 'Exibe página de trajetos da linha', run: ()=>{document.getElementById('tab_link_trajetos').click()}})
+  appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click();return false;}, {desc: 'Exibe aba com campos básicos'})
+  appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click();return false;}, {desc: 'Exibe aba com métricas da linha'})
+  appKeyMap.bind('ctrl+3', ()=>{document.getElementById('tab_link_trajetos').click();return false;}, {desc: 'Exibe página de trajetos da linha'})
   const form = new jsForm(document.getElementById('trafego_form'), {});
   
   var modal_patamar = new bootstrap.Modal(document.getElementById('patamar_modal'), {keyboard: true});

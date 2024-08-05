@@ -32,10 +32,10 @@
 			</div>
 		</div>
 	</div>
-	<script src="{% static 'js/listener.js' %}"></script>
-	<script> 
-        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Inicio', key:'i', alt: true, run: () => {try{document.getElementById('home').click()}catch(e){}}, desc:'Retorna à página inicial'})
-        appKeyMap.bind({name: '<b class="text-secondary">GERAL:</b>&nbsp;&nbsp;&nbsp;&nbsp;Atalhos', key:'k', alt: true, run: () => {appKeyMap.showKeymapModal()}, desc:'Mostra atalhos disponiveis na página'})
+	<script src="{% static 'js/keywatch.js' %}"></script>
+	<script>
+		appKeyMap = new Keywatch();
+        appKeyMap.bind('alt+i', () => {try{document.getElementById('home').click();return false;}catch(e){}}, {desc:'Retorna à página inicial'})
 		if(localStorage.theme){
 			document.documentElement.dataset.bsTheme = localStorage.theme;
 		}

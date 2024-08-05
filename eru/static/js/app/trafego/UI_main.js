@@ -922,7 +922,8 @@ class jsGaitDiagramUI{
         this.rulerTop.style.display = 'block';
         this.__clearTripDisplay();
         this.__clearCarDisplay();
-        appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage2'); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage3'); // Limpa atalhos exclusivos das outras viewStage
         this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearCarLabels(); // Apaga as labels dos carros
@@ -962,7 +963,8 @@ class jsGaitDiagramUI{
         this.arrowsVisible = true;
         if(this.summaryModal){this.summaryModal.remove()}
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
-        appKeyMap.unbindGroup(['March_stage1','March_stage3']);
+        appKeyMap.unbindGroup('March_stage1');
+        appKeyMap.unbindGroup('March_stage3');
         this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearCarLabels(); // Apaga as labels dos carros
@@ -1041,7 +1043,8 @@ class jsGaitDiagramUI{
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         this.rulerTop.style.display = 'none';
         if(this.cursor){this.cursor.remove();} // Remove o cursor
-        appKeyMap.unbindGroup(['March_stage1','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage1'); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage3'); // Limpa atalhos exclusivos das outras viewStage
         // ****
         this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; position: absolute; top: 60px';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})

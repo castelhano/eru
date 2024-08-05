@@ -1435,7 +1435,8 @@ class MarchUI{
         this.rulerTop.style.display = 'block';
         this.__clearViagemDisplay();
         this.__clearCarroDisplay();
-        appKeyMap.unbindGroup(['March_stage2','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage2'); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage3'); // Limpa atalhos exclusivos das outras viewStage
         this.__addStage1Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearCarroLabels(); // Apaga as labels dos carros
@@ -1478,7 +1479,8 @@ class MarchUI{
         this.arrowsVisible = true;
         if(this.summaryModal){this.summaryModal.remove()}
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
-        appKeyMap.unbindGroup(['March_stage1','March_stage3']);
+        appKeyMap.unbindGroup('March_stage1');
+        appKeyMap.unbindGroup('March_stage3');
         this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearCarroLabels(); // Apaga as labels dos carros
@@ -1555,7 +1557,8 @@ class MarchUI{
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         this.rulerTop.style.display = 'none';
         if(this.cursor){this.cursor.remove();} // Remove o cursor
-        appKeyMap.unbindGroup(['March_stage1','March_stage3']); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage1'); // Limpa atalhos exclusivos das outras viewStage
+        appKeyMap.unbindGroup('March_stage3'); // Limpa atalhos exclusivos das outras viewStage
         // ****
         this.summaryModal = document.createElement('dialog');this.summaryModal.style = 'border: 1px solid #FFF; width: 1000px; position: absolute; top: 60px';
         this.summaryModal.addEventListener('cancel', (ev)=>{ev.preventDefault();})
@@ -1963,29 +1966,31 @@ class MarchUI{
         loadInput.remove();
     }
     __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (indiferente do viewStage)
-        appKeyMap.unbind('lTFF'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
-        appKeyMap.bind({group: 'March_general', key: 'arrowright', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para direita', desc: 'Move grid para direita (02 horas)', run: ()=>{this.canvasMove(120)}})
-        appKeyMap.bind({group: 'March_general', key: 'arrowleft', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para esquerda', desc: 'Move grid para esquerda (02 horas)', run: ()=>{this.canvasMove(-120)}})
-        appKeyMap.bind({group: 'March_general', key: 'f5', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Desfazer alterações', desc: 'Recarrega ultimo status salvo do projeto', run: (ev)=>{}}) // Apenas entrada para exibicao no keymap
-        appKeyMap.bind({group: 'March_general', key: 'f8', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Altera Visualização', desc: 'Exibe modal para alteração da visualização', run: (ev)=>{ev.preventDefault();this.__switchStageModal()}})
-        appKeyMap.bind({group: 'March_general', key: '1', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exibe Grid', desc: 'Altera visualização para o Grid', run: ()=>{this.switchStage(1)}})
-        appKeyMap.bind({group: 'March_general', key: '2', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exibe Escalas', desc: 'Altera visualização para Escalas', run: ()=>{this.switchStage(2)}})
-        appKeyMap.bind({group: 'March_general', key: '3', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Exibe Resumo', desc: 'Altera visualização para resumo', run: ()=>{this.switchStage(3)}})
-        appKeyMap.bind({group: 'March_general', key: 'g', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Salva prévia', desc: 'Salva projeto em armazenamento local', run: ()=>{
+        appKeyMap.unbind('alt+l'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.canvasMove(120);return false;}, {group: 'March_general', desc: 'Move grid para direita (02 horas)'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.canvasMove(-120);return false;}, {group: 'March_general', desc: 'Move grid para esquerda (02 horas)'})
+        appKeyMap.bind('f5', (ev)=>{return false;}, {group: 'March_general', desc: 'Recarrega ultimo status salvo do projeto'}) // Apenas entrada para exibicao no keymap
+        appKeyMap.bind('f8', (ev)=>{this.__switchStageModal();return false;}, {group: 'March_general', desc: 'Exibe modal para alteração da visualização'})
+        appKeyMap.bind('alt+1', ()=>{this.switchStage(1);return false;}, {group: 'March_general', desc: 'Altera visualização para o Grid'})
+        appKeyMap.bind('alt+2', ()=>{this.switchStage(2);return false;}, {group: 'March_general', desc: 'Altera visualização para Escalas'})
+        appKeyMap.bind('alt+3', ()=>{this.switchStage(3);return false;}, {group: 'March_general', desc: 'Altera visualização para resumo'})
+        appKeyMap.bind('alt+g', ()=>{
             this.__saveLocal();
-            appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente')
-        }})
-        appKeyMap.bind({group: 'March_general', key: 'l', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpa projeto', desc: 'Limpa projeto atual', run: ()=>{
+            appNotify('success', '<i class="bi bi-check2-square me-2"></i> Prévia salva localmente');
+            return false;
+        }, {group: 'March_general', desc: 'Salva projeto em armazenamento local'})
+        appKeyMap.bind('ctrl+shift+l', ()=>{
             localStorage.removeItem('marchCurrentProject');
             this.project.reset();
             this.__loadStage1();
             this.settingsSumIntervGaps.checked = this.project.sumInterGaps;
             appNotify('warning', '<b class="me-1">Info:</b> Projeto reiniciado.');
-        }})
+            return false;
+        }, {group: 'March_general', desc: 'Limpa projeto atual'})
     }
     __addStage1Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
-        appKeyMap.bind({group: 'March_stage1', key: ';', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Novo carro', desc: 'Insere carro no projeto', run: ()=>{if(this.__gridIsBlock()){return false};this.addCarro()}})
-        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem', desc: 'Insere viagem ao final do carro', run: ()=>{
+        appKeyMap.bind('alt+;', ()=>{if(this.__gridIsBlock()){return false};this.addCarro();return false;}, {group: 'March_stage1', desc: 'Insere carro no projeto'})
+        appKeyMap.bind('alt+.', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -1994,8 +1999,9 @@ class MarchUI{
                 })
             }
             else{this.addViagem();}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: '.', alt: true, ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Viagem AS', desc: 'Insere viagem para carro informando inicio', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Insere viagem ao final do carro'})
+        appKeyMap.bind('ctrl+alt+.', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2004,32 +2010,31 @@ class MarchUI{
                 })
             }
             else{this.addViagemAt();}
-        }})
+            return false;
+        }, {group: 'March_stage1', desc: 'Insere viagem para carro informando inicio'})
 
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próxima viagem', desc: 'Move foco para próxima viagem do carro', run: (ev)=>{
+        appKeyMap.bind('arrowright', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             if(this.project.carros[this.carroIndice].viagens.length > this.viagemIndice + 1){
                 this.viagemIndice++;
                 this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                 this.__cursorMove();
                 this.__updateViagemDisplay();
-                
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar viagem anterior', desc: 'Move foco para viagem anterior do carro', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Move foco para próxima viagem do carro'})
+        appKeyMap.bind('arrowleft', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             if(this.viagemIndice > 0){
                 this.viagemIndice--;
                 this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
                 this.__cursorMove();
                 this.__updateViagemDisplay();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar próximo carro', desc: 'Move foco para próximo carro', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Move foco para viagem anterior do carro'})
+        appKeyMap.bind('arrowdown', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             this.__clearCarroDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.project.carros.length > this.carroIndice + 1){
                 this.carroLabels[this.carroIndice].style.color = 'inherit';
@@ -2055,10 +2060,10 @@ class MarchUI{
                 this.__cursorMove();
                 this.__updateViagemDisplay();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Navegar carro anterior', desc: 'Move foco para carro anterior', run: (ev) => {
+            return false;
+        }, {group: 'March_stage1', desc: 'Move foco para próximo carro'})
+        appKeyMap.bind('arrowup', (ev) => {
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             this.__clearCarroDisplay(); // Ao alterar de carro, limpa o resumo (caso exibido)
             if(this.carroIndice > 0){
                 this.carroLabels[this.carroIndice].style.color = 'inherit';
@@ -2082,22 +2087,25 @@ class MarchUI{
                 }
                 this.viagemFocus = bestMatch;
                 this.__cursorMove();
-                this.__updateViagemDisplay();
+                this.__
+                updateViagemDisplay();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Régua frequência', desc: 'Exibe/oculta régua de frequência', run: ()=>{this.settingsShowFreqRule.click()}})
-        appKeyMap.bind({group: 'March_stage1', key: '+', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus', desc: 'Aumenta 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.plus();}})
-        appKeyMap.bind({group: 'March_stage1', key: '+', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Plus (single)', desc: 'Aumenta 1 minuto na viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.plus(false)}})
-        appKeyMap.bind({group: 'March_stage1', key: '-', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub', desc: 'Subtrai 1 min ao final da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.sub();}})
-        appKeyMap.bind({group: 'March_stage1', key: '-', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem Sub (single)', desc: 'Subtrai 1 minuto na viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.sub(false)}})
-        appKeyMap.bind({group: 'March_stage1', key: ' ', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar', desc: 'Atrasa inicio em 1 minuto, move posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.advance();}})
-        appKeyMap.bind({group: 'March_stage1', key: ' ', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atrasar (single)', desc: 'Aumenta 1 min no inicio da viagem', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}
+            return false;
+        }, {group: 'March_stage1', desc: 'Move foco para carro anterior'})
+        appKeyMap.bind('alt+/', ()=>{this.settingsShowFreqRule.click();return false;}, {group: 'March_stage1', desc: 'Exibe/oculta régua de frequência'})
+        appKeyMap.bind('+', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.plus();return false;}, {group: 'March_stage1', desc: 'Aumenta 1 min ao final da viagem e nas posteriores'})
+        appKeyMap.bind('shift++', ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.plus(false);return false;}, {group: 'March_stage1', desc: 'Aumenta 1 minuto na viagem'})
+        appKeyMap.bind('-', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.sub();return false;}, {group: 'March_stage1', desc: 'Subtrai 1 min ao final da viagem e nas posteriores'})
+        appKeyMap.bind('shift+-', ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.sub(false);return false;}, {group: 'March_stage1', desc: 'Subtrai 1 minuto na viagem'})
+        appKeyMap.bind(' ', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.advance();return false;}, {group: 'March_stage1', desc: 'Atrasa inicio em 1 minuto, move posteriores'})
+        appKeyMap.bind('shift+ ', ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}
             this.moveStart();
             this.__cursorMove();
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'backspace', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar', desc: 'Adianta em 1 min inicio da viagem e nas posteriores', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.back()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'backspace', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adiantar (single)', desc: 'Adianta inicio da viagem em 1 min', run: ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.backStart()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'r', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Intervalo', desc: 'Adiciona intervalo ate a próxima viagem', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Aumenta 1 min no inicio da viagem'})
+        appKeyMap.bind('backspace', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.back();return false;}, {group: 'March_stage1', desc: 'Adianta em 1 min inicio da viagem e nas posteriores'})
+        appKeyMap.bind('shift+backspace', ()=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}this.backStart();return false;}, {group: 'March_stage1', desc: 'Adianta inicio da viagem em 1 min'})
+        appKeyMap.bind('alt+r', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2107,8 +2115,9 @@ class MarchUI{
                 })
             }
             else{this.addInterv();this.__updateViagemDisplay();}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'a', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Acesso', desc: 'Adiciona acesso na viagem', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Adiciona intervalo ate a próxima viagem'})
+        appKeyMap.bind('alt+a', ()=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2118,8 +2127,9 @@ class MarchUI{
                 })
             }
             else{this.addAccess();this.__updateViagemDisplay();}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'a', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Acesso à todos', desc: 'Adiciona acesso para todos os carros', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Adiciona acesso na viagem'})
+        appKeyMap.bind('ctrl+shift+a', ()=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             let increment = true; // addAccess por padrao incrementa o this.viagemIndice, deve incrementar somente para o carro em foco
             for(let i = 0; i < this.project.carros.length; i++){
@@ -2127,8 +2137,9 @@ class MarchUI{
                 increment = false;
                 if(r){this.project.carros[i].escalas = [];} // Limpa escalas do carro
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'p', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Encerrar turno', desc: 'Encerra turno na viagem', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Adiciona acesso para todos os carros'})
+        appKeyMap.bind('alt+p', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2138,8 +2149,9 @@ class MarchUI{
                 })
             }
             else{this.viagemShut();this.__updateViagemDisplay();}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'e', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Adicionar Recolhe', desc: 'Adiciona recolhe na viagem', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Encerra turno na viagem'})
+        appKeyMap.bind('alt+e', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2149,33 +2161,35 @@ class MarchUI{
                 })
             }
             else{this.addRecall();this.__updateViagemDisplay();}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'e', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recolher todos', desc: 'Recolhe todos os carros', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Adiciona recolhe na viagem'})
+        appKeyMap.bind('ctrl+shift+e', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             for(let i = 0; i < this.project.carros.length; i++){
                 let r = this.addRecall(i, this.project.carros[i].viagens.length - 1); // Tenta adicionar recolhe na ultima viagem de cada carro
                 if(r){this.project.carros[i].escalas = [];} // Limpa escalas do carro
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'pagedown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Próxima viagem sentido', desc: 'Foca próxima viagem no mesmo sentido', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.nextViagem();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'pageup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Viagem anterior sentido', desc: 'Foca viagem anterior no mesmo sentido', run: (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false}ev.preventDefault();this.previousViagem();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'home', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem carro', desc: 'Foca primeira viagem do carro', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Recolhe todos os carros'})
+        appKeyMap.bind('pagedown', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.nextViagem();return false;}, {group: 'March_stage1', desc: 'Foca próxima viagem no mesmo sentido'})
+        appKeyMap.bind('pageup', (ev)=>{if(!this.viagemFocus || this.__gridIsBlock()){return false} this.previousViagem();return false;}, {group: 'March_stage1', desc: 'Foca viagem anterior no mesmo sentido'})
+        appKeyMap.bind('home', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             this.viagemIndice = 0;
             this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
             this.__updateViagemDisplay();
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'end', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem carro', desc: 'Foca ultima viagem do carro', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Foca primeira viagem do carro'})
+        appKeyMap.bind('end', (ev)=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
-            ev.preventDefault();
             this.viagemIndice = this.project.carros[this.carroIndice].viagens.length - 1;
             this.viagemFocus = this.project.carros[this.carroIndice].viagens[this.viagemIndice];
             this.__cursorMove();
             this.__updateViagemDisplay();
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'home', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Primeira viagem sentido', desc: 'Foca primeira viagem no mesmo sentido', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Foca ultima viagem do carro'})
+        appKeyMap.bind('ctrl+home', ()=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getFirstViagem(this.viagemFocus.sentido);
             if(resp){
@@ -2187,8 +2201,9 @@ class MarchUI{
                 this.__cursorMove();
                 this.__updateViagemDisplay();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'end', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ultima viagem sentido', desc: 'Foca ultima viagem no mesmo sentido', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Foca primeira viagem no mesmo sentido'})
+        appKeyMap.bind('end', ()=>{
             if(!this.viagemFocus || this.__gridIsBlock()){return false}
             let resp = this.project.getLastViagem(this.viagemFocus.sentido);
             if(resp){
@@ -2200,11 +2215,12 @@ class MarchUI{
                 this.__cursorMove();
                 this.__updateViagemDisplay();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowright', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Selecionar a direita', desc: 'Arrasta seleção para direita', run: ()=>{this.__addToSelecao();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'arrowleft', shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Voltar seleção', desc: 'Diminui da seleção ultima viagem', run: ()=>{this.__subToSelecao();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'l', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar seleção', desc: 'Limpa a seleção de viagens', run: ()=>{this.__clearSelecao();}})
-        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mover viagens', desc: 'Move viagens selecionadas', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Foca ultima viagem no mesmo sentido'})
+        appKeyMap.bind('shift+arrowright', ()=>{this.__addToSelecao();return false;}, {group: 'March_stage1', desc: 'Arrasta seleção para direita'})
+        appKeyMap.bind('shift+arrowleft', ()=>{this.__subToSelecao();return false;}, {group: 'March_stage1', desc: 'Diminui da seleção ultima viagem'})
+        appKeyMap.bind('alt+l', ()=>{this.__clearSelecao();return false;}, {group: 'March_stage1', desc: 'Limpa a seleção de viagens'})
+        appKeyMap.bind('ctrl+v', ()=>{
             if(this.__gridIsBlock() || this.inicioSelecao < 0){return false;}
             if(this.project.carros[this.carroSelecao].escalas.length > 0 || this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2214,8 +2230,9 @@ class MarchUI{
                 })
             }
             else{this.moveViagems()}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'x', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recortar viagens', desc: 'Move viagens selecionadas para area de transferência', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Move viagens selecionadas'})
+        appKeyMap.bind('ctrl+x', ()=>{
             if(this.__gridIsBlock() || this.inicioSelecao < 0 || this.project.area_transferencia.length > 0){return false;}
             if(this.project.carros[this.carroSelecao].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2224,19 +2241,22 @@ class MarchUI{
                 })
             }
             else{this.addToTransferArea()}
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'v', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cola área de transf ', desc: 'Cola todas as viagens da área de transferência', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Move viagens selecionadas para area de transferência'})
+        appKeyMap.bind('ctrl+shift+v', ()=>{
             if(this.project.area_transferencia.length == 0){return false}
-            this.pasteTransfer()
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: ' ', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Centralizar', desc: 'Centraliza grid na viagem em foco', run: ()=>{
+            this.pasteTransfer();
+            return false;
+        }, {group: 'March_stage1', desc: 'Cola todas as viagens da área de transferência'})
+        appKeyMap.bind('ctrl+ ', ()=>{
             if(this.viagemFocus){
                 this.initialView = this.viagemFocus.inicio - 60; // Ajusta o view inicial para uma hora antes da viagem em foco
                 this.__buildRuler();
                 this.canvasFit();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 'delete', ctrl:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remover viagem', desc: 'Remove viagem', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Centraliza grid na viagem em foco'})
+        appKeyMap.bind('ctrl+delete', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.project.carros[this.carroIndice].escalas.length > 0){
                 this.__modalConfirmationChangeProject(()=>{
@@ -2245,8 +2265,9 @@ class MarchUI{
                 })
             }
             else{this.removeViagem(false)}
-        }})
-        appKeyMap.bind({group: 'March_stage1', role: 'removeCarro', key: 'delete', ctrl:true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove viagens/carro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro', run: ()=>{
+            return false;
+        }, {group: 'March_stage1', desc: 'Remove viagem'})
+        appKeyMap.bind('ctrl+shift+delete', ()=>{
             if(this.__gridIsBlock() || !this.viagemFocus){return false;}
             if(this.viagemIndice == 0){this.removeCarro()}
             else if(this.project.carros[this.carroIndice].escalas.length > 0){
@@ -2255,13 +2276,14 @@ class MarchUI{
                     this.removeViagem();
                 })
             }
-            else{this.removeViagem()} 
-        }})
-        appKeyMap.bind({group: 'March_stage1', key: 't', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Legfima viagens', desc: 'Exibe legfima dos tipos de viagens', run: ()=>{this.__showViagemPatterns()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'enter', alt:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Recalcula resumo', desc: 'Exibe resumo do carro em foco', run: ()=>{this.__updateCarroDisplay()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Métricas da linha', desc: 'Exibe controles de métricas da linha', run: (ev)=>{ev.preventDefault();this.__showRouteMetrics()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerador', desc: 'Exibe modal para geração de planejamento', run: (ev)=>{ev.preventDefault();this.__generate()}})
-        appKeyMap.bind({group: 'March_stage1', key: 'backspace', ctrl: true, shift:true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Restaurar Configurações', desc: 'Restaura configurações padrão de interface', run: ()=>{
+            else{this.removeViagem()}
+            return false;
+        }, {group: 'March_stage1', role: 'removeCarro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro'})
+        appKeyMap.bind('alt+t', ()=>{this.__showViagemPatterns();return false;}, {group: 'March_stage1', desc: 'Exibe legfima dos tipos de viagens'})
+        appKeyMap.bind('alt+enter', ()=>{this.__updateCarroDisplay();return false;}, {group: 'March_stage1', desc: 'Exibe resumo do carro em foco'})
+        appKeyMap.bind('f2', (ev)=>{this.__showRouteMetrics();return false;}, {group: 'March_stage1', desc: 'Exibe controles de métricas da linha'})
+        appKeyMap.bind('f4', (ev)=>{this.__generate();return false;}, {desc: 'Exibe modal para geração de planejamento'})
+        appKeyMap.bind('ctrl+shift+backspace', ()=>{
             localStorage.removeItem('marchUiSettings');
             for(let key in this.defaultSettings){
                 this[key] = this.defaultSettings[key]; // Retorna valor padrao a variavel de ambiente
@@ -2270,68 +2292,71 @@ class MarchUI{
             this.__buildRuler(); // Refaz Regua
             this.__loadStage1(false); // Ajusta viagens
             this.canvasFit(); // Centraliza canvas na viagem em foco
-        }})
+            return false;
+        }, {group: 'March_stage1', desc: 'Restaura configurações padrão de interface'})
     }
     __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowright', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próxima escala', desc: 'Seleciona próxima escala', run: (ev)=>{
+        appKeyMap.bind('arrowright', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus){return false}
-            ev.preventDefault();
             if(this.escalaGrid[this.escalaFocus[0]].length - 1 > this.escalaFocus[1]){
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1] + 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.escalaFocus = [this.escalaFocus[0], this.escalaFocus[1] + 1, this.escalaFocus[2]];
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowleft', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar escala anterior', desc: 'Seleciona escala anterior', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Seleciona próxima escala'})
+        appKeyMap.bind('arrowleft', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus){return false}
-            ev.preventDefault();
             if(this.escalaFocus[1] > 0){
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1] - 1].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.escalaFocus = [this.escalaFocus[0], this.escalaFocus[1] - 1, this.escalaFocus[2]];
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowdown', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar próximo carro', desc: 'Seleciona escala do próximo carro', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Seleciona escala anterior'})
+        appKeyMap.bind('arrowdown', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus){return false}
-            ev.preventDefault();
             if(this.escalaGrid[this.escalaFocus[0] + 1]){
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.escalaGrid[this.escalaFocus[0] + 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.escalaFocus = [this.escalaFocus[0] + 1, 0 , 0];
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowup', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Focar carro anterior', desc: 'Seleciona escala do carro anterior', run: (ev)=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Seleciona escala do próximo carro'})
+        appKeyMap.bind('arrowup', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus){return false}
-            ev.preventDefault();
             if(this.escalaFocus[0] > 0){
                 this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].style.backgroundColor = this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala' ? '' : '#1a1d20'; // Altera visual da escala em foco atual
                 this.escalaGrid[this.escalaFocus[0] - 1][0].style.backgroundColor = '#032830'; // Altera visual da proxima escala
                 this.escalaFocus = [this.escalaFocus[0] - 1, 0 , 0];
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowdown', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para baixo', desc: 'Move grid para baixo', run: ()=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Seleciona escala do carro anterior'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{
             if(this.__gridIsBlock()){return false}
             if(this.canvas.offsetTop > (this.maxCarsVisible - this.project.carros.length) * 45){
                 this.canvas.style.top = `calc(${this.canvas.style.top} - 45px)`;
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'arrowup', ctrl: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rolar para cima', desc: 'Move grid para cima', run: ()=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Move grid para baixo'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{
             if(this.__gridIsBlock()){return false}
             if(this.canvas.offsetTop < 0){
                 this.canvas.style.top = `calc(${this.canvas.style.top} + 45px)`;
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'enter', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gerar escala', desc: 'Inicia escala no espaço em foco', run: (ev)=>{
-            ev.preventDefault();
+            return false;
+        }, {group: 'March_stage2', desc: 'Move grid para cima'})
+        appKeyMap.bind('alt+enter', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus){return false}
             this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].click();
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: '/', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Conexões Escalas', desc: 'Exibe ou oculta conexões entre escalas', run: ()=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Inicia escala no espaço em foco'})
+        appKeyMap.bind('alt+/', ()=>{
             if(this.__gridIsBlock()){return false}
             this.__toggleArrowVisibility();
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'f4', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto Gerar tabelas', desc: 'Inicia tabela de todos os carros', run: (ev)=>{
-            ev.preventDefault();
+            return false;
+        }, {group: 'March_stage2', desc: 'Exibe ou oculta conexões entre escalas'})
+        appKeyMap.bind('f4', (ev)=>{
             if(this.__gridIsBlock() || this.project.carros.length == 0){return false}
             this.project.autoGenerateEscalas();
             this.escalaFocus = [0, 0, 0]; // Seleciona primeira viagem do primeiro carro
@@ -2339,9 +2364,9 @@ class MarchUI{
                 this.__updateCarroEscalas(i, this.project.carros[i].getCarroEscalasBlock(this.project.linha))
             }
             this.__updateEscalaArrows();
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'f2', name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Renomear tabela', desc: 'Renomear tabela', run: (ev)=>{
-            ev.preventDefault();
+            return false;
+        }, {group: 'March_stage2', desc: 'Inicia tabela de todos os carros'})
+        appKeyMap.bind('f2', (ev)=>{
             if(this.__gridIsBlock() || !this.escalaFocus || this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala'){return false}
             this.gridLocked = true;
             let modal = document.createElement('dialog');modal.innerHTML = '<h6>Renomear Tabela</h6>';modal.style.position = 'relative';
@@ -2362,8 +2387,9 @@ class MarchUI{
             modal.appendChild(submit);
             document.body.appendChild(modal);
             modal.showModal();
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'delete', alt: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Apagar Escala', desc: 'Exclui a escala em foco', run: ()=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Renomear tabela'})
+        appKeyMap.bind('alt+delete', ()=>{
             if(this.__gridIsBlock() || !this.escalaFocus || this.escalaGrid[this.escalaFocus[0]][this.escalaFocus[1]].dataset.type == 'emptyEscala'){return false}
             let r = this.project.deleteEscala(this.escalaFocus[0], this.escalaFocus[1]);
             if(r){
@@ -2377,14 +2403,16 @@ class MarchUI{
                 r.forEach(el => {this.__updateCarroEscalas(el, this.project.carros[el].getCarroEscalasBlock(this.project.linha))});
                 this.__updateEscalaArrows();
             }
-        }})
-        appKeyMap.bind({group: 'March_stage2', key: 'delete', ctrl: true, shift: true, name: '<b class="text-orange">GRID:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limpar escalas', desc: 'Remove todas as escalas', run: ()=>{
+            return false;
+        }, {group: 'March_stage2', desc: 'Exclui a escala em foco'})
+        appKeyMap.bind('ctrl+shift+delete', ()=>{
             if(this.__gridIsBlock()){return false}
             for(let i = 0; i < this.project.carros.length; i++){
                 this.project.carros[i].escalas = [];
                 this.__updateCarroEscalas(i, this.project.carros[i].getCarroEscalasBlock(this.project.linha))
             }
             this.__updateEscalaArrows();
-        }})
+            return false;
+        }, {group: 'March_stage2', desc: 'Remove todas as escalas'})
     }
 }

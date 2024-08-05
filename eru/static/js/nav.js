@@ -1,15 +1,10 @@
 /*
-* Descreva o contexto do codigo em poucas linhas
+* Cria e manipula menu de navegacao do canvas
 *
 * @version  1.0
-* @since    05/03/2022
+* @since    15/04/2023
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
-* @desc     Decricao abreviada do codigo
-* @param    {Int} Parametro do codigo
-* @returns  {Array} Retorno da funcao
-* @throws   Excessoes lancadas pela funcao
 * @example  Exemplo de utilizacao da funcao
-* @see      {@link https://foo.com}
 */
 
 const customCanvasNavMenu = document.getElementById('customCanvasNavMenu');
@@ -40,7 +35,7 @@ class canvasNavLink{
     focus(){this.link.focus()}
     hide(){this.el.classList.add('d-none')}
     destroy(){this.el.remove()}
-    addKeyBind(options){appKeyMap.bind(options)}
+    addKeyBind(options){appKeyMap.bind(...options)}
 
 }
 
@@ -93,5 +88,5 @@ class canvasNavDropdown{
     focus(){this.link.focus()}
     hide(){this.el.classList.add('d-none')}
     destroy(){this.el.remove()}
-    addKeyBind(options){appKeyMap.bind(options)}
+    addKeyBind(options){appKeyMap.bind(...options)}
 }

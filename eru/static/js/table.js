@@ -404,14 +404,14 @@ class jsTable{
         if(trs_count == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind({key: 'arrowdown', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Próxima linha', desc:'Navega para próxima linha', run: () => {this.nextRow()}})
-        appKeyMap.bind({key: 'arrowup', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Linha anterior', desc:'Navega para linha anterior', run: () => {this.previousRow()}})
-        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind({key: 'enter', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Acessa registro', desc:'Acessa registro em foco', run: () => {this.enterRow()}})}
-        if(this.canFilter){appKeyMap.bind({key: 'f', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Pesquisar', desc:'Foca caixa de pesquisa tabela', run: () => {this.filterInput.select()}})}
-        if(this.canExportCsv){appKeyMap.bind({key: 'd', alt: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Baixar CSV', desc:'Baixa registros em formato CSV', run: () => {this.exportButtonCSV.click()}})}
+        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'Navega para próxima linha'})
+        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'Navega para linha anterior'})
+        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'Acessa registro em foco'})}
+        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'Foca caixa de pesquisa tabela'})}
+        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'Baixa registros em formato CSV'})}
         if(this.enablePaginate){
-            appKeyMap.bind({key: 'arrowright', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Próxima página', desc:'Exibe próxima página da tabela', run: () => {this.nextPage()}})
-            appKeyMap.bind({key: 'arrowleft', ctrl: true, name: '<b class="text-orange">TABELA:</b>&nbsp;&nbsp;Página Anterior', desc:'Exibe página anterior da tabela', run: () => {this.previousPage()}})
+            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'Exibe próxima página da tabela'})
+            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'Exibe página anterior da tabela'})
         }
     }
 }
