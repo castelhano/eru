@@ -1,5 +1,6 @@
 /**
  * TODO: ajusta ctrl+alt+e sendo que os precionados nao importa ordem
+ *       bug quando insere atalho multiplo sendo uma das parciais ja constantes em map
  */
 
 /*
@@ -23,7 +24,7 @@ class Keywatch{
             maplistShowCommands: false,             // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
             shortcutPrompt: "f2",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
             shortcutPromptDesc: "Exibe prompt para entrada de comando",
-            delay: 600,                             // Delay em milissegundos para limpar o historico de sequencia
+            delay: 800,                             // Delay em milissegundos para limpar o historico de sequencia
             //Definicoes de estilizacao
             promptModalClasslist: 'border-1 border-secondary rounded mt-3 p-2',
             promptInputClasslist: 'form-control form-control-sm',
@@ -49,8 +50,8 @@ class Keywatch{
             all: "Atalhos Globais",
             default: "Atalhos Base",
         };
-        this.context = 'default';                                       // Contexto ativo (shortcut no context all serao executados em todos os contextos)
-        for(let key in defaultOptions){                                 // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
+        this.context = 'default';                   // Contexto ativo (shortcut no context all serao executados em todos os contextos)
+        for(let key in defaultOptions){             // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
             this[key] = options.hasOwnProperty(key) ? options[key] : defaultOptions[key];
         }
         this._createComponents();
@@ -206,10 +207,9 @@ class Keywatch{
             if(
                 Object.keys(instance.sequences[instance.context]).filter(k => k.startsWith(schema)).length == 0 &&
                 Object.keys(instance.sequences['all']).filter(k => k.startsWith(schema)).length == 0
-            ){instance.sequence = [];
-            }
+            ){instance.sequence = [];}
             instance._runKeyup(ev, schema);
-            instance._sequenceTimeout = setTimeout(()=>{instance.sequence = []}, instance.delay); // Limpa this.sequence apos delay definido
+            instance._sequenceTimeout = setTimeout(()=>{instance.sequence = [];}, instance.delay); // Limpa this.sequence apos delay definido
         } catch (e){}
     }
     _runKeydown(ev){
@@ -222,9 +222,8 @@ class Keywatch{
         // Verifica se existe shortcut em this.entries no contexto ativo ou no all, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
             if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp}
             if(findOnEntries){resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp}
-            if(!resp){ev.preventDefault();
-            }
-            this.sequence = []; // Limpa sequencia
+            if(!resp){ev.preventDefault()}
+            // this.sequence = []; // Limpa sequencia (##) comentei pois estava dando conflito com atalhos de tecla unica 'e' limpava sequencia de maneira indevida
         }
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
         // Se tecla Enter em input dentro de form, implementa tabulacao (ao instanciar defina {tabOnEnter: false} para desativar) ou no input defina attr data-escape_tab
@@ -254,10 +253,12 @@ class Keywatch{
         // Verifica se existe sequencia correspondente em this.sequences (contexto atual ou no all)
         let findOnSequences = this.sequences[this.context].hasOwnProperty(schema) && (!this.sequences[this.context][schema].options.hasOwnProperty('element') || this.sequences[this.context][schema].options.element == ev.target);
         let findOnAll = this.sequences['all'].hasOwnProperty(schema) && (!this.sequences['all'][schema].options.hasOwnProperty('element') || this.sequences['all'][schema].options.element == ev.target);
+        
         if(findOnSequences){
             resp = this.sequences[this.context][schema].run(ev);
             if(!resp){ev.preventDefault()}
             this.sequence = []; // Limpa sequencia
+            
         }
         if(findOnAll){
             resp = this.sequences['all'][schema].run(ev);

@@ -141,7 +141,7 @@
     {% block add_script_src %}{% endblock %}
 
     <script>
-        appKeyMap = new Keywatch(); // Inicia lib para captura de shortcuts
+        var appKeyMap = new Keywatch(); // Inicia lib para captura de shortcuts
         
         if(localStorage.theme){
             document.documentElement.dataset.bsTheme = localStorage.theme;
@@ -172,6 +172,10 @@
                 case false: canvasNav.hide();break;
             }
         }
+
+        appKeyMap.bind('q,w,e', ()=>{appNotify('success', 'Acionado alt+p'); return false;}, {})
+
+        
         
         appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click();return false;}catch(e){}}, {desc:'Retorna à página inicial'})
         if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click();return false;}catch(e){}}, {desc:'Retorno inicio do módulo'})}
