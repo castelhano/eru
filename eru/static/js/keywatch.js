@@ -76,8 +76,12 @@ class Keywatch{
         }
         let context = options?.context || 'default';
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, '');} // Se novo contexto, chama metodo addContext
-        // if(!this.map.hasOwnProperty(context)){this.map[context] = {}} // Verifica se context existe, se nao inicia entrada
-        this.map[context][shortcut] = { // Cria entrada em this.map para novo shortcut (ou sobregrava se ja existir)
+        
+        let keys = this._getEntries(shortcut); // _getEntries retorna array com entradas do shortcut. Ex _getEntries('ctrl+u;alt+y') = ['ctrl+u','alt+y']
+        for(let i = 0; i < keys.length; i++){ // Verifica se algum atalho ja responde pela combinacao, se sim faz o unbind
+            if(this.entries[context].hasOwnProperty(keys[i]) || this.sequences[context].hasOwnProperty(keys[i])){this.unbind(keys[i]);}
+        }        
+        this.map[context][shortcut] = { // Cria entrada em this.map para novo shortcut
             schema: shortcut,
             run: run,
             options: options
@@ -85,7 +89,6 @@ class Keywatch{
         if(options.hasOwnProperty('command')){ // Se foi atribuido comando para o shortcut, adiciona apontador no dict this.commands
             this.commands[options.command] = this.map[context][shortcut];
         }
-        let keys = this._getEntries(shortcut); // _getEntries retorna array com entradas do shortcut. Ex _getEntries('ctrl+u;alt+y') = ['ctrl+u','alt+y']
         for(let i = 0; i < keys.length; i++){ // 
             if(this._hasSequence(keys[i])){ // Se shortcut eh uma sequencia, adiciona apontador em this.sequences
                 if(!this.sequences.hasOwnProperty(context)){this.sequences[context] = {}} // Inicia context em this.sequences (caso nao iniciado)
@@ -150,14 +153,14 @@ class Keywatch{
                     if(this.entries[context][entries[i]].options.hasOwnProperty('command')){ // Se shortcut tem comando associado, atualiza apontador
                         this.commands[this.entries[context][entries[i]].options.command] = this.map[context][residue];
                     }
-                    // resisue pode conter mais de um apontador, neste caso eh necessario iterar entre todos para atualizar referencia em this.map
+                    // residue pode conter mais de um apontador, neste caso eh necessario iterar entre todos para atualizar referencia em this.map
                     let residues = this._getEntries(residue);
                     for(let j = 0; j < residues.length; j++){
                         if(this._hasSequence(residues[j])){
-                            this.sequences[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                            this.sequences[context][residues[j]] = this.map[context][residue]; // Refaz apontador para nova entrada
                         }
                         else{
-                            this.entries[context][residue] = this.map[context][residues[j]]; // Refaz apontador para nova entrada
+                            this.entries[context][residues[j]] = this.map[context][residue]; // Refaz apontador para nova entrada
                         }
                     }
                     delete this.map[context][this.entries[context][entries[i]].schema]; // Apaga entrada antiga

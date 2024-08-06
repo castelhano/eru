@@ -172,11 +172,6 @@
                 case false: canvasNav.hide();break;
             }
         }
-
-        appKeyMap.bind('q,w,e', ()=>{appNotify('success', 'Acionado alt+p'); return false;}, {})
-
-        
-        
         appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click();return false;}catch(e){}}, {desc:'Retorna à página inicial'})
         if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click();return false;}catch(e){}}, {desc:'Retorno inicio do módulo'})}
         if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click();return false;}catch(e){}}, {desc:'Novo registro'})}
