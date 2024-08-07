@@ -4,8 +4,7 @@
 
 
 <style>
-{% block style %}
-{% endblock %}
+{% block style %}{% endblock %}
 </style>
 
 {% block style_src %}
@@ -17,13 +16,6 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<input type="text" class="form-control" list="datalist" autofocus>
-<datalist id="datalist">
-    <option value="opt1">opt1</option>
-    <option value="opt2">opt2</option>
-    <option value="opt3">opt3</option>
-    <option value="opt4">opt4</option>
-</datalist>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -102,8 +94,23 @@ document.getElementById('id_field'),
 <p class="mt-3">Se usado em conjunto a lib <code>jsForm</code> não é necessário fazer o processo de validação, apenas informar ao instanciar o form os componentes imask</p>
 <pre><code class="language-javascript">const fone = IMask(document.getElementById('id_fone'), {mask: [{mask: '(00) 0000-0000'},{mask: '(00) 00000-0000'}]})</code></pre>
 <pre><code class="language-javascript">const form = new jsForm(meu_form, {imask: [fone, cpf]})</code></pre>
-<h5>listener</h5>
-<pre><code class="language-javascript">appKeyMap.bind({key: 'y', alt: true, run: ()=>{...}, name: 'Nome', desc: 'Descrição abreviada'})</code></pre>
+<h5>Keywatch JS</h5>
+<p>Gerencia atalhos de teclado além de implementar tabulação em forms pela tecla <code>Enter</code></p>
+<pre><code class="language-javascript">const appKeyMap = new Keywatch();
+appKeyMap.bind('alt+e', ()=>{...}, {})  // extrutura basica
+appKeyMap.bind('g+i;g+u', ()=>{...})    // multiplos atalhos
+appKeyMap.bind('q,w,e', ()=>{...})      // sequencia de teclas
+appKeyMap.bind('alt+e', ()=>{...}, {context: 'modalX'}) // alterando o contexto
+
+// conficuracoes do shortcut
+{
+    context: 'default', // use context = 'all' para atalho em TODOS os contextos
+    desc: '',           // descricao, sera usada no mapa de atalhos
+    command: null,      // comando correspondente ao atalho (prompt)
+    visible: true,      // bool define se comendo sera exibido na tela de atalhos
+}
+appKeyMap.bind('alt+e', ()=>{..do something}, {})
+</code></pre>
 <small>Listener responde ao comando <kbd class="mx-2">Alt + Y</kbd>, os campos <code>name</code> e <code>desc</code> são opcionais, apenas para exibição na tela de atalhos</small>
 <div class="callout callout-primary mt-4"><i class="bi bi-exclamation-circle-fill me-2"></i> Para exibir os atalhos cadastrados use o comando <code>appKeyMap.showKeymap()</code> <button type="button" class="btn btn-sm btn-phantom-warning ms-2" onclick="appKeyMap.showKeymap()">Ver</button></div>
 

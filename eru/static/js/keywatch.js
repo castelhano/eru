@@ -1,8 +1,3 @@
-/**
- * TODO: ajusta ctrl+alt+e sendo que os precionados nao importa ordem
- *       bug quando insere atalho multiplo sendo uma das parciais ja constantes em map
- */
-
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
@@ -22,9 +17,11 @@ class Keywatch{
             shortcutMaplist: "alt+k",               // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             maplistShowCommands: false,             // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
+            commandsDatalist: true,                 // Se true (default) adiciona um datalist com comandos disponiveis (texto de sugestao no input)
             shortcutPrompt: "f2",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
             shortcutPromptDesc: "Exibe prompt para entrada de comando",
             delay: 800,                             // Delay em milissegundos para limpar o historico de sequencia
+            showEntry: false,                       // Se true exibe no console o key do ev.keydown
             //Definicoes de estilizacao
             promptModalClasslist: 'border-1 border-secondary rounded mt-3 p-2',
             promptInputClasslist: 'form-control form-control-sm',
@@ -56,7 +53,7 @@ class Keywatch{
         }
         this._createComponents();
 
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap();return false;}, {desc: this.shortcutMaplistDesc})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap();return false;}, {desc: this.shortcutMaplistDesc, context: 'all'})}
         if(this.shortcutPrompt){
             this.bind(this.shortcutPrompt, ()=>{this.showPrompt();return false;}, {context: 'all', desc: this.shortcutPromptDesc}); // Cria atalho para abrir modal do prompt
             this.bind('enter', ()=>{this.runCommand();return false;}, {element: this.promptInput, context: 'all', visible: false}); // Acerta atalho para comando ao precionar enter
@@ -100,7 +97,6 @@ class Keywatch{
             }
         }
     }
-    bindCommand(command, run, options={}){}
     unbind(entry, context=null){ // Remove shortcut, se nao informado contexto remove de todos os contextos
         if(!context){ // Se nao informado contexto, chama recursivamente metodo para todos os contextos
             for(let c in this.contexts){
@@ -219,6 +215,7 @@ class Keywatch{
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
         let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
+        if(this.showEntry){console.log(schema)}; // Se this.showEntry == true exibe entrada no console
         let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
         let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
@@ -313,6 +310,7 @@ class Keywatch{
     getContext(){return this.context}
     setContext(context='default', desc=''){
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
+        else if(desc){this.contexts[context] = desc} // Desc pode ser alterado pelo metodo setContext
         this.context = context;
     }
     updateContext(context, desc=''){
@@ -329,18 +327,34 @@ class Keywatch{
         this.shortcutModal.showModal();        
     }
     showPrompt(){ // Exibe modal para entrada de comando
-        this.commandDataList.innerHTML = '';
-        for(let key in this.commands){ // Atualiza os comandos disponiveis no datalist
-            let opt = document.createElement('option');opt.value = key;opt.innerHTML = key;
-            this.commandDataList.appendChild(opt);            
+        if(this.commandsDatalist){
+            this.commandDataList.innerHTML = '';
+            for(let key in this.commands){ // Atualiza os comandos disponiveis no datalist
+                let opt = document.createElement('option');opt.value = key;opt.innerHTML = key;
+                this.commandDataList.appendChild(opt);            
+            }
         }
-
         this.promptModal.showModal();
     }
     showCommands(bool=true){ // Apos instanciar objeto, usar esse metodo para habilitar / desabilitar a exibicao de comandos no maplist
         this.maplistShowCommands = bool;
         let th = this.shortcutModalTableThead.childNodes[0].childNodes[0];
         th.style.display = bool ? 'table-cell' : 'none';
+    }
+    avail(shortcut, context=null){
+    // Retorna (bool) se shortcut esta disponivel, se nao informado contexto retorna true somente se shortcut disponivel em TODOS os contextos
+    // ## So deve ser usado para shortcut unico (sem entrada multipla) 
+        if(context){ // Se informado contexto verifica se atalho existe no contexto
+            if(!this.contexts.hasOwnProperty(context)){return false;}
+            return !(this.entries[context].hasOwnProperty(shortcut) || this.sequences[context].hasOwnProperty(shortcut));
+        }
+        else { // Se nao fornecido contexto, analisa todos os contextos para ver se entraa existe em algum
+            let inUse = false;
+            for(let c in this.contexts){
+                if(this.entries[c].hasOwnProperty(shortcut) || this.sequences[c].hasOwnProperty(shortcut)){inUse = true}
+            }
+            return inUse;
+        }
     }
     _filterMapTable(ev){
         let term = this.shortcutSearchInput.value.toLowerCase();
@@ -365,7 +379,7 @@ class Keywatch{
                 shortcut = this._humanize(shortcut);
                 let tr = `
                 <tr>
-                <td${!this.maplistShowCommands ? ' style="display: none;"' : ''}>${command}</td>
+                <td class="fit"${!this.maplistShowCommands ? ' style="display: none;"' : ''}>${command}</td>
                 <td>${shortcut}</td>
                 <td>${source[context][entry].options?.desc || ''}</td>
                 <td>${this.contexts[context]}</td>
@@ -391,9 +405,12 @@ class Keywatch{
         // Criando prompt
         this.promptModal = document.createElement('dialog'); this.promptModal.classList = this.promptModalClasslist;
         this.promptModal.onclose = ()=>{this.promptInput.value = ''} // Limpa input ao fechar modal
-        this.commandDataList = document.createElement('datalist');this.commandDataList.id = 'keywatch_datalist';
-        this.promptInput = document.createElement('input');this.promptInput.type = 'search';this.promptInput.classList = this.promptInputClasslist;this.promptInput.placeholder = this.promptInputPlaceholder;this.promptInput.setAttribute('list', 'keywatch_datalist');
-        this.promptModal.appendChild(this.commandDataList);
+        this.promptInput = document.createElement('input');this.promptInput.type = 'search';this.promptInput.classList = this.promptInputClasslist;this.promptInput.placeholder = this.promptInputPlaceholder;
+        if(this.commandsDatalist){
+            this.commandDataList = document.createElement('datalist');this.commandDataList.id = 'keywatch_datalist';
+            this.promptInput.setAttribute('list', 'keywatch_datalist');
+            this.promptModal.appendChild(this.commandDataList);
+        }
         this.promptModal.appendChild(this.promptInput);
         document.body.appendChild(this.promptModal);
         // Criando shortcutList
@@ -405,7 +422,7 @@ class Keywatch{
         this.shortcutModalTable.classList = this.modalTableClasslist;
         this.shortcutModalTableThead = document.createElement('thead');
         this.shortcutModalTableTbody = document.createElement('tbody');
-        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Command</th><th>Shortcut</th><th>Descrição</th><th>Contexto</th></tr>`;
+        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Descrição</th><th>Contexto</th></tr>`;
         this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
         this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
         this.shortcutModal.appendChild(this.shortcutSearchInput);
