@@ -105,8 +105,15 @@ def planejamentos(request):
 def passageiros(request):
     if request.method == 'POST':
         dados = Passageiro.objects.filter(referencia__range=[request.POST['data_inicio'],request.POST['data_fim']])
-        if request.POST['layout'] == 'linha_diario':
+        if(request.POST.get('linha_inicio', None)):
+            linha_fim = request.POST.get('linha_inicio', None) if request.POST.get('linha_inicio', None) else 'zzzzzzzz'
+            dados = dados.filter(linha__codigo__gte=request.POST['linha_inicio'], linha__codigo__lte=linha_fim)
+        if request.POST['layout'] == 'linha_produto':
             dados = dados.values('empresa_id', 'empresa__nome', 'linha_id', 'linha__codigo', 'linha__nome', 'aplicacao', 'tipo').annotate(qtde=Count('linha_id'))
+        elif request.POST['layout'] == 'linha_diario':
+            dados = dados.values('linha_id', 'linha__codigo', 'linha__nome',).annotate(qtde=Count('linha_id'))
+        if len(dados) == 0:
+            messages.warning(request, '<b>Atenção:</b> Nenhum registro com os filtros informados')
         return render(request, 'trafego/passageiros.html', {'dados':dados, 'layout':request.POST['layout']})
     return render(request, 'trafego/passageiros.html')
 

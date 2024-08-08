@@ -7,10 +7,10 @@
 */
 
 class jsTableJson extends jsTable{
-    constructor(target, options){
+    constructor(table_id, options){
         // Inicia configuracao da tabela a ser criada
         let fakeTable = document.createElement('table');
-        fakeTable.id = target;
+        fakeTable.id = table_id;
         fakeTable.classList = options?.tableClasslist || 'table border table-striped table-hover caption-top mb-2';
         fakeTable.appendChild(document.createElement('thead'));
         fakeTable.appendChild(document.createElement('tbody'));
@@ -25,6 +25,7 @@ class jsTableJson extends jsTable{
         this.ignoredCols = options?.ignoredCols || []; // ex: ignoredCols: ['detalhe', 'senha'] campos informados aqui nao serao importados na tabela
         this.restoreButton = null; // Armazena o botao para restaurar linha do trash, necessario para exibir e ocultar baseado na existencia de itens no trash
         this.saveBtn = null;
+        this.pivot = options?.pivot || false;
         // ****************
         this.canAddRow = options?.canAddRow != undefined ? options.canAddRow : false;
         this.canDeleteRow = options?.canDeleteRow != undefined ? options.canDeleteRow : false;

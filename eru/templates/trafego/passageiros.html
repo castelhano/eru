@@ -26,6 +26,7 @@
           <div class="col-lg-2 mb-lg-1 form-floating">
             <select name="layout" id="id_layout" class="form-select" autofocus>
               <option value="linha_diario">Linha Diário</option>
+              <option value="linha_produto">Linha por Produto</option>
               <option value="carregamento_faixa">Carregamento por Faixa</option>
             </select>
             <label for="id_layout">Layout</label>
@@ -51,7 +52,6 @@
             <label for="id_linha_fim">Linha Fim</label>
           </div>
         </div>
-
         <div class="row g-1">
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="text" class="form-control" name="veiculo_inicio" id="id_veiculo_inicio" value="{{request.POST.veiculo_inicio}}">
@@ -82,6 +82,8 @@
 {% block add_script_src %}
 <script src="{% static 'js/url.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/table_json.js' %}"></script>
 {% endblock %}
 
 <script>
@@ -107,7 +109,7 @@
       target: document.getElementById('id_empresa'), 
       url: '{% url 'core_get_empresas' %}',
       emptyRow: true,
-      emptyRowText: 'Geral',
+      emptyRowText: 'Todas',
       then: ()=>{if(urlGet('empresa') != null){document.getElementById('id_empresa').value = urlGet('empresa')}}
     }
     ],
@@ -126,20 +128,37 @@
       // Cria dicionario com dados pesquisados
       const dados = [
       {% for d in dados %}
-        {empresa_id: {{d.empresa_id}}, empresa_nome: '{{d.empresa__nome}}', linha_id: {{d.linha_id}}, linha_codigo: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', aplicacao: '{{d.aplicacao}}', tipo: '{{d.tipo}}', qtde: {{d.qtde|safe}}},
+        {linha_codigo: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', qtde: {{d.qtde}}},
       {% endfor %}
       ]
       
       let total = 0;
       for(let i=0; i < dados.length; i++){total += dados[i].qtde}
+      const json_table = new jsTableJson('linha_produto', {
+        data: dados,
+        container: document.getElementById('table_result'),
+      })
+    {% endif %}  
+    {% if layout == 'linha_produto' %}
+      // Cria dicionario com dados pesquisados
+      const dados = [
+      {% for d in dados %}
+        {empresa_id: {{d.empresa_id}}, empresa_nome: '{{d.empresa__nome}}', linha_id: {{d.linha_id}}, linha_codigo: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', aplicacao: '{{d.aplicacao}}', tipo: '{{d.tipo}}', qtde: {{d.qtde}}},
+      {% endfor %}
+      ]
+      
+      let total = 0;
+      for(let i=0; i < dados.length; i++){total += dados[i].qtde}
+      const json_table = new jsTableJson('linha_produto', {
+        data: dados,
+        container: document.getElementById('table_result'),
+        ignoredCols: ['empresa_id', 'linha_id']
+      })
     {% endif %}  
   {% endif %}
 
 
-  // const linha_diario = new jsTableJson('linha_diario', {
-  //   data: dados,
-  //   container: document.getElementById('table_result'),
-  // })
+  
 
 
   {% endblock %}
