@@ -18,7 +18,7 @@ class Keywatch{
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             maplistShowCommands: false,             // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
             commandsDatalist: true,                 // Se true (default) adiciona um datalist com comandos disponiveis (texto de sugestao no input)
-            shortcutPrompt: "f2",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
+            shortcutPrompt: "f10",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
             shortcutPromptDesc: "Exibe prompt para entrada de comando",
             delay: 800,                             // Delay em milissegundos para limpar o historico de sequencia
             showEntry: false,                       // Se true exibe no console o key do ev.keydown
