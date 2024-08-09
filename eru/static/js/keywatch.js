@@ -21,7 +21,6 @@ class Keywatch{
             shortcutPrompt: "f10",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
             shortcutPromptDesc: "Exibe prompt para entrada de comando",
             delay: 800,                             // Delay em milissegundos para limpar o historico de sequencia
-            showEntry: false,                       // Se true exibe no console o key do ev.keydown
             //Definicoes de estilizacao
             promptModalClasslist: 'border-1 border-secondary rounded mt-3 p-2',
             promptInputClasslist: 'form-control form-control-sm',
@@ -74,7 +73,18 @@ class Keywatch{
         let context = options?.context || 'default';
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, '');} // Se novo contexto, chama metodo addContext
         
-        let keys = this._getEntries(shortcut); // _getEntries retorna array com entradas do shortcut. Ex _getEntries('ctrl+u;alt+y') = ['ctrl+u','alt+y']
+        let rawKeys = this._getEntries(shortcut); // _getEntries retorna array com entradas do shortcut. Ex _getEntries('ctrl+u;alt+y') = ['ctrl+u','alt+y']
+        let keys = [];
+        
+        for(let i = 0; i < rawKeys.length; i++){ // Percorre rawKeys para tratar precenca de combinacoes com mais de um mod, se existir gera permutacoes da combinacao
+            if(!this._hasSequence(rawKeys[i]) && this._splitEntry(rawKeys[i])[0].length > 2){ // Eh combinacao com mais de um mod
+                console.log(keys);
+                keys.push(...this._getEntryPermuts(this._splitEntry(rawKeys[i])[0]));
+                console.log(keys);
+            }
+            else{keys.push(rawKeys[i])}
+        }
+        
         for(let i = 0; i < keys.length; i++){ // Verifica se algum atalho ja responde pela combinacao, se sim faz o unbind
             if(this.entries[context].hasOwnProperty(keys[i]) || this.sequences[context].hasOwnProperty(keys[i])){this.unbind(keys[i]);}
         }        
@@ -215,7 +225,6 @@ class Keywatch{
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
         let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
-        if(this.showEntry){console.log(schema)}; // Se this.showEntry == true exibe entrada no console
         let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
         let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
@@ -223,7 +232,6 @@ class Keywatch{
             if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp}
             if(findOnEntries){resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp}
             if(!resp){ev.preventDefault()}
-            // this.sequence = []; // Limpa sequencia (##) comentei pois estava dando conflito com atalhos de tecla unica 'e' limpava sequencia de maneira indevida
         }
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
         // Se tecla Enter em input dentro de form, implementa tabulacao (ao instanciar defina {tabOnEnter: false} para desativar) ou no input defina attr data-escape_tab
@@ -290,6 +298,22 @@ class Keywatch{
             index = keys.lastIndexOf('');
         }
         return keys;
+    }
+    _getEntryPermuts(list){ // Retorna array com todas as permutacoes de um shortcut ex _getEntryPermuts(['ctrl','alt','e']) = ['ctrl+alt+e','alt+ctrl+e']
+        let result = []
+        let trigger = list.pop(); // 
+        let permut = (arr, m = []) => {
+            if (arr.length === 0){m.push(trigger); result.push(m.join('+'))}
+            else {
+                for (let i = 0; i < arr.length; i++) {
+                    let curr = arr.slice();
+                    let next = curr.splice(i, 1);
+                    permut(curr.slice(), m.concat(next))
+                }
+            }
+        }
+        permut(list);
+        return result;
     }
     _splitEntry(entry){ // Retorna lista de caracteres de um shortcut. ex: 'g+i' = ['g', 'i'] alem do separador usado
         let separator = this._hasSequence(entry) ? ',' : '+';
