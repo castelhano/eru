@@ -166,17 +166,34 @@ class Keywatch{
                     }
                     // residue pode conter mais de um apontador, neste caso eh necessario iterar entre todos para atualizar referencia em this.map
                     let residues = this._getEntries(residue);
+                    
                     for(let j = 0; j < residues.length; j++){
                         if(this._hasSequence(residues[j])){
                             this.sequences[context][residues[j]] = this.map[context][residue]; // Refaz apontador para nova entrada
                         }
                         else{
-                            this.entries[context][residues[j]] = this.map[context][residue]; // Refaz apontador para nova entrada
+                            if(this._splitEntry(residues[j])[0].length > 2){ // Se shortcut for combo com mais de um modificador eh necessario atualiza ref em todas as possiveis permuts
+                                let permuts = this._getEntryPermuts(this._splitEntry(residues[j])[0]);
+                                for(let k = 0; k < permuts.length; k++){
+                                    this.entries[context][permuts[k]] = this.map[context][residue];
+                                }
+                            }
+                            else{ // Caso combo simples, apenas atualiza referencia da entrada
+                                this.entries[context][residues[j]] = this.map[context][residue]; // Refaz apontador para nova entrada
+                            }
                         }
                     }
                     delete this.map[context][this.entries[context][entries[i]].schema]; // Apaga entrada antiga
                 }
-                delete this.entries[context][entries[i]]; // Apaga entrada de this.entries
+                if(this._splitEntry(entries[i])[0].length > 2){
+                    let permuts = this._getEntryPermuts(this._splitEntry(entries[i])[0]);
+                    for(let k = 0; k < permuts.length; k++){
+                        delete this.entries[context][permuts[k]];
+                    }
+                }
+                else{
+                    delete this.entries[context][entries[i]]; // Apaga entrada de this.entries
+                }
             }
         }
     }
@@ -230,6 +247,7 @@ class Keywatch{
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
         let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
+        // console.log(schema);        
         let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
         let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
