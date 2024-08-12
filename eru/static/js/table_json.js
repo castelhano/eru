@@ -1,6 +1,7 @@
-/*
+/**
 * jsTableJson Extende funcionalidade de jsTable, criando tabela a partir de objeto json
 *
+* TODO: Ajustar total para lihas para a ultima coluna
 * @version  1.0
 * @since    09/01/2024
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -16,16 +17,22 @@ class jsTableJson extends jsTable{
         fakeTable.appendChild(document.createElement('tbody'));
         // ********************
         super(fakeTable, options);
+        this.tfoot = document.createElement('tfoot');this.table.appendChild(this.tfoot);
         this.container = options?.container || document.body; // container para tabela, caso nao informado, faz append no body
         this.container.appendChild(this.table);
         if(this.enablePaginate){this.table.after(this.pgControlsContainer)}
-        this.data = options?.data || []; // Json com dados para popular tabela
+        this.originalData = options?.data || []; // Json com dados originais fornecidos
+        this.data = [...this.originalData]; // Faz copia dos dados (Json), usado no caso de pivot dos dados
         this.trash = []; // Ao deletar row, registro eh movido para o trash (permitndo retornar registro)
         this.editableCols = options?.editableCols || [];
         this.ignoredCols = options?.ignoredCols || []; // ex: ignoredCols: ['detalhe', 'senha'] campos informados aqui nao serao importados na tabela
         this.restoreButton = null; // Armazena o botao para restaurar linha do trash, necessario para exibir e ocultar baseado na existencia de itens no trash
         this.saveBtn = null;
-        this.pivot = options?.pivot || false;
+        // Pivot: ex {pivot: {lin: 'matricula', col: 'cidade', value: 'count'}} retorna os dados em formato json ajustado somente para a linha e coluna informada, so aceita 1 campo para linha e outro para coluna 
+        this.pivotSchema = options?.pivot || false; 
+        this.totalLin = options?.totalLin || this.pivot;  // Se true adiciona totalizador para linha
+        this.totalCol = options?.totalCol || this.pivot;  // Se true adiciona totalizador para coluna
+        if(this.pivotSchema){this.pivot(this.pivotSchema, false)}
         // ****************
         this.canAddRow = options?.canAddRow != undefined ? options.canAddRow : false;
         this.canDeleteRow = options?.canDeleteRow != undefined ? options.canDeleteRow : false;
@@ -74,6 +81,7 @@ class jsTableJson extends jsTable{
         }
     }
     buildHeaders(){
+        this.thead.innerHTML = '';
         let tr = document.createElement('tr');
         for(let i = 0;i < this.data.length;i++){
             for(let j in this.data[i]){
@@ -116,6 +124,7 @@ class jsTableJson extends jsTable{
         }
         if(data_size == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
         if(this.showCounterLabel){this.rowsCountLabel.innerHTML = data_size};
+        if(this.totalCol){this.buildFoot()};
     }
     rowAddControls(row){ // Adiciona os controles na linha (tr) alvo
         if(this.canDeleteRow){
@@ -163,6 +172,84 @@ class jsTableJson extends jsTable{
             this.raw.push(row);
         }
         this.rowsReset();
+    }
+    pivot(schema, refreshTable=true){
+        // Pivot deve obrigatoriamente ter atributos lin e col, sendo ambos strings
+        // pode ser fornecido atributo value, neste caso muda comportamento padrao (count) e espera receber atributo type
+        // para type sao aceitos count, sum, average, max ou min (default: count)
+        this.pivotSchema = schema;
+        let hasLin = this.pivotSchema.hasOwnProperty('lin');
+        let hasCol = this.pivotSchema.hasOwnProperty('col');
+        let hasValue = this.pivotSchema.hasOwnProperty('value');
+        let hasType = this.pivotSchema.hasOwnProperty('type');
+        if(
+            !hasLin || typeof this.pivotSchema.lin != 'string' ||
+            !hasCol || typeof this.pivotSchema.col != 'string' ||
+            hasType && (typeof this.pivotSchema.type != 'string' || !['count','sum','average','max','min'].includes(this.pivotSchema.type)) ||
+            hasType && (!hasValue || typeof this.pivotSchema.value != 'string')
+        ){console.log('jsTableJson: Dados para Pivot invalidos, verifique as configuracoes');return undefined;}
+        this.data = []; // Limpa this.data
+        this._pivotSummary = {}; // Dicionario com totalizador para entrada da coluna {rafael: {bh: 0, mg:5}}
+        let pivotTotals = {}; // Dicionario com totalizador para colunas
+        for(let i = 0; i < this.originalData.length; i++){ // Percorre os davos fazendo o pivot nos campos informados
+            if(this._pivotSummary.hasOwnProperty(this.originalData[i][this.pivotSchema.lin])){
+                // Caso ja exista entrada para registro, atualiza valores
+                if(this._pivotSummary[this.originalData[i][this.pivotSchema.lin]].hasOwnProperty(this.originalData[i][this.pivotSchema.col])){
+                    // Caso coluna de value ja exista para registro, atualiza coluna
+                    let entry = this._pivotSummary[this.originalData[i][this.pivotSchema.lin]];
+                    entry[this.originalData[i][this.pivotSchema.col]] = this._pivotGetValue(this.originalData[i], entry[this.originalData[i][this.pivotSchema.col]]);
+                    this._pivotSummary[this.originalData[i][this.pivotSchema.lin]] = entry;
+                }
+                else{
+                    // Caso nao, inicia entrada
+                    let entry = this._pivotSummary[this.originalData[i][this.pivotSchema.lin]];
+                    entry[this.originalData[i][this.pivotSchema.col]] = this._pivotGetValue(this.originalData[i]);
+                    this._pivotSummary[this.originalData[i][this.pivotSchema.lin]] = entry;
+                }
+            }
+            else{ // Primeira entrada para registro, inicia entrada
+                let entry = {}
+                entry[this.originalData[i][this.pivotSchema.col]] = this._pivotGetValue(this.originalData[i]);
+                this._pivotSummary[this.originalData[i][this.pivotSchema.lin]] = entry;
+            }
+        }
+        for(let entry in this._pivotSummary){
+            let lin = {}
+            lin[this.pivotSchema.lin] = entry;
+            lin =  {...lin, ...this._pivotSummary[entry]}
+            if(this.totalLin){lin.total = Object.values(this._pivotSummary[entry]).reduce((a, b) => a + b, 0)}
+            this.data.push(lin);
+        }
+        // Percorre dados ajustados de acordo com pivot e salva em this.data
+        if(this.pivotSchema?.type == 'average'){this._pivotAverage()} // Calcula as medias dos itens
+        if(refreshTable){
+            this.headers = []; // Limpa os readers
+            this.buildHeaders();
+            this.buildRows();
+        }
+    }
+    buildFoot(){
+        this.tfoot.innerHTML = '';
+        console.log(this.headers);
+        
+    }
+    _pivotGetValue(row, current){ // Funcao auxiliar a pivot, trata linha e retorna value baseado na definicao de type (count, sum, average, etc)
+        if(!this.pivotSchema?.type || this.pivotSchema.type == 'count'){return current != undefined ? current += 1 : 1}
+        else if(this.pivotSchema.type == 'sum' || this.pivotSchema.type == 'average'){return current != undefined ? current += row[this.pivotSchema.value] : row[this.pivotSchema.value]}
+        else if(this.pivotSchema.type == 'max'){return current == undefined ? row[this.pivotSchema.value] : current > row[this.pivotSchema.value] ? current : row[this.pivotSchema.value]}
+        else if(this.pivotSchema.type == 'min'){return current == undefined ? row[this.pivotSchema.value] : current > row[this.pivotSchema.value] ? row[this.pivotSchema.value] : current}
+    }
+    _pivotAverage(){
+        this.data = [];
+        for(let key in this._pivotSummary){
+            for(let value in this._pivotSummary[key]){
+                let qtde = this.originalData.filter(v=>{
+                    return v[this.pivotSchema.lin] == key && v[this.pivotSchema.col] == value
+                }).length;
+                this._pivotSummary[key][value] = (this._pivotSummary[key][value] / qtde).toFixed(this.pivotSchema?.precision != undefined ? this.pivotSchema.precision : 2);
+            }
+            this.data.push({key, ...this._pivotSummary[key]});
+        }
     }
     addRow(){ // Adiciona nova linha na tabela
         if(this.raw.length == 0){this.tbody.querySelector('[data-type="emptyRow"]').remove();} // Se tabela vazia, remove linha de emptyRow

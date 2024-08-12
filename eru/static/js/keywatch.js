@@ -2,7 +2,7 @@
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
 * @version  5.0
-* @since    02/03/2022
+* @since    05/08/2024
 * @release  05/08/2024
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @example  appKeyMap = new Keywatch();

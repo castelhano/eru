@@ -16,6 +16,7 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
+<div id="table_container"></div>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -138,11 +139,28 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/table_json.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
+
+const table = new jsTableJson('foo', {
+    container: document.getElementById('table_container'),
+    data:[
+        {nome: 'Rafael', venda: 35, sexo: 'M', cidade: 'BH'},
+        {nome: 'Maria', venda: 15, sexo: 'F', cidade: 'Cuiaba'},
+        {nome: 'Joao', venda: 22, sexo: 'M', cidade: 'BH'},
+        {nome: 'Rafael', venda: 12, sexo: 'M', cidade: 'Cuiaba'},
+        {nome: 'Pedro', venda: 45, sexo: 'M', cidade: 'Manaus'},
+        {nome: 'Rafael', venda: 3, sexo: 'M', cidade: 'Cuiaba'},
+    ],
+    pivot: {lin: 'nome', col: 'cidade', type: 'sum', value: 'venda', precision: 1}
+})
+table.table.style.tableLayout = 'fixed';
+// table.pivot({lin: 'nome', col: 'cidade', type: 'sum', value: 'venda', precision: 0})
 
 appKeyMap.bind('g+h+i', ()=>{appNotify('success', '..........')})
 
