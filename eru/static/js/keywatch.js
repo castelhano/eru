@@ -78,9 +78,7 @@ class Keywatch{
         
         for(let i = 0; i < rawKeys.length; i++){ // Percorre rawKeys para tratar precenca de combinacoes com mais de um mod, se existir gera permutacoes da combinacao
             if(!this._hasSequence(rawKeys[i]) && this._splitEntry(rawKeys[i])[0].length > 2){ // Eh combinacao com mais de um mod
-                console.log(keys);
                 keys.push(...this._getEntryPermuts(this._splitEntry(rawKeys[i])[0]));
-                console.log(keys);
             }
             else{keys.push(rawKeys[i])}
         }
@@ -151,6 +149,13 @@ class Keywatch{
                         delete this.commands[this.entries[context][entries[i]].options.command];
                     }
                     delete this.map[context][this.entries[context][entries[i]].schema];
+                    
+                    if(this._splitEntry(entries[i])[0].length > 2){ // Se shortcut for combo com mais de um modificador eh necessario apagar todas as possiveis permuts
+                        let permuts = this._getEntryPermuts(this._splitEntry(entries[i])[0]);
+                        for(let j = 0; j < permuts.length; j++){
+                            delete this.entries[context][permuts[j]];
+                        }
+                    }
                 }
                 else{ // Caso multi shortcut, apaga apenas parcial informada, nao eh possivel renomear chave, neste caso cria nova entrada e apaga anterior
                     let residue = this._removeEntry(entry, this.entries[context][entry].schema); // Remove a parcial do shortcut
@@ -171,7 +176,7 @@ class Keywatch{
                     }
                     delete this.map[context][this.entries[context][entries[i]].schema]; // Apaga entrada antiga
                 }
-                delete this.entries[context][entries[i]]; // Apaga entrada de this.sequences
+                delete this.entries[context][entries[i]]; // Apaga entrada de this.entries
             }
         }
     }
