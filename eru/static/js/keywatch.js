@@ -17,10 +17,12 @@ class Keywatch{
             shortcutMaplist: "alt+k",               // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             maplistShowCommands: false,             // Se true (default false) exibe no modal com lista de atalhos o comando para acionamento 
-            commandsDatalist: true,                 // Se true (default) adiciona um datalist com comandos disponiveis (texto de sugestao no input)
-            shortcutPrompt: "f10",                   // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
+            showCommandsDatalist: false,            // Se true (default false) adiciona um datalist com comandos disponiveis (texto de sugestao no input) ## Nao deve ser alterado apos instanciado
+            shortcutPrompt: "f10",                  // Atalho para exibir prompt de entrada de cmando, altere para null para desabilitar funcao
             shortcutPromptDesc: "Exibe prompt para entrada de comando",
             delay: 800,                             // Delay em milissegundos para limpar o historico de sequencia
+            keydownMonitor: false,                  // Se true informa no console a tecla (e combinacao de teclas) precionada
+            keyupMonitor: false,                    // Se true informa no console a tecla liberada
             //Definicoes de estilizacao
             promptModalClasslist: 'border-1 border-secondary rounded mt-3 p-2',
             promptInputClasslist: 'form-control form-control-sm',
@@ -34,7 +36,8 @@ class Keywatch{
         }
         this._aliases = {                           // Dicionario com valores de conversao (alias), aplicado antes do bind
             'ctrl': 'control',
-            '[ _ ]': ' '
+            '[space]': ' ',
+            'esc': 'escape',
         }
         this.map = {all: {}, default:{}};           // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
         this.entries = {all: {}, default:{}};       // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
@@ -223,7 +226,7 @@ class Keywatch{
         clearTimeout(instance._sequenceTimeout);
         // Adiciona tecla em this.pressed (caso ainda nao esteja)
         try {
-            if(!instance.pressed.includes(ev.key.toLowerCase())){instance.pressed.push(ev.key.toLowerCase())}
+            if(!instance.pressed.includes(ev.key.toLowerCase())){instance.pressed.push(ev.key.toLowerCase());}
             instance._runKeydown(ev); // Aciona metodo this._runKeydown que processa entrada 
         } catch (e){}
     }
@@ -247,7 +250,7 @@ class Keywatch{
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
         let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
-        // console.log(schema);        
+        if(this.keydownMonitor){console.log(`Keywatch [keyDown]: key: ${ev.key} combo: ${schema}`)}
         let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
         let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
@@ -282,6 +285,7 @@ class Keywatch{
     _runKeyup(ev, schema){
         let resp = true;
         // Verifica se existe sequencia correspondente em this.sequences (contexto atual ou no all)
+        if(this.keyupMonitor){console.log(`Keywatch [keyUp]: key: ${ev.key}`)}
         let findOnSequences = this.sequences[this.context].hasOwnProperty(schema) && (!this.sequences[this.context][schema].options.hasOwnProperty('element') || this.sequences[this.context][schema].options.element == ev.target);
         let findOnAll = this.sequences['all'].hasOwnProperty(schema) && (!this.sequences['all'][schema].options.hasOwnProperty('element') || this.sequences['all'][schema].options.element == ev.target);
         
@@ -374,7 +378,7 @@ class Keywatch{
         this.shortcutModal.showModal();        
     }
     showPrompt(){ // Exibe modal para entrada de comando
-        if(this.commandsDatalist){
+        if(this.showCommandsDatalist){
             this.commandDataList.innerHTML = '';
             for(let key in this.commands){ // Atualiza os comandos disponiveis no datalist
                 let opt = document.createElement('option');opt.value = key;opt.innerHTML = key;
@@ -422,7 +426,8 @@ class Keywatch{
                 if(source[context][entry].options?.visible == false){continue}
                 let command = source[context][entry].options?.command ? `<span class="${this.commandLabelClasslist}">${source[context][entry].options.command}</span>` : '';                
                 let shortcut = entry;
-                for(let key in this._aliases){shortcut = shortcut.replaceAll(this._aliases[key].toUpperCase(), key.toUpperCase())} // Ajusta alias para versao abreviada ex (control = ctrl)
+                // Ajusta alias para versao abreviada ex (control = ctrl)
+                for(let key in this._aliases){shortcut = shortcut.replaceAll(this._aliases[key].toLowerCase(), key.toLowerCase())} 
                 shortcut = this._humanize(shortcut);
                 let tr = `
                 <tr>
@@ -453,7 +458,7 @@ class Keywatch{
         this.promptModal = document.createElement('dialog'); this.promptModal.classList = this.promptModalClasslist;
         this.promptModal.onclose = ()=>{this.promptInput.value = ''} // Limpa input ao fechar modal
         this.promptInput = document.createElement('input');this.promptInput.type = 'search';this.promptInput.classList = this.promptInputClasslist;this.promptInput.placeholder = this.promptInputPlaceholder;
-        if(this.commandsDatalist){
+        if(this.showCommandsDatalist){
             this.commandDataList = document.createElement('datalist');this.commandDataList.id = 'keywatch_datalist';
             this.promptInput.setAttribute('list', 'keywatch_datalist');
             this.promptModal.appendChild(this.commandDataList);
