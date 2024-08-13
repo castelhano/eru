@@ -213,16 +213,18 @@ class jsTableJson extends jsTable{
                 this._pivotSummary[this.originalData[i][this.pivotSchema.lin]] = entry;
             }
         }
-        for(let entry in this._pivotSummary){
+        // Transforma dicionario para montagem da tabela de {rafael:{idade:25, sexo: 'm'}} para {nome: rafael, idade: 25, sexo: 'm'}
+        for(let entry in this._pivotSummary){ 
             let lin = {}
             lin[this.pivotSchema.lin] = entry;
             lin =  {...lin, ...this._pivotSummary[entry]}
-            if(this.totalLin){lin.total = Object.values(this._pivotSummary[entry]).reduce((a, b) => a + b, 0)}
+            // if(this.totalLin){lin.total = Object.values(this._pivotSummary[entry]).reduce((a, b) => a + b, 0)}
             this.data.push(lin);
         }
         // Percorre dados ajustados de acordo com pivot e salva em this.data
         if(this.pivotSchema?.type == 'average'){this._pivotAverage()} // Calcula as medias dos itens
-        if(refreshTable){
+        
+        if(refreshTable){ // Atualiza element table
             this.headers = []; // Limpa os readers
             this.buildHeaders();
             this.buildRows();

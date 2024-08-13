@@ -15,7 +15,7 @@
                 setTimeout(()=>{menuCadastro.focus()}, 340);
                 return false;
             },
-            {desc:'Abre menu de cadastro'}
+            {desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
     const menuImportar = new canvasNavDropdown({
@@ -32,7 +32,7 @@
                 setTimeout(()=>{menuImportar.focus()}, 340);
                 return false;
             },
-            {desc:'Abre menu de importação'}
+            {desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de importação'}
         ]
     })
     {% if perms.trafego.view_planejamento %}
@@ -48,7 +48,7 @@
                 document.getElementById('menu_planejamento').click();
                 return false;
             },
-            {desc: 'Abre página de planejamentos'}
+            {desc: '<small class="badge bg-orange">NAVBAR</small> Abre página de planejamentos'}
         ]
     })
     {% endif %}
@@ -65,7 +65,7 @@
                 document.getElementById('menu_passageiro').click();
                 return false;
             },
-            {desc: 'Abre página de análise de carregamento'}
+            {desc: '<small class="badge bg-orange">NAVBAR</small> Abre página de análise de carregamento'}
         ]
     })
     {% endif %}

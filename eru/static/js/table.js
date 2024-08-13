@@ -3,7 +3,7 @@
 *
 * @version  3.0
 * @since    07/08/2022
-* @desc     Versao 3x implementa por padrao funcionalidades [sort, paginate, export csv, export json, integracao listener,js], demais funcionalidades nas libs complementares
+* @desc     Versao 3x implementa por padrao funcionalidades [sort, paginate, export csv, export json, integracao keywatch.js], demais funcionalidades nas libs complementares
 * @2.0      06/10/2023 Alterado para padrao de classes ES6 
 * @3.0      08/01/2024 Subdividido em varios arquivos usando heranca
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -29,7 +29,7 @@ class jsTable{
         this.filterInput = null;
         // Configuracao ********
         this.caption = options?.caption || null;
-        this.keyBind = options?.keyBind != undefined ? options.keyBind : true; // Booleando, se true cria atalhos na lib listener.js
+        this.keyBind = options?.keyBind != undefined ? options.keyBind : true; // Booleando, se true cria atalhos na lib keywatch.js
         this.keyBindEscape = options?.keyBindEscape || []; // Atalhos a serem desconsiderados na inclusao
         this.showCounterLabel = options?.showCounterLabel != undefined ? options.showCounterLabel : true;
         this.canSort = options?.canSort != undefined ? options.canSort : true;
@@ -404,14 +404,14 @@ class jsTable{
         if(trs_count == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'Navega para próxima linha'})
-        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'Navega para linha anterior'})
-        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'Acessa registro em foco'})}
-        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'Foca caixa de pesquisa tabela'})}
-        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'Baixa registros em formato CSV'})}
+        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para próxima linha'})
+        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para linha anterior'})
+        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Acessa registro em foco'})}
+        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Foca caixa de pesquisa tabela'})}
+        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Baixa registros em formato CSV'})}
         if(this.enablePaginate){
-            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'Exibe próxima página da tabela'})
-            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'Exibe página anterior da tabela'})
+            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe próxima página da tabela'})
+            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe página anterior da tabela'})
         }
     }
 }

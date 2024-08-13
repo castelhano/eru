@@ -38,6 +38,10 @@ class Keywatch{
             'ctrl': 'control',
             '[space]': ' ',
             'esc': 'escape',
+            '↑': 'arrowup',
+            '↓': 'arrowdown',
+            '→': 'arrowright',
+            '←': 'arrowleft',
         }
         this.map = {all: {}, default:{}};           // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
         this.entries = {all: {}, default:{}};       // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
@@ -63,7 +67,7 @@ class Keywatch{
         // ------
         window.addEventListener('keydown', (ev)=>{this._onKeyDown(ev, this)});
         window.addEventListener('keyup', (ev)=>{this._onKeyUp(ev, this)});
-        window.addEventListener('focus', (ev)=>{this.pressed = []});    // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
+        window.addEventListener('focus', (ev)=>{this.pressed = []}); // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
     }
     bind(shortcut, run, options={}){ // Adiciona novo shortcut
         // shortcut: String com teclas a serem tratadas. Ex: "control+u" "ctrl+alt+x" "ctrl+u;alt+y" "q+x,e"
@@ -424,7 +428,7 @@ class Keywatch{
         for(let context in source){ // Filtra todos os atalhos visiveis
             for(let entry in source[context]){
                 if(source[context][entry].options?.visible == false){continue}
-                let command = source[context][entry].options?.command ? `<span class="${this.commandLabelClasslist}">${source[context][entry].options.command}</span>` : '';                
+                let command = source[context][entry].options?.command ? `<small class="${this.commandLabelClasslist}">${source[context][entry].options.command}</small>` : '';                
                 let shortcut = entry;
                 // Ajusta alias para versao abreviada ex (control = ctrl)
                 for(let key in this._aliases){shortcut = shortcut.replaceAll(this._aliases[key].toLowerCase(), key.toLowerCase())} 
