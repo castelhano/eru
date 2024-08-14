@@ -30,8 +30,8 @@ class jsTableJson extends jsTable{
         this.saveBtn = null;
         // Pivot: ex {pivot: {lin: 'matricula', col: 'cidade', value: 'count'}} retorna os dados em formato json ajustado somente para a linha e coluna informada, so aceita 1 campo para linha e outro para coluna 
         this.pivotSchema = options?.pivot || false; 
-        this.totalLin = options?.totalLin || this.pivot;  // Se true adiciona totalizador para linha
-        this.totalCol = options?.totalCol || this.pivot;  // Se true adiciona totalizador para coluna
+        this.totalLin = options.hasOwnProperty('totalLin') ? options.totalLin : true;  // Se true adiciona totalizador para linha
+        this.totalCol = options.hasOwnProperty('totalCol') ? options.totalCol : true;  // Se true adiciona totalizador para coluna
         if(this.pivotSchema){this.pivot(this.pivotSchema, false)}
         // ****************
         this.canAddRow = options?.canAddRow != undefined ? options.canAddRow : false;
@@ -50,6 +50,9 @@ class jsTableJson extends jsTable{
         this.saveButtonText = options?.saveButtonText || '<i class="bi bi-floppy-fill px-1"></i>';
         this.restoreButtonClasslist = options?.restoreButtonClasslist || 'btn btn-sm btn-outline-secondary d-none';
         this.restoreButtonText = options?.restoreButtonText || '<i class="bi bi-clock-history px-1"></i>';
+        this.tfootClasslist = options?.tfootClasslist || 'bg-body-secondary';
+        this.totalLinClasslist = options?.totalLinClasslist || 'bg-body-secondary';
+        this.totalColClasslist = options?.totalColClasslist || 'table-secondary';
         // ****************
         
         this.buildHeaders();
@@ -100,6 +103,10 @@ class jsTableJson extends jsTable{
             th.innerHTML = '';
             tr.appendChild(th);
         }
+        if(this.totalLin){
+            let th = document.createElement('th');th.innerHTML = 'Total'
+            tr.appendChild(th);
+        }
         this.thead.appendChild(tr);
     }
     buildRows(){ // Constroi os objetos trs baseado no conteudo de this.data, popula this.raw
@@ -109,6 +116,7 @@ class jsTableJson extends jsTable{
         for(let i = 0;i < data_size;i++){
             let row = document.createElement('tr');
             row.dataset.rawRef = i;
+            let row_total = 0;
             for(let j = 0;j < this.headers.length;j++){
                 let v = this.data[i][this.headers[j]]; // Busca no json data se existe valor na row para o header, retorna o valor ou undefinied (caso nao encontre)
                 let col = document.createElement('td');
@@ -117,6 +125,12 @@ class jsTableJson extends jsTable{
                 col.contentEditable = editable ? true : false; // Verifica se campo pode ser editado, se sim marca contentEditable='True'
                 col.classList = editable ? this.editableColsClasslist : ''; // Se campo for editavel, acidiona classe definida em editableColsClasslist
                 row.appendChild(col);
+                if(j > 0 && v){row_total += parseFloat(v)} // Incrementa totalizador para linha
+            }
+            if(this.totalLin){ // Se definito totalizador para linhas, cria td para o total
+                let td = document.createElement('td');td.classList = this.totalLinClasslist;
+                td.innerHTML = this.pivotSchema?.type == 'average' ? row_total.toFixed(this.pivotSchema.hasOwnProperty('precision') ? this.pivotSchema.precision : 2) : row_total;
+                row.appendChild(td);
             }
             this.rowAddControls(row); // Adiciona controles para row
             this.raw.push(row); 
@@ -218,7 +232,6 @@ class jsTableJson extends jsTable{
             let lin = {}
             lin[this.pivotSchema.lin] = entry;
             lin =  {...lin, ...this._pivotSummary[entry]}
-            // if(this.totalLin){lin.total = Object.values(this._pivotSummary[entry]).reduce((a, b) => a + b, 0)}
             this.data.push(lin);
         }
         // Percorre dados ajustados de acordo com pivot e salva em this.data
@@ -231,9 +244,32 @@ class jsTableJson extends jsTable{
         }
     }
     buildFoot(){
+        // let col_total = Object.values(this._pivotSummary[entry]).reduce((a, b) => a + b, 0)}
         this.tfoot.innerHTML = '';
-        console.log(this.headers);
+        let subtotal = {};
+        let total = 0;
+        for(let row in this._pivotSummary){ // Percorre todas os registros do summary
+            for(let col in this._pivotSummary[row]){ // Percorre todos os campos
+                if(subtotal.hasOwnProperty(col)){subtotal[col] += parseFloat(this._pivotSummary[row][col]);}
+                else{subtotal[col] = parseFloat(this._pivotSummary[row][col]);}
+                total += parseFloat(this._pivotSummary[row][col]);
+            }
+        }
+        let tr = document.createElement('tr'); // Cria linha para o tfoot
+        let tdfirst = document.createElement('td');tdfirst.innerHTML = 'Total';tdfirst.classList = this.tfootClasslist; // Cria primeira td com a identificacao do totalizador
+        tr.appendChild(tdfirst);
         
+        for(let item in subtotal){ // Percorre todos os itens do resumo e insere o respectivo valor
+            let td = document.createElement('td');td.classList = this.tfootClasslist;
+            td.innerHTML = this.pivotSchema?.type == 'average' ? subtotal[item].toFixed(this.pivotSchema.hasOwnProperty('precision') ? this.pivotSchema.precision : 2) : subtotal[item];
+            tr.appendChild(td);
+        }
+        if(this.totalLin){
+            let tdlast = document.createElement('td');tdlast.classList = this.tfootClasslist;
+            tdlast.innerHTML = this.pivotSchema?.type == 'average' ? total.toFixed(this.pivotSchema.hasOwnProperty('precision') ? this.pivotSchema.precision : 2) : total;
+            tr.appendChild(tdlast);
+        }
+        this.tfoot.appendChild(tr);
     }
     _pivotGetValue(row, current){ // Funcao auxiliar a pivot, trata linha e retorna value baseado na definicao de type (count, sum, average, etc)
         if(!this.pivotSchema?.type || this.pivotSchema.type == 'count'){return current != undefined ? current += 1 : 1}
@@ -248,7 +284,7 @@ class jsTableJson extends jsTable{
                 let qtde = this.originalData.filter(v=>{
                     return v[this.pivotSchema.lin] == key && v[this.pivotSchema.col] == value
                 }).length;
-                this._pivotSummary[key][value] = (this._pivotSummary[key][value] / qtde).toFixed(this.pivotSchema?.precision != undefined ? this.pivotSchema.precision : 2);
+                this._pivotSummary[key][value] = (this._pivotSummary[key][value] / qtde).toFixed(this.pivotSchema.hasOwnProperty('precision') ? this.pivotSchema.precision : undefined ? this.pivotSchema.precision : 2);
             }
             this.data.push({key, ...this._pivotSummary[key]});
         }
