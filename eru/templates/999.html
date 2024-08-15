@@ -10,7 +10,6 @@
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
 <link rel="stylesheet" href="{% static 'css/vendor/prism.css' %}">
-<link rel="stylesheet" href="{% static 'css/vendor/tagin.css' %}">
 {% endblock %}
 
 {% block content_fluid %}
@@ -100,31 +99,38 @@ document.getElementById('id_field'),
 <pre><code class="language-javascript">const appKeyMap = new Keywatch();
 appKeyMap.bind('alt+e', ()=>{...}, {})  // extrutura basica
 appKeyMap.bind('g+i;g+u', ()=>{...})    // multiplos atalhos
-appKeyMap.bind('q,w,e', ()=>{...})      // sequencia de teclas
 appKeyMap.bind('alt+e', ()=>{...}, {context: 'modalX'}) // alterando o contexto
 
 // conficuracoes do shortcut
 {
     context: 'default', // use context = 'all' para atalho em TODOS os contextos
     desc: '',           // descricao, sera usada no mapa de atalhos
-    command: null,      // comando correspondente ao atalho (prompt)
+    element: null,      // informe um elemento da pagina para atalho so responder quando focado
     visible: true,      // bool define se comendo sera exibido na tela de atalhos
+    group: undefined,   // informe um grupo (string) caso precise remover multiplos shortcuts
 }
-appKeyMap.bind('alt+e', ()=>{..do something}, {})
+appKeyMap.bind('alt+e', ()=>{..do something}, {desc: 'Salva registro no banco'})
 </code></pre>
-<small>Listener responde ao comando <kbd class="mx-2">Alt + Y</kbd>, os campos <code>name</code> e <code>desc</code> são opcionais, apenas para exibição na tela de atalhos</small>
+<small>Listener responde ao comando <kbd class="mx-2">Alt + E</kbd>, <code>desc</code> é opcionais, apenas para exibição na tela de atalhos</small><br>
+<small>Se não tefinido <code>context</code> atalho será registrado no contexto <code>default</code></small>
 <div class="callout callout-primary mt-4"><i class="bi bi-exclamation-circle-fill me-2"></i> Para exibir os atalhos cadastrados use o comando <code>appKeyMap.showKeymap()</code> <button type="button" class="btn btn-sm btn-phantom-warning ms-2" onclick="appKeyMap.showKeymap()">Ver</button></div>
 
 <p class="mt-4">Use a opção: <code>visible: <b class="text-orange">false</b></code> para não exibir atalho na lista de atalhos</p>
-<pre><code class="language-javascript">appKeyMap.bind({key: 'f', run: ()=>{...}, visible: false})</code></pre>
+<pre><code class="language-javascript">appKeyMap.bind('alt+e', ()=>{...}, {visible: false})</code></pre>
 
 <small class="d-block mt-4"><i class="bi bi-arrow-right"></i> Outros recursos:</small>
-<pre class="mt-0"><code class="language-javascript">appKeyMap.unbind({key: 'f', alt: true}) // Remove atalho alt + f
-appKeyMap.unbind('fTFF') // Usando alias
-appKeyMap.unbindAll() // Limpa TODOS os atalhos
-appKeyMap.avail({key : 'f', alt: true}) // Retorna booleano se atalho esta disponivel
-appKeyMap.avail('fTFF') // Usando o alias
-appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
+<pre class="mt-0"><code class="language-javascript">appKeyMap.getContext() // Retorna contexto ativo
+appKeyMap.addContext('novoCtx', 'Meu Contexto'); // Insere novo contexto
+appKeyMap.setContext('novoCtx'); // Ativa contexto (ou cria caso nao exista)
+appKeyMap.setContext('novoCtx', 'Meu Contexto'); // Ativa contexto (ou cria) atualizando desc
+appKeyMap.updateContext('novoCtx', 'Nova desc'); // Atualiza desc do contexto
+appKeyMap.unbind('alt+e', 'default') // Remove atalho alt+e no contexto default
+appKeyMap.unbind('alt+e') // Remove atalho em todos os contextos
+appKeyMap.unbindContext('default') // Remove atalhos do contexto informado
+appKeyMap.unbindGroup('meuGrupo') // Limpa atalhos no grupo informado em todos os contextos
+appKeyMap.avail('alt+e', 'default') // Retorna true se atalho esta disponivel no contexto
+appKeyMap.avail('alt+e') // Retorna true somente se atalho nao estiver em uso em nenhum contexto
+appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <h5>nav</h5>
 <h5>jsForm</h5>
@@ -139,33 +145,11 @@ appKeyMap.getMap() // Retorna dicionario com todos os atalhos</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
-<script src="{% static 'js/table.js' %}"></script>
-<script src="{% static 'js/table_json.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
-
-const table = new jsTableJson('foo', {
-    container: document.getElementById('table_container'),
-    data:[
-        {nome: 'Rafael', venda: 35, sexo: 'M', cidade: 'BH'},
-        {nome: 'Maria', venda: 15, sexo: 'F', cidade: 'Cuiaba'},
-        {nome: 'Joao', venda: 22, sexo: 'M', cidade: 'BH'},
-        {nome: 'Rafael', venda: 12, sexo: 'M', cidade: 'Cuiaba'},
-        {nome: 'Pedro', venda: 45, sexo: 'M', cidade: 'Manaus'},
-        {nome: 'Rafael', venda: 3, sexo: 'M', cidade: 'Cuiaba'},
-    ],
-    pivot: {lin: 'nome', col: 'cidade', type: 'count', value: 'venda'},
-
-    // totalCol: false,
-    // totalLin: false,
-})
-table.table.style.tableLayout = 'fixed';
-// table.pivot({lin: 'nome', col: 'cidade', type: 'sum', value: 'venda', precision: 0})
-
-appKeyMap.bind('g+h+i', ()=>{appNotify('success', '..........')})
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const form = new jsForm(document.getElementById('my_form'), {

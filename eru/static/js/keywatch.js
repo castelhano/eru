@@ -1,9 +1,9 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
-* @version  5.0
+* @version  5.1
 * @since    05/08/2024
-* @release  05/08/2024
+* @release  15/08/2024
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
@@ -12,9 +12,10 @@
 class Keywatch{
     constructor(options={}){
         let defaultOptions = { 
-            tabOnEnter: true,                       // Se true (default) implementa tabulacao para formularios ao precionar Enter
-            shortcutMaplist: "alt+k",               // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
+            tabOnEnter: true,                           // Se true (default) implementa tabulacao para formularios ao precionar Enter
+            shortcutMaplist: "alt+k",                   // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+            shortcutMaplistOnlyContextActive: false,    // Se true so mostra atalhados do contexto ativo (alem do all)
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
@@ -296,6 +297,8 @@ class Keywatch{
     _refreshMapTable(source=this.map){
         this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
         for(let context in source){ // Filtra todos os atalhos visiveis
+            // Se shortcutMaplistOnlyContextActive = true so mostra shortcuts do contexto ativo e do all 
+            if(this.shortcutMaplistOnlyContextActive && (context != this.context && context != 'all')){continue}
             for(let entry in source[context]){
                 if(source[context][entry].options?.visible == false){continue}
                 let shortcut = entry;

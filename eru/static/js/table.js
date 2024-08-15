@@ -30,6 +30,7 @@ class jsTable{
         // Configuracao ********
         this.caption = options?.caption || null;
         this.keyBind = options?.keyBind != undefined ? options.keyBind : true; // Booleando, se true cria atalhos na lib keywatch.js
+        this.keyBindContext = options?.keyBindContext || 'default'; // Contexto para atalhos da tabela
         this.keyBindEscape = options?.keyBindEscape || []; // Atalhos a serem desconsiderados na inclusao
         this.showCounterLabel = options?.showCounterLabel != undefined ? options.showCounterLabel : true;
         this.canSort = options?.canSort != undefined ? options.canSort : true;
@@ -404,14 +405,14 @@ class jsTable{
         if(trs_count == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para próxima linha'})
-        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para linha anterior'})
-        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Acessa registro em foco'})}
-        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Foca caixa de pesquisa tabela'})}
-        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Baixa registros em formato CSV'})}
+        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para próxima linha', context: this.keyBindContext})
+        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para linha anterior', context: this.keyBindContext})
+        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Acessa registro em foco', context: this.keyBindContext})}
+        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Foca caixa de pesquisa tabela', context: this.keyBindContext})}
+        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Baixa registros em formato CSV', context: this.keyBindContext})}
         if(this.enablePaginate){
-            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe próxima página da tabela'})
-            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe página anterior da tabela'})
+            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe próxima página da tabela', context: this.keyBindContext})
+            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe página anterior da tabela', context: this.keyBindContext})
         }
     }
 }
