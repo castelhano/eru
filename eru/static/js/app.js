@@ -1,5 +1,17 @@
-const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
+const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
+// appModalLoading._element.addEventListener('show.bs.modal', ()=>{console.log('modal aberto')})
+// appModalLoading._element.addEventListener('show.bs.modal', ()=>{window.location.hash = "loading-modal";})
+// appModalLoading._element.addEventListener('hide.bs.modal', ()=>{window.location.hash = "";})
+// window.onhashchange = ()=>{
+//   if(appModalLoading._element.classList.contains('show')){
+//     appNotify('success','aberto')
+//   }
+//   else{
+//     appNotify('danger','fechado')
+//   }
+// }
+
 
 /*
 * appAlert  Gera um alerta (bootstrap alert), somente um alerta aberto a cada momento
@@ -87,7 +99,6 @@ function timeNow(opt={}){
 function confirmOnClick(options){
   
   if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
-  
   appModalConfirm.show()
 }
 
@@ -95,11 +106,13 @@ function confirmOnClick(options){
 // **
 
 // Exibe modal de carregamento antes de sair da pagina
-window.onbeforeunload = () => {appModalLoading.show()}
+window.onbeforeunload = () => {
+  appModalLoading.show();
+}
 
 // Codigo a ser executado apos carregamento completo da pagina
 document.addEventListener("DOMContentLoaded", function(event) {
-  
+
   // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
   document.querySelectorAll('[data-appConfirm=true]').forEach((el)=>{
     let timeout, interv, span;
