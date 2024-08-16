@@ -15,14 +15,22 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<div id="table_container"></div>
+<a href="{% url 'index' %}" 
+data-appConfirm="true"
+data-appConfirmTitle="Novo titulo"
+data-appConfirmMessage="Uiiiiiiiiiiiiiii"
+data-appConfirmColor="purple"
+data-appConfirmText="Rodar Codigo"
+data-appConfirmDelay="5"
+>Inicio</a>
+
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
         <form id="my_form" action="">
             <div class="row g-1">
                 <div class="form-floating mb-lg-1 col-lg-3">
-                    <input type="text" name="nome" id="id_nome" class="form-control" minlength="4" maxlength="18"  placeholder=" " required>
+                    <input type="text" name="nome" id="id_nome" class="form-control" minlength="4" maxlength="18" value=""  placeholder=" " required>
                     <label for="id_nome">Nome</label>
                 </div>
                 <div class="form-floating mb-lg-1 col-lg-3">

@@ -282,6 +282,12 @@ class Keywatch{
             return !inUse;
         }
     }
+    run(shortcut, context='default'){ // Roda funcao definida para o shortcut (caso exista), necessario informar o contexto
+        if(!this.context.includes(context)){return false}
+        if(this.entries[context].hasOwnProperty(shortcut)){
+            this.entries[context][shortcut].run();
+        }
+    }
     _filterMapTable(ev){
         let term = this.shortcutSearchInput.value.toLowerCase();
         let trs = this.shortcutModalTableTbody.querySelectorAll('tr');
