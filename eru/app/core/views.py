@@ -8,7 +8,7 @@ from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from .extras import clean_request
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 
 
 @login_required
@@ -504,6 +504,8 @@ def logout(request):
 
 @login_required
 def handler(request, code):
+    for i in range(55000):
+        print(i*200/200)
     return render(request,f'{code}.html')
 
 

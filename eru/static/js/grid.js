@@ -182,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {desc:'Seleciona próximo item'})
-        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {desc: 'Seleciona item anterior'})
-        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {desc: 'Seleciona item abaixo'})
-        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {desc: 'Seleciona item acima'})
-        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {desc: 'Tenta acessar o ite selecionado'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {desc:'<small class="badge bg-purple">APP GRID</small> Seleciona próximo item'})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {desc: '<small class="badge bg-purple">APP GRID</small> Seleciona item anterior'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {desc: '<small class="badge bg-purple">APP GRID</small> Seleciona item abaixo'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {desc: '<small class="badge bg-purple">APP GRID</small> Seleciona item acima'})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {desc: '<small class="badge bg-purple">APP GRID</small> Tenta acessar o ite selecionado'})
     }
 }
 

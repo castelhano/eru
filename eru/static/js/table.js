@@ -41,6 +41,7 @@ class jsTable{
         this.csvSeparator = options?.csvSeparator || ';';
         this.csvClean = options?.csvClean != undefined ? options.csvClean : false; // Se setado para true remove acentuacao e caracteres especiais (normalize NFD)
         this.csvHeaders = options?.csvHeaders != undefined ? options.csvHeaders : true; // Define se sera incluido cabecalhos no arquivo de exportacao CSV
+        this.csvFoot = options?.csvFoot != undefined ? options.csvFoot : true; // Define se sera incluido cabecalhos no arquivo de exportacao CSV
         this.canExportJson = options?.canExportJson != undefined ? options.canExportJson : false;
         this.fileName = options?.fileName || this.table.id; // Nome dos arquivos de exportacao (sem a extensao)
         this.enablePaginate = options?.enablePaginate != undefined ? options.enablePaginate : false; // Booleno setado para true se paginacao estiver ativa para tabela
@@ -365,6 +366,11 @@ class jsTable{
                 row.push('"' + data + '"'); // Carrega string
             }
             csv.push(row.join(this.csvSeparator));
+        }
+        if(this.tfoot && this.csvFoot){ // Se tabela tiver tfoot e this.csvFoot = true adiciona rodape ao exportar csv
+            let foot = '';
+            this.tfoot.querySelectorAll('td').forEach((el)=>{foot +=  el.innerHTML + this.csvSeparator})
+            csv.push(foot.substring(0, foot.length - 1));
         }
         let csv_string = csv.join('\n');
         let filename = `${this.fileName}.csv`;

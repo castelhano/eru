@@ -143,7 +143,7 @@
       // Cria dicionario com dados pesquisados
       const dados = [
       {% for d in dados %}
-        {empresa_id: {{d.empresa_id}}, empresa_nome: '{{d.empresa__nome}}', linha_id: {{d.linha_id}}, linha_codigo: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', aplicacao: '{{d.aplicacao}}', tipo: '{{d.tipo}}', qtde: {{d.qtde}}},
+        {empresa_id: {{d.empresa_id}}, empresa_nome: '{{d.empresa__nome}}', linha_id: {{d.linha_id}}, linha: '{{d.linha__codigo}}', linha_nome: '{{d.linha__nome}}', aplicacao: '{{d.aplicacao}}', tipo: '{{d.tipo}}', qtde: {{d.qtde}}},
       {% endfor %}
       ]
       
@@ -152,7 +152,8 @@
       const json_table = new jsTableJson('linha_produto', {
         data: dados,
         container: document.getElementById('table_result'),
-        ignoredCols: ['empresa_id', 'linha_id']
+        pivot: {lin: 'linha', col: 'aplicacao', value: 'qtde', type: 'sum'}
+        // ignoredCols: ['empresa_id', 'linha_id']
       })
     {% endif %}  
   {% endif %}

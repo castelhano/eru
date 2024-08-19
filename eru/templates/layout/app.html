@@ -105,10 +105,12 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <span style="position: relative;top:-6px; left:5px;"><b>Aguarde!</b> Processando requisição...</span>
+                    <span id="appModalLoadingIcon">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </span>
+                    <span id="appModalLoadingMessage" style="position: relative;top:-6px; left:5px;"><b>Aguarde!</b> Processando requisição...</span>
                 </div>
             </div>
         </div>
@@ -178,7 +180,6 @@
         if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click();return false;}catch(e){}}, {desc:'Grava alterações'})}
         if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click();return false;}catch(e){}}, {desc:'Retorna origem'})}
         if(document.getElementById('search')){appKeyMap.bind('ctrl+/', () => {try{document.getElementById('search').click();return false;}catch(e){}}, {desc:'Exibe filtros da página'})}
-        appKeyMap.bind('alt+k', ()=>{appKeyMap.showKeymap();return false;}, {desc:'Mostra atalhos disponiveis na página'})
         appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0]}, {desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle();return false;}, {desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click();return false;}catch(e){}}, {desc:'Encerra sessão no sistema'})

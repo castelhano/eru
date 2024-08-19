@@ -15,7 +15,7 @@
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            {desc:'Abre menu de cadastro'}
+            {desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
     {% if perms.core.view_settings %}
@@ -28,7 +28,7 @@
         keybind: [
             'alt+s',
             ()=>{document.getElementById('menu_settings').click()},
-            {desc: 'Configurações gerais do sistema'}
+            {desc: '<small class="badge bg-orange">NAVBAR</small> Configurações gerais do sistema'}
         ]
     })
     {% endif %}

@@ -1,16 +1,5 @@
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
 const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
-// appModalLoading._element.addEventListener('show.bs.modal', ()=>{console.log('modal aberto')})
-// appModalLoading._element.addEventListener('show.bs.modal', ()=>{window.location.hash = "loading-modal";})
-// appModalLoading._element.addEventListener('hide.bs.modal', ()=>{window.location.hash = "";})
-// window.onhashchange = ()=>{
-//   if(appModalLoading._element.classList.contains('show')){
-//     appNotify('success','aberto')
-//   }
-//   else{
-//     appNotify('danger','fechado')
-//   }
-// }
 
 
 /*
@@ -95,19 +84,23 @@ function timeNow(opt={}){
   }
 }
 
-// Exibe modal para confirmacao 
+// Exibe modal para confirmacao no evento click para elementos com data-appConfirm="true"
 function confirmOnClick(options){
-  
   if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
   appModalConfirm.show()
 }
 
-// Listeners / Configuracoes gerais
-// **
-
 // Exibe modal de carregamento antes de sair da pagina
-window.onbeforeunload = () => {
+var appModalLoadingTimeLimit = 8000; // Tempo limite em milisegundos para alteracao da mensagem do modal
+var appModalLoadingTimeLimitIcon = '<i class="bi bi-exclamation-octagon-fill text-danger h2"></i>'
+var appModalLoadingTimeLimitMessage = '<b class="text-danger"></b>Este processo esta demorando mais que o normal...'
+
+window.onbeforeunload = (ev) => {
   appModalLoading.show();
+  window.setTimeout(()=>{ // Se servidor demorar mais tempo que o definido, altera mensagem 
+    document.getElementById('appModalLoadingIcon').innerHTML = appModalLoadingTimeLimitIcon;
+    document.getElementById('appModalLoadingMessage').innerHTML = appModalLoadingTimeLimitMessage;
+  }, appModalLoadingTimeLimit);
 }
 
 // Codigo a ser executado apos carregamento completo da pagina
@@ -164,5 +157,4 @@ document.addEventListener("DOMContentLoaded", function(event) {
       appModalConfirm.show();
     }
   })
-  
 });
