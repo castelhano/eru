@@ -202,17 +202,22 @@ class jsGaitDiagramUI{
         this.__updateCarDisplay();
         return v;
     }
-    __modalConfirmationChangeProject(resolve, reject=null){
-        this.gridLocked = true;
+    __modalConfirmationChangeProject(resolve, reject=()=>{}){
+        appKeyMap.setContext('modalConfirmationChangeProject');
         let modal = document.createElement('dialog');modal.innerHTML = '<h6 class="text-orange">Alteração de Planejamento</h6><hr class="mt-0"><p><b>Atenção:</b> Já existe escala gerada para o carro, ao inserir, excluir ou movimentar viagens, as escalas do veiculo serão <b class="text-orange">removidas</b>, confirma operação?</p>';
-        modal.addEventListener('close', ()=> {modal.remove(); this.gridLocked = false;})
         let confirm = document.createElement('button');confirm.type = 'button';confirm.classList = 'btn btn-sm btn-secondary float-end';confirm.innerHTML = 'Confirmar';
-        confirm.onclick = ()=>{resolve();modal.close()};
+        confirm.onclick = ()=>{
+            resolve();
+            modal.remove();
+            appKeyMap.setContext();
+        };
         let cancel = document.createElement('button');cancel.type = 'button';cancel.classList = 'btn btn-sm btn-phanton float-end me-2';cancel.innerHTML = 'Cancelar';
         cancel.onclick = ()=>{
-            if(reject){reject()}
-            modal.close();
+            reject();
+            modal.remove();
+            appKeyMap.setContext();
         };        
+        modal.addEventListener('close', ()=> {cancel.click()}) // Ao fechar modal, remove elemento e retorna context para default
         modal.appendChild(confirm);
         modal.appendChild(cancel);
         document.body.appendChild(modal);
@@ -869,47 +874,6 @@ class jsGaitDiagramUI{
         else if(stage == 2){this.__loadStage2()}
         else if(stage == 3){this.__loadStage3()}
     }
-    __switchStageModal(){
-        if(this.gridLocked){return false}
-        this.gridLocked = true;
-        let dialog = document.createElement('dialog');dialog.innerHTML = '<h5 class="text-center user-select-none">Alterar Vizualização do Grid</h5>';
-        dialog.addEventListener('close', ()=>{
-            this.gridLocked = false;
-            dialog.remove();
-        })
-        let btnGroup = document.createElement('div');btnGroup.classList = 'btn-group mt-3 ps-1';
-        let stage1 = document.createElement('button');stage1.type = 'button';stage1.classList = 'btn btn-sm btn-phanton';stage1.innerHTML = 'Planejamento';
-        stage1.onclick = ()=>{
-            this.switchStage(1);
-            dialog.close();
-        };
-        let stage2 = document.createElement('button');stage2.type = 'button';stage2.classList = 'btn btn-sm btn-phanton';stage2.innerHTML = 'Escalas';
-        stage2.onclick = ()=>{
-            this.switchStage(2)
-            dialog.close();
-        };
-        let stage3 = document.createElement('button');stage3.type = 'button';stage3.classList = 'btn btn-sm btn-phanton';stage3.innerHTML = 'Conclusão';
-        stage3.onclick = ()=>{
-            this.switchStage(3)
-            dialog.close();
-        };
-        switch (this.projects[this.projectIndex].viewStage){
-            case 1: stage1.classList.add('active','disabled');break;
-            case 2: stage2.classList.add('active','disabled');break;
-            case 3: stage3.classList.add('active','disabled');break;
-        }
-        switch (this.projects[this.projectIndex].viewStage){
-            case 1: setTimeout(()=>{stage1.focus();}, 10);break;
-            case 2: setTimeout(()=>{stage2.focus();}, 10);break;
-            case 3: setTimeout(()=>{stage3.focus();}, 10);break;
-        }
-        btnGroup.appendChild(stage1);
-        btnGroup.appendChild(stage2);
-        btnGroup.appendChild(stage3);
-        dialog.appendChild(btnGroup);
-        document.body.appendChild(dialog);
-        dialog.showModal();
-    }
     __loadStage1(){ // Refaz grid
         this.scheduleFocus = null;
         this.initialCarView = 0;
@@ -965,7 +929,7 @@ class jsGaitDiagramUI{
         if(this.settingsShowFreqRule.checked){this.settingsShowFreqRule.click()}
         appKeyMap.unbindGroup('March_stage1');
         appKeyMap.unbindGroup('March_stage3');
-        this.__addStage2Listeners(); // Adiciona novamente atalhos para stage 1
+        this.__addStage2Listeners(); // Adiciona atalhos para stage 2
         this.__clearGrid(); // Apaga elemento do grid e freqGrid
         this.__clearCarLabels(); // Apaga as labels dos carros
         if(this.cursor){this.cursor.remove();} // Remove o cursor

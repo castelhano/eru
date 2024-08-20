@@ -101,7 +101,7 @@ class Keywatch{
                     delete this.map[context][this.entries[context][entries[i]].schema];
                     let split = this._splitEntry(entries[i]);
                     if(split.length > 2){ // Se shortcut for combo com mais de um modificador eh necessario apagar todas as possiveis permuts
-                        let permuts = this._getEntryPermuts(split(entries[i]));
+                        let permuts = this._getEntryPermuts(split);
                         for(let j = 0; j < permuts.length; j++){
                             delete this.entries[context][permuts[j]];
                         }

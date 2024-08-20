@@ -2,8 +2,7 @@ function __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (
     appKeyMap.unbind('alt+l'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
     appKeyMap.bind('ctrl+arrowright', ()=>{this.canvasMove(120); return false;}, {group: 'March_general', desc: 'Move grid para direita (02 horas)'})
     appKeyMap.bind('ctrl+arrowleft', ()=>{this.canvasMove(-120);return false;}, {group: 'March_general', desc: 'Move grid para esquerda (02 horas)'})
-    appKeyMap.bind('f5', (ev)=>{return false;}, {group: 'March_general', desc: 'Recarrega ultimo status salvo do projeto'}) // Apenas entrada para exibicao no keymap
-    appKeyMap.bind('f8', (ev)=>{this.__switchStageModal(); return false;}, {group: 'March_general', desc: 'Exibe modal para alteração da visualização'})
+    appKeyMap.bind('f5', (ev)=>{return false;}, {context:'all', visible: false}) // Desabilita tecla F5 (evita de perder projeto)
     appKeyMap.bind('alt+1', ()=>{this.switchStage(1); return false;}, {group: 'March_general', desc: 'Altera visualização para o Grid'})
     appKeyMap.bind('alt+2', ()=>{this.switchStage(2); return false;}, {group: 'March_general', desc: 'Altera visualização para Escalas'})
     appKeyMap.bind('alt+3', ()=>{this.switchStage(3); return false;}, {group: 'March_general', desc: 'Altera visualização para resumo'})
@@ -252,13 +251,14 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
         else{this.moveTrips()}
         return false;
     }, {group: 'March_stage1', desc: 'Move viagens selecionadas'})
-    appKeyMap.bind('ctrl+x', ()=>{
+    appKeyMap.bind('ctrl+x', ()=>{ // Recorta viagens selecionadas para area de transferencia
         if(this.__gridIsBlock() || this.startSelect < 0 || this.projects[this.projectIndex].area_transferencia.length > 0){return false;}
         if(this.projects[this.projectIndex].carros[this.carSelect].escalas.length > 0){
-            this.__modalConfirmationChangeProject(()=>{
+            this.__modalConfirmationChangeProject(()=>{ // Metodo resolve
                 this.projects[this.projectIndex].carros[this.carSelect].escalas = [];
                 this.addToTransferArea()
-            })
+            },
+            ()=>{this.__clearSelecao()}) // Metodo reject, ao cancelar modal, limpa area de transferencia
         }
         else{this.addToTransferArea()}
         return false;
@@ -301,7 +301,7 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
         return false;
     }, {group: 'March_stage1', role: 'removeCarro', desc: 'Remove viagem e posteriores, se 1a viag apaga carro'})
     
-    appKeyMap.bind('alt+t', ()=>{this.__showTripPatterns();return false;}, {group: 'March_stage1', desc: 'Exibe legfima dos tipos de viagens'})
+    appKeyMap.bind('alt+t', ()=>{this.__showTripPatterns();return false;}, {group: 'March_stage1', desc: 'Exibe legenda dos tipos de viagens'})
     appKeyMap.bind('f2', (ev)=>{this.__showRouteMetrics();return false;}, {group: 'March_stage1', desc: 'Exibe controles de métricas da linha'})
     appKeyMap.bind('f4', (ev)=>{this.__generate();return false;}, {desc: 'Exibe modal para geração de planejamento'})   
 }
