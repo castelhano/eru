@@ -1,7 +1,7 @@
 /**
 * jsTableJson Extende funcionalidade de jsTable, criando tabela a partir de objeto json
 *
-* TODO: Ajustar total para lihas para a ultima coluna
+* TODO: Ao exportar, em caso de pivot com totalizador de linha, nao esta sendo exibido header "Total"
 * @version  1.0
 * @since    09/01/2024
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -57,8 +57,9 @@ class jsTableJson extends jsTable{
         
         this.buildHeaders();
         this.updateControls();
-        this.buildRows();
-        if(this.enablePaginate){this.paginate();}
+        console.log('buildRows 000');
+        if(this.pivotSchema){this.buildRows(true, this.pivotSchema?.precision || 0)}else{this.buildRows()}
+        if(this.enablePaginate){this.paginate();}        
     }
     updateControls(){
         if(this.canAddRow){
@@ -110,7 +111,10 @@ class jsTableJson extends jsTable{
         this.thead.appendChild(tr); // Adiciona linha no thead
         this.buildListeners(); // Refaz listeners
     }
-    buildRows(){ // Constroi os objetos trs baseado no conteudo de this.data, popula this.raw
+    buildRows(cur, precision=0){ // Constroi os objetos trs baseado no conteudo de this.data, popula this.raw
+        console.log(cur);
+        console.log(precision);
+        
         this.cleanRows(); // Reinicia this.raw e limpa elementos do this.tbody
         let data_size = this.data.length;
         this.rawNextId = data_size + 1; // Ajusta o id de um eventual proximo elemento a ser inserido
@@ -121,7 +125,7 @@ class jsTableJson extends jsTable{
             for(let j = 0;j < this.headers.length;j++){
                 let v = this.data[i][this.headers[j]]; // Busca no json data se existe valor na row para o header, retorna o valor ou undefinied (caso nao encontre)
                 let col = document.createElement('td');
-                col.innerHTML = v != undefined ? v : ''; // Insere valor ou empty string '' para o campo
+                col.innerHTML = v == undefined ? '' : cur ? formatCur(v, precision) : v; // Insere valor ou empty string '' para o campo
                 let editable = this.editableCols.includes(this.headers[j]);
                 col.contentEditable = editable ? true : false; // Verifica se campo pode ser editado, se sim marca contentEditable='True'
                 col.classList = editable ? this.editableColsClasslist : ''; // Se campo for editavel, acidiona classe definida em editableColsClasslist
@@ -130,7 +134,7 @@ class jsTableJson extends jsTable{
             }
             if(this.pivotSchema && this.totalLin){ // Se definito totalizador para linhas, cria td para o total
                 let td = document.createElement('td');td.classList = this.totalLinClasslist;
-                td.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? row_total.toFixed(this.pivotSchema.precision) : row_total;
+                td.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? formatCur(row_total, this.pivotSchema.precision) : formatCur(row_total, 0);
                 row.appendChild(td);
             }
             this.rowAddControls(row); // Adiciona controles para row
@@ -165,6 +169,7 @@ class jsTableJson extends jsTable{
         this.cleanTable();
         this.buildHeaders();
         this.buildListeners();
+        console.log('buildRows 002');
         this.buildRows();
         this.rowsReset(); // Atualiza conteudo da tabela
     }
@@ -205,7 +210,6 @@ class jsTableJson extends jsTable{
         ){console.log('jsTableJson: Dados para Pivot invalidos, verifique as configuracoes');return undefined;}
         this.data = []; // Limpa this.data
         this._pivotSummary = {}; // Dicionario com totalizador para entrada da coluna {rafael: {bh: 0, mg:5}}
-        let pivotTotals = {}; // Dicionario com totalizador para colunas
         for(let i = 0; i < this.originalData.length; i++){ // Percorre os davos fazendo o pivot nos campos informados
             if(this._pivotSummary.hasOwnProperty(this.originalData[i][this.pivotSchema.lin])){
                 // Caso ja exista entrada para registro, atualiza valores
@@ -250,7 +254,8 @@ class jsTableJson extends jsTable{
         if(refreshTable){ // Atualiza element table
             this.headers = []; // Limpa os readers
             this.buildHeaders();
-            this.buildRows();
+            console.log('buildRows 001');            
+            this.buildRows(true, this.pivotSchema?.precision || 0);
         }
     }
     buildFoot(){
@@ -260,23 +265,24 @@ class jsTableJson extends jsTable{
         let total = 0;
         for(let row in this._pivotSummary){ // Percorre todas os registros do summary
             for(let col in this._pivotSummary[row]){ // Percorre todos os campos
-                if(subtotal.hasOwnProperty(col)){subtotal[col] += parseFloat(this._pivotSummary[row][col]);}
+                if(subtotal.hasOwnProperty(col)){subtotal[col] = parseFloat(this._pivotSummary[row][col] + subtotal[col]);}
                 else{subtotal[col] = parseFloat(this._pivotSummary[row][col]);}
                 total += parseFloat(this._pivotSummary[row][col]);
             }
         }
+        
         let tr = document.createElement('tr'); // Cria linha para o tfoot
         let tdfirst = document.createElement('td');tdfirst.innerHTML = 'Total';tdfirst.classList = this.tfootClasslist; // Cria primeira td com a identificacao do totalizador
         tr.appendChild(tdfirst);
         
         for(let item in subtotal){ // Percorre todos os itens do resumo e insere o respectivo valor
             let td = document.createElement('td');td.classList = this.tfootClasslist;
-            td.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? subtotal[item].toFixed(this.pivotSchema.precision) : subtotal[item];
+            td.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? formatCur(subtotal[item], this.pivotSchema.precision) : formatCur(subtotal[item], 0);
             tr.appendChild(td);
         }
         if(this.totalLin){
             let tdlast = document.createElement('td');tdlast.classList = this.tfootClasslist;
-            tdlast.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? total.toFixed(this.pivotSchema.precision) : total;
+            tdlast.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? formatCur(total, this.pivotSchema.precision) : formatCur(total, 0);
             tr.appendChild(tdlast);
         }
         this.tfoot.appendChild(tr);
