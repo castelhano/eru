@@ -348,7 +348,12 @@ class jsTable{
         let csv = [];
         let raw_size = this.raw.length;
         if(this.csvHeaders){ // Insere cabecalhos
-            csv.push(this.headers.join(this.csvSeparator));
+            if(this.adicionalHeaders){
+                csv.push([...this.headers, ...this.adicionalHeaders].join(this.csvSeparator));
+            }
+            else{
+                csv.push(this.headers.join(this.csvSeparator));
+            }
         }
         for (let i = 0; i < raw_size; i++) {
             let row = [], cols = this.raw[i].querySelectorAll('td, th');

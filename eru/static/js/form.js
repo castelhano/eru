@@ -1,9 +1,9 @@
 /*
 * jsForm    Implementa operacoes com formularios (validacao, conversao, busca via ajax, etc)
 *
-* @version  1.8
+* @version  1.9
 * @since    03/06/2023
-* @release  04/01/2024 [add beforeSubmit]
+* @release  22/08/2024 [add beforeSubmit, add data-formDefault]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @example  const form = new jsForm(document.getElementById('my_form'), {});
 */
@@ -157,7 +157,7 @@ class jsForm{
     __emailIsValid(email){
         return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
     }
-    validate(){ // PAREI AQUI< FALTA ADICIONAR __validateListeners
+    validate(){ // Metodo faz validacao para os campos do form
         cleanNotify(); // Limpa area de notificacao
         // Valida status required, maxlength e minlength
         this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{this.__validateRequired(el)})
@@ -217,15 +217,24 @@ class jsForm{
             }).on('complete', function(){self.imask[i].el.input.classList.remove('is-invalid')})
         }
     }
-    __validateListeners(){
+    __validateListeners(){ // Adiciona validacao (alem de demais comportamentos ao perder o foco) nos campos do form baseado em criterios pre definidos
+        // Adiciona validacao para input com required, maxlength e minlength
         this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
             el.onblur = () => {this.__validateRequired(el, false)}
         })
+        // Adiciona validacao para input number com max ou min e required
         this.form.querySelectorAll('input[type=number][min]:not([data-form=novalidate]), input[type=number][max]:not([data-form=novalidate])').forEach((el)=>{
             el.onblur = () => {this.__validateNumber(el, false)}  
         })
+        // Adiciona validacao para input email
         this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{
             el.onblur = () => {this.__validateEmail(el, false)}
+        })
+        // Adiciona valor padrao para inputs com data-form-default
+        this.form.querySelectorAll('input[data-formDefault]').forEach((el)=>{
+            el.onblur = () => {
+                if([undefined, ''].includes(el.value)){el.value = el.dataset.formdefault}
+            }
         })
     }
 }

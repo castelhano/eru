@@ -44,7 +44,7 @@
             <label for="id_data_fim">Data Fim</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
-            <input type="text" class="form-control" name="linha_inicio" id="id_linha_inicio" value="{{request.POST.linha_inicio}}">
+            <input type="text" class="form-control" name="linha_inicio" id="id_linha_inicio" value="{{request.POST.linha_inicio}}" data-formDefault="0" required>
             <label for="id_linha_inicio">Linha Inicio</label>
           </div>
           <div class="col-lg-2 mb-1 form-floating">
@@ -110,7 +110,7 @@
       url: '{% url 'core_get_empresas' %}',
       emptyRow: true,
       emptyRowText: 'Todas',
-      then: ()=>{if(urlGet('empresa') != null){document.getElementById('id_empresa').value = urlGet('empresa')}}
+      then: ()=>{if({{empresa|default:'false'}}){document.getElementById('id_empresa').value = '{{empresa}}'}}
     }
     ],
     customValidation: {
@@ -137,6 +137,7 @@
       const json_table = new jsTableJson('linha_diario', {
         data: dados,
         container: document.getElementById('table_result'),
+        totals: ['qtde']
       })
     {% endif %}  
     {% if layout == 'linha_produto' %}
@@ -154,10 +155,10 @@
         canFilter: true,
         filterCols: ['linha'],
         container: document.getElementById('table_result'),
-        pivot: {lin: 'linha', col: 'aplicacao', value: 'qtde', type: 'sum'}
+        pivot: {lin: 'linha', col: 'aplicacao', value: 'qtde', type: 'sum'},
         // ignoredCols: ['empresa_id', 'linha_id']
       })
-    {% endif %}  
+    {% endif %}
   {% endif %}
 
 

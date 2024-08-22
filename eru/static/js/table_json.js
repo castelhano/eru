@@ -1,7 +1,6 @@
 /**
-* jsTableJson Extende funcionalidade de jsTable, criando tabela a partir de objeto json
+* jsTableJson Extende funcionalidade de jsTable, criando tabela a partir de objeto json, implementa funcao de pivot de dados, alem de totalizador para colunas
 *
-* TODO: Ao exportar, em caso de pivot com totalizador de linha, nao esta sendo exibido header "Total"
 * @version  1.0
 * @since    09/01/2024
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -26,6 +25,7 @@ class jsTableJson extends jsTable{
         this.trash = []; // Ao deletar row, registro eh movido para o trash (permitndo retornar registro)
         this.editableCols = options?.editableCols || [];
         this.ignoredCols = options?.ignoredCols || []; // ex: ignoredCols: ['detalhe', 'senha'] campos informados aqui nao serao importados na tabela
+        this.totals = options?.totals || []; // ex: totals: ['unitario', 'valor'] campos informados aqui serao totalizados no rodape da tabela
         this.restoreButton = null; // Armazena o botao para restaurar linha do trash, necessario para exibir e ocultar baseado na existencia de itens no trash
         this.saveBtn = null;
         // Pivot: ex {pivot: {lin: 'matricula', col: 'cidade', value: 'count'}} retorna os dados em formato json ajustado somente para a linha e coluna informada, so aceita 1 campo para linha e outro para coluna 
@@ -57,7 +57,6 @@ class jsTableJson extends jsTable{
         
         this.buildHeaders();
         this.updateControls();
-        console.log('buildRows 000');
         if(this.pivotSchema){this.buildRows(true, this.pivotSchema?.precision || 0)}else{this.buildRows()}
         if(this.enablePaginate){this.paginate();}        
     }
@@ -105,16 +104,14 @@ class jsTableJson extends jsTable{
             tr.appendChild(th);
         }
         if(this.pivotSchema && this.totalLin){
-            let th = document.createElement('th');th.innerHTML = this.data.length > 0 ? 'Total' : 'Informativo'
+            this.adicionalHeaders = [this.data.length > 0 ? 'Total' : 'Informativo'];
+            let th = document.createElement('th');th.innerHTML = this.adicionalHeaders[0];
             tr.appendChild(th);
         }
         this.thead.appendChild(tr); // Adiciona linha no thead
         this.buildListeners(); // Refaz listeners
     }
     buildRows(cur, precision=0){ // Constroi os objetos trs baseado no conteudo de this.data, popula this.raw
-        console.log(cur);
-        console.log(precision);
-        
         this.cleanRows(); // Reinicia this.raw e limpa elementos do this.tbody
         let data_size = this.data.length;
         this.rawNextId = data_size + 1; // Ajusta o id de um eventual proximo elemento a ser inserido
@@ -125,7 +122,7 @@ class jsTableJson extends jsTable{
             for(let j = 0;j < this.headers.length;j++){
                 let v = this.data[i][this.headers[j]]; // Busca no json data se existe valor na row para o header, retorna o valor ou undefinied (caso nao encontre)
                 let col = document.createElement('td');
-                col.innerHTML = v == undefined ? '' : cur ? formatCur(v, precision) : v; // Insere valor ou empty string '' para o campo
+                col.innerHTML = v == undefined ? '' : cur || (this?.totals && this.totals.includes(this.headers[j])) ? formatCur(v, precision) : v; // Insere valor ou empty string '' para o campo
                 let editable = this.editableCols.includes(this.headers[j]);
                 col.contentEditable = editable ? true : false; // Verifica se campo pode ser editado, se sim marca contentEditable='True'
                 col.classList = editable ? this.editableColsClasslist : ''; // Se campo for editavel, acidiona classe definida em editableColsClasslist
@@ -143,7 +140,9 @@ class jsTableJson extends jsTable{
         }
         if(data_size == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
         if(this.showCounterLabel){this.rowsCountLabel.innerHTML = data_size};
-        if(this.pivotSchema && this.totalCol && this.data.length > 0){this.buildFoot()};
+        if(this.pivotSchema && this.totalCol && this.data.length > 0){this.buildFoot()}
+        else if(this.totals.length > 0){this.totalize(this.totals, this.precision || 0)}
+
     }
     rowAddControls(row){ // Adiciona os controles na linha (tr) alvo
         if(this.canDeleteRow){
@@ -169,7 +168,6 @@ class jsTableJson extends jsTable{
         this.cleanTable();
         this.buildHeaders();
         this.buildListeners();
-        console.log('buildRows 002');
         this.buildRows();
         this.rowsReset(); // Atualiza conteudo da tabela
     }
@@ -254,7 +252,6 @@ class jsTableJson extends jsTable{
         if(refreshTable){ // Atualiza element table
             this.headers = []; // Limpa os readers
             this.buildHeaders();
-            console.log('buildRows 001');            
             this.buildRows(true, this.pivotSchema?.precision || 0);
         }
     }
@@ -284,6 +281,29 @@ class jsTableJson extends jsTable{
             let tdlast = document.createElement('td');tdlast.classList = this.tfootClasslist;
             tdlast.innerHTML = this.pivotSchema.hasOwnProperty('precision') ? formatCur(total, this.pivotSchema.precision) : formatCur(total, 0);
             tr.appendChild(tdlast);
+        }
+        this.tfoot.appendChild(tr);
+    }
+    totalize(fields, precision=0){ // Gera totalizador para colunas (nao deve ser usado em conjunto a pivot)
+        this.tfoot.innerHTML = '';
+        let summary = {}
+        for(let i = 0; i < this.data.length; i++){ // Percorre todas as linhas da tabela
+            for(let j = 0; j < this.headers.length; j++){ // Percorre todos os headers da tabela, se header for definido para somar, procede com soma
+                if(fields.includes(this.headers[j])){ // Verifica se campo sera totalizado
+                    if(summary.hasOwnProperty(this.headers[j])){ // Verifica se ja foi inicializado subtal para campo
+                        summary[this.headers[j]] += this.data[i][this.headers[j]];
+                    }
+                    else{
+                        summary[this.headers[j]] = this.data[i][this.headers[j]];
+                    }
+                }
+            }
+        }
+        let tr = document.createElement('tr');
+        for(let j = 0; j < this.headers.length; j++){ // Percorre todos os headers agora para adicionar td na tabela
+            let td = document.createElement('td');td.classList = this.tfootClasslist;
+            td.innerHTML = summary.hasOwnProperty(this.headers[j]) ? formatCur(summary[this.headers[j]], precision) : '';
+            tr.appendChild(td);
         }
         this.tfoot.appendChild(tr);
     }

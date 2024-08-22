@@ -105,8 +105,11 @@ def planejamentos(request):
 def passageiros(request):
     if request.method == 'POST':
         dados = Passageiro.objects.filter(referencia__range=[request.POST['data_inicio'],request.POST['data_fim']])
-        if(request.POST.get('linha_inicio', None)):
-            linha_fim = request.POST.get('linha_inicio', None) if request.POST.get('linha_inicio', None) else 'zzzzzzzz'
+        if(request.POST.get('empresa', None)):
+            dados = dados.filter(empresa=request.POST['empresa'])
+        if(request.POST.get('linha_inicio', None) or request.POST.get('linha_fim', None)):
+            linha_inicio = request.POST.get('linha_inicio', None) if request.POST.get('linha_inicio', None) else '0'
+            linha_fim = request.POST.get('linha_fim', None) if request.POST.get('linha_fim', None) else 'zzzzzzzz'
             dados = dados.filter(linha__codigo__gte=request.POST['linha_inicio'], linha__codigo__lte=linha_fim)
         if request.POST['layout'] == 'linha_produto':
             dados = dados.values('empresa_id', 'empresa__nome', 'linha_id', 'linha__codigo', 'linha__nome', 'aplicacao', 'tipo').annotate(qtde=Count('linha_id'))
@@ -114,7 +117,7 @@ def passageiros(request):
             dados = dados.values('linha_id', 'linha__codigo', 'linha__nome',).annotate(qtde=Count('linha_id'))
         if len(dados) == 0:
             messages.warning(request, '<b>Atenção:</b> Nenhum registro com os filtros informados')
-        return render(request, 'trafego/passageiros.html', {'dados':dados, 'layout':request.POST['layout']})
+        return render(request, 'trafego/passageiros.html', {'dados':dados, 'layout':request.POST['layout'], 'empresa': request.POST.get('empresa', None)})
     return render(request, 'trafego/passageiros.html')
 
 # METODOS ADD
