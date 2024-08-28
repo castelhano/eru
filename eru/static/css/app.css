@@ -150,6 +150,7 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 .callout-danger{border-left-color: #DC3545!important;}
 .callout-purple{border-left-color: #6f42c1!important;}
 .callout-orange{border-left-color: #F35B04!important;}
+.callout-pink{border-left-color: #d63384!important;}
 
 pre, code{user-select: all;}
 .code{background-color: #F8F9FA;border: 1px solid #dee2e6;border-radius: .25rem;padding: 5px 10px;margin-bottom: 15px;user-select: all;}

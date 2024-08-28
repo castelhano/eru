@@ -504,8 +504,6 @@ def logout(request):
 
 @login_required
 def handler(request, code):
-    for i in range(55000):
-        print(i*200/200)
     return render(request,f'{code}.html')
 
 

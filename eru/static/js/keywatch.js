@@ -161,6 +161,10 @@ class Keywatch{
             }
         }
     }
+    unbindAll(){ // Apaga todos as entradas e restaura escopos para estado original
+        this.map = {all: {}, default:{}}
+        this.entries = {all: {}, default:{}}
+    }
     _onKeyDown(ev, instance){
         // Adiciona tecla em this.pressed (caso ainda nao esteja)
         try {

@@ -8,7 +8,7 @@
 * @example  appKeyMap.bind({key: 'e', ctrl: true, run: ()=>{...do something}})
 * @example  appKeyMap.bind({key: 'e', alt:true, ctrl: true, run: ()=>{...do something}, group: 'cadastro'})
 */
-class Keywatch{
+class jsListener{
     constructor(){
         this.map = {};                                  // Mapa com todos os atalhos cadastrados
         this.filteredMap = [];                          // Mapa filtrado
@@ -159,5 +159,5 @@ class Keywatch{
         this.modal.appendChild(this.modalTable);
     }
 }
-const appKeyMap = new Keywatch();
-document.addEventListener('keydown', (e) => {appKeyMap.run(e)})
+const listener = new jsListener();
+document.addEventListener('keydown', (e) => {listener.run(e)})
