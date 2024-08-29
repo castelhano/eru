@@ -1,9 +1,9 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
-* @version  5.1
+* @version  5.2
 * @since    05/08/2024
-* @release  15/08/2024
+* @release  29/08/2024 [_autoToggleContext]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
@@ -50,6 +50,8 @@ class Keywatch{
         window.addEventListener('keydown', (ev)=>{this._onKeyDown(ev, this)});
         window.addEventListener('keyup', (ev)=>{this._onKeyUp(ev, this)});
         window.addEventListener('focus', (ev)=>{this.pressed = []}); // Limpa lista de precionados ao receber foco (evita conflitos ao mover foco da pagina)
+        // ------
+        this._autoToggleContext(); // Recorre document em busca de elementos para ativacao automatica de contexto
     }
     bind(shortcut, run, options={}){ // Adiciona novo shortcut
         // shortcut: String com teclas a serem tratadas. Ex: "control+u" "ctrl+alt+x" "ctrl+u;alt+y"
@@ -337,6 +339,20 @@ class Keywatch{
             if(i < entries.length - 1){formated += '&nbsp;&nbsp;ou&nbsp;&nbsp;';}
         }
         return formated;
+    }
+    _autoToggleContext(){ // Implementa alteracao do contexto em elementos com tags predefinidas
+        // Exemplo: <div data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal" ...>
+        // data-kw-context          Nome do contexto a ser ativado
+        // data-kw-context-start    Evento a ser escutado para ativar contexto
+        // data-kw-context-end      Evento a ser escutado para ativar contexto
+        document.querySelectorAll('[data-kw-context]').forEach((el)=>{
+            if(el.hasAttribute('data-kw-context-start')){ // Evento start altera altera contexto informado
+                el.addEventListener(el.dataset['kwContextStart'], ()=>{this.setContext(el.dataset['kwContext'])});
+            }
+            if(el.hasAttribute('data-kw-context-end')){ // Evento end retorna contexto para default
+                el.addEventListener(el.dataset['kwContextEnd'], ()=>{this.setContext()});
+            }
+        })
     }
     _createComponents(){ // Cria modais e demais elementos para tabela de atalhos
         // Criando shortcutMapList

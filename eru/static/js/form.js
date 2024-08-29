@@ -17,7 +17,6 @@ class jsForm{
         this.selectPopulate = options?.selectPopulate || []; // Lista com selects para preenchimento via ajax
         // Funcao a ser chamada antes de submeter form, deve retornar true ou false
         this.beforeSubmit = options?.beforeSubmit != undefined ? options.beforeSubmit : () => { return true };
-        this.selects = {}; // Armazena instancias de selectPopulate
         this.customValidation = options?.customValidation || {};
         // customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
         // deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
@@ -32,7 +31,8 @@ class jsForm{
             this.common.push(this.form.elements[i]);
         }
         for(let i = 0;i < this.selectPopulate.length; i++){ // Busca (ajax) dados e preenche select
-            this.selects[this.selectPopulate[i].target.name] = new selectPopulate(this.selectPopulate[i]);
+            // Salva instancia no attr [selectpolulate] no elemento. Ex.: form.empresa.selectPopulate.update();
+            this[this.selectPopulate[i].target.name].selectPopulate = new selectPopulate(this.selectPopulate[i]);
         }
         if(!this.novalidate){
             this.form.setAttribute('novalidate', null); // Desativa validacao nativa do navegador
@@ -274,7 +274,7 @@ class selectPopulate{
         };
         this.onSuccess = options?.onSuccess != undefined ? options.onSuccess : ()=>{}; // Funcao a ser executada em caso de successo (apos popular elemento)
         this.then = options?.then != undefined ? ()=>{options.then(this.data)} : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
-        this.reload();
+        if(!options?.wait){this.reload()} // Preenche select ao carregar componente, para nao buscar ao carregar defina {wait: true}
     }
     reload(){ // Consulta e carrega registros no select
         if(!this.beforeRequest()){return false}
