@@ -176,8 +176,12 @@ class Keywatch{
     }
     _onKeyUp(ev, instance){
         try {
-            if(instance.pressed.indexOf(ev.key.toLowerCase()) < 0){return}
-            instance.pressed.splice(instance.pressed.indexOf(ev.key.toLowerCase())); // Libera tecla de this.pressed
+            if(instance.pressed.indexOf(ev.key.toLowerCase()) > -1){ // libera tecla precionada caso listada em this.pressed
+                instance.pressed.splice(instance.pressed.indexOf(ev.key.toLowerCase())); // Libera tecla de this.pressed
+            }
+            else if(instance.pressed.includes('alt')){ // Tecla alt se usada em composicao ex: (alt+1+2) retorna ev.key gerado pela combinacao, neste caso limpa alt do pressed
+                instance.pressed.splice(instance.pressed.indexOf('alt')); // Libera recla alt de this.pressed
+            }
         } catch (e){}
     }
     _runKeydown(ev){
