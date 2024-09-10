@@ -1,9 +1,9 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
-* @version  5.2
+* @version  5.3
 * @since    05/08/2024
-* @release  29/08/2024 [_autoToggleContext]
+* @release  10/09/2024 [consiste atalho simples como prioridade] | 29/08/2024 [_autoToggleContext]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
@@ -187,9 +187,30 @@ class Keywatch{
     _runKeydown(ev){
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
         let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
-        let schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
-        let findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
-        let findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
+        // Busca inicialmente por entrada simples (key + mods)
+        let schema, schemas = this._getKeyDownSchema(ev); // Recebe schemas possiveis do evento ([control+alt+e, alt+control+e])
+        let findOnAll = false;
+        let findOnEntries = false;
+        let index = 0;
+        while(!findOnAll && !findOnEntries && index < schemas.length){ // percorre os schemas, se localizar no context all ou entries termina bloco e roda shortcut
+            findOnAll = this.entries['all'].hasOwnProperty(schemas[index]) && (!this.entries['all'][schemas[index]].options.hasOwnProperty('element') || this.entries['all'][schemas[index]].options.element == ev.target);
+            findOnEntries = this.entries[this.context].hasOwnProperty(schemas[index]) && (!this.entries[this.context][schemas[index]].options.hasOwnProperty('element') || this.entries[this.context][schemas[index]].options.element == ev.target);
+            schema = schemas[index];
+            index++;
+        }
+        if(findOnAll){
+            resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp;
+            if(!resp){ev.preventDefault()}
+            return;
+        }
+        else if(findOnEntries){
+            resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp;
+            if(!resp){ev.preventDefault()}
+            return;
+        }
+        schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
+        findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
+        findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
         if(findOnAll || findOnEntries){
         // Verifica se existe shortcut em this.entries no contexto ativo ou no all, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
             if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp}
@@ -243,6 +264,14 @@ class Keywatch{
         }
         permut(list);
         return result;
+    }
+    _getKeyDownSchema(ev){ // retorna array com schemas possiveis no evento
+        let list = [];
+        if(ev.ctrlKey){list.push('control')}
+        if(ev.shiftKey){list.push('shift')}
+        if(ev.altKey){list.push('alt')}
+        if(!['Control','Alt','Shift'].includes(ev.key)){list.push(ev.key.toLowerCase())}
+        return this._getEntryPermuts(list)
     }
     _splitEntry(entry){ // Retorna lista de caracteres de um shortcut. ex: 'g+i' = ['g', 'i'] alem do separador usado
         let keys = entry.split('+'); // Cria array com blocos
