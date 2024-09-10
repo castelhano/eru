@@ -72,6 +72,7 @@ class Linha(models.Model):
     class Meta:
         permissions = [
             ("dop_linha", "Pode acessar DOP"),
+            ("demanda_update", "Pode atualizar demanda"),
         ]
 
 class Trajeto(models.Model):

@@ -22,7 +22,8 @@
         name: 'Impor<b>t</b>ação',
         icon: 'bi bi-person-fill-up',
         itens: [
-        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();return false;}}, {visible: false}]},{% endif %}
+        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();return false;}}, {visible: false}]},{% endif %},
+        {% if perms.trafego.demanda_update %}{name: 'Atualizar <b><u>D</u></b>emanda', id:'menu_demanda_update', tagName: 'span', onclick: ()=>{appNotify('warning', 'Em desenvolvimento')}, keybind: ['d', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_demanda_update').click();return false;}}, {visible: false}]},{% endif %},
         ],
         keybind: [
             'alt+t',

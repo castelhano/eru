@@ -1,7 +1,8 @@
 /*
 * jsTable   Lib para operacoes com tabelas
 *
-* @version  3.0
+* @version  3.1
+* @release  10/09/2022 [change search.input listener (onkeyup > oninput), add blur search.input on navigate]
 * @since    07/08/2022
 * @desc     Versao 3x implementa por padrao funcionalidades [sort, paginate, export csv, export json, integracao keywatch.js], demais funcionalidades nas libs complementares
 * @2.0      06/10/2023 Alterado para padrao de classes ES6 
@@ -109,7 +110,8 @@ class jsTable{
             this.filterInput.disabled = this.filterCols.length ? false : true; // Disabled elemento se nao informado colunas para filtrar (filterCols)
             this.filterInput.classList = 'form-control form-control-sm';
             this.filterInput.placeholder = 'Filtrar*';
-            this.filterInput.onkeyup = (e) => this.filter(e);
+            this.filterInput.autocomplete = false;
+            this.filterInput.oninput = (e) => this.filter(e);
             capFilter.appendChild(this.filterInput);
             capRow.appendChild(capFilter);
         }
@@ -156,7 +158,6 @@ class jsTable{
     }
     filter(e, criterio=null){
         if(this.raw.length == 0){ return null; } // Se tabela for vazia nao executa processo para filtro
-        if([37, 38, 39, 40, 13].includes(e.keyCode)){this.filterInput.blur();return false;} // Nao busca registros caso tecla seja enter ou arrows
         let c = criterio || this.filterInput.value.toLowerCase();
         if(this.canFilter && this.filterCols.length > 0 && c != ""){
             this.filteredRows = []; // Limpa os filtros
@@ -416,14 +417,14 @@ class jsTable{
         if(trs_count == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para próxima linha', context: this.keyBindContext})
-        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para linha anterior', context: this.keyBindContext})
-        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Acessa registro em foco', context: this.keyBindContext})}
+        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para próxima linha', context: this.keyBindContext})
+        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Navega para linha anterior', context: this.keyBindContext})
+        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Acessa registro em foco', context: this.keyBindContext})}
         if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Foca caixa de pesquisa tabela', context: this.keyBindContext})}
-        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Baixa registros em formato CSV', context: this.keyBindContext})}
+        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Baixa registros em formato CSV', context: this.keyBindContext})}
         if(this.enablePaginate){
-            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe próxima página da tabela', context: this.keyBindContext})
-            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe página anterior da tabela', context: this.keyBindContext})
+            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe próxima página da tabela', context: this.keyBindContext})
+            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();this.filterInput.blur();return false;}, {desc:'<small class="badge bg-purple">TABELA</small> Exibe página anterior da tabela', context: this.keyBindContext})
         }
     }
 }

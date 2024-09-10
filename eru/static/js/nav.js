@@ -67,18 +67,17 @@ class canvasNavDropdown{
     }
     __buildMenuItem(options){
         let item = document.createElement('li');item.classList = options?.liClass || '';
-        let link = document.createElement(options?.tagName || 'a');link.classList = options?.linkClass || 'dropdown-item';
+        let link = document.createElement(options?.tagName || 'a');link.classList = options?.linkClass || 'dropdown-item pointer';
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             link.appendChild(icon)
             link.insertAdjacentHTML("beforeend", options?.name || 'name_not_defined')
         }
         else{link.innerHTML = options?.name || 'name_not_defined';}
-        let attrs = {...options}; // Cria copia de opcoes antes de remover attrs
-        if(attrs.hasOwnProperty('keybind')){delete attrs['keybind']}
-        if(attrs.hasOwnProperty('name')){delete attrs['name']}
-        for(let i in attrs){ // Adiciona os atributos do elemento
-            link.setAttribute(i, options[i]);
+        
+        for(let attr in options){ // Adiciona os atributos do elemento
+            if(!['keybind','name','onclick','tagName'].includes(attr)){link.setAttribute(attr, options[attr])} // adiciona atributos simples
+            else if(['onclick','ondblclick'].includes(attr)){link[attr] = options[attr]} // adiciona eventos
         }
         item.appendChild(link);
         return item;        
