@@ -149,7 +149,7 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <script>
 {% block add_script %}
-
+appKeyMap.bind('g+i', ()=>{appNotify('success', 'Ola...')}, {desc: 'Texto explicativo para usuario'})
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf],

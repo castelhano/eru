@@ -186,36 +186,10 @@ class Keywatch{
     }
     _runKeydown(ev){
     // Busca entrada no dict this.entries que atenda criterios do shortcut, caso nao, se event.key = Enter e target vem de um form, implementa tabulacao no form
-        let resp = true; // resp usada para o prevent.default(), se metodo run retornar false, prevent.default() sera acionado no evento
-        // Busca inicialmente por entrada simples (key + mods)
-        let schema, schemas = this._getKeyDownSchema(ev); // Recebe schemas possiveis do evento ([control+alt+e, alt+control+e])
-        let findOnAll = false;
-        let findOnEntries = false;
-        let index = 0;
-        while(!findOnAll && !findOnEntries && index < schemas.length){ // percorre os schemas, se localizar no context all ou entries termina bloco e roda shortcut
-            findOnAll = this.entries['all'].hasOwnProperty(schemas[index]) && (!this.entries['all'][schemas[index]].options.hasOwnProperty('element') || this.entries['all'][schemas[index]].options.element == ev.target);
-            findOnEntries = this.entries[this.context].hasOwnProperty(schemas[index]) && (!this.entries[this.context][schemas[index]].options.hasOwnProperty('element') || this.entries[this.context][schemas[index]].options.element == ev.target);
-            schema = schemas[index];
-            index++;
-        }
-        if(findOnAll){
-            resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp;
-            if(!resp){ev.preventDefault()}
-            return;
-        }
-        else if(findOnEntries){
-            resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp;
-            if(!resp){ev.preventDefault()}
-            return;
-        }
-        schema = this.pressed.join('+');// monta teclas precionadas na notacao usada pela lib
-        findOnAll = this.entries['all'].hasOwnProperty(schema) && (!this.entries['all'][schema].options.hasOwnProperty('element') || this.entries['all'][schema].options.element == ev.target);
-        findOnEntries = this.entries[this.context].hasOwnProperty(schema) && (!this.entries[this.context][schema].options.hasOwnProperty('element') || this.entries[this.context][schema].options.element == ev.target);
-        if(findOnAll || findOnEntries){
-        // Verifica se existe shortcut em this.entries no contexto ativo ou no all, se sim aciona metodo run(), se especificado target verifica se foco esta no elemento especificado
-            if(findOnAll){resp = [undefined, true].includes(this.entries['all'][schema].run(ev)) && resp}
-            if(findOnEntries){resp = [undefined, true].includes(this.entries[this.context][schema].run(ev)) && resp}
-            if(!resp){ev.preventDefault()}
+        let match = this._bestMatch(ev); // metodo _bestMatch retorna melhor correspondente
+        if(match){
+            let resp = match.run(ev);
+            if(resp === false)(ev.preventDefault())
         }
         else if(this.tabOnEnter && ev.key == 'Enter' && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
         // Se tecla Enter em input dentro de form, implementa tabulacao (ao instanciar defina {tabOnEnter: false} para desativar) ou no input defina attr data-escape_tab
@@ -273,6 +247,20 @@ class Keywatch{
         if(!['Control','Alt','Shift'].includes(ev.key)){list.push(ev.key.toLowerCase())}
         return this._getEntryPermuts(list)
     }
+    _bestMatch(ev){ // retorna entrada (que melhor atenda) em this.map com shortcut ou false se nao localizado correspondente
+        // prioriza entradas compostas a entradas simples (g+i antes de i), e contexto all tem prioridade em relacao 
+        if(this.entries['all'].hasOwnProperty(this.pressed.join('+')) && (!this.entries['all'][this.pressed.join('+')].options.hasOwnProperty('element') || this.entries['all'][this.pressed.join('+')].options.element == ev.target)){return this.entries['all'][this.pressed.join('+')]}
+        if(this.entries[this.context].hasOwnProperty(this.pressed.join('+')) && (!this.entries[this.context][this.pressed.join('+')].options.hasOwnProperty('element') || this.entries[this.context][this.pressed.join('+')].options.element == ev.target)){return this.entries[this.context][this.pressed.join('+')]}
+        
+        // analisa entrada simples (i ou ctrl+i, ....)
+        let schema, index = 0, schemas = this._getKeyDownSchema(ev); // Recebe schemas possiveis do evento ([control+alt+e, alt+control+e])
+        for(let i = 0;  i < schemas.length; i++){ // percorre os schemas, se localizar no context all ou entries retorna shortcut
+            if(schemas[index].length == 1 && this.pressed.length > 1){continue}
+            if(this.entries['all'].hasOwnProperty(schemas[index]) && (!this.entries['all'][schemas[index]].options.hasOwnProperty('element') || this.entries['all'][schemas[index]].options.element == ev.target)){return this.entries['all'][schemas[index]]}
+            if(this.entries[this.context].hasOwnProperty(schemas[index]) && (!this.entries[this.context][schemas[index]].options.hasOwnProperty('element') || this.entries[this.context][schemas[index]].options.element == ev.target)){return this.entries[this.context][schemas[index]]}
+        }
+        return false;
+    }
     _splitEntry(entry){ // Retorna lista de caracteres de um shortcut. ex: 'g+i' = ['g', 'i'] alem do separador usado
         let keys = entry.split('+'); // Cria array com blocos
         let index = keys.lastIndexOf('');
@@ -304,7 +292,8 @@ class Keywatch{
     }
     showKeymap(){
         this._refreshMapTable();
-        this.shortcutModal.showModal();        
+        this.shortcutModal.showModal();
+        this.setContext('keywatchModal');
     }
     avail(shortcut, context=null){
     // Retorna (bool) se shortcut esta disponivel, se nao informado contexto retorna true somente se shortcut disponivel em TODOS os contextos
@@ -390,7 +379,7 @@ class Keywatch{
     _createComponents(){ // Cria modais e demais elementos para tabela de atalhos
         // Criando shortcutMapList
         this.shortcutModal = document.createElement('dialog'); this.shortcutModal.classList = this.shortcutModalClasslist;
-        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = ''} // Limpa input ao fechar modal
+        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = '';this.setContext();} // Limpa input ao fechar modal e retorna contexto para default
         this.shortcutSearchInput = document.createElement('input');this.shortcutSearchInput.type = 'search';this.shortcutSearchInput.classList = this.searchInputClasslist;this.shortcutSearchInput.placeholder = this.searchInputPlaceholder;this.shortcutSearchInput.id = 'keywatch_shortcutSearchInput';
         this.shortcutSearchInput.oninput = (ev)=>{this._filterMapTable(ev)}
         this.shortcutModalTable = document.createElement('table');
