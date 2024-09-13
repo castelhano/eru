@@ -1,9 +1,9 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
-* @version  5.3
+* @version  5.4
 * @since    05/08/2024
-* @release  10/09/2024 [consiste atalho simples como prioridade] | 29/08/2024 [_autoToggleContext]
+* @release  13/09/2024 [add commands] | 29/08/2024 [_autoToggleContext]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
@@ -34,6 +34,7 @@ class Keywatch{
         }
         this.map = {all: {}, default:{}};           // Dicionario com os atalhos. Ex: this.map = {'all': {'ctrl+u;alt+y': {....}}}
         this.entries = {all: {}, default:{}};       // Dicionario com apontadores para this.map, pois uma entrada de this.map pode ter varios shortcuts relacionados em this.entries
+        this.commands = {};                         // Dicionario com commandos, (usado no metodo runCommand) ignora contexto
         this.pressed = [];                          // Lista com teclas precionadas
         this.contexts = {                           // Armazena contextos disponiveis e uma breve descricao que sera usada no modal showKeyMap
             all: "Atalhos Globais",
@@ -86,6 +87,9 @@ class Keywatch{
         for(let i = 0; i < keys.length; i++){ // 
             if(!this.entries.hasOwnProperty(context)){this.entries[context] = {}} // Inicia context em this.entries (caso nao iniciado)
             this.entries[context][keys[i]] = this.map[context][shortcut];
+        }
+        if(options.hasOwnProperty('command')){ // Se foi atribuido comando para o shortcut, adiciona apontador no dict this.commands
+            this.commands[options.command] = this.map[context][shortcut];
         }
     }
     unbind(entry, context=null){ // Remove shortcut, se nao informado contexto remove de todos os contextos
@@ -315,6 +319,9 @@ class Keywatch{
         if(this.entries[context].hasOwnProperty(shortcut)){
             this.entries[context][shortcut].run();
         }
+    }
+    runCommand(command=null){ // Aciona atalho pelo respectivo comando, se nao informado comando usa valor inserido em this.commandInput 
+        if(this.commands.hasOwnProperty(command)){this.commands[command].run()}
     }
     _filterMapTable(ev){
         let term = this.shortcutSearchInput.value.toLowerCase();

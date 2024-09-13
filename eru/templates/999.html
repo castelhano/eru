@@ -142,6 +142,7 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 {% block add_script_src %}
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
+<script src="{% static 'js/vendor/hotkeys.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
@@ -149,7 +150,16 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <script>
 {% block add_script %}
-appKeyMap.bind('g+i', ()=>{appNotify('success', 'Ola...')}, {desc: 'Texto explicativo para usuario'})
+appKeyMap.bind('g+i;g+u', ()=>{appNotify('success', 'G+I')}, {desc: 'Texto explicativo para usuario', command: 'fooDoPai'})
+appKeyMap.bind('i', ()=>{appNotify('success', 'I')}, {desc: 'Outro Texto explicativo'})
+// hotkeys('g+i,g+u', ()=>{appNotify('success', 'Ola... G+I')})
+// hotkeys('g+i', ()=>{appNotify('warning', 'Ola... G+I')})
+// hotkeys('i', {scope: 'foo'}, ()=>{appNotify('danger', 'Ola... I')})
+
+
+
+
+
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf],
