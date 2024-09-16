@@ -132,7 +132,10 @@ class jsForm{
             if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, false)}
             else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, false)}
         }
-        else if(el.required && el.value == ''){el.classList.add('is-invalid');}
+        else if(el.required && el.value == ''){
+            el.classList.add('is-invalid');
+            if(notify){appNotify('warning', `jsform: O campo <b>${el.name}</b> é obrigatório`, false)}
+        }
         else{el.classList.remove('is-invalid')}
     }
     __validateNumber(el, notify=true){
@@ -176,12 +179,12 @@ class jsForm{
                 if(!resp[0]){
                     el.classList.add('is-invalid');
                     if(resp[1]){
-                        appNotify('warning', `jsForm: ${resp[1]}`, false);
+                        appNotify('warning', `jsform: ${resp[1]}`, false);
                     }
                 }
                 else{el.classList.remove('is-invalid')}
             } catch (e){
-                console.log(`jsForm: ERRO customValidation para ${i} inválido, verifique dados informados`);
+                console.log(`jsform: ERRO customValidation para ${i} inválido, verifique dados informados`);
                 console.log(`Deve existir no form field com ID id_${i}, e retorno deve ser um array, ex: [false, 'Texto de ajuda'] ou [true]`);
             }
         }
@@ -201,7 +204,7 @@ class jsForm{
             this.form.querySelectorAll('.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
             return true;
         }
-        appAlert('warning', '<b>jsform</b>: Existem campo(s) inválidos, corriga antes de prosseguir');
+        // appAlert('warning', '<b>jsform</b>: Existem campo(s) inválidos, corriga antes de prosseguir');
         return false;
         
     }
@@ -297,32 +300,124 @@ class selectPopulate{
         xhttp.open(instance.method, instance.url + instance.params, true);
         xhttp.send();
     }
+}
 
+class split2TextAddon{
+    constructor(el, options={}){
+        el.multipleAddon = this;            // Torna instancia disponivel no el.multipleAddon
+        const defaultOptions = {
+            text: '<i class="bi bi-clipboard-minus-fill">',
+            badgeClasslist: 'badge bg-success',
+            btnClasslist: 'btn btn-secondary',
+            btnTitle: 'Entrada multipla',
+            dialogClasslist: 'border rounded p-1 text-end bg-body-tertiary',
+            dialogWidth: '150px',
+            textareaClasslist: 'form-control mb-2',
+            textareaRows: 6,
+            confirmButtonClasslist: 'btn btn-sm btn-primary border-0',
+            confirmButtonText: 'Salvar',
+            separator: ';',
+            shortcut: 'f2',
+            marginTop: 3,
+            container: el.parentElement,
+            groupContainerClasslist: 'input-group',
+            el: el
+        }
+        for(let key in defaultOptions){     // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
+            this[key] = options.hasOwnProperty(key) ? options[key] : defaultOptions[key];
+        }
+        this._build();
+    }
+    _build(){
+        // <button id="btn_addon" type="button" class="btn btn-secondary" tabindex="-1">
+        // <i class="bi bi-clipboard-minus-fill"></i>
+        // <span class="badge bg-dark">13</span>
+        // </button>
+        this.select = document.createElement('select');this.select.multiple = true;this.select.style.display = 'none';this.select.name = `${this.el.name}_multiple`;
+        let foo = document.createElement('option'); foo.value = '22';foo.selected = true;
+        let fei = document.createElement('option'); fei.value = '35';fei.selected = true;
+        this.select.appendChild(foo)
+        this.select.appendChild(fei)
+        this.dialog = document.createElement('dialog');this.dialog.classList = this.dialogClasslist;this.dialog.style.margin = '0px';this.dialog.style.zIndex = '10';
+        this.dialog.style.width = this.dialogWidth;
+        this.textarea = document.createElement('textarea');this.textarea.classList = this.textareaClasslist;this.textarea.rows = this.textareaRows;
+        this.textarea.addEventListener('keydown', (ev)=>{
+            if(ev.key == 'Escape'){ // ao precionar esc com foco no text area, limpa valores e fecha dialog
+                this.btn.click();
+                this.el.focus(); // move o foco para o controle original
+            }
+        })
+        this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;
+        this.dialog.appendChild(this.textarea);
+        this.dialog.appendChild(this.confirmButton);
+        this.dialog.appendChild(this.select);
+        // **
+        this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
+        this.btn.onclick = ()=>{
+            if(this.dialog.open){
+                this.textarea.value = '';
+                this.dialog.close();
+            }
+            else{
+                this.dialog.show();
+            }
+        }
+        let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
+        if(this.container.classList.contains('form-floating') && this.container.parentNode.classList.contains('row')){
+        /** row
+         *  ** form-floating col
+         *  **** input
+         */
+            let col = document.createElement('div');
+            let addClass = this.container.classList.value.replace('form-floating', '').trim().split(' ');
+            addClass.forEach((e)=>{
+                this.container.classList.remove(e);
+                col.classList.add(e);
+            })
+            // se definido maxWidth no container, remove stilo e aplica max widht no col
+            if(this.container.style.maxWidth != ''){
+                col.style.maxWidth = this.container.style.maxWidth;
+                this.container.style.maxWidth = '';
+            }
+            this.container.before(col);
+            col.appendChild(groupContainer);
+            col.appendChild(this.dialog);
+            groupContainer.appendChild(this.container);
+            groupContainer.appendChild(this.btn);
+        }
+        else{}
+        // ajusta posicionamento do dialog abaixo do controle (alinhado a direita)
+        let rect = this.btn.getBoundingClientRect();
+        let left = this.el.getBoundingClientRect().left;
+        this.dialog.style.top = (parseInt(rect.bottom) + this.marginTop) + 'px';
+        this.dialog.style.left = Math.max(parseInt(rect.right) - parseInt(this.dialog.style.width), left) + 'px';
+    }
 }
 
 // Configuracoes / Listeners ao carregar pagina
-// **
-// Evita tabulacao em elementos select com classe readonly
-document.querySelectorAll('select.readonly').forEach((e) => {e.tabIndex = -1});
-
-// Adiciona eventos auxiliares a input:date ([t => today()], [+ currentday + 1], [- currentday - 1])
-// para desativar, crie variavel (ANTES DE INSERIR lib) dateExtra e atribua valor false. Ex: var dateExtra = false;
-if(typeof dateExtra == 'undefined' || dateExtra == true){
-    document.querySelectorAll('input[type=date]').forEach((el) => {
-        el.onkeydown = (e) => {
-            if(e.key == 't'){el.value = dateToday({native:true})} // Precionado a letra T, carrega data atual
-            else{
-                if(!['-', '+'].includes(e.key)){return} // Se nao for teclas - ou + encerra bloco
-                let current = Date.parse(el.value + ' 00:00') ? new Date(el.value + ' 00:00') : new Date();
-                if(e.key == '-'){ // Precionado -
-                    current.setDate(current.getDate() - 1);
-                    el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
-                }
-                if(e.key == '+'){ // Precionado +
-                    current.setDate(current.getDate() + 1);
-                    el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
+window.addEventListener('load', ()=>{
+    // Evita tabulacao em elementos select com classe readonly
+    document.querySelectorAll('select.readonly').forEach((e) => {e.tabIndex = -1});
+    
+    // Adiciona eventos auxiliares a input:date ([t => today()], [+ currentday + 1], [- currentday - 1])
+    // para desativar, crie variavel jsForm_dateExtra e atribua valor false. Ex: var jsForm_dateExtra = false;
+    if(typeof jsForm_dateExtra == 'undefined' || jsForm_dateExtra == true){
+        document.querySelectorAll('input[type=date]').forEach((el) => {
+            el.onkeydown = (e) => {
+                if(e.key == 't'){el.value = dateToday({native:true})} // Precionado a letra T, carrega data atual
+                else{
+                    if(!['-', '+'].includes(e.key)){return} // Se nao for teclas - ou + encerra bloco
+                    let current = Date.parse(el.value + ' 00:00') ? new Date(el.value + ' 00:00') : new Date();
+                    if(e.key == '-'){ // Precionado -
+                        current.setDate(current.getDate() - 1);
+                        el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
+                    }
+                    if(e.key == '+'){ // Precionado +
+                        current.setDate(current.getDate() + 1);
+                        el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
+                    }
                 }
             }
-        }
-    });
-}
+        });
+    }
+})
