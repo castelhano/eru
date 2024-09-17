@@ -17,31 +17,6 @@
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
 
-<div class="row g-1" id="funcionario_container">
-    <div class="form-floating mb-1 col" style="max-width: 140px;">
-        <input type="text" class="form-control" name="matricula_funcionario" maxlength="6" id="id_matricula_funcionario" value="{{matricula}}" placeholder="">
-        <label for="id_matricula_funcionario">Matricula</label>
-    </div>
-    <div class="form-floating mb-1 col">
-        <input type="text" class="form-control" name="nome_funcionario" id="id_nome_funcionario" value="{{nome}}" disabled>
-        <label for="id_nome_funcionario">Nome Funcionario</label>
-    </div>
-    <div class="form-floating mb-1 col-4 {% if mostrar_cargo == None or mostrar_cargo == true %}d-none d-lg-block{% else %}d-none{% endif %}">
-        <input type="text" class="form-control" name="cargo_funcionario" id="id_cargo_funcionario" value="{{cargo}}" disabled>
-        <label for="id_cargo_funcionario">Cargo</label>
-    </div>
-    <input type="hidden" name="funcionario" id="id_funcionario" value="{{id|safe}}">
-</div>
-<div class="row g-1">
-    <div class="form-floating mb-1 col-lg-5">
-        <select class="form-select" id="id_asas" name="asas">
-            <option value="" selected>---------</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-        </select>
-        <label for="id_asas">asas</label>
-    </div>
-</div>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -184,17 +159,8 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <script>
 {% block add_script %}
-// let btn = document.getElementById('btn_addon');
-// btn.onclick = ()=>{document.getElementById('target_container').classList.toggle('d-none')}
-// let container = document.getElementById('target_container');
-// var rect = btn.getBoundingClientRect();
-// container.style.top = (rect.top + 1) + 'px';
-// container.style.left = (rect.right + 5) + 'px';
-
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
-new split2TextAddon(document.getElementById('id_cpf'));
-new split2TextAddon(document.getElementById('id_matricula_funcionario'));
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,
     scale: 2,
@@ -210,8 +176,8 @@ const form = new jsForm(document.getElementById('my_form'), {
     selectPopulate: [
         {target: document.getElementById('id_empresa'), url: '{% url 'core_get_empresas' %}'}
     ],
-    multipleAddon: ['cpf'],
-    // multipleAddon: [{field: 'cpf', .....}],
+    // multipleAddon: ['cpf'],
+    multipleAddon: [{field: 'cpf', shortcut: 'f4'}],
     // multipleAddonText: '<i class="bi bi-clipboard-minus-fill">',
     // multipleAddonBadgeClasslist: 'badge bg-success',
     // multipleAddonSeparator: '_',
@@ -220,7 +186,7 @@ const form = new jsForm(document.getElementById('my_form'), {
         'senha': (v)=>{
             let resp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
             return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
-        }
+        },
     }
 })
 

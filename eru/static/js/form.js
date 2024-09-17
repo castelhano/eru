@@ -15,6 +15,7 @@ class jsForm{
         this.imask = options?.imask || []; // Lista elementos Imask presentes no form
         this.imaskFieldNames = []; // Lista com nomes dos elementos Imask
         this.selectPopulate = options?.selectPopulate || []; // Lista com selects para preenchimento via ajax
+        this.multipleAddon = options?.multipleAddon || []; // adiciona controle para entrada multipla (cria um select)
         // Funcao a ser chamada antes de submeter form, deve retornar true ou false
         this.beforeSubmit = options?.beforeSubmit != undefined ? options.beforeSubmit : () => { return true };
         this.customValidation = options?.customValidation || {};
@@ -30,6 +31,16 @@ class jsForm{
             if(this.imaskFieldNames.includes(this.form.elements[i].name)){continue}
             this.common.push(this.form.elements[i]);
         }
+        this.multipleAddon.forEach((el)=>{ // multipleAddon pode ser array com campos ['matricula','cpf'] ou json [{field: 'matricula', shortcut: 'f5', ...}]
+            if(typeof el == 'string'){ // se for string, cria componente com configuracoes padrao
+                if(!this.hasOwnProperty(el)){return}
+                this[el].multipleAddon = new multipleAddon(this[el])
+            }
+            else if(typeof el == 'object'){ // se dicionario repassa configuracoes para construtor
+                if(!this.hasOwnProperty(el.field)){return}
+                this[el.field].multipleAddon = new multipleAddon(this[el.field], el);
+            }
+        })
         for(let i = 0;i < this.selectPopulate.length; i++){ // Busca (ajax) dados e preenche select
             // Salva instancia no attr [selectpolulate] no elemento. Ex.: form.empresa.selectPopulate.update();
             this[this.selectPopulate[i].target.name].selectPopulate = new selectPopulate(this.selectPopulate[i]);
@@ -56,11 +67,19 @@ class jsForm{
         }
 
     }
-    get(field){ // Retorna dicionario com valores do form form.get() ou valor de field em especifico form.get('nome')
+    get(field){ // Retorna valor do campo especificado ou na omissao dicionario com todos os campos do form
         let formData = new FormData(this.form);
-        if(field){return formData.get(field)} 
+        if(field){
+            if(this[field].type == 'select-multiple'){
+                return Array.from(this[field].options).filter(function (option) { return option.selected; }).map(function (option) {return option.value});
+            }
+            return formData.get(field)
+        }
         let resp = {};
         for(let [key, value] of formData){resp[key] = value}
+        this.form.querySelectorAll('select[multiple]').forEach((el)=>{ // se existe select multiple no form, Formdata retorna apenas um dos valores selecionados
+            resp[el.name] = Array.from(el.options).filter(function (option) { return option.selected; }).map(function (option) {return option.value});
+        })
         return resp;
     }
     disabled(fields){
@@ -163,13 +182,14 @@ class jsForm{
     validate(){ // Metodo faz validacao para os campos do form
         cleanNotify(); // Limpa area de notificacao
         // Valida status required, maxlength e minlength
-        this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{this.__validateRequired(el)})
+        this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
+            if(this.customValidation.hasOwnProperty(el.name)){return}; this.__validateRequired(el);})
 
         // Valida inputs NUMBER quanto ao MIN e MAX e required
-        this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{this.__validateNumber(el)})
+        this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateNumber(el)})
 
         // Valida email fields
-        this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{ this.__validateEmail(el); })
+        this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateEmail(el);})
 
         // Verifica se existe validacao adicional na pagina de origem
         for(let i in this.customValidation){
@@ -223,21 +243,23 @@ class jsForm{
     __validateListeners(){ // Adiciona validacao (alem de demais comportamentos ao perder o foco) nos campos do form baseado em criterios pre definidos
         // Adiciona validacao para input com required, maxlength e minlength
         this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
+            if(this.customValidation.hasOwnProperty(el.name)){return}
             el.onblur = () => {this.__validateRequired(el, false)}
         })
         // Adiciona validacao para input number com max ou min e required
         this.form.querySelectorAll('input[type=number][min]:not([data-form=novalidate]), input[type=number][max]:not([data-form=novalidate])').forEach((el)=>{
+            if(this.customValidation.hasOwnProperty(el.name)){return}
             el.onblur = () => {this.__validateNumber(el, false)}  
         })
         // Adiciona validacao para input email
         this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{
+            if(this.customValidation.hasOwnProperty(el.name)){return}
             el.onblur = () => {this.__validateEmail(el, false)}
         })
         // Adiciona valor padrao para inputs com data-form-default
         this.form.querySelectorAll('input[data-formDefault]').forEach((el)=>{
-            el.onblur = () => {
-                if([undefined, ''].includes(el.value)){el.value = el.dataset.formdefault}
-            }
+            if(this.customValidation.hasOwnProperty(el.name)){return}
+            el.onblur = () => {if([undefined, ''].includes(el.value)){el.value = el.dataset.formdefault}}
         })
     }
 }
@@ -301,13 +323,13 @@ class selectPopulate{
         xhttp.send();
     }
 }
-
-class split2TextAddon{
+''
+class multipleAddon{
     constructor(el, options={}){
-        el.multipleAddon = this;            // Torna instancia disponivel no el.multipleAddon
+        // el.multipleAddon = this;            // Torna instancia disponivel no el.multipleAddon
         const defaultOptions = {
-            text: '<i class="bi bi-clipboard-minus-fill">',
-            badgeClasslist: 'badge bg-success',
+            text: '<i class="bi bi-list-ul">',
+            badgeClasslist: 'badge bg-dark',
             btnClasslist: 'btn btn-secondary',
             btnTitle: 'Entrada multipla',
             dialogClasslist: 'border rounded p-1 text-end bg-body-tertiary',
@@ -316,7 +338,6 @@ class split2TextAddon{
             textareaRows: 6,
             confirmButtonClasslist: 'btn btn-sm btn-primary border-0',
             confirmButtonText: 'Salvar',
-            separator: ';',
             shortcut: 'f2',
             marginTop: 3,
             container: el.parentElement,
@@ -334,33 +355,48 @@ class split2TextAddon{
         // <span class="badge bg-dark">13</span>
         // </button>
         this.select = document.createElement('select');this.select.multiple = true;this.select.style.display = 'none';this.select.name = `${this.el.name}_multiple`;
-        let foo = document.createElement('option'); foo.value = '22';foo.selected = true;
-        let fei = document.createElement('option'); fei.value = '35';fei.selected = true;
-        this.select.appendChild(foo)
-        this.select.appendChild(fei)
         this.dialog = document.createElement('dialog');this.dialog.classList = this.dialogClasslist;this.dialog.style.margin = '0px';this.dialog.style.zIndex = '10';
         this.dialog.style.width = this.dialogWidth;
         this.textarea = document.createElement('textarea');this.textarea.classList = this.textareaClasslist;this.textarea.rows = this.textareaRows;
         this.textarea.addEventListener('keydown', (ev)=>{
-            if(ev.key == 'Escape'){ // ao precionar esc com foco no text area, limpa valores e fecha dialog
-                this.btn.click();
-                this.el.focus(); // move o foco para o controle original
-            }
+            if(ev.key === 'Escape'){this.el.focus();this.dialog.close();}
+            else if(ev.key === 'Enter' && ev.altKey){this.confirmButton.click();ev.preventDefault();}
         })
-        this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;
+        this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;this.confirmButton.title = 'Alt+Enter'
+        this.confirmButton.onclick = ()=>{
+            this.select.innerHTML = '';
+            let count = 0;
+            this.textarea.value.split('\n').filter(n => n).forEach((el)=>{
+                let opt = document.createElement('option'); opt.value = el; opt.selected = true;
+                this.select.appendChild(opt);
+                count += 1;
+            })
+            if(count > 0){
+                this.btn.innerHTML = `<span class="${this.badgeClasslist}">${count}</span>`;
+                this.el.value = '';
+                this.el.readOnly = true;
+            }
+            else{
+                this.btn.innerHTML = this.text;
+                this.el.readOnly = false;
+                this.el.focus();
+            }
+            this.dialog.close();
+
+        }
         this.dialog.appendChild(this.textarea);
         this.dialog.appendChild(this.confirmButton);
         this.dialog.appendChild(this.select);
         // **
+        if(this.shortcut){ // adiciona shortcut quando foco estiver no input
+            this.el.addEventListener('keydown', (ev)=>{
+                if(ev.key.toLowerCase() === this.shortcut){this.btn.click(); ev.preventDefault();}
+            })
+        }
         this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
         this.btn.onclick = ()=>{
-            if(this.dialog.open){
-                this.textarea.value = '';
-                this.dialog.close();
-            }
-            else{
-                this.dialog.show();
-            }
+            if(this.dialog.open){this.dialog.close()}
+            else{this.dialog.show()}
         }
         let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
         if(this.container.classList.contains('form-floating') && this.container.parentNode.classList.contains('row')){
