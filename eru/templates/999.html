@@ -162,7 +162,7 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
-let foo = keywatch();
+let kw = new keywatch();
 
 hotkeys('g+i', ()=>{appNotify('success', 'Ola mundo...')})
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
