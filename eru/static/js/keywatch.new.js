@@ -1,6 +1,6 @@
 
 
-class keywatch{
+class KeywatchNew{
     #handlers = {};                        // armazena shortcuts vinculados ao document
     #modifier = {                          // itens para conversao de codigo
     }
