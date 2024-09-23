@@ -96,8 +96,8 @@
   if(document.getElementById('id_data_fim').value == ''){dateToday({native: true, target: document.getElementById('id_data_fim')})}
   
   
-  appKeyMap.map.default['alt+g'].options.desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
-  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click();return false;}, {desc: 'Exibe filtros da pesquisa'})
+  appKeyMap.map.keydown.default['alt+g'].options.desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
+  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {desc: 'Exibe filtros da pesquisa'})
 
   // Move foco para layout sempre q exibido lista de filtros
   document.querySelector('.collapse').addEventListener('shown.bs.collapse', ()=>{document.getElementById('id_layout').focus()})

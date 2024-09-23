@@ -236,11 +236,11 @@
 
 <script>
   {% block add_script %}
-  appKeyMap.bind('alt+d', ()=>{document.getElementById('planejamento_grid').click();return false;}, {desc: 'Abre a interface grid'})
+  appKeyMap.bind('alt+d', ()=>{document.getElementById('planejamento_grid').click()}, {desc: 'Abre a interface grid'})
   const form = new jsForm(document.getElementById('app_form'), {});
   
   {% if ativo %}
-  appKeyMap.bind('alt+x', ()=>{document.getElementById('btn_comparar').click();return false;}, {desc: 'Compara planejamento com ativo atualmente'})
+  appKeyMap.bind('alt+x', ()=>{document.getElementById('btn_comparar').click()}, {desc: 'Compara planejamento com ativo atualmente'})
   
   function compararPlanejamentos(){
     let labels = document.querySelectorAll('.switch-view');
