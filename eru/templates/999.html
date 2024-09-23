@@ -152,7 +152,6 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 {% block add_script_src %}
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
-<script src="{% static 'js/keywatch.new.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
@@ -160,11 +159,6 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <script>
 {% block add_script %}
-appKeyMap.unbindAll();
-
-let kw = new KeywatchNew();
-
-kw.bind('u+g+i', ()=>{appNotify('warning', 'entrei no DEFAULT')})
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {

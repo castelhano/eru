@@ -1,8 +1,5 @@
-
-
 class KeywatchNew{
     constructor(options={}){
-        
         this.handlers = {};                        // armazena shortcuts vinculados ao document
         
         this.pressed = [];                         // lista com reclas precionadas
@@ -13,12 +10,13 @@ class KeywatchNew{
         this.context = 'default';                    // contexto ativo
         this.handlerOptions = {                      // configuracoes padrao para shortcut
             context: 'default',
+            desc: '',
             element: document,
             keydown: true,
             keyup: false,
             group: null,
             display: true,
-            preventDefault: false,
+            preventDefault: true,
             useCapture: false
         }
         this.defaultOptions = {                     // configuracoes padrao para classe
@@ -31,7 +29,6 @@ class KeywatchNew{
             else{this[k] = this.defaultOptions[k]}
         }
         
-        let isff = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase().indexOf('firefox') > 0 : false;
         this.modifier = {                          // itens para conversao de codigo
             'ctrl': 'control',
             '[space]': ' ',
@@ -42,178 +39,144 @@ class KeywatchNew{
             '←': 'arrowleft',
         }
         
-        this.keyMap = {
-            shiftkey: 16, 
-            ctrlkey: 17, 
-            altkey: 18, 
-            backspace: 8,
-            '⌫': 8,
-            tab: 9,
-            clear: 12,
-            enter: 13,
-            '↩': 13,
-            return: 13,
-            esc: 27,
-            escape: 27,
-            space: 32,
-            left: 37,
-            up: 38,
-            right: 39,
-            down: 40,
-            del: 46,
-            delete: 46,
-            ins: 45,
-            insert: 45,
-            home: 36,
-            end: 35,
-            pageup: 33,
-            pagedown: 34,
-            capslock: 20,
-            num_0: 96,
-            num_1: 97,
-            num_2: 98,
-            num_3: 99,
-            num_4: 100,
-            num_5: 101,
-            num_6: 102,
-            num_7: 103,
-            num_8: 104,
-            num_9: 105,
-            num_multiply: 106,
-            num_add: 107,
-            num_enter: 108,
-            num_subtract: 109,
-            num_decimal: 110,
-            num_divide: 111,
-            '⇪': 20,
-            ',': 188,
-            '.': 190,
-            '/': 191,
-            '`': 192,
-            '-': isff ? 173 : 189,
-            '=': isff ? 61 : 187,
-            ';': isff ? 59 : 186,
-            '\'': 222,
-            '[': 219,
-            ']': 221,
-            '\\': 220
-        };
-        
         // adiciona listeners basico para document
-        this.addEvent(document, 'keydown', (ev)=>{this._eventHandler(ev, this)}, false);
-        this.addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
+        this._addEvent(document, 'keydown', (ev)=>{this._eventHandler(ev, this)}, false);
+        this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
+        this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
     }
-    // adiciona listener no objeto
-    addEvent(element, event, method, useCapture=false){element.addEventListener(event, method, useCapture)}
     
     // adiciona listener no objeto
-    removeEvent(element, event, method, useCapture=false){element.removeEventListener(event, method, useCapture)}
+    _addEvent(element, event, method, useCapture=false){element.addEventListener(event, method, useCapture)}
     
-    _eventsRun(list, ev){
-        let prev = true; // prevent default
+    // roda os methods atrelados aos shortcuts e retorna quantidade de matchs
+    _eventsMatch(scope, ev){
+        let prev = false; // prevent default
+        let count = 0;
+        let list = [
+            ...this.handlers?.[ev.type]?.[this.context]?.[scope] || [],
+            ...this.handlers?.[ev.type]?.['all']?.[scope] || []
+        ];
         list.forEach((el)=>{
             if(el.element == document || el.element == ev.target){
-                el.method();
+                el.method(ev, el);
+                count += 1;
                 prev = prev || el.preventDefault;
             }
         })
         if(prev){ev.preventDefault()}
+        return count;
     }
-
+    
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
-        if(ev.type == 'keydown'){
-            // verifica se tecla esta listada em pressed, se nao faz push da tecla
-
-            if(!this.pressed.includes(this.keyMap[ev.key.toLowerCase()] || ev.key.toLowerCase().charCodeAt(0))){
-                this.pressed.push(this.keyMap[ev.key.toLowerCase()] || ev.key.toLowerCase().charCodeAt(0))
-                console.log('down', this.pressed);
-                
-                
-                // analisa escopo base do evento
-                let keys = this.getEventScope(ev);
-                
-                // let find
-                if(this.handlers?.['keydown']?.[this.context]?.[keys[1]]?.[keys[0].join(',')]){ // localiza correspondentes do evento
-                    this._eventsRun(this.handlers['keydown'][this.context][keys[1]][keys[0].join(',')], ev);
-                }
-                if(this.handlers?.['keydown']?.['all']?.[keys[1]]?.[keys[0].join(',')]){ // localiza correspondentes do evento
-                    this._eventsRun(this.handlers['keydown']['all'][keys[1]][keys[0].join(',')], ev);
-                }
+        let scope = this._getEventScope(ev); // scopo pata match em this.handlers
+        let find = this._eventsMatch(scope, ev); // Busca inicialmente match no scopo simples do evento (sem analisar this.pressed)
+        
+        if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
+            if(!this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
+            if(!find){ // caso nao localizado match no evento, analisa composicao com this.pressed
+                scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+                find = this._eventsMatch(scope, ev); // Busca match de composicao
             }
-            
-            
         }
-        else if(ev.type == 'keyup'){
-            console.log(this.pressed.indexOf(this.keyMap[ev.key.toLowerCase()] || ev.key.toLowerCase().charCodeAt(0)));
-            
-            if(this.pressed.indexOf(this.keyMap[ev.key.toLowerCase()] || ev.key.toLowerCase().charCodeAt(0)) > -1){ // libera tecla precionada caso listada em this.pressed
-                this.pressed.splice(this.keyMap[ev.key.toLowerCase()] || ev.key.toLowerCase().charCodeAt(0), 1); // Libera tecla de this.pressed
-                console.log('up', this.pressed);
+        else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
+            if(!find){ // caso nao localizado match no evento, analisa composicao com this.pressed ANTES de remover de this.press
+                scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+                find = this._eventsMatch(scope, ev); // Busca match de composicao
             }
-            // else if(String.fromCharCode(ev.keyC )== 18 && this.pressed.includes('alt')){ // tecla alt se usada em composicao ex: (alt+1+2) retorna ev.key gerado pela combinacao, neste caso limpa alt do pressed
-            //     this.pressed.splice(this.pressed.indexOf('alt')); // Libera recla alt de this.pressed
-            // }
+            if(this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
+            else if(ev.keyCode == 18){this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
         }
     }
     
     // cria entrada em this.handlers
-    dispatch(event){
+    _spread(event){
         if(event.keydown){
             if(!this.handlers.hasOwnProperty('keydown')){this.handlers.keydown = {}}
             if(!this.handlers.keydown.hasOwnProperty(event.context)){this.handlers.keydown[event.context] = {}}
-            if(!this.handlers.keydown[event.context].hasOwnProperty(event.key)){this.handlers.keydown[event.context][event.key] = []}
-            if(!this.handlers.keydown[event.context][event.key].hasOwnProperty(event.mods.join(','))){this.handlers.keydown[event.context][event.key][event.mods.join(',')] = []}
-            this.handlers.keydown[event.context][event.key][event.mods.join(',')].push(event);
+            if(!this.handlers.keydown[event.context].hasOwnProperty(event.scope)){this.handlers.keydown[event.context][event.scope] = []}
+            this.handlers.keydown[event.context][event.scope].push(event);
+            this.handlers.keydown[event.context][event.scope].sort((a,b)=>{return a.useCapture == b.useCapture ? 0 : a.useCapture ? -1 : 1;});
         }
         if(event.keyup){
             if(!this.handlers.hasOwnProperty('keyup')){this.handlers.keyup = {}}
             if(!this.handlers.keyup.hasOwnProperty(event.context)){this.handlers.keyup[event.context] = {}}
-            if(!this.handlers.keyup[event.context].hasOwnProperty(event.key)){this.handlers.keyup[event.context][event.key] = []}
-            if(!this.handlers.keyup[event.context][event.key].hasOwnProperty(event.mods.join(','))){this.handlers.keyup[event.context][event.key][event.mods.join(',')] = []}
-            this.handlers.keyup[event.context][event.key][event.mods.join(',')].push(event);
+            if(!this.handlers.keyup[event.context].hasOwnProperty(event.scope)){this.handlers.keyup[event.context][event.scope] = []}
+            this.handlers.keyup[event.context][event.scope].push(event);
+            this.handlers.keyup[event.context][event.scope].sort((a,b)=>{return a.useCapture == b.useCapture ? 0 : a.useCapture ? -1 : 1;});
         }
     }
     
-    // retorna lista com modificadores e key ex. getScope('g+u+i') = [[103,117], 105]
-    getScope(scope){
+    // retorna lista com modificadores e key ex. getScope('g+u+i') = [['g','u'], 'i'], mods retornados classificados
+    _getScope(scope){
         let keys = scope.split(this.splitKey);
         keys.forEach((el, index)=>{
-            keys[index] = this.keyMap[el] || el.charCodeAt(0)
+            keys[index] = this.modifier[el] || el;
         })
         return [keys.slice(0, -1).sort(), keys[keys.length - 1]]
     }
     
-    // retorna lista com modificadores e key direto do evento
-    getEventScope(ev){
-        let mods = [];
-        if(ev.keyCode != 16 && ev.shiftKey){mods.push(16)}
-        if(ev.keyCode != 17 && ev.ctrlKey){mods.push(17)}
-        if(ev.keyCode != 18 && ev.altKey){mods.push(18)}
-        return [mods, String.fromCharCode(ev.key)]
+    // retorna string com scopo ex: 'control,i' (mods devem ser retornados em ordem alfabetica)
+    _getEventScope(ev){
+        let scope = [];
+        if(ev.keyCode != 18 && ev.altKey){scope.push('alt')}
+        if(ev.key != 'Control' && ev.ctrlKey){scope.push('control')}
+        if(ev.key != 'Shift' && ev.shiftKey){scope.push('shift')}
+        scope.push(ev.key.toLowerCase());
+        return scope.join()
     }
     
     // cria novo shortcut
     bind(scope, method, options={}){
-        let event = {...this.handlerOptions};
-        for(let k in event){if(options.hasOwnProperty(k)){event[k] = options[k]}}
-        let keysList = this._getKeyCodes(scope.split(this.separator)); // recebe codigos na ordem informada no bind
+        let keysList = scope.split(this.separator); // separa entradas multiplas ex: bind('g+i;g+u') => ['g+i','g+u']
         
         keysList.forEach((el)=>{ // percorre todas as entradas do escopo e prepara extrutura do shortcut
-            [event.mods, event.key] = this.getScope(scope)
-            event.keys = scope;
+            let event = {...this.handlerOptions};
+            for(let k in event){if(options.hasOwnProperty(k)){event[k] = options[k]}}
+            [event.mods, event.key] = this._getScope(el);
+            event.scope = [...event.mods, event.key].flat().join();
             event.method = method;
-            this.dispatch(event);
+            this._spread(event);
         })
     }
-    _getKeyCodes(list){ // recebe array com string de teclas e devolve char codes ex ['alt', 'e'] => [18, 69]
-        let keyCodes = [];
-        list.forEach((el)=>{
-            keyCodes.push(this.modifier[el] || el.charCodeAt(0))
+    
+    
+    unbind(scope, options={}){ // remove atalho especificado
+        if(!options.hasOwnProperty('type')){ // se options.type omitido, chama recursivamente metodo tanto para keydown quando keyup
+            ['keydown','keyup'].forEach((el)=>{
+                options.type = el;
+                this.unbind(scope, options)
+            })
+            return;
+        }
+        if(!options.context){ // se nao informado context, remove atalho de todos os contextos
+            for(let k in this.contexts){ // chama recursivamente metodo para todos os escopos
+                options.context = k;
+                this.unbind(scope, options)
+            }
+            return;
+        }
+        if(!this.contexts.hasOwnProperty(options.context)){return} // se contexto informado nao existe termina codigo
+        
+        let entries = this._getScope(scope).flat().join();
+        let matchs = this.handlers?.[options.type]?.[options.context]?.[entries] || [];
+        if(matchs.length == 0){return false} // se nenhum match, termina bloco
+        let residual = []; // armazena atalhos que nao seram afetados
+        let count = 0;
+        matchs.forEach((el, index)=>{
+            if(options.element && options.element != el.element){residual.push(el)}
+            else{count += 1;}
         })
-        return keyCodes
+        if(count == 0){return}
+        if(residual.length > 0){this.handlers[options.type][options.context][entries] = residual}
+        else{ // limpa entradas vazias apos remocao
+            delete this.handlers[options.type][options.context][entries];
+            if(Object.keys(this.handlers[options.type][options.context]).length === 0){delete this.handlers[options.type][options.context]}
+            if(Object.keys(this.handlers[options.type]).length === 0){delete this.handlers[options.type]}
+        }
+        return true;
     }
-    unbind(scope, context='default'){}
     unbindContext(context){}
     unbindAll(){}
+    
 }
