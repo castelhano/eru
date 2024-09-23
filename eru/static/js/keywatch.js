@@ -1,4 +1,7 @@
 /*
+TODO: showKeyMap
+TODO: avail
+TODO: run
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *
 * @version  6.0
@@ -152,8 +155,6 @@ class Keywatch{
             this._spread(event);
         })
     }
-    
-    
     unbind(scope, options={}){ // remove atalho especificado
         if(!options.hasOwnProperty('type')){ // se options.type omitido, chama recursivamente metodo tanto para keydown quando keyup
             ['keydown','keyup'].forEach((el)=>{
@@ -191,5 +192,30 @@ class Keywatch{
     }
     unbindContext(context){}
     unbindAll(){}
-    
+    getContext(){return this.context}
+    addContext(context, desc=''){if(context){this.context[context] = desc}}
+    setContext(context, desc=''){
+        if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
+        else if(desc){this.contexts[context] = desc} // Desc pode ser alterado pelo metodo setContext
+        this.context = context;
+    }
+    updateContext(context, desc=''){if(this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
+    avail(scope, options={}){
+        // retorna (bool) se shortcut esta disponivel, se nao informado contexto retorna true somente se shortcut disponivel em TODOS os contextos
+        // se nao informado event.type assume 'keydown' como padrao
+        // ## So deve ser usado para shortcut unico (sem entrada multipla)
+        if(!options.hasOwnProperty('type')){options.type = 'keydown'}
+        if(!options.hasOwnProperty('element')){options.element = document}
+        scope = scope.replace(this.splitKey, ',');
+        if(options.context){ // se informado contexto verifica se atalho existe no contexto
+            if(!this.contexts.hasOwnProperty(options.context) || !this.handlers?.[options.type]?.[options.context]){return true}
+            return !this.handlers[options.type][options.context].hasOwnProperty(scope);
+        }
+        else { // Se nao fornecido contexto, analisa todos os contextos para ver se entraa existe em algum
+            for(let c in this.contexts){
+                if(this.handlers?.[options.type]?.[c] && this.handlers[options.type][c].hasOwnProperty(scope)){return false}
+            }
+            return true;
+        }
+    }
 }
