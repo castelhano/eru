@@ -1,9 +1,8 @@
 /*
 TODO: showKeyMap
-TODO: avail
-TODO: run
+TODO: tabOnEnter
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
-*
+*           # Ao definir atalhos, evite combinar modificadores padrao (alt, control, shift) com outras teclas ex: (ctrl+y+i) ou (alt+a+b), detalhes na secao #todo abaixo
 * @version  6.0
 * @since    05/08/2024
 * @release  23/09/2024 [add keyup, multiple shortcuts]
@@ -12,6 +11,11 @@ TODO: run
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
+* @todo     Logica prioriza entrada simples de teclado (analise direto do evento) e somente se nao achar correspondente busca composicao com outras teclas,
+*           desta forma evitando conflito de acionamento rapido onde this.pressed recebe a keydown antes de keyup ser acionado. 
+*           Porem este comportamento gera conflito quando dois shortcuts compartilham a mesma tecla de aciomanento e um deles utiliza composicao 
+*           com multiplos modificadores (sendo um padrao e outra tecla) , ex:
+*           bind('ctrl+i') e bind('ctrl+h+i'), o segundo atalho nunca sera acionado, pois ao analisar o evento ctrl+i match com entrada existente
 */
 class Keywatch{
     constructor(options={}){
@@ -191,7 +195,7 @@ class Keywatch{
         return true;
     }
     unbindContext(context){}
-    unbindAll(){}
+    unbindAll(){this.handlers = {}}
     getContext(){return this.context}
     addContext(context, desc=''){if(context){this.context[context] = desc}}
     setContext(context, desc=''){
@@ -205,7 +209,6 @@ class Keywatch{
         // se nao informado event.type assume 'keydown' como padrao
         // ## So deve ser usado para shortcut unico (sem entrada multipla)
         if(!options.hasOwnProperty('type')){options.type = 'keydown'}
-        if(!options.hasOwnProperty('element')){options.element = document}
         scope = scope.replace(this.splitKey, ',');
         if(options.context){ // se informado contexto verifica se atalho existe no contexto
             if(!this.contexts.hasOwnProperty(options.context) || !this.handlers?.[options.type]?.[options.context]){return true}
@@ -216,6 +219,19 @@ class Keywatch{
                 if(this.handlers?.[options.type]?.[c] && this.handlers[options.type][c].hasOwnProperty(scope)){return false}
             }
             return true;
+        }
+    }
+    run(scope, options={}){
+        let defaultOptions = {
+            type: 'keydown',
+            context: 'default',
+            element: document
+        }
+        for(let k in defaultOptions){if(!options.hasOwnProperty(k)){options[k] = defaultOptions[k]}}
+        if(this.handlers?.[options.type]?.[options.context]?.[scope.replace(this.splitKey, ',')]){
+            this.handlers[options.type][options.context][scope.replace(this.splitKey, ',')].forEach((el)=>{
+                if(el.element == options.element){el.method()}
+            })
         }
     }
 }

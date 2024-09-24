@@ -160,8 +160,6 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
-appKeyMap.bind('g+i', ()=>{appNotify('warning', 'Aquiii')})
-
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,
