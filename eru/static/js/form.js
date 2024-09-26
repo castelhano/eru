@@ -34,11 +34,11 @@ class jsForm{
         this.multipleAddon.forEach((el)=>{ // multipleAddon pode ser array com campos ['matricula','cpf'] ou json [{field: 'matricula', shortcut: 'f5', ...}]
             if(typeof el == 'string'){ // se for string, cria componente com configuracoes padrao
                 if(!this.hasOwnProperty(el)){return}
-                this[el].multipleAddon = new multipleAddon(this[el])
+                this[el].multipleAddon = new MultipleAddon(this[el])
             }
             else if(typeof el == 'object'){ // se dicionario repassa configuracoes para construtor
                 if(!this.hasOwnProperty(el.field)){return}
-                this[el.field].multipleAddon = new multipleAddon(this[el.field], el);
+                this[el.field].multipleAddon = new MultipleAddon(this[el.field], el);
             }
         })
         for(let i = 0;i < this.selectPopulate.length; i++){ // Busca (ajax) dados e preenche select
@@ -324,9 +324,8 @@ class selectPopulate{
     }
 }
 ''
-class multipleAddon{
+class MultipleAddon{
     constructor(el, options={}){
-        // el.multipleAddon = this;            // Torna instancia disponivel no el.multipleAddon
         const defaultOptions = {
             text: '<i class="bi bi-list-ul">',
             badgeClasslist: 'badge bg-dark',

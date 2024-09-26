@@ -1,6 +1,5 @@
 /*
 TODO: showKeyMap
-TODO: tabOnEnter
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *           # Ao definir atalhos, evite combinar modificadores padrao (alt, control, shift) com outras teclas ex: (ctrl+y+i) ou (alt+a+b), detalhes na secao #todo abaixo
 * @version  6.0
@@ -38,10 +37,19 @@ class Keywatch{
             preventDefault: true,
             useCapture: false
         }
-        this.defaultOptions = {                     // configuracoes padrao para classe
+        this.defaultOptions = {                         // configuracoes padrao para classe
             splitKey: '+',
             separator: ';',
             tabOnEnter: true,
+            shortcutMaplist: "alt+k",                   // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
+            shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+            shortcutMaplistOnlyContextActive: false,    // Se true so mostra atalhados do contexto ativo (alem do all)
+            //Definicoes de estilizacao
+            shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
+            searchInputClasslist: 'form-control form-control-sm',
+            searchInputPlaceholder: 'Criterio pesquisa',
+            modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
+            modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary font-monospace',
         }
         
         for(let k in this.defaultOptions){ // carrega configuracoes para classe
@@ -63,6 +71,8 @@ class Keywatch{
         this._addEvent(document, 'keydown', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
+        //**** */
+        this._createModal();
     }
     
     // adiciona listener no objeto
@@ -97,6 +107,28 @@ class Keywatch{
             if(!find){ // caso nao localizado match no evento, analisa composicao com this.pressed
                 scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
                 find = this._eventsMatch(scope, ev); // Busca match de composicao
+            }
+            if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
+                // caso nao localizado nem diretamente do evento nem em composicao, verifica se ev.key eh Enter e se originou de input / select
+                // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
+                // para desativar tabulacao em um input especifico atribua data-keywatch='none' para nao tabular (nao submete form) ou data-keywatch='default' para submit
+                try{
+                    if(ev.target.dataset?.keywatch == 'submit'){return false} // Adicione attr data-keywatch='default' no input para assumir evento padrao (submit do form)
+                    ev.preventDefault();
+                    if(ev.target.dataset?.keywatch == 'none'){return false} // Adicione attr data-keywatch='none' no input que queira evitar tabulacao no enter mais nao submeter
+                    let form = ev.target.form;
+                    let index = Array.prototype.indexOf.call(form, ev.target);
+                    if(form.elements[index + 1].disabled == false && !form.elements[index + 1]?.readOnly == true && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
+                    else{
+                        let el = ev.target.form.elements;
+                        let i = index + 1;
+                        let escape = false;
+                        while(i <= el.length && !escape){
+                            if(form.elements[i].disabled == false && !form.elements[i]?.readOnly == true && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
+                            else{i++;}
+                        }
+                    }
+                }catch(e){}
             }
         }
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
@@ -145,16 +177,28 @@ class Keywatch{
         scope.push(ev.key.toLowerCase());
         return scope.join()
     }
-    
+    // retorna array com shortcuts ex: ('g+i;g+u') => ['g+i','g+u']
+    _getMultipleKeys(scope){
+        let keys = scope.split(this.separator); // cria array com blocos
+        let index = keys.lastIndexOf('');
+        for(; index >= 0;){ // Trata existencia de ; no scope ex: "ctrl+;"
+            keys[index - 1] += ';';
+            keys.splice(index, 1);
+            index = keys.lastIndexOf('');
+        }
+        return keys;
+    }
+
     // cria novo shortcut
     bind(scope, method, options={}){
-        let keysList = scope.split(this.separator); // separa entradas multiplas ex: bind('g+i;g+u') => ['g+i','g+u']
+        let keysList = this._getMultipleKeys(scope); // separa entradas multiplas ex: bind('g+i;g+u') => ['g+i','g+u']
         
         keysList.forEach((el)=>{ // percorre todas as entradas do escopo e prepara extrutura do shortcut
             let event = {...this.handlerOptions};
             for(let k in event){if(options.hasOwnProperty(k)){event[k] = options[k]}}
             [event.mods, event.key] = this._getScope(el);
             event.scope = [...event.mods, event.key].flat().join();
+            event.schema = scope;
             event.method = method;
             this._spread(event);
         })
@@ -197,8 +241,8 @@ class Keywatch{
     unbindContext(context){}
     unbindAll(){this.handlers = {}}
     getContext(){return this.context}
-    addContext(context, desc=''){if(context){this.context[context] = desc}}
-    setContext(context, desc=''){
+    addContext(context, desc=''){if(context && !this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
+    setContext(context='default', desc=''){
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
         else if(desc){this.contexts[context] = desc} // Desc pode ser alterado pelo metodo setContext
         this.context = context;
@@ -233,5 +277,79 @@ class Keywatch{
                 if(el.element == options.element){el.method()}
             })
         }
+    }
+    showKeymap(){
+        this._refreshMapTable();
+        this.shortcutModal.showModal();
+        this.setContext('keywatchModal');
+    }
+    _createModal(){
+        this.shortcutModal = document.createElement('dialog'); this.shortcutModal.classList = this.shortcutModalClasslist;
+        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = '';this.setContext();} // Limpa input ao fechar modal e retorna contexto para default
+        this.shortcutSearchInput = document.createElement('input');this.shortcutSearchInput.type = 'search';this.shortcutSearchInput.classList = this.searchInputClasslist;this.shortcutSearchInput.placeholder = this.searchInputPlaceholder;this.shortcutSearchInput.id = 'keywatch_shortcutSearchInput';
+        this.shortcutSearchInput.oninput = (ev)=>{this._filterMapTable(ev)}
+        this.shortcutModalTable = document.createElement('table');
+        this.shortcutModalTable.classList = this.modalTableClasslist;
+        this.shortcutModalTableThead = document.createElement('thead');
+        this.shortcutModalTableTbody = document.createElement('tbody');
+        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Descrição</th><th>Contexto</th></tr>`;
+        this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
+        this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
+        this.shortcutModal.appendChild(this.shortcutSearchInput);
+        this.shortcutModal.appendChild(this.shortcutModalTable);
+        document.body.appendChild(this.shortcutModal);
+    }
+    _refreshMapTable(source=this.handlers){ // atualiza tabela com shortcuts
+        this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
+        for(let type in source){ // percorre todos os types
+            for(let context in source[type]){ // percorre todos os contextos
+                // Se shortcutMaplistOnlyContextActive = true so mostra shortcuts do contexto ativo e do all 
+                if(this.shortcutMaplistOnlyContextActive && (context != this.context && context != 'all')){continue}
+                for(let entries in source[type][context]){ // percorre todos os atalhos no contexto
+                    source[type][context][entries].forEach((el)=>{
+                        if(el.options?.visible == false){return}
+                        let shortcut = el.schema;
+                        // Ajusta alias para versao abreviada ex (control = ctrl)
+                        for(let key in this.modifier){shortcut = shortcut.replaceAll(this.modifier[key].toLowerCase(), key.toLowerCase())} 
+                        shortcut = this._humanize(shortcut);
+                        let tr = `
+                        <tr>
+                        <td>${shortcut}</td>
+                        <td>${el.options?.desc || ''}</td>
+                        <td>${this.contexts[context]}</td>
+                        </tr>
+                        `;
+                        this.shortcutModalTableTbody.innerHTML += tr;
+
+                    })
+                }
+            }
+        }
+    }
+    _filterMapTable(ev){
+        let term = this.shortcutSearchInput.value.toLowerCase();
+        let trs = this.shortcutModalTableTbody.querySelectorAll('tr');
+        for(let i = 0; i < trs.length; i++){
+            let tds = trs[i].querySelectorAll('td');
+            let rowValue = tds[0].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            rowValue += tds[1].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            rowValue += tds[2].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
+            if(rowValue.replaceAll(/&nbsp;| /g,'').indexOf(term) < 0){trs[i].style.display = 'none'}
+            else{trs[i].style.display = 'table-row'}
+        }
+    }
+    _humanize(entry){ // Recebe um schema de atalho e formata para exibicao na tabela de atalhos
+        // TODO PAREI AQUIIIIIIIIIIIIIIIIIIII
+        let entries = this._getMultipleKeys(entry);
+        let formated = '';
+        for(let i = 0; i < entries.length; i++){
+            let schema = this._splitEntry(entries[i]);
+            for(let j = 0; j < schema.length; j++){
+                formated += `<small class="${this.modalTableLabelClasslist}">${schema[j].toUpperCase()}</small>`;
+                if(j < schema.length - 1){formated += '+';}
+            }
+            if(i < entries.length - 1){formated += '&nbsp;&nbsp;ou&nbsp;&nbsp;';}
+        }
+        return formated;
     }
 }

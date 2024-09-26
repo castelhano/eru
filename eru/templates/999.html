@@ -160,6 +160,9 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
+appKeyMap.bind('g+i;g+u', ()=>{appNotify('success', 'Ola')})
+
+
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,
@@ -170,6 +173,7 @@ const salario = IMask(document.getElementById('id_salario'), {
     radix: ',',
     mapToRadix: ['.'],
 })
+
 const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf, salario],
     // novalidate: true,
@@ -179,16 +183,16 @@ const form = new jsForm(document.getElementById('my_form'), {
     // multipleAddon: ['cpf'],
     multipleAddon: [{field: 'cpf', shortcut: 'f4'}],
     // multipleAddonText: '<i class="bi bi-clipboard-minus-fill">',
-    // multipleAddonBadgeClasslist: 'badge bg-success',
-    // multipleAddonSeparator: '_',
-    // multipleAddonShortcut: 'f2',
-    customValidation: {
-        'senha': (v)=>{
-            let resp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
-            return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
-        },
-    }
-})
-
-{% endblock %}
+        // multipleAddonBadgeClasslist: 'badge bg-success',
+        // multipleAddonSeparator: '_',
+        // multipleAddonShortcut: 'f2',
+        customValidation: {
+            'senha': (v)=>{
+                let resp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
+                return [resp, 'Senha deve ser no mínimo de 6 caracteres, conter <b>números</b>, letras <b>maiusculas</b> e <b>minusculas</b>'];
+            },
+        }
+    })
+    
+    {% endblock %}
 </script>
