@@ -1,17 +1,16 @@
 /*
-TODO: showKeyMap
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 *           # Ao definir atalhos, evite combinar modificadores padrao (alt, control, shift) com outras teclas ex: (ctrl+y+i) ou (alt+a+b), detalhes na secao #todo abaixo
 * @version  6.0
 * @since    05/08/2024
-* @release  23/09/2024 [add keyup, multiple shortcuts]
+* @release  23/09/2024 [add keyup, multiple shortcuts at same trigger, priority as useCapture]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
 * @todo     Logica prioriza entrada simples de teclado (analise direto do evento) e somente se nao achar correspondente busca composicao com outras teclas,
-*           desta forma evitando conflito de acionamento rapido onde this.pressed recebe a keydown antes de keyup ser acionado. 
+*           desta forma evita conflito de acionamento rapido onde this.pressed recebe a keydown antes de keyup ser acionado. 
 *           Porem este comportamento gera conflito quando dois shortcuts compartilham a mesma tecla de aciomanento e um deles utiliza composicao 
 *           com multiplos modificadores (sendo um padrao e outra tecla) , ex:
 *           bind('ctrl+i') e bind('ctrl+h+i'), o segundo atalho nunca sera acionado, pois ao analisar o evento ctrl+i match com entrada existente
@@ -30,6 +29,7 @@ class Keywatch{
             context: 'default',
             desc: '',
             element: document,
+            origin: undefined,
             keydown: true,
             keyup: false,
             group: null,
@@ -41,15 +41,18 @@ class Keywatch{
             splitKey: '+',
             separator: ';',
             tabOnEnter: true,
-            shortcutMaplist: "alt+k",                   // Atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar essa opcao
+            shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
-            shortcutMaplistOnlyContextActive: false,    // Se true so mostra atalhados do contexto ativo (alem do all)
+            shortcutMaplistOnlyContextActive: false,    // se true so mostra atalhados do contexto ativo (alem do all)
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
             searchInputPlaceholder: 'Criterio pesquisa',
             modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
             modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary font-monospace',
+            shortcutModalTableDetailClasslist: 'fit text-center px-3',
+            shortcutModalTableDetailText: '<i class="bi bi-question-lg"></i>',
+            shortcutModalTableDetailItemText: '<i class="bi bi-list d-block text-center pointer"></i>',
         }
         
         for(let k in this.defaultOptions){ // carrega configuracoes para classe
@@ -72,6 +75,7 @@ class Keywatch{
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
         //**** */
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', desc: 'Exibe lista de atalhos disponiveis'})}
         this._createModal();
     }
     
@@ -161,6 +165,7 @@ class Keywatch{
     
     // retorna lista com modificadores e key ex. getScope('g+u+i') = [['g','u'], 'i'], mods retornados classificados
     _getScope(scope){
+        // let keys = this._splitEntry(this.splitKey);
         let keys = scope.split(this.splitKey);
         keys.forEach((el, index)=>{
             keys[index] = this.modifier[el] || el;
@@ -188,18 +193,19 @@ class Keywatch{
         }
         return keys;
     }
-
+    
     // cria novo shortcut
     bind(scope, method, options={}){
         let keysList = this._getMultipleKeys(scope); // separa entradas multiplas ex: bind('g+i;g+u') => ['g+i','g+u']
         
-        keysList.forEach((el)=>{ // percorre todas as entradas do escopo e prepara extrutura do shortcut
+        keysList.forEach((el, index)=>{ // percorre todas as entradas do escopo e prepara extrutura do shortcut
             let event = {...this.handlerOptions};
             for(let k in event){if(options.hasOwnProperty(k)){event[k] = options[k]}}
             [event.mods, event.key] = this._getScope(el);
             event.scope = [...event.mods, event.key].flat().join();
             event.schema = scope;
             event.method = method;
+            if(index > 0){event.display = false} // evita de exibir duplicatas no modal de atalhos para atalhos multiplos
             this._spread(event);
         })
     }
@@ -238,8 +244,30 @@ class Keywatch{
         }
         return true;
     }
-    unbindContext(context){}
-    unbindAll(){this.handlers = {}}
+    unbindContext(context){if(this.contexts.hasOwnProperty(context)){ // apaga TODAS as entradas para o contexto informado
+        for(let type in this.handlers){
+            if(this.handlers[type].hasOwnProperty(context)){delete this.handlers[type][context]}
+            if(Object.keys(this.handlers[type]).length === 0){delete this.handlers[type]}
+        }
+    }}
+    unbindGroup(group){ // remove todas as entradas do grupo especificado
+        if(!group){return}
+        for(let type in this.handlers){
+            for(let context in this.handlers[type]){
+                for(let scope in this.handlers[type][context]){
+                    let residual = []
+                    this.handlers[type][context][scope].forEach((el)=>{
+                        if(el.group != group){residual.push(el)}
+                    })
+                    if(residual.length > 0){this.handlers[type][context][scope] = residual}
+                    else{delete this.handlers[type][context][scope]}
+                }
+                if(Object.keys(this.handlers[type][context]).length === 0){delete this.handlers[type][context]}
+            }
+            if(Object.keys(this.handlers[type]).length === 0){delete this.handlers[type]}
+        }
+    }
+    unbindAll(){this.handlers = {}} // limpa todos os atalhos
     getContext(){return this.context}
     addContext(context, desc=''){if(context && !this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
     setContext(context='default', desc=''){
@@ -292,7 +320,7 @@ class Keywatch{
         this.shortcutModalTable.classList = this.modalTableClasslist;
         this.shortcutModalTableThead = document.createElement('thead');
         this.shortcutModalTableTbody = document.createElement('tbody');
-        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Descrição</th><th>Contexto</th></tr>`;
+        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Descrição</th><th class="${this.shortcutModalTableDetailClasslist}">${this.shortcutModalTableDetailText}</th></tr>`;
         this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
         this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
         this.shortcutModal.appendChild(this.shortcutSearchInput);
@@ -307,20 +335,25 @@ class Keywatch{
                 if(this.shortcutMaplistOnlyContextActive && (context != this.context && context != 'all')){continue}
                 for(let entries in source[type][context]){ // percorre todos os atalhos no contexto
                     source[type][context][entries].forEach((el)=>{
-                        if(el.options?.visible == false){return}
+                        if(!el.display){return}
                         let shortcut = el.schema;
                         // Ajusta alias para versao abreviada ex (control = ctrl)
                         for(let key in this.modifier){shortcut = shortcut.replaceAll(this.modifier[key].toLowerCase(), key.toLowerCase())} 
                         shortcut = this._humanize(shortcut);
+                        let title = '';
+                        for(let attr in el){
+                            if(!['origin','context','keydown','keyup','preventDefault','useCapture'].includes(attr)){continue}
+                            title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
+                        }
                         let tr = `
                         <tr>
                         <td>${shortcut}</td>
-                        <td>${el.options?.desc || ''}</td>
-                        <td>${this.contexts[context]}</td>
+                        <td>${el?.desc || ''}</td>
+                        <td title="${title}">${this.shortcutModalTableDetailItemText}</td>
                         </tr>
                         `;
                         this.shortcutModalTableTbody.innerHTML += tr;
-
+                        
                     })
                 }
             }
@@ -338,8 +371,8 @@ class Keywatch{
             else{trs[i].style.display = 'table-row'}
         }
     }
-    _humanize(entry){ // Recebe um schema de atalho e formata para exibicao na tabela de atalhos
-        // TODO PAREI AQUIIIIIIIIIIIIIIIIIIII
+    
+    _humanize(entry){ // recebe um schema de atalho e formata para exibicao na tabela de atalhos
         let entries = this._getMultipleKeys(entry);
         let formated = '';
         for(let i = 0; i < entries.length; i++){
@@ -352,4 +385,15 @@ class Keywatch{
         }
         return formated;
     }
+    _splitEntry(entry){ // retorna lista de caracteres de um shortcut. ex: 'g+i' = ['g', 'i']
+        let keys = entry.split(this.splitKey); // cria array com blocos
+        let index = keys.lastIndexOf('');
+        for(; index >= 0;){ // trata conflito ao usar simbolo do splitKey no shortcut, ex splitKey = '+' e shortcut (alt++)
+            keys[index - 1] += this.splitKey;
+            keys.splice(index, 1);
+            index = keys.lastIndexOf('');
+        }
+        return keys;
+    }
+    
 }

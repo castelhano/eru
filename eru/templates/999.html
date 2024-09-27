@@ -16,7 +16,6 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -103,27 +102,51 @@ document.getElementById('id_field'),
 <p>Gerencia atalhos de teclado além de implementar tabulação em forms pela tecla <code>Enter</code></p>
 
 <pre><code class="language-javascript">const appKeyMap = new Keywatch();
-appKeyMap.bind('alt+e', ()=>{...}, {})  // extrutura basica
+// configuracoes ao instanciar
+{
+    splitKey: '+',
+    separator: ';',
+    tabOnEnter: true,
+    shortcutMaplist: "alt+k",
+    shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+    shortcutMaplistOnlyContextActive: false,
+    //Definicoes de estilizacao
+    shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
+    searchInputClasslist: 'form-control form-control-sm',
+    searchInputPlaceholder: 'Criterio pesquisa',
+    modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
+    modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary font-monospace',
+    shortcutModalTableDetailClasslist: 'fit text-center px-3',
+    shortcutModalTableDetailText: '<i class="bi bi-question-lg"></i>',
+    shortcutModalTableDetailItemText: '<i class="bi bi-list d-block text-center pointer"></i>',
+}</code></pre>
+<p class="mt-4 mb-0">Criando shortcuts</p>
+<pre><code class="language-javascript">appKeyMap.bind('alt+e', ()=>{...}, {})  // extrutura basica
 appKeyMap.bind('g+i;g+u', ()=>{...})    // multiplos atalhos
 appKeyMap.bind('alt+e', ()=>{...}, {context: 'modalX'}) // alterando o contexto
 
 // conficuracoes do shortcut
 {
-    context: 'default', // use context = 'all' para atalho em TODOS os contextos
-    desc: '',           // descricao, sera usada no mapa de atalhos
-    element: null,      // informe um elemento da pagina para atalho so responder quando focado
-    visible: true,      // bool define se comendo sera exibido na tela de atalhos
-    group: undefined,   // informe um grupo (string) caso precise remover multiplos shortcuts
-    command: undefined, // informe um comando (string) para acionar com instance.runCommand('')
+    context: 'default',     // contexto
+    desc: '',               // descricao do atalho
+    element: document,      // elemento atrelado
+    origin: undefined,      // origem do atalho (string)
+    keydown: true,          // se responde no keydown
+    keyup: false,           // se responde no keyup
+    group: null,            // grupo do atalho
+    display: true,          // se sera exibido no modal
+    preventDefault: true,   // se previne comportamento default
+    useCapture: false       // se tera prioridade de execucao
 }
+// exemplo de novo atalho
 appKeyMap.bind('alt+e', ()=>{..do something}, {desc: 'Salva registro no banco'})
 </code></pre>
 <small>Listener responde ao comando <kbd class="mx-2">Alt + E</kbd>, <code>desc</code> é opcional, apenas para exibição na tela de atalhos</small><br>
 <small>Se não tefinido <code>context</code> atalho será registrado no contexto <code>default</code></small>
 <div class="callout callout-primary mt-4"><i class="bi bi-exclamation-circle-fill me-2"></i> Para exibir os atalhos cadastrados use o comando <code>appKeyMap.showKeymap()</code> <button type="button" class="btn btn-sm btn-phantom-warning ms-2" onclick="appKeyMap.showKeymap()">Ver</button></div>
 
-<p class="mt-4">Use a opção: <code>visible: <span class="text-orange me-1">false</span></code> para não exibir atalho na lista de atalhos</p>
-<pre><code class="language-javascript">appKeyMap.bind('alt+e', ()=>{...}, {visible: false})</code></pre>
+<p class="mt-4">Use a opção: <code>display: <span class="text-orange me-1">false</span></code> para não exibir na lista de atalhos</p>
+<pre><code class="language-javascript">appKeyMap.bind('alt+e', ()=>{...}, {display: false})</code></pre>
 
 <small class="d-block mt-4"><i class="bi bi-arrow-right"></i> Outros recursos:</small>
 <pre class="mt-0"><code class="language-javascript">appKeyMap.getContext() // Retorna contexto ativo
@@ -131,8 +154,10 @@ appKeyMap.addContext('novoCtx', 'Meu Contexto'); // Insere novo contexto
 appKeyMap.setContext('novoCtx'); // Ativa contexto (ou cria caso nao exista)
 appKeyMap.setContext('novoCtx', 'Meu Contexto'); // Ativa contexto (ou cria) atualizando desc
 appKeyMap.updateContext('novoCtx', 'Nova desc'); // Atualiza desc do contexto
-appKeyMap.unbind('alt+e', 'default') // Remove atalho alt+e no contexto default
 appKeyMap.unbind('alt+e') // Remove atalho em todos os contextos
+appKeyMap.unbind('alt+e', {context: 'default'}) // Remove atalho alt+e no contexto default
+appKeyMap.unbind('alt+e', {element: meuInput}) // Remove atalho em todos os contextos atrelados ao input
+appKeyMap.unbind('alt+e', {type: 'keyup'}) // Remove listener apenas do keyup
 appKeyMap.unbindContext('default') // Remove TODOS os atalhos do contexto informado
 appKeyMap.unbindGroup('meuGrupo') // Limpa atalhos no grupo informado em todos os contextos
 appKeyMap.unbindAll() // Limpa TODOS atalhos de TODOS os contextos
@@ -160,8 +185,8 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
-appKeyMap.bind('g+i;g+u', ()=>{appNotify('success', 'Ola')})
-
+appKeyMap.bind('g+i', ()=>{appNotify('success', 'Ola')}, {context: 'non', group: 'foo'})
+appKeyMap.bind('g+u', ()=>{appNotify('success', 'Ola')}, {context: 'non', group: 'fei'})
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
