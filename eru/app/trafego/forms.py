@@ -7,7 +7,7 @@ class LocalidadeForm(forms.ModelForm):
     class Meta:
         model = Localidade
         fields = ['nome','eh_garagem','troca_turno', 'ponto_de_controle']
-    nome = forms.CharField(error_messages={'required': 'Defina um nome para localidade'},widget=forms.TextInput(attrs={'class': 'form-control','autofocus':'autofocus','placeholder':' '}))
+    nome = forms.CharField(error_messages={'required': 'Defina um nome para localidade'}, min_length=3, widget=forms.TextInput(attrs={'class': 'form-control','autofocus':'autofocus','placeholder':' '}))
     eh_garagem = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     troca_turno = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     ponto_de_controle = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))

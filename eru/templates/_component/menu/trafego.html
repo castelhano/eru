@@ -1,11 +1,10 @@
 <script>
-
     const menuCadastro = new canvasNavDropdown({
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: ['l', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click();return false;}}, {visible: false}]},{% endif %}
-        {% if perms.trafego.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();return false;}}, {visible: false}]}, {% endif %}
+        {% if perms.trafego.view_linha %}{name: '<b><u>L</u></b>inha', id:'menu_linha', href: '{% url 'trafego_linhas' %}', keybind: ['l', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_linha').click();return false;}}, {display: false}]},{% endif %}
+        {% if perms.trafego.view_localidade %}{name: 'L<b><u>o</u></b>calidade', id:'menu_localidade', href: '{% url 'trafego_localidades' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_localidade').click();return false;}}, {display: false}]}, {% endif %}
         ],
         keybind: [
             'alt+c',
@@ -18,12 +17,14 @@
             {desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
+    {% if perms.trafego.view_linha %}appKeyMap.bind('c+l', ()=>{document.getElementById('menu_linha').click()}, {desc: '<small class="badge bg-orange">NAVBAR</small> Cadastro de linha', origin: 'menu/trafego'}){% endif %}
+    {% if perms.trafego.view_localidade %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_localidade').click()}, {desc: '<small class="badge bg-orange">NAVBAR</small> Cadastro de localidade', origin: 'menu/trafego'}){% endif %}
     const menuImportar = new canvasNavDropdown({
         name: 'Impor<b>t</b>ação',
         icon: 'bi bi-person-fill-up',
         itens: [
-        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();return false;}}, {visible: false}]},{% endif %},
-        {% if perms.trafego.demanda_update %}{name: 'Atualizar <b><u>D</u></b>emanda', id:'menu_demanda_update', tagName: 'span', onclick: ()=>{appNotify('warning', 'Em desenvolvimento')}, keybind: ['d', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_demanda_update').click();return false;}}, {visible: false}]},{% endif %},
+        {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();return false;}}, {display: false}]},{% endif %},
+        {% if perms.trafego.demanda_update %}{name: 'Atualizar <b><u>D</u></b>emanda', id:'menu_demanda_update', tagName: 'span', onclick: ()=>{appNotify('warning', 'Em desenvolvimento')}, keybind: ['d', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_demanda_update').click();return false;}}, {display: false}]},{% endif %},
         ],
         keybind: [
             'alt+t',

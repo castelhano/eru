@@ -185,9 +185,6 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
-appKeyMap.bind('g+i', ()=>{appNotify('success', 'Ola')}, {context: 'non', group: 'foo'})
-appKeyMap.bind('g+u', ()=>{appNotify('success', 'Ola')}, {context: 'non', group: 'fei'})
-
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,
@@ -206,7 +203,7 @@ const form = new jsForm(document.getElementById('my_form'), {
         {target: document.getElementById('id_empresa'), url: '{% url 'core_get_empresas' %}'}
     ],
     // multipleAddon: ['cpf'],
-    multipleAddon: [{field: 'cpf', shortcut: 'f4'}],
+    multipleAddon: [{field: 'cpf', shortcut: 'f4', max: 15}],
     // multipleAddonText: '<i class="bi bi-clipboard-minus-fill">',
         // multipleAddonBadgeClasslist: 'badge bg-success',
         // multipleAddonSeparator: '_',

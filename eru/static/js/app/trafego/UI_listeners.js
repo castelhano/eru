@@ -2,7 +2,7 @@ function __addGeneralListeners(){ // Cria atalhos de teclado gerais do projeto (
     appKeyMap.unbind('alt+l'); // Remove atalho para dar reload em pagina (se projeto nao salvo iria perder todo progresso)
     appKeyMap.bind('ctrl+arrowright', ()=>{this.canvasMove(120); return false;}, {group: 'March_general', desc: 'Move grid para direita (02 horas)'})
     appKeyMap.bind('ctrl+arrowleft', ()=>{this.canvasMove(-120);return false;}, {group: 'March_general', desc: 'Move grid para esquerda (02 horas)'})
-    appKeyMap.bind('f5', (ev)=>{return false;}, {context:'all', visible: false}) // Desabilita tecla F5 (evita de perder projeto)
+    appKeyMap.bind('f5', (ev)=>{return false;}, {context:'all', display: false}) // Desabilita tecla F5 (evita de perder projeto)
     appKeyMap.bind('alt+1', ()=>{this.switchStage(1); return false;}, {group: 'March_general', desc: 'Altera visualização para o Grid'})
     appKeyMap.bind('alt+2', ()=>{this.switchStage(2); return false;}, {group: 'March_general', desc: 'Altera visualização para Escalas'})
     appKeyMap.bind('alt+3', ()=>{this.switchStage(3); return false;}, {group: 'March_general', desc: 'Altera visualização para resumo'})

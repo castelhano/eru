@@ -1,6 +1,6 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
-*           # Ao definir atalhos, evite combinar modificadores padrao (alt, control, shift) com outras teclas ex: (ctrl+y+i) ou (alt+a+b), detalhes na secao #todo abaixo
+**
 * @version  6.0
 * @since    05/08/2024
 * @release  23/09/2024 [add keyup, multiple shortcuts at same trigger, priority as useCapture]
@@ -9,11 +9,6 @@
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
-* @todo     Logica prioriza entrada simples de teclado (analise direto do evento) e somente se nao achar correspondente busca composicao com outras teclas,
-*           desta forma evita conflito de acionamento rapido onde this.pressed recebe a keydown antes de keyup ser acionado. 
-*           Porem este comportamento gera conflito quando dois shortcuts compartilham a mesma tecla de aciomanento e um deles utiliza composicao 
-*           com multiplos modificadores (sendo um padrao e outra tecla) , ex:
-*           bind('ctrl+i') e bind('ctrl+h+i'), o segundo atalho nunca sera acionado, pois ao analisar o evento ctrl+i match com entrada existente
 */
 class Keywatch{
     constructor(options={}){
@@ -103,15 +98,10 @@ class Keywatch{
     
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
-        let scope = this._getEventScope(ev); // scopo pata match em this.handlers
-        let find = this._eventsMatch(scope, ev); // Busca inicialmente match no scopo simples do evento (sem analisar this.pressed)
-        
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             if(!this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
-            if(!find){ // caso nao localizado match no evento, analisa composicao com this.pressed
-                scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
-                find = this._eventsMatch(scope, ev); // Busca match de composicao
-            }
+            let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+            let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
                 // caso nao localizado nem diretamente do evento nem em composicao, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
@@ -136,10 +126,8 @@ class Keywatch{
             }
         }
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
-            if(!find){ // caso nao localizado match no evento, analisa composicao com this.pressed ANTES de remover de this.press
-                scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
-                find = this._eventsMatch(scope, ev); // Busca match de composicao
-            }
+            let scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+            let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
             else if(ev.keyCode == 18){this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
         }
@@ -173,15 +161,6 @@ class Keywatch{
         return [keys.slice(0, -1).sort(), keys[keys.length - 1]]
     }
     
-    // retorna string com scopo ex: 'control,i' (mods devem ser retornados em ordem alfabetica)
-    _getEventScope(ev){
-        let scope = [];
-        if(ev.keyCode != 18 && ev.altKey){scope.push('alt')}
-        if(ev.key != 'Control' && ev.ctrlKey){scope.push('control')}
-        if(ev.key != 'Shift' && ev.shiftKey){scope.push('shift')}
-        scope.push(ev.key.toLowerCase());
-        return scope.join()
-    }
     // retorna array com shortcuts ex: ('g+i;g+u') => ['g+i','g+u']
     _getMultipleKeys(scope){
         let keys = scope.split(this.separator); // cria array com blocos

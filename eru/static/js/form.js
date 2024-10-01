@@ -326,6 +326,7 @@ class selectPopulate{
 ''
 class MultipleAddon{
     constructor(el, options={}){
+        let list = [];
         const defaultOptions = {
             text: '<i class="bi bi-list-ul">',
             badgeClasslist: 'badge bg-dark',
@@ -341,6 +342,7 @@ class MultipleAddon{
             marginTop: 3,
             container: el.parentElement,
             groupContainerClasslist: 'input-group',
+            max: 999,
             el: el
         }
         for(let key in defaultOptions){     // Carrega configuracoes informadas ao instanciar objeto ou de defaultOptions se omitido
@@ -349,10 +351,6 @@ class MultipleAddon{
         this._build();
     }
     _build(){
-        // <button id="btn_addon" type="button" class="btn btn-secondary" tabindex="-1">
-        // <i class="bi bi-clipboard-minus-fill"></i>
-        // <span class="badge bg-dark">13</span>
-        // </button>
         this.select = document.createElement('select');this.select.multiple = true;this.select.style.display = 'none';this.select.name = `${this.el.name}_multiple`;
         this.dialog = document.createElement('dialog');this.dialog.classList = this.dialogClasslist;this.dialog.style.margin = '0px';this.dialog.style.zIndex = '10';
         this.dialog.style.width = this.dialogWidth;
@@ -364,11 +362,19 @@ class MultipleAddon{
         this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;this.confirmButton.title = 'Alt+Enter'
         this.confirmButton.onclick = ()=>{
             this.select.innerHTML = '';
+            this.list = [];
             let count = 0;
-            this.textarea.value.split('\n').filter(n => n).forEach((el)=>{
+            this.textarea.value.trim().split('\n').filter(n => n).every((el, index)=>{
+                if(count == this.max){
+                    this.textarea.value = this.list.join('\n'); // atualiza o textarea somente com os valores aceitos
+                    appNotify('warning', `jsForm: Campo <b>${this.el.name}</b> Máximo de <b>${this.max}</b> registros`, false)
+                    return false
+                }
                 let opt = document.createElement('option'); opt.value = el; opt.selected = true;
                 this.select.appendChild(opt);
                 count += 1;
+                this.list.push(el);
+                return true;
             })
             if(count > 0){
                 this.btn.innerHTML = `<span class="${this.badgeClasslist}">${count}</span>`;
@@ -398,6 +404,7 @@ class MultipleAddon{
             else{this.dialog.show()}
         }
         let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
+        // carrega componente junto ao controle original, usa classes de input-group do bootstrap
         if(this.container.classList.contains('form-floating') && this.container.parentNode.classList.contains('row')){
         /** row
          *  ** form-floating col
@@ -427,6 +434,7 @@ class MultipleAddon{
         this.dialog.style.top = (parseInt(rect.bottom) + this.marginTop) + 'px';
         this.dialog.style.left = Math.max(parseInt(rect.right) - parseInt(this.dialog.style.width), left) + 'px';
     }
+    get(){return this.list}
 }
 
 // Configuracoes / Listeners ao carregar pagina
