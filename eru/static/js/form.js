@@ -326,7 +326,7 @@ class selectPopulate{
 ''
 class MultipleAddon{
     constructor(el, options={}){
-        let list = [];
+        this.list = [];
         const defaultOptions = {
             text: '<i class="bi bi-list-ul">',
             badgeClasslist: 'badge bg-dark',
