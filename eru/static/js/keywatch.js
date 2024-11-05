@@ -126,7 +126,7 @@ class Keywatch{
             }
         }
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
-            let scope = [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+            let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
             else if(ev.keyCode == 18){this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
@@ -153,8 +153,13 @@ class Keywatch{
     
     // retorna lista com modificadores e key ex. getScope('g+u+i') = [['g','u'], 'i'], mods retornados classificados
     _getScope(scope){
-        // let keys = this._splitEntry(this.splitKey);
         let keys = scope.split(this.splitKey);
+        let index = keys.lastIndexOf('');
+        for(; index >= 0;){ // Trata existencia de + no scope ex: "ctrl++" ou "+"
+            keys[index - 1] += this.splitKey;
+            keys.splice(index, 1);
+            index = keys.lastIndexOf('');
+        }
         keys.forEach((el, index)=>{
             keys[index] = this.modifier[el] || el;
         })
