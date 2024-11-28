@@ -4,24 +4,24 @@
 {% block nav_title %}998{% endblock %}
 
 {% block content_fluid %}
-
-<div id="from" style="" class="position-absolute bg-info border p-4">FOO</div>
-<div id="to" style="top: 800px; right: 20px;" class="position-absolute bg-success border p-4">BAR</div>
+<form action="">
+    <input type="text" id="nome" class="form-control" placeholder="nome" autofocus />
+    <input type="text" id="cpf" class="form-control" placeholder="cpf" />
+    <button type="button" class="btn btn-success mt-2">Concluir</button>
+</form>
 {% endblock %}
 
-{% block add_script_src %}
-<script src="{% static 'js/elConnector.js' %}"></script>
-{% endblock %}
+{% block add_script_src %}{% endblock %}
 
 <script>
     {% block add_script %}
 
-const arrow = new jsELConnector({
-    from: document.getElementById('from'),
-    to: document.getElementById('to'),
-    style: 'linear',
-    // lineH: '22px'
-})
-    
+    appKeyMap.bind('g+i',()=>{
+        appNotify('success', 'Precionado...')
+    },{
+        desc: 'Teste de atalhos',
+        element: document.getElementById('cpf'),
+    })
+
     {% endblock %}
 </script>
