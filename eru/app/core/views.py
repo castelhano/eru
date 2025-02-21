@@ -340,7 +340,7 @@ def settings_update(request, id):
         l.usuario = request.user
         l.mensagem = "UPDATE"
         l.save()
-        messages.success(request,'Settings <b>CORE</b> alterado')
+        messages.success(request,'Configurações <b>atualizadas</b> com sucesso')
         return redirect('core_settings')
     else:
         return render(request,'core/settings.html',{'form':form,'settings':settings})
