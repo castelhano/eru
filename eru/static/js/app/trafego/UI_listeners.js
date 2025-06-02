@@ -303,7 +303,7 @@ function __addStage1Listeners(){ // Cria atalhos de teclado para manipulação d
     
     appKeyMap.bind('alt+t', ()=>{this.__showTripPatterns();return false;}, {group: 'March_stage1', desc: 'Exibe legenda dos tipos de viagens'})
     appKeyMap.bind('f2', (ev)=>{this.__showRouteMetrics();return false;}, {group: 'March_stage1', desc: 'Exibe controles de métricas da linha'})
-    appKeyMap.bind('f4', (ev)=>{this.__generate();return false;}, {desc: 'Exibe modal para geração de planejamento'})   
+    appKeyMap.bind('f4', (ev)=>{this.__generate();return false;}, {group: 'March_stage1', desc: 'Exibe modal para geração de planejamento'})   
 }
 
 function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação do diagrama de marcha
