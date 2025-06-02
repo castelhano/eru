@@ -45,6 +45,14 @@
                     <h5 class="offcanvas-title">Configurações</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
+                <div class="row">
+                    <div class="col ms-3 text-secondary">
+                        {% if user.is_staff %}<small class="badge bg-primary">STAFF</small>{% endif %}
+                        {% if user.is_superuser %}<small class="badge bg-danger">SUPER</small>{% endif %}
+                        <small class="badge bg-secondary">{{user|upper}}</small>
+                        <small>{{user.last_login|date:'d/m/y H:i'}}</small>
+                    </div>
+                </div>
                 <div class="offcanvas-body">
                     <div class="row">
                         <div class="col">
@@ -101,7 +109,7 @@
     {% endif %}
 
     <!-- Loading Modal -->
-    <div class="modal fade user-select-none" id="appModalLoading" tabindex="-1" style="z-index: 10000;" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- <div class="modal fade user-select-none" id="appModalLoading" tabindex="-1" style="z-index: 10000;" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
@@ -114,7 +122,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Confirmation modal -->
     <div class="modal fade" id="appModalConfirm" tabindex="-1">

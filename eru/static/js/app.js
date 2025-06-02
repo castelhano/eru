@@ -1,5 +1,5 @@
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
-const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
+// const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
 
 
 /*
@@ -91,17 +91,17 @@ function confirmOnClick(options){
 }
 
 // Exibe modal de carregamento antes de sair da pagina
-var appModalLoadingTimeLimit = 8000; // Tempo limite em milisegundos para alteracao da mensagem do modal
-var appModalLoadingTimeLimitIcon = '<i class="bi bi-exclamation-octagon-fill text-danger h2"></i>'
-var appModalLoadingTimeLimitMessage = '<b class="text-danger"></b>Este processo esta demorando mais que o normal...'
+// var appModalLoadingTimeLimit = 8000; // Tempo limite em milisegundos para alteracao da mensagem do modal
+// var appModalLoadingTimeLimitIcon = '<i class="bi bi-exclamation-octagon-fill text-danger h2"></i>'
+// var appModalLoadingTimeLimitMessage = '<b class="text-danger"></b>Este processo esta demorando mais que o normal...'
 
-window.onbeforeunload = (ev) => {
-  appModalLoading.show();
-  window.setTimeout(()=>{ // Se servidor demorar mais tempo que o definido, altera mensagem 
-    document.getElementById('appModalLoadingIcon').innerHTML = appModalLoadingTimeLimitIcon;
-    document.getElementById('appModalLoadingMessage').innerHTML = appModalLoadingTimeLimitMessage;
-  }, appModalLoadingTimeLimit);
-}
+// window.onbeforeunload = (ev) => {
+//   appModalLoading.show();
+//   window.setTimeout(()=>{ // Se servidor demorar mais tempo que o definido, altera mensagem 
+//     document.getElementById('appModalLoadingIcon').innerHTML = appModalLoadingTimeLimitIcon;
+//     document.getElementById('appModalLoadingMessage').innerHTML = appModalLoadingTimeLimitMessage;
+//   }, appModalLoadingTimeLimit);
+// }
 
 // Codigo a ser executado apos carregamento completo da pagina
 document.addEventListener("DOMContentLoaded", function(event) {

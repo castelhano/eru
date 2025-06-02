@@ -172,6 +172,7 @@
 
   const form = new jsForm(document.getElementById('trafego_form'), {});
   
+  {% if perms.trafego.change_patamar %}
   var modal_patamar = new bootstrap.Modal(document.getElementById('patamar_modal'), {keyboard: true});
   function patamarUpdate(inicial='', final='', ida=50, volta=45, patamar=''){
     document.getElementById('id_inicial').value = inicial;
@@ -182,5 +183,6 @@
     modal_patamar.show();
     setTimeout(function(){document.getElementById('id_inicial').select();},480);
   }
+  {% endif %}
   {% endblock %}
 </script>

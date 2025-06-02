@@ -99,7 +99,7 @@ class Keywatch{
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
-            if(!this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
+            if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
@@ -128,7 +128,7 @@ class Keywatch{
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
-            if(this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
+            if(ev.key && this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
             else if(ev.keyCode == 18){this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
         }
     }

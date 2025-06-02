@@ -104,40 +104,41 @@
         <caption>
           <div class="d-flex justify-content-between align-items-center">
             <div class="fw-bold">Patamares</div>
-            <a class="btn btn-sm btn-success pointer" style="width: 35px;" id="add" onclick="patamarUpdate();"><i class="bi bi-plus-lg"></i></a></div>
-          </caption>
-          <thead>
-            <tr>
-              <th>Inicial</th>
-              <th>Final</th>
-              <th>Ida</th>
-              <th>Volta</th>
-              <th>Int Ida</th>
-              <th>Int Volta</th>
-              {% if perms.trafego.change_patamar %}<th>&nbsp;</th>{% endif %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for patamar in linha.patamares %}
-            <tr>
-              <td class="bg-body-secondary">{{patamar.inicial}}</td>  
-              <td class="bg-body-secondary">{{patamar.final}}</td>  
-              <td>{{patamar.ida}}</td>  
-              <td>{{patamar.volta}}</td>  
-              <td>{{patamar.intervalo_ida}}</td>  
-              <td>{{patamar.intervalo_volta}}</td>  
-              {% if perms.trafego.change_patamar %}
-              <td class="fit py-1 text-end"><a class="btn btn-sm btn-dark pointer" style="width: 35px;" onclick="patamarUpdate({{patamar.inicial}}, {{patamar.final}}, {{patamar.ida}}, {{patamar.volta}}, {{patamar.id}});"><i class="bi bi-pen-fill"></i></a></td>
-              {% endif %}
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5">Nenhum patamar cadastrado para linha</td>
-            </tr>
-            {% endfor %}
-          </tbody>          
-        </table>
-      </div>    
-      {% endif %}
-    </div>
+            {% if perms.trafego.change_patamar %}<a class="btn btn-sm btn-success pointer" style="width: 35px;" id="add" onclick="patamarUpdate();"><i class="bi bi-plus-lg"></i></a>{% endif %}
+          </div>
+        </caption>
+        <thead>
+          <tr>
+            <th>Inicial</th>
+            <th>Final</th>
+            <th>Ida</th>
+            <th>Volta</th>
+            <th>Int Ida</th>
+            <th>Int Volta</th>
+            {% if perms.trafego.change_patamar %}<th>&nbsp;</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for patamar in linha.patamares %}
+          <tr>
+            <td class="bg-body-secondary">{{patamar.inicial}}</td>  
+            <td class="bg-body-secondary">{{patamar.final}}</td>  
+            <td>{{patamar.ida}}</td>  
+            <td>{{patamar.volta}}</td>  
+            <td>{{patamar.intervalo_ida}}</td>  
+            <td>{{patamar.intervalo_volta}}</td>  
+            {% if perms.trafego.change_patamar %}
+            <td class="fit py-1 text-end"><a class="btn btn-sm btn-dark pointer" style="width: 35px;" onclick="patamarUpdate({{patamar.inicial}}, {{patamar.final}}, {{patamar.ida}}, {{patamar.volta}}, {{patamar.id}});"><i class="bi bi-pen-fill"></i></a></td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">Nenhum patamar cadastrado para linha</td>
+          </tr>
+          {% endfor %}
+        </tbody>          
+      </table>
+    </div>    
+    {% endif %}
   </div>
+</div>
