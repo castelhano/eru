@@ -270,7 +270,7 @@ class Keywatch{
             if(!this.contexts.hasOwnProperty(options.context) || !this.handlers?.[options.type]?.[options.context]){return true}
             return !this.handlers[options.type][options.context].hasOwnProperty(scope);
         }
-        else { // Se nao fornecido contexto, analisa todos os contextos para ver se entraa existe em algum
+        else { // Se nao fornecido contexto, analisa todos os contextos para ver se entrada existe em algum
             for(let c in this.contexts){
                 if(this.handlers?.[options.type]?.[c] && this.handlers[options.type][c].hasOwnProperty(scope)){return false}
             }
