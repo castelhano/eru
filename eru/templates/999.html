@@ -161,10 +161,9 @@ appKeyMap.unbind('alt+e', {type: 'keyup'}) // Remove listener apenas do keyup
 appKeyMap.unbindContext('default') // Remove TODOS os atalhos do contexto informado
 appKeyMap.unbindGroup('meuGrupo') // Limpa atalhos no grupo informado em todos os contextos
 appKeyMap.unbindAll() // Limpa TODOS atalhos de TODOS os contextos
-appKeyMap.avail('alt+e', 'default') // Retorna true se atalho esta disponivel no contexto
+appKeyMap.avail('alt+e', {context: 'default'}) // Retorna true se atalho esta disponivel no contexto
 appKeyMap.avail('alt+e') // Retorna true somente se atalho nao estiver em uso em nenhum contexto
-appKeyMap.run('alt+e','meuContext') // Executa atalho especificado (se omitido contexto busca no 'default')
-appKeyMap.command('meuComando') // Executa atalho do comando especificado (ignora contexto)
+appKeyMap.run('alt+e', {context: 'foo'}) // Executa atalho especificado (se omitido contexto busca no 'default')
 appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <h5>nav</h5>
