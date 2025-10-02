@@ -8,6 +8,7 @@ from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from .extras import clean_request
+from django.conf import settings as ROOT
 from django.http import HttpResponse
 
 
@@ -536,6 +537,40 @@ def initializeProfileConfig():
 
 
 # AJAX METODOS
+
+# i18n: Retorna dicionario de dados (json) com linguagem solicitada (se existir)
+# --
+# @version  1.0
+# @since    02/10/2025
+# @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+# @desc     Arquivos json dever ser salvos na pasta o respectivo app/i18n e nome do arquivo deve corresponder ao idioma
+#           ex: en.json ou en-US.json
+@login_required
+def i18n(request):
+    data = None
+    if request.method == 'GET':
+        app = request.GET.get('app')
+        lng = request.GET.get('lng')
+        try:
+            fpath = f'{ROOT.TEMPLATES_DIR}{app}/i18n/{lng}.json'
+            if os.path.exists(fpath): # Verifica se arquivo base existe
+                f = open(fpath, 'r', encoding='utf-8')
+                data = json.load(f)
+                f.close()
+            elif '-' in lng: # Caso linguagem tenha especificacoa regional ex en-US
+                generic_lng = lng.split('-')[0]
+                fpath = f'{ROOT.TEMPLATES_DIR}{app}/i18n/{generic_lng}.json'
+                if os.path.exists(fpath): # Verifica se existe idioma generico (sem especificacao regional, se sim retorna ele)
+                    f = open(fpath, 'r', encoding='utf-8')
+                    data = json.load(f)
+                    f.close()
+            else:
+                return HttpResponse(f'Not found correspondent for language "{lng}" in app "{app}"')
+        except Exception as e:
+            return HttpResponse('Server Error....')
+        return HttpResponse(json.dumps(data))
+    return HttpResponse('Access denied')
+
 @login_required
 def get_empresas(request):
     # Metodo retorna JSON com dados das empresas

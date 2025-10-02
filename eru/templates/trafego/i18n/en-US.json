@@ -1,0 +1,26 @@
+{
+    "common":{
+        "save": "save",
+        "cancel": "cancel",
+        "undo": "undo",
+        "settings": "settings",
+        "register": "register",
+        "detail": "detail",
+        "attention": "attention",
+        "error": "error"
+    },
+    "index": {
+        "apps":{
+            "routes": "Routes",
+            "planning": "Planning"
+        }
+    },
+    "linha":{
+        "sys":{
+            "change_password_request":"It's necessary change the password"            
+        },
+        "route_register": "Route Register",
+        "extension_going": "Extension going",
+        "extension_back": "Extension back"
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "common":{
+        "save": "save",
+        "cancel": "cancel",
+        "undo": "undo",
+        "settings": "settings",
+        "register": "register",
+        "detail": "detail",
+        "attention": "attention",
+        "error": "error"
+    },
+    "index": {
+        "apps":{
+            "routes": "Routes",
+            "planning": "Planning"
+        }
+    },
+    "auth": {
+        "update":{
+            "changePassword": "Change Password",
+            "currentPassword": "Current Password",
+            "newPassword": "New Password",
+            "confirmPassword": "Confirm Password"
+        }
+    }
+}

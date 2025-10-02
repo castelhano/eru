@@ -4,6 +4,7 @@ from django.contrib.messages import constants as messages
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 APP_DIR = os.path.join(BASE_DIR,'eru/app/')
+TEMPLATES_DIR = os.path.join(BASE_DIR,'eru/templates/')
 
 from .settings_local import *
 INSTALLED_APPS = [
