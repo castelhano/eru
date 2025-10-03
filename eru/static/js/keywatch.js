@@ -1,9 +1,11 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 **
-* @version  6.0
+* @version  6.1
 * @since    05/08/2024
-* @release  23/09/2024 [add keyup, multiple shortcuts at same trigger, priority as useCapture]
+* @release  03/10/2025 
+* @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{i18n='my.key'})
+* @ver < 6  [add keyup, multiple shortcuts at same trigger, priority as useCapture]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
@@ -30,7 +32,9 @@ class Keywatch{
             group: null,
             display: true,
             preventDefault: true,
-            useCapture: false
+            useCapture: false,
+            i18n: undefined,
+            i18n_dynamicKey: false
         }
         this.defaultOptions = {                         // configuracoes padrao para classe
             splitKey: '+',
@@ -39,6 +43,7 @@ class Keywatch{
             shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             shortcutMaplistOnlyContextActive: false,    // se true so mostra atalhados do contexto ativo (alem do all)
+            i18nHandler: null,                          // integracao com lib i18n, se ativa deve informar objeto instanciado
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
@@ -70,7 +75,7 @@ class Keywatch{
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
         //**** */
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', desc: 'Exibe lista de atalhos disponiveis'})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', i18n_dynamicKey: true, desc: 'Exibe lista de atalhos disponiveis'})}
         this._createModal();
     }
     
@@ -329,10 +334,11 @@ class Keywatch{
                             if(!['origin','context','keydown','keyup','preventDefault','useCapture'].includes(attr)){continue}
                             title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
                         }
+                        let desc = this.i18nHandler && el.i18n ? this.i18nHandler.getEntry(el.i18n) || el?.desc || '' : el?.desc || '';
                         let tr = `
                         <tr>
                         <td>${shortcut}</td>
-                        <td>${el?.desc || ''}</td>
+                        <td${el?.i18n ? " i18n='" + el.i18n + "'" : "" }${el?.i18n_dynamicKey ? ' i18n_dynamicKey=true' : ''}>${desc}</td>
                         <td title="${title}">${this.shortcutModalTableDetailItemText}</td>
                         </tr>
                         `;
@@ -341,6 +347,10 @@ class Keywatch{
                     })
                 }
             }
+        }
+        // Se utilizando integracao com i18n ajusta demais campos (inpit fields, etc)
+        if(this.i18nHandler){
+            this.shortcutSearchInput.placeholder = this.i18nHandler.getEntry('shortcuts.keywatch.searchInputPlaceholder') || this.defaultOptions.searchInputPlaceholder;
         }
     }
     _filterMapTable(ev){
