@@ -20,7 +20,13 @@
             "changePassword": "Change Password",
             "currentPassword": "Current Password",
             "newPassword": "New Password",
-            "confirmPassword": "Confirm Password"
+            "confirmPassword": "Confirm Password",
+            "minimumCharacters": "Minimun of ",
+            "characters": " characters",
+            "alphaRequired": "Must contain letters",
+            "bothCasesRequired": "Must contain upper and lowers letters",
+            "numbersRequired": "Must contain numbers",
+            "especialCharactersRequired": "Must contain especial characters"
         }
     },
     "shortcuts": {

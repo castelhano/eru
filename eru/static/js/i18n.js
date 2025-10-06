@@ -3,9 +3,10 @@
 *
 * @version  1.0
 * @release  02/10/2025
-* @since    02/10/2025
+* @since    06/10/2025
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
+* @example  const i18n = new I18n({app: 'core'})
 */
 
 class I18n{
@@ -33,6 +34,8 @@ class I18n{
 
         if(this.autoDetect){this.translate(navigator.language || navigator.userLanguage)}
         else{console.log(`${timeNow({showSeconds: true})} | i18n: Autodetect setting "false", waiting for manualy change language`)}
+        
+        if(this.switcher){this.setSwitcher(this.switcher)}
     }
     // Percorre pagina e monta dicionario de idioma com estado original da pagina
     __populateDefaultLanguage(){
@@ -83,11 +86,8 @@ class I18n{
         let promisses = []; // Armazena todas as promisses para chegar se todas retornaram, antes do refresh()
         this.apps.forEach((el)=>{
             let promise = this.__getLanguage(lng, el).then((resp)=>{
-                if(Object.keys(resp).length == 0){ // Chega se json eh vazio, se sim termina codigo
-                    console.log(`${timeNow({showSeconds: true})} | i18n: Server return a empty object, scaping`);
-                    return
-                }
                 this.language = lng;    // Altera idioma carregado
+                if(Object.keys(resp).length == 0){return} // Chega se json eh vazio, se sim termina codigo
                 this.__updateDb(lng, resp); // Insere dicionario no db
             })
             promisses.push(promise)
@@ -108,7 +108,7 @@ class I18n{
                     resolve(d);
                 }
                 catch(e){
-                    console.log(`${timeNow({showSeconds: true})} | i18n: [FAIL] ${this.responseText}`);
+                    console.log(`${timeNow({showSeconds: true})} | i18n: [WARNING] ${this.responseText}`);
                     resolve({})
                 }
             };
@@ -133,6 +133,11 @@ class I18n{
     }
     addApp(app){this.apps.push(app)}
     setLanguage(lng=(navigator.language || navigator.userLanguage)){}
+    setSwitcher(el){ // Define html element para alternar manualmente idioma
+        // Apenas elementos select (de selecao unica) sao aceitos
+        if(el.type != 'select-one'){console.log(`i18n: [ERROR] Switcher must be a select element (multiple not accepted)`);return;}
+        el.addEventListener('change', ()=>{this.translate(el.value)})
+    }
     getEntry(entry){
         try{return entry.split('.').reduce((previous, current) => previous[current], this.db[this.language])}
         catch(e){return null}
@@ -142,19 +147,13 @@ class I18n{
         let entries = document.querySelectorAll('[i18n]');
         let errorCount = 0;
         entries.forEach((el)=>{
-            console.log(el);
-            
             let result = null;
             try {
                 result = el.getAttribute('i18n').split('.').reduce((previous, current) => previous[current], this.db[this.language]);
                 if(!result){ throw '' }
-            } 
+            }
             // Se nao encontrado correspondente adiciona contador de erro, informa no log e analisa proxima entrada
             catch (e) {
-                console.log('CAI NO CATCH');
-                console.log(el.getAttribute('i18n'));
-                
-                
                 // Chaves criadas dinamicamente (ex: por libs) nao serao contruidas no db default, e devem ser tratadas dirto na lib
                 // neste caso nao apresenta erro de chave nao encontrada
                 if(el.getAttribute('i18n_dynamicKey') != 'true'){

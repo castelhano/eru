@@ -152,7 +152,7 @@
     {% block add_script_src %}{% endblock %}
 
     <script>
-        const i18n = new I18n({apps: ['core'], autoDetect: false})
+        const i18n = new I18n({apps: ['core']})
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
         
         if(localStorage.theme){
