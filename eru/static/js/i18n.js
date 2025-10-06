@@ -13,25 +13,24 @@ class I18n{
     constructor(options){
         this.db = {}; // Base com idioma(s), entrada com idioma default montado de maneira automatica ao instanciar objeto
         this.apps = [];
+        this.defaultLanguagePopulated = false;
         let defaultOptions = {
             url: 'i18n',
             method: 'GET',
             autoDetect: true,
             defaultLanguage: 'pt-BR',
             callbackLanguage: null,
-            acceptedLanguages: [{'pt-BR': 'Portugues (BR)'}],
             switcher: null,
         }
-
+        
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = defaultOptions[k]}
         }
+        this.language = this.defaultLanguage; // this.language armazena o idioma ativo, inicia setado com defaultLanguage
         if(options?.apps && Array.isArray(options.apps)){this.apps = options.apps}
 
-        this.__populateDefaultLanguage();
-        this.language = this.defaultLanguage;
-
+        
         if(this.autoDetect){this.translate(navigator.language || navigator.userLanguage)}
         else{console.log(`${timeNow({showSeconds: true})} | i18n: Autodetect setting "false", waiting for manualy change language`)}
         
@@ -65,6 +64,7 @@ class I18n{
                 target = target[k];
             })
         })
+        this.defaultLanguagePopulated = true;
         console.log(`${timeNow({showSeconds: true})} | i18n: Total of ${entries.length} entries found`);
     }
     
@@ -75,6 +75,8 @@ class I18n{
             console.log(`${timeNow({showSeconds: true})} | i18n: Language ${lng} already in use, scaping...`);
             return
         }
+        if(!this.defaultLanguagePopulated){this.__populateDefaultLanguage()} // Caso ainda nao criado entrada para defaultLanguage chama metodo de criacao
+
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking localy for '${lng}' translate schema`);
         if(this.db.hasOwnProperty(lng)){ // Se idioma ja existir na base local, altera para idioma informado e chama metodo refresh
             console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);

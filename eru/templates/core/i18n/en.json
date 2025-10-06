@@ -9,6 +9,9 @@
         "attention": "attention",
         "error": "error"
     },
+    "sys": {
+        "exclusionLogs": "Exclusion Logs"
+    },
     "index": {
         "apps":{
             "routes": "Routes",
