@@ -14,12 +14,15 @@ class canvasNavLink{
         this.el = document.createElement('li'); this.el.classList = 'nav-item py-1';
         this.link = document.createElement('a');
         this.link.classList = `${options?.class || 'nav-link'}`;
+        this.desc = document.createElement('span');
+        this.desc.innerHTML = options?.name || 'name_not_defined';
+        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
-            this.link.insertAdjacentHTML("beforeend", options?.name || 'name_not_defined')
         }
-        else{this.link.innerHTML = options?.name || 'name_not_defined';}
+        this.link.appendChild(this.desc)
+
         
         let attrs = {...options};
         if(attrs.hasOwnProperty('keybind')){delete attrs['keybind']}
@@ -47,12 +50,15 @@ class canvasNavDropdown{
         this.link = document.createElement('a');
         this.link.classList = `${options?.class || 'nav-link dropdown-toggle py-1'}`;
         this.link.href = '#';this.link.setAttribute('role', 'button');this.link.setAttribute('data-bs-toggle', 'dropdown');
+        this.desc = document.createElement('span');
+        this.desc.innerHTML = options?.name || 'name_not_defined';
+        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
-            this.link.insertAdjacentHTML("beforeend", options?.name || 'name_not_defined')
+            // this.link.insertAdjacentHTML("beforeend", this.desc)
         }
-        else{this.link.innerHTML = options?.name || 'name_not_defined';}
+        this.link.appendChild(this.desc)
 
         this.ul = document.createElement('ul');this.ul.classList = 'dropdown-menu mb-2';
         for(let i in this.itens){
@@ -68,12 +74,14 @@ class canvasNavDropdown{
     __buildMenuItem(options){
         let item = document.createElement('li');item.classList = options?.liClass || '';
         let link = document.createElement(options?.tagName || 'a');link.classList = options?.linkClass || 'dropdown-item pointer';
+        let desc = document.createElement('span');
+        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){desc.setAttribute(el, options[el])}})
+        desc.innerHTML = options?.name || 'name_not_defined';
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             link.appendChild(icon)
-            link.insertAdjacentHTML("beforeend", options?.name || 'name_not_defined')
         }
-        else{link.innerHTML = options?.name || 'name_not_defined';}
+        link.appendChild(desc)
         
         for(let attr in options){ // Adiciona os atributos do elemento
             if(!['keybind','name','onclick','tagName'].includes(attr)){link.setAttribute(attr, options[attr])} // adiciona atributos simples

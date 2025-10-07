@@ -158,7 +158,7 @@ class I18n{
             catch (e) {
                 // Chaves criadas dinamicamente (ex: por libs) nao serao contruidas no db default, e devem ser tratadas dirto na lib
                 // neste caso nao apresenta erro de chave nao encontrada
-                if(el.getAttribute('i18n_dynamicKey') != 'true'){
+                if(el.getAttribute('i18n-dynamicKey') != 'true'){
                     errorCount++;
                     console.log(`i18n: [MISSING KEY] ${el.getAttribute('i18n')} for ${this.language}`);
                 }

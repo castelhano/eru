@@ -34,7 +34,7 @@ class Keywatch{
             preventDefault: true,
             useCapture: false,
             i18n: undefined,
-            i18n_dynamicKey: false
+            'i18n-dynamicKey': false
         }
         this.defaultOptions = {                         // configuracoes padrao para classe
             splitKey: '+',
@@ -75,7 +75,7 @@ class Keywatch{
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
         //**** */
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', i18n_dynamicKey: true, desc: 'Exibe lista de atalhos disponiveis'})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, desc: 'Exibe lista de atalhos disponiveis'})}
         this._createModal();
     }
     
@@ -338,7 +338,7 @@ class Keywatch{
                         let tr = `
                         <tr>
                         <td>${shortcut}</td>
-                        <td${el?.i18n ? " i18n='" + el.i18n + "'" : "" }${el?.i18n_dynamicKey ? ' i18n_dynamicKey=true' : ''}>${desc}</td>
+                        <td${el?.i18n ? " i18n='" + el.i18n + "'" : "" }${el['i18n-dynamicKey'] ? ' i18n-dynamicKey=true' : ''}>${desc}</td>
                         <td title="${title}">${this.shortcutModalTableDetailItemText}</td>
                         </tr>
                         `;

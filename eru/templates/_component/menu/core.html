@@ -3,8 +3,11 @@
     const cadastro = new canvasNavDropdown({
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
+        i18n: 'common.register',
+        'i18n-bold': 'c',
+        'i18n-transform': 'captalize',
         itens: [
-        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', i18n: 'index.nav.registerCompany', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', keybind: ['u', ()=>{appNotify('danger','aqq'); if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         ],
@@ -15,20 +18,22 @@
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            {desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
+            {i18n: 'index.nav.registerDesc', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
     {% if perms.core.view_settings %}
     const settings = new canvasNavLink({
-        name: 'App <b>S</b>ettings',
+        name: '<b>P</b>referências',
         id: 'menu_settings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'core_settings' %}',
+        i18n: 'index.nav.appSettings',
+        'i18n-bold': 'p',
         keybind: [
-            'alt+s',
+            'alt+p',
             ()=>{document.getElementById('menu_settings').click()},
-            {desc: '<small class="badge bg-orange">NAVBAR</small> Configurações gerais do sistema'}
+            {i18n:"index.nav.appSettingsDesc", desc: '<small class="badge bg-orange">NAVBAR</small> Configurações gerais do sistema'}
         ]
     })
     {% endif %}
