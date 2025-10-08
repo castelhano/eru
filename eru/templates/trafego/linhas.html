@@ -97,6 +97,8 @@
 <script>
 {% block add_script %}
 
+i18n.addApp('trafego')
+
 const table = new jsTable(document.getElementById('main_table'), {
   canFilter: true,
   filterCols: ['Cod', 'Nome', 'Origem', 'Destino'],

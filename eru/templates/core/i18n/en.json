@@ -1,17 +1,20 @@
 {
     "common":{
-        "save": "save",
-        "cancel": "cancel",
-        "undo": "undo",
-        "settings": "settings",
-        "register": "register",
-        "detail": "detail",
-        "password": "password",
-        "attention": "attention",
-        "error": "error"
+        "save": "Save",
+        "cancel": "Cancel",
+        "undo": "Undo",
+        "settings": "Settings",
+        "register": "Register",
+        "detail": "Detail",
+        "password": "Password",
+        "attention": "Attention",
+        "error": "Error"
     },
     "sys": {
-        "exclusionLogs": "Exclusion Logs"
+        "exclusionLogs": "Exclusion Logs",
+        "i18n":{
+            "translationFileNotFound": "No translation file found for selected language"
+        }
     },
     "index": {
         "darkTheme":"Dark theme",

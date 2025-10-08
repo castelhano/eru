@@ -42,7 +42,7 @@
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" i18n="common.settings" i18n-transform="captalize">Configurações</h5>
+                    <h5 class="offcanvas-title" i18n="common.settings">Configurações</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
                 <div class="row">
@@ -73,7 +73,7 @@
                     {% block canvasNav %}{% endblock %}
                     <div class="position-sticky mt-2" style="top: 95%;">
                         <button class="btn btn-sm btn-primary me-1" id="logout" type="button"><i class="bi bi-power me-2"></i>Logout</button>
-                        <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span i18n="common.password" i18n-transform="captalize">Senha</span></a>
+                        <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span i18n="common.password">Senha</span></a>
                         <a href="{% url 'jobs' %}" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                     </div>
                 </div>

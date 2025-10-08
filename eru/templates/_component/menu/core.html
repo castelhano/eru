@@ -5,7 +5,6 @@
         icon: 'bi bi-list',
         i18n: 'common.register',
         'i18n-bold': 'c',
-        'i18n-transform': 'captalize',
         itens: [
         {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', i18n: 'index.nav.registerCompany', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', keybind: ['u', ()=>{appNotify('danger','aqq'); if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}

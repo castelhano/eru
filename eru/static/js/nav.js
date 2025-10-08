@@ -56,7 +56,6 @@ class canvasNavDropdown{
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
-            // this.link.insertAdjacentHTML("beforeend", this.desc)
         }
         this.link.appendChild(this.desc)
 
