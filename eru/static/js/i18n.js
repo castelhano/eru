@@ -1,9 +1,9 @@
 /*
 * I18n      Lib para interlacionalização de codigo
 *
-* @version  1.0
+* @version  1.3
 * @release  02/10/2025
-* @since    06/10/2025
+* @since    08/10/2025 [ajustes de bugs, remocao de populatedDefaultLanguage]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
 * @example  const i18n = new I18n({app: 'core'})
@@ -11,72 +11,54 @@
 
 class I18n{
     constructor(options){
-        this.db = {}; // Base com idioma(s), entrada com idioma default montado de maneira automatica ao instanciar objeto
-        this.apps = [];
-        this.defaultLanguagePopulated = false;
+        this.db = localStorage.getItem('i18nDB') ? JSON.parse(localStorage.getItem('i18nDB'))  : {}; // Base com idioma(s), entrada com idioma default montado de maneira automatica ao instanciar objeto
+        this.apps = localStorage.getItem('i18nApps') ? localStorage.getItem('i18nApps').split(',') : [];
         let defaultOptions = {
-            url: 'i18n',
-            method: 'GET',
-            autoDetect: true,
-            defaultLanguage: 'pt-BR',
-            callbackLanguage: null,
-            switcher: null,
+            url: 'i18n',                                // URL para consulta ajax, (recebe app e lng) deve retornar json com entradas de trducao
+            method: 'GET',                              // Metodo de consulta
+            autoDetect: true,                           // Inicia traducao a partir de idioma do navegador navigator.language || navigator.userLanguage
+            defaultLanguage: 'pt-BR',                   // Idioma padrao (paginas devem ser construidas neste idioma)
+            callbackLanguage: null,                     // Idioma a ser buscado caso nao localizado arquivo de traducao
+            switcher: null,                             // Elemento select para troca de idioma 
+            notifyFunction: null,                       // Funcao para notificacao func(style, message, autodismiss)
+            notFoundMsg: 'Não encontrado arquivo de tradução para linguagem selecionada'
         }
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = defaultOptions[k]}
         }
-        this.language = this.defaultLanguage; // this.language armazena o idioma ativo, inicia setado com defaultLanguage
-        if(options?.apps && Array.isArray(options.apps)){this.apps = options.apps}
-
-        
-        if(this.autoDetect){this.translate(navigator.language || navigator.userLanguage)}
-        else{console.log(`${timeNow({showSeconds: true})} | i18n: Autodetect setting "false", waiting for manualy change language`)}
-        
+        this.language = localStorage.getItem('i18nLanguage') || this.defaultLanguage; // this.language armazena o idioma ativo, inicia setado com defaultLanguage
+        if(this.apps.length == 0 && options?.apps && Array.isArray(options.apps)){this.apps = options.apps}
         if(this.switcher){this.setSwitcher(this.switcher)}
     }
-    // Percorre pagina e monta dicionario de idioma com estado original da pagina
-    __populateDefaultLanguage(){
-        console.log(`${timeNow({showSeconds: true})} | i18n: Populating default language DB`);
-        this.db[this.defaultLanguage] = {}; // Inicia entrada para default language
-        let entries = document.querySelectorAll('[i18n], [data-i18n]');
-        entries.forEach(el=>{
-            let keys = el.getAttribute('i18n').split('.');
-            let size = keys.length;
-            let target = this.db[this.defaultLanguage];
-            keys.forEach((k, index)=>{
-                if(target.hasOwnProperty(k) && index < size - 1){ // Se entrada ja existe apenas altera apontador busca proxima entrada
-                    target = target[k];
-                    return
-                }
-                if(index == size - 1){ // Ultima parte da chave, finaliza a entrada em DB
-                    if(el.getAttribute('i18n-target')){ // Caso entrada nao seja no innerHTML 
-                        target[k] = el.getAttribute(el.getAttribute('i18n-target'))
-                    }
-                    else{
-                        target[k] = el.innerHTML;
-                    }
-                }
-                else{
-                    target[k] = {}
-                }
-                target = target[k];
-            })
-        })
-        this.defaultLanguagePopulated = true;
-        console.log(`${timeNow({showSeconds: true})} | i18n: Total of ${entries.length} entries found`);
+    init(){
+        
+        /** Ordem de prioridade para identificacao do idioma
+         * 1 - Verifica existencia localStorage[i18nLanguage]
+         * 2 - Se autoDetect = true, busca idioma do navegador
+         * 3 - Aguarda requisicao manual para troca de idioma
+         */
+        
+        if(this.language != this.defaultLanguage){
+            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
+            if(this.switcher){this.switcher.value = this.language}
+            this.translate(this.language)
+        }
+        else if(this.autoDetect){
+            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for navigator language (autoDetect)`);
+            this.translate(navigator.language || navigator.userLanguage)
+        }
     }
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
     translate(lng){
+        if(lng == this.defaultLanguage){localStorage.setItem('i18nLanguage', lng);appKeyMap.run('alt+l');return;}
         if(lng == this.language){
-            // Termina codigo se idioma for igual ao idioma ativo
-            console.log(`${timeNow({showSeconds: true})} | i18n: Language ${lng} already in use, scaping...`);
+            // Caso linguagem seja a mesma de this.language chama o metodo refresh (necessario ao importar DB do localStorage)
+            this.refresh();
             return
         }
-        if(!this.defaultLanguagePopulated){this.__populateDefaultLanguage()} // Caso ainda nao criado entrada para defaultLanguage chama metodo de criacao
-
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking localy for '${lng}' translate schema`);
         if(this.db.hasOwnProperty(lng)){ // Se idioma ja existir na base local, altera para idioma informado e chama metodo refresh
             console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
@@ -88,14 +70,24 @@ class I18n{
         let promisses = []; // Armazena todas as promisses para chegar se todas retornaram, antes do refresh()
         this.apps.forEach((el)=>{
             let promise = this.__getLanguage(lng, el).then((resp)=>{
-                this.language = lng;    // Altera idioma carregado
                 if(Object.keys(resp).length == 0){return} // Chega se json eh vazio, se sim termina codigo
                 this.__updateDb(lng, resp); // Insere dicionario no db
             })
             promisses.push(promise)
         })        
         Promise.all(promisses).then((r)=>{
-            console.log(`${timeNow({showSeconds: true})} | i18n: Starting interpolation on entries`);
+            if(!this.db[lng]){
+                console.log(`${timeNow({showSeconds: true})} | i18n: [WARNING] No translation files found for "${lng}"`);
+                if(this.callbackLanguage){
+                    console.log(`${timeNow({showSeconds: true})} | i18n: Calling for callback language "${this.callbackLanguage}"`);
+                    this.translate(this.callbackLanguage)
+                }
+                if(this.switcher){try {this.switcher.value = this.language} catch(error){}} // Se informado switcher, seleciona novamente a linguagem ativa
+                // Se informado funcao de notificacao, chama funcao com mensagem de alerta
+                if(this.notifyFunction){this.notifyFunction('warning', this.getEntry('sys.i18n.translationFileNotFound') || this.notFoundMsg, false)}
+                return;
+            }
+            this.language = lng;    // Altera idioma carregado
             this.refresh();         // Chama metodo para plotar alteracoes na pagina
         })
     }
@@ -126,15 +118,21 @@ class I18n{
             if (schemas.hasOwnProperty(key)) {
                 if (typeof schemas[key] === 'object' && schemas[key] !== null && typeof target[key] === 'object' && target[key] !== null && !Array.isArray(schemas[key]) && !Array.isArray(target[key])){
                     // If both are objects (not arrays), recurse
-                    target[key] = deepMerge(target[key], schemas[key]);
+                    target[key] = this.__updateDb(target[key], schemas[key]);
                 }
                 else {target[key] = schemas[key]} // Otherwise, directly assign or overwrite
             }
         }
         return true;
     }
-    addApp(app){this.apps.push(app)}
-    setLanguage(lng=(navigator.language || navigator.userLanguage)){}
+    addApp(app){ // Adiciona app no array this.apps, busca schema para idioma ativo e chama metodo refresh
+        if(this.apps.includes(app)){return}
+        console.log(`${timeNow({showSeconds: true})} | i18n: Adding app "${app}"`);
+        this.apps.push(app);
+        this.__getLanguage(this.language, app).then((resp)=>{
+            this.__updateDb(this.language, resp);
+        })
+    }
     setSwitcher(el){ // Define html element para alternar manualmente idioma
         // Apenas elementos select (de selecao unica) sao aceitos
         if(el.type != 'select-one'){console.log(`i18n: [ERROR] Switcher must be a select element (multiple not accepted)`);return;}
@@ -146,6 +144,7 @@ class I18n{
     }
     
     refresh(){
+        console.log(`${timeNow({showSeconds: true})} | i18n: Updating user interface (refresh)`);
         let entries = document.querySelectorAll('[i18n]');
         let errorCount = 0;
         entries.forEach((el)=>{
@@ -189,5 +188,8 @@ class I18n{
             else{el.setAttribute(el.getAttribute('i18n-target'), result || el.getAttribute(el.getAttribute('i18n-target')))}
         })
         console.log(`${timeNow({showSeconds: true})} | i18n: Translate process completed with ${errorCount} errors`);
+        localStorage.setItem('i18nLanguage', this.language)
+        localStorage.setItem('i18nApps', this.apps)
+        localStorage.setItem('i18nDB', JSON.stringify(this.db))
     }
 }
