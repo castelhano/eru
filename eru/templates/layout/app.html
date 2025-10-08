@@ -197,15 +197,15 @@
                 case false: canvasNav.hide();break;
             }
         }
-        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {desc:'Retorna à página inicial'})
-        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {desc:'Retorno inicio do módulo'})}
-        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {desc:'Novo registro'})}
-        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {desc:'Grava alterações'})}
-        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {desc:'Retorna origem'})}
-        if(document.getElementById('search')){appKeyMap.bind('ctrl+/', () => {try{document.getElementById('search').click()}catch(e){}}, {desc:'Exibe filtros da página'})}
-        appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0]}, {desc:'Recarregar página (limpa filtros)'})
-        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {desc:'Abre painel lateral'})
-        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {desc:'Encerra sessão no sistema'})
+        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {i18n:'sys.shortcuts.goIndexPage', desc:'Retorna à página inicial'})
+        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {i18n:'sys.shortcuts.moduleRoot', desc:'Retorno inicio do módulo'})}
+        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {i18n:'sys.shortcuts.addRegistry', desc:'Novo registro'})}
+        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {i18n:'sys.shortcuts.submitForm', desc:'Grava alterações'})}
+        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {i18n:'sys.shortcuts.goPreviousNode', desc:'Retorna origem'})}
+        if(document.getElementById('search')){appKeyMap.bind('ctrl+/', () => {try{document.getElementById('search').click()}catch(e){}}, {i18n:'sys.shortcuts.showFilters', desc:'Exibe filtros da página'})}
+        appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0]}, {i18n:'sys.shortcuts.reload', desc:'Recarregar página (limpa filtros)'})
+        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {i18n:'sys.shortcuts.showSysPanel', desc:'Abre painel lateral'})
+        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {i18n:'sys.shortcuts.logout', desc:'Encerra sessão no sistema'})
         
         {% block add_script %}{% endblock %}
     </script>

@@ -14,19 +14,42 @@
         "exclusionLogs": "Exclusion Logs",
         "i18n":{
             "translationFileNotFound": "No translation file found for selected language"
+        },
+        "shortcuts": {
+            "goIndexPage": "Return to initial page",
+            "moduleRoot": "Return to module initial page",
+            "addRegistry": "Add new registry",
+            "submitForm": "Save changes",
+            "goPreviousNode": "Return to origin",
+            "showFilters": "Show page filters",
+            "reload": "Reload page (clean filters)",
+            "showSysPanel": "Show system panel",
+            "logout": "End system session (logout)"
         }
     },
     "index": {
         "darkTheme":"Dark theme",
         "nav": {
             "registerDesc":"<small class='badge bg-orange'>NAVBAR</small> Open register menu",
-            "registerCompany":"Company",
+            "registerCompany":"Company <sup>E</sup>",
+            "registerUser":"Users",
+            "registerGroup":"Groups",
             "appSettings":"App Settings",
             "appSettingsDesc":"<small class='badge bg-orange'>NAVBAR</small> General system settings"
         },
         "apps":{
             "routes": "Routes",
             "planning": "Planning"
+        },
+        "shortcuts":{
+            "grid": {
+                "previousItem": "<small class=\"badge bg-purple\">APP GRID</small> Select previous item",
+                "nextItem": "<small class=\"badge bg-purple\">APP GRID</small> Select next item",
+                "bottomItem": "<small class=\"badge bg-purple\">APP GRID</small> Select item below",
+                "upItem": "<small class=\"badge bg-purple\">APP GRID</small> Select item above",
+                "accessItem": "<small class=\"badge bg-purple\">APP GRID</small> Attempts to access selected item"
+            }
+            
         }
     },
     "auth": {
@@ -40,7 +63,9 @@
             "alphaRequired": "Must contain letters",
             "bothCasesRequired": "Must contain upper and lowers letters",
             "numbersRequired": "Must contain numbers",
-            "especialCharactersRequired": "Must contain especial characters"
+            "especialCharactersRequired": "Must contain especial characters",
+            "showBaseTab": "Show change password tab",
+            "showHelpTab": "Show help guide"
         }
     },
     "shortcuts": {
