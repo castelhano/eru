@@ -6,7 +6,7 @@
 * @since    08/10/2025 [ajustes de bugs, remocao de populatedDefaultLanguage]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
-* @example  const i18n = new I18n({app: 'core'})
+* @example  const i18n = new I18n({apps: ['core']})
 */
 
 class I18n{
@@ -53,7 +53,12 @@ class I18n{
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
     translate(lng){
-        if(lng == this.defaultLanguage){localStorage.setItem('i18nLanguage', lng);appKeyMap.run('alt+l');return;}
+        if(lng == this.defaultLanguage){
+            // Se retornado para idioma padrao, salva definicao de idioma no localStorage e recarrega pagina
+            localStorage.setItem('i18nLanguage', lng);
+            window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0];
+            return;
+        }
         if(lng == this.language){
             // Caso linguagem seja a mesma de this.language chama o metodo refresh (necessario ao importar DB do localStorage)
             this.refresh();
