@@ -90,6 +90,13 @@ function confirmOnClick(options){
   appModalConfirm.show()
 }
 
+// Script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
+function appOnLogout(url){
+  let removeOnLocalStorage = ['i18nLanguage', 'i18nApps', 'i18nDB']
+  removeOnLocalStorage.forEach((el)=>{localStorage.removeItem(el)})
+  location.href = url;
+}
+
 // Exibe modal de carregamento antes de sair da pagina
 // var appModalLoadingTimeLimit = 8000; // Tempo limite em milisegundos para alteracao da mensagem do modal
 // var appModalLoadingTimeLimitIcon = '<i class="bi bi-exclamation-octagon-fill text-danger h2"></i>'
