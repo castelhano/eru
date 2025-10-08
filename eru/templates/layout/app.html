@@ -72,7 +72,7 @@
                     <ul id="customCanvasNavMenu" class="navbar-nav justify-content-end flex-grow-1 mt-2"></ul>
                     {% block canvasNav %}{% endblock %}
                     <div class="position-sticky mt-2" style="top: 95%;">
-                        <a href="{% url 'logout' %}" class="btn btn-sm btn-primary me-1" id="logout"><i class="bi bi-power me-2"></i>Logout</a>
+                        <button class="btn btn-sm btn-primary me-1" id="logout" type="button"><i class="bi bi-power me-2"></i>Logout</button>
                         <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span i18n="common.password" i18n-transform="captalize">Senha</span></a>
                         <a href="{% url 'jobs' %}" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                     </div>
@@ -158,7 +158,14 @@
     {% block add_script_src %}{% endblock %}
 
     <script>
-        const i18n = new I18n({apps: ['core'], autoDetect: false, switcher: document.getElementById('id_language')})
+        document.getElementById('logout').onclick = ()=>{appOnLogout("{% url 'logout' %}")} // Chama funcao de limpeza ao deslogar do sistema
+
+        const i18n = new I18n({
+            apps: ['core'], 
+            autoDetect: false, 
+            switcher: document.getElementById('id_language'), 
+            notifyFunction: appAlert
+        })
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
         
         if(localStorage.theme){
@@ -204,7 +211,9 @@
     </script>
 
     {% block canvas_menu %}{% endblock %}
-    
-    
+
+    <script>
+        i18n.init();
+    </script>
 </body>
 </html>
