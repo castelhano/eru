@@ -48,5 +48,15 @@
             "searchInputPlaceholder": "Search entry",
             "shortcutMaplist": "Display list of available shortcuts"
         }
+    },
+    "jsTable": {
+        "nextRow":"<small class='badge bg-purple'>TABLE</small> Select next line",
+        "previousRow":"<small class='badge bg-purple'>TABLE</small> Select previous line",
+        "accessRow":"<small class='badge bg-purple'>TABLE</small> Access current row",
+        "filterInputFocus":"<small class='badge bg-purple'>TABLE</small> Focus search input",
+        "downloadCSV":"<small class='badge bg-purple'>TABLE</small> Download as CSV",
+        "nextPage":"<small class='badge bg-purple'>TABLE</small> Show next page",
+        "previousPage":"<small class='badge bg-purple'>TABLE</small> Show previous page"
+
     }
 }
