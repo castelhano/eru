@@ -309,7 +309,7 @@ class Keywatch{
         this.shortcutModalTable.classList = this.modalTableClasslist;
         this.shortcutModalTableThead = document.createElement('thead');
         this.shortcutModalTableTbody = document.createElement('tbody');
-        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Descrição</th><th class="${this.shortcutModalTableDetailClasslist}">${this.shortcutModalTableDetailText}</th></tr>`;
+        this.shortcutModalTableThead.innerHTML = `<tr><th${!this.maplistShowCommands ? ' style="display: none;"' : ''}>Comando</th><th>Shortcut</th><th>Description</th><th class="${this.shortcutModalTableDetailClasslist}">${this.shortcutModalTableDetailText}</th></tr>`;
         this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
         this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
         this.shortcutModal.appendChild(this.shortcutSearchInput);

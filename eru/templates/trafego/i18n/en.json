@@ -1,3 +1,31 @@
 {
-    "foo": "bar"
+    "route": {
+        "form": {
+            "routeRegister" : "Route Register",
+            "mainTab" : "Displays tab with basic fields",
+            "metricsTab" : "Displays tab with route metrics",
+            "departExtension" : "Depart extension",
+            "returnExtension" : "Return extension",
+            "departAccessMin" : "Depart access (min)",
+            "departAccessKm" : "Depart access (km)",
+            "returnAccessMin" : "Return access (min)",
+            "returnAccessKm" : "Return access (km)",
+            "pickupOriginMin" : "Pickup Origin (min)",
+            "pickupOriginKm" : "Pickup Origin (km)",
+            "pickupDestinationMin" : "Pickup Destination (min)",
+            "pickupDestinationKm" : "Pickup Destination (km)",
+            "removeRoute" : "Remove Route"
+        },
+        "metrics": {
+            "start": "Start",
+            "end": "End",
+            "depart": "Depart",
+            "return": "Return",
+            "origin": "Origin",
+            "destination": "Destination",
+            "departInterval": "Int Depart",
+            "returnInterval": "Int Return",
+            "emptyMessage": "No metrics register for route"
+        }
+    }
 }
