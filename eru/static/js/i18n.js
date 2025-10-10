@@ -92,8 +92,9 @@ class I18n{
                 if(this.notifyFunction){this.notifyFunction('warning', this.getEntry('sys.i18n.translationFileNotFound') || this.notFoundMsg, false)}
                 return;
             }
-            this.language = lng;    // Altera idioma carregado
-            this.refresh();         // Chama metodo para plotar alteracoes na pagina
+            this.language = lng;                        // Altera idioma carregado
+            localStorage.setItem('i18nLanguage', lng);  // Salva language no localstorage
+            this.refresh();                             // Chama metodo para plotar alteracoes na pagina
         })
     }
     __getLanguage(lng, app){
@@ -128,6 +129,8 @@ class I18n{
                 else {target[key] = schemas[key]} // Otherwise, directly assign or overwrite
             }
         }
+        localStorage.setItem('i18nApps', this.apps)
+        localStorage.setItem('i18nDB', JSON.stringify(this.db))
         return true;
     }
     addApp(app){ // Adiciona app no array this.apps, busca schema para idioma ativo e chama metodo refresh
@@ -192,9 +195,5 @@ class I18n{
             if(el.getAttribute('i18n-target') == null){el.innerHTML =  result || el.innerHTML}
             else{el.setAttribute(el.getAttribute('i18n-target'), result || el.getAttribute(el.getAttribute('i18n-target')))}
         })
-        console.log(`${timeNow({showSeconds: true})} | i18n: Translate process completed with ${errorCount} errors`);
-        localStorage.setItem('i18nLanguage', this.language)
-        localStorage.setItem('i18nApps', this.apps)
-        localStorage.setItem('i18nDB', JSON.stringify(this.db))
     }
 }

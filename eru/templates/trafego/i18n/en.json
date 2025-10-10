@@ -17,6 +17,11 @@
             "removeRoute" : "Remove Route"
         },
         "metrics": {
+            "transverse": "Transverse",
+            "trunk": "Trunk",
+            "feeder": "Feeder",
+            "intersectoral": "Intersectoral",
+            "special": "Special",
             "start": "Start",
             "end": "End",
             "depart": "Depart",

@@ -2,6 +2,7 @@ from django.db import models
 from datetime import datetime
 from core.models import Empresa, Log
 from django.contrib.auth.models import User
+from django.utils.safestring import mark_safe
 import json
 
 
@@ -20,13 +21,13 @@ class Localidade(models.Model):
 
 class Linha(models.Model):
     CLASSIFICACAO_CHOICES = (
-    ('RD','Radial'),
-    ('DM','Diametral'),
-    ('CR','Circular'),
-    ('TR','Troncal'),
-    ('AL','Alimentadora'),
-    ('IT','Intersetorial'),
-    ('ES','Especial'),
+    ('RD', 'Radial'),
+    ('DM', mark_safe('<span i18n="route.metrics.transverse">Diametral</span>')),
+    ('CR', 'Circular'),
+    ('TR', mark_safe('<span i18n="route.metrics.trunk">Troncal</span>')),
+    ('AL', mark_safe('<span i18n="route.metrics.feeder">Alimentadora</span>')),
+    ('IT', mark_safe('<span i18n="route.metrics.intersectoral">Intersetorial</span>')),
+    ('ES', mark_safe('<span i18n="route.metrics.special">Especial</span>')),
     )
     empresa = models.ForeignKey(Empresa, blank=True, null=True, on_delete=models.RESTRICT)
     codigo = models.CharField(max_length=8, unique=True, blank=False)

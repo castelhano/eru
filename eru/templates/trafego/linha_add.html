@@ -33,7 +33,6 @@
 
 <script>
   {% block add_script %}
-  i18n.addApp('trafego');
   const form = new jsForm(document.getElementById('app_form'), {})
   appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click()}, {i18n:'route.form.mainTab', desc: 'Exibe aba com campos básicos'})
   appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click()}, {i18n:'route.form.metricsTab', desc: 'Exibe aba com métricas da linha'})
