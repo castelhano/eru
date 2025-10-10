@@ -212,9 +212,12 @@
             localStorage.removeItem('i18nDB');
             localStorage.removeItem('i18nApps');
             i18n.language = i18n.defaultLanguage;
+            i18n.db = {};
+            i18n.apps = ['core', 'trafego'];
+            // i18n.init();
             i18n.translate('en');
             appNotify('warning', 'i18n storage clear');
-        }, {desc:'<small class="badge bg-dark">SUPER</small> Clear localStorage for i18n, translating for "en"'})
+        }, {desc:'<small class="badge bg-danger">SUPER</small> Clear localStorage for i18n, translating for "en"'})
         {% endif %}
         
         {% block add_script %}{% endblock %}

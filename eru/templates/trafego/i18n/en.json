@@ -1,5 +1,20 @@
 {
     "route": {
+        "route": "Route",
+        "locale": "Locale",
+        "startRoute": "Start Route",
+        "endRoute": "End Route",
+        "initialVehicle": "Initial Vehicle",
+        "endVehicle": "End Vehicle",
+        "cardNumber": "Card number",
+        "passenger": {
+            "passenger": "Passenger",
+            "loadAnalisys": "Load Analisys",
+            "dailyRoute": "Daily Route",
+            "routeByProduct": "Route by Product",
+            "timeSlotLoad": "Time slot load"
+        },
+        "planning": "Planning",
         "form": {
             "routeRegister" : "Route Register",
             "mainTab" : "Displays tab with basic fields",
@@ -31,6 +46,15 @@
             "departInterval": "Int Depart",
             "returnInterval": "Int Return",
             "emptyMessage": "No metrics register for route"
+        },
+        "shortcuts": {
+            "demandUpdate": "Demand Update",
+            "openRegisterMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Register menu",
+            "openImportMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Import menu",
+            "planningMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Planning page",
+            "passengerMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Passengers page",
+            "filterPassengersDesc" : "Performs search with informed filters",
+            "showFilters" : "Show/hide search filters"
         }
     }
 }

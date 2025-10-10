@@ -180,15 +180,23 @@ class I18n{
             }
             // Caso queria destacar parte so texto (bold), use i18.bold="substring" (se existir no texto)
             // Se for a default language assume se que emphasys ja esta no texto original, e nao faz alteracoes
-            if(this.language != this.defaultLanguage && el.getAttribute('i18n-bold') && result.toLowerCase().includes(el.getAttribute('i18n-bold').toLowerCase())){
-                let indexStart = result.toLowerCase().indexOf(el.getAttribute('i18n-bold').toLowerCase());
-                let indexEnd = indexStart + el.getAttribute('i18n-bold').length;
-                let substring = result.slice(indexStart, indexEnd);
-                if(indexStart > 0){
-                    result = result.slice(0,indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
-                }
+            if(this.language != this.defaultLanguage && el.getAttribute('i18n-bold')){
+                if(typeof result != 'string'){console.log(`i18n: [ERROR] ${el.getAttribute('i18n')} return is not a string`)}
                 else{
-                    result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
+                    if(result.toLowerCase().includes(el.getAttribute('i18n-bold').toLowerCase())){
+                        let indexStart = result.toLowerCase().indexOf(el.getAttribute('i18n-bold').toLowerCase());
+                        let indexEnd = indexStart + el.getAttribute('i18n-bold').length;
+                        let substring = result.slice(indexStart, indexEnd);
+                        if(indexStart > 0){
+                            result = result.slice(0,indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
+                        }
+                        else{
+                            result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
+                        }
+                    }
+                    else{ // Caso nao exista na traducao a letra bold adiciona ao final da palavra elemento sup com destaque para letra
+                        result += ` <sup><b>${el.getAttribute('i18n-bold').toUpperCase()}</b></sup>`;
+                    }
                 }
             }
             // Se definido i18n-target, resultado sera aplicado ao atribute informado, se nao plota resultado no innerHTML do elemento

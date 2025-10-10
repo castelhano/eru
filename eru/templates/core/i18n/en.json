@@ -1,36 +1,42 @@
 {
     "common":{
-        "save": "Save",
+        "all": "All",
+        "attention": "Attention",
         "cancel": "Cancel",
-        "undo": "Undo",
-        "settings": "Settings",
+        "classification": "Classification",
+        "code": "Code",
+        "company": "Company",
+        "date": "Date",
+        "description": "Description",
+        "detail": "Detail",
+        "employee": "Employee",
+        "error": "Error",
+        "export": "Export",
+        "garage": "Garage",
+        "filter": "Filter",
         "history": "History",
+        "import": "Import",
+        "metrics": "Metrics",
+        "name": "Name",
+        "operation": "Operation",
+        "password": "Password",
+        "position": "Position",
+        "prefix": "Prefix",
         "register": "Register",
         "remove": "Remove",
-        "detail": "Detail",
-        "all": "All",
-        "password": "Password",
-        "attention": "Attention",
-        "code": "Code",
-        "prefix": "Prefix",
-        "name": "Name",
-        "description": "Description",
-        "classification": "Classification",
-        "company": "Company",
-        "garage": "Garage",
-        "employee": "Employee",
+        "save": "Save",
         "sector": "Sector",
-        "position": "Position",
-        "metrics": "Metrics",
-        "date": "Date",
+        "settings": "Settings",
+        "undo": "Undo",
         "user": "User",
-        "operation": "Operation",
-        "warning": "Warning",
-        "error": "Error"
+        "warning": "Warning"
     },
     "sys": {
         "exclusionLogs": "Exclusion Logs",
         "deleteRecord": "Delete Record",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "inDevelopment": "<i class=\"bi bi-exclamation-diamond-fill me-2\"></i> In Development",
         "deleteRecordMsg": "<b class=\"text-danger\">Warning!!</b>This operation cannot be undone, confirm the deletion of the record?",
         "i18n":{
             "translationFileNotFound": "No translation file found for selected language"
@@ -47,19 +53,19 @@
             "logout": "End system session (logout)"
         }
     },
+    "apps":{
+        "routes": "Routes",
+        "planning": "Planning"
+    },
     "index": {
         "darkTheme":"Dark theme",
         "nav": {
             "registerDesc":"<small class='badge bg-orange'>NAVBAR</small> Open register menu",
-            "registerCompany":"Company <sup>E</sup>",
+            "registerCompany":"Company",
             "registerUser":"Users",
             "registerGroup":"Groups",
             "appSettings":"App Settings",
             "appSettingsDesc":"<small class='badge bg-orange'>NAVBAR</small> General system settings"
-        },
-        "apps":{
-            "routes": "Routes",
-            "planning": "Planning"
         },
         "shortcuts":{
             "grid": {

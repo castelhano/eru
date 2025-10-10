@@ -17,8 +17,31 @@ const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalCon
 function appAlert(tipo, mensagem, autodismiss=true){
     try {document.querySelector('[data-type="appAlert"]').remove();}catch(e){}let e = document.createElement('div');e.setAttribute('data-type','appAlert');e.style.zIndex = 100;let b = document.createElement('button');b.classList.add('btn-close');b.setAttribute('data-bs-dismiss','alert');e.classList.add('alert','slideIn','appAlert',`alert-${tipo}`,'alert-dismissible','fade','show','mb-0');e.innerHTML = mensagem;e.appendChild(b);document.body.appendChild(e);if(autodismiss){setTimeout(function() {e.remove()}, 5000);}}
   
-function appNotify(tipo, mensagem, autodismiss=true){
-  let e = document.createElement('div'); e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; let b = document.createElement('button'); b.classList = 'btn-close'; b.setAttribute('data-bs-dismiss','alert'); e.innerHTML = mensagem; e.appendChild(b);document.getElementById('notify_container').appendChild(e); if(autodismiss){setTimeout(function() {e.remove()}, 4500);} }
+function appNotify(tipo, mensagem, options={}){
+  if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
+  let e = document.createElement('div'); 
+  e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
+  let b = document.createElement('button'); 
+  b.classList = 'btn-close'; 
+  b.setAttribute('data-bs-dismiss','alert'); 
+  console.log(options.i18n);
+  
+  e.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) : mensagem; 
+  e.appendChild(b);
+  document.getElementById('notify_container').appendChild(e); 
+  if(options.autodismiss){setTimeout(function() {e.remove()}, 4500);} 
+}
+// function appNotify(tipo, mensagem, autodismiss=true){
+//   let e = document.createElement('div'); 
+//   e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
+//   let b = document.createElement('button'); 
+//   b.classList = 'btn-close'; 
+//   b.setAttribute('data-bs-dismiss','alert'); 
+//   e.innerHTML = mensagem; 
+//   e.appendChild(b);
+//   document.getElementById('notify_container').appendChild(e); 
+//   if(autodismiss){setTimeout(function() {e.remove()}, 4500);} 
+// }
 
 // Limpa area de notificacao
 function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}

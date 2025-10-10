@@ -22,8 +22,8 @@ const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   // size: 'lg',
   items: [
-    {% if perms.trafego.view_linha %}{icon: 'bi bi-sign-merge-left-fill', color: 'primary', href: '{% url 'trafego_linhas' %}', i18n: 'index.apps.routes', desc: '<span i18n="index.apps.routes">Linhas</span>'}, {% endif %}
-    {% if perms.trafego.view_planejamento %}{icon: 'bi bi-shuffle', color: 'primary', href: '{% url 'trafego_planejamentos' %}', i18n: 'index.apps.planning', desc: '<span i18n="index.apps.planning">Planejamento</span>'}, {% endif %}
+    {% if perms.trafego.view_linha %}{icon: 'bi bi-sign-merge-left-fill', color: 'primary', href: '{% url 'trafego_linhas' %}', i18n: 'apps.routes', desc: '<span i18n="apps.routes">Linhas</span>'}, {% endif %}
+    {% if perms.trafego.view_planejamento %}{icon: 'bi bi-shuffle', color: 'primary', href: '{% url 'trafego_planejamentos' %}', i18n: 'apps.planning', desc: '<span i18n="apps.planning">Planejamento</span>'}, {% endif %}
     // {text: 'Trafego', i18n: 'index.apps.planning', desc: 'Keybind'},
     // {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
     // {
