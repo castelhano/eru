@@ -20,6 +20,10 @@
             {i18n: 'index.nav.registerDesc', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
+    // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
+    {% if perms.core.view_empresa %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_empresa').click()}, {display: false}){% endif %}
+    {% if perms.auth.view_user %}appKeyMap.bind('c+u', ()=>{document.getElementById('menu_usuario').click()}, {display: false}){% endif %}
+    {% if perms.auth.view_group %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo').click()}, {display: false}){% endif %}
     {% if perms.core.view_settings %}
     const settings = new canvasNavLink({
         name: '<b>P</b>referências',

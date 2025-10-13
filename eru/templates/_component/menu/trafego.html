@@ -18,6 +18,8 @@
             {i18n: 'route.shortcuts.openRegisterMenu', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
         ]
     })
+    {% if perms.trafego.view_linha %}appKeyMap.bind('c+l', ()=>{document.getElementById('menu_linha').click()}, {display: false}){% endif %}
+    {% if perms.trafego.view_localidade %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_localidade').click()}, {display: false}){% endif %}
     const menuImportar = new canvasNavDropdown({
         name: 'Impor<b>t</b>ação',
         icon: 'bi bi-person-fill-up',
@@ -25,7 +27,7 @@
         'i18n-bold': 't',
         itens: [
         {% if perms.trafego.add_passageiro %}{name: '<b><u>P</u></b>assageiros', i18n: 'route.passenger.passenger', 'i18n-bold': 'p', id:'menu_passageiros_import', href: '{% url 'trafego_passageiros_import' %}', keybind: ['p', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_passageiros_import').click();}}, {display: false, preventDefault: false}]},{% endif %},
-        {% if perms.trafego.demanda_update %}{name: 'Atualizar <b><u>D</u></b>emanda', i18n: 'route.shortcuts.demandUpdate', 'i18n-bold': 'd', id:'menu_demanda_update', tagName: 'span', onclick: ()=>{appNotify('warning', 'Em desenvolvimento', {i18n: 'sys.inDevelopment'})}, keybind: ['d', ()=>{if(menuImportar.isOpen()){canvasNavActive(false);document.getElementById('menu_demanda_update').click();}}, {display: false, preventDefault: false}]},{% endif %},
+        {% if perms.trafego.demanda_update %}{name: 'Atualizar <b><u>D</u></b>emanda', i18n: 'route.shortcuts.demandUpdate', 'i18n-bold': 'd', id:'menu_demanda_update', tagName: 'span', onclick: ()=>{appAlert('warning', 'Em desenvolvimento', {i18n: 'sys.inDevelopment', autodismiss: false})}, keybind: ['d', ()=>{if(menuImportar.isOpen()){document.getElementById('menu_demanda_update').click();}}, {display: false, preventDefault: false}]},{% endif %},
         ],
         keybind: [
             'alt+t',
@@ -37,6 +39,9 @@
             {i18n: 'route.shortcuts.openImportMenu', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de importação'}
         ]
     })
+    {% if perms.trafego.add_passageiro %}appKeyMap.bind('t+p', ()=>{document.getElementById('menu_passageiros_import').click()}, {display: false}){% endif %}
+    {% if perms.trafego.demanda_update %}appKeyMap.bind('t+d', ()=>{document.getElementById('menu_demanda_update').click()}, {display: false}){% endif %}
+    
     {% if perms.trafego.view_planejamento %}
     const menuPlanejamento = new canvasNavLink({
         name: '<b>P</b>lanejamento',

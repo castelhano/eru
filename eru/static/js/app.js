@@ -14,8 +14,21 @@ const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalCon
 * @example  appNotify('danger', 'Este eh um <b>alerta de exemplo</b>')
 */
 
-function appAlert(tipo, mensagem, autodismiss=true){
-    try {document.querySelector('[data-type="appAlert"]').remove();}catch(e){}let e = document.createElement('div');e.setAttribute('data-type','appAlert');e.style.zIndex = 100;let b = document.createElement('button');b.classList.add('btn-close');b.setAttribute('data-bs-dismiss','alert');e.classList.add('alert','slideIn','appAlert',`alert-${tipo}`,'alert-dismissible','fade','show','mb-0');e.innerHTML = mensagem;e.appendChild(b);document.body.appendChild(e);if(autodismiss){setTimeout(function() {e.remove()}, 5000);}}
+function appAlert(tipo, mensagem, options={}){
+  try {document.querySelector('[data-type="appAlert"]').remove()}
+  catch(e){}
+  if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
+  let e = document.createElement('div');
+  e.setAttribute('data-type','appAlert');
+  e.style.zIndex = 100;
+  let b = document.createElement('button');
+  b.classList.add('btn-close');
+  b.setAttribute('data-bs-dismiss','alert');
+  e.classList.add('alert','slideIn','appAlert',`alert-${tipo}`,'alert-dismissible','fade','show','mb-0');
+  e.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) : mensagem; 
+  e.appendChild(b);
+  document.body.appendChild(e);
+  if(options.autodismiss){setTimeout(function() {e.remove()}, 5000)}}
   
 function appNotify(tipo, mensagem, options={}){
   if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
@@ -24,8 +37,6 @@ function appNotify(tipo, mensagem, options={}){
   let b = document.createElement('button'); 
   b.classList = 'btn-close'; 
   b.setAttribute('data-bs-dismiss','alert'); 
-  console.log(options.i18n);
-  
   e.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) : mensagem; 
   e.appendChild(b);
   document.getElementById('notify_container').appendChild(e); 

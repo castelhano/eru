@@ -82,7 +82,7 @@ class jsForm{
         })
         return resp;
     }
-    disabled(fields){
+    disabled(fields){ // Recebe array com nome dos campos a serem desabilitados
         if(fields){
             for(let i in fields){
                 try {
@@ -91,7 +91,7 @@ class jsForm{
                     if(['INPUT','TEXTAREA','BUTTON'].includes(field.tagName)){
                         field.disabled = true;
                         if(field.type == 'file'){
-                            try{ // Djando input#files adiciona controle para limpar campo, também desabilita controle 
+                            try{ // Django input#files adiciona controle para limpar campo, também desabilita controle 
                                 this.form.querySelector(`#${field.name}-clear_id`).disabled = true;                                
                             }catch(e){}
                         }
@@ -103,12 +103,21 @@ class jsForm{
         else{
             for(let i = 0; i < this.form.elements.length; i++){
                 if(this.form.elements[i] instanceof HTMLElement && this.form.elements[i].getAttribute('data-jsform') == 'always_enable'){continue;} // Para habilitar um controle num form disabled adicione o attr data-jsform='always_enable'
-                if(['INPUT','TEXTAREA','BUTTON'].includes(this.form.elements[i].tagName)){this.form.elements[i].disabled = true;}
+                if(['INPUT','TEXTAREA','BUTTON'].includes(this.form.elements[i].tagName)){
+                    this.form.elements[i].disabled = true;
+                    if(this.form.elements[i].type == 'file'){
+                        try{ // Django input#files adiciona controle para limpar campo, também desabilita controle 
+                            this.form.querySelector(`#${this.form.elements[i].name}-clear_id`).disabled = true;                                
+                        }catch(e){}
+                    }   
+                }
                 else if(this.form.elements[i].tagName == 'SELECT'){this.form.elements[i].classList.add('readonly');this.form.elements[i].tabIndex = -1;}
             }
         }
     }
-    readonly(fields){
+    // Recebe array com nome dos campos a serem marcados como readonly, alguns elementos nao tem attr readonly, 
+    // nestes casos usa script bostrap para classe readonly
+    readonly(fields){ 
         if(fields){
             for(let i in fields){
                 try {
@@ -148,12 +157,12 @@ class jsForm{
         let min = el.getAttribute('minlength');
         if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, false)}
-            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, false)}
+            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, {autodismiss: false})}
         }
         else if(el.required && el.value == ''){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', `jsform: O campo <b>${el.name}</b> é obrigatório`, false)}
+            if(notify){appNotify('warning', `jsform: O campo <b>${el.name}</b> é obrigatório`, {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
@@ -162,8 +171,8 @@ class jsForm{
         let min = parseFloat(el.getAttribute('min')) || null;
         if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, false)}
-            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, false)}
+            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, {autodismiss: false})}
             
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
@@ -172,7 +181,7 @@ class jsForm{
     __validateEmail(el, notify=true){
         if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido', false)}
+            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido', {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
@@ -199,7 +208,7 @@ class jsForm{
                 if(!resp[0]){
                     el.classList.add('is-invalid');
                     if(resp[1]){
-                        appNotify('warning', `jsform: ${resp[1]}`, false);
+                        appNotify('warning', `jsform: ${resp[1]}`, {autodismiss: false});
                     }
                 }
                 else{el.classList.remove('is-invalid')}
@@ -295,7 +304,7 @@ class selectPopulate{
         };
         this.onError = options?.onError != undefined ? options.onError : ()=>{ 
             this.target.innerHTML = `<option selected disabled>${this.emptyMessage}</option>`;
-            appNotify('danger', `jsform: Erro ao carregar <b>${this.target.name}</b>, favor informar ao administrador`, false)
+            appNotify('danger', `jsform: Erro ao carregar <b>${this.target.name}</b>, favor informar ao administrador`, {autodismiss: false})
         };
         this.onSuccess = options?.onSuccess != undefined ? options.onSuccess : ()=>{}; // Funcao a ser executada em caso de successo (apos popular elemento)
         this.then = options?.then != undefined ? ()=>{options.then(this.data)} : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
@@ -367,7 +376,7 @@ class MultipleAddon{
             this.textarea.value.trim().split('\n').filter(n => n).every((el, index)=>{
                 if(count == this.max){
                     this.textarea.value = this.list.join('\n'); // atualiza o textarea somente com os valores aceitos
-                    appNotify('warning', `jsForm: Campo <b>${this.el.name}</b> Máximo de <b>${this.max}</b> registros`, false)
+                    appNotify('warning', `jsForm: Campo <b>${this.el.name}</b> Máximo de <b>${this.max}</b> registros`, {autodismiss: false})
                     return false
                 }
                 let opt = document.createElement('option'); opt.value = el; opt.selected = true;

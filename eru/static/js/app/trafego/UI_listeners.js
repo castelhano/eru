@@ -357,7 +357,7 @@ function __addStage2Listeners(){ // Cria atalhos de teclado para manipulação d
         }
         return false;
     }, {group: 'March_stage2', desc: 'Move grid para cima'})
-    appKeyMap.bind('alt+enter   ', (ev)=>{
+    appKeyMap.bind('alt+enter', (ev)=>{
         if(this.__gridIsBlock() || !this.scheduleFocus){return false}
         this.scheduleGrid[this.scheduleFocus[0]][this.scheduleFocus[1]].click();
         return false;

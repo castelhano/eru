@@ -30,7 +30,7 @@
         const __sw = screen?.width || null;
         const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
         {% block script_preload %}{% endblock %}
-        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, false)})
+        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
     </script>
 </head>
 
@@ -161,12 +161,21 @@
         document.getElementById('logout').onclick = ()=>{appOnLogout("{% url 'logout' %}")} // Chama funcao de limpeza ao deslogar do sistema
 
         const i18n = new I18n({
-            apps: ['core'], 
+            apps: ['core'],
+            url: "{% url 'i18n' %}",
             autoDetect: false, 
             switcher: document.getElementById('id_language'), 
             notifyFunction: appAlert
         })
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
+        {% if user.is_superuser %}
+        appKeyMap.bind('s+backspace', ()=>{
+            i18n.clearAll(false);
+            i18n.apps = ['core', 'trafego'];
+            i18n.translate('en');
+            appNotify('warning', 'i18n storage clear');
+        }, {desc:'<small class="badge bg-danger">_ SUPER _</small> Clear localStorage for i18n then translate for "en"'})
+        {% endif %}
         
         if(localStorage.theme){
             document.documentElement.dataset.bsTheme = localStorage.theme;
@@ -206,19 +215,6 @@
         appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0]}, {i18n:'sys.shortcuts.reload', desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {i18n:'sys.shortcuts.showSysPanel', desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {i18n:'sys.shortcuts.logout', desc:'Encerra sessão no sistema'})
-        {% if user.is_superuser %}
-        appKeyMap.bind('s+backspace', ()=>{
-            localStorage.removeItem('i18nLanguage');
-            localStorage.removeItem('i18nDB');
-            localStorage.removeItem('i18nApps');
-            i18n.language = i18n.defaultLanguage;
-            i18n.db = {};
-            i18n.apps = ['core', 'trafego'];
-            // i18n.init();
-            i18n.translate('en');
-            appNotify('warning', 'i18n storage clear');
-        }, {desc:'<small class="badge bg-danger">SUPER</small> Clear localStorage for i18n, translating for "en"'})
-        {% endif %}
         
         {% block add_script %}{% endblock %}
     </script>

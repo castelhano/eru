@@ -150,7 +150,21 @@ class I18n{
         try{return entry.split('.').reduce((previous, current) => previous[current], this.db[this.language])}
         catch(e){return null}
     }
-    
+    // Limpa dados salvos no localStorage e recarrega pagina (se reload=true)
+    // Obs.: Caso reload=false, lembrar de setar novamente i18n.addApp('seu app')
+    clearAll(reload=true){ 
+        localStorage.removeItem('i18nLanguage');
+        localStorage.removeItem('i18nDB');
+        localStorage.removeItem('i18nApps');
+        if(reload){ // recarrega pagina com idioma default
+            window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0];
+        }
+        else{
+            this.db = {};
+            this.apps = [];
+            this.language = this.defaultLanguage;
+        }
+    }
     refresh(){
         console.log(`${timeNow({showSeconds: true})} | i18n: Updating user interface (refresh)`);
         let entries = document.querySelectorAll('[i18n]');

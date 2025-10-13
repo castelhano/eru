@@ -1405,7 +1405,7 @@ class jsGaitDiagramUI{
             let fr = new FileReader();
             fr.onload = (function(){
                 let r = JSON.parse(fr.result);
-                if(r.version != obj.projects[obj.projectIndex].version){appNotify('warning', `O arquivo carregado <code>${r.version}</code> tem versão diferente da aplicação <code>${obj.projects[obj.projectIndex].version}</code>, o que pode gerar incompatibilidade e/ou erros de execução.`, false)}
+                if(r.version != obj.projects[obj.projectIndex].version){appNotify('warning', `O arquivo carregado <code>${r.version}</code> tem versão diferente da aplicação <code>${obj.projects[obj.projectIndex].version}</code>, o que pode gerar incompatibilidade e/ou erros de execução.`, {autodismiss: false})}
                 obj.projects[obj.projectIndex].load(JSON.parse(fr.result));
                 obj.projects[obj.projectIndex].viewStage = 1;
                 obj.switchStage(1);
