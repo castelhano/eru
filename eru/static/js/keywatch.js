@@ -25,6 +25,7 @@ class Keywatch{
         this.handlerOptions = {                      // configuracoes padrao para shortcut
             context: 'default',
             desc: '',
+            icon: null,
             element: document,
             origin: undefined,
             keydown: true,
@@ -42,6 +43,7 @@ class Keywatch{
             tabOnEnter: true,
             shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+            shortcutMaplistIcon: "bi bi-alt",
             shortcutMaplistOnlyContextActive: false,    // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null,                          // integracao com lib i18n, se ativa deve informar objeto instanciado
             //Definicoes de estilizacao
@@ -75,7 +77,7 @@ class Keywatch{
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
         //**** */
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, desc: 'Exibe lista de atalhos disponiveis'})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
     }
     
@@ -334,7 +336,8 @@ class Keywatch{
                             if(!['origin','context','keydown','keyup','preventDefault','useCapture'].includes(attr)){continue}
                             title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
                         }
-                        let desc = this.i18nHandler && el.i18n ? this.i18nHandler.getEntry(el.i18n) || el?.desc || '' : el?.desc || '';
+                        let desc = el?.icon ? `<i class="${el.icon} me-2"></i>` : '';
+                        desc += this.i18nHandler && el.i18n ? this.i18nHandler.getEntry(el.i18n) || el?.desc || '' : el?.desc || '';
                         let tr = `
                         <tr>
                         <td>${shortcut}</td>

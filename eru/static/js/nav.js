@@ -15,7 +15,7 @@ class canvasNavLink{
         this.link = document.createElement('a');
         this.link.classList = `${options?.class || 'nav-link'}`;
         this.desc = document.createElement('span');
-        this.desc.innerHTML = options?.name || 'name_not_defined';
+        this.desc.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) || options?.name || 'name_not_defined' : options?.name || 'name_not_defined';
         ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
@@ -25,11 +25,8 @@ class canvasNavLink{
 
         
         let attrs = {...options};
-        if(attrs.hasOwnProperty('keybind')){delete attrs['keybind']}
-        if(attrs.hasOwnProperty('name')){delete attrs['name']}
-        for(let i in attrs){
-            this.link.setAttribute(i, attrs[i])
-        }
+        // Remove atributos utilizados apenas para o link
+        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey', 'keybind', 'name'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options?.keybind){this.addKeyBind(options.keybind)}
         this.el.appendChild(this.link);
         customCanvasNavMenu.appendChild(this.el);

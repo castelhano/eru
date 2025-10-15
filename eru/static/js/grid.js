@@ -182,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {i18n:'index.shortcuts.grid.previousItem', desc:'<small class="badge bg-purple">APP GRID</small> Seleciona item anterior'})
-        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {i18n:'index.shortcuts.grid.nextItem', desc: '<small class="badge bg-purple">APP GRID</small> Seleciona próximo item'})
-        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {i18n:'index.shortcuts.grid.bottomItem', desc: '<small class="badge bg-purple">APP GRID</small> Seleciona item abaixo'})
-        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {i18n:'index.shortcuts.grid.upItem', desc: '<small class="badge bg-purple">APP GRID</small> Seleciona item acima'})
-        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {i18n:'index.shortcuts.grid.accessItem', desc: '<small class="badge bg-purple">APP GRID</small> Tenta acessar o item selecionado'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {i18n:'index.shortcuts.grid.previousItem', desc:'<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item anterior do grid'})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {i18n:'index.shortcuts.grid.nextItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona próximo item do grid'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {i18n:'index.shortcuts.grid.bottomItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item abaixo do grid'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {i18n:'index.shortcuts.grid.upItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item acima do grid'})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {i18n:'index.shortcuts.grid.accessItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Tenta acessar o item selecionado do grid'})
     }
 }
 

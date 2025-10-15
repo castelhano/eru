@@ -15,7 +15,7 @@
                 menuCadastro.click();
                 setTimeout(()=>{menuCadastro.focus()}, 340);
             },
-            {i18n: 'route.shortcuts.openRegisterMenu', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de cadastro'}
+            {i18n: 'route.shortcuts.openRegisterMenu', icon: 'bi bi-layout-sidebar-inset-reverse text-orange', desc:'Abre menu de cadastro'}
         ]
     })
     {% if perms.trafego.view_linha %}appKeyMap.bind('c+l', ()=>{document.getElementById('menu_linha').click()}, {display: false}){% endif %}
@@ -36,7 +36,7 @@
                 menuImportar.click();
                 setTimeout(()=>{menuImportar.focus()}, 340);
             },
-            {i18n: 'route.shortcuts.openImportMenu', desc:'<small class="badge bg-orange">NAVBAR</small> Abre menu de importação'}
+            {i18n: 'route.shortcuts.openImportMenu', icon: 'bi bi-layout-sidebar-inset-reverse text-orange', desc:'Abre menu de importação'}
         ]
     })
     {% if perms.trafego.add_passageiro %}appKeyMap.bind('t+p', ()=>{document.getElementById('menu_passageiros_import').click()}, {display: false}){% endif %}
@@ -44,9 +44,9 @@
     
     {% if perms.trafego.view_planejamento %}
     const menuPlanejamento = new canvasNavLink({
-        name: '<b>P</b>lanejamento',
+        name: 'Pla<b>n</b>ejamento',
         i18n: 'route.planning',
-        'i18n-bold': 'p',
+        'i18n-bold': 'n',
         id: 'menu_planejamento',
         class: 'text-purple',
         icon: 'bi bi-shuffle',
@@ -56,7 +56,7 @@
             ()=>{
                 document.getElementById('menu_planejamento').click();
             },
-            {i18n: 'route.shortcuts.planningMenu', desc: '<small class="badge bg-orange">NAVBAR</small> Abre página de planejamentos'}
+            {i18n: 'route.shortcuts.planningMenu', icon: 'bi bi-layout-sidebar-inset-reverse text-orange', desc: 'Abre página de planejamentos'}
         ]
     })
     {% endif %}
@@ -74,7 +74,7 @@
             ()=>{
                 document.getElementById('menu_passageiro').click();
             },
-            {i18n: 'route.shortcuts.passengerMenu', desc: '<small class="badge bg-orange">NAVBAR</small> Abre página de análise de carregamento'}
+            {i18n: 'route.shortcuts.passengerMenu', icon: 'bi bi-layout-sidebar-inset-reverse text-orange', desc: 'Abre página de análise de carregamento'}
         ]
     })
     {% endif %}

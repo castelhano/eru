@@ -1,0 +1,72 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Funcionarios{% endblock %}
+
+{% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
+
+
+{% block content_fluid %}
+<div class="card mt-2">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs">
+      <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+      {% if perms.pessoal.add_funcionario %}
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      {% endif %}
+      <li class="nav-item"><a class="nav-link"><i class="bi bi-search"></i></a></li>
+      {% if perms.core.view_log %}
+      <li class="nav-item dropdown ms-auto">
+        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=pessoal.funcionario&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+        </ul>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="card-body tab-content">
+    <h5 class="card-title"><span i18n="common.module">Módulo</span>: <span class="text-purple" i18n="common.employee">Funcionário</span></h5>
+    <div class="row">
+      <div class="col-lg">
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+          <div class="row">
+            <div class="col-lg-auto">
+              <div class="row g-1">
+                <div class="form-floating mb-1 col-lg-12">
+                  <input type="text" class="form-control" id="search" name="pesquisa" style="min-width: 250px;" placeholder=" " autocomplete="off" autofocus>
+                  <label for="search">Matricula / Nome</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg">
+              <span>Consultas:</span>
+              <ul class="list-unstyled">
+                <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Condutores CNH vencida</a></li>
+                <li><hr class="my-1"></li>
+                <li><a href="#" id="id_foo" onclick="">item</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+{% endblock %}
+
+<script>
+  {% block add_script %}
+  
+  // const table = new jsTable(document.getElementById('main_table'), {
+  //   enablePaginate: true,
+  //   canFilter: true,
+  //   filterCols: ['Username'],
+  // });
+
+  {% endblock %}
+</script>

@@ -17,6 +17,7 @@
         "history": "History",
         "import": "Import",
         "metrics": "Metrics",
+        "module": "Module",
         "name": "Name",
         "operation": "Operation",
         "password": "Password",
@@ -25,6 +26,7 @@
         "register": "Register",
         "remove": "Remove",
         "save": "Save",
+        "search": "Search",
         "sector": "Sector",
         "settings": "Settings",
         "undo": "Undo",
@@ -36,8 +38,8 @@
         "deleteRecord": "Delete Record",
         "startDate": "Start Date",
         "endDate": "End Date",
-        "inDevelopment": "<i class=\"bi bi-exclamation-diamond-fill me-2\"></i> In Development",
-        "deleteRecordMsg": "<b class=\"text-danger\">Warning!!</b>This operation cannot be undone, confirm the deletion of the record?",
+        "inDevelopment": "In Development",
+        "deleteRecordMsg": "This operation cannot be undone, confirm the deletion of the record?",
         "i18n":{
             "translationFileNotFound": "No translation file found for selected language"
         },
@@ -55,25 +57,26 @@
     },
     "apps":{
         "routes": "Routes",
-        "planning": "Planning"
+        "planning": "Planning",
+        "employee": "Employee"
     },
     "index": {
         "darkTheme":"Dark theme",
         "nav": {
-            "registerDesc":"<small class='badge bg-orange'>NAVBAR</small> Open register menu",
+            "registerDesc":"Open register menu",
             "registerCompany":"Company",
             "registerUser":"Users",
             "registerGroup":"Groups",
             "appSettings":"App Settings",
-            "appSettingsDesc":"<small class='badge bg-orange'>NAVBAR</small> General system settings"
+            "appSettingsDesc":"General system settings"
         },
         "shortcuts":{
             "grid": {
-                "previousItem": "<small class=\"badge bg-purple\">APP GRID</small> Select previous item",
-                "nextItem": "<small class=\"badge bg-purple\">APP GRID</small> Select next item",
-                "bottomItem": "<small class=\"badge bg-purple\">APP GRID</small> Select item below",
-                "upItem": "<small class=\"badge bg-purple\">APP GRID</small> Select item above",
-                "accessItem": "<small class=\"badge bg-purple\">APP GRID</small> Attempts to access selected item"
+                "previousItem": "Select previous item on grid",
+                "nextItem": "Select next item on grid",
+                "bottomItem": "Select item below on grid",
+                "upItem": "Select item above on grid",
+                "accessItem": "Attempts to access selected item on grid"
             }
             
         }
@@ -101,13 +104,13 @@
         }
     },
     "jsTable": {
-        "nextRow":"<small class='badge bg-purple'>TABLE</small> Select next line",
-        "previousRow":"<small class='badge bg-purple'>TABLE</small> Select previous line",
-        "accessRow":"<small class='badge bg-purple'>TABLE</small> Access current row",
-        "filterInputFocus":"<small class='badge bg-purple'>TABLE</small> Focus search input",
-        "downloadCSV":"<small class='badge bg-purple'>TABLE</small> Download as CSV",
-        "nextPage":"<small class='badge bg-purple'>TABLE</small> Show next page",
-        "previousPage":"<small class='badge bg-purple'>TABLE</small> Show previous page"
+        "nextRow":"Table: Select next line",
+        "previousRow":"Table: Select previous line",
+        "accessRow":"Table: Access current row",
+        "filterInputFocus":"Table: Focus search input",
+        "downloadCSV":"Table: Download as CSV",
+        "nextPage":"Table: Show next page",
+        "previousPage":"Table: Show previous page"
 
     }
 }

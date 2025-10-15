@@ -3,6 +3,7 @@
 .cursor-default{cursor: default;}
 .pointer{cursor: pointer;}
 .help{cursor: help;}
+a.active{font-weight: 600;color: var(--bs-body-color);}
 
 
 .fs-7{font-size: 0.9rem!important;}
@@ -39,6 +40,7 @@ dialog:focus-visible{outline: none!important;}
 .text-transparent{color: transparent!important;}
 .text-orange{color: #FF5722!important;}
 .text-purple{color: #6f42c1!important;}
+.text-purple-light{color: #727cf5!important;}
 .text-pink{color: #d63384!important;}
 [data-bs-theme="dark"] .text-purple{color: #F2A2E8!important;}
 .text-hover-orange:hover{color: #FF5722!important;}
