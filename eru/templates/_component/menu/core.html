@@ -3,12 +3,12 @@
     const cadastro = new canvasNavDropdown({
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
-        i18n: 'common.register',
-        'i18n-bold': 'c',
+        'data-i18n': 'common.register',
+        'data-i18n-bold': 'c',
         itens: [
-        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', i18n: 'index.nav.registerCompany', 'i18n-bold':'e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', i18n: 'index.nav.registerUser', 'i18n-bold':'u', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', i18n: 'index.nav.registerGroup', 'i18n-bold':'g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', 'data-i18n': 'index.nav.registerCompany', 'data-i18n-bold':'e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', 'data-i18n': 'index.nav.registerUser', 'data-i18n-bold':'u', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', 'data-i18n': 'index.nav.registerGroup', 'data-i18n-bold':'g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         ],
         keybind: [
             'alt+c',
@@ -17,7 +17,7 @@
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            {i18n: 'index.nav.registerDesc', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
+            {'data-i18n': 'index.nav.registerDesc', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -26,17 +26,17 @@
     {% if perms.auth.view_group %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo').click()}, {display: false}){% endif %}
     {% if perms.core.view_settings %}
     const settings = new canvasNavLink({
-        name: '<b>P</b>referências',
+        name: 'Config<b>u</b>rações',
         id: 'menu_settings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'core_settings' %}',
-        i18n: 'index.nav.appSettings',
-        'i18n-bold': 'p',
+        'data-i18n': 'common.settings',
+        'data-i18n-bold': 'u',
         keybind: [
-            'alt+p',
-            ()=>{document.getElementById('menu_settings').click()},
-            {i18n:"index.nav.appSettingsDesc", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+            'alt+u',
+            ()=>{settings.click()},
+            {'data-i18n':"common.settings", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
         ]
     })
     {% endif %}

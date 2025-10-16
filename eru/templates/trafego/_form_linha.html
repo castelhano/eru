@@ -3,7 +3,7 @@
     <div class="card-body tab-content pb-1 pb-lg-3">
       <div class="row">
         <div class="col-lg d-flex justify-content-between">
-          <h5 class="card-title mb-3" i18n="route.form.routeRegister">Cadastro de Linha</h5>
+          <h5 class="card-title mb-3" data-i18n="route.form.routeRegister">Cadastro de Linha</h5>
         </div>
       </div>
       <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -11,15 +11,15 @@
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-auto codigo_container">
             {{ form.codigo }}
-            <label for="id_codigo" i18n="common.prefix">Codigo</label>
+            <label for="id_codigo" data-i18n="common.prefix">Codigo</label>
           </div>
           <div class="form-floating mb-lg-1 col-lg">
             {{ form.nome }}
-            <label for="id_nome" i18n="common.name">Nome</label>
+            <label for="id_nome" data-i18n="common.name">Nome</label>
           </div>
           <div class="form-floating mb-1 col-lg-3">
             {{ form.classificacao }}
-            <label for="id_classificacao" i18n="common.classification">Classificação</label>
+            <label for="id_classificacao" data-i18n="common.classification">Classificação</label>
           </div>
         </div>
         <div class="row g-1">
@@ -32,35 +32,35 @@
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.extensao_ida }}
-            <label for="id_extensao_ida" i18n="route.form.departExtension">Extensão Ida</label>
+            <label for="id_extensao_ida" data-i18n="route.form.departExtension">Extensão Ida</label>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             <input type="text" class="form-control" id="empty_1" disabled>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.acesso_origem_minutos }}
-            <label for="id_acesso_origem_minutos" i18n="route.form.departAccessMin">Acesso Ida (min)</label>
+            <label for="id_acesso_origem_minutos" data-i18n="route.form.departAccessMin">Acesso Ida (min)</label>
           </div>
           <div class="form-floating mb-1 col-lg-3">
             {{ form.acesso_origem_km }}
-            <label for="id_acesso_origem_km" i18n="route.form.departAccessKm">Acesso Ida (km)</label>
+            <label for="id_acesso_origem_km" data-i18n="route.form.departAccessKm">Acesso Ida (km)</label>
           </div>
         </div>
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.extensao_volta }}
-            <label for="id_extensao_volta" i18n="route.form.returnExtension">Extensão Volta</label>
+            <label for="id_extensao_volta" data-i18n="route.form.returnExtension">Extensão Volta</label>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             <input type="text" class="form-control" id="empty_2" disabled>
           </div>
           <div class="form-floating mb-lg-1 col-lg-3">
             {{ form.acesso_destino_minutos }}
-            <label for="id_acesso_destino_minutos" i18n="route.form.returnAccessMin">Acesso Volta (min)</label>
+            <label for="id_acesso_destino_minutos" data-i18n="route.form.returnAccessMin">Acesso Volta (min)</label>
           </div>
           <div class="form-floating mb-1 col-lg-3">
             {{ form.acesso_destino_km }}
-            <label for="id_acesso_destino_km" i18n="route.form.returnAccessKm">Acesso Volta (km)</label>
+            <label for="id_acesso_destino_km" data-i18n="route.form.returnAccessKm">Acesso Volta (km)</label>
           </div>
         </div>
         <div class="row g-1">
@@ -68,19 +68,19 @@
             <div class="row g-1">
               <div class="form-floating col-lg-6">
                 {{ form.recolhe_origem_minutos }}
-                <label for="id_recolhe_origem_minutos"  i18n="route.form.pickupOriginMin">Recolhe Ida (min)</label>
+                <label for="id_recolhe_origem_minutos"  data-i18n="route.form.pickupOriginMin">Recolhe Ida (min)</label>
               </div>
               <div class="form-floating col-lg-6">
                 {{ form.recolhe_origem_km }}
-                <label for="id_recolhe_origem_km" i18n="route.form.pickupOriginKm">Recolhe Ida (km)</label>
+                <label for="id_recolhe_origem_km" data-i18n="route.form.pickupOriginKm">Recolhe Ida (km)</label>
               </div>
               <div class="form-floating mb-lg-1 col-lg-6">
                 {{ form.recolhe_destino_minutos }}
-                <label for="id_recolhe_destino_minutos" i18n="route.form.pickupDestinationMin">Recolhe Volta (min)</label>
+                <label for="id_recolhe_destino_minutos" data-i18n="route.form.pickupDestinationMin">Recolhe Volta (min)</label>
               </div>
               <div class="form-floating mb-1 col-lg-6">
                 {{ form.recolhe_destino_km }}
-                <label for="id_recolhe_destino_km" i18n="route.form.pickupDestinationKm">Recolhe Volta (km)</label>
+                <label for="id_recolhe_destino_km" data-i18n="route.form.pickupDestinationKm">Recolhe Volta (km)</label>
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
       <!-- CONTROLES DO FORM -->
       <div class="row mt-3">
         <div class="col">
-          <button type="submit" id="submit" class="btn btn-primary" i18n="common.save" i18n-bold="g" title="ALT + G"{% if 'linha_id' in request.get_full_path and not perms.trafego.change_linha %} disabled{% endif %}><b>G</b>ravar</button>
+          <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save" i18n-bold="g" title="ALT + G"{% if 'linha_id' in request.get_full_path and not perms.trafego.change_linha %} disabled{% endif %}><b>G</b>ravar</button>
         </div>
       </div>
     </div>      
@@ -103,18 +103,18 @@
       <table class="table border table-striped table-hover table-sortable caption-top">
         <caption>
           <div class="d-flex justify-content-between align-items-center">
-            <div class="fw-bold" i18n="common.metrics">Patamares</div>
+            <div class="fw-bold" data-i18n="common.metrics">Patamares</div>
             {% if perms.trafego.change_patamar %}<a class="btn btn-sm btn-success pointer" style="width: 35px;" id="add" onclick="patamarUpdate();"><i class="bi bi-plus-lg"></i></a>{% endif %}
           </div>
         </caption>
         <thead>
           <tr>
-            <th i18n="route.metrics.start">Inicial</th>
-            <th i18n="route.metrics.end">Final</th>
-            <th i18n="route.metrics.depart">Ida</th>
-            <th i18n="route.metrics.return">Volta</th>
-            <th i18n="route.metrics.departInterval">Int Ida</th>
-            <th i18n="route.metrics.returnInterval">Int Volta</th>
+            <th data-i18n="route.metrics.start">Inicial</th>
+            <th data-i18n="route.metrics.end">Final</th>
+            <th data-i18n="route.metrics.depart">Ida</th>
+            <th data-i18n="route.metrics.return">Volta</th>
+            <th data-i18n="route.metrics.departInterval">Int Ida</th>
+            <th data-i18n="route.metrics.returnInterval">Int Volta</th>
             {% if perms.trafego.change_patamar %}<th>&nbsp;</th>{% endif %}
           </tr>
         </thead>
@@ -133,7 +133,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" i18n="route.metrics.emptyMessage">Nenhum patamar cadastrado para linha</td>
+            <td colspan="5" data-i18n="route.metrics.emptyMessage">Nenhum patamar cadastrado para linha</td>
           </tr>
           {% endfor %}
         </tbody>          

@@ -13,7 +13,8 @@
       {% if perms.pessoal.add_funcionario %}
       <li class="nav-item ms-1"><a class="nav-link border" id="add" href="" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link"><i class="bi bi-search"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="search"><i class="bi bi-search"></i></a></li>
+      <!-- <li class="nav-item"><a class="nav-link" id="search" data-bs-toggle="modal" data-bs-target="#fooModal"><i class="bi bi-search"></i></a></li> -->
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -25,7 +26,7 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title"><span i18n="common.module">Módulo</span>: <span class="text-purple" i18n="common.employee">Funcionário</span></h5>
+    <h5 class="card-title"><span data-i18n="common.module">Módulo</span>: <span class="text-purple" data-i18n="common.employee">Funcionário</span></h5>
     <div class="row">
       <div class="col-lg">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -33,13 +34,14 @@
             <div class="col-lg-auto">
               <div class="row g-1">
                 <div class="form-floating mb-1 col-lg-12">
-                  <input type="text" class="form-control" id="search" name="pesquisa" style="min-width: 250px;" placeholder=" " autocomplete="off" autofocus>
-                  <label for="search">Matricula / Nome</label>
+                  <input type="text" class="form-control" id="id_pesquisa" name="pesquisa" style="min-width: 250px;" placeholder=" " autocomplete="off" autofocus>
+                  <label for="id_pesquisa"><span>Consulta</span>*</label>
                 </div>
               </div>
+              <small>*Consulta <code>matricula</code>, <code>nome</code> ou <code>apelido</code>.</small>
             </div>
             <div class="col-lg">
-              <span>Consultas:</span>
+              <span>Consultas Rápidas:</span>
               <ul class="list-unstyled">
                 <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Condutores CNH vencida</a></li>
                 <li><hr class="my-1"></li>
@@ -53,15 +55,55 @@
   </div>
 </div>
 
+
+
+<form action="#" id="filterForm" style="display: none;">
+  <div class="row">
+    <div class="col-6 col-lg-3">
+      <div class="row g-1">
+        <div class="form-floating mb-1">
+          {{ form.status }}
+          <label for="id_status">Status</label>
+        </div>
+      </div>
+      <div class="row g-1 d-none" id="motivoDesligamentoContainer">
+        <div class="form-floating mb-1">
+          {{ form.motivo_desligamento }}
+          <label for="id_motivo_desligamento">Motivo Desligamento</label>
+        </div>
+      </div>
+      <div class="row g-1">
+        <div class="form-floating mb-1">
+          {{ form.regime }}
+          <label for="id_regime">Regime</label>
+        </div>
+      </div>
+    </div>
+    <div class="col border-start"></div>
+  </div>
+</form>
+  
 {% endblock%}
 
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
 {% endblock %}
 
 <script>
   {% block add_script %}
-  
+
+  const form = new jsForm(document.getElementById('filterForm'), {
+    modalBody: document.getElementById('filterForm'),
+    modalFocus: document.getElementById('id_status'),
+    modalTrigger: document.getElementById('search'),
+    selectAddAllOption: [
+      {nome: 'status', value: '', desc: 'Todos', 'data-i18n': ''}
+    ],
+  })
+
+
+
   // const table = new jsTable(document.getElementById('main_table'), {
   //   enablePaginate: true,
   //   canFilter: true,

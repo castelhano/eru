@@ -182,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {i18n:'index.shortcuts.grid.previousItem', desc:'<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item anterior do grid'})
-        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {i18n:'index.shortcuts.grid.nextItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona próximo item do grid'})
-        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {i18n:'index.shortcuts.grid.bottomItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item abaixo do grid'})
-        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {i18n:'index.shortcuts.grid.upItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Seleciona item acima do grid'})
-        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {i18n:'index.shortcuts.grid.accessItem', desc: '<i class="bi bi-grid-3x3-gap-fill text-purple-light me-2"></i><span style="display: none;"> apps</span>Tenta acessar o item selecionado do grid'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {'data-i18n':'index.shortcuts.grid.previousItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc:'Seleciona item anterior do grid'})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {'data-i18n':'index.shortcuts.grid.nextItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona próximo item do grid'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {'data-i18n':'index.shortcuts.grid.bottomItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item abaixo do grid'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {'data-i18n':'index.shortcuts.grid.upItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item acima do grid'})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {'data-i18n':'index.shortcuts.grid.accessItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Tenta acessar o item selecionado do grid'})
     }
 }
 

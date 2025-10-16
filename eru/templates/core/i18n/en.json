@@ -5,6 +5,7 @@
         "cancel": "Cancel",
         "classification": "Classification",
         "code": "Code",
+        "confirm": "Confirm",
         "company": "Company",
         "date": "Date",
         "description": "Description",
@@ -35,6 +36,7 @@
     },
     "sys": {
         "exclusionLogs": "Exclusion Logs",
+        "filterQuery": "Filter Query",
         "deleteRecord": "Delete Record",
         "startDate": "Start Date",
         "endDate": "End Date",
@@ -67,7 +69,6 @@
             "registerCompany":"Company",
             "registerUser":"Users",
             "registerGroup":"Groups",
-            "appSettings":"App Settings",
             "appSettingsDesc":"General system settings"
         },
         "shortcuts":{

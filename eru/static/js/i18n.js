@@ -167,39 +167,39 @@ class I18n{
     }
     refresh(){
         console.log(`${timeNow({showSeconds: true})} | i18n: Updating user interface (refresh)`);
-        let entries = document.querySelectorAll('[i18n]');
+        let entries = document.querySelectorAll('[data-i18n]');
         let errorCount = 0;
         entries.forEach((el)=>{
             let result = null;
             try {
-                result = el.getAttribute('i18n').split('.').reduce((previous, current) => previous[current], this.db[this.language]);
+                result = el.getAttribute('data-i18n').split('.').reduce((previous, current) => previous[current], this.db[this.language]);
                 if(!result){ throw '' }
             }
             // Se nao encontrado correspondente adiciona contador de erro, informa no log e analisa proxima entrada
             catch (e) {
                 // Chaves criadas dinamicamente (ex: por libs) nao serao contruidas no db default, e devem ser tratadas dirto na lib
                 // neste caso nao apresenta erro de chave nao encontrada
-                if(el.getAttribute('i18n-dynamicKey') != 'true'){
+                if(el.getAttribute('data-i18n-dynamicKey') != 'true'){
                     errorCount++;
-                    console.log(`i18n: [MISSING KEY] ${el.getAttribute('i18n')} for ${this.language}`);
+                    console.log(`i18n: [MISSING KEY] ${el.getAttribute('data-i18n')} for ${this.language}`);
                 }
                 return;
             }
             // Analisa se existe definicao para transform no texto
-            if(el.getAttribute('i18n-transform')){
+            if(el.getAttribute('data-i18n-transform')){
                 // Alterando entre caixa alta / baixa / captalize
-                if(el.getAttribute('i18n-transform') == 'captalize'){result = result.charAt(0).toUpperCase() + result.slice(1)}
-                else if(el.getAttribute('i18n-transform') == 'upperCase'){result = result.toUpperCase()}
-                else if(el.getAttribute('i18n-transform') == 'lowerCase'){result = result.toLowerCase()}
+                if(el.getAttribute('data-i18n-transform') == 'captalize'){result = result.charAt(0).toUpperCase() + result.slice(1)}
+                else if(el.getAttribute('data-i18n-transform') == 'upperCase'){result = result.toUpperCase()}
+                else if(el.getAttribute('data-i18n-transform') == 'lowerCase'){result = result.toLowerCase()}
             }
             // Caso queria destacar parte so texto (bold), use i18.bold="substring" (se existir no texto)
             // Se for a default language assume se que emphasys ja esta no texto original, e nao faz alteracoes
-            if(this.language != this.defaultLanguage && el.getAttribute('i18n-bold')){
-                if(typeof result != 'string'){console.log(`i18n: [ERROR] ${el.getAttribute('i18n')} return is not a string`)}
+            if(this.language != this.defaultLanguage && el.getAttribute('data-i18n-bold')){
+                if(typeof result != 'string'){console.log(`i18n: [ERROR] ${el.getAttribute('data-i18n')} return is not a string`)}
                 else{
-                    if(result.toLowerCase().includes(el.getAttribute('i18n-bold').toLowerCase())){
-                        let indexStart = result.toLowerCase().indexOf(el.getAttribute('i18n-bold').toLowerCase());
-                        let indexEnd = indexStart + el.getAttribute('i18n-bold').length;
+                    if(result.toLowerCase().includes(el.getAttribute('data-i18n-bold').toLowerCase())){
+                        let indexStart = result.toLowerCase().indexOf(el.getAttribute('data-i18n-bold').toLowerCase());
+                        let indexEnd = indexStart + el.getAttribute('data-i18n-bold').length;
                         let substring = result.slice(indexStart, indexEnd);
                         if(indexStart > 0){
                             result = result.slice(0,indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
@@ -209,13 +209,13 @@ class I18n{
                         }
                     }
                     else{ // Caso nao exista na traducao a letra bold adiciona ao final da palavra elemento sup com destaque para letra
-                        result += ` <sup><b>${el.getAttribute('i18n-bold').toUpperCase()}</b></sup>`;
+                        result += ` <sup><b>${el.getAttribute('data-i18n-bold').toUpperCase()}</b></sup>`;
                     }
                 }
             }
             // Se definido i18n-target, resultado sera aplicado ao atribute informado, se nao plota resultado no innerHTML do elemento
-            if(el.getAttribute('i18n-target') == null){el.innerHTML =  result || el.innerHTML}
-            else{el.setAttribute(el.getAttribute('i18n-target'), result || el.getAttribute(el.getAttribute('i18n-target')))}
+            if(el.getAttribute('data-i18n-target') == null){el.innerHTML =  result || el.innerHTML}
+            else{el.setAttribute(el.getAttribute('data-i18n-target'), result || el.getAttribute(el.getAttribute('data-i18n-target')))}
         })
     }
 }

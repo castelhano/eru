@@ -21,10 +21,10 @@
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
-          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" i18n="common.history">Historico</a></li>
+          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" data-i18n="common.history">Historico</a></li>
           {% if perms.trafego.delete_linha %}
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" i18n="route.form.removeRoute">Excluir Linha</a></li>
+          <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="route.form.removeRoute">Excluir Linha</a></li>
           {% endif %}
         </ul>
       </li>
@@ -41,15 +41,15 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="row">
-        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> <span i18n="sys.deleteRecord">Excluir Registro</span></h5></div>
+        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> <span data-i18n="sys.deleteRecord">Excluir Registro</span></h5></div>
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
-        <p><b class="text-danger" i18n="common.warning">Atenção</b> <span i18n="sys.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
+        <p><b class="text-danger" data-i18n="common.warning">Atenção</b> <span data-i18n="sys.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
         <div class="row mt-2">
           <div class="col text-end">
-            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" i18n="common.cancel">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'trafego_linha_delete' linha.id|safe %}" i18n="common.remove">Excluir</a>
+            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego_linha_delete' linha.id|safe %}" data-i18n="common.remove">Excluir</a>
           </div>
         </div>
       </div>
@@ -61,16 +61,16 @@
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
       <div class="row">
-        <div class="col"><h5 class="ms-3 mt-3"><span i18n="common.history">Histórico</span> <sup>(last 15)</sup></h5></div>
+        <div class="col"><h5 class="ms-3 mt-3"><span data-i18n="common.history">Histórico</span> <sup>(last 15)</sup></h5></div>
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       </div>
       <div class="modal-body">
         <table class="table table-sm">
           <thead>
             <tr>
-              <th i18n="common.date">Data</th>
-              <th i18n="common.operation">Operação</th>
-              <th i18n="common.user">Usuário</th>
+              <th data-i18n="common.date">Data</th>
+              <th data-i18n="common.operation">Operação</th>
+              <th data-i18n="common.user">Usuário</th>
             </tr>
           </thead>
           <tbody class="fs-7">

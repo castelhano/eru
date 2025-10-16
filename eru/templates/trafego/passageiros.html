@@ -14,7 +14,7 @@
   </div>
   <div class="card-body tab-content">
     <div class="row">
-      <div class="col"><h5 class="card-title mb-2" i18n="route.passenger.loadAnalisys">Análise de Carregamento</h5></div>
+      <div class="col"><h5 class="card-title mb-2" data-i18n="route.passenger.loadAnalisys">Análise de Carregamento</h5></div>
       <div class="col-auto">
         <button class="btn btn-sm btn-phantom" id="filters_btn" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-funnel-fill"></i></button>
       </div>
@@ -25,48 +25,48 @@
         <div class="row g-1">
           <div class="col-lg-2 mb-lg-1 form-floating">
             <select name="layout" id="id_layout" class="form-select" autofocus>
-              <option value="linha_diario" i18n="route.passenger.dailyRoute">Linha Diário</option>
-              <option value="linha_produto" i18n="route.passenger.routeByProduct">Linha por Produto</option>
-              <option value="carregamento_faixa" i18n="route.passenger.timeSlotLoad">Carregamento por Faixa</option>
+              <option value="linha_diario" data-i18n="route.passenger.dailyRoute">Linha Diário</option>
+              <option value="linha_produto" data-i18n="route.passenger.routeByProduct">Linha por Produto</option>
+              <option value="carregamento_faixa" data-i18n="route.passenger.timeSlotLoad">Carregamento por Faixa</option>
             </select>
             <label for="id_layout">Layout</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
             <select name="empresa" id="id_empresa" class="form-select"></select>
-            <label for="id_empresa" i18n="common.company">Empresa</label>
+            <label for="id_empresa" data-i18n="common.company">Empresa</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="date" class="form-control" name="data_inicio" id="id_data_inicio" value="{{request.POST.data_inicio}}" required>
-            <label for="id_data_inicio" i18n="sys.startDate">Data Inicio</label>
+            <label for="id_data_inicio" data-i18n="sys.startDate">Data Inicio</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="date" class="form-control" name="data_fim" id="id_data_fim" value="{{request.POST.data_fim}}" required>
-            <label for="id_data_fim" i18n="sys.endDate">Data Fim</label>
+            <label for="id_data_fim" data-i18n="sys.endDate">Data Fim</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="text" class="form-control" name="linha_inicio" id="id_linha_inicio" value="{{request.POST.linha_inicio}}" data-formDefault="0" required>
-            <label for="id_linha_inicio" i18n="route.startRoute">Linha Inicio</label>
+            <label for="id_linha_inicio" data-i18n="route.startRoute">Linha Inicio</label>
           </div>
           <div class="col-lg-2 mb-1 form-floating">
             <input type="text" class="form-control" name="linha_fim" id="id_linha_fim" value="{{request.POST.linha_fim}}">
-            <label for="id_linha_fim" i18n="route.endRoute">Linha Fim</label>
+            <label for="id_linha_fim" data-i18n="route.endRoute">Linha Fim</label>
           </div>
         </div>
         <div class="row g-1">
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="text" class="form-control" name="veiculo_inicio" id="id_veiculo_inicio" value="{{request.POST.veiculo_inicio}}">
-            <label for="id_veiculo_inicio" i18n="route.initialVehicle">Veiculo Inicio</label>
+            <label for="id_veiculo_inicio" data-i18n="route.initialVehicle">Veiculo Inicio</label>
           </div>
           <div class="col-lg-2 mb-lg-1 form-floating">
             <input type="text" class="form-control" name="veiculo_fim" id="id_veiculo_fim" value="{{request.POST.veiculo_fim}}">
-            <label for="id_veiculo_fim" i18n="route.endVehicle">Veiculo Fim</label>
+            <label for="id_veiculo_fim" data-i18n="route.endVehicle">Veiculo Fim</label>
           </div>
           <div class="col-lg-4 mb-1 form-floating">
             <input type="text" class="form-control" name="cartao" id="id_cartao" value="{{request.POST.cartao}}">
-            <label for="id_cartao" i18n="route.cardNumber">Número do cartão</label>
+            <label for="id_cartao" data-i18n="route.cardNumber">Número do cartão</label>
           </div>
           <div class="col">
-            <button type="submit" id="submit" class="btn btn-dark" i18n="common.filter">Filtrar</button>
+            <button type="submit" id="submit" class="btn btn-dark" data-i18n="common.filter">Filtrar</button>
           </div>
         </div>
       </form>
@@ -100,7 +100,7 @@
     appKeyMap.handlers.keydown.default['alt,g'][0].i18n = 'route.shortcuts.filterPassengersDesc';
     appKeyMap.handlers.keydown.default['alt,g'][0].desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
   }
-  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {i18n: 'route.shortcuts.showFilters', desc: 'Exibe/Oculta filtros da pesquisa'})
+  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {'data-i18n': 'route.shortcuts.showFilters', desc: 'Exibe/Oculta filtros da pesquisa'})
 
   // Move foco para layout sempre q exibido lista de filtros
   document.querySelector('.collapse').addEventListener('shown.bs.collapse', ()=>{document.getElementById('id_layout').focus()})

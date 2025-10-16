@@ -4,7 +4,7 @@
 * @version  6.1
 * @since    05/08/2024
 * @release  03/10/2025 
-* @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{i18n='my.key'})
+* @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{'data-i18n'='my.key'})
 * @ver < 6  [add keyup, multiple shortcuts at same trigger, priority as useCapture]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
@@ -34,7 +34,7 @@ class Keywatch{
             display: true,
             preventDefault: true,
             useCapture: false,
-            i18n: undefined,
+            'data-i18n': undefined,
             'i18n-dynamicKey': false
         }
         this.defaultOptions = {                         // configuracoes padrao para classe
@@ -77,7 +77,7 @@ class Keywatch{
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne registro indevido no this.pressed ao perder o foco do document
         //**** */
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', i18n: 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
     }
     
@@ -337,11 +337,11 @@ class Keywatch{
                             title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
                         }
                         let desc = el?.icon ? `<i class="${el.icon} me-2"></i>` : '';
-                        desc += this.i18nHandler && el.i18n ? this.i18nHandler.getEntry(el.i18n) || el?.desc || '' : el?.desc || '';
+                        desc += this.i18nHandler && el['data-i18n'] ? this.i18nHandler.getEntry(el['data-i18n']) || el?.desc || '' : el?.desc || '';
                         let tr = `
                         <tr>
                         <td>${shortcut}</td>
-                        <td${el?.i18n ? " i18n='" + el.i18n + "'" : "" }${el['i18n-dynamicKey'] ? ' i18n-dynamicKey=true' : ''}>${desc}</td>
+                        <td${el['data-i18n'] ? " data-i18n='" + el['data-i18n'] + "'" : "" }${el['data-i18n-dynamicKey'] ? ' data-i18n-dynamicKey=true' : ''}>${desc}</td>
                         <td title="${title}">${this.shortcutModalTableDetailItemText}</td>
                         </tr>
                         `;

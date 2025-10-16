@@ -14,14 +14,25 @@ class jsForm{
         this.common = []; // Lista vai armazenar os fields comuns (sem maskara)
         this.imask = options?.imask || []; // Lista elementos Imask presentes no form
         this.imaskFieldNames = []; // Lista com nomes dos elementos Imask
-        this.selectPopulate = options?.selectPopulate || []; // Lista com selects para preenchimento via ajax
-        this.multipleAddon = options?.multipleAddon || []; // adiciona controle para entrada multipla (cria um select)
-        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
-        this.beforeSubmit = options?.beforeSubmit != undefined ? options.beforeSubmit : () => { return true };
-        this.customValidation = options?.customValidation || {};
-        // customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
-        // deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
-        this.novalidate = options?.novalidate != undefined ? options.novalidate : false; // Setar {novalidate: true} vala desativar validacao do formulario
+        this.defaultOptions = {
+            selectPopulate: [],                         // Lista com selects para preenchimento via ajax
+            multipleAddon: [],                          // Adiciona controle para entrada multipla (cria um select)
+            selectAddAllOption: [],                     // Adiciona opcao 'Todos' nos selects informados (pode receber outras configuracoes)
+            beforeSubmit: () => { return true },        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
+            customValidation: {},                       // [**] detalhes abaixo
+            novalidate: false,                          // Setar {novalidate: true} para desativar validacao do formulario
+            modalBody: null,                            // Usar (modalBody: container) para criacao de modal (bootstrap modal) de filtros
+            modalTrigger: null,                         // Elemento acionador do modal
+            modalFocus: null,                           // Elemento html a receber foco ao abrir modal
+        }
+        // ** customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
+        // ** deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
+        
+        for(let k in this.defaultOptions){ // carrega configuracoes para classe
+            if(options.hasOwnProperty(k)){this[k] = options[k]}
+            else{this[k] = this.defaultOptions[k]}
+        }
+
         this.imask.forEach((el)=>{ // Carrega list com nomes dos imaskFields
             this.imaskFieldNames.push(el.el.input.name); // Popula list com names dos campos imask
         })
@@ -56,6 +67,9 @@ class jsForm{
         }
         else { // Roda metodo antes de submeter form
             this.form.onsubmit = ()=>{return this.beforeSubmit()};
+        }
+        if(this.modalBody){
+            this.__createModalFilter();
         }
     }
     load(data, ignore=[]){ // Metodo carrega dados no form, deve recebe um dicionario. Ex. form.load({nome: 'Maria', idade: 25}) 
@@ -187,6 +201,36 @@ class jsForm{
     }
     __emailIsValid(email){
         return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
+    }
+    __createModalFilter(){ // se definido modal nas opcoes, cria bootstrap modal
+        let modalContainer = document.createElement('div'); modalContainer.classList = 'modal fade'; modalContainer.tabIndex = '-1';
+        let modalDialog = document.createElement('div'); modalDialog.classList = 'modal-dialog modal-fullscreen';
+        let modalContent = document.createElement('div'); modalContent.classList = 'modal-content';
+        let modalBody = document.createElement('div'); modalBody.classList = 'modal-body';
+        let modalTitle = document.createElement('h5'); modalTitle.setAttribute('data-i18n', 'sys.filterQuery');modalTitle.innerHTML = 'Filtrar Consulta';
+        let separator = document.createElement('hr');
+        let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
+        let cancel = document.createElement('button'); cancel.type = 'button'; cancel.classList = 'btn btn-sm btn-secondary'; cancel.setAttribute('data-bs-dismiss', "modal"); cancel.setAttribute('data-i18n', "common.cancel"); cancel.innerHTML = 'Cancelar';
+        let confirm = document.createElement('button'); confirm.type = 'submit'; confirm.classList = 'btn btn-sm btn-primary'; confirm.setAttribute('data-i18n', "common.confirm"); confirm.innerHTML = 'Confirmar';
+        // *******
+        modalFooter.appendChild(cancel);
+        modalFooter.appendChild(confirm);
+        modalBody.appendChild(modalTitle);
+        modalBody.appendChild(separator);
+        modalBody.appendChild(this.modalBody); // conteudo do forma repassado ao instanciar form
+        modalContent.appendChild(modalBody);
+        modalContent.appendChild(modalFooter);
+        modalDialog.appendChild(modalContent);
+        modalContainer.appendChild(modalDialog);
+        document.body.appendChild(modalContainer);
+        this.modal = new bootstrap.Modal(modalContainer, {});
+        if(this.modalFocus){
+            modalContainer.addEventListener('shown.bs.modal', () => { this.modalFocus.focus()})
+        }
+        if(this.modalTrigger){
+            this.modalTrigger.addEventListener('click', () => { this.modal.show()})
+        }
+        this.modalBody.style.display = 'block'; // Recomendado setar o body na pagina como display = none, aqui voltamos a exibir elemento
     }
     validate(){ // Metodo faz validacao para os campos do form
         cleanNotify(); // Limpa area de notificacao

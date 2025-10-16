@@ -116,9 +116,9 @@ class FuncaoFixa(models.Model):
     
 class Funcionario(Pessoa):
     STATUS_CHOICES = (
-        ("A","ATIVO"),
-        ("F","AFASTADO"),
-        ("D","DESLIGADO"),
+        ("A","Ativo"),
+        ("F","Afastado"),
+        ("D","Desligado"),
     )
     MOTIVOS_DESLIGAMENTO = (
         ("EM","Pelo Empregador"),

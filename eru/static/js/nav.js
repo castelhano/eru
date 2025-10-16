@@ -11,12 +11,16 @@ const customCanvasNavMenu = document.getElementById('customCanvasNavMenu');
 
 class canvasNavLink{
     constructor(options){
+        console.log(options);
+        
         this.el = document.createElement('li'); this.el.classList = 'nav-item py-1';
         this.link = document.createElement('a');
+        if(options?.id){this.link.id = options.id}
+        if(options?.href){this.link.href = options.href}
         this.link.classList = `${options?.class || 'nav-link'}`;
         this.desc = document.createElement('span');
-        this.desc.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) || options?.name || 'name_not_defined' : options?.name || 'name_not_defined';
-        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
+        this.desc.innerHTML = options['data-i18n'] ? i18n.getEntry(options['data-i18n']) || options?.name || 'name_not_defined' : options?.name || 'name_not_defined';
+        ['data-i18n', 'data-i18n-transform', 'data-i18n-bold', 'data-i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
@@ -26,7 +30,7 @@ class canvasNavLink{
         
         let attrs = {...options};
         // Remove atributos utilizados apenas para o link
-        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey', 'keybind', 'name'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
+        ['data-i18n', 'data-i18n-transform', 'data-i18n-bold', 'data-i18n-dynamicKey', 'name'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options?.keybind){this.addKeyBind(options.keybind)}
         this.el.appendChild(this.link);
         customCanvasNavMenu.appendChild(this.el);
@@ -35,7 +39,9 @@ class canvasNavLink{
     focus(){this.link.focus()}
     hide(){this.el.classList.add('d-none')}
     destroy(){this.el.remove()}
-    addKeyBind(options){appKeyMap.bind(...options)}
+    addKeyBind(options){
+        appKeyMap.bind(...options)
+    }
 
 }
 
@@ -49,7 +55,7 @@ class canvasNavDropdown{
         this.link.href = '#';this.link.setAttribute('role', 'button');this.link.setAttribute('data-bs-toggle', 'dropdown');
         this.desc = document.createElement('span');
         this.desc.innerHTML = options?.name || 'name_not_defined';
-        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
+        ['data-i18n', 'data-i18n-transform', 'data-i18n-bold', 'data-i18n-dynamicKey'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
@@ -71,7 +77,7 @@ class canvasNavDropdown{
         let item = document.createElement('li');item.classList = options?.liClass || '';
         let link = document.createElement(options?.tagName || 'a');link.classList = options?.linkClass || 'dropdown-item pointer';
         let desc = document.createElement('span');
-        ['i18n', 'i18n-transform', 'i18n-bold', 'i18n-dynamicKey'].forEach((el)=>{if(options[el]){desc.setAttribute(el, options[el])}})
+        ['data-i18n', 'data-i18n-transform', 'data-i18n-bold', 'data-i18n-dynamicKey'].forEach((el)=>{if(options[el]){desc.setAttribute(el, options[el])}})
         desc.innerHTML = options?.name || 'name_not_defined';
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
