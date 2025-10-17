@@ -27,6 +27,7 @@
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Nome</th>
                         {% if perms.pessoal.change_setor %}
                         <th>&nbsp;</th>
@@ -36,6 +37,7 @@
                 <tbody>
                     {% for setor in setores %}
                     <tr>
+                        <td>{{setor.id|safe}}</td>
                         <td>{{setor.nome}}</td>
                         {% if perms.pessoal.change_setor %}
                         <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_setor_id' setor.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>

@@ -21,10 +21,15 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
 {% endblock %}
 
 <script>
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
+    let funcao_fixa = new jsSelectm(form.funcao_fixa,{
+        // optionsSelected: empresasUsuario,
+        emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
+    });
     {% endblock %}
 </script>

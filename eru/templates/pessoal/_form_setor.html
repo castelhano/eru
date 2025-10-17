@@ -1,17 +1,29 @@
 <div class="card-body tab-content">
     <h5 class="card-title mb-3"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="common.sector">Setor</b></h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
-        <div class="row g-1">
-            <div class="form-floating mb-1 col-lg-4">
-                {{ form.nome }}
-                <label for="id_nome" data-i18n="common.name">Nome</label>
+        <div class="row">
+            <div class="col col-lg-3">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col">
+                        {{ form.nome }}
+                        <label for="id_nome" data-i18n="common.name">Nome</label>
+                    </div>
+                </div>
+                <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save" data-i18n-bold="s"><b>G</b>ravar</button>                
             </div>
-        </div>
-    </div>
-    <!-- CONTROLES DO FORM -->
-    <div class="row mt-3">
-        <div class="col">
-            <button type="submit" id="submit" class="btn btn-primary" title="ALT + G" data-i18n="common.save" data-i18n-bold="s"><b>G</b>ravar</button>
+            <div class="col border-start">
+                <h6 class="text-body-secondary">Função Fixa</span>:</h6>
+                <div class="row">
+                    <div class="col-lg-auto" style="min-width: 250px;">
+                        <select class="form-select" id="id_funcao_fixa" name="funcao_fixa" multiple>
+                            <option value="A">Auxiliar</option>
+                            <option value="M">Motorista</option>
+                            <option value="O">Oficina</option>
+                            <option value="T">Trafego</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

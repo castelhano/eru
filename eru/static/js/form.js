@@ -398,7 +398,7 @@ class selectPopulate{
     }
 }
 
-class MultipleAddon{
+class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipla de valores
     constructor(el, options={}){
         this.list = [];
         const defaultOptions = {
