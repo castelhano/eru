@@ -1,0 +1,31 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Funcionário{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" id="menu_funcionario_basico" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_matricula').focus();},220);" href="#" title="Basico [Ctrl + 1]"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_docs" data-bs-toggle="tab" data-bs-target="#documents" onclick="setTimeout(function(){document.getElementById('id_rg').focus();},220);" href="#" title="Documentos [Ctrl + 2]"><i class="bi bi-person-vcard-fill"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_funcionarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+        </ul>
+    </div>
+    <form id="app_form" action="{% url 'pessoal_funcionario_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+    {% csrf_token %}
+    {% include 'pessoal/_form_funcionario.html' %}
+  </form>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+{% block add_script %}{% endblock %}
+</script>

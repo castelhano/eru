@@ -92,3 +92,9 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.DEBUG: 'dark'
 }
+
+DEFAULT_MESSAGES = {
+    'created': '<span data-i18n="sys.recordCreated">Registro criado com sucesso</span>',
+    'updated': '<span data-i18n="sys.recordUpdated">Registro atualizado com sucesso</span>',
+    'error': '<span data-i18n="sys.recordErrorOnSaved">Erro ao salvar registro</span>'
+}

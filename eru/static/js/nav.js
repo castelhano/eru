@@ -11,8 +11,6 @@ const customCanvasNavMenu = document.getElementById('customCanvasNavMenu');
 
 class canvasNavLink{
     constructor(options){
-        console.log(options);
-        
         this.el = document.createElement('li'); this.el.classList = 'nav-item py-1';
         this.link = document.createElement('a');
         if(options?.id){this.link.id = options.id}

@@ -1,0 +1,11 @@
+{
+    "personal":{
+        "personal": "Personal"
+    },
+    "employees": {
+        "sysMessages": {
+            "errorCreateEmployee": "Error registering employee [INVALID FORM]"
+        }
+
+    }
+}

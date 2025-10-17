@@ -17,7 +17,7 @@ class jsForm{
         this.defaultOptions = {
             selectPopulate: [],                         // Lista com selects para preenchimento via ajax
             multipleAddon: [],                          // Adiciona controle para entrada multipla (cria um select)
-            selectAddAllOption: [],                     // Adiciona opcao 'Todos' nos selects informados (pode receber outras configuracoes)
+            selectAddAllOption: [],                     // Adiciona opcao 'Todos' nos selects informados [{nome: 'empresa', value: '', desc: 'Todas', i18n: 'foo.bar'}] apenas opcao 'nome' obrigatoria
             beforeSubmit: () => { return true },        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
             customValidation: {},                       // [**] detalhes abaixo
             novalidate: false,                          // Setar {novalidate: true} para desativar validacao do formulario
@@ -27,7 +27,6 @@ class jsForm{
         }
         // ** customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
         // ** deve retornar um array com a primeira posicao o resultado (true ou false) e na segunda (opcional) texto de orientacao 
-        
         for(let k in this.defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = this.defaultOptions[k]}
@@ -68,6 +67,7 @@ class jsForm{
         else { // Roda metodo antes de submeter form
             this.form.onsubmit = ()=>{return this.beforeSubmit()};
         }
+        this.__selectAddAllOption();
         if(this.modalBody){
             this.__createModalFilter();
         }
@@ -202,6 +202,23 @@ class jsForm{
     __emailIsValid(email){
         return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
     }
+    __selectAddAllOption(){
+        this.selectAddAllOption.forEach((el)=>{
+            try{
+                let opt = document.createElement('option');
+                opt.value = el?.value || '';
+                if(el?.i18n){
+                    opt.innerHTML = i18n.getEntry(el.i18n) || el?.desc || 'Todos';
+                    opt.setAttribute('data-i18n', el.i18n);
+                }
+                else{opt.innerHTML = el?.desc || 'Todos';}
+                this[el.nome].insertBefore(opt, this[el.nome].firstChild);
+                this[el.nome].value = opt.value;
+            }catch(err){
+                console.log(`jsForm: [selectAddAllOption] Erro ao criar 'option', verificque o valor informado [{nome: 'meuCampo'}] campo 'nome' necessario.`);
+            }            
+        })
+    }
     __createModalFilter(){ // se definido modal nas opcoes, cria bootstrap modal
         let modalContainer = document.createElement('div'); modalContainer.classList = 'modal fade'; modalContainer.tabIndex = '-1';
         let modalDialog = document.createElement('div'); modalDialog.classList = 'modal-dialog modal-fullscreen';
@@ -211,7 +228,7 @@ class jsForm{
         let separator = document.createElement('hr');
         let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
         let cancel = document.createElement('button'); cancel.type = 'button'; cancel.classList = 'btn btn-sm btn-secondary'; cancel.setAttribute('data-bs-dismiss', "modal"); cancel.setAttribute('data-i18n', "common.cancel"); cancel.innerHTML = 'Cancelar';
-        let confirm = document.createElement('button'); confirm.type = 'submit'; confirm.classList = 'btn btn-sm btn-primary'; confirm.setAttribute('data-i18n', "common.confirm"); confirm.innerHTML = 'Confirmar';
+        let confirm = document.createElement('button'); confirm.type = 'submit'; confirm.classList = 'btn btn-sm btn-primary'; confirm.setAttribute('data-i18n', "common.confirm");confirm.setAttribute('data-i18n-bold', "c"); confirm.innerHTML = '<b>C</b>onfirmar';
         // *******
         modalFooter.appendChild(cancel);
         modalFooter.appendChild(confirm);
@@ -226,9 +243,13 @@ class jsForm{
         this.modal = new bootstrap.Modal(modalContainer, {});
         if(this.modalFocus){
             modalContainer.addEventListener('shown.bs.modal', () => { this.modalFocus.focus()})
+            modalContainer.addEventListener('hide.bs.modal', () => { this.modalFocus.focus(), appKeyMap.setContext();})
         }
         if(this.modalTrigger){
-            this.modalTrigger.addEventListener('click', () => { this.modal.show()})
+            this.modalTrigger.addEventListener('click', () => { 
+                this.modal.show();
+                appKeyMap.setContext('filterModal');
+            })
         }
         this.modalBody.style.display = 'block'; // Recomendado setar o body na pagina como display = none, aqui voltamos a exibir elemento
     }
@@ -376,7 +397,7 @@ class selectPopulate{
         xhttp.send();
     }
 }
-''
+
 class MultipleAddon{
     constructor(el, options={}){
         this.list = [];

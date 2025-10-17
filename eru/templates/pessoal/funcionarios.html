@@ -11,15 +11,14 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.pessoal.add_funcionario %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal_funcionario_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link" id="search"><i class="bi bi-search"></i></a></li>
-      <!-- <li class="nav-item"><a class="nav-link" id="search" data-bs-toggle="modal" data-bs-target="#fooModal"><i class="bi bi-search"></i></a></li> -->
+      <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
-          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=pessoal.funcionario&mensagem=DELETE" target="_blank">Log de Exclusões</a></li>
+          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=pessoal.funcionario&mensagem=DELETE" target="_blank" data-i18n="sys.exclusionLogs">Log de Exclusões</a></li>
         </ul>
       </li>
       {% endif %}
@@ -30,24 +29,89 @@
     <div class="row">
       <div class="col-lg">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-          <div class="row">
-            <div class="col-lg-auto">
-              <div class="row g-1">
-                <div class="form-floating mb-1 col-lg-12">
-                  <input type="text" class="form-control" id="id_pesquisa" name="pesquisa" style="min-width: 250px;" placeholder=" " autocomplete="off" autofocus>
-                  <label for="id_pesquisa"><span>Consulta</span>*</label>
+          <form id="app_form" action="{% url 'pessoal_funcionarios' %}" method="GET" autocomplete="off" novalidate>
+            <div class="row">
+              <div class="col-lg-auto">
+                <div class="input-group">
+                  <div class="form-floating">
+                    <input 
+                    type="text" 
+                    class="form-control" 
+                    id="id_pesquisa" 
+                    name="pesquisa" 
+                    style="min-width: 250px;" 
+                    placeholder=" " 
+                    autocomplete="off" 
+                    minlength="3" 
+                    data-keywatch="submit" 
+                    required 
+                    autofocus>
+                    <label for="id_pesquisa"><span>Consulta</span>*</label>
+                  </div>
+                  <button type="submit" id="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
                 </div>
+                <small>*Consulta <code>matricula</code>, <code>nome</code> ou <code>apelido</code>.</small>
               </div>
-              <small>*Consulta <code>matricula</code>, <code>nome</code> ou <code>apelido</code>.</small>
+              <div class="col-lg">
+                <span>Consultas Rápidas:</span>
+                <ul class="list-unstyled">
+                  <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Condutores CNH vencida</a></li>
+                  <li><a href="#" id="id_ativos" onclick="">Funcionários Afastados</a></li>
+                  <li><hr class="my-1"></li>
+                  <li><a href="#" id="id_foo" onclick="">item</a></li>
+                </ul>
+              </div>
             </div>
-            <div class="col-lg">
-              <span>Consultas Rápidas:</span>
-              <ul class="list-unstyled">
-                <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Condutores CNH vencida</a></li>
-                <li><hr class="my-1"></li>
-                <li><a href="#" id="id_foo" onclick="">item</a></li>
-              </ul>
-            </div>
+          </form>
+          <div class="{% if not funcionarios %}d-none{% endif %}">
+            <table id="main_table" class="table border table-striped table-hover{% if not funcionarios %} d-none{% endif %}">
+              <thead>
+                <tr>
+                  <th class="d-none d-sm-table-cell">Empresa</th>
+                  <th>Matric</th>
+                  <th class="d-none d-lg-table-cell">Nome</th>
+                  <th class="d-table-cell d-lg-none">Apelido</th>
+                  <th class="d-none">Sexo</th>
+                  <th class="d-none">Nascimento</th>
+                  <th class="d-none">Admissão</th>
+                  <th class="d-none">CPF</th>
+                  <th class="d-none">CNH</th>
+                  <th class="d-none">Validade</th>
+                  <th class="d-none d-lg-table-cell">Setor</th>
+                  <th class="d-none d-sm-table-cell">Cargo</th>
+                  <th class="d-none">Regime</th>
+                  <th class="d-none">PNE</th>
+                  <th class="d-none d-lg-table-cell">Status</th>
+                  {% if perms.pessoal.view_funcionario %}
+                  <th>&nbsp;</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for funcionario in funcionarios %}
+                <tr class="{% if funcionario.status != 'A' %} table-emphasis{% endif %}">
+                  <td class="d-none d-sm-table-cell">{{funcionario.empresa.nome|default:'---'}}</td>
+                  <td>{{funcionario.matricula}}</td>
+                  <td class="d-none d-lg-table-cell">{{funcionario.nome}}</td>
+                  <td class="d-table-cell d-lg-none">{{funcionario.apelido}}</td>
+                  <td class="d-none">{{funcionario.sexo}}</td>
+                  <td class="d-none">{{funcionario.data_nascimento|date:'d/m/Y'|default:''}}</td>
+                  <td class="d-none">{{funcionario.data_admissao|date:'d/m/Y'|default:''}}</td>
+                  <td class="d-none">{{funcionario.cpf}}</td>
+                  <td class="d-none">{{funcionario.cnh}}</td>
+                  <td class="d-none">{{funcionario.cnh_validade|date:'d/m/Y'}}</td>
+                  <td class="d-none d-lg-table-cell">{{funcionario.cargo.setor.nome|default:'---'}}</td>
+                  <td class="d-none d-sm-table-cell">{{funcionario.cargo.nome|default:'---'}}</td>
+                  <td class="d-none">{{funcionario.get_regime_display|default:'---'}}</td>
+                  <td class="d-none">{{funcionario.pne|yesno:'PNE,'}}</td>
+                  <td class="d-none d-lg-table-cell">{{funcionario.get_status_display}}</td>
+                  {% if perms.pessoal.view_funcionario %}
+                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_funcionario_id' funcionario.id|safe %}" title="Editar" data-i18n="common.edit" data-i18n-target="title" ><i class="bi bi-pen-fill"></i></a></td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -78,11 +142,17 @@
           <label for="id_regime">Regime</label>
         </div>
       </div>
+      <div class="row g-1">
+        <div class="form-floating mb-1">
+          <select name="setor" id="id_setor" class="form-select"></select>
+          <label for="id_setor">Setor</label>
+        </div>
+      </div>
     </div>
     <div class="col border-start"></div>
   </div>
 </form>
-  
+
 {% endblock%}
 
 {% block add_script_src %}
@@ -92,23 +162,29 @@
 
 <script>
   {% block add_script %}
-
-  const form = new jsForm(document.getElementById('filterForm'), {
+  
+  const form = new jsForm(document.getElementById('app_form'), {})
+  
+  const filterForm = new jsForm(document.getElementById('filterForm'), {
     modalBody: document.getElementById('filterForm'),
     modalFocus: document.getElementById('id_status'),
     modalTrigger: document.getElementById('search'),
     selectAddAllOption: [
-      {nome: 'status', value: '', desc: 'Todos', 'data-i18n': ''}
+    {nome: 'status', 'i18n': 'common.all'}
     ],
+    selectPopulate: [
+      {target: document.getElementById('id_setor'), url: '{% url 'pessoal_get_setores' %}'}
+    ]
   })
-
-
-
-  // const table = new jsTable(document.getElementById('main_table'), {
-  //   enablePaginate: true,
-  //   canFilter: true,
-  //   filterCols: ['Username'],
-  // });
-
+  
+  
+  
+  
+  const table = new jsTable(document.getElementById('main_table'), {
+    enablePaginate: true,
+    canFilter: true,
+    filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
+  });
+  
   {% endblock %}
 </script>

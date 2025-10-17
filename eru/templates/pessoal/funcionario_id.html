@@ -1,0 +1,94 @@
+{% extends "layout/app.html" %}
+{% block title %}Funcionario{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" id="menu_funcionario_basico" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_matricula').focus();},220);" href="#" title="Basico [Ctrl + 1]"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_docs" data-bs-toggle="tab" data-bs-target="#documents" onclick="setTimeout(function(){document.getElementById('id_rg').focus();},220);" href="#" title="Documentos [Ctrl + 2]"><i class="bi bi-person-vcard-fill"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_funcionarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" data-i18n="common.history">Historico</a></li>
+                    <li><a class="dropdown-item" href="{# url 'pessoal_export_funcionario_csv' funcionario.id|safe #}">Baixar CSV</a></li>
+                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{# url 'pessoal_dependentes' funcionario.id|safe#}">Dependentes</a></li>{% endif %}
+                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{# url 'pessoal_afastamentos' funcionario.id|safe #}">Afastamentos</a></li>{% endif %}
+                    {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
+                    <li><a class="dropdown-item dropdown-item-danger" data-bs-toggle="modal" data-bs-target="#modal_desligamento" href="#">Desligar Funcionário</a></li>
+                    {% endif %}
+                    {% if perms.app.delete_modelo %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <form id="app_form" action="{% url 'pessoal_funcionario_update' funcionario.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+        {% csrf_token %}
+        {% include 'pessoal/_form_funcionario.html' %}
+    </form>
+</div>
+
+{% if perms.app.delete_modelo %}
+<div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i> Excluir Registro</h5></div>
+                <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            </div>
+            <div class="modal-body">
+                <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
+                <div class="row mt-2">
+                    <div class="col text-end">
+                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+                        <a class="btn btn-danger px-3" href="url">Excluir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<div class="modal fade" id="history_modal" tabindex="-1" data-kw-context="modalHistory" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
+                <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Operação</th>
+                            <th>Usuário</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fs-7">
+                        {% for i in modelo.ultimas_alteracoes %}
+                        <tr>
+                            <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
+                            <td>{{i.mensagem}}</td>
+                            <td>{{i.usuario.username|upper}}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}{% endblock %}
+
+<script>
+    {% block add_script %}{% endblock %}
+</script>

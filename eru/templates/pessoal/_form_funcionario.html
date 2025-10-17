@@ -1,0 +1,299 @@
+{% load static %}
+<div class="card-body">
+    <h5 class="card-title mb-3">Cadastro de Funcionário</h5>
+    <div class="row g-lg-3">
+        <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
+            {% if funcionario.foto %}
+            <img src="{{funcionario.foto_url}}" class="widget-thumb-img pointer" style="min-width: 110px;" onclick="photo.modal.show();" id="funcionarioFoto" alt="Foto Funcionario">
+            {% else %}
+            <img src="{% static 'img/default_user.png' %}" class="widget-thumb-img pointer" style="min-width: 110px;" onclick="photo.modal.show();" id="funcionarioFoto" alt="Foto Funcionario">
+            {% endif %}
+            <div class="widget-thumb-controls ms-2 ms-lg-0">
+                <div class="row g-0">
+                    <div class="col">
+                        <div class="d-grid">
+                            {% if not funcionario %}
+                            <a class="btn btn-sm btn-light px-4 px-lg-0 disabled">NOVO</a>
+                            {% elif funcionario.status == 'A' %}
+                            <a class="btn btn-sm btn-success px-4 px-lg-0 disabled">ATIVO</a>
+                            {% else %}
+                            <a class="btn btn-sm btn-warning px-4 px-lg-0 disabled">{{funcionario.get_status_display}}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>      
+        </div>
+        <div class="col-lg">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="base" role="tabpanel">
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.matricula }}
+                            <label for="id_matricula">Matricula</label>
+                        </div>
+                        {% include "_component/field/empresa.html" with container_classlist='form-floating col mb-1' empresa_atual=funcionario.empresa.id|safe attrs='autofocus' %}
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-9">
+                            {{ form.nome }}
+                            <label for="id_nome">Nome completo</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-3">
+                            {{ form.regime }}
+                            <label for="id_regime">Regime de Trabalho</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-9">
+                            {{ form.nome_social }}
+                            <label for="id_nome_social">Nome Social</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-3">
+                            {{ form.apelido }}
+                            <label for="id_apelido">Apelido</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            <select class="form-select" id="id_setor" name="setor" onchange="carregaCargos()">
+                                <option value="">---------</option>
+                            </select>
+                            <label for="id_setor">Setor</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            <select class="form-select" id="id_cargo" name="cargo">
+                                <option value="">---------</option>
+                            </select>
+                            <label for="id_cargo">Cargo</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.sexo }}
+                            <label for="id_sexo">Sexo</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-3">
+                            {{ form.data_nascimento }}
+                            <label for="id_data_nascimento">Data Nascimento</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-4">
+                            {{ form.data_admissao }}
+                            <label for="id_data_admissao">Data Admissão</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-4">
+                            {{ form.estado_civil }}
+                            <label for="id_estado_civil">Estado Civil</label>
+                        </div>
+                        {% if perms.pessoal.associar_usuario %}
+                        <div class="form-floating mb-1 col-lg-4">
+                            {{ form.usuario }}
+                            <label for="id_usuario">Usuário</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if funcionario.status == 'D' %}
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-4">
+                            <input type="date" class="form-control fw-bold" id="id_data_desligamento" value="{{funcionario.data_desligamento|date:'Y-m-d'}}" disabled>
+                            <label for="id_data_desligamento">Data Desligamento</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg">
+                            <input type="text" class="form-control fw-bold" id="id_motivo_desligamento" value=" {{funcionario.get_motivo_desligamento_display }}" disabled>
+                            <label for="id_motivo_desligamento">Motivo Desligamento</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="row g-1">
+                        <div class="form-floating mb-1 col-12">
+                            {{ form.nome_pai }}
+                            <label for="id_nome_pai">Nome Pai</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-1 col-12">
+                            {{ form.nome_mae }}
+                            <label for="id_nome_mae">Nome Mãe</label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="foto_data_url" id="id_foto_data_url">
+                    <div class="form-check form-switch mt-2">
+                        {{form.pne}}
+                        <label class="form-check-label" for="id_pne">PNE Portador de necessidades especiais</label>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="documents" role="tabpanel">
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-5">
+                            {{ form.rg }}
+                            <label for="id_rg">RG</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.rg_orgao_expedidor }}
+                            <label for="id_rg_orgao_expedidor">RG Orgão Expedidor</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-4">
+                            {{ form.rg_emissao }}
+                            <label for="id_rg_emissao">RG Data de emissão</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-5">
+                            {{ form.cpf }}
+                            <label for="id_cpf">CPF</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-7">
+                            {{ form.reservista }}
+                            <label for="id_reservista">Reservista</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-5">
+                            {{ form.titulo_eleitor }}
+                            <label for="id_titulo_eleitor">Titulo eleitor</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.titulo_zona }}
+                            <label for="id_titulo_zona">Zona</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-4">
+                            {{ form.titulo_secao }}
+                            <label for="id_titulo_secao">Seção</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-5">
+                            {{ form.cnh }}
+                            <label for="id_cnh">CNH</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg">
+                            {{ form.cnh_primeira_habilitacao }}
+                            <label for="id_cnh_primeira_habilitacao">Primeira Habilitação</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-auto" style="min-width: 130px;">
+                            {{ form.cnh_categoria }}
+                            <label for="id_cnh_categoria">Categoria</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-5">
+                            {{ form.cnh_emissao }}
+                            <label for="id_cnh_emissao">CNH Emissão</label>
+                        </div>
+                        <div class="form-floating col-lg">
+                            {{ form.cnh_validade }}
+                            <label for="id_cnh_validade">CNH Validade</label>
+                        </div>
+                        <div class="form-floating col-lg">
+                            {% if funcionario.cnh == None %}
+                            <input type="text" class="form-control" id="id_situacao_cnh" value="" disabled>
+                            {% elif funcionario.cnh_eh_valida %}
+                            <input type="text" class="form-control" id="id_situacao_cnh" value="No prazo" disabled>
+                            {% else %}
+                            <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" value="Vencida" disabled>
+                            {% endif %}
+                            <label for="id_situacao_cnh">Status</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="contato" role="tabpanel">
+                    <div class="row g-1">
+                        <div class="form-floating mb-1 col-lg-12">
+                            {{ form.endereco }}
+                            <label for="id_endereco">Endereço</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col" style="max-width: 100px;">
+                            {{ form.uf }}
+                            <label for="id_uf">UF</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col">
+                            {{ form.cidade }}
+                            <label for="id_cidade">Cidade</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg">
+                            {{ form.bairro }}
+                            <label for="id_bairro">Bairro</label>
+                        </div>
+                    </div>
+                    <div class="row g-1">
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.fone1 }}
+                            <label for="id_fone1">Fone 01</label>
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg-3">
+                            {{ form.fone2 }}
+                            <label for="id_fone2">Fone 02</label>
+                        </div>
+                        <div class="form-floating mb-1 col-lg-6">
+                            {{ form.email }}
+                            <label for="id_email">Email</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="detalhe" role="tabpanel">
+                    <div class="row g-1">
+                        <div class="form-floating mb-1 col-12">
+                            {{ form.detalhe }}
+                            <label for="id_nome">Detalhes</label>
+                        </div>
+                    </div>
+                </div>    
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"{% if 'funcionario_id' in request.get_full_path and not perms.pessoal.change_funcionario %} disabled{% endif %}><b>G</b>ravar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // function carregaSetores(loading_page=false) {
+    //     var xhttp = new XMLHttpRequest();
+    //     xhttp.onreadystatechange = function() {
+    //         if(this.readyState == 4 && this.status == 200){
+    //             if(this.responseText == ''){}
+    //             else{
+    //                 let obj = JSON.parse(this.responseText);
+    //                 setores = document.getElementById("id_setor");
+    //                 setor_atual = '{{funcionario.cargo.setor.id|safe}}';
+    //                 for(key in obj){
+    //                     if(obj[key] == setor_atual){setores.innerHTML += '<option value="' + obj[key] + '" selected>' + key + '</option>';}
+    //                     else{setores.innerHTML += '<option value="' + obj[key] + '">' + key + '</option>';}}
+    //                     if(loading_page){carregaCargos();}
+    //                 }
+    //             }
+    //         };
+    //         xhttp.open("GET", "{# url 'pessoal_get_setores' #}", true);
+    //         xhttp.send();
+    //     }
+    //     carregaSetores(true);
+        
+    //     function carregaCargos() {
+    //         setor = document.getElementById('id_setor').value;
+    //         cargos = document.getElementById("id_cargo");
+    //         cargos.innerHTML = '<option value="">---------</option>';
+    //         if(setor == ''){}
+    //         else{
+    //             var xhttp = new XMLHttpRequest();
+    //             xhttp.onreadystatechange = function() {
+    //                 if(this.readyState == 4 && this.status == 200){
+    //                     if(this.responseText == ''){}
+    //                     else{
+    //                         let obj = JSON.parse(this.responseText);
+    //                         cargo_atual = '{{funcionario.cargo.id|safe}}';
+    //                         for(key in obj){
+    //                             if(obj[key] == cargo_atual){cargos.innerHTML += '<option value="' + obj[key] + '" selected>' + key + '</option>';}
+    //                             else{cargos.innerHTML += '<option value="' + obj[key] + '">' + key + '</option>';}
+    //                         }
+    //                     }
+    //                 }
+    //             };
+    //             xhttp.open("GET", "{# url 'pessoal_get_cargos' #}?setor=" + setor, true);
+    //             xhttp.send();
+    //         }
+    //     } 
+    </script>
