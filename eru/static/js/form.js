@@ -355,7 +355,7 @@ class selectPopulate{
         this.data = []; // Json com dados retornados
         this.url = options.url;
         this.params = options.params ? `?${options.params}`  : '';
-        this.key = options?.key || 'id';
+        this.key = options?.key || 'pk';
         this.value = options?.value || 'nome';
         this.method = options?.method || 'GET';
         this.beforeRequest = options?.beforeRequest != undefined ? options.beforeRequest : ()=>{return true}; // Funcao a ser chamada antes de executar a consulta
@@ -383,11 +383,11 @@ class selectPopulate{
         xhttp.onreadystatechange = function() {
             if(this.readyState == 4 && this.status == 200){
                 if(this.responseText == ''){instance.onError()}
-                else if(this.responseText == '[]'){instance.onEmpty()}
+                    else if(this.responseText == '[]'){instance.onEmpty()}
                 else{
                     instance.data = JSON.parse(this.responseText);
                     if(instance.emptyRow){instance.target.innerHTML = `<option value="${instance.emptyRowValue}">${instance.emptyRowText}</option>`}
-                    for(let i in instance.data){instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i][instance.value]}</option>`;}
+                    for(let i in instance.data){instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i].fields[instance.value]}</option>`;}
                     instance.onSuccess();
                 }
                 instance.then(); // Funcao a ser executada indiferente se retornado dados do servidor

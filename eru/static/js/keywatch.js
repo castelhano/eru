@@ -284,6 +284,24 @@ class Keywatch{
             return true;
         }
     }
+    duplicated(context='default'){ // retorna lista com detalhes dos schemas duplicados (leva em consideracao evento, contexto e elemento)
+        let duplicatedList = [];
+        for(let ev in this.handlers){
+            for(let cx in this.handlers[ev]){
+                for(let schema in this.handlers[ev][cx]){
+                    if(this.handlers[ev][cx][schema].length > 1){
+                        let unic = []
+                        for(let sk in this.handlers[ev][cx][schema]){
+                            let stringfy = JSON.stringify({event: ev, context: cx, schema: schema, element: this.handlers[ev][cx][schema][sk].element == window.document ? 'document' : this.handlers[ev][cx][schema][sk].element.id})
+                            if(unic.includes(stringfy)){duplicatedList.push(JSON.parse(stringfy))}
+                            else{unic.push(stringfy)}
+                        }
+                    }
+                }
+            }
+        }
+        return duplicatedList;
+    }
     run(scope, options={}){
         let defaultOptions = {
             type: 'keydown',

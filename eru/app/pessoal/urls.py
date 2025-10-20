@@ -12,5 +12,10 @@ urlpatterns = [
     path('pessoal_setor_id/<int:id>',views.setor_id,name='pessoal_setor_id'),
     path('pessoal_setor_update/<int:id>',views.setor_update,name='pessoal_setor_update'),
     path('pessoal_setor_delete/<int:id>/delete',views.setor_delete,name='pessoal_setor_delete'),
+    path('pessoal_cargos',views.cargos,name='pessoal_cargos'),
+    path('pessoal_cargo_add',views.cargo_add,name='pessoal_cargo_add'),
+    path('pessoal_cargo_id/<int:id>',views.cargo_id,name='pessoal_cargo_id'),
+    path('pessoal_cargo_update/<int:id>',views.cargo_update,name='pessoal_cargo_update'),
+    path('pessoal_cargo_delete/<int:id>/delete',views.cargo_delete,name='pessoal_cargo_delete'),
     path('pessoal_get_setores',views.get_setores,name='pessoal_get_setores'),
 ]

@@ -1,6 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
-{% block title %}Setor{% endblock %}
+{% block title %}Cargo{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -8,12 +8,12 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_setores' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_setor_add' %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal_cargo_add' %}" method="POST" autocomplete="off" novalidate>
         {% csrf_token %}
-        {% include 'pessoal/_form_setor.html' %}
+        {% include 'pessoal/_form_cargo.html' %}
     </form>
 </div>
 
@@ -21,10 +21,14 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
 {% endblock %}
 
 <script>
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
+    
+    const ffixa = new jsSelectm(document.getElementById('id_funcao_fixa'), {});
+    
     {% endblock %}
 </script>

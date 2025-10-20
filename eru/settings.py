@@ -94,7 +94,9 @@ MESSAGE_TAGS = {
 }
 
 DEFAULT_MESSAGES = {
-    'created': '<span data-i18n="sys.recordCreated">Registro criado com sucesso</span>',
+    'created': f'<span data-i18n="sys.recordCreated">Registro criado com sucesso</span>',
     'updated': '<span data-i18n="sys.recordUpdated">Registro atualizado com sucesso</span>',
-    'error': '<span data-i18n="sys.recordErrorOnSaved">Erro ao salvar registro</span>'
+    'delete': '<span data-i18n="sys.recordDeleted">Registro excluido, essa operação não pode ser desfeita</span>',
+    'saveError': '<span data-i18n="sys.recordErrorOnSaved">Erro ao salvar registro</span>',
+    'deleteError': '<span data-i18n="sys.recordErrorOnDelete">Erro ao tentar apagar registro</span>'
 }

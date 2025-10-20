@@ -8,6 +8,7 @@ from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from .extras import clean_request
+from django.core import serializers
 from django.conf import settings as ROOT
 from django.http import HttpResponse
 
@@ -571,45 +572,50 @@ def i18n(request):
         return HttpResponse(json.dumps(data))
     return HttpResponse('Access denied')
 
+# @login_required
+# def get_empresas(request):
+#     # Metodo retorna JSON com dados das empresas
+#     try:
+#         if request.GET.get('usuario', None) == 'new':
+#             empresas = Empresa.objects.all().order_by('nome')
+#         else:
+#             usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
+#             empresas = usuario.profile.empresas.all().order_by('nome')
+#         itens = []
+#         for item in empresas:
+#             item_dict = vars(item) # Converte objetos em dicionario
+#             if '_state' in item_dict: del item_dict['_state'] # Remove _state do dict (se existir)
+#             itens.append(item_dict)
+#         dataJSON = json.dumps(itens)
+#         return HttpResponse(dataJSON)
+#     except:
+#         return HttpResponse('')
+
 @login_required
 def get_empresas(request):
     # Metodo retorna JSON com dados das empresas
-    try:
-        if request.GET.get('usuario', None) == 'new':
-            empresas = Empresa.objects.all().order_by('nome')
-        else:
-            usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
-            empresas = usuario.profile.empresas.all().order_by('nome')
-        itens = []
-        for item in empresas:
-            item_dict = vars(item) # Converte objetos em dicionario
-            if '_state' in item_dict: del item_dict['_state'] # Remove _state do dict (se existir)
-            itens.append(item_dict)
-        dataJSON = json.dumps(itens)
-        return HttpResponse(dataJSON)
-    except:
-        return HttpResponse('')
+    if request.GET.get('usuario', None) == 'new':
+        empresas = Empresa.objects.all().order_by('nome')
+    else:
+        usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
+        empresas = usuario.profile.empresas.all().order_by('nome')
+    obj = serializers.serialize('json', empresas)
+    return HttpResponse(obj, content_type="application/json")
 
 @login_required
 def get_grupos(request):
-    try:
-        if request.GET.get('usuario', None) == 'new':
-            grupos = Group.objects.all().order_by('name')
-        else:
-            usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
-            grupos = Group.objects.filter(user=usuario).order_by('name')
-        itens = []
-        for item in grupos:
-            item_dict = vars(item) # Converte objeto em dicionario
-            if '_state' in item_dict: del item_dict['_state'] # Remove _state do dict (se existir)
-            itens.append(item_dict)
-        dataJSON = json.dumps(itens)
-        return HttpResponse(dataJSON)
-    except:
-        return HttpResponse('')
+    # Metodo retorna JSON com dados de auth.groups
+    if request.GET.get('usuario', None) == 'new':
+        grupos = Group.objects.all().order_by('name')
+    else:
+        usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
+        grupos = Group.objects.filter(user=usuario).order_by('name')
+    obj = serializers.serialize('json', grupos)
+    return HttpResponse(obj, content_type="application/json")
 
 @login_required
 def get_user_perms(request):
+    # retorna permissoes para usuario (** nao ajustar para serializers)
     try:
         exclude_itens = ['sessions','contenttypes','admin']
         if request.GET.get('usuario', None) == 'new':
@@ -619,7 +625,7 @@ def get_user_perms(request):
             perms = Permission.objects.filter(user=usuario).exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
         itens = []
         for item in perms:
-            item_dict = {'id':item.id,'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'}
+            item_dict = {'model': 'auth.perms', 'pk':item.id,'fields': {'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'}}
             itens.append(item_dict)
         dataJSON = json.dumps(itens)
         return HttpResponse(dataJSON)
@@ -643,7 +649,8 @@ def get_group_perms(request):
             perms = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
         itens = {}
         for item in perms:
-            itens[f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'] = item.id
+            item_dict = {'model': 'auth.groupPerms', 'pk':item.id,'fields': {'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'}}
+            itens.append(item_dict)
         dataJSON = json.dumps(itens)
         return HttpResponse(dataJSON)
     except:

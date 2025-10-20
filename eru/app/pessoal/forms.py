@@ -17,13 +17,8 @@ class CargoForm(forms.ModelForm):
     setor = forms.ModelChoiceField(error_messages={'required': 'Selecione um setor'},queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select','autofocus':'autofocus'}))
     nome = forms.CharField(error_messages={'required': 'Preencha o nome do cargo'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     atividades = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Atividades do cargo', 'rows':'15'}))
-
-class FuncaoFixaForm(forms.ModelForm):
-    class Meta:
-        model = FuncaoFixa
-        fields = ['nome','cargos']
-    nome = forms.ChoiceField(error_messages={'unique': 'Função Fixa para está função já tem associações'},choices=FuncaoFixa.FFIXA_CHOICES, widget=forms.Select(attrs={'class':'form-select fw-bold'}))
-
+    funcao_fixa = forms.MultipleChoiceField(required=False, choices=FuncaoFixa.FFIXA_CHOICES, widget=forms.SelectMultiple(attrs={'class':'form-select fw-bold'}))
+    
 class AfastamentoForm(forms.ModelForm):
     class Meta:
         model = Afastamento

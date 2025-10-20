@@ -4,7 +4,7 @@ from django.http import HttpResponse
 # from json import dumps
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente
-from .forms import SetorForm, CargoForm, FuncionarioForm, FuncaoFixaForm, AfastamentoForm, DependenteForm
+from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.models import Log
@@ -20,6 +20,12 @@ def setores(request):
     return render(request,'pessoal/setores.html', {'setores' : setores})
 
 @login_required
+@permission_required('pessoal.view_cargo', login_url="/handler/403")
+def cargos(request):
+    cargos = Cargo.objects.all().order_by('nome')
+    return render(request,'pessoal/cargos.html',{'cargos':cargos})
+
+@login_required
 @permission_required('pessoal.view_funcionario', login_url="/handler/403")
 def funcionarios(request):
     if request.method == 'GET':
@@ -31,7 +37,7 @@ def funcionarios(request):
                 form = FuncionarioForm(instance=funcionario)
                 return render(request,'pessoal/funcionario_id.html', {'form':form, 'funcionario': funcionario})
             else:
-                # criterio de consulta nao corresponde a uma matricula, busca avancada por nome / apelido
+                # criterio de consulta nao corresponde a uma matricula, busca avancada por nome
                 criterios = request.GET['pesquisa'].split(' ')
                 
                 # incia consulta setando somente funcionarios nas empresa autorizadas
@@ -41,8 +47,6 @@ def funcionarios(request):
                 for nome in criterios:
                     query &= Q(nome__icontains=nome)
                 
-                # Adiciona na consulta busca pelo apelido
-                query |= Q(apelido__icontains=request.GET['pesquisa'])
                 
                 funcionarios = Funcionario.objects.filter(query)
                 if len(funcionarios) == 0:
@@ -73,14 +77,44 @@ def setor_add(request):
                 l.usuario = request.user
                 l.mensagem = "CREATED"
                 l.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'])
+                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
                 return redirect('pessoal_setor_add')
             except:
-                messages.error(request, settings.DEFAULT_MESSAGES['error'])
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
                 return redirect('pessoal_setor_add')
     else:
         form = SetorForm()
     return render(request,'pessoal/setor_add.html',{'form':form})
+
+@login_required
+@permission_required('pessoal.add_cargo', login_url="/handler/403")
+def cargo_add(request):
+    if request.method == 'POST':
+        form = CargoForm(request.POST)
+        if form.is_valid():
+            # try:
+            registro = form.save()
+            for ffixa in request.POST.getlist('funcao_fixa'):
+                if FuncaoFixa.objects.filter(nome=ffixa).exists():
+                    ff = FuncaoFixa.objects.get(nome=ffixa)
+                else:
+                    ff = FuncaoFixa.objects.create(nome=ffixa)
+                ff.cargos.add(registro)
+            l = Log()
+            l.modelo = "pessoal.cargo"
+            l.objeto_id = registro.id
+            l.objeto_str = registro.nome[0:48]
+            l.usuario = request.user
+            l.mensagem = "CREATED"
+            l.save()
+            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+            return redirect('pessoal_cargo_add')
+            # except:
+            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+            #     return redirect('pessoal_cargo_add')
+    else:
+        form = CargoForm()
+    return render(request,'pessoal/cargo_add.html',{'form':form})
 
 @login_required
 @permission_required('pessoal.add_funcionario', login_url="/handler/403")
@@ -111,10 +145,10 @@ def funcionario_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 if not has_warnings:
-                    messages.success(request,'<span data-i18n="common.employee">Funcionário</span> <b>' + registro.matricula + '</b> <span data-i18n="common.registered" data-i18n-transform="lowerCase">cadastrado</span>')
+                    messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
                 return redirect('pessoal_funcionario_id', registro.id)
             except:
-                messages.error(request,'<span data-i18n="employees.sysMessages.errorCreateEmployee">Erro ao inserir funcionario [INVALID FORM]</span>')
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'] + f' <b>{registro.matricula}</b>')
                 return redirect('pessoal_funcionario_add')
     else:
         form = FuncionarioForm()
@@ -130,6 +164,13 @@ def setor_id(request,id):
     setor = Setor.objects.get(pk=id)
     form = SetorForm(instance=setor)
     return render(request,'pessoal/setor_id.html',{'form':form,'setor':setor})
+
+@login_required
+@permission_required('pessoal.change_cargo', login_url="/handler/403")
+def cargo_id(request,id):
+    cargo = Cargo.objects.get(pk=id)
+    form = CargoForm(instance=cargo)
+    return render(request,'pessoal/cargo_id.html',{'form':form,'cargo':cargo})
 
 @login_required
 @permission_required('pessoal.view_funcionario', login_url="/handler/403")
@@ -159,17 +200,51 @@ def setor_update(request,id):
         l.usuario = request.user
         l.mensagem = "UPDATE"
         l.save()
-        messages.success(request,settings.DEFAULT_MESSAGES['updated'])
+        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal_setor_id', id)
     else:
         return render(request,'pessoal/setor_id.html',{'form':form,'setor':setor})
+
+@login_required
+@permission_required('pessoal.change_cargo', login_url="/handler/403")
+def cargo_update(request,id):
+    cargo = Cargo.objects.get(pk=id)
+    form = CargoForm(request.POST, instance=cargo)
+    if form.is_valid():
+        registro = form.save()
+        flist = [chave for chave, valor in FuncaoFixa.FFIXA_CHOICES] # inicia lista com as funcoes fixas existentes
+        for ffixa in request.POST.getlist('funcao_fixa'):
+            if registro.ffixas.filter(nome=ffixa).exists():
+                # se funcao fixa ja esta associada a funcao nada precisa ser feito
+                flist.remove(ffixa)
+            else:
+                if FuncaoFixa.objects.filter(nome=ffixa).exists():
+                    ff = FuncaoFixa.objects.get(nome=ffixa)
+                else:
+                    ff = FuncaoFixa.objects.create(nome=ffixa)
+                ff.cargos.add(registro)
+                flist.remove(ffixa)
+        for item in flist:
+            if registro.ffixas.filter(nome=item).exists():
+                FuncaoFixa.objects.get(nome=item).cargos.remove(registro)
+        l = Log()
+        l.modelo = "pessoal.cargo"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "UPDATE"
+        l.save()
+        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_cargo_id', id)
+    else:
+        return render(request,'pessoal/cargo_id.html',{'form':form,'cargo':cargo})
 
 @login_required
 @permission_required('pessoal.change_funcionario', login_url="/handler/403")
 def funcionario_update(request,id):
     funcionario = Funcionario.objects.get(pk=id)
     if funcionario.status == 'D':
-        messages.error(request,'<b>Erro:</b> Não é possivel movimentar funcionários desligados')
+        messages.error(request,'<span data-i18n="employees.sysMessages.cantMoveDismissEmployee"><b>Erro:</b> Não é possivel movimentar funcionários desligados</span>')
         return redirect('pessoal_funcionario_id', id)
     form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
     if form.is_valid():
@@ -185,7 +260,7 @@ def funcionario_update(request,id):
                 registro.foto = f'pessoal/fotos/{file_name}'
             else:
                 has_warnings = True
-                messages.warning(request,'<b>Erro ao salvar foto:</b> ' + result[1])
+                messages.warning(request, settings.DEFAULT_MESSAGES['saveError'] + f' pic: result[1]')
         registro.save()
         l = Log()
         l.modelo = "pessoal.funcionario"
@@ -195,7 +270,7 @@ def funcionario_update(request,id):
         l.mensagem = "UPDATE"
         l.save()
         if not has_warnings:
-            messages.success(request,'Funcionario <b>' + registro.matricula + '</b> alterado')
+            messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' mat: <b>{registro.matricula}</b>')
         return redirect('pessoal_funcionario_id', id)
     else:
         return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
@@ -215,11 +290,30 @@ def setor_delete(request,id):
         l.mensagem = "DELETE"
         registro.delete()
         l.save()
-        messages.warning(request,f'Setor <b>{registro.nome}</b> apagado. Essa operação não pode ser desfeita')
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal_setores')
     except:
-        messages.error(request,'ERRO ao apagar setor')
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal_setor_id', id)
+
+@login_required
+@permission_required('pessoal.delete_cargo', login_url="/handler/403")
+def cargo_delete(request,id):
+    try:
+        registro = Cargo.objects.get(pk=id)
+        l = Log()
+        l.modelo = "pessoal.cargo"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "DELETE"
+        registro.delete()
+        l.save()
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_cargos')
+    except:
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_cargo_id', id)
 
 @login_required
 @permission_required('pessoal.delete_funcionario', login_url="/handler/403")
@@ -234,25 +328,12 @@ def funcionario_delete(request,id):
         l.mensagem = "DELETE"
         registro.delete()
         l.save()
-        messages.warning(request,'Funcionario apagado. Essa operação não pode ser desfeita')
+        messages.warning(request,settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.matricula}</b>')
         return redirect('pessoal_funcionarios')
     except:
         messages.error(request,'ERRO ao apagar funcionario')
         return redirect('pessoal_funcionario_id', id)
 
-
-# Metodos ajax (retorna json)
-# @login_required
-# def get_setores(request):
-#     try:
-#         setores = Setor.objects.all().order_by('nome')
-#         itens = {}
-#         for item in setores:
-#             itens[item.nome] = item.id
-#         dataJSON = dumps(itens)
-#         return HttpResponse(dataJSON)
-#     except:
-#         return HttpResponse('')
 
 @login_required
 def get_setores(request):

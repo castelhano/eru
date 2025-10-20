@@ -2,9 +2,12 @@
     "personal":{
         "personal": "Personal"
     },
+    "position": {
+        "fixedPosition": "Fixed Position"
+    },
     "employees": {
         "sysMessages": {
-            "errorCreateEmployee": "Error registering employee [INVALID FORM]"
+            "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees"
         }
 
     }

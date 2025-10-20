@@ -8,7 +8,7 @@
         itens: [
         {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal_funcionarios' %}', 'data-i18n': 'common.employee', 'data-i18n-bold':'f', keybind: ['f', ()=>{if(cadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal_setores' %}', 'data-i18n': 'common.sector', 'data-i18n-bold':'s', keybind: ['s', ()=>{if(cadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{# url 'pessoal_cargos' #}', 'data-i18n': 'common.position', 'data-i18n-bold':'o', keybind: ['o', ()=>{if(cadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal_cargos' %}', 'data-i18n': 'common.position', 'data-i18n-bold':'o', keybind: ['o', ()=>{if(cadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',

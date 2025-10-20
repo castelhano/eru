@@ -44,15 +44,15 @@
     
     {% if perms.trafego.view_planejamento %}
     const menuPlanejamento = new canvasNavLink({
-        name: 'Pla<b>n</b>ejamento',
+        name: '<b>P</b>lanejamento',
         'data-i18n': 'route.planning',
-        'data-i18n-bold': 'n',
+        'data-i18n-bold': 'p',
         id: 'menu_planejamento',
         class: 'text-purple',
         icon: 'bi bi-shuffle',
         href: '{% url 'trafego_planejamentos' %}',
         keybind:[
-            'alt+n',
+            'alt+p',
             ()=>{document.getElementById('menu_planejamento').click()},
             {'data-i18n': 'route.shortcuts.planningMenu', icon: 'bi bi-layout-sidebar-inset-reverse text-orange', desc: 'Abre página de planejamentos'}
         ]

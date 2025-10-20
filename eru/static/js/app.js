@@ -4,7 +4,7 @@ const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalCon
 
 /*
 * appAlert  Gera um alerta (bootstrap alert), somente um alerta aberto a cada momento
-* appNotify Gera uma notificação (stackable), na caixa de notificação do sistema
+* appNotify Gera uma notificaçao (stackable), na caixa de notificaçao do sistema
 *
 * @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
 * @param    {String} tipo Tipo do alerta (info, danger, warning, success, primary, etc..)
@@ -143,6 +143,29 @@ function appOnLogout(url){
 //     document.getElementById('appModalLoadingMessage').innerHTML = appModalLoadingTimeLimitMessage;
 //   }, appModalLoadingTimeLimit);
 // }
+
+// dictIsEqual Recebe dois objetos (dict) e compara se sao iguais, levando em consideracao nao somente primtivos, mais apontadores e objetos
+function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
+  if (obj1 === obj2) {return true} //para comparacao de valores primitivos, como strings e numeros
+  if (obj1 instanceof HTMLElement && obj2 instanceof HTMLElement) {return obj1 === obj2} // Verifica se sao elementos DOM, retorna true apenas se for a mesma instancia de elemento
+  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) { return false } // Verifica se nao sao objetos ou se um deles eh nulo
+  if (seen.has(obj1) || seen.has(obj2)) {return seen.get(obj1) === obj2} // Trata referencias circulares
+  seen.set(obj1, obj2);
+
+  // Obtém as chaves de ambos os objetos
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  
+  if (keys1.length !== keys2.length) {return false} // Compara o numero de chaves
+
+  // Percorre as chaves e compara os valores recursivamente
+  for (const key of keys1) {
+    if (!keys2.includes(key) || !dictIsEqual(obj1[key], obj2[key], seen)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 // Codigo a ser executado apos carregamento completo da pagina
 document.addEventListener("DOMContentLoaded", function(event) {

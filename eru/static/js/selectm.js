@@ -29,17 +29,19 @@ class jsSelectm{
         this.__buildSelect();
         if(!this.customStyles){this.__addStyles();} // Cria estilos padrao caso nao definido estilos customizados
         this.buildOptions();
+        // assegura que todos os valores informados em optionsSelected estejam marcados como selected no select original
+        this.optionsSelected.forEach((el)=>{this.target.querySelector(`option[value=${el}]`).selected = true})
     }
     __addStyles(){
         let style = document.createElement('style');
-        style.innerHTML = '.jsSelectm_wrapper{position:relative;border: 1px solid #ced4da;border-radius: 0.375rem;padding: 0.375rem 0.875rem 0.475rem 0.75rem;}';
+        style.innerHTML = '.jsSelectm_wrapper{position:relative;border: 1px solid var(--bs-border-color);border-radius: 0.375rem;padding: 0.375rem 0.875rem 0.475rem 0.75rem;}';
         style.innerHTML += '.jsSelectm_wrapper.disabled{background-color: #E9ECEF;}';
         style.innerHTML += '[data-bs-theme="dark"] .jsSelectm_wrapper.disabled{background-color: #393939;}';
         style.innerHTML += '.jsSelectm_wrapper small{margin-bottom: 5px;margin-right: 5px;}';
         style.innerHTML += '.jsSelectm_wrapper > div{max-height:230px;overflow-y: scroll;}';
         style.innerHTML += '.jsSelectm_wrapper div[data-value], .jsSelectm_wrapper div[data-role]{padding: 2px 5px 2px 5px; border-radius: 3px;}';
         style.innerHTML += '.jsSelectm_wrapper div[data-select]{background-color: rgba(25, 135, 84, 0.25)!important;}';
-        if(!this.disabled){style.innerHTML += '@media(min-width: 992px){.jsSelectm_wrapper div[data-value]:hover, .jsSelectm_wrapper div[data-role]:hover{cursor: pointer;background-color: #ced4da; opacity: 0.5;}}';}
+        if(!this.disabled){style.innerHTML += '@media(min-width: 992px){.jsSelectm_wrapper div[data-value]:hover, .jsSelectm_wrapper div[data-role]:hover{cursor: pointer;background-color: var(--bs-secondary-bg);}}';}
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     __buildSelect(){

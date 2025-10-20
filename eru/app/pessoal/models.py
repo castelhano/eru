@@ -92,6 +92,10 @@ class Cargo(models.Model):
         return self.nome
     def ativos(self):
         return Funcionario.objects.filter(cargo=self, status='A').count()
+    def funcoes_fixas(self):
+        return self.ffixas.all()
+    def funcoes_fixas_list(self):
+        return list(self.ffixas.values_list('nome', flat=True))
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.cargo',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)

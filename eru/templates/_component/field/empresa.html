@@ -15,7 +15,7 @@
 					empresa_atual = '{{empresa_atual}}';
 					if({{blank_row|default:'false'}}){empresas.innerHTML = '<option value="" data-i18n="common.all">{{blank_row_message|default:'Todas'}}</option>' }
   				for(key in obj){
-					empresas.innerHTML += `<option value="${obj[key].id}" ${obj[key].id == empresa_atual ? 'selected' : ''}>${obj[key].nome}</option>`;
+					empresas.innerHTML += `<option value="${obj[key].pk}" ${obj[key].pk == empresa_atual ? 'selected' : ''}>${obj[key].fields.nome}</option>`;
 				}
   			}
   		}
