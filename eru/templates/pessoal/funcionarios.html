@@ -176,6 +176,13 @@
       {target: document.getElementById('id_setor'), url: '{% url 'pessoal_get_setores' %}'}
     ]
   })
+  let oldContext;
+
+  filterForm.form.addEventListener('show.bs.modal', (ev)=>{
+    oldContext = appKeyMap.getContext();
+    appKeyMap.setContext('filterModal');
+  })
+  filterForm.form.addEventListener('hide.bs.modal', (ev)=>{appKeyMap.setContext(oldContext)})
   
   
   

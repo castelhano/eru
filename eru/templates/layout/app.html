@@ -171,6 +171,7 @@
             notifyFunction: appAlert
         })
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
+        const appOldContext = appKeyMap.getContext();        // usado para rollback de centexto
         {% if user.is_superuser %}
         appKeyMap.bind('s+backspace', ()=>{
             i18n.clearAll(false);

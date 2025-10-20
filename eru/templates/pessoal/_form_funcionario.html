@@ -185,7 +185,7 @@
                             <label for="id_cnh_validade">CNH Validade</label>
                         </div>
                         <div class="form-floating col-lg">
-                            {% if funcionario.cnh == None %}
+                            {% if funcionario.cnh_validade == None %}
                             <input type="text" class="form-control" id="id_situacao_cnh" value="" disabled>
                             {% elif funcionario.cnh_eh_valida %}
                             <input type="text" class="form-control" id="id_situacao_cnh" value="No prazo" disabled>
@@ -251,49 +251,58 @@
 </div>
 
 <script>
-    // function carregaSetores(loading_page=false) {
-    //     var xhttp = new XMLHttpRequest();
-    //     xhttp.onreadystatechange = function() {
-    //         if(this.readyState == 4 && this.status == 200){
-    //             if(this.responseText == ''){}
-    //             else{
-    //                 let obj = JSON.parse(this.responseText);
-    //                 setores = document.getElementById("id_setor");
-    //                 setor_atual = '{{funcionario.cargo.setor.id|safe}}';
-    //                 for(key in obj){
-    //                     if(obj[key] == setor_atual){setores.innerHTML += '<option value="' + obj[key] + '" selected>' + key + '</option>';}
-    //                     else{setores.innerHTML += '<option value="' + obj[key] + '">' + key + '</option>';}}
-    //                     if(loading_page){carregaCargos();}
-    //                 }
-    //             }
-    //         };
-    //         xhttp.open("GET", "{# url 'pessoal_get_setores' #}", true);
-    //         xhttp.send();
-    //     }
-    //     carregaSetores(true);
-        
-    //     function carregaCargos() {
-    //         setor = document.getElementById('id_setor').value;
-    //         cargos = document.getElementById("id_cargo");
-    //         cargos.innerHTML = '<option value="">---------</option>';
-    //         if(setor == ''){}
-    //         else{
-    //             var xhttp = new XMLHttpRequest();
-    //             xhttp.onreadystatechange = function() {
-    //                 if(this.readyState == 4 && this.status == 200){
-    //                     if(this.responseText == ''){}
-    //                     else{
-    //                         let obj = JSON.parse(this.responseText);
-    //                         cargo_atual = '{{funcionario.cargo.id|safe}}';
-    //                         for(key in obj){
-    //                             if(obj[key] == cargo_atual){cargos.innerHTML += '<option value="' + obj[key] + '" selected>' + key + '</option>';}
-    //                             else{cargos.innerHTML += '<option value="' + obj[key] + '">' + key + '</option>';}
-    //                         }
-    //                     }
-    //                 }
-    //             };
-    //             xhttp.open("GET", "{# url 'pessoal_get_cargos' #}?setor=" + setor, true);
-    //             xhttp.send();
-    //         }
-    //     } 
-    </script>
+    function carregaSetores(loading_page=false) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if(this.readyState == 4 && this.status == 200){
+                if(this.responseText == ''){}
+                else{
+                    let obj = JSON.parse(this.responseText);
+                    setores = document.getElementById("id_setor");
+                    setor_atual = '{{funcionario.cargo.setor.id|safe}}';
+                    obj.forEach((el)=>{
+                        setores.innerHTML += `<option value="${el.pk}"${el.pk == setor_atual ? 'selected' : ''}>${el.fields.nome}</option>`;
+                    })
+                    if(loading_page){carregaCargos();}
+                }
+            }
+        };
+        xhttp.open("GET", "{% url 'pessoal_get_setores' %}", true);
+        xhttp.send();
+    }
+    carregaSetores(true);
+    
+    function carregaCargos() {
+        setor = document.getElementById('id_setor').value;
+        cargos = document.getElementById("id_cargo");
+        cargos.innerHTML = '<option value="">---------</option>';
+        if(setor == ''){}
+        else{
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if(this.readyState == 4 && this.status == 200){
+                    if(this.responseText == ''){}
+                    else{
+                        let obj = JSON.parse(this.responseText);
+                        cargo_atual = '{{funcionario.cargo.id|safe}}';
+                        obj.forEach((el)=>{
+                            cargos.innerHTML += `<option value="${el.pk}"${el.pk == cargo_atual ? 'selected' : ''}>${el.fields.nome}</option>`;
+                        })
+                    }
+                }
+            };
+            xhttp.open("GET", "{% url 'pessoal_get_cargos' %}?setor=" + setor, true);
+            xhttp.send();
+        }
+    }
+
+    function _formRun(){
+        const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
+        const cnh = IMask(document.getElementById('id_cnh'), {mask: '000.000.000-00'})
+        appKeyMap.bind('ctrl+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com dados básicos do funcionário', origin: '_form_funcionario'})
+        appKeyMap.bind('ctrl+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com documentos do funcionário', origin: '_form_funcionario'})
+        appKeyMap.bind('ctrl+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com endereço e informações de contato', origin: '_form_funcionario'})
+        appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com detalhes gerais do funcionário', origin: '_form_funcionario'})
+
+    }
+</script>

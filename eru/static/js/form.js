@@ -11,9 +11,9 @@
 class jsForm{
     constructor(form, options){
         this.form = form;
-        this.common = []; // Lista vai armazenar os fields comuns (sem maskara)
-        this.imask = options?.imask || []; // Lista elementos Imask presentes no form
-        this.imaskFieldNames = []; // Lista com nomes dos elementos Imask
+        this.common = [];                   // Lista vai armazenar os fields comuns (sem maskara)
+        this.imask = options?.imask || [];  // Lista elementos Imask presentes no form
+        this.imaskFieldNames = [];          // Lista com nomes dos elementos Imask
         this.defaultOptions = {
             selectPopulate: [],                         // Lista com selects para preenchimento via ajax
             multipleAddon: [],                          // Adiciona controle para entrada multipla (cria um select)
@@ -241,15 +241,14 @@ class jsForm{
         modalContainer.appendChild(modalDialog);
         document.body.appendChild(modalContainer);
         this.modal = new bootstrap.Modal(modalContainer, {});
-        if(this.modalFocus){
-            modalContainer.addEventListener('shown.bs.modal', () => { this.modalFocus.focus()})
-            modalContainer.addEventListener('hide.bs.modal', () => { this.modalFocus.focus(), appKeyMap.setContext();})
-        }
+        modalContainer.addEventListener('shown.bs.modal', () => { 
+            if(this.modalFocus){this.modalFocus.focus()}
+            appKeyMap.setContext('filterModal');
+        })
+        modalContainer.addEventListener('hide.bs.modal', () => { appKeyMap.setContext()})
+        
         if(this.modalTrigger){
-            this.modalTrigger.addEventListener('click', () => { 
-                this.modal.show();
-                appKeyMap.setContext('filterModal');
-            })
+            this.modalTrigger.addEventListener('click', () => {this.modal.show()})
         }
         this.modalBody.style.display = 'block'; // Recomendado setar o body na pagina como display = none, aqui voltamos a exibir elemento
     }

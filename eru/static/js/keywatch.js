@@ -21,6 +21,7 @@ class Keywatch{
             all: 'Atalhos Globais',
             default: 'Atalhos Base',
         };
+        this.locked = false;                         // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
         this.context = 'default';                    // contexto ativo
         this.handlerOptions = {                      // configuracoes padrao para shortcut
             context: 'default',
@@ -44,12 +45,14 @@ class Keywatch{
             shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             shortcutMaplistIcon: "bi bi-alt",
-            shortcutMaplistOnlyContextActive: false,    // se true so mostra atalhados do contexto ativo (alem do all)
+            shortcutMaplistOnlyContextActive: true,    // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null,                          // integracao com lib i18n, se ativa deve informar objeto instanciado
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
             searchInputPlaceholder: 'Criterio pesquisa',
+            contextLabelClasslist: 'fs-8 text-body-tertiary position-absolute',
+            contextLabelStyle: 'top: 22px; right: 25px;',
             modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',
             modalTableLabelClasslist: 'border rounded py-1 px-2 bg-dark-subtle text-body-secondary font-monospace',
             shortcutModalTableDetailClasslist: 'fit text-center px-3',
@@ -105,6 +108,7 @@ class Keywatch{
     
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
+        if(this.locked){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
@@ -318,13 +322,15 @@ class Keywatch{
     showKeymap(){
         this._refreshMapTable();
         this.shortcutModal.showModal();
-        this.setContext('keywatchModal');
+        this.locked = true;
+        this.pressed = [];
     }
     _createModal(){
         this.shortcutModal = document.createElement('dialog'); this.shortcutModal.classList = this.shortcutModalClasslist;
-        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = '';this.setContext();} // Limpa input ao fechar modal e retorna contexto para default
+        this.shortcutModal.onclose = ()=>{this.shortcutSearchInput.value = '';this.locked = false;} // Limpa input ao fechar modal e retorna contexto para default
         this.shortcutSearchInput = document.createElement('input');this.shortcutSearchInput.type = 'search';this.shortcutSearchInput.classList = this.searchInputClasslist;this.shortcutSearchInput.placeholder = this.searchInputPlaceholder;this.shortcutSearchInput.id = 'keywatch_shortcutSearchInput';
         this.shortcutSearchInput.oninput = (ev)=>{this._filterMapTable(ev)}
+        this.contextLabel = document.createElement('span');this.contextLabel.classList = this.contextLabelClasslist;this.contextLabel.style = this.contextLabelStyle; this.contextLabel.innerHTML = this.context;
         this.shortcutModalTable = document.createElement('table');
         this.shortcutModalTable.classList = this.modalTableClasslist;
         this.shortcutModalTableThead = document.createElement('thead');
@@ -333,6 +339,7 @@ class Keywatch{
         this.shortcutModalTable.appendChild(this.shortcutModalTableThead);
         this.shortcutModalTable.appendChild(this.shortcutModalTableTbody);
         this.shortcutModal.appendChild(this.shortcutSearchInput);
+        this.shortcutModal.appendChild(this.contextLabel);
         this.shortcutModal.appendChild(this.shortcutModalTable);
         document.body.appendChild(this.shortcutModal);
     }

@@ -34,8 +34,7 @@ def funcionarios(request):
             # checa se existe funcionario com matricula informada na consulta, se sim abre form de edicao para funcionario
             if Funcionario.objects.filter(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all()).exists():
                 funcionario = Funcionario.objects.get(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all())
-                form = FuncionarioForm(instance=funcionario)
-                return render(request,'pessoal/funcionario_id.html', {'form':form, 'funcionario': funcionario})
+                return redirect('pessoal_funcionario_id', funcionario.id)
             else:
                 # criterio de consulta nao corresponde a uma matricula, busca avancada por nome
                 criterios = request.GET['pesquisa'].split(' ')
@@ -46,7 +45,6 @@ def funcionarios(request):
                 # Analise parcialmente cada nome informado buscando correspondencia 
                 for nome in criterios:
                     query &= Q(nome__icontains=nome)
-                
                 
                 funcionarios = Funcionario.objects.filter(query)
                 if len(funcionarios) == 0:
@@ -339,4 +337,13 @@ def funcionario_delete(request,id):
 def get_setores(request):
     setores = Setor.objects.all().order_by('nome')
     obj = serializers.serialize('json', setores)
+    return HttpResponse(obj, content_type="application/json")
+
+@login_required
+def get_cargos(request):
+    try:
+        cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
+        obj = serializers.serialize('json', cargos)
+    except Exception as e:
+        obj = []
     return HttpResponse(obj, content_type="application/json")

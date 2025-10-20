@@ -1,4 +1,5 @@
 {% extends "layout/app.html" %}
+{% load static %}
 {% block title %}Funcionario{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
@@ -87,8 +88,14 @@
 </div>
 {% endblock%}
 
-{% block add_script_src %}{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
+{% endblock %}
 
 <script>
-    {% block add_script %}{% endblock %}
+    {% block add_script %}
+    const form = new jsForm(document.getElementById('app_form'), {})
+    _formRun();
+    {% endblock %}
 </script>
