@@ -14,14 +14,21 @@ def clean_request(request, fields):
     params = {}
     for p in fields:
         if p in request:
-            if request[p] != 'True' and request[p] != 'False' and request[p] != 'None':
+            especial = ['','True', 'False', 'None', 'on', 'off']
+            if request[p] not in especial:
                 params[p] = request[p]
-            elif request[p] == 'True':
-                params[p] = True
-            elif request[p] == 'False':
-                params[p] = False
+            elif request[p] in ['']:
+                pass
             else:
-                params[p] = None
+                convert = {'True': True, 'False': False, 'None': None, 'on': True, 'off': False}
+                params[p] = convert[request[p]]
+            # elif request[p] == 'True':
+            #     params[p] = True
+            # elif request[p] == 'False':
+            #     params[p] = False
+            # elif request[p] == 'None':
+            #     params[p] = None
+    print(params)
     return params
 
 

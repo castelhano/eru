@@ -17,7 +17,7 @@
                             {% elif funcionario.status == 'A' %}
                             <a class="btn btn-sm btn-success px-4 px-lg-0 disabled">ATIVO</a>
                             {% else %}
-                            <a class="btn btn-sm btn-warning px-4 px-lg-0 disabled">{{funcionario.get_status_display}}</a>
+                            <a class="btn btn-sm btn-warning px-4 px-lg-0 disabled text-uppercase">{{funcionario.get_status_display}}</a>
                             {% endif %}
                         </div>
                     </div>
@@ -303,6 +303,6 @@
         appKeyMap.bind('ctrl+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com documentos do funcionário', origin: '_form_funcionario'})
         appKeyMap.bind('ctrl+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com endereço e informações de contato', origin: '_form_funcionario'})
         appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com detalhes gerais do funcionário', origin: '_form_funcionario'})
-
+        return [cpf, cnh]
     }
 </script>

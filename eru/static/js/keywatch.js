@@ -269,6 +269,7 @@ class Keywatch{
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
         else if(desc){this.contexts[context] = desc} // Desc pode ser alterado pelo metodo setContext
         this.context = context;
+        this.contextLabel.innerHTML = context;
     }
     updateContext(context, desc=''){if(this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
     avail(scope, options={}){

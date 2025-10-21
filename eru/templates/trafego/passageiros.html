@@ -111,8 +111,7 @@
     {
       target: document.getElementById('id_empresa'), 
       url: '{% url 'core_get_empresas' %}',
-      emptyRow: true,
-      emptyRowText: 'Todas',
+      emptyRow: {innerHTML: 'Todas'},
       then: ()=>{if({{empresa|default:'false'}}){document.getElementById('id_empresa').value = '{{empresa}}'}}
     }
     ],

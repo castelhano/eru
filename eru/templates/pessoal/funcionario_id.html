@@ -29,7 +29,7 @@
             </li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_funcionario_update' funcionario.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal_funcionario_update' funcionario.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off">
         {% csrf_token %}
         {% include 'pessoal/_form_funcionario.html' %}
     </form>
@@ -95,7 +95,9 @@
 
 <script>
     {% block add_script %}
-    const form = new jsForm(document.getElementById('app_form'), {})
-    _formRun();
+    let imaskElements = _formRun();
+    const form = new jsForm(document.getElementById('app_form'), {
+        imask: imaskElements
+    })
     {% endblock %}
 </script>

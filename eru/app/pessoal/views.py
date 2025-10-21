@@ -8,7 +8,7 @@ from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, Depen
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.models import Log
-from core.extras import create_image
+from core.extras import create_image, clean_request
 from django.conf import settings
 from datetime import datetime
 
@@ -28,8 +28,10 @@ def cargos(request):
 @login_required
 @permission_required('pessoal.view_funcionario', login_url="/handler/403")
 def funcionarios(request):
+    options = {
+        "form": FuncionarioForm()
+    }
     if request.method == 'GET':
-        form = FuncionarioForm()
         if request.GET.get('pesquisa'):
             # checa se existe funcionario com matricula informada na consulta, se sim abre form de edicao para funcionario
             if Funcionario.objects.filter(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all()).exists():
@@ -46,18 +48,37 @@ def funcionarios(request):
                 for nome in criterios:
                     query &= Q(nome__icontains=nome)
                 
-                funcionarios = Funcionario.objects.filter(query)
-                if len(funcionarios) == 0:
-                    messages.warning(request,'<i class="bi bi-exclamation-triangle-fill me-2"></i><span data-i18n="sys.noResultsFound">Nenhum resultado encontrado com os critérios informados</span>')
-                return render(request,'pessoal/funcionarios.html', {'form':form, 'funcionarios': funcionarios})
+                options['funcionarios'] = Funcionario.objects.filter(query)
+                if len(options['funcionarios']) == 0:
+                    messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
         else:
-            # Se veio por metodo get sem filtro, apenas exibe pagina base para consulta
-            return render(request,'pessoal/funcionarios.html', {'form':form})
+            if request.GET:
+                # Se veio parametros pelo get realiza a consulta
+                options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
+                fields = ['cnh_validade__lt']
+                try:
+                    params = clean_request(request.GET, fields)
+                    options['funcionarios'] = options['funcionarios'].filter(**params)
+                    if len(options['funcionarios']) == 0:
+                        messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
+                except:
+                    messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
+            else:
+                # Se veio por metodo get sem filtro, apenas exibe pagina base para consulta
+                pass
     else:
         # Request via POST vindo de um form de filtros, cria query e retorna resultados compativeis
-        pass
-
-
+        options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
+        fields = ['empresa','status','motivo_desligamento','regime','cargo__setor', 'pne']
+        # try:
+        params = clean_request(request.POST, fields)
+        options['funcionarios'] = options['funcionarios'].filter(**params)
+        if len(options['funcionarios']) == 0:
+            messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
+        # except:
+        #     messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
+        #     return redirect('pessoal_funcionarios')
+    return render(request, 'pessoal/funcionarios.html', options)
 
 # Metodos ADD
 @login_required

@@ -6,8 +6,15 @@
         "fixedPosition": "Fixed Position"
     },
     "employees": {
+        "terminationReason": "Reason for termination",
         "sysMessages": {
             "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees"
+        },
+        "shortcuts": {
+            "selectFieldCompany": "Focus field Company",
+            "selectFieldStatus": "Focus field Status",
+            "selectFieldRegime": "Focus field Regime",
+            "selectFieldSector": "Focus field Sector"
         }
 
     }

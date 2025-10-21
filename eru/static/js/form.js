@@ -14,6 +14,7 @@ class jsForm{
         this.common = [];                   // Lista vai armazenar os fields comuns (sem maskara)
         this.imask = options?.imask || [];  // Lista elementos Imask presentes no form
         this.imaskFieldNames = [];          // Lista com nomes dos elementos Imask
+        this.previousContext;               // Guarda contexto anterior, usado ao alterar o contexto na exibicao do filterModal
         this.defaultOptions = {
             selectPopulate: [],                         // Lista com selects para preenchimento via ajax
             multipleAddon: [],                          // Adiciona controle para entrada multipla (cria um select)
@@ -23,6 +24,9 @@ class jsForm{
             novalidate: false,                          // Setar {novalidate: true} para desativar validacao do formulario
             modalBody: null,                            // Usar (modalBody: container) para criacao de modal (bootstrap modal) de filtros
             modalTrigger: null,                         // Elemento acionador do modal
+            triggerShortcut: 'f2',                      // Teclas de atalho (integracao com keywatch) para acionamento do modal
+            submitSchema: {type: 'submit', innerHTML: '<b>C</b>onfirmar', classList: 'btn btn-sm btn-primary', 'data-i18n': 'common.confirm', 'data-i18n-bold': "c"},
+            cancelSchema: {type: 'button', innerHTML: 'Cancelar', classList: 'btn btn-sm btn-secondary', 'data-i18n': 'common.cancel', 'data-bs-dismiss': 'modal', 'tabIndex': '-1'},
             modalFocus: null,                           // Elemento html a receber foco ao abrir modal
         }
         // ** customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
@@ -207,11 +211,9 @@ class jsForm{
             try{
                 let opt = document.createElement('option');
                 opt.value = el?.value || '';
-                if(el?.i18n){
-                    opt.innerHTML = i18n.getEntry(el.i18n) || el?.desc || 'Todos';
-                    opt.setAttribute('data-i18n', el.i18n);
-                }
-                else{opt.innerHTML = el?.desc || 'Todos';}
+                el['data-i18n'] = el?.['data-i18n'] || 'common.all'
+                opt.innerHTML = i18n.getEntry(el['data-i18n']) || el?.desc || 'Todos';
+                opt.setAttribute('data-i18n', el['data-i18n']);
                 this[el.nome].insertBefore(opt, this[el.nome].firstChild);
                 this[el.nome].value = opt.value;
             }catch(err){
@@ -227,11 +229,21 @@ class jsForm{
         let modalTitle = document.createElement('h5'); modalTitle.setAttribute('data-i18n', 'sys.filterQuery');modalTitle.innerHTML = 'Filtrar Consulta';
         let separator = document.createElement('hr');
         let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
-        let cancel = document.createElement('button'); cancel.type = 'button'; cancel.classList = 'btn btn-sm btn-secondary'; cancel.setAttribute('data-bs-dismiss', "modal"); cancel.setAttribute('data-i18n', "common.cancel"); cancel.innerHTML = 'Cancelar';
-        let confirm = document.createElement('button'); confirm.type = 'submit'; confirm.classList = 'btn btn-sm btn-primary'; confirm.setAttribute('data-i18n', "common.confirm");confirm.setAttribute('data-i18n-bold', "c"); confirm.innerHTML = '<b>C</b>onfirmar';
+        this.cancel = document.createElement('button');
+        for(let key in this.cancelSchema){this.cancel[key] = this.cancelSchema[key]}
+        this.submit = document.createElement('button');
+        for(let key in this.submitSchema){this.submit[key] = this.submitSchema[key]}
+        this.submit.addEventListener('click', ()=>{
+            if(this.modalBody.tagName == 'FORM'){this.modalBody.submit()}
+            else{
+                let form = this.modalBody.querySelector('form');
+                if(form){form.submit()}
+            }
+        })
+
         // *******
-        modalFooter.appendChild(cancel);
-        modalFooter.appendChild(confirm);
+        modalFooter.appendChild(this.cancel);
+        modalFooter.appendChild(this.submit);
         modalBody.appendChild(modalTitle);
         modalBody.appendChild(separator);
         modalBody.appendChild(this.modalBody); // conteudo do forma repassado ao instanciar form
@@ -243,14 +255,24 @@ class jsForm{
         this.modal = new bootstrap.Modal(modalContainer, {});
         modalContainer.addEventListener('shown.bs.modal', () => { 
             if(this.modalFocus){this.modalFocus.focus()}
+            this.previousContext = appKeyMap.getContext();
             appKeyMap.setContext('filterModal');
         })
-        modalContainer.addEventListener('hide.bs.modal', () => { appKeyMap.setContext()})
+        modalContainer.addEventListener('hide.bs.modal', () => { appKeyMap.setContext(this.previousContext)})
         
         if(this.modalTrigger){
             this.modalTrigger.addEventListener('click', () => {this.modal.show()})
+            appKeyMap.bind(this.triggerShortcut, ()=>{this.modalTrigger.click()}, {desc: 'Exibe filtros da página', icon: 'bi bi-funnel-fill', origin: 'jsForm', 'data-i18n':'sys.shortcuts.showFilters'})
         }
         this.modalBody.style.display = 'block'; // Recomendado setar o body na pagina como display = none, aqui voltamos a exibir elemento
+        appKeyMap.bind('alt+c', ()=>{this.submit.click()}, 
+        {
+            context: 'filterModal', 
+            desc: 'Realiza busca com filtros informados', 
+            origin: 'jsForm', 
+            icon: 'bi bi-funnel-fill text-primary', 
+            'data-i18n': 'sys.shortcuts.submitFilters'
+        })
     }
     validate(){ // Metodo faz validacao para os campos do form
         cleanNotify(); // Limpa area de notificacao
@@ -291,10 +313,12 @@ class jsForm{
             this.form.querySelectorAll('[data-jsform_unmask=num]').forEach((el)=>{el.value = el.value.replace(/\D/g,'');})
             
             // Faz toUpperCase no valor de elementos com classe text-uppercase
-            this.form.querySelectorAll('.text-uppercase').forEach((el)=>{el.value = el.value.toUpperCase();})
+            this.form.querySelectorAll('input.text-uppercase, select.text-uppercase, textarea.text-uppercase').forEach((el)=>{
+                el.value = el.value.toUpperCase();
+            })
             
             // Faz toLowerCase no valor de elementos com classe text-lowercase
-            this.form.querySelectorAll('.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
+            this.form.querySelectorAll('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
             return true;
         }
         // appAlert('warning', '<b>jsform</b>: Existem campo(s) inválidos, corriga antes de prosseguir');
@@ -358,16 +382,23 @@ class selectPopulate{
         this.value = options?.value || 'nome';
         this.method = options?.method || 'GET';
         this.beforeRequest = options?.beforeRequest != undefined ? options.beforeRequest : ()=>{return true}; // Funcao a ser chamada antes de executar a consulta
-        this.emptyRow = options?.emptyRow || false; // Se true insere linha vazia antes dos registros
-        this.emptyRowValue = options?.emptyRowValue || '';
-        this.emptyRowText = options?.emptyRowText || '--';
-        this.emptyMessage = options?.emptyMessage || 'Nenhum registro';
+        this.emptyRow = options?.emptyRow || false; // Insere option generica (todos), ex emptyRow: {} ou emptyRow: {innerHTML: '', 'data-i18n': ''}
+        if(this.emptyRow && !this.emptyRow['data-i18n']){this.emptyRow['data-i18n'] = 'common.all'}
+        if(this.emptyRow && !this.emptyRow['value']){this.emptyRow['value'] = ''}
         if(options?.onChange){this.target.onchange = options.onChange} // Funcao a ser atribuida no evento onchange (caso informado ao instanciar)
         this.onEmpty = options?.onEmpty != undefined ? options.onEmpty : ()=>{ // Funcao a ser executada caso retorno seja array vazio '[]'
-            this.target.innerHTML = `<span>${this.emptyMessage}</span>`;
+            if(this.emptyRow){
+                let opt = document.createElement('option');
+                for(let key in this.emptyRow){
+                    if(['innerHTML'].includes(key)){continue}
+                    opt.setAttribute(key, this.emptyRow[key])
+                }
+                opt.innerHTML = i18n.getEntry(instance.emptyRow['data-i18n']) || instance.emptyRow['innerHTML'] || 'Todos';
+                this.target.appendChild(opt);
+            }
         };
         this.onError = options?.onError != undefined ? options.onError : ()=>{ 
-            this.target.innerHTML = `<option selected disabled>${this.emptyMessage}</option>`;
+            this.target.innerHTML = '';
             appNotify('danger', `jsform: Erro ao carregar <b>${this.target.name}</b>, favor informar ao administrador`, {autodismiss: false})
         };
         this.onSuccess = options?.onSuccess != undefined ? options.onSuccess : ()=>{}; // Funcao a ser executada em caso de successo (apos popular elemento)
@@ -385,7 +416,15 @@ class selectPopulate{
                     else if(this.responseText == '[]'){instance.onEmpty()}
                 else{
                     instance.data = JSON.parse(this.responseText);
-                    if(instance.emptyRow){instance.target.innerHTML = `<option value="${instance.emptyRowValue}">${instance.emptyRowText}</option>`}
+                    if(instance.emptyRow){
+                        let opt = document.createElement('option');
+                        for(let key in instance.emptyRow){
+                            if(['innerHTML'].includes(key)){continue}
+                            opt.setAttribute(key, instance.emptyRow[key])
+                        }
+                        opt.innerHTML = i18n.getEntry(instance.emptyRow['data-i18n']) || instance.emptyRow['innerHTML'] || 'Todos';
+                        instance.target.appendChild(opt);
+                    }
                     for(let i in instance.data){instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i].fields[instance.value]}</option>`;}
                     instance.onSuccess();
                 }

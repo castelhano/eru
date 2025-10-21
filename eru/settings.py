@@ -97,6 +97,8 @@ DEFAULT_MESSAGES = {
     'created': f'<span data-i18n="sys.recordCreated">Registro criado com sucesso</span>',
     'updated': '<span data-i18n="sys.recordUpdated">Registro atualizado com sucesso</span>',
     'delete': '<span data-i18n="sys.recordDeleted">Registro excluido, essa operação não pode ser desfeita</span>',
+    'emptyQuery': '<i class="bi bi-exclamation-triangle-fill me-2"></i><span data-i18n="sys.noResultsFound">Nenhum resultado encontrado com os critérios informados</span>',
+    'filterError': '<span data-i18n="sys.recordErrorOnFilter">Erro ao buscar dados solictados</span>',
     'saveError': '<span data-i18n="sys.recordErrorOnSaved">Erro ao salvar registro</span>',
     'deleteError': '<span data-i18n="sys.recordErrorOnDelete">Erro ao tentar apagar registro</span>'
 }

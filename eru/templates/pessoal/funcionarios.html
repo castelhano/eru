@@ -55,8 +55,8 @@
               <div class="col-lg">
                 <span>Consultas Rápidas:</span>
                 <ul class="list-unstyled">
-                  <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Condutores CNH vencida</a></li>
-                  <li><a href="#" id="id_ativos" onclick="">Funcionários Afastados</a></li>
+                  <li><a href="#" onclick="urlFilter('cnh_validade__lt', dateToday({days: 30, native: true}))">Condutores CNH vencendo</a></li>
+                  <li><a href="#" onclick="urlFilter('status', 'F')">Funcionários Afastados</a></li>
                   <li><hr class="my-1"></li>
                   <li><a href="#" id="id_foo" onclick="">item</a></li>
                 </ul>
@@ -121,35 +121,53 @@
 
 
 
-<form action="#" id="filterForm" style="display: none;">
+<form action="{% url 'pessoal_funcionarios' %}" method="POST" id="filterForm" style="display: none;" autocomplete="off" novalidate>
+  {% csrf_token %}
   <div class="row">
     <div class="col-6 col-lg-3">
       <div class="row g-1">
         <div class="form-floating mb-1">
+          <select class="form-select" id="id_empresa" name="empresa"></select>
+          <label for="id_empresa" data-i18n="common.company" data-i18n-bold="e"><b class="text-body"><u>E</u></b>mpresa</label>
+        </div>
+      </div>
+      <div class="row g-1">
+        <div class="form-floating mb-1">
           {{ form.status }}
-          <label for="id_status">Status</label>
+          <label for="id_status" data-i18n="common.status" data-i18n-bold="s"><b class="text-body"><u>S</u></b>tatus</label>
         </div>
       </div>
       <div class="row g-1 d-none" id="motivoDesligamentoContainer">
         <div class="form-floating mb-1">
           {{ form.motivo_desligamento }}
-          <label for="id_motivo_desligamento">Motivo Desligamento</label>
+          <label for="id_motivo_desligamento" data-i18n="employees.terminationReason">Motivo Desligamento</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           {{ form.regime }}
-          <label for="id_regime">Regime</label>
+          <label for="id_regime" data-i18n="common.regime" data-i18n-bold="r"><b class="text-body"><u>R</u></b>egime</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
-          <select name="setor" id="id_setor" class="form-select"></select>
-          <label for="id_setor">Setor</label>
+          <select name="cargo__setor" id="id_setor" class="form-select"></select>
+          <label for="id_setor" data-i18n="common.sector" data-i18n-bold="t">Se<b class="text-body"><u>t</u></b>or</label>
+        </div>
+      </div>
+      <div class="row g-1">
+        <div class="form-floating mb-1">
+          <select name="cargo" id="id_cargo" class="form-select"><option value="" data-i18n="common.all">Todos</option></select>
+          <label for="id_cargo" data-i18n="common.position" data-i18n-bold="g">Car<b class="text-body"><u>g</u></b>o</label>
         </div>
       </div>
     </div>
-    <div class="col border-start"></div>
+    <div class="col border-start">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" name="pne" id="id_pne">
+        <label class="form-check-label" for="id_pne"><span data-i18n="common.only">Somente</span> PNE</label>
+      </div>
+    </div>
   </div>
 </form>
 
@@ -158,6 +176,7 @@
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
 {% endblock %}
 
 <script>
@@ -167,15 +186,30 @@
   
   const filterForm = new jsForm(document.getElementById('filterForm'), {
     modalBody: document.getElementById('filterForm'),
-    modalFocus: document.getElementById('id_status'),
+    modalFocus: document.getElementById('id_empresa'),
     modalTrigger: document.getElementById('search'),
     selectAddAllOption: [
-    {nome: 'status', 'i18n': 'common.all'}
+    {nome: 'status'},
+    {nome: 'motivo_desligamento'},
+    {nome: 'regime'},
     ],
     selectPopulate: [
-      {target: document.getElementById('id_setor'), url: '{% url 'pessoal_get_setores' %}'}
+      {target: document.getElementById('id_empresa'), url: '{% url 'core_get_empresas' %}', emptyRow: {innerHTML: 'Todas'}},
+      {target: document.getElementById('id_setor'), url: '{% url 'pessoal_get_setores' %}', emptyRow: {}},
     ]
   })
+  
+  // Ao escolher uma empresa nos filtros marca status = ativo
+  filterForm.empresa.addEventListener('change', ()=>{if(filterForm.status.value == ''){filterForm.status.value = 'A'}})
+
+  // Adiciona atalhos para modal de filtros
+  appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
+  appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
+  appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
+  appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
+  appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
+
+
   let oldContext;
 
   filterForm.form.addEventListener('show.bs.modal', (ev)=>{
@@ -192,6 +226,23 @@
     canFilter: true,
     filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
   });
+
+  document.getElementById('id_status').addEventListener('change', (ev)=>{
+    if(ev.target.value == 'D'){
+      document.getElementById('motivoDesligamentoContainer').classList.remove('d-none');
+    }
+    else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
+    
+  })
+  
+  document.getElementById('id_setor').addEventListener('change', (ev)=>{
+    if(ev.target.value == ''){return}
+    else{
+      let cargos = new selectPopulate({target: filterForm.cargo, url: '{% url "pessoal_get_cargos" %}', params: `setor=${ev.target.value}`, emptyRow:{}})
+    }
+    
+  })
+
   
   {% endblock %}
 </script>
