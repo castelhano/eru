@@ -5,26 +5,36 @@
 * @since    03/02/2023
 * @release  08/03/2023 [adicionado marcar todos]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
-* @depend   boostrap 5.2.0, fontawesome 5.15.4, dot.css, dot.js
+* @depend   boostrap 5.x, dot.css, dot.js
 */
 class jsSelectm{
     constructor(el, options){
-        this.target = el;
+        this.target = typeof el === 'string' ? document.querySelector(el) : el;
         // Configuracoes
-        this.optionsSelected = options?.optionsSelected || []; // Opcoes pre selecionadas ao instanciar objeto
-        this.options = options?.options || this.__initializeOptions();
-        this.groups = options?.groups || false; // Informa grupo para os select
-        this.title = options?.title || false; // Titulo do select (opcional)
-        this.onchange = options?.onchange != undefined ? options.onchange : () => {}; // Funcao a ser chamada ao alterar componente
-        this.disabled = options?.disabled != undefined ? options.disabled : false; // Se sim desativa operacoes nos eventos click e altera formatacao
-        this.checkAll = options?.checkAll != undefined ? options.checkAll : true; // Se sim sera adicionado botao para marcar todas as opcoes
-        this.reorderOptions = options?.reorderOptions != undefined ? options.reorderOptions : true; // Se sim reordena opcoes baseado no innerText
-        // Estilizacao
-        this.customStyles = options?.customStyles != undefined ? options.customStyles : false; // Se false criar estilos
-        this.wrapperClassList = options?.wrapperClassList || 'jsSelectm_wrapper'; // Classes o titulo (small) do select 
-        this.iconUncheckedClasslist = options?.iconUncheckedClasslist || 'bi bi-square me-2'; // Classes do icone desmarcado
-        this.iconCheckedClasslist = options?.iconCheckedClasslist || 'bi bi-check-square-fill me-2'; // Classes do icone marcado
-        this.emptySelectMessage = options?.emptySelectMessage || '<p class="text-muted fs-7">Nenhuma opção disponivel</p>'; // Mensagem exibida em caso de select vazio
+        this.defaults = {
+            optionsSelected: [],                                       // Opcoes pre selecionadas ao instanciar objeto
+            options: this.__initializeOptions(),                       // Options do select, pode dicionario {1: 'Ativo', 2: 'Afastado'} ou na omissao busca options do elemento 
+            groups: false,                                             // Informa grupos com respectivos valores ex: {grupoA: [1,4], grupoB: [2]}
+            title: false,                                              // Titulo do select
+            onchange: () => {return true},                             // Funcao a ser chamada ao alterar componente
+            disabled: false,                                           // Se true desativa operacoes nos eventos click e altera formatacao
+            checkAll: true,                                            // Se true sera adicionado controle para marcar todas as opcoes
+            canFilter: false,                                          // Se true adiciona input para filtrar opcoes
+            reorderOptions: true,                                      // Se true reordena opcoes baseado no innerText
+            // Estilizacao
+            customStyles: false,                                       // Se false, adiciona estilos da lib na pagina
+            wrapperClassList: 'jsSelectm_wrapper',                     // Classes o titulo (small) do select 
+            filterInputClasslist: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',  // Classes do input search
+            filterInputStyle: 'outline: none; color: var(--bs-body-color); width: 99%;',                     // Stilos do input search
+            filterInputPlaceholder: 'Pesquisa',                        // Placeholder do input
+            iconUncheckedClasslist: 'bi bi-square me-2',               // Classes do icone desmarcado
+            iconCheckedClasslist: 'bi bi-check-square-fill me-2',      // Classes do icone marcado
+            emptySelectMessage: '<p class="text-body-secondary fs-7">Nenhuma opção disponivel</p>', // Mensagem exibida em caso de select vazio
+        }
+        for(let k in this.defaults){ // carrega configuracoes para classe
+            if(options.hasOwnProperty(k)){this[k] = options[k]}
+            else{this[k] = this.defaults[k]}
+        }
 
         this.__buildSelect();
         if(!this.customStyles){this.__addStyles();} // Cria estilos padrao caso nao definido estilos customizados
@@ -41,6 +51,7 @@ class jsSelectm{
         style.innerHTML += '.jsSelectm_wrapper > div{max-height:230px;overflow-y: scroll;}';
         style.innerHTML += '.jsSelectm_wrapper div[data-value], .jsSelectm_wrapper div[data-role]{padding: 2px 5px 2px 5px; border-radius: 3px;}';
         style.innerHTML += '.jsSelectm_wrapper div[data-select]{background-color: rgba(25, 135, 84, 0.25)!important;}';
+        style.innerHTML += '.accordion-collapse > input[type=search]{width: 100%!important;padding-left: 10px;}';
         if(!this.disabled){style.innerHTML += '@media(min-width: 992px){.jsSelectm_wrapper div[data-value]:hover, .jsSelectm_wrapper div[data-role]:hover{cursor: pointer;background-color: var(--bs-secondary-bg);}}';}
         document.getElementsByTagName('head')[0].appendChild(style);
     }
@@ -73,8 +84,7 @@ class jsSelectm{
         let reordered = items.sort(function(a, b) {
             return a.innerText == b.innerText ? 0 : (a.innerText > b.innerText ? 1 : -1);
         });
-        this.optionsContainer.innerHTML = '';
-        if(this.checkAll){this.__addCheckAll(this.optionsContainer);}
+        this.optionsContainer.querySelectorAll('[data-value]').forEach((el)=>{el.remove()})
         for(let i in reordered){
             this.optionsContainer.appendChild(reordered[i]);
         }
@@ -82,6 +92,11 @@ class jsSelectm{
     buildOptions(){ // Monta os options  
         this.optionsContainer.innerHTML = '';
         if(this.groups){this.__buildGroupsContainer();}
+        else{
+            if(this.canFilter){this.__addFilterInput(this.optionsContainer)};
+            if(this.checkAll){this.__addCheckAll(this.optionsContainer)};
+        }
+        
         for(let key in this.options){
             let option = document.createElement('div');
             let checkIcon = document.createElement('i');
@@ -116,6 +131,7 @@ class jsSelectm{
             let acc_button = document.createElement('span');acc_button.classList = 'accordion-button collapsed fs-6 py-2';acc_button.setAttribute('data-bs-toggle','collapse');acc_button.setAttribute('data-bs-target',`[data-group=${i}]`);
             acc_button.innerHTML = i;
             let acc_container = document.createElement('div');acc_container.classList = 'accordion-collapse collapse';acc_container.setAttribute('data-group', i);acc_container.setAttribute('data-bs-parent', '[data-jsSelect-role=group_container]');
+            if(this.canFilter){this.__addFilterInput(acc_container);}
             if(this.checkAll){this.__addCheckAll(acc_container);}
             acc_header.appendChild(acc_button);
             acc_item.appendChild(acc_header);
@@ -124,7 +140,22 @@ class jsSelectm{
             this.optionsContainer.appendChild(acc);
         }
     }
-    __addCheckAll(container){
+    __addFilterInput(container){
+        let filterInput = document.createElement('input');
+        filterInput.setAttribute('data-role', 'filterInput')
+        filterInput.type = 'search';
+        filterInput.classList = this.filterInputClasslist;
+        filterInput.style = this.filterInputStyle;
+        filterInput.placeholder = this.filterInputPlaceholder;
+        filterInput.oninput = ()=>{
+            container.querySelectorAll('[data-value]').forEach((el)=>{
+                if(el.innerText.toLowerCase().includes(filterInput.value.toLowerCase())){el.classList.remove('d-none')}
+                else{el.classList.add('d-none')}
+            })
+        }
+        container.appendChild(filterInput);
+    }
+    __addCheckAll(container){ // adiciona opção para selecionar todas as opções
         let selectAll = document.createElement('div');selectAll.setAttribute('data-role', 'checkAll');
         let checkIcon = document.createElement('i');checkIcon.classList = this.iconUncheckedClasslist;
         let optionTxt = document.createElement('span');optionTxt.classList = 'fs-7 text-secondary';optionTxt.innerHTML = 'Marcar todos';
@@ -141,10 +172,12 @@ class jsSelectm{
                     });
                 }
                 else{
-                    checkIcon.classList = this.iconCheckedClasslist;
-                    selectAll.setAttribute('data-checked', '');
+                    if(selectAll.parentNode.querySelectorAll('div[data-value].d-none').length == 0){
+                        checkIcon.classList = this.iconCheckedClasslist;
+                        selectAll.setAttribute('data-checked', '');
+                    }
                     this.optionsSelected = Object.keys(this.options);
-                    selectAll.parentNode.querySelectorAll('div[data-value]:not([data-select])').forEach((el) => {
+                    selectAll.parentNode.querySelectorAll('div[data-value]:not([data-select], .d-none)').forEach((el) => {
                         el.setAttribute('data-select', '');
                         el.querySelector('i').classList = this.iconCheckedClasslist;
                     });
@@ -160,7 +193,7 @@ class jsSelectm{
     }
     __getGroupContainer(key){ // Localiza se item esta em algum grupo, se sim retorna o container do grupo, caso nao retorna o container principal
         for(let group in this.groups){
-            if(this.groups[group].includes(key)){return this.optionsContainer.querySelector(`[data-group=${group}]`);}
+            if(this.groups[group].includes(key)){return this.optionsContainer.querySelector(`[data-group="${group}"]`);}
         }
         return this.optionsContainer;
     }
