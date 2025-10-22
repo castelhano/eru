@@ -31,7 +31,7 @@
   const form = new jsForm(document.getElementById('app_form'), {
     selectPopulate: [
       {target: document.getElementById('id_empresas'), url: '{% url 'core_get_empresas' %}', params: 'usuario=new',then: ()=>{const selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'});}},
-      {target: document.getElementById('id_grupos'), url: '{% url 'core_get_grupos' %}', params: 'usuario=new', value: 'name', then: ()=>{const selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});}},
+      {target: document.getElementById('id_grupos'), url: '{% url 'core_get_grupos' %}', params: 'usuario=new', value: 'name', then: ()=>{const selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {canFilter: true, emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});}},
       {
         target: document.getElementById('id_perms'),
         url: '{% url 'core_get_user_perms' %}',
@@ -49,6 +49,7 @@
           const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
             reorderOptions: false,
             options: perms,
+            canFilter: true,
             groups: permsGroups,
             wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
             emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'

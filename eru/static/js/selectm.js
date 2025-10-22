@@ -29,6 +29,7 @@ class jsSelectm{
             filterInputPlaceholder: 'Pesquisa',                        // Placeholder do input
             iconUncheckedClasslist: 'bi bi-square me-2',               // Classes do icone desmarcado
             iconCheckedClasslist: 'bi bi-check-square-fill me-2',      // Classes do icone marcado
+            iconSemiCheckedClasslist: 'bi bi-dash-square me-2',        // Classes do icone marcado parcialmente
             emptySelectMessage: '<p class="text-body-secondary fs-7">Nenhuma opção disponivel</p>', // Mensagem exibida em caso de select vazio
         }
         for(let k in this.defaults){ // carrega configuracoes para classe
@@ -91,18 +92,24 @@ class jsSelectm{
     }
     buildOptions(){ // Monta os options  
         this.optionsContainer.innerHTML = '';
-        if(this.groups){this.__buildGroupsContainer();}
+        let els; // armazena retorno da funcao addCheckAll: {'selectAll': selectAll, 'checkIcon':checkIcon, 'optionTxt':optionTxt};
+        if(this.groups){this.__buildGroupsContainer()}
         else{
             if(this.canFilter){this.__addFilterInput(this.optionsContainer)};
-            if(this.checkAll){this.__addCheckAll(this.optionsContainer)};
+            if(this.checkAll){
+                els = this.__addCheckAll(this.optionsContainer);
+                els.container = this.optionsContainer;
+            };
         }
         
+        let count = 0, selected = 0;
         for(let key in this.options){
             let option = document.createElement('div');
             let checkIcon = document.createElement('i');
             if(this.optionsSelected.includes(key)){
                 checkIcon.classList = this.iconCheckedClasslist;
                 option.dataset.select = '';
+                selected++;
             }
             else{checkIcon.classList = this.iconUncheckedClasslist;}
             let optionTxt = document.createElement('span');
@@ -113,10 +120,36 @@ class jsSelectm{
             if(!this.disabled){
                 option.onclick = () => {
                     this.__switchOption(option);
+                    if(this.groups){
+                        els = this.__getCheckallGroupContainer(key)
+                    }
+                    if(els.container.querySelectorAll('[data-value][data-select]').length > 0){
+                        if(els.container.querySelectorAll('[data-value]:not([data-select])').length > 0){els.checkIcon.classList = this.iconSemiCheckedClasslist}
+                        else{els.checkIcon.classList = this.iconCheckedClasslist}
+                        els.selectAll.setAttribute('data-checked', '')
+                        els.optionTxt.innerHTML = 'Desmarcar todos';
+                    }
+                    else{
+                        els.selectAll.removeAttribute('data-checked')
+                        els.checkIcon.classList = this.iconUncheckedClasslist;
+                        els.optionTxt.innerHTML = 'Marcar todos';
+                    }
                 };
             }
             if(this.groups){this.__getGroupContainer(key).appendChild(option);} // Se trabalhando com grupos adiciona item no devido grupo
             else{this.optionsContainer.appendChild(option);} // Caso nao insere no container
+            count++;
+        }
+        // ajusta checkAll (texto e icone) baseado se existe ou nao itens selecionados
+        if(this.groups){ // se aplicado grupos, analise precisa ser feita grupo a grupo
+            // TODO:: PAREI AQUI
+
+        }
+        else if(els && selected > 0){ // se select simples e existe item selecionado, altera o icone / status do botao checkAll
+            if(selected == count){els.checkIcon.classList = this.iconCheckedClasslist}
+            else{els.checkIcon.classList = this.iconSemiCheckedClasslist}
+            els.optionTxt.innerHTML = 'Descarcar todos';
+            els.selectAll.setAttribute('data-checked', '')
         }
         if(Object.keys(this.options).length == 0){
             this.optionsContainer.innerHTML = this.emptySelectMessage;
@@ -155,21 +188,33 @@ class jsSelectm{
         }
         container.appendChild(filterInput);
     }
-    __addCheckAll(container){ // adiciona opção para selecionar todas as opções
+    __addCheckAll(container, status='uncheck'){ // adiciona opção para selecionar todas as opções
         let selectAll = document.createElement('div');selectAll.setAttribute('data-role', 'checkAll');
-        let checkIcon = document.createElement('i');checkIcon.classList = this.iconUncheckedClasslist;
-        let optionTxt = document.createElement('span');optionTxt.classList = 'fs-7 text-secondary';optionTxt.innerHTML = 'Marcar todos';
+        let checkIcon = document.createElement('i');
+        switch (status) {
+            case 'uncheck': checkIcon.classList = this.iconUncheckedClasslist; break;
+            case 'check': checkIcon.classList = this.iconCheckedClasslist; selectAll.setAttribute('data-checked', '');break;
+            case 'semi': checkIcon.classList = this.iconSemiCheckedClasslist; selectAll.setAttribute('data-checked', ''); break;
+            default: checkIcon.classList = this.iconUncheckedClasslist; break;
+        }
+        let optionTxt = document.createElement('span');optionTxt.classList = 'fs-7 text-secondary';optionTxt.innerHTML = status == 'uncheck' ? 'Marcar todos' : 'Decarcar todos';
         selectAll.onclick = (e) => {
             this.loadingStatus.style.display = 'inline-block';
             setTimeout(() => { // Adiciona timeout para exibir this.loadingStatus antes de inicar processo..
                 if(selectAll.dataset.checked != undefined){
-                    checkIcon.classList = this.iconUncheckedClasslist;
-                    selectAll.removeAttribute('data-checked');
                     this.optionsSelected = [];
-                    selectAll.parentNode.querySelectorAll('[data-select]').forEach((el) => {
+                    selectAll.parentNode.querySelectorAll('[data-select]:not(.d-none)').forEach((el) => {
                         el.removeAttribute('data-select');
                         el.querySelector('i').classList = this.iconUncheckedClasslist;
                     });
+                    if(selectAll.parentNode.querySelectorAll('[data-select]').length == 0){
+                        checkIcon.classList = this.iconUncheckedClasslist;
+                        selectAll.removeAttribute('data-checked');
+                        optionTxt.innerHTML = 'Marcar todos';
+                    }
+                    else{
+                        checkIcon.classList = this.iconSemiCheckedClasslist;
+                    }
                 }
                 else{
                     if(selectAll.parentNode.querySelectorAll('div[data-value].d-none').length == 0){
@@ -181,6 +226,7 @@ class jsSelectm{
                         el.setAttribute('data-select', '');
                         el.querySelector('i').classList = this.iconCheckedClasslist;
                     });
+                    optionTxt.innerHTML = 'Desmarcar todos';
                 }
                 this.loadingStatus.style.display = 'none';
                 this.rebuildTargetOptions();
@@ -190,12 +236,28 @@ class jsSelectm{
         selectAll.appendChild(checkIcon);
         selectAll.appendChild(optionTxt);
         container.appendChild(selectAll);
+        return {'selectAll': selectAll, 'checkIcon':checkIcon, 'optionTxt':optionTxt};
     }
     __getGroupContainer(key){ // Localiza se item esta em algum grupo, se sim retorna o container do grupo, caso nao retorna o container principal
         for(let group in this.groups){
             if(this.groups[group].includes(key)){return this.optionsContainer.querySelector(`[data-group="${group}"]`);}
         }
         return this.optionsContainer;
+    }
+    __getCheckallGroupContainer(key){
+        for(let group in this.groups){
+            if(this.groups[group].includes(key)){
+                return {
+                    'container': this.optionsContainer.querySelector(`[data-group="${group}"]`),
+                    'selectAll': this.optionsContainer.querySelector(`[data-group="${group}"] [data-role="checkAll"]`), 
+                    'checkIcon': this.optionsContainer.querySelector(`[data-group="${group}"] [data-role="checkAll"] i`), 
+                    'optionTxt': this.optionsContainer.querySelector(`[data-group="${group}"] [data-role="checkAll"] span`)
+                };
+                // return this.optionsContainer.querySelector(`[data-group="${group}"]`)
+            }
+        }
+        return false;
+
     }
     __switchOption(opt){ // Altera stilo e data-attr do option e chama funcao que refaz conteudo do select target 
         if(opt.dataset.select != undefined){

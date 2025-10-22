@@ -122,6 +122,8 @@
           {% endfor %}
           let selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
             optionsSelected: gruposUsuario,
+            // title: 'Meu titulo',
+            canFilter: true,
             emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
           });
           selectGrupos.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
@@ -149,6 +151,7 @@
             reorderOptions: false,
             options: perms,
             groups: permsGroups,
+            canFilter: true,
             optionsSelected: permsUsuario,
             wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
             emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
