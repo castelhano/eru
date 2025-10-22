@@ -2,35 +2,6 @@ import base64
 import os, glob
 from pathlib import Path
 
-# Monta dicionario com parametros recebidos no request
-# --
-# @version  1.0
-# @since    10/10/2021
-# @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
-# @param    {Dict} request Requisicao
-# @param    {Array} fields Lista com campos aceitos no request, todos os demais serao desconsiderados
-# @returns  {Dict} Dicionario ajustado
-def clean_request(request, fields):
-    params = {}
-    for p in fields:
-        if p in request:
-            especial = ['','True', 'False', 'None', 'on', 'off']
-            if request[p] not in especial:
-                params[p] = request[p]
-            elif request[p] in ['']:
-                pass
-            else:
-                convert = {'True': True, 'False': False, 'None': None, 'on': True, 'off': False}
-                params[p] = convert[request[p]]
-            # elif request[p] == 'True':
-            #     params[p] = True
-            # elif request[p] == 'False':
-            #     params[p] = False
-            # elif request[p] == 'None':
-            #     params[p] = None
-    print(params)
-    return params
-
 
 # Cria imagem a partir de dataUrl
 # --

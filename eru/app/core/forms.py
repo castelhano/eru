@@ -1,6 +1,6 @@
 from django import forms
 from .models import Empresa, Settings
-from datetime import date
+# from datetime import date
 from django.contrib.auth.models import User, Group
 
 class EmpresaForm(forms.ModelForm):
@@ -36,6 +36,7 @@ class UserForm(forms.ModelForm):
     is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+
 
 class GroupForm(forms.ModelForm):
     class Meta:

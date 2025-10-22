@@ -5,9 +5,9 @@ from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
 from .models import Empresa, Log, Settings, Job
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
+from .filters import UserFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from .extras import clean_request
 from django.core import serializers
 from django.conf import settings as ROOT
 from django.http import HttpResponse
@@ -50,18 +50,16 @@ def usuarios_grupo(request, id):
 @login_required
 @permission_required('auth.view_user', login_url="/handler/403")
 def usuarios(request):
-    usuarios = User.objects.all().order_by('username')
+    context = {}
+    context['usuarios'] = User.objects.all().order_by('username')
     if request.GET:
-        if request.GET.get('pesquisa'):
-            usuarios = usuarios.filter(username__contains=request.GET.get('pesquisa'))
-        fields = ['email','is_superuser','is_staff','is_active','last_login','last_login__lte']
         try:
-            params = clean_request(request.GET, fields)
-            usuarios = usuarios.filter(**params)
+            user_filter = UserFilter(request.GET, queryset=context['usuarios'])
+            context['usuarios'] = user_filter.qs
         except:
             messages.warning(request,'<b>Erro</b> ao filtrar usuário..')
             return redirect('core_usuarios')
-    return render(request,'core/usuarios.html',{'usuarios':usuarios})
+    return render(request,'core/usuarios.html', context)
 
 @login_required
 @permission_required('core.view_log', login_url="/handler/403")

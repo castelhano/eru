@@ -11,6 +11,7 @@ INSTALLED_APPS = [
     'core',
     'trafego',
     'pessoal',
+    'django_filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

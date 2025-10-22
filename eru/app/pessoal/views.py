@@ -5,10 +5,11 @@ from django.http import HttpResponse
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm
+from .filters import FuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.models import Log
-from core.extras import create_image, clean_request
+from core.extras import create_image
 from django.conf import settings
 from datetime import datetime
 
@@ -55,10 +56,9 @@ def funcionarios(request):
             if request.GET:
                 # Se veio parametros pelo get realiza a consulta
                 options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
-                fields = ['cnh_validade__lt']
                 try:
-                    params = clean_request(request.GET, fields)
-                    options['funcionarios'] = options['funcionarios'].filter(**params)
+                    func_filter = FuncionarioFilter(request.GET, queryset=options['funcionarios'])
+                    options['funcionarios'] = func_filter.qs
                     if len(options['funcionarios']) == 0:
                         messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
                 except:
@@ -69,15 +69,14 @@ def funcionarios(request):
     else:
         # Request via POST vindo de um form de filtros, cria query e retorna resultados compativeis
         options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
-        fields = ['empresa','status','motivo_desligamento','regime','cargo__setor', 'pne']
-        # try:
-        params = clean_request(request.POST, fields)
-        options['funcionarios'] = options['funcionarios'].filter(**params)
-        if len(options['funcionarios']) == 0:
-            messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-        # except:
-        #     messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
-        #     return redirect('pessoal_funcionarios')
+        try:
+            func_filter = FuncionarioFilter(request.POST, queryset=options['funcionarios'])
+            options['funcionarios'] = func_filter.qs
+            if len(options['funcionarios']) == 0:
+                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
+        except:
+            messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
+            return redirect('pessoal_funcionarios')
     return render(request, 'pessoal/funcionarios.html', options)
 
 # Metodos ADD

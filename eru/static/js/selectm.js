@@ -30,7 +30,7 @@ class jsSelectm{
         if(!this.customStyles){this.__addStyles();} // Cria estilos padrao caso nao definido estilos customizados
         this.buildOptions();
         // assegura que todos os valores informados em optionsSelected estejam marcados como selected no select original
-        this.optionsSelected.forEach((el)=>{this.target.querySelector(`option[value=${el}]`).selected = true})
+        this.optionsSelected.forEach((el)=>{this.target.querySelector(`option[value="${el}"]`).selected = true})
     }
     __addStyles(){
         let style = document.createElement('style');
