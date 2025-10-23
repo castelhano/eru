@@ -90,7 +90,9 @@ class jsSelectm{
             this.optionsContainer.appendChild(reordered[i]);
         }
     }
-    buildOptions(){ // Monta os options  
+    buildOptions(){ // Monta os options
+        console.log('build options');
+          
         this.optionsContainer.innerHTML = '';
         let els; // armazena retorno da funcao addCheckAll: {'selectAll': selectAll, 'checkIcon':checkIcon, 'optionTxt':optionTxt};
         if(this.groups){this.__buildGroupsContainer()}
@@ -142,7 +144,27 @@ class jsSelectm{
         }
         // ajusta checkAll (texto e icone) baseado se existe ou nao itens selecionados
         if(this.groups){ // se aplicado grupos, analise precisa ser feita grupo a grupo
-            // TODO:: PAREI AQUI
+            for(let grupo in this.groups){
+                let itens = new Set(this.groups[grupo]);
+                let selected = this.optionsSelected.filter(i => itens.has(i));
+                let els = {
+                    'container': this.optionsContainer.querySelector(`[data-group="${grupo}"]`),
+                    'selectAll': this.optionsContainer.querySelector(`[data-group="${grupo}"] [data-role="checkAll"]`), 
+                    'checkIcon': this.optionsContainer.querySelector(`[data-group="${grupo}"] [data-role="checkAll"] i`), 
+                    'optionTxt': this.optionsContainer.querySelector(`[data-group="${grupo}"] [data-role="checkAll"] span`)
+                };
+                if(selected == 0){
+                    els.selectAll.removeAttribute('data-checked')
+                    els.checkIcon.classList = this.iconUncheckedClasslist;
+                    els.optionTxt.innerHTML = 'Marcar todos';
+                }
+                else{
+                    if(selected.length == this.groups[grupo].length){els.checkIcon.classList = this.iconCheckedClasslist}
+                    else{els.checkIcon.classList = this.iconSemiCheckedClasslist}
+                    els.selectAll.setAttribute('data-checked', '')
+                    els.optionTxt.innerHTML = 'Desmarcar todos';
+                }
+            }
 
         }
         else if(els && selected > 0){ // se select simples e existe item selecionado, altera o icone / status do botao checkAll
