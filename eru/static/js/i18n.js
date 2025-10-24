@@ -68,6 +68,7 @@ class I18n{
         if(this.db.hasOwnProperty(lng)){ // Se idioma ja existir na base local, altera para idioma informado e chama metodo refresh
             console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
             this.language = lng;
+            localStorage.setItem('i18nLanguage', lng);
             this.refresh();
             return;
         }
