@@ -16,6 +16,13 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
+<select name="foo" id="id_foo" multiple>
+    <option data-i18n="common.name" value="1">Nome</option>
+    <option data-i18n="common.attention" value="2">Atenção</option>
+    <option data-i18n="common.cancel" value="3" selected>Cancelar</option>
+    <option data-i18n="common.code" value="4">Código</option>
+    <option data-i18n="common.confirm" value="5" selected>Confirmar</option>
+</select>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -178,11 +185,19 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
+<script src="{% static 'js/selectm_refactor.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
+
+const select = new jsSelectm('#id_foo', {
+    title: 'Teste',
+    icon: 'bi bi-amazon',
+    canFilter: true,
+    filterOptions: {'data-i18n': 'common.search', 'data-i18n-target': 'placeholder', placeholder: 'Pesquisa'},
+});
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
