@@ -94,6 +94,23 @@ class jsSelectm{
     }
     
     // Metodos de manipulacao de estado
+    _optionSwitch(el){ // recebe elemento data-role=option e altera estado
+        if(el.dataset?.group){}
+        else{
+            let opt = this.model.options[el.dataset.value];
+            if(opt.selected){
+                el.removeAttribute('data-selected');
+                this.selected.pop(el.dataset.value);
+                opt.icon.classList = this.config.classlist.uncheck;
+            }
+            else{
+                el.setAttribute('data-selected', '');
+                this.selected.push(el.dataset.value);
+                opt.icon.classList = this.config.classlist.check;
+            }
+            opt.selected = opt.selected == false;
+        }
+    }
     getSelected() { return this.selected }
     setSelected(values=[]) {
         // Logica para definir as opcoes selecionadas
@@ -126,6 +143,7 @@ class jsSelectm{
         model.wrapper.style = this.config.styles.wrapper;
         model.wrapper.classList = this.config.styles.classlist;
         model.wrapper.setAttribute('data-role', 'wrapper');
+        model.wrapper.addEventListener('click', (ev)=>{this._handleOnclick(ev)})
         if(this.config.title){ // adiciona titulo para componente
             model.title = this._addTitle();
             model.wrapper.appendChild(model.title);
@@ -149,8 +167,11 @@ class jsSelectm{
     }
     _buildGroupModel(){}
     _addOption(config){ // cria elemento que representa uma <option> para componente
-        let container = document.createElement('div'); container.classList = this.config.classlist.option; container.style = this.config.styles.option;
+        let container = document.createElement('div'); 
+        container.classList = this.config.classlist.option; 
+        container.style = this.config.styles.option;
         container.setAttribute('data-role', 'option')
+        container.setAttribute('data-value', config.value)
         let icon = document.createElement('i');
         let text = document.createElement('span');
         ['data-i18n'].forEach((el)=>{if(config?.[el]){ text.setAttribute(el, config[el]) }})
@@ -225,7 +246,12 @@ class jsSelectm{
     
     // Metodos para eventos
     _handleOnclick(ev){
-        console.log(ev.target);
+        if(ev.target.dataset?.role == 'option'){ // click disparado do container
+            this._optionSwitch(ev.target)
+        }
+        else if(ev.target.parentNode.dataset?.role == 'option'){ // click disparado do span ou do icone
+            this._optionSwitch(ev.target.parentNode);
+        }
     }
     onChange(){
         if(typeof this.options.onchange === 'function'){}
