@@ -13,7 +13,7 @@ class jsSelectm{
         // Configuracoes
         this.defaults = {
             optionsSelected: [],                                       // Opcoes pre selecionadas ao instanciar objeto
-            options: this.__initializeOptions(),                       // Options do select, pode dicionario {1: 'Ativo', 2: 'Afastado'} ou na omissao busca options do elemento 
+            options: [],                                               // Options do select, pode dicionario {1: 'Ativo', 2: 'Afastado'} ou na omissao busca options do elemento 
             groups: false,                                             // Informa grupos com respectivos valores ex: {grupoA: [1,4], grupoB: [2]}
             title: false,                                              // Titulo do select
             onchange: () => {return true},                             // Funcao a ser chamada ao alterar componente
@@ -36,7 +36,7 @@ class jsSelectm{
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = this.defaults[k]}
         }
-
+        if(this.options.length == 0){this.options = this.__initializeOptions()} // caso nao informado options, carrega 
         this.__buildSelect();
         if(!this.customStyles){this.__addStyles();} // Cria estilos padrao caso nao definido estilos customizados
         this.buildOptions();
@@ -91,8 +91,6 @@ class jsSelectm{
         }
     }
     buildOptions(){ // Monta os options
-        console.log('build options');
-          
         this.optionsContainer.innerHTML = '';
         let els; // armazena retorno da funcao addCheckAll: {'selectAll': selectAll, 'checkIcon':checkIcon, 'optionTxt':optionTxt};
         if(this.groups){this.__buildGroupsContainer()}
@@ -192,8 +190,8 @@ class jsSelectm{
             acc_item.appendChild(acc_header);
             acc_item.appendChild(acc_container);
             acc.appendChild(acc_item);
-            this.optionsContainer.appendChild(acc);
         }
+        this.optionsContainer.appendChild(acc);
     }
     __addFilterInput(container){
         let filterInput = document.createElement('input');
