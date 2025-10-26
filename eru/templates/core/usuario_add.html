@@ -37,22 +37,16 @@
         url: '{% url 'core_get_user_perms' %}',
         params: 'usuario=new',
         then: (data)=>{
-          let permsGroups = {};
-          let perms = {};
-          for(item in data){
-            let nome_split = data[item].fields.nome.split(' | ');
-            // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
-            if(permsGroups.hasOwnProperty(nome_split[0])){permsGroups[nome_split[0]].push(`${data[item].pk}`)}
-            else{permsGroups[nome_split[0]] = [`${data[item].pk}`]} // Caso nao, inicia grupo
-            perms[data[item].pk] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+          let options = {};
+          for(let item in data){
+            let opt = { value: data[item].pk, group: String(data[item].fields.app_label) };
+            opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
+            options[data[item].pk] = opt;
           }
           const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
-            reorderOptions: false,
-            options: perms,
+            sort: false,
+            options: options,
             canFilter: true,
-            groups: permsGroups,
-            wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
-            emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
           });
         }
       }

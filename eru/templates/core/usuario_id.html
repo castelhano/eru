@@ -98,15 +98,12 @@
         url: '{% url 'core_get_empresas' %}',
         params: 'usuario=new',
         then: ()=>{
-          let empresasUsuario = [] // Armazena empresas atuais habilitadas para o usuario
-          {% for empresa in usuario.profile.empresas.all %}
-          empresasUsuario.push('{{empresa.id|safe}}');
-          {% endfor %}
+          let selected = []; // Armazena empresas atuais habilitadas para o usuario
+          {% for empresa in usuario.profile.empresas.all %} selected.push('{{empresa.id|safe}}'); {% endfor %}
+          
           let selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
-            optionsSelected: empresasUsuario,
-            emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'
+            selected: selected,
           });
-          selectEmpresas.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
         }
       },
       {% if not usuario.is_superuser %}
@@ -116,17 +113,12 @@
         params: 'usuario=new',
         value: 'name',
         then: ()=>{
-          let gruposUsuario = [] // Armazena os grupos atuais do usuario
-          {% for grupo in usuario.groups.all %}
-          gruposUsuario.push('{{grupo.id|safe}}');
-          {% endfor %}
+          let selected = [] // Armazena os grupos atuais do usuario
+          {% for grupo in usuario.groups.all %} selected.push('{{grupo.id|safe}}'); {% endfor %}
           let selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
-            optionsSelected: gruposUsuario,
-            // title: 'Meu titulo',
+            selected: selected,
             canFilter: true,
-            emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'
           });
-          selectGrupos.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
         }
       },
       {
@@ -134,29 +126,25 @@
         url: '{% url 'core_get_user_perms' %}',
         params: 'usuario=new',
         then: (data)=>{
-          let permsGroups = {};
-          let perms = {};
-          let permsUsuario = [] // Armazena os perms atuais do usuario
-          {% for perm in usuario.user_permissions.all %}
-          permsUsuario.push('{{perm.pk|safe}}');
-          {% endfor %}
+          let options = {};
+          let selected = [] // Armazena os perms atuais do usuario
+          {% for perm in usuario.user_permissions.all %} selected.push('{{perm.pk|safe}}'); {% endfor %}
           for(item in data){
-            let nome_split = data[item].fields.nome.split(' | ');
-            // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
-            if(permsGroups.hasOwnProperty(nome_split[0])){permsGroups[nome_split[0]].push(`${data[item].pk}`)}
-            else{permsGroups[nome_split[0]] = [`${data[item].pk}`]} // Caso nao, inicia grupo
-            perms[data[item].pk] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
+            let opt = { value: data[item].pk, group: String(data[item].fields.app_label) };
+            opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
+            options[data[item].pk] = opt;
           }
+            // let nome_split = data[item].fields.nome.split(' | ');
+            // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
+            // if(permsGroups.hasOwnProperty(nome_split[0])){permsGroups[nome_split[0]].push(`${data[item].pk}`)}
+            // else{permsGroups[nome_split[0]] = [`${data[item].pk}`]} // Caso nao, inicia grupo
+            // perms[data[item].pk] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
           let selectPerms = new jsSelectm(document.getElementById('id_perms'), {
-            reorderOptions: false,
-            options: perms,
-            groups: permsGroups,
+            sort: false,
+            options: options,
             canFilter: true,
-            optionsSelected: permsUsuario,
-            wrapperClassList: 'jsSelectm_wrapper border-0 p-0',
-            emptySelectMessage: '<small class="text-body-secondary">Nada a exibir</small>'
+            selected: selected,
           });
-          selectPerms.rebuildTargetOptions(); // Remonta input somente com opcoes habilitadas para usuario
         }
       }
       {% endif %}

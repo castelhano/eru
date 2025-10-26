@@ -86,29 +86,20 @@
 <script>
   {% block add_script %}
 
-  // Constroi grupos para opções
-  const targetOptions = document.getElementById('id_permissions').options;
-  let perms = {};
-  const permsGroups = {};
-  const permsSelecionados = [];
-  const avoidGroups = ['admin','contenttypes','sessions'];
-  for(i = 0; i < targetOptions.length; i++){
-    let nome_split = targetOptions[i].innerText.split(' | ');
-    if(avoidGroups.includes(nome_split[0])){continue;}
-    if(Object.keys(permsGroups).includes(nome_split[0])){ // Verifica se grupo ja foi iniciado, se sim adiciona item no grupo
-      permsGroups[nome_split[0]].push(`${targetOptions[i].value}`);
+  let options = {};
+  let selected = {{grupo_perms|safe}};
+  {% for perm in permissions %}
+    options[{{perm.pk|safe}}] = {
+      value: '{{perm.pk|safe}}',
+      text: '<span class="text-purple">{{perm.content_type.model}}</span>: {{perm.name}}',
+      group: '{{perm.content_type.app_label}}',
+      selected: selected.includes({{perm.pk|safe}})
     }
-    else{ // Caso nao, inicia grupo
-      permsGroups[nome_split[0]] = [`${targetOptions[i].value}`];
-    }
-    if(targetOptions[i].selected){permsSelecionados.push(targetOptions[i].value)}
-    perms[targetOptions[i].value] = `<span class="text-purple">${nome_split[1]}</span>: ${nome_split[2]}`;
-  }
-  const select = new jsSelectm(document.getElementById('id_permissions'), {
+  {% endfor %}
+  
+  const select = new jsSelectm('#id_permissions', {
     title: 'Permissões',
-    options: perms,
-    groups: permsGroups,
-    optionsSelected: permsSelecionados
+    options: options,
   });
 
   {% endblock %}

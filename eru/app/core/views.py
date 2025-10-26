@@ -219,7 +219,9 @@ def grupo_add(request):
                 return redirect('core_grupos')
     else:
         form = GroupForm()
-    return render(request,'core/grupo_add.html',{'form':form})
+        exclude_itens = ['sessions','contenttypes','admin']
+        permissions = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens)
+    return render(request,'core/grupo_add.html',{'form':form, 'permissions': permissions})
 
 # METODOS GET
 @login_required
@@ -240,8 +242,11 @@ def usuario_id(request, id):
 @permission_required('auth.change_group', login_url="/handler/403")
 def grupo_id(request, id):
     grupo = Group.objects.get(id=id)
+    grupo_perms = list(grupo.permissions.values_list('pk', flat=True))
     form = GroupForm(instance=grupo)
-    return render(request,'core/grupo_id.html',{'form':form,'grupo':grupo})
+    exclude_itens = ['sessions','contenttypes','admin']
+    permissions = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens)
+    return render(request,'core/grupo_id.html',{'form':form,'grupo':grupo, 'permissions': permissions, 'grupo_perms': grupo_perms})
 
 
 # METODOS UPDATE
@@ -621,9 +626,16 @@ def get_user_perms(request):
         else:
             usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
             perms = Permission.objects.filter(user=usuario).exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
+        # obj = serializers.serialize('json', perms)
+        # return HttpResponse(obj, content_type="application/json")
         itens = []
         for item in perms:
-            item_dict = {'model': 'auth.perms', 'pk':item.id,'fields': {'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'}}
+            item_dict = {'model': 'auth.perms', 'pk':item.id,'fields': {
+                'app_label': item.content_type.app_label,
+                'model': item.content_type.model,
+                'description': item.name
+            }}
+                # 'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'
             itens.append(item_dict)
         dataJSON = json.dumps(itens)
         return HttpResponse(dataJSON)

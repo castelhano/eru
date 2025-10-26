@@ -10,7 +10,7 @@
 
 class jsForm{
     constructor(form, options){
-        this.form = form;
+        this.form = typeof form == 'string' ? document.querySelector(form) : form;
         this.common = [];                   // Lista vai armazenar os fields comuns (sem maskara)
         this.imask = options?.imask || [];  // Lista elementos Imask presentes no form
         this.imaskFieldNames = [];          // Lista com nomes dos elementos Imask
