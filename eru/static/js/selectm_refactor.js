@@ -1,11 +1,20 @@
 /*
 * jsSelectm   Implementa controle para select multiple
 *
-* @version  2.0
+* @version  2.2
 * @since    03/02/2023
-* @release  25/10/2025 [refactor]
+* @release  26/10/2025 [refactor]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @depend   boostrap 5.x, bootsrap icons
+* --
+* Nota: Componente pode trabalhar com agrupamento de options, informando groups: {meu_grupo: [1,2], outro: [4]}
+* quando usando conceito de grupos, options adicionadas sem grupo informado seram incluidas ao final do componente e nao
+* terao acesso as opcoes de filtragem e controle checkAll.
+* Se instanciado sem informar pelo menos um grupo, componente ignora tentativas de adicionar opcoes em grupo posteriormente,
+* adicionando a nova option no container principal.
+**
+TODO:
+Remover a ideia de remain options, criar um container de ocoes gerais abaixo do group_container e listar la as opcoes sem grupo
 */
 class jsSelectm{
     constructor(el, options){
@@ -24,7 +33,7 @@ class jsSelectm{
             canFilter: false,                                          // Se true adiciona input para filtrar opcoes
             filterOpions: {},                                          // Opcoes para o input#search
             placeholder: 'Pesquisa',                                   // Placeholder do search input para filtrar opcoes
-            emptyMessage: '<p class="text-body-secondary fs-7">Nenhuma opcão disponivel</p>',
+            emptyMessage: '<p class="text-body-secondary fs-7">Nenhuma opcao disponivel</p>',
             sort: false,                                                // Se true reordena opcoes baseado no innerText
         }
         this.config = { ...this.defaults, ...options };
@@ -68,6 +77,75 @@ class jsSelectm{
         
         // -- Adiciona componente no DOM
         this.select.after(this.model.wrapper);
+    }
+    _initOptions(){ // para selects contruidos no template, carrega opcoes no modelo
+        let options = {};
+        let selected = [];
+        this.select.querySelectorAll('option').forEach((el) => {
+            let opt = {}
+            for(let attr of el.attributes){opt[attr.name] = attr.value}
+            opt.el = el;
+            opt.text = el.innerText; 
+            opt.selected = el.selected
+            options[el.value] = opt;
+            if(el.selected){selected.push(el.value)}
+        });
+        return {options: options, selected: selected}
+    }
+    _addTitle(){ // cria elemento de titulo para componente
+        // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', 'data-i18n': 'foo', etc: 2}
+        let container = document.createElement('div');
+        container.style = this.config.styles.titleContainer;
+        container.classList = this.config.classlist.titleContainer;
+        if(this.config.icon){
+            let icon = document.createElement('i');
+            icon.classList = this.config.icon;
+            icon.style = this.config.styles.icon;
+            container.appendChild(icon);
+        }
+        let text = document.createElement('span');
+        text.style = this.config.styles.title;
+        text.classList = this.config.classlist.title;
+        if(typeof this.config.title == 'string'){text.innerHTML = this.config.title}
+        else{ for(let k in options){ text.setAttribute(k, this.config.title[k]) }}
+        container.appendChild(text);
+        return container;
+    }
+    _addCheckAll(options={}){ // cria um controle para selecionar todas as opcoes
+        let container = document.createElement('div');
+        let icon = document.createElement('i');
+        let text = document.createElement('span');
+        container.setAttribute('data-role', 'checkAll');
+        container.style = this.config.styles.checkAll;
+        container.classList = this.config.classlist.checkAll;
+        text.style = this.config.styles.checkAllText;
+        text.classList = this.config.classlist.checkAllText;
+        let state = options?.state || 'unckeck';
+        icon.classList = state == 'unckeck' ? this.config.classlist.uncheck : state == 'check' ? this.config.classlist.check : this.config.classlist.partial;
+        text.innerHTML = state == 'unckeck' ? 'Marcar todos' : 'Desmarcar todos';
+        container.appendChild(icon);
+        container.appendChild(text);
+        return {
+            container: container,
+            icon: icon,
+            text: text,
+            state: state
+        }
+    }
+    _addSearchInput(options={}){
+        let input = document.createElement('input');
+        input.type = 'search';
+        ['data-i18n', 'data-i18n-transform', 'data-i18n-target', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
+        input.style = this.groups ? this.config.styles.groupInput : this.config.styles.input;
+        input.classList = this.groups ? this.config.classlist.groupInput : this.config.classlist.input;
+        input.oninput = (ev)=>{
+            input.parentNode.querySelectorAll('[data-role="option"]').forEach((el)=>{
+                if(el.innerText.toLowerCase().includes(input.value.toLowerCase())){el.classList.remove('d-none')}
+                else{el.classList.add('d-none')}
+            })
+        }
+        if(this.config.disabled){input.disabled = true}
+        return input;
     }
     // Metodos de estilizacao 
     _getDefaultStyles(){
@@ -171,57 +249,13 @@ class jsSelectm{
         }
         this._checkAllUpdateStatus(this._containerGetState(checkAll.container.parentNode), checkAll) // atualiza checkAll ao final
     }
-    _containerGetState(container){ // retorna all, none ou partial, baseado na quantidade de opcoes selecionadasno container
+    _containerGetState(container){ // retorna all, none ou partial, baseado na quantidade de opcoes selecionadas no container
         let total = container.querySelectorAll('[data-value]').length;
         let selected = container.querySelectorAll('[data-value][data-selected]').length;
         return selected == 0 ? 'none' : selected == total ? 'all' : 'partial';
     }
     
-    // Metodos de manipulacão de opcoes
-    _initOptions(){ // para selects contruidos no template, carrega opcoes no modelo
-        let options = {};
-        let selected = [];
-        this.select.querySelectorAll('option').forEach((el) => {
-            let opt = {}
-            for(let attr of el.attributes){opt[attr.name] = attr.value}
-            opt.el = el;
-            opt.text = el.innerText; 
-            opt.selected = el.selected
-            options[el.value] = opt;
-            if(el.selected){selected.push(el.value)}
-        });
-        return {options: options, selected: selected}
-
-    }
-    addOption(option) {
-        if(!option?.value){console.log('jsSelectm: Option require at least "value"'); return;}
-        if(this.options[option.value]){console.log('jsSelectm: Option value duplicated'); return;}
-        
-        let opt = this._addOption(option);      // cria extrutura do option para this.model
-        let el = document.createElement('option');
-        el.value = option.value;
-        el.innerHTML = option?.['data-i18n'] ? i18n.getEntry(option['data-i18n']) || option?.text || '' : option?.text || '';
-        el.selected = option.selected == true;
-        this.select.appendChild(el);
-        //--
-        this.options[option.value] = {...option, ...{el: el}};      // adiciona option na lista geral de opcoes
-        if(option.selected){ this.selected.push(String(option.value)) };    // adiciona em this.selected
-        if(option?.group){}
-        else{
-            this.model.options[option.value] = opt;
-            this.model.wrapper.appendChild(opt.container);
-            if(this.groups){ opt.container.setAttribute('data-remain', 'true') }
-            else if(this.config.sort){this._sort(this.model.wrapper)}
-        }
-    }
-    _sort(wrapper){
-        let items = [...wrapper.querySelectorAll('[data-value]')];
-        // para sort usamos document.fragment para otimizar desempenho evitando reescrita no DOM
-        let fragment = document.createDocumentFragment();
-        items.sort((a, b) => a.innerText.localeCompare(b.innerText));
-        items.forEach(el => fragment.appendChild(el));
-        wrapper.appendChild(fragment);
-    }
+    // Metodos de manipulacao de opcoes
     _buildModel(){ // constroi base do componente e insere na pagina, retorna escopo do modelo com apontadores
         let model = {};
         model.wrapper = document.createElement('div');
@@ -266,6 +300,88 @@ class jsSelectm{
         })
         return model;
     }
+    _addOption(config){ // cria elemento que representa uma <option> para componente
+        let container = document.createElement('div');
+        container.classList = this.config.classlist.option; 
+        container.style = this.config.styles.option;
+        container.setAttribute('data-role', 'option')
+        container.setAttribute('data-value', config.value)
+        let icon = document.createElement('i');
+        let text = document.createElement('span');
+        let result = {
+            container: container,
+            icon: icon,
+            text: text,
+            selected: config.selected == true
+        };
+        
+        ['data-i18n', 'data-i18n-target', 'data-i18n-transform', 'data-i18n-bold'].forEach((el)=>{
+            if(config?.[el]){
+                result[el] = config[el];
+                text.setAttribute(el, config[el]);
+            }
+        })
+        if(config?.selected){
+            container.setAttribute('data-selected', '');
+            icon.classList = this.config.classlist.check;
+        }
+        else{ icon.classList = this.config.classlist.uncheck }
+        text.innerHTML = config?.['data-i18n'] ? i18n.getEntry(config['data-i18n']) || config.text : config.text;
+        container.appendChild(icon);
+        container.appendChild(text);
+        return result;
+    }
+    addOptions(options){
+        if(!Array.isArray(options)){console.log('jsSelectm: addOptions expect an array element');return;}
+        options.forEach((el)=>{ try{this.addOption(el)}catch(err){} })
+    }
+    addOption(option) {
+        if(!option?.value){console.log('jsSelectm: Option require at least "value"'); return;}
+        if(this.options[option.value]){console.log('jsSelectm: Option value duplicated'); return;}
+        // abordagem de grupo precisa ser definida ao instanciar classe, uma vez iniciado sem o conceito de grupos
+        // adicionar option informando grupo neste caso ignora o grupo e insere option no container geral
+        if(option.group && !this.groups){
+            console.log('jsSelectm: Once a component is instantiated without creating groups, new options will ignore the group');
+            delete option.group;
+        }
+        
+        let opt = this._addOption(option);      // cria extrutura do option para this.model
+        let el = document.createElement('option');
+        el.value = option.value;
+        el.innerHTML = option?.['data-i18n'] ? i18n.getEntry(option['data-i18n']) || option?.text || '' : option?.text || '';
+        el.selected = option.selected == true;
+        this.select.appendChild(el);
+        //--
+        this.options[option.value] = {...option, ...{el: el}};              // adiciona option na lista geral de opcoes
+        if(option.selected){ this.selected.push(String(option.value)) };    // adiciona em this.selected
+        
+        if(option?.group){
+            if(!this.groups[option.group]){ // se grupo informado nao existe, cria novo grupo
+               this.groups[option.group] = [option.value];
+               this._addGroup(option.group, [option.value], this.model);
+            }
+            else{ // se grupo ja existe insere option no grupo
+                opt.container.setAttribute('data-group', option.group);
+                this.model.groups[option.group].options[option.value] = opt;
+                this.model.groups[option.group].wrapper.appendChild(opt.container);
+            }
+            if(this.config.sort){this._sort(this.model.groups[option.group].wrapper)}
+        }
+        else{
+            this.model.options[option.value] = opt;
+            this.model.wrapper.appendChild(opt.container);
+            if(this.groups){ opt.container.setAttribute('data-remain', 'true') }
+            else if(this.config.sort){this._sort(this.model.wrapper)}
+        }
+    }
+    _sort(wrapper){
+        let items = [...wrapper.querySelectorAll('[data-value]')];
+        // para sort usamos document.fragment para otimizar desempenho evitando reescrita no DOM
+        let fragment = document.createDocumentFragment();
+        items.sort((a, b) => a.innerText.localeCompare(b.innerText));
+        items.forEach(el => fragment.appendChild(el));
+        wrapper.appendChild(fragment);
+    }
     _addGroup(name='novo', options=[], model=this.model){ // cria elementos para novo grupo
         model.groups[name] = {}; // inicia extrutura de novo grupo
         let acc_item = document.createElement('div');acc_item.classList = 'accordion-item';
@@ -305,92 +421,6 @@ class jsSelectm{
         })
         return model.groups[name]
     }
-    _addOption(config){ // cria elemento que representa uma <option> para componente
-        let container = document.createElement('div');
-        container.classList = this.config.classlist.option; 
-        container.style = this.config.styles.option;
-        container.setAttribute('data-role', 'option')
-        container.setAttribute('data-value', config.value)
-        let icon = document.createElement('i');
-        let text = document.createElement('span');
-        let result = {
-            container: container,
-            icon: icon,
-            text: text,
-            selected: config.selected == true
-        };
-        
-        ['data-i18n', 'data-i18n-target', 'data-i18n-transform', 'data-i18n-bold'].forEach((el)=>{
-            if(config?.[el]){
-                result[el] = config[el];
-                text.setAttribute(el, config[el]);
-            }
-        })
-        if(config?.selected){
-            container.setAttribute('data-selected', '');
-            icon.classList = this.config.classlist.check;
-        }
-        else{ icon.classList = this.config.classlist.uncheck }
-        text.innerHTML = config?.['data-i18n'] ? i18n.getEntry(config['data-i18n']) || config.text : config.text;
-        container.appendChild(icon);
-        container.appendChild(text);
-        return result;
-    }
-    _addTitle(){ // cria elemento de titulo para componente
-        // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', 'data-i18n': 'foo', etc: 2}
-        let container = document.createElement('div');
-        container.style = this.config.styles.titleContainer;
-        container.classList = this.config.classlist.titleContainer;
-        if(this.config.icon){
-            let icon = document.createElement('i');
-            icon.classList = this.config.icon;
-            icon.style = this.config.styles.icon;
-            container.appendChild(icon);
-        }
-        let text = document.createElement('span');
-        text.style = this.config.styles.title;
-        text.classList = this.config.classlist.title;
-        if(typeof this.config.title == 'string'){text.innerHTML = this.config.title}
-        else{ for(let k in options){ text.setAttribute(k, this.config.title[k]) }}
-        container.appendChild(text);
-        return container;
-    }
-    _addCheckAll(options={}){ // cria um controle para selecionar todas as opcoes
-        let container = document.createElement('div');
-        let icon = document.createElement('i');
-        let text = document.createElement('span');
-        container.setAttribute('data-role', 'checkAll');
-        container.style = this.config.styles.checkAll;
-        container.classList = this.config.classlist.checkAll;
-        text.style = this.config.styles.checkAllText;
-        text.classList = this.config.classlist.checkAllText;
-        let state = options?.state || 'unckeck';
-        icon.classList = state == 'unckeck' ? this.config.classlist.uncheck : state == 'check' ? this.config.classlist.check : this.config.classlist.partial;
-        text.innerHTML = state == 'unckeck' ? 'Marcar todos' : 'Desmarcar todos';
-        container.appendChild(icon);
-        container.appendChild(text);
-        return {
-            container: container,
-            icon: icon,
-            text: text,
-            state: state
-        }
-    }
-    _addSearchInput(options={}){
-        let input = document.createElement('input');
-        input.type = 'search';
-        ['data-i18n', 'data-i18n-transform', 'data-i18n-target', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
-        input.style = this.groups ? this.config.styles.groupInput : this.config.styles.input;
-        input.classList = this.groups ? this.config.classlist.groupInput : this.config.classlist.input;
-        input.oninput = (ev)=>{
-            input.parentNode.querySelectorAll('[data-role="option"]').forEach((el)=>{
-                if(el.innerText.toLowerCase().includes(input.value.toLowerCase())){el.classList.remove('d-none')}
-                else{el.classList.add('d-none')}
-            })
-        }
-        if(this.config.disabled){input.disabled = true}
-        return input;
-    }
     
     // Metodos para eventos
     _handleOnclick(ev){
@@ -410,5 +440,4 @@ class jsSelectm{
     onChange(){
         if(typeof this.options.onchange === 'function'){}
     }
-    destroy(){}
 }
