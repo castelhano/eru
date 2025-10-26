@@ -16,14 +16,6 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<select name="foo" id="id_foo" multiple>
-    <!-- <option data-i18n="common.name" value="1" selected>Nome</option>
-    <option data-i18n="common.attention" value="2" selected>Atenção</option>
-    <option data-i18n="common.cancel" value="3">Cancelar</option>
-    <option data-i18n="common.code" value="4" selected>Código</option>
-    <option data-i18n="common.confirm" value="5">Confirmar</option>
-    <option data-i18n="common.all" value="6" selected>Todos</option> -->
-</select>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -186,23 +178,11 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
-<script src="{% static 'js/selectm.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
-
-const select = new jsSelectm('#id_foo', {
-    options: {1: {value: 1, text: 'Teste do pai', group: 'Teste'}, 2: {value: 2, text: 'Outro teste'}, 3: {value: 3, text: 'Haaaaaa', group: 'Teste'}, 8: {value: 8, text: 'KKKKKKK'}},
-    title: 'Teste',
-    icon: 'bi bi-amazon',
-    canFilter: true,
-    sort: true,
-    // onchange: (resp)=>{appNotify('success', `Change from: ${resp.origin}`)},
-    // groups: {user: ['1'], settings: ['2','3', '4']},
-    filterOptions: {'data-i18n': 'common.search', 'data-i18n-target': 'placeholder', placeholder: 'Pesquisa'},
-});
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {

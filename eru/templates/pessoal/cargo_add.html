@@ -28,7 +28,10 @@
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
     
-const ffixa = new jsSelectm('#id_funcao_fixa', {});
+const ffixa = new jsSelectm('#id_funcao_fixa', {
+    title: i18n.getEntry('position.fixedPosition') || '<span data-i18n="position.fixedPosition">Função Fixa</span>',
+    icon: 'bi bi-dash-square-fill',
+});
     
     {% endblock %}
 </script>

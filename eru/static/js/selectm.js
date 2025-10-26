@@ -6,6 +6,9 @@
 * @release  26/10/2025 [refactor]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @depend   boostrap 5.x, bootsrap icons
+TODO: wrapper default fica display: none se nenuma opcao, precisa ajustar no addOption para mostrar novamente
+mesmo caso wrapper de grupo (accordion) deve display none e reexibir quando necessario
+
 */
 class jsSelectm{
     constructor(el, options){
@@ -169,7 +172,7 @@ class jsSelectm{
             selected: 'background-color: rgba(25, 135, 84, 0.25)!important;',
             titleContainer: '',
             title: '',
-            icon: 'margin-right: 5px;margin-left: 5px;',
+            icon: 'margin-right: 8px;margin-left: 5px;',
             input: 'outline: none; color: var(--bs-body-color); width: 99%;',
             groupInput: 'outline: none; color: var(--bs-body-color); width: 100%!important;padding-left: 10px;',
             checkAll: 'padding: 2px 5px;',
@@ -182,7 +185,7 @@ class jsSelectm{
             container: '',
             option: 'selectm-option',
             titleContainer: '',
-            title: 'fs-5 text-body-secondary',
+            title: 'fw-bold text-body-secondary',
             icon: '',
             input: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
             groupInput: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
