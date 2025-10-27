@@ -94,6 +94,8 @@
 <script>
 {% block add_script %}
 appKeyMap.tabOnEnter = false;
+appKeyMap.bind('f2', ()=>{document.getElementById('search').click()}, {desc: 'Exibe filtros da página', icon: 'bi bi-funnel-fill', origin: 'planejamentos', 'data-i18n':'sys.shortcuts.showFilters'})
+
 const table = new jsTable(document.getElementById('main_table'), {
   enablePaginate: true,
   canFilter: true,

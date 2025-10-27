@@ -1,6 +1,13 @@
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
-// const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
+const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
+var pageshow_persisted = false; // flag informa se pagina foi construida pelo cache do navegador (em geral no history back)
 
+// exibe modal de carregameto ao sair da pagina
+appModalLoading._element.addEventListener('shown.bs.modal', ()=>{ if(pageshow_persisted){ appModalLoading.hide() } })
+
+// trata erro de modal permanecer aberto ao usar o history back do navegador
+window.addEventListener('pageshow', (event) => { pageshow_persisted = event.persisted });
+window.onbeforeunload = (ev) => { appModalLoading.show() }
 
 /*
 * appAlert  Gera um alerta (bootstrap alert), somente um alerta aberto a cada momento
@@ -42,17 +49,6 @@ function appNotify(tipo, mensagem, options={}){
   document.getElementById('notify_container').appendChild(e); 
   if(options.autodismiss){setTimeout(function() {e.remove()}, 4500);} 
 }
-// function appNotify(tipo, mensagem, autodismiss=true){
-//   let e = document.createElement('div'); 
-//   e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
-//   let b = document.createElement('button'); 
-//   b.classList = 'btn-close'; 
-//   b.setAttribute('data-bs-dismiss','alert'); 
-//   e.innerHTML = mensagem; 
-//   e.appendChild(b);
-//   document.getElementById('notify_container').appendChild(e); 
-//   if(autodismiss){setTimeout(function() {e.remove()}, 4500);} 
-// }
 
 // Limpa area de notificacao
 function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
@@ -130,19 +126,6 @@ function appOnLogout(url){
   removeOnLocalStorage.forEach((el)=>{localStorage.removeItem(el)})
   location.href = url;
 }
-
-// Exibe modal de carregamento antes de sair da pagina
-// var appModalLoadingTimeLimit = 8000; // Tempo limite em milisegundos para alteracao da mensagem do modal
-// var appModalLoadingTimeLimitIcon = '<i class="bi bi-exclamation-octagon-fill text-danger h2"></i>'
-// var appModalLoadingTimeLimitMessage = '<b class="text-danger"></b>Este processo esta demorando mais que o normal...'
-
-// window.onbeforeunload = (ev) => {
-//   appModalLoading.show();
-//   window.setTimeout(()=>{ // Se servidor demorar mais tempo que o definido, altera mensagem 
-//     document.getElementById('appModalLoadingIcon').innerHTML = appModalLoadingTimeLimitIcon;
-//     document.getElementById('appModalLoadingMessage').innerHTML = appModalLoadingTimeLimitMessage;
-//   }, appModalLoadingTimeLimit);
-// }
 
 // dictIsEqual Recebe dois objetos (dict) e compara se sao iguais, levando em consideracao nao somente primtivos, mais apontadores e objetos
 function dictIsEqual(obj1, obj2, seen = new WeakMap()) {

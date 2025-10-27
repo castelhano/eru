@@ -39,7 +39,7 @@
         then: (data)=>{
           let options = {};
           for(let item in data){
-            let opt = { value: data[item].pk, group: String(data[item].fields.app_label) };
+            let opt = { value: data[item].pk, 'data-group': String(data[item].fields.app_label) };
             opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
             options[data[item].pk] = opt;
           }

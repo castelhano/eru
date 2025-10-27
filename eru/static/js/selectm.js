@@ -9,6 +9,8 @@
 TODO: wrapper default fica display: none se nenuma opcao, precisa ajustar no addOption para mostrar novamente
 mesmo caso wrapper de grupo (accordion) deve display none e reexibir quando necessario
 
+Metodo onchange deve encaminhar como elemento array com os options que sofreram modificacao [1,3,8]
+
 */
 class jsSelectm{
     constructor(el, options){
@@ -42,7 +44,8 @@ class jsSelectm{
         this._init();
     }
     _init() {
-        this._addPseudoClass();                // adiciona pseudo classes para componentes
+        this._addPseudoClass();                    // adiciona pseudo classes para componentes
+        this._normalizeGroups();                   // ajusta grupos converterndo entradas para string
         if(Object.keys(this.options) == 0){        // se opcoes nao informadas ao instanciar objeto, constroi opcoes a partir do select
             let result = this._initOptions();      // monta modelo de opcoes a partir das options do select informado 
             this.options = result.options;
@@ -94,18 +97,23 @@ class jsSelectm{
         return {options: options, selected: selected}
     }
     _normalizeOptions(){ 
-    // ao criar opcoes uzando o metodo _initOptions o atributo group pode nao estar informado, padroniza option para grupos
+    // ao criar opcoes uzando o metodo _initOptions o atributo data-group pode nao estar informado, padroniza option para grupos
     // tambem trata inclusao no grupo de option inexistente, removendo entrada invalida do group
         for(let grupo in this.groups){
             let toRemove = [];
             this.groups[grupo].forEach((el)=>{
                 if(!this.options[el]){toRemove.push(el); return;}
-                this.options[el].group = grupo;
+                this.options[el]['data-group'] = grupo;
             })
             toRemove.forEach((el)=>{
                 this.groups[grupo].splice(this.groups[grupo].indexOf(el), 1);
                 console.log(`jsSelectm: Item "${el}" for group "${grupo}" not found in option, descarted`);
             })
+        }
+    }
+    _normalizeGroups(){ // ao instanciar grupos {groups: [1,5]} necessario converter todas as entradas para string para evitar conflitos de comparacao
+        for(let group in this.groups){
+            this.groups[group] = this.groups[group].map(item => String(item));
         }
     }
     _addTitle(){ // cria elemento de titulo para componente
@@ -148,12 +156,12 @@ class jsSelectm{
             state: state
         }
     }
-    _addSearchInput(options={}){
+    _addSearchInput(options={}, groupContainer=false){
         let input = document.createElement('input');
         input.type = 'search';
         ['data-i18n', 'data-i18n-transform', 'data-i18n-target', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
-        input.style = this.groups ? this.config.styles.groupInput : this.config.styles.input;
-        input.classList = this.groups ? this.config.classlist.groupInput : this.config.classlist.input;
+        input.style = groupContainer ? this.config.styles.groupInput : this.config.styles.input;
+        input.classList = groupContainer ? this.config.classlist.groupInput : this.config.classlist.input;
         input.oninput = (ev)=>{
             input.parentNode.querySelectorAll('[data-role="option"]').forEach((el)=>{
                 if(el.innerText.toLowerCase().includes(input.value.toLowerCase())){el.classList.remove('d-none')}
@@ -290,7 +298,7 @@ class jsSelectm{
         let model = {};
         model.container = document.createElement('div'); // container principal, todo componente eh inserido aq
         model.container.style = this.config.styles.wrapper;
-        model.container.classList = this.config.styles.classlist;
+        model.container.classList = this.config.classlist.wrapper;
         model.container.setAttribute('data-role', 'wrapper');
         model.container.addEventListener('click', (ev)=>{this._handleOnclick(ev)})
         model.wrapper = document.createElement('div'); // container dos options (sem grupo associado)
@@ -319,18 +327,18 @@ class jsSelectm{
 
         // percorre todas as options construindo entrada no seu respectivo container
         for(let option in this.options){ 
-            if(this.options[option].group){
+            if(this.options[option]?.['data-group']){
                 // cria entrada em this.groups caso nao exista, ocorre ao adicionar option{group: 'x'} ao invez de usar groups
-                if(!this.groups[this.options[option].group]){this.groups[this.options[option].group] = [this.options[option].value]}
-                else if(!this.groups[this.options[option].group].includes(this.options[option].value)){this.groups[this.options[option].group].push(this.options[option].value)}
+                if(!this.groups[this.options[option]?.['data-group']]){this.groups[this.options[option]['data-group']] = [this.options[option].value]}
+                else if(!this.groups[this.options[option]['data-group']].includes(this.options[option].value)){this.groups[this.options[option]['data-group']].push(this.options[option].value)}
                 // valida entrada em this.model.groups
-                if(model.groups[this.options[option].group]){ // se grupo ja existe cria option e insere no grupo
+                if(model.groups[this.options[option]['data-group']]){ // se grupo ja existe cria option e insere no grupo
                     // cria entrada em this.model para option
-                    model.groups[this.options[option].group].options[option] = this._addOption(this.options[option]);
+                    model.groups[this.options[option]['data-group']].options[option] = this._addOption(this.options[option]);
                     // adiciona option no wrapper
-                    model.groups[this.options[option].group].wrapper.appendChild(model.groups[this.options[option].group].options[option].container); 
+                    model.groups[this.options[option]['data-group']].wrapper.appendChild(model.groups[this.options[option]['data-group']].options[option].container); 
                 }
-                else{ this._addGroup(this.options[option].group, [ this.options[option].value ], model) }
+                else{ this._addGroup(this.options[option]['data-group'], [ this.options[option].value ], model) }
             }
             else{
                 model.options[option] = this._addOption(this.options[option]);  // cria entrada em this.model para option
@@ -354,7 +362,7 @@ class jsSelectm{
             selected: config.selected == true
         };
         // adiciona data-group no elemento para identificacao do evento click
-        if(config.group){ container.setAttribute('data-group', config.group) }
+        if(config['data-group']){ container.setAttribute('data-group', config['data-group']) }
         
         ['data-i18n', 'data-i18n-target', 'data-i18n-transform', 'data-i18n-bold'].forEach((el)=>{
             if(config?.[el]){
@@ -380,12 +388,6 @@ class jsSelectm{
     addOption(option) {
         if(!option?.value){console.log('jsSelectm: Option require at least "value"'); return;}
         if(this.options[option.value]){console.log('jsSelectm: Option value duplicated'); return;}
-        // abordagem de grupo precisa ser definida ao instanciar classe, uma vez iniciado sem o conceito de grupos
-        // adicionar option informando grupo neste caso ignora o grupo e insere option no container geral
-        if(option.group && !this.groups){
-            console.log('jsSelectm: Once a component is instantiated without creating groups, new options will ignore the group');
-            delete option.group;
-        }
         
         let opt = this._addOption(option);      // cria extrutura do option para this.model
         let el = document.createElement('option');
@@ -397,23 +399,25 @@ class jsSelectm{
         this.options[option.value] = {...option, ...{el: el}};              // adiciona option na lista geral de opcoes
         if(option.selected){ this.selected.push(String(option.value)) };    // adiciona em this.selected
         
-        if(option?.group){
-            if(!this.groups[option.group]){ // se grupo informado nao existe, cria novo grupo
-                this.groups[option.group] = [option.value];
-                this._addGroup(option.group, [option.value], this.model);
+        if(option?.['data-group']){
+            if(!this.groups[option['data-group']]){ // se grupo informado nao existe, cria novo grupo
+                this.groups[option['data-group']] = [option.value];
+                this._addGroup(option['data-group'], [String(option.value)], this.model);
             }
             else{ // se grupo ja existe insere option no grupo
-                opt.container.setAttribute('data-group', option.group);
-                this.model.groups[option.group].options[option.value] = opt;
-                this.model.groups[option.group].wrapper.appendChild(opt.container);
+                opt.container.setAttribute('data-group', ['data-group']);
+                this.model.groups[['data-group']].options[option.value] = opt;
+                this.model.groups[['data-group']].wrapper.appendChild(opt.container);
             }
-            if(this.config.sort){this._sort(this.model.groups[option.group].wrapper)}
+            if(this.config.sort){this._sort(this.model.groups[option['data-group']].wrapper)}
         }
         else{
             this.model.options[option.value] = opt;
-            this.model.container.appendChild(opt.container);
+            this.model.wrapper.appendChild(opt.container);
             if(this.config.sort){this._sort(this.model.container)}
+            this.model.wrapper.style.display = 'block'; // assegura que container esta visivel ao adicionar um elemento
         }
+
         this.config.onchange({origin: 'addOption'});
     }
     _sort(wrapper){
@@ -438,10 +442,10 @@ class jsSelectm{
         model.groups[name].wrapper = document.createElement('div');
         model.groups[name].wrapper.classList = 'accordion-collapse collapse';
         model.groups[name].wrapper.setAttribute('data-groupContainer', name);
-        model.groups[name].wrapper.setAttribute('data-bs-parent', '[data-role=groupsContainer]');
+        model.groups[name].wrapper.setAttribute('data-bs-parent', '[data-role="groupsContainer"]');
         //--
         if(this.config.canFilter){ // adiciona input para filtrar opcoes
-            model.groups[name].input = this._addSearchInput(this.config.filterOptions)
+            model.groups[name].input = this._addSearchInput(this.config.filterOptions, true)
             model.groups[name].wrapper.appendChild(model.groups[name].input)
         }
         if(this.config.checkAll){ // adiciona controle para marcar / desmarcar todas as opcoes
