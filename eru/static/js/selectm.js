@@ -1,13 +1,13 @@
 /*
 * jsSelectm   Implementa controle para select multiple
 *
-* @version  2.3
+* @version  2.4
 * @since    03/02/2023
 * @release  26/10/2025 [refactor]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @depend   boostrap 5.x, bootsrap icons
-TODO: wrapper default fica display: none se nenuma opcao, precisa ajustar no addOption para mostrar novamente
-mesmo caso wrapper de grupo (accordion) deve display none e reexibir quando necessario
+
+TODO: ERRO ao salvar, aparentemente nao esta carregando as opcoes em this.selected dos itens precarragados
 
 Metodo onchange deve encaminhar como elemento array com os options que sofreram modificacao [1,3,8]
 
@@ -18,7 +18,7 @@ class jsSelectm{
         this.select.style.display = 'none'; // oculta select original
         // Configuracoes
         this.defaults = {
-            options: {},                                               // Options do select, dicionario {1: 'Ativo', 2: 'Afastado'} na omissao constroi options do elemento
+            options: {},                                               // Options do select, dicionario {1: {value: 1, text: 'Ativo'}, 2: {value: 2, text: 'Afastado', 'data-group': 'RH'}} na omissao constroi options do elemento
             selected: [],                                              // Opcoes pre selecionadas ao instanciar objeto
             groups: {},                                                // Informa grupos com respectivos valores ex: {grupoA: [1,4], grupoB: [2]}
             title: false,                                              // Titulo do select
@@ -26,6 +26,7 @@ class jsSelectm{
             onchange: () => {return true},                             // Funcao a ser chamada ao alterar componente
             disabled: false,                                           // Se true desativa operacoes nos eventos click e altera formatacao
             checkAll: true,                                            // Se true sera adicionado controle para marcar todas as opcoes
+            groupCounter: true,                                        // Se true adiciona contador de opcoes somente nas opcoes de grupo
             canFilter: false,                                          // Se true adiciona input para filtrar opcoes
             filterOptions: {                                           // Opcoes para o input#search
                 placeholder: i18n ? i18n.getEntry('common.search') || 'Pesquisa' : 'Pesquisa'
@@ -66,7 +67,9 @@ class jsSelectm{
         if(Object.keys(this.options).length == 0){ this.config.disabled = true }
         this._normalizeOptions();
         this.model = this._buildModel();
-        if(this.getSummary().default == 0){ this.model.wrapper.style.display = 'none' }
+        let summary = this.getSummary();
+        if(summary.default.total == 0){ this.model.wrapper.style.display = 'none' }
+        this._groupCounterUpdate();
         
         if(this.config.checkAll){ // adiciona controle de marcar todos para cada grupo
             for(let group in this.model.groups){
@@ -183,6 +186,8 @@ class jsSelectm{
             icon: 'margin-right: 8px;margin-left: 5px;',
             input: 'outline: none; color: var(--bs-body-color); width: 99%;',
             groupInput: 'outline: none; color: var(--bs-body-color); width: 100%!important;padding-left: 10px;',
+            groupLabel: 'width: 100%',
+            groupCounter: 'font-size: 0.75rem; margin-right: 15px;',
             checkAll: 'padding: 2px 5px;',
             checkAllText: '',
         }
@@ -197,6 +202,8 @@ class jsSelectm{
             icon: '',
             input: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
             groupInput: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
+            groupLabel: '',
+            groupCounter: 'badge bg-body-tertiary fw-normal ms-2',
             checkAll: 'pointer user-select-none',
             checkAllText: 'text-body-tertiary',
             uncheck: 'bi bi-square me-2',
@@ -235,7 +242,7 @@ class jsSelectm{
             opt.icon.classList = this.config.classlist.check;
         }
         // atualiza contole de marcar todos
-        if(updatecheckAll && opt.container.dataset?.remain != 'true'){ // atualiza checkAll
+        if(updatecheckAll){ // atualiza checkAll
             let modelTarget = opt.container.dataset?.group ? this.model.groups[opt.container.dataset.group] : this.model;
             this._checkAllUpdateStatus(this._containerGetState(modelTarget.wrapper), opt.container.dataset?.group ? this.model.groups[opt.container.dataset.group].checkAll : this.model.checkAll);
             this.config.onchange({origin: '_optionSwitch'});
@@ -278,19 +285,38 @@ class jsSelectm{
         this._checkAllUpdateStatus(this._containerGetState(checkAll.container.parentNode), checkAll) // atualiza checkAll ao final
         if(count > 0){ this.config.onchange({origin: '_checkAllSwitch'}) }
     }
+    _groupCounterUpdate(group=false, summary=this.getSummary()){ // atualiza contador para grupos
+        if(group){ // atualiza contador para grupo informado
+            this.model.groups[group].groupCounter.innerHTML = `${summary[group].selected} / ${summary[group].total}`;
+        }
+        else{ // atualiza contador para todos os grupos
+            for(let g in this.groups){
+                this.model.groups[g].groupCounter.innerHTML = `${summary[g].selected} / ${summary[g].total}`;
+            }
+        }
+    }
     _containerGetState(container){ // retorna all, none ou partial, baseado na quantidade de opcoes selecionadas no container
         let total = container.querySelectorAll('[data-value]').length;
         let selected = container.querySelectorAll('[data-value][data-selected]').length;
         return selected == 0 ? 'none' : selected == total ? 'all' : 'partial';
     }
-    getSummary(){ // retorna quantidade de opcoes separandopor grupo ex: {grupoA: 4, grupoB:1, default: 12}
-        let summary = {}
-        let groupsCount = 0;
+    getSummary(){ 
+    // retorna resumo das opcoes separado por grupo ex {grupo1: {total: 22, selected: 4}, default: {total: 14, selected: 6}}
+        let summary = {default: {total: 0, selected: 0}}
+        let groupsCount = [0,0];
         for(let group in this.groups){
-            summary[group] = this.groups[group].length;
-            groupsCount += this.groups[group].length;
+            let entry = {total: this.groups[group].length, selected: 0};
+            groupsCount[0] += entry.total;
+            this.groups[group].forEach((el)=>{
+                if(this.selected.includes(el)){
+                    entry.selected += 1;
+                    groupsCount[1] += 1;
+                }
+            })
+            summary[group] = entry;
         }
-        summary['default'] = Object.keys(this.options).length - groupsCount;
+        summary.default.total = Object.keys(this.options).length - groupsCount[0];
+        summary.default.selected = this.selected.length - groupsCount[1];
         return summary ;
     }
     // Metodos de manipulacao de opcoes
@@ -433,11 +459,22 @@ class jsSelectm{
         let acc_item = document.createElement('div');acc_item.classList = 'accordion-item';
         let acc_header = document.createElement('div');acc_header.classList = 'accordion-header pointer';
         //--
-        let acc_button = document.createElement('span');
+        let acc_button = document.createElement('div');
         acc_button.classList = 'accordion-button collapsed fs-6 py-2';
         acc_button.setAttribute('data-bs-toggle','collapse');
         acc_button.setAttribute('data-bs-target',`[data-groupContainer=${name}]`);
-        acc_button.innerHTML = name;
+        let acc_button_text = document.createElement('span');
+        acc_button_text.style = this.config.styles.groupLabel;
+        acc_button_text.classList = this.config.classlist.groupLabel;
+        acc_button_text.innerHTML = name;
+        acc_button.appendChild(acc_button_text);
+        if(this.config.groupCounter){
+            model.groups[name].groupCounter = document.createElement('span');
+            model.groups[name].groupCounter.style = this.config.styles.groupCounter;
+            model.groups[name].groupCounter.classList = this.config.classlist.groupCounter;
+            model.groups[name].groupCounter.innerHTML = '2 / 4';
+            acc_button.appendChild(model.groups[name].groupCounter);
+        }
         //--
         model.groups[name].wrapper = document.createElement('div');
         model.groups[name].wrapper.classList = 'accordion-collapse collapse';
