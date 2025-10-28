@@ -141,6 +141,13 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 [data-bs-theme="dark"] .table-done.bg-body-secondary td,td.table-done.bg-body-secondary, .bg-done.bg-body-secondary td{background-color: #092618;}
 
 .nav-link:focus-visible{box-shadow: none;color: var(--bs-link-color)!important;}
+.link {
+    color: var(--bs-link-color);
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+.link.active { text-decoration: underline;}
+.link:hover { color: var(--bs-link-hover-color) }
 
 .appAlert{position: fixed;width: 100%;bottom: 0;z-index: 300;margin-bottom: 0;}
 

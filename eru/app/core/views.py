@@ -1,3 +1,4 @@
+# import time # Only in development: time.sleep(5) atrasa em 5 segundos
 import re, os, json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
@@ -32,10 +33,7 @@ def empresas(request):
 @permission_required('auth.view_group', login_url="/handler/403")
 def grupos(request):
     grupos = Group.objects.all().order_by('name')
-    pesquisa = request.GET.get('pesquisa', None)
-    if pesquisa:
-        grupos = grupos.filter(name__contains=pesquisa)
-    if request.GET.get('_associacoes', None):
+    if request.GET.get('users', None) and request.GET['users'] == 'false':
         grupos = grupos.filter(user=None)
     return render(request,'core/grupos.html',{'grupos':grupos})
 

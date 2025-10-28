@@ -100,6 +100,11 @@ class jsSelectm{
         return {options: options, selected: selected}
     }
     _normalizeOptions(){ 
+        this.selected.forEach((el)=>{ 
+        // marca options selected=true para os itens em this.selected (caso nao informado ao instanciar elemento)
+            this.options[el].selected = true;
+            this.select.querySelector(`option[value="${el}"]`).selected = true;
+        })
     // ao criar opcoes uzando o metodo _initOptions o atributo data-group pode nao estar informado, padroniza option para grupos
     // tambem trata inclusao no grupo de option inexistente, removendo entrada invalida do group
         for(let grupo in this.groups){
@@ -118,6 +123,35 @@ class jsSelectm{
         for(let group in this.groups){
             this.groups[group] = this.groups[group].map(item => String(item));
         }
+    }
+    checkAll(state){ // marca todas as opcoes para o container padrao
+        this.model.checkAll.state = state == undefined ? this.model.checkAll.state : state == true ? 'uncheck' : 'check';
+        this._checkAllSwitch(this.model.checkAll)
+        this.config.onchange({origin: 'checkAll'})
+    }
+    groupCheckAll(group=undefined, state=undefined){ // marca todas as opcoes para o grupo informado, na omissaomarca todas as opcoes de todos os grupos
+        if(typeof group == 'boolean' && state == undefined){ // checkAll para todos os grupos
+            state = group;
+            group = undefined;
+        }
+        if(group && !this.groups[group]){return}
+        // if(group == undefined && state == undefined){return}
+        
+        if(group){
+            this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
+            this._checkAllSwitch(this.model.groups[group].checkAll);
+            this._groupCounterUpdate(group);
+        }
+        else{
+            // state = state == true ? 'uncheck' : 'check';
+            for(let group in this.groups){ 
+                this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
+                // this.model.groups[group].checkAll.state = state;
+                this._checkAllSwitch(this.model.groups[group].checkAll) ;
+                this._groupCounterUpdate(group);
+            }
+        }
+        this.config.onchange({origin: 'groupCheckAll'})
     }
     _addTitle(){ // cria elemento de titulo para componente
         // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', 'data-i18n': 'foo', etc: 2}
@@ -247,6 +281,7 @@ class jsSelectm{
             this._checkAllUpdateStatus(this._containerGetState(modelTarget.wrapper), opt.container.dataset?.group ? this.model.groups[opt.container.dataset.group].checkAll : this.model.checkAll);
             this.config.onchange({origin: '_optionSwitch'});
         }
+        if(el.dataset?.group && this.config.groupCounter){this._groupCounterUpdate(el.dataset.group);}
     }
     _checkAllUpdateStatus(state, checkAll){ // atualiza informacoes (icone, descricao e status) do controle de marcar todos
         if(state == 'none'){

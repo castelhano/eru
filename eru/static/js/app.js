@@ -1,6 +1,7 @@
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
 const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
-var pageshow_persisted = false; // flag informa se pagina foi construida pelo cache do navegador (em geral no history back)
+var pageshow_persisted = false;      // flag informa se pagina foi construida pelo cache do navegador (em geral no history back)
+var appPreviousContext = 'default';  // usado para rollback de contexto
 
 // exibe modal de carregameto ao sair da pagina
 appModalLoading._element.addEventListener('shown.bs.modal', ()=>{ if(pageshow_persisted){ appModalLoading.hide() } })
@@ -153,11 +154,19 @@ function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
 // Codigo a ser executado apos carregamento completo da pagina
 document.addEventListener("DOMContentLoaded", function(event) {
 
+  // retorna context para anterior a abertura do modal de confirmacao
+  appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext(appPreviousContext)})
+  if(document.querySelector('[data-appConfirm="true"]')){
+    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação', 'data-i18n':'sys.confirmOperation'})
+  }
+  
   // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
-  document.querySelectorAll('[data-appConfirm=true]').forEach((el)=>{
+  document.querySelectorAll('[data-appConfirm="true"]').forEach((el)=>{
     let timeout, interv, span;
     el.onclick = (e)=>{
       e.preventDefault();
+      appPreviousContext = appKeyMap.getContext();
+      appKeyMap.setContext('appConfirmModal');
       if(span){
         clearInterval(interv);
         clearTimeout(timeout);
@@ -165,36 +174,21 @@ document.addEventListener("DOMContentLoaded", function(event) {
       }
       if(el.hasAttribute('data-appConfirmTitle')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-appConfirmTitle')}
       if(el.hasAttribute('data-appConfirmMessage')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-appConfirmMessage')}
+      if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
+      if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
       if(el.hasAttribute('href')){
-        document.getElementById('appModalConfirm_link').classList.remove('d-none');
-        document.getElementById('appModalConfirm_button').classList.add('d-none');
-        document.getElementById('appModalConfirm_link').href = el.href;
-        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_link').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
-        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_link').innerHTML = el.getAttribute('data-appConfirmText')}
-        setTimeout(()=>{document.getElementById('appModalConfirm_link').focus();}, 500);
+        document.getElementById('appModalConfirm_button').onclick = ()=>{ location.href = el.href };
       }
       else if(el.hasAttribute('onclick')){
-        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
-        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
-        document.getElementById('appModalConfirm_link').classList.add('d-none');
-        document.getElementById('appModalConfirm_button').classList.remove('d-none');
         document.getElementById('appModalConfirm_button').onclick = options.onclick;
-        setTimeout(()=>{document.getElementById('appModalConfirm_button').focus();}, 500);
       }
       if(el.hasAttribute('data-appConfirmDelay')){
         span = document.createElement('span');
         let counter = el.getAttribute('data-appConfirmDelay');
         span.innerHTML = ' ' + counter;
-        if(el.hasAttribute('href')){
-          document.getElementById('appModalConfirm_link').classList.add('disabled');
-          document.getElementById('appModalConfirm_link').appendChild(span);
-        }
-        else{
-          document.getElementById('appModalConfirm_button').disabled = true;
-          document.getElementById('appModalConfirm_button').appendChild(span)
-        } 
+        document.getElementById('appModalConfirm_button').disabled = true;
+        document.getElementById('appModalConfirm_button').appendChild(span);
         timeout = setTimeout(()=>{
-          span.parentNode.classList.remove('disabled');
           span.parentNode.disabled = false;
           clearInterval(interv);
           span.remove();

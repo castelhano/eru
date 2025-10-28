@@ -124,7 +124,7 @@
                             <span class="visually-hidden">Loading...</span>
                         </span>
                     </span>
-                    <span id="appModalLoadingMessage" style="position: relative;top:-6px; left:5px;"><b>Aguarde!</b> Processando requisição...</span>
+                    <span id="appModalLoadingMessage" style="position: relative;top:-6px; left:5px;"><b data-i18n="common.wait">Aguarde</b>! <span data-i18n="sys.processingRequest">Processando requisição</span>...</span>
                 </div>
             </div>
         </div>
@@ -135,15 +135,14 @@
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i>Confirma Operação</h1>
+                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span data-i18n="sys.confirmOperation">Confirma Operação</span></h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="appModalConfirm_message">Confirma operação?</p>
+                    <p id="appModalConfirm_message"><span data-i18n="sys.confirmOperation">Confirma operação</span>?</p>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <a id="appModalConfirm_link" class="btn btn-sm btn-primary">Confirmar</a>
-                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary d-none">Confirmar</button>
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancelar</button>
+                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary" data-i18n="common.confirm" data-i18n-bold="c"><b>C</b>onfirmar</button>
                     </div>
                 </div>
             </div>
@@ -171,7 +170,6 @@
             notifyFunction: appAlert
         })
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
-        const appOldContext = appKeyMap.getContext();        // usado para rollback de centexto
         {% if user.is_superuser %}
         appKeyMap.bind('s+backspace', ()=>{
             i18n.clearAll(false);
