@@ -1,12 +1,19 @@
 /*
 * I18n      Lib para interlacionalização de codigo
 *
-* @version  1.3
-* @release  02/10/2025
-* @since    08/10/2025 [ajustes de bugs, remocao de populatedDefaultLanguage]
+* @version  2.0
+* @release  [2.0] 29/10/25 [declaration refactor see**]
+* @since    02/10/2025
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
 * @example  const i18n = new I18n({apps: ['core']})
+* --
+* Read me **: 
+* Ver 2.0 alterado forma de declaracao de modificadores, removido data-i18n-[bold, transform, pluralize]
+* declaracao eh feita toda em data-i18n="[placeholder]common.company__plural__captalize__bold:c"
+
+TODO: ao addApp metodo init esta sendo chamado antes da resposta do server, adicionado refresh novamente apos resposta do servidor
+ajustar logica para init so ser chamado apos conluido resposta do addApp
 */
 
 class I18n{
@@ -23,6 +30,11 @@ class I18n{
             notifyFunction: null,                       // Funcao para notificacao func(style, message, autodismiss)
             notFoundMsg: 'Não encontrado arquivo de tradução para linguagem selecionada'
         }
+        this.wait = false;       // se true esperando resposta seridor 
+        this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
+        this.modificatorAttrs = ['plural'];
+        this.composedAttrs = ['bold'];
+        String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + this.slice(1) }
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
@@ -33,13 +45,11 @@ class I18n{
         if(this.switcher){this.setSwitcher(this.switcher)}
     }
     init(){
-        
         /** Ordem de prioridade para identificacao do idioma
          * 1 - Verifica existencia localStorage[i18nLanguage]
          * 2 - Se autoDetect = true, busca idioma do navegador
          * 3 - Aguarda requisicao manual para troca de idioma
          */
-        
         if(this.language != this.defaultLanguage){
             console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
             if(this.switcher){this.switcher.value = this.language}
@@ -134,12 +144,38 @@ class I18n{
         localStorage.setItem('i18nDB', JSON.stringify(this.db))
         return true;
     }
+    __detachEntry(original_entry){
+        // recebe uma entrada e retorna parametros para traducao 
+        // ex: __detachEntry('placeholder]foo.bar__upper__bold:c') => {entry: 'foo.bar', target: 'placeholder', transform: 'upperCase', bold: 'c'}
+        let result = [];
+        let entries = original_entry.split(';'); // eh possivel informar multiplas chaves separando por comma ex: 'foo.bar;[title]foo.fei'
+        entries.forEach((el)=>{
+            let entry = {entry: el};
+            let target = el.match(/\[(.*?)\](.*)/);
+            if(target){
+                entry.target = target[1];
+                entry.entry = target[2];
+            }
+            let attrs = entry.entry.split('__');    // separa atributos de configuracao do entry
+            entry.entry = attrs[0];                 // ajusta entry removendo os atributos
+            attrs.forEach((attr)=>{                 // percorre todos os atributos configurando entry
+                if(this.functionAttrs.includes(attr)){ entry.transform = attr}
+                if(this.modificatorAttrs.includes(attr)){entry[attr] = true}
+                if(this.composedAttrs.includes(attr.split(':')[0])){entry[attr.split(':')[0]] = String(attr.split(':')[1]).toLowerCase()}
+            })
+            result.push(entry)
+        })
+        return result;
+    }
     addApp(app){ // Adiciona app no array this.apps, busca schema para idioma ativo e chama metodo refresh
         if(this.apps.includes(app)){return}
+        // this.wait = true;
         console.log(`${timeNow({showSeconds: true})} | i18n: Adding app "${app}"`);
         this.apps.push(app);
         this.__getLanguage(this.language, app).then((resp)=>{
             this.__updateDb(this.language, resp);
+            // this.refresh(); // atualiza interface
+            // this.wait = false;
         })
     }
     setSwitcher(el){ // Define html element para alternar manualmente idioma
@@ -147,8 +183,23 @@ class I18n{
         if(el.type != 'select-one'){console.log(`i18n: [ERROR] Switcher must be a select element (multiple not accepted)`);return;}
         el.addEventListener('change', ()=>{this.translate(el.value)})
     }
-    getEntry(entry){
-        try{return entry.split('.').reduce((previous, current) => previous[current], this.db[this.language])}
+    getEntry(original_entry){
+        try{
+            let entry = this.__detachEntry(original_entry)[0]; // getEntry analisa somente a primeira entry (caso informado mais de uma)
+            let result = entry.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]);
+            if(entry.plural && result.includes('#')){result = result.split('#')[1]}
+            else{result = result.split('#')[0]}
+            if(entry.transform){result = result[entry.transform]()}
+            if(entry.bold && entry.entry.toLowerCase().includes(entry.bold)){
+                let indexStart = result.toLowerCase().indexOf(entry.bold);
+                let indexEnd = indexStart + entry.bold.length;
+                let substring = result.slice(indexStart, indexEnd);
+                if(indexStart > 0){ result = result.slice(0, indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
+                else{ result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
+            }
+            else if(entry.bold){ result += ` <sup><b>${entry.bold.toUpperCase()}</b></sup>` }
+            return result;
+        }
         catch(e){return null}
     }
     // Limpa dados salvos no localStorage e recarrega pagina (se reload=true)
@@ -166,57 +217,39 @@ class I18n{
             this.language = this.defaultLanguage;
         }
     }
-    refresh(){
+    refresh(){ // percorre a pagina traduzindo todas as entradas com data-i18n=""
         console.log(`${timeNow({showSeconds: true})} | i18n: Updating user interface (refresh)`);
-        let entries = document.querySelectorAll('[data-i18n]');
+        let els = document.querySelectorAll('[data-i18n]');
         let errorCount = 0;
-        entries.forEach((el)=>{
-            let result = null;
-            try {
-                result = el.getAttribute('data-i18n').split('.').reduce((previous, current) => previous[current], this.db[this.language]);
-                if(!result){ throw '' }
-            }
-            // Se nao encontrado correspondente adiciona contador de erro, informa no log e analisa proxima entrada
-            catch (e) {
-                // Chaves criadas dinamicamente (ex: por libs) nao serao contruidas no db default, e devem ser tratadas dirto na lib
-                // neste caso nao apresenta erro de chave nao encontrada
-                if(el.getAttribute('data-i18n-dynamicKey') != 'true'){
+        els.forEach((el)=>{
+            let entries = this.__detachEntry(el.dataset.i18n);
+            entries.forEach((e)=>{
+                let result;
+                try{
+                    result = e.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]);
+                    if(!result){throw ''}
+                }
+                catch(err){
                     errorCount++;
-                    console.log(`i18n: [MISSING KEY] ${el.getAttribute('data-i18n')} for ${this.language}`);
+                    let key = this.__detachEntry(el.getAttribute('data-i18n'))
+                    console.log(`i18n: [MISSING KEY] ${key?.entry || el.getAttribute('data-i18n')} for ${this.language}`);
+                    return;
                 }
-                return;
-            }
-            // Analisa se existe definicao para transform no texto
-            if(el.getAttribute('data-i18n-transform')){
-                // Alterando entre caixa alta / baixa / captalize
-                if(el.getAttribute('data-i18n-transform') == 'captalize'){result = result.charAt(0).toUpperCase() + result.slice(1)}
-                else if(el.getAttribute('data-i18n-transform') == 'upperCase'){result = result.toUpperCase()}
-                else if(el.getAttribute('data-i18n-transform') == 'lowerCase'){result = result.toLowerCase()}
-            }
-            // Caso queria destacar parte so texto (bold), use i18.bold="substring" (se existir no texto)
-            // Se for a default language assume se que emphasys ja esta no texto original, e nao faz alteracoes
-            if(this.language != this.defaultLanguage && el.getAttribute('data-i18n-bold')){
-                if(typeof result != 'string'){console.log(`i18n: [ERROR] ${el.getAttribute('data-i18n')} return is not a string`)}
-                else{
-                    if(result.toLowerCase().includes(el.getAttribute('data-i18n-bold').toLowerCase())){
-                        let indexStart = result.toLowerCase().indexOf(el.getAttribute('data-i18n-bold').toLowerCase());
-                        let indexEnd = indexStart + el.getAttribute('data-i18n-bold').length;
-                        let substring = result.slice(indexStart, indexEnd);
-                        if(indexStart > 0){
-                            result = result.slice(0,indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
-                        }
-                        else{
-                            result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) ;
-                        }
-                    }
-                    else{ // Caso nao exista na traducao a letra bold adiciona ao final da palavra elemento sup com destaque para letra
-                        result += ` <sup><b>${el.getAttribute('data-i18n-bold').toUpperCase()}</b></sup>`;
-                    }
+                if(e.plural && result.includes('#')){result = result.split('#')[1]}
+                else{result = result.split('#')[0]}
+                if(e.transform){result = result[e.transform]()}
+                if(e.bold && result.toLowerCase().includes(e.bold)){
+                    let indexStart = result.toLowerCase().indexOf(e.bold);
+                    let indexEnd = indexStart + e.bold.length;
+                    let substring = result.slice(indexStart, indexEnd);
+                    if(indexStart > 0){ result = result.slice(0, indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
+                    else{ result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
                 }
-            }
-            // Se definido i18n-target, resultado sera aplicado ao atribute informado, se nao plota resultado no innerHTML do elemento
-            if(el.getAttribute('data-i18n-target') == null){el.innerHTML =  result || el.innerHTML}
-            else{el.setAttribute(el.getAttribute('data-i18n-target'), result || el.getAttribute(el.getAttribute('data-i18n-target')))}
+                else if(e.bold){ result += ` <sup><b>${e.bold.toUpperCase()}</b></sup>` }
+                //--
+                if(e.target){ el[e.target] = result }
+                else{ el.innerHTML = result }
+            })
         })
     }
 }

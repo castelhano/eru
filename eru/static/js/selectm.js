@@ -196,7 +196,7 @@ class jsSelectm{
     _addSearchInput(options={}, groupContainer=false){
         let input = document.createElement('input');
         input.type = 'search';
-        ['data-i18n', 'data-i18n-transform', 'data-i18n-target', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
+        ['data-i18n', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
         input.style = groupContainer ? this.config.styles.groupInput : this.config.styles.input;
         input.classList = groupContainer ? this.config.classlist.groupInput : this.config.classlist.input;
         input.oninput = (ev)=>{
@@ -425,7 +425,7 @@ class jsSelectm{
         // adiciona data-group no elemento para identificacao do evento click
         if(config['data-group']){ container.setAttribute('data-group', config['data-group']) }
         
-        ['data-i18n', 'data-i18n-target', 'data-i18n-transform', 'data-i18n-bold'].forEach((el)=>{
+        ['data-i18n'].forEach((el)=>{
             if(config?.[el]){
                 result[el] = config[el];
                 text.setAttribute(el, config[el]);

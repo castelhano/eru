@@ -92,13 +92,14 @@
     options[{{perm.pk|safe}}] = {
       value: '{{perm.pk|safe}}',
       text: '<span class="text-purple">{{perm.content_type.model}}</span>: {{perm.name}}',
-      group: '{{perm.content_type.app_label}}',
+      'data-group': '{{perm.content_type.app_label}}',
       selected: selected.includes({{perm.pk|safe}})
     }
   {% endfor %}
   
   const select = new jsSelectm('#id_permissions', {
     title: 'Permissões',
+    canFilter: true,
     options: options,
   });
 

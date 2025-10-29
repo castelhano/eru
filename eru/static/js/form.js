@@ -25,7 +25,7 @@ class jsForm{
             modalBody: null,                            // Usar (modalBody: container) para criacao de modal (bootstrap modal) de filtros
             modalTrigger: null,                         // Elemento acionador do modal
             triggerShortcut: 'f2',                      // Teclas de atalho (integracao com keywatch) para acionamento do modal
-            submitSchema: {type: 'submit', innerHTML: '<b>C</b>onfirmar', classList: 'btn btn-sm btn-primary', 'data-i18n': 'common.confirm', 'data-i18n-bold': "c"},
+            submitSchema: {type: 'submit', innerHTML: '<b>C</b>onfirmar', classList: 'btn btn-sm btn-primary', 'data-i18n': 'common.confirm__bold:c'},
             cancelSchema: {type: 'button', innerHTML: 'Cancelar', classList: 'btn btn-sm btn-secondary', 'data-i18n': 'common.cancel', 'data-bs-dismiss': 'modal', 'tabIndex': '-1'},
             modalFocus: null,                           // Elemento html a receber foco ao abrir modal
         }

@@ -3,12 +3,11 @@
     const cadastro = new canvasNavDropdown({
         name: '<b>C</b>adastro',
         icon: 'bi bi-list',
-        'data-i18n': 'common.register',
-        'data-i18n-bold': 'c',
+        'data-i18n': 'common.register__bold:c',
         itens: [
-        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', 'data-i18n': 'index.nav.registerCompany', 'data-i18n-bold':'e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', 'data-i18n': 'index.nav.registerUser', 'data-i18n-bold':'u', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', 'data-i18n': 'index.nav.registerGroup', 'data-i18n-bold':'g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'core_empresas' %}', 'data-i18n': 'index.nav.registerCompany__bold:e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'core_usuarios' %}', 'data-i18n': 'index.nav.registerUser__bold:u', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'core_grupos' %}', 'data-i18n': 'index.nav.registerGroup__bold:g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         ],
         keybind: [
             'alt+c',
@@ -31,8 +30,7 @@
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'core_settings' %}',
-        'data-i18n': 'common.settings',
-        'data-i18n-bold': 'u',
+        'data-i18n': 'common.settings__bold:u',
         keybind: [
             'alt+u',
             ()=>{settings.click()},

@@ -106,7 +106,7 @@
                   <td class="d-none">{{funcionario.pne|yesno:'PNE,'}}</td>
                   <td class="d-none d-lg-table-cell">{{funcionario.get_status_display}}</td>
                   {% if perms.pessoal.view_funcionario %}
-                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_funcionario_id' funcionario.id|safe %}" title="Editar" data-i18n="common.edit" data-i18n-target="title" ><i class="bi bi-pen-fill"></i></a></td>
+                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_funcionario_id' funcionario.id|safe %}" title="Editar" data-i18n="[title]common.edit"><i class="bi bi-pen-fill"></i></a></td>
                   {% endif %}
                 </tr>
                 {% endfor %}
@@ -128,13 +128,13 @@
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select class="form-select" id="id_empresa" name="empresa"></select>
-          <label for="id_empresa" data-i18n="common.company" data-i18n-bold="e"><b class="text-body"><u>E</u></b>mpresa</label>
+          <label for="id_empresa" data-i18n="common.company__bold:e"><b class="text-body"><u>E</u></b>mpresa</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           {{ form.status }}
-          <label for="id_status" data-i18n="common.status" data-i18n-bold="s"><b class="text-body"><u>S</u></b>tatus</label>
+          <label for="id_status" data-i18n="common.status__bold:s"><b class="text-body"><u>S</u></b>tatus</label>
         </div>
       </div>
       <div class="row g-1 d-none" id="motivoDesligamentoContainer">
@@ -146,19 +146,19 @@
       <div class="row g-1">
         <div class="form-floating mb-1">
           {{ form.regime }}
-          <label for="id_regime" data-i18n="common.regime" data-i18n-bold="r"><b class="text-body"><u>R</u></b>egime</label>
+          <label for="id_regime" data-i18n="common.regime__bold:r"><b class="text-body"><u>R</u></b>egime</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select name="cargo__setor" id="id_setor" class="form-select"></select>
-          <label for="id_setor" data-i18n="common.sector" data-i18n-bold="t">Se<b class="text-body"><u>t</u></b>or</label>
+          <label for="id_setor" data-i18n="common.sector__bold:t">Se<b class="text-body"><u>t</u></b>or</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select name="cargo" id="id_cargo" class="form-select"><option value="" data-i18n="common.all">Todos</option></select>
-          <label for="id_cargo" data-i18n="common.position" data-i18n-bold="g">Car<b class="text-body"><u>g</u></b>o</label>
+          <label for="id_cargo" data-i18n="common.position__bold:g">Car<b class="text-body"><u>g</u></b>o</label>
         </div>
       </div>
     </div>
