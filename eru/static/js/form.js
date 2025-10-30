@@ -393,7 +393,7 @@ class selectPopulate{
                     if(['innerHTML'].includes(key)){continue}
                     opt.setAttribute(key, this.emptyRow[key])
                 }
-                opt.innerHTML = i18n.getEntry(instance.emptyRow['data-i18n']) || instance.emptyRow['innerHTML'] || 'Todos';
+                opt.innerHTML = i18n.getEntry(this.emptyRow['data-i18n']) || this.emptyRow['innerHTML'] || 'Todos';
                 this.target.appendChild(opt);
             }
         };

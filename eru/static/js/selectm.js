@@ -28,6 +28,8 @@ class jsSelectm{
             checkAll: true,                                            // Se true sera adicionado controle para marcar todas as opcoes
             groupCounter: true,                                        // Se true adiciona contador de opcoes somente nas opcoes de grupo
             canFilter: false,                                          // Se true adiciona input para filtrar opcoes
+            // emptyMessage sera exibido se nenhum option estiver disponivel
+            emptyMessage: i18n ? i18n.getEntry('sys.nothingToShow') || 'Nada a exibir' : 'Nada a exibir',
             filterOptions: {                                           // Opcoes para o input#search
                 placeholder: i18n ? i18n.getEntry('common.search') || 'Pesquisa' : 'Pesquisa'
             },
@@ -58,17 +60,20 @@ class jsSelectm{
                 el.value = this.options[opt].value;
                 el.innerHTML = this.options[opt]['data-i18n'] ? i18n.getEntry(this.options[opt]['data-i18n']) || this.options[opt].text || '' : this.options[opt].text || '';
                 el.selected = this.options[opt].selected == true;
+                if(this.options[opt].selected && !this.selected.includes(opt)){ this.selected.push(opt) }
                 this.select.appendChild(el);
                 this.options[opt].el = el;
             }
         }
         
         // Cria this.model, extrutura que armazena apontadores para todos os elementos criados
-        if(Object.keys(this.options).length == 0){ this.config.disabled = true }
         this._normalizeOptions();
         this.model = this._buildModel();
         let summary = this.getSummary();
         if(summary.default.total == 0){ this.model.wrapper.style.display = 'none' }
+        if(summary.default.total == 0 && Object.keys(this.groups).length == 0){ 
+            this.model.container.appendChild(this._addEmptyMessage());
+        }
         if(this.config.groupCounter){ this._groupCounterUpdate() }
         
         if(this.config.checkAll){ // adiciona controle de marcar todos para cada grupo
@@ -208,6 +213,13 @@ class jsSelectm{
         if(this.config.disabled){input.disabled = true}
         return input;
     }
+    _addEmptyMessage(model=this.model){
+        model.emptyMessage = document.createElement('div'); 
+        model.emptyMessage.style = this.config.styles.emptyMessage; 
+        model.emptyMessage.classList = this.config.classlist.emptyMessage;
+        model.emptyMessage.innerHTML = this.config.emptyMessage;
+        return model.emptyMessage;
+    }
     // Metodos de estilizacao 
     _getDefaultStyles(){
         return {
@@ -224,6 +236,7 @@ class jsSelectm{
             groupCounter: 'font-size: 0.75rem; margin-right: 15px;',
             checkAll: 'padding: 2px 5px;',
             checkAllText: '',
+            emptyMessage: '',
         }
     }
     _getDefaultClasslist(){
@@ -243,6 +256,7 @@ class jsSelectm{
             uncheck: 'bi bi-square me-2',
             check: 'bi bi-check-square-fill me-2',
             partial: 'bi bi-dash-square me-2',
+            emptyMessage: 'mb-1 ps-1 text-body-tertiary',
         }
     }
     _addPseudoClass(){
@@ -479,7 +493,7 @@ class jsSelectm{
             if(this.config.sort){this._sort(this.model.container)}
             this.model.wrapper.style.display = 'block'; // assegura que container esta visivel ao adicionar um elemento
         }
-
+        if(this.model.emptyMessage){ this.model.emptyMessage.remove(); this.model.emptyMessage = null; }
         this.config.onchange({origin: 'addOption'});
     }
     _sort(wrapper){ // reordena (ordem crescente) options no componente baseado no text (innerHTML)

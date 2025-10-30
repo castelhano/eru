@@ -101,7 +101,7 @@
           let selected = []; // Armazena empresas atuais habilitadas para o usuario
           {% for empresa in usuario.profile.empresas.all %} selected.push('{{empresa.id|safe}}'); {% endfor %}
           
-          let selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
+          window.selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
             selected: selected,
           });
         }
@@ -115,7 +115,7 @@
         then: ()=>{
           let selected = [] // Armazena os grupos atuais do usuario
           {% for grupo in usuario.groups.all %} selected.push('{{grupo.id|safe}}'); {% endfor %}
-          let selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
+          window.selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
             selected: selected,
             canFilter: true,
           });
@@ -134,7 +134,7 @@
             opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
             options[String(data[item].pk)] = opt;
           }
-          let selectPerms = new jsSelectm(document.getElementById('id_perms'), {
+          window.selectPerms = new jsSelectm(document.getElementById('id_perms'), {
             sort: false,
             options: options,
             canFilter: true,

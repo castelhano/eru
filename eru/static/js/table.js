@@ -109,7 +109,8 @@ class jsTable{
             this.filterInput.type = 'text';
             this.filterInput.disabled = this.filterCols.length ? false : true; // Disabled elemento se nao informado colunas para filtrar (filterCols)
             this.filterInput.classList = 'form-control form-control-sm';
-            this.filterInput.placeholder = i18n ? i18n.getEntry('common.filter') + '*' : 'Filtrar*';
+            this.filterInput.placeholder = i18n ? i18n.getEntry('common.filter__posfix:*') || 'Filtrar*' : 'Filtrar*';
+            this.filterInput.setAttribute('data-i18n', '[placeholder]common.filter__posfix:*');
             this.filterInput.autocomplete = false;
             this.filterInput.oninput = (e) => this.filter(e);
             capFilter.appendChild(this.filterInput);

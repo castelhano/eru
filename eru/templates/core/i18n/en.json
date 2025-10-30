@@ -52,6 +52,7 @@
         "filterQuery": "Filter Query",
         "inDevelopment": "In Development",
         "noResultsFound": "No results found with the criteria provided",
+        "nothingToShow": "Nothing to show",
         "processingRequest": "Processing request",
         "recordCreated": "Record create successfully",
         "recordDeleted": "Record deleted, this operation cannot be undone",

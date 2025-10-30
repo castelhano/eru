@@ -242,3 +242,52 @@ class Dependente(models.Model):
             return hoje.year - self.data_nascimento.year - ((hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day))
         else:
             return ''
+
+class GrupoEvento(models.Model):
+    nome = models.CharField(max_length=100, blank=False)
+    def ultimas_alteracoes(self):
+        logs = Log.objects.filter(modelo='pessoal.grupo_evento',objeto_id=self.id).order_by('-data')[:15]
+        return reversed(logs)
+
+class Evento(models.Model):
+    TIPOS = (
+        ("P","Provento"),
+        ("D","Desconto"),
+        ("R","Referencia"),
+    )
+    nome = models.CharField(max_length=100, blank=False)
+    rastreio = models.CharField(max_length=40, blank=True)
+    grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT)
+    def ultimas_alteracoes(self):
+        logs = Log.objects.filter(modelo='pessoal.evento', objeto_id=self.id).order_by('-data')[:15]
+        return reversed(logs)
+
+class MotivoReajuste(models.Model):
+    nome = models.CharField(max_length=100, blank=False)
+    def ultimas_alteracoes(self):
+        logs = Log.objects.filter(modelo='pessoal.motivo_reajuste', objeto_id=self.id).order_by('-data')[:15]
+        return reversed(logs)
+
+class EventoMovimentacao(models.Model):
+    TIPOS = (
+        ("V","Valor"),
+        ("F","Formula"),
+    )
+    inicio = models.DateField(blank=False, null=False, default=datetime.today)
+    fim = models.DateField(blank=True, null=True)
+    valor = models.CharField(max_length=250, blank=True)
+    motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
+    class Meta:
+        abstract = True
+
+class EventoCargo(EventoMovimentacao):
+    cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
+    def ultimas_alteracoes(self):
+        logs = Log.objects.filter(modelo='pessoal.evento_cargo',objeto_id=self.id).order_by('-data')[:15]
+        return reversed(logs)
+
+class EventoFuncionario(EventoMovimentacao):
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)
+    def ultimas_alteracoes(self):
+        logs = Log.objects.filter(modelo='pessoal.evento_funcionario', objeto_id=self.id).order_by('-data')[:15]
+        return reversed(logs)

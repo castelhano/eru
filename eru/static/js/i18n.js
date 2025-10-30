@@ -10,7 +10,7 @@
 * --
 * Read me **: 
 * Ver 2.0 alterado forma de declaracao de modificadores, removido data-i18n-[bold, transform, pluralize]
-* declaracao eh feita toda em data-i18n="[placeholder]common.company__plural__captalize__bold:c"
+* declaracao eh feita toda em data-i18n="[placeholder]common.company__plural__captalize__bold:c__prefix:R$__posfix: pt-BR"
 * alteracao multipla no elemento data-i18n="[placeholder]foo.bar;[title]foo.fei"
 */
 
@@ -31,7 +31,7 @@ class I18n{
         this.waiting = [];       // fila de processos (ajax) aguardando resposta do servidor 
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         this.modificatorAttrs = ['plural'];
-        this.composedAttrs = ['bold'];
+        this.composedAttrs = ['bold','prefix', 'posfix'];
         String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + this.slice(1) }
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
@@ -160,7 +160,7 @@ class I18n{
             attrs.forEach((attr)=>{                 // percorre todos os atributos configurando entry
                 if(this.functionAttrs.includes(attr)){ entry.transform = attr}
                 if(this.modificatorAttrs.includes(attr)){entry[attr] = true}
-                if(this.composedAttrs.includes(attr.split(':')[0])){entry[attr.split(':')[0]] = String(attr.split(':')[1]).toLowerCase()}
+                if(this.composedAttrs.includes(attr.split(':')[0])){entry[attr.split(':')[0]] = attr.split(':')[1]}
             })
             result.push(entry)
         })
@@ -189,7 +189,10 @@ class I18n{
             if(entry.plural && result.includes('#')){result = result.split('#')[1]}
             else{result = result.split('#')[0]}
             if(entry.transform){result = result[entry.transform]()}
-            if(entry.bold && entry.entry.toLowerCase().includes(entry.bold)){
+            if(entry.prefix){result = entry.prefix + result }
+            if(entry.posfix){result = result + entry.posfix}
+            if(entry.bold && entry.entry.toLowerCase().includes(String(entry.bold).toLowerCase())){
+                entry.bold = String(entry.bold).toLowerCase(); // converte em string
                 let indexStart = result.toLowerCase().indexOf(entry.bold);
                 let indexEnd = indexStart + entry.bold.length;
                 let substring = result.slice(indexStart, indexEnd);
@@ -237,7 +240,10 @@ class I18n{
                 if(e.plural && result.includes('#')){result = result.split('#')[1]}
                 else{result = result.split('#')[0]}
                 if(e.transform){result = result[e.transform]()}
-                if(e.bold && result.toLowerCase().includes(e.bold)){
+                if(e.prefix){result = e.prefix + result }
+                if(e.posfix){result = result + e.posfix}
+                if(e.bold && result.toLowerCase().includes(String(e.bold).toLowerCase())){
+                    e.bold = String(e.bold).toLowerCase();
                     let indexStart = result.toLowerCase().indexOf(e.bold);
                     let indexEnd = indexStart + e.bold.length;
                     let substring = result.slice(indexStart, indexEnd);
