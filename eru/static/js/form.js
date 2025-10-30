@@ -450,7 +450,8 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
             textareaRows: 6,
             confirmButtonClasslist: 'btn btn-sm btn-primary border-0',
             confirmButtonText: 'Salvar',
-            shortcut: 'f2',
+            shortcut: 'ctrl+enter',
+            cleanSelectionShortcut: 'alt+l',
             marginTop: 3,
             container: el.parentElement,
             groupContainerClasslist: 'input-group',
@@ -465,13 +466,10 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
     _build(){
         this.select = document.createElement('select');this.select.multiple = true;this.select.style.display = 'none';this.select.name = `${this.el.name}_multiple`;
         this.dialog = document.createElement('dialog');this.dialog.classList = this.dialogClasslist;this.dialog.style.margin = '0px';this.dialog.style.zIndex = '10';
+        this.dialog.addEventListener('close', ()=>{appKeyMap.setContext(appPreviousContext)})
         this.dialog.style.width = this.dialogWidth;
         this.textarea = document.createElement('textarea');this.textarea.classList = this.textareaClasslist;this.textarea.rows = this.textareaRows;
-        this.textarea.addEventListener('keydown', (ev)=>{
-            if(ev.key === 'Escape'){this.el.focus();this.dialog.close();}
-            else if(ev.key === 'Enter' && ev.altKey){this.confirmButton.click();ev.preventDefault();}
-        })
-        this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;this.confirmButton.title = 'Alt+Enter'
+        this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;this.confirmButton.title = this.shortcut ? this.shortcut.toUpperCase() : '';
         this.confirmButton.onclick = ()=>{
             this.select.innerHTML = '';
             this.list = [];
@@ -479,7 +477,7 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
             this.textarea.value.trim().split('\n').filter(n => n).every((el, index)=>{
                 if(count == this.max){
                     this.textarea.value = this.list.join('\n'); // atualiza o textarea somente com os valores aceitos
-                    appNotify('warning', `jsForm: Campo <b>${this.el.name}</b> Máximo de <b>${this.max}</b> registros`, {autodismiss: false})
+                    appNotify('warning', `jsForm: Campo <b>${this.el.name}</b> máximo de <b>${this.max}</b> registros`, {autodismiss: false})
                     return false
                 }
                 let opt = document.createElement('option'); opt.value = el; opt.selected = true;
@@ -506,14 +504,15 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
         this.dialog.appendChild(this.select);
         // **
         if(this.shortcut){ // adiciona shortcut quando foco estiver no input
-            this.el.addEventListener('keydown', (ev)=>{
-                if(ev.key.toLowerCase() === this.shortcut){this.btn.click(); ev.preventDefault();}
-            })
+            appKeyMap.bind(this.shortcut, (ev)=>{this.btn.click(); this.oldValue = this.textarea.value;}, {element: this.el, display: false})
+            appKeyMap.bind(this.shortcut, (ev)=>{this.confirmButton.click()}, {context: 'multipleAddonModal', element: this.textarea, 'data-i18n': 'sys.shortcuts.submitForm', icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})
+            appKeyMap.bind('esc', (ev)=>{this.textarea.value = this.oldValue;this.el.focus(); this.dialog.close();}, {context: 'multipleAddonModal', display: false})
+            appKeyMap.bind(this.cleanSelectionShortcut, (ev)=>{this.textarea.value = ''}, {context: 'multipleAddonModal', element: this.textarea, 'data-i18n': 'sys.shortcuts.clearSelection', icon: 'bi bi-input-cursor-text text-warning', desc:'Limpa seleção'})
         }
         this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
         this.btn.onclick = ()=>{
             if(this.dialog.open){this.dialog.close()}
-            else{this.dialog.show()}
+            else{this.dialog.show(); appPreviousContext = appKeyMap.getContext(); appKeyMap.setContext('multipleAddonModal')}
         }
         let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
         // carrega componente junto ao controle original, usa classes de input-group do bootstrap

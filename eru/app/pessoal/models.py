@@ -159,24 +159,6 @@ class Funcionario(Pessoa):
             return ''
     def dependentes(self):
         return Dependente.objects.filter(funcionario=self).order_by('nome')
-    # def afastar(self, afastamento, update=False):
-    #     try:
-    #         if not update and self.status != 'A': # Novo afastamento restrito a funcionarios ativos
-    #             return [False,'<b class="text-danger">Erro: </b> Só é possivel afastar <b>funcionários ativos</b>']
-    #         if not update and Afastamento.objects.filter(funcionario=self,data_retorno=None).exists(): # Nao eh possivel afastar caso ja tenha um afastamento sem retorno
-    #             return [False,'<b class="text-danger">Erro: </b> Existe <b>afastamento sem retorno</b> para o funcionário']
-    #         if afastamento.data_retorno != None and afastamento.data_retorno <= afastamento.data_afastamento: # Data de retorno precisa ser maior que data de afastamento
-    #             return [False,'<b class="text-danger">Erro: </b> Data de retorno precisa ser <b>maior</b> que a data de afastamento']
-    #         if afastamento.data_retorno == None and Afastamento.objects.filter(funcionario=self, data_afastamento__lte=afastamento.data_afastamento, data_retorno__gte=afastamento.data_afastamento).exclude(id=afastamento.id).exists(): # Valida conflito de datas para afastamento (sem data de retorno)
-    #             return [False,'<b class="text-danger">Erro: </b> <b>Conflito de data</b> com outro(s) afastamento(s)']
-    #         if afastamento.data_retorno != None and  Afastamento.objects.filter(funcionario=self,data_afastamento__lte=afastamento.data_retorno, data_retorno__gte=afastamento.data_afastamento).exclude(id=afastamento.id).exists(): # Valida registro ja com data de retorno
-    #             return [False,'<b class="text-danger">Erro: </b> <b>Conflito de data</b> com outro(s) afastamento(s)']
-    #         if afastamento.data_retorno != None and  Afastamento.objects.filter(funcionario=self,data_afastamento__lte=afastamento.data_retorno, data_retorno=None).exclude(id=afastamento.id).exists(): # Valida conflito com afastamento ainda sem data de retorno
-    #             return [False,'<b class="text-danger">Erro: </b> <b>Conflito de data</b> com outro(s) afastamento(s)']
-    #         self.status = 'F'
-    #         return [True]
-    #     except:
-    #         return [False, '<b class="text-danger">Erro: </b> ao afastar funcionário']
     def afastamentos(self):
         return Afastamento.objects.filter(funcionario=self).order_by('data_afastamento')
     def desligamento(self, data, motivo):

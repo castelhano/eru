@@ -69,7 +69,7 @@ class jsSelectm{
         this.model = this._buildModel();
         let summary = this.getSummary();
         if(summary.default.total == 0){ this.model.wrapper.style.display = 'none' }
-        this._groupCounterUpdate();
+        if(this.config.groupCounter){ this._groupCounterUpdate() }
         
         if(this.config.checkAll){ // adiciona controle de marcar todos para cada grupo
             for(let group in this.model.groups){
@@ -140,7 +140,7 @@ class jsSelectm{
         if(group){
             this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
             this._checkAllSwitch(this.model.groups[group].checkAll);
-            this._groupCounterUpdate(group);
+            if(this.config.groupCounter){ this._groupCounterUpdate(group) }
         }
         else{
             // state = state == true ? 'uncheck' : 'check';
@@ -148,7 +148,7 @@ class jsSelectm{
                 this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
                 // this.model.groups[group].checkAll.state = state;
                 this._checkAllSwitch(this.model.groups[group].checkAll) ;
-                this._groupCounterUpdate(group);
+                if(this.config.groupCounter){ this._groupCounterUpdate(group) }
             }
         }
         this.config.onchange({origin: 'groupCheckAll'})
@@ -446,9 +446,10 @@ class jsSelectm{
         options.forEach((el)=>{ try{this.addOption(el)}catch(err){} })
         this.config.onchange({origin: 'addOptions'});
     }
-    addOption(option) {
-        if(!option?.value){console.log('jsSelectm: Option require at least "value"'); return;}
-        if(this.options[option.value]){console.log('jsSelectm: Option value duplicated'); return;}
+    addOption(option) { // adiciona novo option tanto no select original quanto no componente
+        if(!option?.value){console.log('jsSelectm: Option require at least "value"'); return;} // option.value eh obrigatorio
+        if(this.options[option.value]){console.log('jsSelectm: Option value duplicated'); return;} // option.value nao pode ser duplicado
+        if(option.group){option['data-group'] = option.group; delete option.group} // converte {group: 'x'} para {data-group: 'x'}
         
         let opt = this._addOption(option);      // cria extrutura do option para this.model
         let el = document.createElement('option');
@@ -481,7 +482,7 @@ class jsSelectm{
 
         this.config.onchange({origin: 'addOption'});
     }
-    _sort(wrapper){
+    _sort(wrapper){ // reordena (ordem crescente) options no componente baseado no text (innerHTML)
         let items = [...wrapper.querySelectorAll('[data-value]')];
         // para sort usamos document.fragment para otimizar desempenho evitando reescrita no DOM
         let fragment = document.createDocumentFragment();

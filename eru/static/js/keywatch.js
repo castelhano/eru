@@ -108,7 +108,6 @@ class Keywatch{
     
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
-        
         if(this.locked){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}

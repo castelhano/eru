@@ -64,17 +64,18 @@
             "translationFileNotFound": "No translation file found for selected language"
         },
         "shortcuts": {
-            "goIndexPage": "Return to initial page",
-            "moduleRoot": "Return to module initial page",
             "addRegistry": "Add new registry",
-            "registerMenu": "Open register menu",
-            "submitForm": "Save changes",
+            "clearSelection": "Clear selection",
+            "goIndexPage": "Return to initial page",
             "goPreviousNode": "Return to origin",
-            "showFilters": "Show page filters",
-            "submitFilters": "Performs search with informed filters",
+            "logout": "End system session (logout)",
+            "moduleRoot": "Return to module initial page",
+            "registerMenu": "Open register menu",
             "reload": "Reload page (clean filters)",
+            "showFilters": "Show page filters",
             "showSysPanel": "Show system panel",
-            "logout": "End system session (logout)"
+            "submitFilters": "Performs search with informed filters",
+            "submitForm": "Save changes"
         }
     },
     "apps":{

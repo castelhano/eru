@@ -1,8 +1,8 @@
 /*
 * I18n      Lib para interlacionalização de codigo
 *
-* @version  2.0
-* @release  [2.0] 29/10/25 [declaration refactor see**]
+* @version  2.1
+* @release  [2.1] 29/10/25 [declaration refactor see**, waiting pool]
 * @since    02/10/2025
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
@@ -11,9 +11,7 @@
 * Read me **: 
 * Ver 2.0 alterado forma de declaracao de modificadores, removido data-i18n-[bold, transform, pluralize]
 * declaracao eh feita toda em data-i18n="[placeholder]common.company__plural__captalize__bold:c"
-
-TODO: ao addApp metodo init esta sendo chamado antes da resposta do server, adicionado refresh novamente apos resposta do servidor
-ajustar logica para init so ser chamado apos conluido resposta do addApp
+* alteracao multipla no elemento data-i18n="[placeholder]foo.bar;[title]foo.fei"
 */
 
 class I18n{
@@ -30,7 +28,7 @@ class I18n{
             notifyFunction: null,                       // Funcao para notificacao func(style, message, autodismiss)
             notFoundMsg: 'Não encontrado arquivo de tradução para linguagem selecionada'
         }
-        this.wait = false;       // se true esperando resposta seridor 
+        this.waiting = [];       // fila de processos (ajax) aguardando resposta do servidor 
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         this.modificatorAttrs = ['plural'];
         this.composedAttrs = ['bold'];
@@ -50,6 +48,7 @@ class I18n{
          * 2 - Se autoDetect = true, busca idioma do navegador
          * 3 - Aguarda requisicao manual para troca de idioma
          */
+        if(this.waiting.length > 0){return} // nao inicia se ainda existem requisicoes ajax aguardando resposta
         if(this.language != this.defaultLanguage){
             console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
             if(this.switcher){this.switcher.value = this.language}
@@ -169,13 +168,13 @@ class I18n{
     }
     addApp(app){ // Adiciona app no array this.apps, busca schema para idioma ativo e chama metodo refresh
         if(this.apps.includes(app)){return}
-        // this.wait = true;
+        this.waiting.push(`addApp_${app}`)
         console.log(`${timeNow({showSeconds: true})} | i18n: Adding app "${app}"`);
         this.apps.push(app);
         this.__getLanguage(this.language, app).then((resp)=>{
             this.__updateDb(this.language, resp);
-            // this.refresh(); // atualiza interface
-            // this.wait = false;
+            this.waiting.splice(this.waiting.indexOf(`addApp_${app}`, 1))
+            if(this.waiting.length == 0){this.init()}
         })
     }
     setSwitcher(el){ // Define html element para alternar manualmente idioma
@@ -194,8 +193,8 @@ class I18n{
                 let indexStart = result.toLowerCase().indexOf(entry.bold);
                 let indexEnd = indexStart + entry.bold.length;
                 let substring = result.slice(indexStart, indexEnd);
-                if(indexStart > 0){ result = result.slice(0, indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
-                else{ result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
+                if(indexStart > 0){ result = result.slice(0, indexStart) + '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
+                else{ result = '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
             }
             else if(entry.bold){ result += ` <sup><b>${entry.bold.toUpperCase()}</b></sup>` }
             return result;
@@ -242,8 +241,8 @@ class I18n{
                     let indexStart = result.toLowerCase().indexOf(e.bold);
                     let indexEnd = indexStart + e.bold.length;
                     let substring = result.slice(indexStart, indexEnd);
-                    if(indexStart > 0){ result = result.slice(0, indexStart) + '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
-                    else{ result = '<b>' + substring + '</b>' + result.slice(indexEnd, result.length) }
+                    if(indexStart > 0){ result = result.slice(0, indexStart) + '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
+                    else{ result = '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
                 }
                 else if(e.bold){ result += ` <sup><b>${e.bold.toUpperCase()}</b></sup>` }
                 //--
