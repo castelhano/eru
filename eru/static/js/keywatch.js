@@ -110,7 +110,8 @@ class Keywatch{
     _eventHandler(ev){
         if(this.locked){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
-            if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
+            let key = ev.code.includes('Key') ? ev.code.slice(3).toLowerCase() : ev.key.toLowerCase();
+            if(key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
