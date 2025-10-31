@@ -1,16 +1,18 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 **
-* @version  6.1
+* @version  6.2
 * @since    05/08/2024
-* @release  03/10/2025 
-* @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{'data-i18n'='my.key'})
+* @release  31/10/2025 
+* @ver 6.2  Adicionado suporte para i18n lib appKeyMap.bind(...{'data-i18n'='my.key'})
 * @ver < 6  [add keyup, multiple shortcuts at same trigger, priority as useCapture]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
+--
+* Adicionado suporte para teclas de acento (~ ´) porem recomenda se cautela ao usar estas teclas em atalhos (nao testado em layouts de teclado diferentes do qwert)
 */
 class Keywatch{
     constructor(options={}){
@@ -73,6 +75,8 @@ class Keywatch{
             '↓': 'arrowdown',
             '→': 'arrowright',
             '←': 'arrowleft',
+            '~': 'quote',
+            '´': 'bracketleft',
         }
         
         // adiciona listeners basico para document
@@ -110,7 +114,7 @@ class Keywatch{
     _eventHandler(ev){
         if(this.locked){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
-            let key = ev.code.includes('Key') ? ev.code.slice(3).toLowerCase() : ev.key.toLowerCase();
+            let key = ev.code.includes('Key') ? ev.code.slice(3).toLowerCase() : ev.key.toLowerCase() == 'dead' ? ev.code.toLowerCase() : ev.key.toLowerCase();
             if(key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
@@ -140,7 +144,8 @@ class Keywatch{
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
-            if(ev.key && this.pressed.indexOf(ev.key.toLowerCase()) > -1){this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
+            let key = ev.code.includes('Key') ? ev.code.slice(3).toLowerCase() : ev.key.toLowerCase() == 'dead' ? ev.code.toLowerCase() : ev.key.toLowerCase();
+            if(key && this.pressed.indexOf(key) > -1){this.pressed.splice(this.pressed.indexOf(key), 1);} 
             else if(ev.code == 'Altleft'){this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
         }
     }
