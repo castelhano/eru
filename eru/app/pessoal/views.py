@@ -268,7 +268,7 @@ def cargo_update(request,id):
 def funcionario_update(request,id):
     funcionario = Funcionario.objects.get(pk=id)
     if funcionario.status == 'D':
-        messages.error(request,'<span data-i18n="employees.sysMessages.cantMoveDismissEmployee"><b>Erro:</b> Não é possivel movimentar funcionários desligados</span>')
+        messages.error(request,'<span data-i18n="personal.sys.cantMoveDismissEmployee"><b>Erro:</b> Não é possivel movimentar funcionários desligados</span>')
         return redirect('pessoal_funcionario_id', id)
     form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
     if form.is_valid():

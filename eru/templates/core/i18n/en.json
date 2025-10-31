@@ -1,8 +1,11 @@
 {
     "common":{
         "all": "All",
+        "address": "Address#Addresses",
         "attention": "Attention#Attentions",
+        "neighborhood": "Neighborhood#Neighborhoods",
         "cancel": "Cancel",
+        "city": "City#Cities",
         "classification": "Classification",
         "code": "Code#Codes",
         "confirm": "Confirm",
@@ -17,9 +20,11 @@
         "export": "Export#Exports",
         "garage": "Garage#Garages",
         "filter": "Filter#Filters",
+        "fone": "Fone#Fones",
         "group": "Group#Groups",
         "history": "History",
         "import": "Import",
+        "key": "Key#Keys",
         "metric": "Metric#Metrics",
         "model": "Model",
         "module": "Module",
@@ -41,9 +46,16 @@
         "start": "Start",
         "status": "Status",
         "undo": "Undo",
-        "user": "User",
+        "user": "User#Users",
         "wait": "Wait",
         "warning": "Warning"
+    },
+    "company": {
+        "companyName": "Company Name",
+        "municipalReg": "Municipal Reg",
+        "stateReg": "State Reg",
+        "zipCode": "Zip code"
+        
     },
     "sys": {
         "changeHistory": "Change history",

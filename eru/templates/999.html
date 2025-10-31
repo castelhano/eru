@@ -191,6 +191,10 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 
 <script>
 {% block add_script %}
+    appKeyMap.bind('~', ()=>{appNotify('success', 'Ola mundo')}, {});
+    appKeyMap.bind('´', ()=>{appNotify('success', 'Ola mundo')}, {});
+    appKeyMap.bind('[', ()=>{appNotify('success', 'Ola mundo')}, {});
+    appKeyMap.bind(']', ()=>{appNotify('success', 'Ola mundo')}, {});
 
 // const select = new jsSelectm('#id_foo', {
 //     canFilter: true,

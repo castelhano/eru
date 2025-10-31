@@ -59,7 +59,7 @@ class jsTable{
         this.pgFirstButtonLabel = options?.pgFirstButtonLabel || '<i class="bi bi-arrow-bar-left"></i>';
         this.pgPreviousButtonLabel = options?.pgPreviousButtonLabel || '<i class="bi bi-arrow-left"></i>';
         this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-right"></i>';
-        this.emptyTableMessage = options?.emptyTableMessage || 'Nenhum registro a exibir';
+        this.emptyTableMessage = options?.emptyTableMessage || i18n.getEntry('sys.nothingToShow') || 'Nada a exibir';
         
         if(!options?.noValidate){this.validateTable()}
         this.buildControls();
@@ -350,12 +350,16 @@ class jsTable{
         let csv = [];
         let raw_size = this.raw.length;
         if(this.csvHeaders){ // Insere cabecalhos
-            if(this.adicionalHeaders){
-                csv.push([...this.headers, ...this.adicionalHeaders].join(this.csvSeparator));
-            }
-            else{
-                csv.push(this.headers.join(this.csvSeparator));
-            }
+            csv.push(Array.from(this.table.tHead.querySelectorAll('th:not([data-key="&nbsp;"])')).map(th => th.innerHTML).join(this.csvSeparator))
+            // .forEach((el)=>{
+            //     csv.push(el + this.csvSeparator)
+            // })
+            // if(this.adicionalHeaders){
+            //     csv.push([...this.headers, ...this.adicionalHeaders].join(this.csvSeparator));
+            // }
+            // else{
+            //     csv.push(this.headers.join(this.csvSeparator));
+            // }
         }
         for (let i = 0; i < raw_size; i++) {
             let row = [], cols = this.raw[i].querySelectorAll('td, th');
@@ -406,7 +410,7 @@ class jsTable{
         for(let i = 0; i < ths.length;i++){ // Percorre todos os headers, ajustando conteudo e populando array de headers
             ths[i].setAttribute('data-key',ths[i].innerText); // Ajusta o data-attr key com o valor informado no th
             this.headers.push(ths[i].innerText); // Adiciona o header no array de headers
-            if(this.canFilter && this.filterCols.includes(ths[i].innerText)){ths[i].innerHTML += '*'} // Verifica se header esta marcado para ser filtrado, se sim adiciona caracter identificador
+            if(this.canFilter && this.filterCols.includes(ths[i].dataset.key)){ths[i].innerHTML += '*'} // Verifica se header esta marcado para ser filtrado, se sim adiciona caracter identificador
         }
         let trs = this.table.querySelectorAll('tbody tr'); // Busca todas as linhas dentro de um tbody
         let trs_count = trs.length;

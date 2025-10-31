@@ -42,7 +42,7 @@ class canvasNavLink{
     }
 
 }
-
+// no menu itens use {type: 'separator'} para inserir um separador (boostrap) entre options
 class canvasNavDropdown{
     constructor(options){
         this.itens = options?.itens || [];
@@ -62,8 +62,11 @@ class canvasNavDropdown{
 
         this.ul = document.createElement('ul');this.ul.classList = 'dropdown-menu mb-2';
         for(let i in this.itens){
-            this.ul.appendChild(this.__buildMenuItem(this.itens[i]));
-            if(this.itens[i]?.keybind){this.addKeyBind(this.itens[i].keybind)}
+            if(this.itens[i].type == 'separator'){ this.ul.appendChild(this.__buildSeparator()) }
+            else{
+                this.ul.appendChild(this.__buildMenuItem(this.itens[i]));
+                if(this.itens[i]?.keybind){this.addKeyBind(this.itens[i].keybind)}
+            }
         }
         
         this.el.appendChild(this.link);
@@ -89,6 +92,12 @@ class canvasNavDropdown{
         }
         item.appendChild(link);
         return item;        
+    }
+    __buildSeparator(){
+        let separator = document.createElement('li');
+        let hr = document.createElement('hr'); hr.classList = 'dropdown-divider';
+        separator.appendChild(hr);
+        return separator;
     }
     isOpen(){return this.ul.classList.contains('show')}
     click(){this.link.click()}

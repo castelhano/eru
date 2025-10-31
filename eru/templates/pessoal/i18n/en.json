@@ -1,13 +1,20 @@
 {
     "personal":{
-        "personal": "Personal"
-    },
-    "position": {
-        "fixedPosition": "Fixed Position"
-    },
-    "employees": {
-        "terminationReason": "Reason for termination",
-        "sysMessages": {
+        "common":{
+            "personal": "Personal#Personals",
+            "event": "Event#Events"
+        },
+        "employee": {
+            "form": {
+                "terminationReason": "Reason for termination"
+            }
+        },
+        "fixedPosition":{
+            "form": {
+                "fixedPosition": "Fixed Position"
+            }
+        },
+        "sys":{
             "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees"
         },
         "shortcuts": {
@@ -16,6 +23,5 @@
             "selectFieldRegime": "Focus field Regime",
             "selectFieldSector": "Focus field Sector"
         }
-
     }
 }

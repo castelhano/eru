@@ -93,7 +93,9 @@
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
     const ffixa = new jsSelectm('#id_funcao_fixa', {
-        selected: {{cargo.funcoes_fixas_list|safe}}
+        selected: {{cargo.funcoes_fixas_list|safe}},
+        title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',
+        icon: 'bi bi-diagram-3-fill',
     });
     
     {% endblock %}
