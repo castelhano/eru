@@ -548,6 +548,50 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
     get(){return this.list}
 }
 
+class RelatedAddon {
+    constructor(el, options){
+        this.element = typeof el == 'string' ? document.querySelector(el) : el;
+        this.default = {
+            url: null,
+            params: null,
+            add: true,
+            change: true,
+            delete: false,
+        }
+        this.config = {...this.default, ...options};
+        this.config.sytles = {...this._setStyles(), ...options?.styles || {}}
+        this.config.classlist = {...this._setClasslist(), ...options?.classlist || {}}
+    }
+    _setStyles(){
+        return {
+            dialog: '',
+            button: '',
+            icon: '',
+        }
+    }
+    _setClasslist(){
+        return {
+            dialog: '' ,
+            button: '' ,
+            icon: '' ,
+        }
+    }
+    _build(){
+        this.dialog = document.createElement('dialog');
+        this.dialog.classList = this.config.dialog;
+        this.dialog.style.margin = '0px';
+        this.dialog.style.zIndex = '10';
+        this.btn = document.createElement('button');
+        this.btn.type = 'button';
+        this.btn.classList = this.config.classlist.button;
+        this.btn.tabIndex = '-1';
+        let btnIcon = document.createElement('i');
+        btnIcon.style = this.config.styles.icon;
+        btnIcon.classList = this.config.classlist.icon;
+    }
+
+}
+
 // Configuracoes / Listeners ao carregar pagina
 window.addEventListener('load', ()=>{
     // Evita tabulacao em elementos select com classe readonly
