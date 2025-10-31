@@ -3,7 +3,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 # from json import dumps
 from django.core import serializers
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente
+from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm
 from .filters import FuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
@@ -78,6 +78,12 @@ def funcionarios(request):
             messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
             return redirect('pessoal_funcionarios')
     return render(request, 'pessoal/funcionarios.html', options)
+
+@login_required
+@permission_required('pessoal.view_evento', login_url="/handler/403")
+def eventos(request):
+    eventos = Evento.objects.all().order_by('nome')
+    return render(request,'pessoal/eventos.html',{'eventos':eventos})
 
 # Metodos ADD
 @login_required

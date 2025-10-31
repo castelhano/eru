@@ -1,6 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Linhas{% endblock %}
+{% block title_i18n %}traffic.common.route__plural{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
 
@@ -51,12 +52,12 @@
         <thead>
           <tr>
             <th class="d-none">#</th>
- 						<th class="d-none d-lg-table-cell">Empresa</th>
+ 						<th class="d-none d-lg-table-cell" data-i18n="common.company__plural">Empresa</th>
             <th>Cod</th>
- 						<th class="">Nome</th>
- 						<th class="d-none">Classificação</th>
+ 						<th class="" data-i18n="common.name">Nome</th>
+ 						<th class="d-none" data-i18n="common.classification">Classificação</th>
  						<th class="d-none">Garagem</th>
- 						<th class="d-none d-lg-table-cell">Origem</th>
+ 						<th class="d-none d-lg-table-cell" data-i18n="common.classification">Origem</th>
  						<th class="d-none d-lg-table-cell">Destino</th>
  						<th class="d-none d-sm-table-cell">Status</th>
             {% if perms.trafego.change_linha %}

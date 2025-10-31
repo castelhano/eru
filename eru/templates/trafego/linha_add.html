@@ -1,6 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Linha{% endblock %}
+{% block title_i18n %}traffic.common.route{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
 <style media="screen">
@@ -34,7 +35,7 @@
 <script>
   {% block add_script %}
   const form = new jsForm(document.getElementById('app_form'), {})
-  appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click()}, {'data-i18n':'route.form.mainTab', desc: 'Exibe aba com campos básicos'})
-  appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click()}, {'data-i18n':'route.form.metricsTab', desc: 'Exibe aba com métricas da linha'})
+  appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click()}, {'data-i18n':'traffic.route.form.mainTab', desc: 'Exibe aba com campos básicos'})
+  appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click()}, {'data-i18n':'traffic.route.form.metricsTab', desc: 'Exibe aba com métricas da linha'})
   {% endblock %}
 </script>

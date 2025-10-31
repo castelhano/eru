@@ -1,58 +1,51 @@
 {
-    "route": {
-        "route": "Route",
-        "locale": "Locale",
-        "startRoute": "Start Route",
-        "endRoute": "End Route",
-        "initialVehicle": "Initial Vehicle",
-        "endVehicle": "End Vehicle",
-        "cardNumber": "Card number",
-        "passenger": {
-            "passenger": "Passenger",
-            "loadAnalisys": "Load Analisys",
-            "dailyRoute": "Daily Route",
-            "routeByProduct": "Route by Product",
-            "timeSlotLoad": "Time slot load"
-        },
-        "planning": "Planning",
-        "form": {
-            "routeRegister" : "Route Register",
-            "mainTab" : "Displays tab with basic fields",
-            "metricsTab" : "Displays tab with route metrics",
-            "departExtension" : "Depart extension",
-            "returnExtension" : "Return extension",
-            "departAccessMin" : "Depart access (min)",
-            "departAccessKm" : "Depart access (km)",
-            "returnAccessMin" : "Return access (min)",
-            "returnAccessKm" : "Return access (km)",
-            "pickupOriginMin" : "Pickup Origin (min)",
-            "pickupOriginKm" : "Pickup Origin (km)",
-            "pickupDestinationMin" : "Pickup Destination (min)",
-            "pickupDestinationKm" : "Pickup Destination (km)",
-            "removeRoute" : "Remove Route"
-        },
-        "metrics": {
-            "transverse": "Transverse",
-            "trunk": "Trunk",
+    "traffic": {
+        "common": {
+            "locale": "Locale#Localies",
+            "destination": "Destination#Destinations",
+            "depart": "Depart#Departs",
             "feeder": "Feeder",
             "intersectoral": "Intersectoral",
-            "special": "Special",
-            "start": "Start",
-            "end": "End",
-            "depart": "Depart",
+            "origin": "Origin#Origins",
+            "passenger": "Passenger#Passengers",
+            "planning": "Planning",
             "return": "Return",
-            "origin": "Origin",
-            "destination": "Destination",
-            "departInterval": "Int Depart",
-            "returnInterval": "Int Return",
-            "emptyMessage": "No metrics register for route"
+            "route": "Route#Routes",
+            "schedule": "Schedule#Schedules",
+            "special": "Special",
+            "transverse": "Transverse",
+            "trunk": "Trunk",
+            "vehicle": "Vehicle#Vehicles"
+        },
+        "route":{
+            "form":{
+                "departAccessKm" : "Depart access (km)",
+                "departAccessMin" : "Depart access (min)",
+                "departExtension" : "Depart extension",
+                "departInterval" : "Depart interval",
+                "mainTab" : "Displays tab with basic fields",
+                "metricsTab" : "Displays tab with route metrics",
+                "pickupDestinationKm" : "Pickup Destination (km)",
+                "pickupDestinationMin" : "Pickup Destination (min)",
+                "pickupOriginKm" : "Pickup Origin (km)",
+                "pickupOriginMin" : "Pickup Origin (min)",
+                "removeRoute" : "Remove Route",
+                "returnAccessKm" : "Return access (km)",
+                "returnAccessMin" : "Return access (min)",
+                "returnExtension" : "Return extension",
+                "returnInterval" : "Return interval",
+                "routeRegister" : "Route Register"
+            }
+        },
+        "form": {
+            
         },
         "shortcuts": {
             "demandUpdate": "Demand Update",
-            "openRegisterMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Register menu",
-            "openImportMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Import menu",
-            "planningMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Planning page",
-            "passengerMenu" : "<small class=\"badge bg-orange\">NAVBAR</small> Open Passengers page",
+            "openRegisterMenu" : "Open Register menu",
+            "openImportMenu" : "Open Import menu",
+            "planningMenu" : "Open Planning page",
+            "passengerMenu" : "Open Passengers page",
             "filterPassengersDesc" : "Performs search with informed filters",
             "showFilters" : "Show/hide search filters"
         }

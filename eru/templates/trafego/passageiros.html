@@ -1,6 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Carregamento{% endblock %}
+{% block title_i18n %}traffic.common.passenger__plural{% endblock %}
 {% block navbar_classlist %}navbar-text-light bg-primary bg-gradient{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/trafego.html' %}{% endblock %}
 
@@ -97,10 +98,10 @@
   
   
   if(!appKeyMap.avail('alt+g', {context: 'default', type: 'keydown'})){
-    appKeyMap.handlers.keydown.default['alt,g'][0].i18n = 'route.shortcuts.filterPassengersDesc';
+    appKeyMap.handlers.keydown.default['alt,g'][0].i18n = 'traffic.shortcuts.filterPassengersDesc';
     appKeyMap.handlers.keydown.default['alt,g'][0].desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
   }
-  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {'data-i18n': 'route.shortcuts.showFilters', desc: 'Exibe/Oculta filtros da pesquisa'})
+  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {'data-i18n': 'traffic.shortcuts.showFilters', desc: 'Exibe/Oculta filtros da pesquisa'})
 
   // Move foco para layout sempre q exibido lista de filtros
   document.querySelector('.collapse').addEventListener('shown.bs.collapse', ()=>{document.getElementById('id_layout').focus()})

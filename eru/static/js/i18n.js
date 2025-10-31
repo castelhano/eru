@@ -222,6 +222,8 @@ class I18n{
     refresh(){ // percorre a pagina traduzindo todas as entradas com data-i18n=""
         console.log(`${timeNow({showSeconds: true})} | i18n: Updating user interface (refresh)`);
         let els = document.querySelectorAll('[data-i18n]');
+        // remove elemento sem valor em data-i18n
+        els = Array.from(els).filter(el => { return el.getAttribute('data-i18n') !== null && el.getAttribute('data-i18n') !== '' });
         let errorCount = 0;
         els.forEach((el)=>{
             let entries = this.__detachEntry(el.dataset.i18n);

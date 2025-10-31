@@ -40,7 +40,7 @@ class LinhaForm(forms.ModelForm):
     acesso_destino_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
     recolhe_origem_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
     recolhe_destino_minutos = forms.IntegerField(required=False,initial=0, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'1000', 'onfocus':'this.select();'}))
-    detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'rows':4, 'i18n': 'common.detail'}))
+    detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'rows':4, 'data-i18n': '[placeholder]common.detail__plural'}))
 
 class PlanejamentoForm(forms.ModelForm):
     class Meta:
