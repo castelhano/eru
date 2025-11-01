@@ -552,42 +552,98 @@ class RelatedAddon {
     constructor(el, options){
         this.element = typeof el == 'string' ? document.querySelector(el) : el;
         this.default = {
-            url: null,
-            params: null,
+            container: this.element.parentElement,
+            url: {
+                updateOnStart: false,
+                csrf_token: '',
+                parent: {
+                    show: null,
+                    params: null,
+                },
+                related: {
+                    add: null,
+                    get: null,
+                    update: null,
+                    delete: null,
+                    params: null,
+                }
+            },
+            fields: [{
+                type: 'text', 
+                name: 'nome', 
+                id: 'id_nome', 
+                classlist: 'form-control', 
+                placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
+            }],
             add: true,
             change: true,
             delete: false,
         }
         this.config = {...this.default, ...options};
-        this.config.sytles = {...this._setStyles(), ...options?.styles || {}}
+        this.config.styles = {...this._setStyles(), ...options?.styles || {}}
         this.config.classlist = {...this._setClasslist(), ...options?.classlist || {}}
+
+        this._build();
     }
     _setStyles(){
         return {
-            dialog: '',
+            dialog: 'min-width:300px;position:fixed;top:30px;left:50%;transform: translate(-50%, 0);',
             button: '',
             icon: '',
+            conainer: '',
         }
     }
     _setClasslist(){
         return {
             dialog: '' ,
-            button: '' ,
-            icon: '' ,
+            button: 'btn btn-secondary' ,
+            icon: 'bi bi-search' ,
+            container: 'input-group' ,
         }
     }
     _build(){
         this.dialog = document.createElement('dialog');
-        this.dialog.classList = this.config.dialog;
+        this.dialog.style = this.config.styles.dialog;
+        this.dialog.classList = this.config.classlist.dialog;
         this.dialog.style.margin = '0px';
         this.dialog.style.zIndex = '10';
+        document.body.appendChild(this.dialog)
         this.btn = document.createElement('button');
         this.btn.type = 'button';
         this.btn.classList = this.config.classlist.button;
         this.btn.tabIndex = '-1';
+        this.btn.onclick = ()=>{this.dialog.showModal()}
         let btnIcon = document.createElement('i');
         btnIcon.style = this.config.styles.icon;
         btnIcon.classList = this.config.classlist.icon;
+        this.btn.appendChild(btnIcon);
+        
+        let groupContainer = document.createElement('div'); groupContainer.classList = this.config.classlist.container;
+        // carrega componente junto ao controle original, usa classes de input-group do bootstrap
+        
+        if(this.config.container.classList.contains('form-floating') && this.config.container.parentNode.classList.contains('row')){
+            /** row
+            *  ** form-floating col
+            *  **** input
+            */
+            let col = document.createElement('div');
+            let addClass = this.config.container.classList.value.replace('form-floating', '').trim().split(' ');
+            addClass.forEach((e)=>{
+                this.config.container.classList.remove(e);
+                col.classList.add(e);
+            })
+            // se definido maxWidth no container, remove stilo e aplica max widht no col
+            if(this.config.container.style.maxWidth != ''){
+                col.style.maxWidth = this.config.container.style.maxWidth;
+                this.config.container.style.maxWidth = '';
+            }
+            this.config.container.before(col);
+            col.appendChild(groupContainer);
+            // col.appendChild(this.dialog);
+            groupContainer.appendChild(this.config.container);
+            groupContainer.appendChild(this.btn);
+        }
+        else{}
     }
 
 }
