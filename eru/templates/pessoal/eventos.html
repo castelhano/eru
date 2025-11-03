@@ -10,7 +10,7 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             {% if perms.pessoal.add_evento %}
-            <li class="nav-item ms-1"><a class="nav-link border" id="add" href=""><i class="bi bi-plus-lg text-success"></i></a></li>
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal_evento_add' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
             {% endif %}
             <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
             <li class="nav-item dropdown ms-auto">
@@ -42,7 +42,7 @@
                     <tr>
                         <td>{{evento.nome}}</td>
                         <td>{{evento.rastreio}}</td>
-                        <td>{{evento.grupo}}</td>
+                        <td>{{evento.grupo|default:''}}</td>
                         {% if perms.pessoal.change_evento %}
                         <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="url" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}

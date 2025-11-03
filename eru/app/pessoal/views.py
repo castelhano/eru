@@ -4,7 +4,7 @@ from django.http import HttpResponse
 # from json import dumps
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
-from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm
+from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm
 from .filters import FuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
@@ -116,26 +116,26 @@ def cargo_add(request):
     if request.method == 'POST':
         form = CargoForm(request.POST)
         if form.is_valid():
-            # try:
-            registro = form.save()
-            for ffixa in request.POST.getlist('funcao_fixa'):
-                if FuncaoFixa.objects.filter(nome=ffixa).exists():
-                    ff = FuncaoFixa.objects.get(nome=ffixa)
-                else:
-                    ff = FuncaoFixa.objects.create(nome=ffixa)
-                ff.cargos.add(registro)
-            l = Log()
-            l.modelo = "pessoal.cargo"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "CREATED"
-            l.save()
-            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-            return redirect('pessoal_cargo_add')
-            # except:
-            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-            #     return redirect('pessoal_cargo_add')
+            try:
+                registro = form.save()
+                for ffixa in request.POST.getlist('funcao_fixa'):
+                    if FuncaoFixa.objects.filter(nome=ffixa).exists():
+                        ff = FuncaoFixa.objects.get(nome=ffixa)
+                    else:
+                        ff = FuncaoFixa.objects.create(nome=ffixa)
+                    ff.cargos.add(registro)
+                l = Log()
+                l.modelo = "pessoal.cargo"
+                l.objeto_id = registro.id
+                l.objeto_str = registro.nome[0:48]
+                l.usuario = request.user
+                l.mensagem = "CREATED"
+                l.save()
+                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+                return redirect('pessoal_cargo_add')
+            except:
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+                return redirect('pessoal_cargo_add')
     else:
         form = CargoForm()
     return render(request,'pessoal/cargo_add.html',{'form':form})
@@ -178,7 +178,29 @@ def funcionario_add(request):
         form = FuncionarioForm()
     return render(request,'pessoal/funcionario_add.html', {'form':form})
 
-
+@login_required
+@permission_required('pessoal.add_evento', login_url="/handler/403")
+def evento_add(request):
+    if request.method == 'POST':
+        form = EventoForm(request.POST)
+        if form.is_valid():
+            # try:
+            registro = form.save()
+            l = Log()
+            l.modelo = "pessoal.evento"
+            l.objeto_id = registro.id
+            l.objeto_str = registro.nome[0:48]
+            l.usuario = request.user
+            l.mensagem = "CREATED"
+            l.save()
+            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+            return redirect('pessoal_evento_add')
+            # except:
+            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+            #     return redirect('pessoal_evento_add')
+    else:
+        form = EventoForm()
+    return render(request,'pessoal/evento_add.html',{'form':form})
 
 
 # Metodos GET
@@ -206,6 +228,13 @@ def funcionario_id(request,id):
         return redirect('pessoal_funcionarios')
     form = FuncionarioForm(instance=funcionario)
     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
+
+@login_required
+@permission_required('pessoal.change_evento', login_url="/handler/403")
+def evento_id(request,id):
+    evento = Evento.objects.get(pk=id)
+    form = EventoForm(instance=evento)
+    return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
 
 
@@ -299,6 +328,24 @@ def funcionario_update(request,id):
     else:
         return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
+@login_required
+@permission_required('pessoal.change_evento', login_url="/handler/403")
+def evento_update(request,id):
+    evento = Evento.objects.get(pk=id)
+    form = EventoForm(request.POST, instance=evento)
+    if form.is_valid():
+        registro = form.save()
+        l = Log()
+        l.modelo = "pessoal.evento"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "UPDATE"
+        l.save()
+        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_evento_id', id)
+    else:
+        return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
 # Metodos DELETE
 @login_required
@@ -358,6 +405,24 @@ def funcionario_delete(request,id):
         messages.error(request,'ERRO ao apagar funcionario')
         return redirect('pessoal_funcionario_id', id)
 
+@login_required
+@permission_required('pessoal.delete_evento', login_url="/handler/403")
+def evento_delete(request,id):
+    try:
+        registro = Evento.objects.get(pk=id)
+        l = Log()
+        l.modelo = "pessoal.evento"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "DELETE"
+        registro.delete()
+        l.save()
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_eventos')
+    except:
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_evento_id', id)
 
 @login_required
 def get_setores(request):

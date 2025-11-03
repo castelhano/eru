@@ -257,7 +257,7 @@ class Evento(models.Model):
     )
     nome = models.CharField(max_length=100, blank=False)
     rastreio = models.CharField(max_length=40, blank=True)
-    grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT)
+    grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.evento', objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)

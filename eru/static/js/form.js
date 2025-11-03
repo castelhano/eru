@@ -551,8 +551,15 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
 class RelatedAddon {
     constructor(el, options){
         this.element = typeof el == 'string' ? document.querySelector(el) : el;
-        this.default = {
+        let defaultOptions = {
             container: this.element.parentElement,
+            fields: [{ // campos que seram exibidos no modal de cadastro, na omisao gera um imput text "nome"
+                type: 'text', 
+                name: 'nome', 
+                id: 'id_nome', 
+                classlist: 'form-control', 
+                placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
+            }],
             url: {
                 updateOnStart: false,
                 csrf_token: '',
@@ -568,38 +575,28 @@ class RelatedAddon {
                     params: null,
                 }
             },
-            fields: [{
-                type: 'text', 
-                name: 'nome', 
-                id: 'id_nome', 
-                classlist: 'form-control', 
-                placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
-            }],
+            styles: {
+                dialog: 'min-width:300px;position:fixed;top:30px;left:50%;transform: translate(-50%, 0);',
+                button: '',
+                icon: '',
+                conainer: '',
+            },
+            classlist: {
+                dialog: 'border-2 border-secondary bg-dark-subtle',
+                button: 'btn btn-secondary' ,
+                icon: 'bi bi-search' ,
+                container: 'input-group' ,
+            },
+            key: 'pk',                  // usado no SelectPopulate, eh o value do option a ser criado
+            value: 'nome',              // usado no SelectPopulate, eh o innerHTML do option a ser criado
+            shortcut: 'ctrl+enter',
+            title: '',
             add: true,
             change: true,
             delete: false,
         }
-        this.config = {...this.default, ...options};
-        this.config.styles = {...this._setStyles(), ...options?.styles || {}}
-        this.config.classlist = {...this._setClasslist(), ...options?.classlist || {}}
-
+        this.config = deepMerge(defaultOptions, options);
         this._build();
-    }
-    _setStyles(){
-        return {
-            dialog: 'min-width:300px;position:fixed;top:30px;left:50%;transform: translate(-50%, 0);',
-            button: '',
-            icon: '',
-            conainer: '',
-        }
-    }
-    _setClasslist(){
-        return {
-            dialog: '' ,
-            button: 'btn btn-secondary' ,
-            icon: 'bi bi-search' ,
-            container: 'input-group' ,
-        }
     }
     _build(){
         this.dialog = document.createElement('dialog');
@@ -607,6 +604,13 @@ class RelatedAddon {
         this.dialog.classList = this.config.classlist.dialog;
         this.dialog.style.margin = '0px';
         this.dialog.style.zIndex = '10';
+        this.dialog.addEventListener('beforetoggle', (ev)=>{
+            if(ev.newState == 'open'){
+                appPreviousContext = appKeyMap.getContext();
+                appKeyMap.setContext('relatedAddon#show');
+            }
+            else if(ev.newState == 'closed'){appKeyMap.setContext(appPreviousContext)}
+        })
         document.body.appendChild(this.dialog)
         this.btn = document.createElement('button');
         this.btn.type = 'button';
@@ -617,6 +621,17 @@ class RelatedAddon {
         btnIcon.style = this.config.styles.icon;
         btnIcon.classList = this.config.classlist.icon;
         this.btn.appendChild(btnIcon);
+
+        // *********
+        if(this.element.nodeName == 'SELECT'){
+            // cria instancia de SelectPopulate, insanca disponivel this.parent
+            this.parent = new selectPopulate({
+                wait: !this.config.url.updateOnStart,
+                target: this.element, 
+                url: this.config.url.parent.show, 
+                param: this.config.url.parent.param,
+            })
+        }
         
         let groupContainer = document.createElement('div'); groupContainer.classList = this.config.classlist.container;
         // carrega componente junto ao controle original, usa classes de input-group do bootstrap
@@ -645,7 +660,7 @@ class RelatedAddon {
         }
         else{}
     }
-
+    _parentRefresh(){}
 }
 
 // Configuracoes / Listeners ao carregar pagina

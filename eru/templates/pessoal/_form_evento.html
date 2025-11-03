@@ -1,0 +1,31 @@
+<div class="card-body tab-content">
+    <h5 class="card-title mb-3"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.event">Event</b></h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row">
+            <div class="col col-lg-3">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col">
+                        {{ form.nome }}
+                        <label for="id_nome" data-i18n="common.name">Nome</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col">
+                        {{ form.rastreio }}
+                    <label for="id_rastreio" data-i18n="common.tracking__posfix: **">Rastreio</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col">
+                        {{ form.grupo }}
+                    <label for="id_grupo" data-i18n="common.group">Grupo</label>
+                    </div>
+                </div>
+                <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save__bold:s"><b>G</b>ravar</button>                
+            </div>
+            <div class="col border-start">
+                <small data-i18n="personal.event.form.trackingHelp__prefix:** ">Rastreio usado para composição de formulas para módulo de folha</small>
+            </div>
+        </div>
+    </div>
+</div>

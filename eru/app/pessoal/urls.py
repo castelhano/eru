@@ -18,6 +18,10 @@ urlpatterns = [
     path('pessoal_cargo_update/<int:id>',views.cargo_update,name='pessoal_cargo_update'),
     path('pessoal_cargo_delete/<int:id>/delete',views.cargo_delete,name='pessoal_cargo_delete'),
     path('pessoal_eventos',views.eventos,name='pessoal_eventos'),
+    path('pessoal_evento_add',views.evento_add,name='pessoal_evento_add'),
+    path('pessoal_evento_id/<int:id>',views.evento_id,name='pessoal_evento_id'),
+    path('pessoal_evento_update/<int:id>',views.evento_update,name='pessoal_evento_update'),
+    path('pessoal_evento_delete/<int:id>/delete',views.evento_delete,name='pessoal_evento_delete'),
     path('pessoal_get_setores',views.get_setores,name='pessoal_get_setores'),
     path('pessoal_get_cargos',views.get_cargos,name='pessoal_get_cargos'),
 ]

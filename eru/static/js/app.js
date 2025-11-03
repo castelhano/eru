@@ -128,6 +128,8 @@ function appOnLogout(url){
   location.href = url;
 }
 
+function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item))}
+
 // dictIsEqual Recebe dois objetos (dict) e compara se sao iguais, levando em consideracao nao somente primtivos, mais apontadores e objetos
 function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
   if (obj1 === obj2) {return true} //para comparacao de valores primitivos, como strings e numeros
@@ -150,6 +152,25 @@ function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
   }
   return true;
 }
+
+// faz deep merge de dois ou mais objetos, uso: deepMerge({}, obj1, obj2)
+function deepMerge(target, ...sources) {
+  if (!sources.length) return target;
+  let source = sources.shift();
+
+  if (isObject(target) && isObject(source)) {
+    for (let key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        deepMerge(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+  return deepMerge(target, ...sources);
+}
+
 
 // Codigo a ser executado apos carregamento completo da pagina
 document.addEventListener("DOMContentLoaded", function(event) {

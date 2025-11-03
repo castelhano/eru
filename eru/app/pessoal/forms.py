@@ -1,5 +1,5 @@
 from django import forms
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente
+from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento
 from django.contrib.auth.models import User
 from datetime import date
 
@@ -9,6 +9,12 @@ class SetorForm(forms.ModelForm):
         model = Setor
         fields = ['nome']
     nome = forms.CharField(error_messages={'required': 'Preencha o nome do setor'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+
+class GrupoEventoForm(forms.ModelForm):
+    class Meta:
+        model = GrupoEvento
+        fields = ['nome']
+    nome = forms.CharField(error_messages={'required': 'Preencha o nome do grupo'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
 class CargoForm(forms.ModelForm):
     class Meta:
@@ -87,3 +93,12 @@ class FuncionarioForm(forms.ModelForm):
     detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'style':'min-height:300px'}))
     status = forms.ChoiceField(required=False, choices=Funcionario.STATUS_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
+
+
+class EventoForm(forms.ModelForm):
+    class Meta:
+        model = Evento
+        fields = ['nome','rastreio','grupo']
+    nome = forms.CharField(error_messages={'required': 'Informe o nome do evento'}, max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+    rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))

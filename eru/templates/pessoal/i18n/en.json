@@ -14,6 +14,11 @@
                 "fixedPosition": "Fixed Position"
             }
         },
+        "event": {
+            "form": {
+                "trackingHelp": "Tracking used for formula composition for payroll module"
+            }
+        },
         "sys":{
             "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees"
         },

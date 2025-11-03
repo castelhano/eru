@@ -45,6 +45,8 @@
         "settings": "Settings",
         "start": "Start",
         "status": "Status",
+        "track": "Track",
+        "tracking": "Tracking",
         "undo": "Undo",
         "user": "User#Users",
         "wait": "Wait",

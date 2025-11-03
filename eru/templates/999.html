@@ -184,14 +184,22 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
-<script src="{% static 'js/selectm.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
 
-let objrelated = new RelatedAddon('#meuInput', {})
+let related = new RelatedAddon('#meuInput', {
+    url: {
+        parent: {
+            show: "{% url 'pessoal_eventos' %}",
+        }
+    },
+    styles: {
+        button: 'btn-success foo'
+    }
+})
 
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
