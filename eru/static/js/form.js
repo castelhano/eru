@@ -775,8 +775,14 @@ class RelatedAddon {
         xhttp.onreadystatechange = function() {
             if(this.readyState == 4 && this.status == 200){
                 let resp =  JSON.parse(this.response);
+                console.log('status ok');
+                console.log(resp);
+                
                 appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.nome}</b>`) || `Registro criado com sucesso <b>${resp.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)}
-            else if(this.readyState == 4){console.log('Error...');}
+            else if(this.readyState == 4){
+                console.log('error');
+                console.log(JSON.parse(this.response));
+            }
         };
         xhttp.open("POST", this.config.url.related.add, true);
         xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);

@@ -244,7 +244,7 @@ class Dependente(models.Model):
             return ''
 
 class GrupoEvento(models.Model):
-    nome = models.CharField(max_length=100, blank=False)
+    nome = models.CharField(max_length=100, blank=False, unique=True)
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.grupo_evento',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
