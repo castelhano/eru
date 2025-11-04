@@ -564,6 +564,9 @@ class RelatedAddon {
                 classlist: 'form-control', 
                 placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
             }],
+            labels:{
+                nome: i18n ? i18n.getEntry('common.name') || '<span data-i18n="common.name">Nome</span>' : '<span data-i18n="common.name">Nome</span>'
+            },
             url: {
                 csrf_token: getCookie('csrftoken'),
                 updateOnStart: false,
@@ -581,21 +584,39 @@ class RelatedAddon {
                 }
             },
             styles: {
-                dialog: 'min-width:300px;position:fixed;top:30px;left:50%;transform: translate(-50%, 0);',
-                button: '',
+                dialog: 'min-width:500px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
+                addOn: '',
+                submit: '',
+                cancel: '',
+                title: '',
+                footer: 'position: absolute; bottom: 0;left: 0;width: 100%',
                 icon: '',
-                conainer: '',
+                container: '',
+                tableContainer: '',
+                fieldContainer: '',
+                inputLabel: '',
+                inputText: '',
             },
             classlist: {
                 dialog: 'border-2 border-secondary bg-dark-subtle',
-                button: 'btn btn-secondary' ,
+                title: 'text-body-secondary mb-2 pb-2 border-bottom' ,
+                footer: 'border-top p-2 text-end' ,
+                addOn: 'btn btn-secondary' ,
+                submit: 'btn btn-sm btn-success ms-1' ,
+                cancel: 'btn btn-sm btn-secondary' ,
                 icon: 'bi bi-search' ,
                 container: 'input-group' ,
+                tableContainer: '',
+                fieldContainer: '',
+                inputLabel: 'form-label ps-1',
+                inputText: 'form-control mb-2',
             },
             key: 'pk',                  // usado no SelectPopulate, eh o value do option a ser criado
             value: 'nome',              // usado no SelectPopulate, eh o innerHTML do option a ser criado
             shortcut: 'ctrl+enter',
             title: '',
+            submit: i18n ? i18n.getEntry('common.save__bold:s') || '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>' : '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>',
+            cancel: i18n ? i18n.getEntry('common.cancel') || '<span data-i18n="common.cancel">Cancelar</span>' : '<span data-i18n="common.cancel">Cancelar</span>',
         }
         this.config = deepMerge(defaultOptions, options);
         this.context = this.config.url.related.show ? 'show' : this.config.url.related.add ? 'add' : this.config.url.related.edit ? 'edit' : ''
@@ -613,14 +634,26 @@ class RelatedAddon {
                 appPreviousContext = appKeyMap.getContext();
                 appKeyMap.setContext(`relatedAddon#${this.context}`);
             }
-            else if(ev.newState == 'closed'){appKeyMap.setContext(appPreviousContext)}
+            else if(ev.newState == 'closed'){
+                appKeyMap.setContext(appPreviousContext);
+            }
         })
-        // document.body.appendChild(this.dialog)
+        if(this.config.title){
+            this.model.title = document.createElement('h5');
+            this.model.title.style = this.config.styles.title;
+            this.model.title.classList = this.config.classlist.title;
+            this.model.title.innerHTML += this.config.title;
+            this.model.dialog.appendChild(this.model.title);
+        }
+        this.model.dialog.appendChild(this._addModalTable());
+        this.model.dialog.appendChild(this._addFields());
+        this.model.dialog.appendChild(this._addFooter());
+        document.body.appendChild(this.model.dialog)
         this.model.addOn = document.createElement('button');
         this.model.addOn.type = 'button';
-        this.model.addOn.classList = this.config.classlist.button;
+        this.model.addOn.classList = this.config.classlist.addOn;
         this.model.addOn.tabIndex = '-1';
-        this.model.addOn.onclick = ()=>{}
+        this.model.addOn.onclick = ()=>{this.model.dialog.showModal()}
         this.model.icon = document.createElement('i');
         this.model.icon.style = this.config.styles.icon;
         this.model.icon.classList = this.config.classlist.icon;
@@ -637,7 +670,9 @@ class RelatedAddon {
             })
         }
         
-        let groupContainer = document.createElement('div'); groupContainer.classList = this.config.classlist.container;
+        let groupContainer = document.createElement('div');
+        groupContainer.style = this.config.styles.container;
+        groupContainer.classList = this.config.classlist.container;
         // carrega componente junto ao controle original, usa classes de input-group do bootstrap
         
         if(this.config.container.classList.contains('form-floating') && this.config.container.parentNode.classList.contains('row')){
@@ -660,15 +695,92 @@ class RelatedAddon {
             col.appendChild(groupContainer);
             // col.appendChild(this.dialog);
             groupContainer.appendChild(this.config.container);
-            groupContainer.appendChild(this.btn);
+            groupContainer.appendChild(this.model.addOn);
         }
         else{}
     }
-    _showModal(context=this.context){ // exibe modal baseado no contexto informado (show, add, change)
-        if(!['add', 'show', 'change'].includes(context)){return false}
+    _addModalTable(){
+        this.model.tableContainer = document.createElement('div');
+        if(!this.config.url.related.show){this.model.tableContainer.style.display = 'none'}
+        this.model.tableContainer.innerHTML = 'TABELA AQUI'
+        return this.model.tableContainer;
     }
-    _add(){ // exibe modal no contexto de adicao
-
+    _addFields(){
+        this.model.fieldsContainer = document.createElement('div');
+        this.model.fieldsContainer.style = this.config.styles.fieldContainer;
+        this.model.fieldsContainer.classList = this.config.classlist.fieldContainer;
+        this.model.fieldsContainer.style.display = 'none';
+        this.config.fields.forEach((el)=>{
+            if(el.type == 'text'){
+                let attrs = Object.assign({
+                    class: this.config.classlist.inputText,
+                    style: this.config.styles.inputText
+                }, el);
+                if(this.config.labels[attrs.name]){
+                    this.model[`${attrs.name}_label`] = document.createElement('label');
+                    this.model[`${attrs.name}_label`].innerHTML = this.config.labels[el.name];
+                    this.model[`${attrs.name}_label`].style = this.config.styles.inputLabel;
+                    this.model[`${attrs.name}_label`].classList = this.config.classlist.inputLabel;
+                    this.model.fieldsContainer.appendChild(this.model[`${attrs.name}_label`])
+                }
+                this.model[attrs.name] = document.createElement('input');
+                for(let attr in attrs){
+                    this.model[attrs.name].setAttribute(attr, attrs[attr])
+                }
+                this.model.fieldsContainer.appendChild(this.model[attrs.name])
+            } 
+        })
+        return this.model.fieldsContainer;
+    }
+    _addFooter(){
+        this.model.footer = document.createElement('div');
+        this.model.footer.style = this.config.styles.footer;
+        this.model.footer.classList = this.config.classlist.footer;
+        this.model.submit = document.createElement('button');
+        this.model.submit.type = 'button';
+        this.model.submit.style = this.config.styles.submit;
+        this.model.submit.classList = this.config.classlist.submit;
+        this.model.submit.innerHTML = this.config.submit;
+        this.model.submit.onclick = ()=>{this._add()};
+        this.model.cancel = document.createElement('button');
+        this.model.cancel.type = 'button';
+        this.model.cancel.style = this.config.styles.cancel;
+        this.model.cancel.classList = this.config.classlist.cancel;
+        this.model.cancel.innerHTML = this.config.cancel;
+        this.model.footer.appendChild(this.model.cancel);
+        this.model.footer.appendChild(this.model.submit);
+        return this.model.footer;
+    }
+    _setContext(context){ // altera perfil de exibicao do modal
+        if(!['add', 'show', 'change'].includes(context)){return false}
+        this.context = context;
+        if(context == 'show'){
+            this.model.tableContainer.style.display = 'block';
+            this.model.fieldsContainer.style.display = 'none';
+        }
+        else if(context == 'add' || context == 'change'){
+            this.model.tableContainer.style.display = 'none';
+            this.model.fieldsContainer.style.display = 'block';
+        }
+    }
+    _getData(){
+        let data = {};
+        this.config.fields.forEach((el)=>{
+            data[el.name] = this.model[el.name].value
+        })
+        return data;
+    }
+    _add(){ // executa ajax post para criacao de novo registro
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if(this.readyState == 4 && this.status == 200){
+                let resp =  JSON.parse(this.response);
+                appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.nome}</b>`) || `Registro criado com sucesso <b>${resp.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)}
+            else if(this.readyState == 4){console.log('Error...');}
+        };
+        xhttp.open("POST", this.config.url.related.add, true);
+        xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
+        xhttp.send(JSON.stringify(this._getData()));
     }
 }
 

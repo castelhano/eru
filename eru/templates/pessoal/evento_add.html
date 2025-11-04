@@ -28,11 +28,16 @@
 {% block add_script %}
 const form = new jsForm(document.getElementById('app_form'), {})
 const grupoRelated = new RelatedAddon('#id_grupo', {
+    title: 'Cadastro de Grupo de Evento',
+    labels: {
+        nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
+    },
     url: {
         parent: {
             show: "{% url 'pessoal_get_grupos_evento' %}",
         },
         related: {
+            show: "{% url 'pessoal_get_grupos_evento' %}",
             add: "{% url 'pessoal_add_grupo_evento' %}",
         }
     }    

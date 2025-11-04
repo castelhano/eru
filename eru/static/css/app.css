@@ -170,3 +170,8 @@ pre, code{user-select: all;}
 
 .slideIn{animation-fill-mode: both; animation-name: slideIn; animation-duration: 0.5s;}
 @keyframes slideIn{from{transform:translate3d(0,100%,0);visibility:visible;}to{transform:translate3d(0,0,0);}}
+
+
+
+
+dialog::backdrop { background-color: rgba(0, 0, 0, 0.5) }

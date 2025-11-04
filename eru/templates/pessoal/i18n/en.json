@@ -16,6 +16,7 @@
         },
         "event": {
             "form": {
+                "groupName": "Group name",
                 "trackingHelp": "Tracking used for formula composition for payroll module"
             }
         },

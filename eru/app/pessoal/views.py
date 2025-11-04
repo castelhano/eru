@@ -525,8 +525,10 @@ def get_grupos_evento(request):
 def add_grupo_evento(request):
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         form = GrupoEventoForm(data)
         if form.is_valid():
+            print('eh valido form')
             grupo_evento = form.save()
             return JsonResponse({'id': grupo_evento.id, 'nome': grupo_evento.nome, 'status': 'success'}, status=200)
         else:
