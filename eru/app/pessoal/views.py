@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from django.http import HttpResponse
-# from json import dumps
+from django.http import HttpResponse, JsonResponse
+import json
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm
@@ -84,6 +84,12 @@ def funcionarios(request):
 def eventos(request):
     eventos = Evento.objects.all().order_by('nome')
     return render(request,'pessoal/eventos.html',{'eventos':eventos})
+
+# @login_required
+# @permission_required('pessoal.view_grupoevento', login_url="/handler/403")
+# def grupos_evento(request):
+#     grupos_evento = GrupoEvento.objects.all().order_by('nome')
+#     return render(request,'pessoal/grupos_evento.html',{'grupos_evento':grupos_evento})
 
 # Metodos ADD
 @login_required
@@ -184,23 +190,47 @@ def evento_add(request):
     if request.method == 'POST':
         form = EventoForm(request.POST)
         if form.is_valid():
-            # try:
-            registro = form.save()
-            l = Log()
-            l.modelo = "pessoal.evento"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "CREATED"
-            l.save()
-            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-            return redirect('pessoal_evento_add')
-            # except:
-            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-            #     return redirect('pessoal_evento_add')
+            try:
+                registro = form.save()
+                l = Log()
+                l.modelo = "pessoal.evento"
+                l.objeto_id = registro.id
+                l.objeto_str = registro.nome[0:48]
+                l.usuario = request.user
+                l.mensagem = "CREATED"
+                l.save()
+                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+                return redirect('pessoal_evento_add')
+            except:
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+                return redirect('pessoal_evento_add')
     else:
         form = EventoForm()
     return render(request,'pessoal/evento_add.html',{'form':form})
+
+# @login_required
+# @permission_required('pessoal.add_grupoevento', login_url="/handler/403")
+# def grupo_evento_add(request):
+#     if request.method == 'POST':
+#         form = GrupoEventoForm(request.POST)
+#         if form.is_valid():
+#             # try:
+#             registro = form.save()
+#             l = Log()
+#             l.modelo = "pessoal.grupo_evento"
+#             l.objeto_id = registro.id
+#             l.objeto_str = registro.nome[0:48]
+#             l.usuario = request.user
+#             l.mensagem = "CREATED"
+#             l.save()
+#             messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+#             return redirect('pessoal_grupo_evento_add')
+#             # except:
+#             #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+#             #     return redirect('pessoal_grupo_evento_add')
+#     else:
+#         form = GrupoEventoForm()
+#     return render(request,'pessoal/grupo_evento_add.html',{'form':form})
 
 
 # Metodos GET
@@ -235,6 +265,13 @@ def evento_id(request,id):
     evento = Evento.objects.get(pk=id)
     form = EventoForm(instance=evento)
     return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
+
+# @login_required
+# @permission_required('pessoal.change_grupoevento', login_url="/handler/403")
+# def grupo_evento_id(request,id):
+#     grupo_evento = GrupoEvento.objects.get(pk=id)
+#     form = GrupoEventoForm(instance=grupo_evento)
+#     return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
 
 
 
@@ -347,6 +384,25 @@ def evento_update(request,id):
     else:
         return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
+# @login_required
+# @permission_required('pessoal.change_grupoevento', login_url="/handler/403")
+# def grupo_evento_update(request,id):
+#     grupo_evento = GrupoEvento.objects.get(pk=id)
+#     form = GrupoEventoForm(request.POST, instance=grupo_evento)
+#     if form.is_valid():
+#         registro = form.save()
+#         l = Log()
+#         l.modelo = "pessoal.grupo_evento"
+#         l.objeto_id = registro.id
+#         l.objeto_str = registro.nome[0:48]
+#         l.usuario = request.user
+#         l.mensagem = "UPDATE"
+#         l.save()
+#         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
+#         return redirect('pessoal_grupo_evento_id', id)
+#     else:
+#         return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
+
 # Metodos DELETE
 @login_required
 @permission_required('pessoal.delete_setor', login_url="/handler/403")
@@ -424,6 +480,26 @@ def evento_delete(request,id):
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal_evento_id', id)
 
+# @login_required
+# @permission_required('pessoal.delete_grupoevento', login_url="/handler/403")
+# def grupo_evento_delete(request,id):
+#     try:
+#         registro = GrupoEvento.objects.get(pk=id)
+#         l = Log()
+#         l.modelo = "pessoal.grupo_evento"
+#         l.objeto_id = registro.id
+#         l.objeto_str = registro.nome[0:48]
+#         l.usuario = request.user
+#         l.mensagem = "DELETE"
+#         registro.delete()
+#         l.save()
+#         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+#         return redirect('pessoal_grupo_eventos')
+#     except:
+#         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+#         return redirect('pessoal_grupo_evento_id', id)
+
+# Metodos Ajax
 @login_required
 def get_setores(request):
     setores = Setor.objects.all().order_by('nome')
@@ -438,3 +514,21 @@ def get_cargos(request):
     except Exception as e:
         obj = []
     return HttpResponse(obj, content_type="application/json")
+
+@login_required
+def get_grupos_evento(request):
+    grupos_evento = GruposEvento.objects.all().order_by('nome')
+    obj = serializers.serialize('json', grupos_evento)
+    return HttpResponse(obj, content_type="application/json")
+
+@login_required
+def add_grupo_evento(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        form = GrupoEventoForm(data)
+        if form.is_valid():
+            grupo_evento = form.save()
+            return JsonResponse({'id': grupo_evento.id, 'nome': grupo_evento.nome, 'status': 'success'}, status=200)
+        else:
+            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+    return JsonResponse({'status': 'invalid request'}, status=400)

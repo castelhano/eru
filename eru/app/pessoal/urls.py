@@ -22,6 +22,13 @@ urlpatterns = [
     path('pessoal_evento_id/<int:id>',views.evento_id,name='pessoal_evento_id'),
     path('pessoal_evento_update/<int:id>',views.evento_update,name='pessoal_evento_update'),
     path('pessoal_evento_delete/<int:id>/delete',views.evento_delete,name='pessoal_evento_delete'),
+    # path('pessoal_grupos_evento',views.grupos_evento,name='pessoal_grupos_evento'),
+    # path('pessoal_grupo_evento_add',views.grupo_evento_add,name='pessoal_grupo_evento_add'),
+    # path('pessoal_grupo_evento_id/<int:id>',views.grupo_evento_id,name='pessoal_grupo_evento_id'),
+    # path('pessoal_grupo_evento_update/<int:id>',views.grupo_evento_update,name='pessoal_grupo_evento_update'),
+    # path('pessoal_grupo_evento_delete/<int:id>/delete',views.grupo_evento_delete,name='pessoal_grupo_evento_delete'),
     path('pessoal_get_setores',views.get_setores,name='pessoal_get_setores'),
     path('pessoal_get_cargos',views.get_cargos,name='pessoal_get_cargos'),
+    path('pessoal_get_grupos_evento',views.get_grupos_evento,name='pessoal_get_grupos_evento'),
+    path('pessoal_add_grupo_evento',views.add_grupo_evento,name='pessoal_add_grupo_evento'),
 ]

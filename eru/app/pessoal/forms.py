@@ -14,7 +14,6 @@ class GrupoEventoForm(forms.ModelForm):
     class Meta:
         model = GrupoEvento
         fields = ['nome']
-    nome = forms.CharField(error_messages={'required': 'Preencha o nome do grupo'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
 class CargoForm(forms.ModelForm):
     class Meta:

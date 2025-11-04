@@ -27,6 +27,7 @@
     {% if perms.pessoal.view_funcionario %}appKeyMap.bind('c+f', ()=>{document.getElementById('menu_funcionario').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
     
     
     i18n.addApp('pessoal');

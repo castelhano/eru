@@ -115,6 +115,31 @@ function timeNow(opt={}){
   }
 }
 
+/*
+* getCookie Busca no arquivo de cookie pela chave informada e retorna o valor
+*
+* @version  1.0
+* @since    31/08/2022
+* @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+* @param    {String} name
+* @returns  {String} Valor da chave (se encontrada) ou null caso nao encontrado
+* @example  let token = getCookie('csrftoken');
+*/
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== ''){
+    const cookies = document.cookie.split(';');
+    for(let i = 0; i < cookies.length; i++){
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')){
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 // Exibe modal para confirmacao no evento click para elementos com data-appConfirm="true"
 function confirmOnClick(options){
   if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}

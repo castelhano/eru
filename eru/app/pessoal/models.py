@@ -248,6 +248,8 @@ class GrupoEvento(models.Model):
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.grupo_evento',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+    def __str__(self):
+        return self.nome
 
 class Evento(models.Model):
     TIPOS = (

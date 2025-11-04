@@ -382,7 +382,7 @@ class selectPopulate{
         this.value = options?.value || 'nome';
         this.method = options?.method || 'GET';
         this.beforeRequest = options?.beforeRequest != undefined ? options.beforeRequest : ()=>{return true}; // Funcao a ser chamada antes de executar a consulta
-        this.emptyRow = options?.emptyRow || false; // Insere option generica (todos), ex emptyRow: {} ou emptyRow: {innerHTML: '', 'data-i18n': ''}
+        this.emptyRow = options.hasOwnProperty('emptyRow') ? options.emptyRow : false; // Insere option generica (todos), ex emptyRow: {} ou emptyRow: {innerHTML: '', 'data-i18n': ''}
         if(this.emptyRow && !this.emptyRow['data-i18n']){this.emptyRow['data-i18n'] = 'common.all'}
         if(this.emptyRow && !this.emptyRow['value']){this.emptyRow['value'] = ''}
         if(options?.onChange){this.target.onchange = options.onChange} // Funcao a ser atribuida no evento onchange (caso informado ao instanciar)
@@ -425,7 +425,11 @@ class selectPopulate{
                         opt.innerHTML = i18n.getEntry(instance.emptyRow['data-i18n']) || instance.emptyRow['innerHTML'] || 'Todos';
                         instance.target.appendChild(opt);
                     }
-                    for(let i in instance.data){instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i].fields[instance.value]}</option>`;}
+                    console.log('Select populate');
+                    
+                    for(let i in instance.data){
+                        instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i].fields[instance.value]}</option>`;
+                    }
                     instance.onSuccess();
                 }
                 instance.then(); // Funcao a ser executada indiferente se retornado dados do servidor
@@ -561,13 +565,14 @@ class RelatedAddon {
                 placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
             }],
             url: {
+                csrf_token: getCookie('csrftoken'),
                 updateOnStart: false,
-                csrf_token: '',
                 parent: {
                     show: null,
                     params: null,
                 },
                 related: {
+                    show: null,
                     add: null,
                     get: null,
                     update: null,
@@ -591,40 +596,39 @@ class RelatedAddon {
             value: 'nome',              // usado no SelectPopulate, eh o innerHTML do option a ser criado
             shortcut: 'ctrl+enter',
             title: '',
-            add: true,
-            change: true,
-            delete: false,
         }
         this.config = deepMerge(defaultOptions, options);
+        this.context = this.config.url.related.show ? 'show' : this.config.url.related.add ? 'add' : this.config.url.related.edit ? 'edit' : ''
         this._build();
     }
     _build(){
-        this.dialog = document.createElement('dialog');
-        this.dialog.style = this.config.styles.dialog;
-        this.dialog.classList = this.config.classlist.dialog;
-        this.dialog.style.margin = '0px';
-        this.dialog.style.zIndex = '10';
-        this.dialog.addEventListener('beforetoggle', (ev)=>{
+        this.model = {}
+        this.model.dialog = document.createElement('dialog');
+        this.model.dialog.style = this.config.styles.dialog;
+        this.model.dialog.classList = this.config.classlist.dialog;
+        this.model.dialog.style.margin = '0px';
+        this.model.dialog.style.zIndex = '10';
+        this.model.dialog.addEventListener('beforetoggle', (ev)=>{
             if(ev.newState == 'open'){
                 appPreviousContext = appKeyMap.getContext();
-                appKeyMap.setContext('relatedAddon#show');
+                appKeyMap.setContext(`relatedAddon#${this.context}`);
             }
             else if(ev.newState == 'closed'){appKeyMap.setContext(appPreviousContext)}
         })
-        document.body.appendChild(this.dialog)
-        this.btn = document.createElement('button');
-        this.btn.type = 'button';
-        this.btn.classList = this.config.classlist.button;
-        this.btn.tabIndex = '-1';
-        this.btn.onclick = ()=>{this.dialog.showModal()}
-        let btnIcon = document.createElement('i');
-        btnIcon.style = this.config.styles.icon;
-        btnIcon.classList = this.config.classlist.icon;
-        this.btn.appendChild(btnIcon);
+        // document.body.appendChild(this.dialog)
+        this.model.addOn = document.createElement('button');
+        this.model.addOn.type = 'button';
+        this.model.addOn.classList = this.config.classlist.button;
+        this.model.addOn.tabIndex = '-1';
+        this.model.addOn.onclick = ()=>{}
+        this.model.icon = document.createElement('i');
+        this.model.icon.style = this.config.styles.icon;
+        this.model.icon.classList = this.config.classlist.icon;
+        this.model.addOn.appendChild(this.model.icon);
 
         // *********
         if(this.element.nodeName == 'SELECT'){
-            // cria instancia de SelectPopulate, insanca disponivel this.parent
+            // cria instancia de SelectPopulate, instancia disponivel this.parent
             this.parent = new selectPopulate({
                 wait: !this.config.url.updateOnStart,
                 target: this.element, 
@@ -660,7 +664,12 @@ class RelatedAddon {
         }
         else{}
     }
-    _parentRefresh(){}
+    _showModal(context=this.context){ // exibe modal baseado no contexto informado (show, add, change)
+        if(!['add', 'show', 'change'].includes(context)){return false}
+    }
+    _add(){ // exibe modal no contexto de adicao
+
+    }
 }
 
 // Configuracoes / Listeners ao carregar pagina

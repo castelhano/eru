@@ -27,11 +27,13 @@
 <script>
 {% block add_script %}
 const form = new jsForm(document.getElementById('app_form'), {})
-const grupoRelated = new RelatedAddon(form.grupo, {
+const grupoRelated = new RelatedAddon('#id_grupo', {
     url: {
         parent: {
-            csrf_token: '{% csrf_token %}',
-            show: 'foo'
+            show: "{% url 'pessoal_get_grupos_evento' %}",
+        },
+        related: {
+            add: "{% url 'pessoal_add_grupo_evento' %}",
         }
     }    
 })
