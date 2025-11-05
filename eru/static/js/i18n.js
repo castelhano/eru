@@ -32,7 +32,6 @@ class I18n{
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         this.modificatorAttrs = ['plural'];
         this.composedAttrs = ['bold','prefix', 'posfix'];
-        String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + this.slice(1) }
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}

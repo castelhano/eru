@@ -3,6 +3,8 @@ const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoa
 var pageshow_persisted = false;      // flag informa se pagina foi construida pelo cache do navegador (em geral no history back)
 var appPreviousContext = 'default';  // usado para rollback de contexto
 
+String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + this.slice(1) }
+
 // exibe modal de carregameto ao sair da pagina
 appModalLoading._element.addEventListener('shown.bs.modal', ()=>{ if(pageshow_persisted){ appModalLoading.hide() } })
 

@@ -60,7 +60,7 @@ class jsForm{
             this[this.selectPopulate[i].target.name].selectPopulate = new selectPopulate(this.selectPopulate[i]);
         }
         if(!this.novalidate){
-            this.form.setAttribute('novalidate', null); // Desativa validacao nativa do navegador
+            this.form.noValidate = true; // Desativa validacao nativa do navegador
             this.form.onsubmit = ()=>{ // Chama funcao de validacao ao submeter form
                 if(this.validate()){return this.beforeSubmit()} // Se passou na validacao, chama funcao beforeSubmit
                 return false;
@@ -577,7 +577,6 @@ class RelatedAddon {
                 related: {
                     show: null,
                     add: null,
-                    get: null,
                     update: null,
                     delete: null,
                     params: null,
@@ -588,12 +587,16 @@ class RelatedAddon {
                 addOn: '',
                 submit: '',
                 cancel: '',
+                addBtn: '',
+                tableBtn: '',
+                editButton: '',
                 title: '',
                 footer: 'position: absolute; bottom: 0;left: 0;width: 100%',
-                icon: '',
+                addOnIcon: '',
                 container: '',
                 tableContainer: '',
                 fieldContainer: '',
+                table: '',
                 inputLabel: '',
                 inputText: '',
             },
@@ -604,26 +607,38 @@ class RelatedAddon {
                 addOn: 'btn btn-secondary' ,
                 submit: 'btn btn-sm btn-success ms-1' ,
                 cancel: 'btn btn-sm btn-secondary' ,
-                icon: 'bi bi-search' ,
+                addBtn: 'btn btn-sm btn-success float-start me-1',
+                tableBtn: 'btn btn-sm btn-secondary float-start me-1',
+                editButton: 'btn btn-sm btn-dark py-0 me-1',
+                addOnIcon: 'bi bi-search' ,
+                addBtnIcon: 'bi bi-plus-lg',
+                tableBtnIcon: 'bi bi-table',
+                editButtonIcon: 'bi bi-pen-fill',
                 container: 'input-group' ,
-                tableContainer: '',
+                tableContainer: 'pt-2',
                 fieldContainer: '',
+                table: 'table table-sm border table-striped table-hover',
                 inputLabel: 'form-label ps-1',
                 inputText: 'form-control mb-2',
             },
             key: 'pk',                  // usado no SelectPopulate, eh o value do option a ser criado
             value: 'nome',              // usado no SelectPopulate, eh o innerHTML do option a ser criado
             shortcut: 'ctrl+enter',
+            addBtnShortcut: 'alt+n',
+            tableBtnShortcut: 'alt+t',
             title: '',
+            jsTable: {canExportCsv: false, enablePaginate: true, showCounterLabel: false},
             submit: i18n ? i18n.getEntry('common.save__bold:s') || '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>' : '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>',
             cancel: i18n ? i18n.getEntry('common.cancel') || '<span data-i18n="common.cancel">Cancelar</span>' : '<span data-i18n="common.cancel">Cancelar</span>',
         }
         this.config = deepMerge(defaultOptions, options);
-        this.context = this.config.url.related.show ? 'show' : this.config.url.related.add ? 'add' : this.config.url.related.edit ? 'edit' : ''
+        this.config.rows = [];      // array armazena todas as linhas da tabela com registro do modelo related
+        this.context = 'show';
         this._build();
     }
     _build(){
         this.model = {}
+        appKeyMap.bind(this.config.shortcut, ()=>{ this.model.addOn.click()}, {element: this.element, display: false, origin: 'form#RelatedAddon'})
         this.model.dialog = document.createElement('dialog');
         this.model.dialog.style = this.config.styles.dialog;
         this.model.dialog.classList = this.config.classlist.dialog;
@@ -632,7 +647,7 @@ class RelatedAddon {
         this.model.dialog.addEventListener('beforetoggle', (ev)=>{
             if(ev.newState == 'open'){
                 appPreviousContext = appKeyMap.getContext();
-                appKeyMap.setContext(`relatedAddon#${this.context}`);
+                appKeyMap.setContext(`relatedAddon#show`);
             }
             else if(ev.newState == 'closed'){
                 appKeyMap.setContext(appPreviousContext);
@@ -649,14 +664,15 @@ class RelatedAddon {
         this.model.dialog.appendChild(this._addFields());
         this.model.dialog.appendChild(this._addFooter());
         document.body.appendChild(this.model.dialog)
+        this.model.form = new jsForm(this.model.fieldsContainer, {})
         this.model.addOn = document.createElement('button');
         this.model.addOn.type = 'button';
         this.model.addOn.classList = this.config.classlist.addOn;
         this.model.addOn.tabIndex = '-1';
         this.model.addOn.onclick = ()=>{this.model.dialog.showModal()}
         this.model.icon = document.createElement('i');
-        this.model.icon.style = this.config.styles.icon;
-        this.model.icon.classList = this.config.classlist.icon;
+        this.model.icon.style = this.config.styles.addOnIcon;
+        this.model.icon.classList = this.config.classlist.addOnIcon;
         this.model.addOn.appendChild(this.model.icon);
 
         // *********
@@ -701,14 +717,44 @@ class RelatedAddon {
     }
     _addModalTable(){
         this.model.tableContainer = document.createElement('div');
-        if(!this.config.url.related.show){this.model.tableContainer.style.display = 'none'}
-        this.model.tableContainer.innerHTML = 'TABELA AQUI'
+        this.model.tableContainer.style = this.config.styles.tableContainer;
+        this.model.tableContainer.classList = this.config.classlist.tableContainer;
+        this.model.table = document.createElement('table');
+        this.model.table.style = this.config.styles.table;
+        this.model.table.classList = this.config.classlist.table;
+        this.model.thead = document.createElement('thead');
+        let tr = document.createElement('tr');
+        this.model.thead.appendChild(tr);
+        this.config.fields.forEach((el)=>{
+            let th = document.createElement('th');
+            th.innerHTML = el.name.captalize();
+            tr.appendChild(th)
+        })
+        if(this.config.url.related.change){
+            let th = document.createElement('th');
+            th.innerHTML = ' ';
+            tr.appendChild(th)
+        }
+        this.model.thead.appendChild(tr);
+        this.model.tbody = document.createElement('tbody');
+        this._relatedGetAll().then((resp)=>{
+            resp.forEach((el)=>{
+                this.config.rows.push(el);
+                this.model.tbody.appendChild(this._addTableRow(el));
+            })
+            if(jsTable){this.model.jsTable = new jsTable(this.model.table, this.config.jsTable)}
+        });
+        this.model.table.appendChild(this.model.thead);
+        this.model.table.appendChild(this.model.tbody);
+        this.model.tableContainer.appendChild(this.model.table)
         return this.model.tableContainer;
     }
     _addFields(){
-        this.model.fieldsContainer = document.createElement('div');
+        this.model.fieldsContainer = document.createElement('form');
         this.model.fieldsContainer.style = this.config.styles.fieldContainer;
         this.model.fieldsContainer.classList = this.config.classlist.fieldContainer;
+        this.model.fieldsContainer.noValidate = true;
+        this.model.fieldsContainer.setAttribute('autocomplete', 'off');
         this.model.fieldsContainer.style.display = 'none';
         this.config.fields.forEach((el)=>{
             if(el.type == 'text'){
@@ -732,6 +778,27 @@ class RelatedAddon {
         })
         return this.model.fieldsContainer;
     }
+    _addTableRow(data){
+        let tr = document.createElement('tr');
+        for(let field in this.config.fields){
+            let td = document.createElement('td')
+            td.innerHTML = data.fields[this.config.fields[field].name] || '';
+            tr.appendChild(td);
+        }
+        if(this.config.url.related.change){
+            let td = document.createElement('td');
+            td.classList = 'text-end fit'
+            let btn = document.createElement('button');
+            btn.type = 'button';
+            btn.classList = this.config.classlist.editButton;
+            btn.style = this.config.styles.editButton;
+            btn.setAttribute('data-id', data.pk)
+            btn.innerHTML = `<i class="${this.config.classlist.editButtonIcon}"></i>`;
+            td.appendChild(btn);
+            tr.appendChild(td);
+        }
+        return tr;        
+    }
     _addFooter(){
         this.model.footer = document.createElement('div');
         this.model.footer.style = this.config.styles.footer;
@@ -747,20 +814,51 @@ class RelatedAddon {
         this.model.cancel.style = this.config.styles.cancel;
         this.model.cancel.classList = this.config.classlist.cancel;
         this.model.cancel.innerHTML = this.config.cancel;
+        this.model.cancel.onclick = ()=>{this.model.dialog.close()}
+        // --
+        this.model.addBtn = document.createElement('button');
+        this.model.addBtn.type = 'button';
+        this.model.addBtn.tabIndex = '-1';
+        this.model.addBtn.style = this.config.styles.addBtn;
+        this.model.addBtn.classList = this.config.classlist.addBtn;
+        this.model.addBtn.innerHTML = `<i class="${this.config.classlist.addBtnIcon}"></i>`;
+        this.model.addBtn.onclick = ()=>{this._setContext('add')};
+        appKeyMap.bind(this.config.addBtnShortcut, ()=>{this._setContext('add')}, {context: 'relatedAddon#show', icon: 'bi bi-plus-square-fill text-success', desc: '<span data-i18n="jsForm.relatedAddon.showAddContext">Exibe form para adicionar registro</span>', 'data-i18n': 'jsForm.relatedAddon.showAddContext', origin: 'form#RelatedAddon'})
+        this.model.tableBtn = document.createElement('button');
+        this.model.tableBtn.type = 'button';
+        this.model.tableBtn.tabIndex = '-1';
+        this.model.tableBtn.style = this.config.styles.tableBtn;
+        this.model.tableBtn.classList = this.config.classlist.tableBtn;
+        this.model.tableBtn.style.display = 'none';
+        this.model.tableBtn.innerHTML = `<i class="${this.config.classlist.tableBtnIcon}"></i>`;
+        this.model.tableBtn.onclick = ()=>{this._setContext('show')};
+        appKeyMap.bind(this.config.tableBtnShortcut, ()=>{this._setContext('show')}, {context: 'relatedAddon#set', icon: 'bi bi-table text-success', desc: '<span data-i18n="jsForm.relatedAddon.showTableContext">Exibe lista de registros</span>', 'data-i18n': 'jsForm.relatedAddon.showTableContext', origin: 'form#RelatedAddon'})
+        // --
+        this.model.footer.appendChild(this.model.addBtn);
+        this.model.footer.appendChild(this.model.tableBtn);
         this.model.footer.appendChild(this.model.cancel);
         this.model.footer.appendChild(this.model.submit);
         return this.model.footer;
     }
     _setContext(context){ // altera perfil de exibicao do modal
-        if(!['add', 'show', 'change'].includes(context)){return false}
+        if(!['add', 'change', 'show'].includes(context)){return false}
         this.context = context;
         if(context == 'show'){
+            this.context = 'show';
+            appKeyMap.setContext('relatedAddon#show');
             this.model.tableContainer.style.display = 'block';
             this.model.fieldsContainer.style.display = 'none';
+            this.model.addBtn.style.display = 'block';
+            this.model.tableBtn.style.display = 'none';
         }
         else if(context == 'add' || context == 'change'){
+            this.context = context;
+            appKeyMap.setContext('relatedAddon#set');
             this.model.tableContainer.style.display = 'none';
-            this.model.fieldsContainer.style.display = 'block';
+            this.model.fieldsContainer.style.display = 'inline';
+            this.model.addBtn.style.display = 'none';
+            this.model.tableBtn.style.display = 'inline';
+            this.model[this.config.fields[0].name].focus();
         }
     }
     _getData(){
@@ -770,15 +868,36 @@ class RelatedAddon {
         })
         return data;
     }
+    _relatedGetAll(){ // retora promise de requisicao ajax use _relatedGetAll().then((resp)=>{}).catch((err)=>{})
+        let self = this;
+        return new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() {
+                let d = JSON.parse(this.responseText);
+                if(typeof d != 'object'){d = JSON.parse(d)}
+                resolve(d);
+            };
+            xhr.onerror = reject;
+            xhr.open('GET', self.config.url.related.show);
+            xhr.send();
+        });
+    }
     _add(){ // executa ajax post para criacao de novo registro
+        let self = this;
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if(this.readyState == 4 && this.status == 200){
                 let resp =  JSON.parse(this.response);
-                console.log('status ok');
-                console.log(resp);
-                
-                appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.nome}</b>`) || `Registro criado com sucesso <b>${resp.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)}
+                self._addTableRow(resp); // adiciona linha na tabela do modal
+                let opt = document.createElement('option');
+                opt.value = resp.pk;
+                opt.innerHTML = resp.fields[self.config.value];
+                self.element.appendChild(opt);
+                self.element.value = resp.pk;
+                self._clearForm();
+                self.model.dialog.close();
+                appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.fields.nome}</b>`) || `Registro criado com sucesso <b>${resp.fields.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)
+            }
             else if(this.readyState == 4){
                 console.log('error');
                 console.log(JSON.parse(this.response));
@@ -787,6 +906,11 @@ class RelatedAddon {
         xhttp.open("POST", this.config.url.related.add, true);
         xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
         xhttp.send(JSON.stringify(this._getData()));
+    }
+    _clearForm(){
+        this.config.fields.forEach((el)=>{
+            this.model[el.name].value = '';
+        })
     }
 }
 

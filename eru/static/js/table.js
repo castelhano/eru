@@ -403,7 +403,10 @@ class jsTable{
     cleanTbody(){this.tbody.innerHTML = '';}
     addEmptyRow(){this.tbody.innerHTML = `<tr class="emptyRow"><td data-type="emptyRow" colspan="${this.headers.length}">${this.emptyTableMessage}</td></tr>`;}
     validateTable(){ // Metodo chamado em tabelas previamente criadas, normaliza e categoriza elementos  
-        if(!this.table.caption){this.table.caption = document.createElement('caption');} // Cria o caption da tabela caso nao exista
+        if(!this.table.caption){ // Cria o caption da tabela caso nao exista
+            this.table.caption = document.createElement('caption');
+            if(!this.caption){this.table.caption.style.display = 'none'}
+        }
         else{this.caption = this.table.caption.innerHTML;this.table.caption.innerHTML = ''} // Limpa o caption atual, sera refeito no metodo buildControls
         this.table.caption.style.position = 'relative'; // Ajusta o posicionamento do caption para relative
         let ths = this.table.tHead.querySelectorAll('th,td'); // Busca todos os elementos th ou td no header da tabela

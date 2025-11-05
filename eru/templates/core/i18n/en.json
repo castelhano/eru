@@ -148,5 +148,11 @@
         "downloadCSV":"Table: Download as CSV",
         "nextPage":"Table: Show next page",
         "previousPage":"Table: Show previous page"
+    },
+    "jsForm": {
+        "relatedAddon": {
+            "showAddContext": "Displays form for adding record",
+            "showTableContext": "Displays records list"
+        }
     }
 }

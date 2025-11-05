@@ -517,18 +517,42 @@ def get_cargos(request):
 
 @login_required
 def get_grupos_evento(request):
-    grupos_evento = GruposEvento.objects.all().order_by('nome')
+    grupos_evento = GrupoEvento.objects.all().order_by('nome')
     obj = serializers.serialize('json', grupos_evento)
     return HttpResponse(obj, content_type="application/json")
 
 @login_required
 def add_grupo_evento(request):
+    if not request.user.has_perm("pessoal.add_grupoevento"):
+        return JsonResponse({'status': 'access denied'}, status=401)
+    
     if request.method == 'POST':
         data = json.loads(request.body)
         form = GrupoEventoForm(data)
         if form.is_valid():
             grupo_evento = form.save()
-            return JsonResponse({'id': grupo_evento.id, 'nome': grupo_evento.nome, 'status': 'success'}, status=200)
+            return JsonResponse({'pk': grupo_evento.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': grupo_evento.nome}, 'status': 'success'}, status=200)
         else:
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
     return JsonResponse({'status': 'invalid request'}, status=400)
+
+@login_required
+def update_grupo_evento(request, id):
+    if not request.user.has_perm("pessoal.change_grupoevento"):
+        return JsonResponse({'status': 'access denied'}, status=401)
+    try:
+        grupo = GrupoEvento.objects.get(pk=id)
+        form = GrupoEventoForm(request.POST, instance=grupo)
+        if form.is_valid():
+            registro = form.save()
+            l = Log()
+            l.modelo = "pessoal.grupo_evento"
+            l.objeto_id = registro.id
+            l.objeto_str = registro.nome[0:48]
+            l.usuario = request.user
+            l.mensagem = "UPDATE"
+            l.save()
+            return JsonResponse({'id': registro.id, 'nome': registro.nome, 'status': 'success'}, status=200)
+        return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': e, 'status': 'error'}, status=500)
