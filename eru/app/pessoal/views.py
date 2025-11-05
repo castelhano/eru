@@ -537,22 +537,27 @@ def add_grupo_evento(request):
     return JsonResponse({'status': 'invalid request'}, status=400)
 
 @login_required
-def update_grupo_evento(request, id):
+def update_grupo_evento(request):
     if not request.user.has_perm("pessoal.change_grupoevento"):
         return JsonResponse({'status': 'access denied'}, status=401)
-    try:
-        grupo = GrupoEvento.objects.get(pk=id)
-        form = GrupoEventoForm(request.POST, instance=grupo)
-        if form.is_valid():
-            registro = form.save()
-            l = Log()
-            l.modelo = "pessoal.grupo_evento"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "UPDATE"
-            l.save()
-            return JsonResponse({'id': registro.id, 'nome': registro.nome, 'status': 'success'}, status=200)
-        return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': e, 'status': 'error'}, status=500)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            if not data['pk']:
+                return JsonResponse({'status': 'field pk expected on request'}, status=400)
+            grupo = GrupoEvento.objects.get(pk=data['pk'])
+            form = GrupoEventoForm(data, instance=grupo)
+            if form.is_valid():
+                registro = form.save()
+                l = Log()
+                l.modelo = "pessoal.grupo_evento"
+                l.objeto_id = registro.id
+                l.objeto_str = registro.nome[0:48]
+                l.usuario = request.user
+                l.mensagem = "UPDATE"
+                l.save()
+                return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
+            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': e, 'status': 'error'}, status=500)
+    return JsonResponse({'status': 'invalid request'}, status=400)

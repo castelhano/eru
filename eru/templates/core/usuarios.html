@@ -76,13 +76,13 @@
         <div class="filter-container">
           <h6 class="text-body-secondary d-flex justify-content-between">Filtros:<a class="text-body-secondary text-decoration-none fs-8" id="clear" href="{% url 'core_usuarios' %}">Limpar</a></h6>
           <ul class="list-unstyled">
-            <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">Ativos</a></li>
-            <li><a href="#" id="id_bloqueados" onclick="urlFilter('is_active','False')">Bloqueados</a></li>
-            <li><a href="#" id="id_superuser" onclick="urlFilter('is_superuser','True')">Superusuario</a></li>
-            <li><a href="#" id="id_staff" onclick="urlFilter('is_staff','True')">Membro de Equipe</a></li>
+            <li><a href="#" id="id_ativos" data-i18n="common.active__plural" onclick="urlFilter('is_active','True')">Ativos</a></li>
+            <li><a href="#" id="id_bloqueados" data-i18n="common.blocked__plural" onclick="urlFilter('is_active','False')">Bloqueados</a></li>
+            <li><a href="#" id="id_superuser" data-i18n="auth.superuser" onclick="urlFilter('is_superuser','True')">Superusuario</a></li>
+            <li><a href="#" id="id_staff" data-i18n="auth.teamMember" onclick="urlFilter('is_staff','True')">Membro de Equipe</a></li>
             <li><hr class="my-1"></li>
-            <li><a href="#" id="id_inativos" onclick="inativosFilter(-30);">Inativo +30 dias</a></li>
-            <li><a href="#" id="id_nunca_logado" onclick="urlFilter('never_login','True');">Sem registro de login</a></li>
+            <li><a href="#" id="id_inativos" data-i18n="auth.inactive30d" onclick="inativosFilter(-30);">Inativo +30 dias</a></li>
+            <li><a href="#" id="id_nunca_logado" data-i18n="auth.noLoginRecord" onclick="urlFilter('never_login','True');">Sem registro de login</a></li>
           </ul>
         </div>
       </div>

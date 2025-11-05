@@ -59,10 +59,10 @@
       </div>
       <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2" style="min-width: 200px;">
         <div class="filter-container">
-          <h6 class="text-body-secondary d-flex justify-content-between">Filtros:<a class="text-body-secondary text-decoration-none fs-8" href="{% url 'core_grupos' %}">Limpar</a></h6>
+          <h6 class="text-body-secondary d-flex justify-content-between"><span data-i18n="common.filter__plural__posfix::">Filtros</span><a class="text-body-secondary text-decoration-none fs-8" data-i18n="common.clean" href="{% url 'core_grupos' %}">Limpar</a></h6>
           <ul class="list-unstyled">
-            <li><span id="id_sem_associacoes" class="link pointer" onclick="urlFilter('users','false')">Sem Usuários</span></li>
             <li><hr class="my-1"></li>
+            <li><span id="id_sem_associacoes" data-i18n="auth.noUsers" class="link pointer" onclick="urlFilter('users','false')">Sem Usuários</span></li>
           </ul>
         </div>
       </div>

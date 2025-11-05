@@ -1,12 +1,14 @@
 {
     "common":{
         "all": "All",
+        "active": "Active",
         "address": "Address#Addresses",
         "attention": "Attention#Attentions",
-        "neighborhood": "Neighborhood#Neighborhoods",
+        "blocked": "Blocked",
         "cancel": "Cancel",
         "city": "City#Cities",
         "classification": "Classification",
+        "clean": "Clean",
         "code": "Code#Codes",
         "confirm": "Confirm",
         "company": "Company#Companies",
@@ -29,6 +31,7 @@
         "model": "Model",
         "module": "Module",
         "name": "Name",
+        "neighborhood": "Neighborhood#Neighborhoods",
         "object": "Object",
         "only": "Only",
         "operation": "Operation",
@@ -60,8 +63,11 @@
         
     },
     "sys": {
+        "401": "Permission denied, please check with your system administrator",
+        "500": "Server error, if problem persists, contact the administrator",
         "changeHistory": "Change history",
         "confirmOperation": "Confirm Operation",
+        "contactAdminOnError": "If the error persists, contact the administrator",
         "deleteRecord": "Delete Record",
         "deleteRecordMsg": "This operation cannot be undone, confirm the deletion of the record?",
         "endDate": "End Date",
@@ -119,6 +125,11 @@
         }
     },
     "auth": {
+        "teamMember": "Team member#Team members",
+        "inactive30d": "Inactive +30 days",
+        "noLoginRecord": "No login record",
+        "superuser": "Superuser",
+        "noUsers": "No users",
         "update":{
             "changePassword": "Change Password",
             "currentPassword": "Current Password",
@@ -154,5 +165,9 @@
             "showAddContext": "Displays form for adding record",
             "showTableContext": "Displays records list"
         }
+    },
+    "selectm": {
+        "checkAll": "Check all",
+        "uncheckAll": "Uncheck all"
     }
 }

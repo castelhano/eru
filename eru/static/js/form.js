@@ -562,6 +562,7 @@ class RelatedAddon {
                 name: 'nome', 
                 id: 'id_nome', 
                 classlist: 'form-control', 
+                required: true,
                 placeholder: i18n ? i18n.getEntry('common.name') || 'Nome' : 'Nome',
             }],
             labels:{
@@ -577,13 +578,14 @@ class RelatedAddon {
                 related: {
                     show: null,
                     add: null,
-                    update: null,
+                    change: null,
                     delete: null,
                     params: null,
                 }
             },
             styles: {
                 dialog: 'min-width:500px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
+                spinner: 'position: absolute;top: 10px; right: 20px;',
                 addOn: '',
                 submit: '',
                 cancel: '',
@@ -602,19 +604,20 @@ class RelatedAddon {
             },
             classlist: {
                 dialog: 'border-2 border-secondary bg-dark-subtle',
-                title: 'text-body-secondary mb-2 pb-2 border-bottom' ,
-                footer: 'border-top p-2 text-end' ,
-                addOn: 'btn btn-secondary' ,
-                submit: 'btn btn-sm btn-success ms-1' ,
-                cancel: 'btn btn-sm btn-secondary' ,
+                spinner: 'spinner-grow text-success',
+                title: 'text-body-secondary mb-2 pb-2 border-bottom',
+                footer: 'border-top p-2 text-end',
+                addOn: 'btn btn-secondary',
+                submit: 'btn btn-sm btn-success ms-1',
+                cancel: 'btn btn-sm btn-secondary',
                 addBtn: 'btn btn-sm btn-success float-start me-1',
                 tableBtn: 'btn btn-sm btn-secondary float-start me-1',
                 editButton: 'btn btn-sm btn-dark py-0 me-1',
-                addOnIcon: 'bi bi-search' ,
+                addOnIcon: 'bi bi-search',
                 addBtnIcon: 'bi bi-plus-lg',
-                tableBtnIcon: 'bi bi-table',
+                tableBtnIcon: 'bi bi-arrow-counterclockwise',
                 editButtonIcon: 'bi bi-pen-fill',
-                container: 'input-group' ,
+                container: 'input-group',
                 tableContainer: 'pt-2',
                 fieldContainer: '',
                 table: 'table table-sm border table-striped table-hover',
@@ -623,12 +626,13 @@ class RelatedAddon {
             },
             key: 'pk',                  // usado no SelectPopulate, eh o value do option a ser criado
             value: 'nome',              // usado no SelectPopulate, eh o innerHTML do option a ser criado
-            shortcut: 'ctrl+enter',
+            shortcut: 'ctrl+enter;alt+enter',
             addBtnShortcut: 'alt+n',
-            tableBtnShortcut: 'alt+t',
+            tableBtnShortcut: 'alt+v',
+            submitShortcut: 'alt+g',
             title: '',
             jsTable: {canExportCsv: false, enablePaginate: true, showCounterLabel: false},
-            submit: i18n ? i18n.getEntry('common.save__bold:s') || '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>' : '<span data-i18n="common.save__bold:s"><b>S</b>alvar</span>',
+            submit: i18n ? i18n.getEntry('common.save__bold:g') || '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>' : '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>',
             cancel: i18n ? i18n.getEntry('common.cancel') || '<span data-i18n="common.cancel">Cancelar</span>' : '<span data-i18n="common.cancel">Cancelar</span>',
         }
         this.config = deepMerge(defaultOptions, options);
@@ -647,12 +651,19 @@ class RelatedAddon {
         this.model.dialog.addEventListener('beforetoggle', (ev)=>{
             if(ev.newState == 'open'){
                 appPreviousContext = appKeyMap.getContext();
-                appKeyMap.setContext(`relatedAddon#show`);
+                appKeyMap.setContext(`relatedAddon#${this.context == 'show' ? 'show' : 'set'}`);
             }
             else if(ev.newState == 'closed'){
                 appKeyMap.setContext(appPreviousContext);
             }
         })
+        // --
+        this.model.spinner = document.createElement('div');
+        this.model.spinner.style = this.config.styles.spinner;
+        this.model.spinner.classList = this.config.classlist.spinner;
+        this.model.spinner.style.display = 'none';
+        this.model.dialog.appendChild(this.model.spinner);
+        // --
         if(this.config.title){
             this.model.title = document.createElement('h5');
             this.model.title.style = this.config.styles.title;
@@ -742,7 +753,7 @@ class RelatedAddon {
                 this.config.rows.push(el);
                 this.model.tbody.appendChild(this._addTableRow(el));
             })
-            if(jsTable){this.model.jsTable = new jsTable(this.model.table, this.config.jsTable)}
+            if(jsTable){this.model.jsTable = new jsTable(this.model.table, Object.assign(this.config.jsTable, {keyBindContext: 'relatedAddon#show'}))}
         });
         this.model.table.appendChild(this.model.thead);
         this.model.table.appendChild(this.model.tbody);
@@ -756,9 +767,12 @@ class RelatedAddon {
         this.model.fieldsContainer.noValidate = true;
         this.model.fieldsContainer.setAttribute('autocomplete', 'off');
         this.model.fieldsContainer.style.display = 'none';
+        // adiciona input hidden para armazenar id do elemento no update
+        this.config.fields.push({type: 'hidden', name: 'pk'})
         this.config.fields.forEach((el)=>{
-            if(el.type == 'text'){
-                let attrs = Object.assign({
+            let attrs = {...el};
+            if(el.type != 'hidden'){
+                attrs = Object.assign({
                     class: this.config.classlist.inputText,
                     style: this.config.styles.inputText
                 }, el);
@@ -769,18 +783,21 @@ class RelatedAddon {
                     this.model[`${attrs.name}_label`].classList = this.config.classlist.inputLabel;
                     this.model.fieldsContainer.appendChild(this.model[`${attrs.name}_label`])
                 }
+            }
+            if(!['select', 'textarea', 'switch', 'checkbox', 'radio'].includes(el.type)){
                 this.model[attrs.name] = document.createElement('input');
                 for(let attr in attrs){
                     this.model[attrs.name].setAttribute(attr, attrs[attr])
                 }
                 this.model.fieldsContainer.appendChild(this.model[attrs.name])
-            } 
+            }
         })
         return this.model.fieldsContainer;
     }
     _addTableRow(data){
         let tr = document.createElement('tr');
         for(let field in this.config.fields){
+            if(this.config.fields[field].name == 'pk'){continue}
             let td = document.createElement('td')
             td.innerHTML = data.fields[this.config.fields[field].name] || '';
             tr.appendChild(td);
@@ -794,6 +811,13 @@ class RelatedAddon {
             btn.style = this.config.styles.editButton;
             btn.setAttribute('data-id', data.pk)
             btn.innerHTML = `<i class="${this.config.classlist.editButtonIcon}"></i>`;
+            btn.onclick = (el)=>{
+                let target = this.config.rows.find(row => row.pk === parseInt(el.target.dataset.id));
+                for(let field in this.config.fields){
+                    this.model[this.config.fields[field].name].value = target?.[this.config.fields[field].name] || target?.fields?.[this.config.fields[field].name];
+                }
+                this._setContext('change');
+            }
             td.appendChild(btn);
             tr.appendChild(td);
         }
@@ -806,9 +830,17 @@ class RelatedAddon {
         this.model.submit = document.createElement('button');
         this.model.submit.type = 'button';
         this.model.submit.style = this.config.styles.submit;
+        this.model.submit.style.display = 'none';
         this.model.submit.classList = this.config.classlist.submit;
         this.model.submit.innerHTML = this.config.submit;
-        this.model.submit.onclick = ()=>{this._add()};
+        this.model.submit.onclick = ()=>{
+            if(!grupoRelated.model.form.validate()){return} // valida form, se for nao for valido, cancela operacao
+            switch (this.context) {
+                case 'add': this._add(); break;
+                case 'change': this._update(); break;
+            }
+        };
+        appKeyMap.bind(this.config.submitShortcut, ()=>{this.model.submit.click()}, {context: 'relatedAddon#set', icon: 'bi bi-floppy-fill text-primary', 'data-i18n': 'sys.shortcuts.submitForm', desc: 'Salva alterações', origin: 'form#RelatedAddon'})
         this.model.cancel = document.createElement('button');
         this.model.cancel.type = 'button';
         this.model.cancel.style = this.config.styles.cancel;
@@ -822,8 +854,12 @@ class RelatedAddon {
         this.model.addBtn.style = this.config.styles.addBtn;
         this.model.addBtn.classList = this.config.classlist.addBtn;
         this.model.addBtn.innerHTML = `<i class="${this.config.classlist.addBtnIcon}"></i>`;
-        this.model.addBtn.onclick = ()=>{this._setContext('add')};
-        appKeyMap.bind(this.config.addBtnShortcut, ()=>{this._setContext('add')}, {context: 'relatedAddon#show', icon: 'bi bi-plus-square-fill text-success', desc: '<span data-i18n="jsForm.relatedAddon.showAddContext">Exibe form para adicionar registro</span>', 'data-i18n': 'jsForm.relatedAddon.showAddContext', origin: 'form#RelatedAddon'})
+        this.model.addBtn.onclick = ()=>{
+            // limpa todos os campos do form
+            for(let field in this.config.fields){ this.model[this.config.fields[field].name].value = '' }
+            this._setContext('add'); // altera contexto para add
+        };
+        appKeyMap.bind(this.config.addBtnShortcut, ()=>{this.model.addBtn.click()}, {context: 'relatedAddon#show', icon: 'bi bi-plus-square-fill text-success', desc: '<span data-i18n="jsForm.relatedAddon.showAddContext">Exibe form para adicionar registro</span>', 'data-i18n': 'jsForm.relatedAddon.showAddContext', origin: 'form#RelatedAddon'})
         this.model.tableBtn = document.createElement('button');
         this.model.tableBtn.type = 'button';
         this.model.tableBtn.tabIndex = '-1';
@@ -850,6 +886,7 @@ class RelatedAddon {
             this.model.fieldsContainer.style.display = 'none';
             this.model.addBtn.style.display = 'block';
             this.model.tableBtn.style.display = 'none';
+            this.model.submit.style.display = 'none';
         }
         else if(context == 'add' || context == 'change'){
             this.context = context;
@@ -858,6 +895,7 @@ class RelatedAddon {
             this.model.fieldsContainer.style.display = 'inline';
             this.model.addBtn.style.display = 'none';
             this.model.tableBtn.style.display = 'inline';
+            this.model.submit.style.display = 'inline';
             this.model[this.config.fields[0].name].focus();
         }
     }
@@ -884,11 +922,12 @@ class RelatedAddon {
     }
     _add(){ // executa ajax post para criacao de novo registro
         let self = this;
+        this.model.spinner.style.display = 'block';
         let xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if(this.readyState == 4 && this.status == 200){
                 let resp =  JSON.parse(this.response);
-                self._addTableRow(resp); // adiciona linha na tabela do modal
+                self.model.tbody.appendChild(self._addTableRow(resp)); // adiciona linha na tabela do modal
                 let opt = document.createElement('option');
                 opt.value = resp.pk;
                 opt.innerHTML = resp.fields[self.config.value];
@@ -896,17 +935,83 @@ class RelatedAddon {
                 self.element.value = resp.pk;
                 self._clearForm();
                 self.model.dialog.close();
+                self.model.spinner.style.display = 'none';
                 appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.fields.nome}</b>`) || `Registro criado com sucesso <b>${resp.fields.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)
             }
             else if(this.readyState == 4){
-                console.log('error');
-                console.log(JSON.parse(this.response));
+                let resp =  JSON.parse(this.response);
+                console.log(resp);                
+                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::')}</b>` || '<b>Erro ao salvar registro:</b>';
+                if(this.status == 401){
+                    message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
+                }
+                else if(this.status == 500){
+                    message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
+                }
+                else if(this.status == 400){
+                    for(let field in resp.errors){
+                        resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+                    }
+                }
+                appAlert('danger', message, {autodismiss: false})
+                self._clearForm();
+                self._setContext('show');
+                self.model.dialog.close();
             }
         };
         xhttp.open("POST", this.config.url.related.add, true);
         xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
         xhttp.send(JSON.stringify(this._getData()));
     }
+    _update(){
+        let self = this;
+        this.model.spinner.style.display = 'block';
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if(this.readyState == 4 && this.status == 200){
+                let resp =  JSON.parse(this.response);
+                let target = self.config.rows.find(row => row.pk === parseInt(resp.pk));
+                for(let attr in resp.fields){ target.fields[attr] = resp.fields[attr] }
+                self.element.querySelector(`option[value="${resp.pk}"`).innerHTML = resp.fields[self.config.value]
+                self.element.value = resp.pk;
+                
+                // self.model.tbody.appendChild(self._addTableRow(resp)); // adiciona linha na tabela do modal
+                // let opt = document.createElement('option');
+                // opt.value = resp.pk;
+                // opt.innerHTML = resp.fields[self.config.value];
+                // self.element.appendChild(opt);
+                // self.element.value = resp.pk;
+                self._clearForm();
+                self.model.dialog.close();
+                self.model.spinner.style.display = 'none';
+                appNotify('success', i18n ? i18n.getEntry(`sys.recordUpdated__posfix: <b>${resp.fields[self.config.value]}</b>`) || `Registro alterado com sucesso <b>${resp.fields[self.config.value]}</b>` : `Registro alterado com sucesso <b>${resp.fields[self.value]}</b>`)
+            }
+            else if(this.readyState == 4){
+                let resp =  JSON.parse(this.response);
+                console.log(resp);
+                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::')}</b>` || '<b>Erro ao salvar registro:</b>';
+                if(this.status == 401){
+                    message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
+                }
+                else if(this.status == 500){
+                    message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
+                }
+                else if(this.status == 400){
+                    for(let field in resp.errors){
+                        resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+                    }
+                }
+                appAlert('danger', message, {autodismiss: false})
+                self._clearForm();
+                self._setContext('show');
+                self.model.dialog.close();
+            }
+        };
+        xhttp.open("POST", this.config.url.related.change, true);
+        xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
+        xhttp.send(JSON.stringify(this._getData()));
+    }
+    _delete(){}
     _clearForm(){
         this.config.fields.forEach((el)=>{
             this.model[el.name].value = '';

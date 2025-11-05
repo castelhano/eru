@@ -9,6 +9,9 @@
                 "terminationReason": "Reason for termination"
             }
         },
+        "position":{
+            "jobResponsibilities": "Job responsibilities"
+        },
         "fixedPosition":{
             "form": {
                 "fixedPosition": "Fixed Position"

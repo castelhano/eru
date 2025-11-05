@@ -159,7 +159,11 @@ class I18n{
             attrs.forEach((attr)=>{                 // percorre todos os atributos configurando entry
                 if(this.functionAttrs.includes(attr)){ entry.transform = attr}
                 if(this.modificatorAttrs.includes(attr)){entry[attr] = true}
-                if(this.composedAttrs.includes(attr.split(':')[0])){entry[attr.split(':')[0]] = attr.split(':')[1]}
+                if(this.composedAttrs.includes(attr.split(':')[0])){
+                    // trata ex. __posfix::
+                    if(attr.split(':').length == 3 && attr.split(':')[2] == ''){entry[attr.split(':')[0]] = ':'}
+                    else{ entry[attr.split(':')[0]] = attr.split(':')[1] }
+                }
             })
             result.push(entry)
         })
