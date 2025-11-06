@@ -631,7 +631,7 @@ class RelatedAddon {
             tableBtnShortcut: 'alt+v',
             submitShortcut: 'alt+g',
             title: '',
-            jsTable: {canExportCsv: false, enablePaginate: true, showCounterLabel: false},
+            jsTable: {canExportCsv: false, enablePaginate: true, rowsPerPage: 5, showCounterLabel: false},
             submit: i18n ? i18n.getEntry('common.save__bold:g') || '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>' : '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>',
             cancel: i18n ? i18n.getEntry('common.cancel') || '<span data-i18n="common.cancel">Cancelar</span>' : '<span data-i18n="common.cancel">Cancelar</span>',
         }
