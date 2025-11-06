@@ -517,6 +517,8 @@ def get_cargos(request):
 
 @login_required
 def get_grupos_evento(request):
+    if not request.user.has_perm("pessoal.view_grupoevento"):
+        return JsonResponse({'status': 'access denied'}, status=401)
     grupos_evento = GrupoEvento.objects.all().order_by('nome')
     obj = serializers.serialize('json', grupos_evento)
     return HttpResponse(obj, content_type="application/json")
@@ -561,3 +563,41 @@ def update_grupo_evento(request):
         except Exception as e:
             return JsonResponse({'error': e, 'status': 'error'}, status=500)
     return JsonResponse({'status': 'invalid request'}, status=400)
+
+
+@login_required
+def delete_grupo_evento(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            if not data['pk']:
+                return JsonResponse({'status': 'field pk expected on request'}, status=400)
+            grupo = GrupoEvento.objects.get(pk=data['pk'])
+            l = Log()
+            l.modelo = "pessoal.setor"
+            l.objeto_id = registro.id
+            l.objeto_str = registro.nome[0:48]
+            l.usuario = request.user
+            l.mensagem = "DELETE"
+            registro.delete()
+            l.save()
+                return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
+            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': e, 'status': 'error'}, status=500)
+    return JsonResponse({'status': 'invalid request'}, status=400)
+    try:
+        registro = Setor.objects.get(pk=id)
+        l = Log()
+        l.modelo = "pessoal.setor"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "DELETE"
+        registro.delete()
+        l.save()
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_setores')
+    except:
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_setor_id', id)

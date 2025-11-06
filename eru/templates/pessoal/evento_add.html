@@ -41,7 +41,8 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
         related: {
             // show: "{% url 'pessoal_get_grupos_evento' %}",
             add: "{% url 'pessoal_add_grupo_evento' %}",
-            change: "{% url 'pessoal_update_grupo_evento' %}",
+            delete: "{% url 'pessoal_delete_grupo_evento' %}",
+            // change: "{% url 'pessoal_update_grupo_evento' %}",
         }
     }    
 })
