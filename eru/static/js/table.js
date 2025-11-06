@@ -13,8 +13,7 @@
 class jsTable{
     constructor(target, options){
         // Variaveis internas ********
-        if(typeof target != 'object'){return false}
-        this.table = target; // Aponta para tabela alvo
+        this.table = typeof target == 'string' ? document.querySelector(target) : target; // Aponta para tabela alvo
         this.raw = []; // Guarda todos os TRs da tabela
         this.filteredRows = []; // Guarda as rows filtradas
         this.rowsCountLabel = null; // Span com a qtde de registros na tabela
@@ -60,6 +59,8 @@ class jsTable{
         this.pgPreviousButtonLabel = options?.pgPreviousButtonLabel || '<i class="bi bi-arrow-left"></i>';
         this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-right"></i>';
         this.emptyTableMessage = options?.emptyTableMessage || i18n.getEntry('sys.nothingToShow') || 'Nada a exibir';
+
+        this.onclickObjs = []; // lista armazena todos os elementos com evento no onclick (buttons em geral) para remocao no dispose()
         
         if(!options?.noValidate){this.validateTable()}
         this.buildControls();
@@ -67,6 +68,7 @@ class jsTable{
         
         if(this.enablePaginate){this.paginate();}
         if(this.keyBind){this.__appKeyMapIntegration();}
+        if(!this.table.caption.hasChildNodes()){this.table.caption.style.display = 'none'} // oculta caption caso nao tiver nenhum elemento (export, filter, etc)
     }
     buildControls(){
         this.table.classList.add('caption-top'); // Adiciona a classe caption top (caso nao exista)
@@ -77,14 +79,17 @@ class jsTable{
             this.pgControls.classList = this.pgControlClasslist;
             let first = document.createElement('li');
             first.onclick = () => this.goToPage(1);
+            this.onclickObjs.push(first);
             first.classList = this.pgPageClasslist;
             first.innerHTML = `<span class="${this.pgLinkClasslist}">${this.pgFirstButtonLabel}</span>`;
             let previous = document.createElement('li');
             previous.onclick = () => this.previousPage();
+            this.onclickObjs.push(previous);
             previous.classList = this.pgPageClasslist;
             previous.innerHTML = `<span class="${this.pgLinkClasslist}">${this.pgPreviousButtonLabel}</span>`;
             let next = document.createElement('li');
             next.onclick = () => this.nextPage();
+            this.onclickObjs.push(next);            
             next.classList = this.pgPageClasslist;
             next.innerHTML = `<span class="${this.pgLinkClasslist}">${this.pgNextButtonLabel}</span>`;
             this.pgControls.appendChild(first); // Adiciona o botao para primeira pagina no pgControls
@@ -129,6 +134,7 @@ class jsTable{
             this.exportButtonCSV = document.createElement('button');
             this.exportButtonCSV.classList = 'btn btn-sm btn-outline-secondary';
             this.exportButtonCSV.onclick = (e) => this.exportCsv(e);
+            this.onclickObjs.push(this.exportButtonCSV);
             this.exportButtonCSV.innerHTML = 'CSV';
             this.exportButtonCSV.id = 'jsTableDownloadCSV';
             this.controlsGroup.appendChild(this.exportButtonCSV);
@@ -137,6 +143,7 @@ class jsTable{
             let btn = document.createElement('button');
             btn.classList = 'btn btn-sm btn-outline-secondary';
             btn.onclick = (e) => this.exportJson(e);
+            this.onclickObjs.push(btn);
             btn.innerHTML = 'JSON';
             this.controlsGroup.appendChild(btn);
         }
@@ -237,6 +244,7 @@ class jsTable{
             if(this.activePage == current){btn.classList.add('active');}
             else{
                 btn.onclick = () => this.goToPage(btn.dataset.page);
+                this.onclickObjs.push(btn);
             } // Caso nao seja botao referente a pagina atual, adiciona trigger para pagina correspondente
             btn.innerHTML = `<a class="${this.pgLinkClasslist}">${current}</a>`;
             this.pgControls.appendChild(btn);
@@ -351,15 +359,6 @@ class jsTable{
         let raw_size = this.raw.length;
         if(this.csvHeaders){ // Insere cabecalhos
             csv.push(Array.from(this.table.tHead.querySelectorAll('th:not([data-key="&nbsp;"])')).map(th => th.innerHTML).join(this.csvSeparator))
-            // .forEach((el)=>{
-            //     csv.push(el + this.csvSeparator)
-            // })
-            // if(this.adicionalHeaders){
-            //     csv.push([...this.headers, ...this.adicionalHeaders].join(this.csvSeparator));
-            // }
-            // else{
-            //     csv.push(this.headers.join(this.csvSeparator));
-            // }
         }
         for (let i = 0; i < raw_size; i++) {
             let row = [], cols = this.raw[i].querySelectorAll('td, th');
@@ -405,7 +404,6 @@ class jsTable{
     validateTable(){ // Metodo chamado em tabelas previamente criadas, normaliza e categoriza elementos  
         if(!this.table.caption){ // Cria o caption da tabela caso nao exista
             this.table.caption = document.createElement('caption');
-            if(!this.caption){this.table.caption.style.display = 'none'}
         }
         else{this.caption = this.table.caption.innerHTML;this.table.caption.innerHTML = ''} // Limpa o caption atual, sera refeito no metodo buildControls
         this.table.caption.style.position = 'relative'; // Ajusta o posicionamento do caption para relative
@@ -438,5 +436,11 @@ class jsTable{
     dispose(){ // destroi referencias, listeners, timers
         // removendo listeners
         if(this.canSort){ this.thead.removeEventListener('click', this.handlerSort) }
+        if(this.canFilter){ this.filterInput.oninput = null }
+        this.onclickObjs.forEach((el)=>{el.onclick = null})
+
+        // destroi elementos
+        this.pgControlsContainer.remove();
+        this.table.caption.remove();
     }
 }

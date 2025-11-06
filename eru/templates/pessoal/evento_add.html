@@ -23,6 +23,7 @@
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/related.js' %}"></script>
 {% endblock %}
 
 <script>
@@ -38,7 +39,7 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
             show: "{% url 'pessoal_get_grupos_evento' %}",
         },
         related: {
-            show: "{% url 'pessoal_get_grupos_evento' %}",
+            // show: "{% url 'pessoal_get_grupos_evento' %}",
             add: "{% url 'pessoal_add_grupo_evento' %}",
             change: "{% url 'pessoal_update_grupo_evento' %}",
         }
