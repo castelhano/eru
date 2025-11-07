@@ -30,12 +30,13 @@ class RelatedAddon {
                 }
             },
             styles: {
-                dialog: 'min-width:500px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
+                dialog: 'min-width:500px;max-width:800px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
                 spinner: 'position: absolute;top: 10px; right: 20px;',
                 addOn: '',
                 submit: '',
-                cancel: '',
+                cancel: 'position: absolute; top: 15px; right: 15px;',
                 addBtn: '',
+                deleteBtn: '',
                 tableBtn: '',
                 editButton: '',
                 title: '',
@@ -44,7 +45,9 @@ class RelatedAddon {
                 container: '',
                 tableContainer: '',
                 fieldContainer: '',
+                deleteContainer: 'padding-left: 65px;',
                 table: '',
+                warningIcon: 'position: absolute; top: 135px; left: 20px; opacity: 0.4;font-size: 3.0rem;',
                 inputLabel: '',
                 inputText: '',
             },
@@ -55,17 +58,20 @@ class RelatedAddon {
                 footer: 'border-top p-2 text-end',
                 addOn: options?.url?.related?.show ? 'btn btn-secondary' : 'btn btn-success',
                 submit: 'btn btn-sm btn-success ms-1',
-                cancel: 'btn btn-sm btn-secondary',
+                cancel: 'btn-close',
                 addBtn: 'btn btn-sm btn-success float-start me-1',
+                deleteBtn: 'btn btn-sm btn-danger me-1',
                 tableBtn: 'btn btn-sm btn-secondary float-start me-1',
                 editButton: 'btn btn-sm btn-dark py-0 me-1',
                 addOnIcon: options?.url?.related?.show ? 'bi bi-search' : 'bi bi-plus-lg',
                 addBtnIcon: 'bi bi-plus-lg',
                 tableBtnIcon: 'bi bi-arrow-counterclockwise',
                 editButtonIcon: 'bi bi-pen-fill',
+                warningIcon: 'bi bi-exclamation-triangle-fill text-danger',
                 container: 'input-group',
                 tableContainer: 'pt-2',
                 fieldContainer: '',
+                deleteContainer: 'mt-3 fs-5 text-orange',
                 table: 'table table-sm border table-striped table-hover',
                 inputLabel: 'form-label ps-1',
                 inputText: 'form-control mb-2',
@@ -78,8 +84,9 @@ class RelatedAddon {
             submitShortcut: 'alt+g',
             title: '',
             jsTable: {canExportCsv: false, enablePaginate: true, rowsPerPage: 10, showCounterLabel: false},
-            submit: i18n ? i18n.getEntry('common.save__bold:g') || '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>' : '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>',
-            cancel: i18n ? i18n.getEntry('common.cancel') || '<span data-i18n="common.cancel">Cancelar</span>' : '<span data-i18n="common.cancel">Cancelar</span>',
+            deleteMsg: i18n.getEntry('sys.deleteRecordMsg') || '<span data-i18n="common.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span>',
+            submit: i18n.getEntry('common.save__bold:g') || '<span data-i18n="common.save__bold:g"><b>G</b>ravar</span>',
+            delete: i18n.getEntry('common.delete') || '<span data-i18n="common.delete">Excluir</span>',
         }
         this.config = deepMerge(defaultOptions, options);
         this.config.rows = [];      // array armazena todas as linhas da tabela com registro do modelo related
@@ -118,8 +125,17 @@ class RelatedAddon {
             this.model.title.innerHTML += this.config.title;
             this.model.dialog.appendChild(this.model.title);
         }
+        this.model.cancel = document.createElement('button');
+        this.model.cancel.type = 'button';
+        this.model.cancel.style = this.config.styles.cancel;
+        this.model.cancel.classList = this.config.classlist.cancel;
+        this.model.cancel.onclick = ()=>{this.model.dialog.close()}
+        this.model.dialog.appendChild(this.model.cancel);
+
+        // --
         if(this.config.url.related.show){ this.model.dialog.appendChild(this._addModalTable()); }
         this.model.dialog.appendChild(this._addFields());
+        if(this.config.url.related.delete){ this.model.dialog.appendChild(this._addDeleteContainer()); }
         this.model.dialog.appendChild(this._addFooter());
         document.body.appendChild(this.model.dialog)
         if(jsForm){ this.model.form = new jsForm(this.model.fieldsContainer, {}) }
@@ -247,7 +263,27 @@ class RelatedAddon {
                 this.model.fieldsContainer.appendChild(this.model[attrs.name])
             }
         })
+        this.model[this.config.value].autofocus = true;
         return this.model.fieldsContainer;
+    }
+    _addDeleteContainer(){
+        this.model.deleteContainer = document.createElement('div');
+        this.model.deleteContainer.classList = this.config.classlist.deleteContainer;
+        this.model.deleteContainer.style = this.config.styles.deleteContainer;
+        this.model.deleteContainer.style.display = 'none';
+        this.model.deleteContainer.innerHTML = this.config.deleteMsg + '<br>';
+        let warningIcon = document.createElement('i');
+        warningIcon.style = this.config.styles.warningIcon;
+        warningIcon.classList = this.config.classlist.warningIcon;
+        let returnBtn = document.createElement('span');
+        returnBtn.classList = 'link fs-5 ps-1'
+        returnBtn.innerHTML = i18n.getEntry('common.back') || 'Voltar';
+        returnBtn.onclick = ()=>{
+            this._setContext('change');
+        }
+        this.model.deleteContainer.appendChild(warningIcon);
+        this.model.deleteContainer.appendChild(returnBtn);
+        return this.model.deleteContainer;
     }
     _addTableRow(data){
         let tr = document.createElement('tr');
@@ -295,12 +331,6 @@ class RelatedAddon {
             }
         };
         appKeyMap.bind(this.config.submitShortcut, ()=>{this.model.submit.click()}, {context: 'relatedAddon#set', icon: 'bi bi-floppy-fill text-primary', 'data-i18n': 'sys.shortcuts.submitForm', desc: 'Salva alterações', origin: 'form#RelatedAddon'})
-        this.model.cancel = document.createElement('button');
-        this.model.cancel.type = 'button';
-        this.model.cancel.style = this.config.styles.cancel;
-        this.model.cancel.classList = this.config.classlist.cancel;
-        this.model.cancel.innerHTML = this.config.cancel;
-        this.model.cancel.onclick = ()=>{this.model.dialog.close()}
         // --
         if(this.config.url.related.show){
             this.model.addBtn = document.createElement('button');
@@ -315,6 +345,22 @@ class RelatedAddon {
                 this._setContext('add'); // altera contexto para add
             };
             appKeyMap.bind(this.config.addBtnShortcut, ()=>{this.model.addBtn.click()}, {context: 'relatedAddon#show', icon: 'bi bi-plus-square-fill text-success', desc: '<span data-i18n="jsForm.relatedAddon.showAddContext">Exibe form para adicionar registro</span>', 'data-i18n': 'jsForm.relatedAddon.showAddContext', origin: 'form#RelatedAddon'})
+            if(this.config.url.related.delete){ 
+                this.model.deleteBtn = document.createElement('button');
+                this.model.deleteBtn.type = 'button';
+                this.model.deleteBtn.tabIndex = '-1';
+                this.model.deleteBtn.style = this.config.styles.deleteBtn;
+                this.model.deleteBtn.classList = this.config.classlist.deleteBtn;
+                this.model.deleteBtn.innerHTML = this.config.delete;
+                this.model.deleteBtn.onclick = ()=>{
+                    if(this.context != 'delete'){
+                        this._setContext('delete'); // altera contexto para delete
+                    }
+                    else{ this._delete() }
+                };
+                this.model.deleteBtn.style.display = 'none';
+                this.model.footer.appendChild(this.model.deleteBtn) 
+            }
             this.model.tableBtn = document.createElement('button');
             this.model.tableBtn.type = 'button';
             this.model.tableBtn.tabIndex = '-1';
@@ -329,18 +375,18 @@ class RelatedAddon {
             this.model.footer.appendChild(this.model.addBtn);
             this.model.footer.appendChild(this.model.tableBtn);
         }
-        this.model.footer.appendChild(this.model.cancel);
         this.model.footer.appendChild(this.model.submit);
         return this.model.footer;
     }
     _setContext(context){ // altera perfil de exibicao do modal
-        if(!['add', 'change', 'show'].includes(context)){return false}
+        if(!['add', 'change', 'show', 'delete'].includes(context)){return false}
         this.context = context;
         if(context == 'show'){
             this.context = 'show';
             appKeyMap.setContext('relatedAddon#show');
             this.model.tableContainer.style.display = 'block';
             this.model.fieldsContainer.style.display = 'none';
+            if(this.config.url.related.delete){ this.model.deleteContainer.style.display = 'none' }
             this.model.addBtn.style.display = 'block';
             this.model.tableBtn.style.display = 'none';
             this.model.submit.style.display = 'none';
@@ -350,10 +396,29 @@ class RelatedAddon {
             appKeyMap.setContext('relatedAddon#set');
             this.model.tableContainer.style.display = 'none';
             this.model.fieldsContainer.style.display = 'inline';
-            this.model.addBtn.style.display = 'none';
-            this.model.tableBtn.style.display = 'inline';
+            this.model[this.config.value].disabled = false;
+            if(this.config.url.related.delete){ this.model.deleteContainer.style.display = 'none' }
+            if(this.config.url.related.show){
+                this.model.addBtn.style.display = 'none';
+                this.model.tableBtn.style.display = 'inline';
+            }
             this.model.submit.style.display = 'inline';
+            if(this.config.url.related.delete){ this.model.deleteBtn.style.display = 'inline' }
             this.model[this.config.fields[0].name].focus();
+        }
+        else if(context == 'delete'){
+            this.context = context;
+            appKeyMap.setContext('relatedAddon#delete');
+            this.model.fieldsContainer.style.display = 'inline';
+            this.model[this.config.value].disabled = true;
+            this.model.deleteContainer.style.display = 'block';
+            if(this.config.url.related.show){
+                this.model.tableContainer.style.display = 'none';
+                this.model.addBtn.style.display = 'none';
+                this.model.tableBtn.style.display = 'none';
+            }
+            this.model.deleteBtn.style.display = 'inline';
+            this.model.submit.style.display = 'none';
         }
     }
     _getData(){
@@ -446,7 +511,7 @@ class RelatedAddon {
                 self._clearForm();
                 self.model.spinner.style.display = 'none';
                 self._setContext('show');
-                appNotify('success', i18n ? i18n.getEntry(`sys.recordUpdated__posfix: <b>${resp.fields[self.config.value]}</b>`) || `Registro alterado com sucesso <b>${resp.fields[self.config.value]}</b>` : `Registro alterado com sucesso <b>${resp.fields[self.value]}</b>`)
+                appNotify('success', i18n.getEntry(`sys.recordUpdated__posfix: <b>${resp.fields[self.config.value]}</b>`) || `Registro alterado com sucesso <b>${resp.fields[self.config.value]}</b>`)
             }
             else if(this.readyState == 4){
                 let resp =  JSON.parse(this.response);
@@ -473,7 +538,50 @@ class RelatedAddon {
         xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
         xhttp.send(JSON.stringify(this._getData()));
     }
-    _delete(){}
+    _delete(){
+        let self = this;
+        this.model.spinner.style.display = 'block';
+        let xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if(this.readyState == 4 && this.status == 200){
+                let resp =  JSON.parse(this.response);
+                delete self.config.rows.find(row => row.pk === parseInt(resp.pk));
+                // ajusta referencia ao option em this.config.rows
+                if(self.config.parent){self.config.parent.reload()} // se definido url para atualiza o parent, faz ocnsulta ajax
+                else{ // se nao apenas cria option e insere ao final do controle
+                    self.element.querySelector(`option[value="${resp.pk}"`).removeElement();
+                }
+                self._rebuildTableRows();                
+                self._clearForm();
+                self.model.spinner.style.display = 'none';
+                self._setContext('show');
+                appNotify('warning', i18n.getEntry('sys.recordDeleted') || 'Registro excluido com sucesso, essa operação não pode ser desfeita', false)
+            }
+            else if(this.readyState == 4){
+                let resp =  JSON.parse(this.response);
+                console.log(resp);
+                let message = `<b>${i18n.getEntry('sys.recordErrorOnDelete__posfix::')}</b>` || '<b>Erro ao excluir registro:</b>';
+                if(this.status == 401){
+                    message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
+                }
+                else if(this.status == 500){
+                    message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
+                }
+                else if(this.status == 400){
+                    for(let field in resp.errors){
+                        resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+                    }
+                }
+                appAlert('danger', message, {autodismiss: false})
+                self._clearForm();
+                self._setContext('show');
+                self.model.dialog.close();
+            }
+        };
+        xhttp.open("POST", this.config.url.related.delete, true);
+        xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
+        xhttp.send(JSON.stringify(this._getData()));
+    }
     _clearForm(){
         this.config.fields.forEach((el)=>{
             this.model[el.name].value = '';
