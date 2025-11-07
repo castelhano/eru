@@ -79,6 +79,7 @@ class Keywatch{
         this._addEvent(document, 'keydown', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
         this._addEvent(document, 'change', (ev)=>{this.pressed = []}, false); // previne teclas travadas no pressed ao usar um elemento select
+        this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
         //**** */
         if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
