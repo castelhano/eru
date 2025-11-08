@@ -30,7 +30,8 @@ urlpatterns = [
     path('pessoal_get_setores',views.get_setores,name='pessoal_get_setores'),
     path('pessoal_get_cargos',views.get_cargos,name='pessoal_get_cargos'),
     path('pessoal_get_grupos_evento',views.get_grupos_evento,name='pessoal_get_grupos_evento'),
+    path('pessoal_add_setor',views.add_setor,name='pessoal_add_setor'),
     path('pessoal_add_grupo_evento',views.add_grupo_evento,name='pessoal_add_grupo_evento'),
-    # path('pessoal_update_grupo_evento', views.update_grupo_evento,name='pessoal_update_grupo_evento'),
-    # path('pessoal_delete_grupo_evento', views.delete_grupo_evento,name='pessoal_delete_grupo_evento'),
+    path('pessoal_update_grupo_evento', views.update_grupo_evento,name='pessoal_update_grupo_evento'),
+    path('pessoal_delete_grupo_evento', views.delete_grupo_evento,name='pessoal_delete_grupo_evento'),
 ]

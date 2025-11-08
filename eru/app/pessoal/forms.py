@@ -102,7 +102,7 @@ class EventoForm(forms.ModelForm):
         model = Evento
         fields = ['nome','rastreio','grupo']
     nome = forms.CharField(error_messages={'required': 'Informe o nome do evento'}, max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
-    rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')

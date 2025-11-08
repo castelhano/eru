@@ -23,11 +23,21 @@
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/selectm.js' %}"></script>
+<script src="{% static 'js/related.js' %}"></script>
 {% endblock %}
 
 <script>
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
+    const setor = new RelatedAddon('#id_setor', {
+        title: 'foo',
+        url: {
+            parent: {},
+            related: {
+                add: "{% url 'pessoal_add_setor' %}",
+            },
+        }
+    })
     
 const ffixa = new jsSelectm('#id_funcao_fixa', {
     title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',

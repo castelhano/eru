@@ -21,6 +21,8 @@ dialog:focus-visible{outline: none!important;}
 [data-bs-theme="dark"] .readonly + label::after,
 [data-bs-theme="dark"] textarea[readonly]{background-color: #393939!important;color: #999!important;}
 
+.form-floating > label::after{ background-color: transparent!important }
+
 .flat-input{border: 0;border-bottom: 2px solid var(--bs-border-color-translucent);background-color: transparent;padding-top: 22px;padding-bottom: 3px;margin-bottom: 4px;outline: none;font-size: 0.95rem;width: 100%;}
 .flat-input.is-invalid{border-bottom-color: var(--bs-form-invalid-border-color);}
 .flat-input ~ .flat-label{float: left;margin-top: -35px;z-index: -1;font-size: 1rem;transition: all 0.3s ease;}
