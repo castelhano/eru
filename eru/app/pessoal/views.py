@@ -85,11 +85,11 @@ def eventos(request):
     eventos = Evento.objects.all().order_by('nome')
     return render(request,'pessoal/eventos.html',{'eventos':eventos})
 
-# @login_required
-# @permission_required('pessoal.view_grupoevento', login_url="/handler/403")
-# def grupos_evento(request):
-#     grupos_evento = GrupoEvento.objects.all().order_by('nome')
-#     return render(request,'pessoal/grupos_evento.html',{'grupos_evento':grupos_evento})
+@login_required
+@permission_required('pessoal.view_grupoevento', login_url="/handler/403")
+def grupos_evento(request):
+    grupos_evento = GrupoEvento.objects.all().order_by('nome')
+    return render(request,'pessoal/grupos_evento.html',{'grupos_evento':grupos_evento})
 
 # Metodos ADD
 @login_required
@@ -208,29 +208,29 @@ def evento_add(request):
         form = EventoForm()
     return render(request,'pessoal/evento_add.html',{'form':form})
 
-# @login_required
-# @permission_required('pessoal.add_grupoevento', login_url="/handler/403")
-# def grupo_evento_add(request):
-#     if request.method == 'POST':
-#         form = GrupoEventoForm(request.POST)
-#         if form.is_valid():
-#             # try:
-#             registro = form.save()
-#             l = Log()
-#             l.modelo = "pessoal.grupo_evento"
-#             l.objeto_id = registro.id
-#             l.objeto_str = registro.nome[0:48]
-#             l.usuario = request.user
-#             l.mensagem = "CREATED"
-#             l.save()
-#             messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-#             return redirect('pessoal_grupo_evento_add')
-#             # except:
-#             #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-#             #     return redirect('pessoal_grupo_evento_add')
-#     else:
-#         form = GrupoEventoForm()
-#     return render(request,'pessoal/grupo_evento_add.html',{'form':form})
+@login_required
+@permission_required('pessoal.add_grupoevento', login_url="/handler/403")
+def grupo_evento_add(request):
+    if request.method == 'POST':
+        form = GrupoEventoForm(request.POST)
+        if form.is_valid():
+            # try:
+            registro = form.save()
+            l = Log()
+            l.modelo = "pessoal.grupo_evento"
+            l.objeto_id = registro.id
+            l.objeto_str = registro.nome[0:48]
+            l.usuario = request.user
+            l.mensagem = "CREATED"
+            l.save()
+            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+            return redirect('pessoal_grupo_evento_add')
+            # except:
+            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+            #     return redirect('pessoal_grupo_evento_add')
+    else:
+        form = GrupoEventoForm()
+    return render(request,'pessoal/grupo_evento_add.html',{'form':form})
 
 
 # Metodos GET
@@ -266,12 +266,12 @@ def evento_id(request,id):
     form = EventoForm(instance=evento)
     return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
-# @login_required
-# @permission_required('pessoal.change_grupoevento', login_url="/handler/403")
-# def grupo_evento_id(request,id):
-#     grupo_evento = GrupoEvento.objects.get(pk=id)
-#     form = GrupoEventoForm(instance=grupo_evento)
-#     return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
+@login_required
+@permission_required('pessoal.change_grupoevento', login_url="/handler/403")
+def grupo_evento_id(request,id):
+    grupo_evento = GrupoEvento.objects.get(pk=id)
+    form = GrupoEventoForm(instance=grupo_evento)
+    return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
 
 
 
@@ -384,24 +384,24 @@ def evento_update(request,id):
     else:
         return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
-# @login_required
-# @permission_required('pessoal.change_grupoevento', login_url="/handler/403")
-# def grupo_evento_update(request,id):
-#     grupo_evento = GrupoEvento.objects.get(pk=id)
-#     form = GrupoEventoForm(request.POST, instance=grupo_evento)
-#     if form.is_valid():
-#         registro = form.save()
-#         l = Log()
-#         l.modelo = "pessoal.grupo_evento"
-#         l.objeto_id = registro.id
-#         l.objeto_str = registro.nome[0:48]
-#         l.usuario = request.user
-#         l.mensagem = "UPDATE"
-#         l.save()
-#         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-#         return redirect('pessoal_grupo_evento_id', id)
-#     else:
-#         return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
+@login_required
+@permission_required('pessoal.change_grupoevento', login_url="/handler/403")
+def grupo_evento_update(request,id):
+    grupo_evento = GrupoEvento.objects.get(pk=id)
+    form = GrupoEventoForm(request.POST, instance=grupo_evento)
+    if form.is_valid():
+        registro = form.save()
+        l = Log()
+        l.modelo = "pessoal.grupo_evento"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "UPDATE"
+        l.save()
+        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_grupo_evento_id', id)
+    else:
+        return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
 
 # Metodos DELETE
 @login_required
@@ -480,24 +480,24 @@ def evento_delete(request,id):
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal_evento_id', id)
 
-# @login_required
-# @permission_required('pessoal.delete_grupoevento', login_url="/handler/403")
-# def grupo_evento_delete(request,id):
-#     try:
-#         registro = GrupoEvento.objects.get(pk=id)
-#         l = Log()
-#         l.modelo = "pessoal.grupo_evento"
-#         l.objeto_id = registro.id
-#         l.objeto_str = registro.nome[0:48]
-#         l.usuario = request.user
-#         l.mensagem = "DELETE"
-#         registro.delete()
-#         l.save()
-#         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-#         return redirect('pessoal_grupo_eventos')
-#     except:
-#         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-#         return redirect('pessoal_grupo_evento_id', id)
+@login_required
+@permission_required('pessoal.delete_grupoevento', login_url="/handler/403")
+def grupo_evento_delete(request,id):
+    try:
+        registro = GrupoEvento.objects.get(pk=id)
+        l = Log()
+        l.modelo = "pessoal.grupo_evento"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "DELETE"
+        registro.delete()
+        l.save()
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_grupo_eventos')
+    except:
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal_grupo_evento_id', id)
 
 # Metodos Ajax
 @login_required
@@ -538,52 +538,52 @@ def add_grupo_evento(request):
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
     return JsonResponse({'status': 'invalid request'}, status=400)
 
-@login_required
-def update_grupo_evento(request):
-    if not request.user.has_perm("pessoal.change_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            if not data['pk']:
-                return JsonResponse({'status': 'field pk expected on request'}, status=400)
-            grupo = GrupoEvento.objects.get(pk=data['pk'])
-            form = GrupoEventoForm(data, instance=grupo)
-            if form.is_valid():
-                registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.grupo_evento"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "UPDATE"
-                l.save()
-                return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
-            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': e, 'status': 'error'}, status=500)
-    return JsonResponse({'status': 'invalid request'}, status=400)
+# @login_required
+# def update_grupo_evento(request):
+#     if not request.user.has_perm("pessoal.change_grupoevento"):
+#         return JsonResponse({'status': 'access denied'}, status=401)
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             if not data['pk']:
+#                 return JsonResponse({'status': 'field pk expected on request'}, status=400)
+#             grupo = GrupoEvento.objects.get(pk=data['pk'])
+#             form = GrupoEventoForm(data, instance=grupo)
+#             if form.is_valid():
+#                 registro = form.save()
+#                 l = Log()
+#                 l.modelo = "pessoal.grupo_evento"
+#                 l.objeto_id = registro.id
+#                 l.objeto_str = registro.nome[0:48]
+#                 l.usuario = request.user
+#                 l.mensagem = "UPDATE"
+#                 l.save()
+#                 return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
+#             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+#         except Exception as e:
+#             return JsonResponse({'error': e, 'status': 'error'}, status=500)
+#     return JsonResponse({'status': 'invalid request'}, status=400)
 
 
-@login_required
-def delete_grupo_evento(request):
-    if not request.user.has_perm("pessoal.delete_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            if not data['pk']:
-                return JsonResponse({'status': 'field pk expected on request'}, status=400)
-            registro = GrupoEvento.objects.get(pk=data['pk'])
-            l = Log()
-            l.modelo = "pessoal.setor"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "DELETE"
-            registro.delete()
-            l.save()
-            return JsonResponse({'pk': data['pk'], 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
-        except Exception as e:
-            return JsonResponse({'error': e, 'status': 'error'}, status=500)
-    return JsonResponse({'status': 'invalid request'}, status=400)
+# @login_required
+# def delete_grupo_evento(request):
+#     if not request.user.has_perm("pessoal.delete_grupoevento"):
+#         return JsonResponse({'status': 'access denied'}, status=401)
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             if not data['pk']:
+#                 return JsonResponse({'status': 'field pk expected on request'}, status=400)
+#             registro = GrupoEvento.objects.get(pk=data['pk'])
+#             l = Log()
+#             l.modelo = "pessoal.setor"
+#             l.objeto_id = registro.id
+#             l.objeto_str = registro.nome[0:48]
+#             l.usuario = request.user
+#             l.mensagem = "DELETE"
+#             registro.delete()
+#             l.save()
+#             return JsonResponse({'pk': data['pk'], 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
+#         except Exception as e:
+#             return JsonResponse({'error': e, 'status': 'error'}, status=500)
+#     return JsonResponse({'status': 'invalid request'}, status=400)

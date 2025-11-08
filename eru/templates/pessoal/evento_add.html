@@ -24,14 +24,19 @@
 <script src="{% static 'js/table.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/related.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
 const form = new jsForm(document.getElementById('app_form'), {})
-{% if perms.pessoal.view_grupoevento %}
+const rastreio = IMask(document.getElementById('id_rastreio'), {
+    mask: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+})
+
+{% if perms.pessoal.add_grupoevento %}
 const grupoRelated = new RelatedAddon('#id_grupo', {
-    title: 'Cadastro de Grupo de Evento',
+    title: i18n.getEntry('personal.event.groupEventRegister') || 'Cadastro de Grupo de Evento',
     labels: {
         nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
     },
@@ -40,9 +45,7 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
             show: "{% url 'pessoal_get_grupos_evento' %}",
         },
         related: {
-            {% if perms.pessoal.add_grupoevento %}
-            add: "{% url 'pessoal_add_grupo_evento' %}",
-            {% endif %}
+             add: "{% url 'pessoal_add_grupo_evento' %}",
         }
     }    
 })

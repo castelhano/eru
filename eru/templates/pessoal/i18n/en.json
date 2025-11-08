@@ -20,7 +20,13 @@
         "event": {
             "form": {
                 "groupName": "Group name",
-                "trackingHelp": "Tracking used for formula composition for payroll module"
+                "groupEventRegister": "Group event register",
+                "trackingHelp": "Tracking used for formula composition for payroll module",
+                "trackingHelp_r1": "It must start with the letter (alpha)",
+                "trackingHelp_r2": "It can contain letters (uppercase and lowercase) and numbers",
+                "trackingHelp_r3": "Special characters and spaces are not allowed",
+                "trackingHelp_r4": "Maximum of 20 characters"
+
             }
         },
         "sys":{

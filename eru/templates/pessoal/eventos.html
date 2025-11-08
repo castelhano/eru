@@ -44,7 +44,7 @@
                         <td>{{evento.rastreio}}</td>
                         <td>{{evento.grupo|default:''}}</td>
                         {% if perms.pessoal.change_evento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="url" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_evento_id' evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

@@ -1,8 +1,11 @@
+import re
 from django import forms
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento
 from django.contrib.auth.models import User
 from datetime import date
+from django.conf import settings
 
+RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
 class SetorForm(forms.ModelForm):
     class Meta:
@@ -101,3 +104,9 @@ class EventoForm(forms.ModelForm):
     nome = forms.CharField(error_messages={'required': 'Informe o nome do evento'}, max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+    def clean_rastreio(self):
+        rastreio_value = self.cleaned_data.get('rastreio')
+        # Verifica se o valor corresponde à expressão regular
+        if rastreio_value and not RASTREIO_REGEX.match(rastreio_value):
+            raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
+        return rastreio_value
