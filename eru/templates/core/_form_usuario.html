@@ -1,45 +1,45 @@
 <div class="card-body tab-content">
-  <h5 class="card-title mb-3">Cadastro de Usuario</h5>
+  <h5 class="card-title mb-3" data-i18n="auth.userRegistration">Cadastro de Usuário</h5>
   <div class="tab-pane fade show active" id="base" role="tabpanel">
     <div class="row">
       <div class="col-lg-8">
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg">
             {{ form.username }}
-            <label for="id_username">Username</label>
+            <label for="id_username" data-i18n="auth.username">Username</label>
           </div>
           {% if 'usuario_add' in request.get_full_path %}
           <div class="form-floating mb-1 col-lg">
             <input type="password" class="form-control" name="password" id="id_password">
-            <label for="id_password">Password</label>
+            <label for="id_password" data-i18n="common.password">Senha</label>
           </div>
           {% else %}
           <div class="form-floating mb-1 col-lg">
             <input type="text" class="form-control" name="reset_password" id="id_reset_password" placeholder="" disabled>
-            <label for="id_reset_password">Password Reset</label>
+            <label for="id_reset_password" data-i18n="auth.passwordReset">Reiniciar senha</label>
           </div>
           {% endif %}              
         </div>
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-6">
             {{ form.first_name }}
-            <label for="id_first_name">Fist Name</label>
+            <label for="id_first_name" data-i18n="auth.firstName">Primeiro nome</label>
           </div>
           <div class="form-floating mb-1 col-lg-6">
             {{ form.last_name }}
-            <label for="id_last_name">Last Name</label>
+            <label for="id_last_name" data-i18n="auth.lastName">Sobrenome</label>
           </div>
         </div>
         <div class="row g-1">
           <div class="form-floating mb-1 col-lg-12">
             {{ form.email }}
-            <label for="id_email">Email</label>
+            <label for="id_email" data-i18n="common.email">Email</label>
           </div>
         </div>
         <div class="accordion mt-2" id="accordion_user_profile">
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_empresas"><i class="bi bi-house-gear-fill text-body-secondary me-2"></i> Empresas</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_empresas"><i class="bi bi-house-gear-fill text-body-secondary me-2"></i> <span data-i18n="common.company__plural">Empresas</span></button>
             </h2>
             <div id="accordion_empresas" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
@@ -54,7 +54,7 @@
           {% if not usuario.is_superuser %}
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_grupos"><i class="bi bi-person-video2 text-body-secondary me-2"></i> Grupos</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_grupos"><i class="bi bi-person-video2 text-body-secondary me-2"></i> <span data-i18n="common.group__plural">Grupos</span></button>
             </h2>
             <div id="accordion_grupos" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
@@ -68,7 +68,7 @@
           </div>
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_permittions"><i class="bi bi-person-fill-lock text-body-secondary me-2"></i> Permissões</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_permittions"><i class="bi bi-person-fill-lock text-body-secondary me-2"></i> <span data-i18n="common.permission__plural">Permissões</span></button>
             </h2>
             <div id="accordion_permittions" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">

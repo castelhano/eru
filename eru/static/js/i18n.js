@@ -2,7 +2,7 @@
 * I18n      Lib para interlacionalização de codigo
 *
 * @version  2.1
-* @release  [2.1] 29/10/25 [declaration refactor see**, waiting pool]
+* @release  [2.2] 10/11/25 [declaration refactor see**, waiting pool, add __she (gender inflection)]
 * @since    02/10/2025
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
 * @depend   na
@@ -10,7 +10,7 @@
 * --
 * Read me **: 
 * Ver 2.0 alterado forma de declaracao de modificadores, removido data-i18n-[bold, transform, pluralize]
-* declaracao eh feita toda em data-i18n="[placeholder]common.company__plural__captalize__bold:c__prefix:R$__posfix: pt-BR"
+* declaracao eh feita toda em data-i18n="[placeholder]common.company__she__plural__captalize__bold:c__prefix:R$__posfix: pt-BR"
 * alteracao multipla no elemento data-i18n="[placeholder]foo.bar;[title]foo.fei"
 */
 
@@ -25,42 +25,49 @@ class I18n{
             defaultLanguage: 'pt-BR',                   // Idioma padrao (paginas devem ser construidas neste idioma)
             callbackLanguage: null,                     // Idioma a ser buscado caso nao localizado arquivo de traducao
             switcher: null,                             // Elemento select para troca de idioma 
-            notifyFunction: null,                       // Funcao para notificacao func(style, message, autodismiss)
+            notifyFunction: null,                       // Funcao para notificacao func(style, message, {autodismiss: false})
             notFoundMsg: 'Não encontrado arquivo de tradução para linguagem selecionada'
         }
         this.waiting = [];       // fila de processos (ajax) aguardando resposta do servidor 
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
-        this.modificatorAttrs = ['plural'];
+        this.modificatorAttrs = ['plural', 'she'];
         this.composedAttrs = ['bold','prefix', 'posfix'];
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = defaultOptions[k]}
         }
-        this.language = localStorage.getItem('i18nLanguage') || this.defaultLanguage; // this.language armazena o idioma ativo, inicia setado com defaultLanguage
+        // this.language armazena o idioma ativo, inicia setado com defaultLanguage
+        this.language = localStorage.getItem('i18nLanguage') || this.defaultLanguage;
         if(this.apps.length == 0 && options?.apps && Array.isArray(options.apps)){this.apps = options.apps}
         if(this.switcher){this.setSwitcher(this.switcher)}
     }
     init(){
+        this.startAt = Date.now();
         /** Ordem de prioridade para identificacao do idioma
          * 1 - Verifica existencia localStorage[i18nLanguage]
          * 2 - Se autoDetect = true, busca idioma do navegador
          * 3 - Aguarda requisicao manual para troca de idioma
          */
         if(this.waiting.length > 0){return} // nao inicia se ainda existem requisicoes ajax aguardando resposta
-        if(this.language != this.defaultLanguage){
-            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
-            if(this.switcher){this.switcher.value = this.language}
-            this.translate(this.language)
+        if(this.autoDetect){
+            let lng = localStorage.getItem('i18nLanguage') || navigator.language || navigator.userLanguage;
+            if(lng == this.defaultLanguage){
+                console.log(`${timeNow({showSeconds: true})} | i18n: [Autodetect] '${lng}' is default language, skiping`);
+                return;
+            }
+            console.log(`${timeNow({showSeconds: true})} | i18n: Call translating for navigator language (autoDetect)`);
+            this.translate(lng);
         }
-        else if(this.autoDetect){
-            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for navigator language (autoDetect)`);
-            this.translate(navigator.language || navigator.userLanguage)
+        else if(this.language != this.defaultLanguage){
+            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
+            this.translate(this.language)
         }
     }
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
     translate(lng){
+        this.startAt = Date.now();
         if(lng == this.defaultLanguage){
             // Se retornado para idioma padrao, salva definicao de idioma no localStorage e recarrega pagina
             localStorage.setItem('i18nLanguage', lng);
@@ -69,6 +76,7 @@ class I18n{
         }
         if(lng == this.language){
             // Caso linguagem seja a mesma de this.language chama o metodo refresh (necessario ao importar DB do localStorage)
+            if(this.switcher){this.switcher.value = this.language}  // Ajusta switcher se existir
             this.refresh();
             return
         }
@@ -77,6 +85,7 @@ class I18n{
             console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
             this.language = lng;
             localStorage.setItem('i18nLanguage', lng);
+            if(this.switcher){this.switcher.value = this.language}  // Ajusta switcher se existir
             this.refresh();
             return;
         }
@@ -101,9 +110,10 @@ class I18n{
                 if(this.notifyFunction){this.notifyFunction('warning', this.getEntry('sys.i18n.translationFileNotFound') || this.notFoundMsg, false)}
                 return;
             }
-            this.language = lng;                        // Altera idioma carregado
-            localStorage.setItem('i18nLanguage', lng);  // Salva language no localstorage
-            this.refresh();                             // Chama metodo para plotar alteracoes na pagina
+            this.language = lng;                                    // Altera idioma carregado
+            localStorage.setItem('i18nLanguage', lng);              // Salva language no localstorage
+            if(this.switcher){this.switcher.value = this.language}  // Ajusta switcher se existir
+            this.refresh();                                         // Chama metodo para plotar alteracoes na pagina
         })
     }
     __getLanguage(lng, app){
@@ -189,7 +199,11 @@ class I18n{
         try{
             let entry = this.__detachEntry(original_entry)[0]; // getEntry analisa somente a primeira entry (caso informado mais de uma)
             let result = entry.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]);
-            if(entry.plural && result.includes('#')){result = result.split('#')[1]}
+            if(entry.she && result.split('#').length > 2){ // she solicita inflexao de genero feminino
+                if(entry.plural && result.split('#').length > 3){result = result.split('#')[3]}
+                else{ result = result.split('#')[2] }
+            }
+            else if(entry.plural && result.includes('#')){result = result.split('#')[1]}
             else{result = result.split('#')[0]}
             if(entry.transform){result = result[entry.transform]()}
             if(entry.prefix){result = entry.prefix + result }
@@ -242,7 +256,11 @@ class I18n{
                     console.log(`i18n: [MISSING KEY] ${key?.entry || el.getAttribute('data-i18n')} for ${this.language}`);
                     return;
                 }
-                if(e.plural && result.includes('#')){result = result.split('#')[1]}
+                if(e.she && result.split('#').length > 2){ // she solicita inflexao de genero feminino
+                    if(e.plural && result.split('#').length > 3){result = result.split('#')[3]}
+                    else{ result = result.split('#')[2] }
+                }
+                else if(e.plural && result.includes('#')){result = result.split('#')[1]}
                 else{result = result.split('#')[0]}
                 if(e.transform){result = result[e.transform]()}
                 if(e.prefix){result = e.prefix + result }
@@ -261,6 +279,7 @@ class I18n{
                 else{ el.innerHTML = result }
             })
         })
-        console.log(`${timeNow({showSeconds: true})} | i18n: Translation complete`);
+        this.endAt = Date.now();
+        console.log(`${timeNow({showSeconds: true})} | i18n: Translation complete, ${this.endAt - this.startAt} milliseconds`);
     }
 }
