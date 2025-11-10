@@ -261,5 +261,6 @@ class I18n{
                 else{ el.innerHTML = result }
             })
         })
+        console.log(`${timeNow({showSeconds: true})} | i18n: Translation complete`);
     }
 }

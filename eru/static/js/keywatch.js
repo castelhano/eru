@@ -11,6 +11,13 @@
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
+--
+# Problema conhecido:
+# ao abrir caixa de opcoes de elemento select usando o atalho padrão (alt+arrowdown) teclas ficam presas em this.pressed (navegador nao aciona 
+# eventos com options aberta), para tratar, analisamos evento change no document e limpamos this.pressed, e no evento keyup limpamos pressed ao usar 
+# a tecla esc para fechar a caixa de opcoes
+# unico cenario que problema persiste eh ao usar a tecla enter sem altear a opcao do select (selecionar opcao ja ativa)
+# eh possivel definir {selectDisable: true} ao instanciar para desativar atalhos com foco em selects, outra possibilidade eh nao usar selects nativos
 */
 class Keywatch{
     constructor(options={}){
@@ -42,6 +49,7 @@ class Keywatch{
             splitKey: '+',
             separator: ';',
             tabOnEnter: true,
+            selectDisable: false,                        // se select disabled == true, atalhos com o focus em selects nao seram analisados
             shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             shortcutMaplistIcon: "bi bi-alt",
@@ -110,6 +118,7 @@ class Keywatch{
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
         if(this.locked){return false}
+        if(this.selectDisable && ev.target.tagName == 'SELECT'){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
@@ -142,7 +151,8 @@ class Keywatch{
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(ev.key && this.pressed.indexOf(ev.key.toLowerCase()) > -1){ this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
             else if(ev.code == 'Altleft'){ this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
-            if(ev.key == 'escape' && ev.target.tagName == 'SELECT'){this.pressed = []} // elementos select 
+            // el selects geram inconsistencia ao abrir opcoes usando atalho teclado (alt+arrowdown) ficando com teclas presas no this.pressed
+            if(ev.key.toLowerCase() == 'escape' && ev.target.tagName.toLowerCase() == 'select'){this.pressed = []} // el select gera inconsistencia ao abrir
         }
     }
     
