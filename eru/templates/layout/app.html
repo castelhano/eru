@@ -159,14 +159,13 @@
     {% block add_script_src %}{% endblock %}
 
     <script>
-        document.getElementById('logout').onclick = ()=>{appOnLogout("{% url 'logout' %}")} // Chama funcao de limpeza ao deslogar do sistema
+        document.getElementById('logout').onclick = ()=>{appOnLogout("{% url 'logout' %}")} // Chama funcao de validacao / limpeza ao deslogar do sistema
 
         const i18n = new I18n({
             apps: ['core'],
             url: "{% url 'i18n' %}",
             autoDetect: false, 
             switcher: document.getElementById('id_language'), 
-            notifyFunction: appAlert
         })
         const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
         {% if perms.core.debug %}

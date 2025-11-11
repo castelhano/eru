@@ -150,8 +150,8 @@ function confirmOnClick(options){
 
 // Script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
 function appOnLogout(url){
-  let removeOnLocalStorage = ['i18nLanguage', 'i18nApps', 'i18nDB']
-  removeOnLocalStorage.forEach((el)=>{localStorage.removeItem(el)})
+  i18n.clearAll(false);
+  //--
   location.href = url;
 }
 
