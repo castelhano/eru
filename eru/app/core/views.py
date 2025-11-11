@@ -56,7 +56,7 @@ def usuarios(request):
             context['usuarios'] = user_filter.qs
         except:
             messages.warning(request,'<b>Erro</b> ao filtrar usuário..')
-            return redirect('core_usuarios')
+            return redirect('usuarios')
     return render(request,'core/usuarios.html', context)
 
 @login_required
@@ -138,10 +138,10 @@ def empresa_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request,'Empresa <b>' + registro.nome + '</b> criada')
-                return redirect('core_empresas')
+                return redirect('empresas')
             except:
                 messages.error(request,'Erro ao inserir empresa [INVALID FORM]')
-                return redirect('core_empresas')
+                return redirect('empresas')
     else:
         form = EmpresaForm()
     return render(request,'core/empresa_add.html',{'form':form})
@@ -187,10 +187,10 @@ def usuario_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request,'Usuario <b>' + registro.username + '</b> criado')
-                return redirect('core_usuario_id', registro.id)
+                return redirect('usuario_id', registro.id)
             except:
                 messages.error(request,'Erro ao inserir usuario [INVALID FORM]')
-                return redirect('core_usuarios')
+                return redirect('usuarios')
     else:
         form = UserForm()
     return render(request,'core/usuario_add.html',{'form':form})
@@ -211,10 +211,10 @@ def grupo_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request,'Grupo <b>' + registro.name + '</b> criado')
-                return redirect('core_grupos')
+                return redirect('grupos')
             except:
                 messages.error(request,'Erro ao inserir grupo [INVALID FORM]')
-                return redirect('core_grupos')
+                return redirect('grupos')
     else:
         form = GroupForm()
         exclude_itens = ['sessions','contenttypes','admin']
@@ -263,7 +263,7 @@ def empresa_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,'Empresa <b>' + registro.nome + '</b> alterada')
-        return redirect('core_empresa_id',id)
+        return redirect('empresa_id',id)
     else:
         return render(request,'core/empresa_id.html',{'form':form,'empresa':empresa})
 
@@ -306,7 +306,7 @@ def usuario_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,'Usuario <b>' + registro.username + '</b> alterado')
-        return redirect('core_usuario_id',id)
+        return redirect('usuario_id',id)
     else:
         return render(request,'core/usuario_id.html',{'form':form,'usuario':usuario})
 
@@ -325,7 +325,7 @@ def grupo_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,'Grupo <b>' + registro.name + '</b> alterado')
-        return redirect('core_grupo_id',id)
+        return redirect('grupo_id',id)
     else:
         return render(request,'core/grupo_id.html',{'form':form,'grupo':grupo})
 
@@ -344,7 +344,7 @@ def settings_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,'Configurações <b>atualizadas</b> com sucesso')
-        return redirect('core_settings')
+        return redirect('settings')
     else:
         return render(request,'core/settings.html',{'form':form,'settings':settings})
 
@@ -363,10 +363,10 @@ def empresa_delete(request, id):
         registro.delete()
         l.save()
         messages.warning(request,'Empresa <b>' + registro.nome + '</b> apagada')
-        return redirect('core_empresas')
+        return redirect('empresas')
     except:
         messages.error(request,'ERRO ao apagar empresa')
-        return redirect('core_empresa_id', id)
+        return redirect('empresa_id', id)
 
 @login_required
 @permission_required('auth.delete_user', login_url="/handler/403")
@@ -382,10 +382,10 @@ def usuario_delete(request, id):
         registro.delete()
         l.save()
         messages.warning(request,'Usuario <b>' + registro.username + '</b> apagado')
-        return redirect('core_usuarios')
+        return redirect('usuarios')
     except:
         messages.error(request,'ERRO ao apagar usuario')
-        return redirect('core_usuario_id', id)
+        return redirect('usuario_id', id)
 
 @login_required
 @permission_required('auth.delete_group', login_url="/handler/403")
@@ -401,10 +401,10 @@ def grupo_delete(request, id):
         registro.delete()
         l.save()
         messages.warning(request,'Grupo <b>' + registro.name + '</b> apagado')
-        return redirect('core_grupos')
+        return redirect('grupos')
     except:
         messages.error(request,'ERRO ao apagar grupo')
-        return redirect('core_grupo_id', id)
+        return redirect('grupo_id', id)
 
 # AUTENTICACAO E PERMISSAO
 def login(request):
@@ -572,25 +572,6 @@ def i18n(request):
             return HttpResponse('Server Error....')
         return HttpResponse(json.dumps(data))
     return HttpResponse('Access denied')
-
-# @login_required
-# def get_empresas(request):
-#     # Metodo retorna JSON com dados das empresas
-#     try:
-#         if request.GET.get('usuario', None) == 'new':
-#             empresas = Empresa.objects.all().order_by('nome')
-#         else:
-#             usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
-#             empresas = usuario.profile.empresas.all().order_by('nome')
-#         itens = []
-#         for item in empresas:
-#             item_dict = vars(item) # Converte objetos em dicionario
-#             if '_state' in item_dict: del item_dict['_state'] # Remove _state do dict (se existir)
-#             itens.append(item_dict)
-#         dataJSON = json.dumps(itens)
-#         return HttpResponse(dataJSON)
-#     except:
-#         return HttpResponse('')
 
 @login_required
 def get_empresas(request):

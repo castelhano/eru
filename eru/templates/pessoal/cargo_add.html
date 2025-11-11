@@ -9,10 +9,10 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_cargo_add' %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:cargo_add' %}" method="POST" autocomplete="off" novalidate>
         {% csrf_token %}
         {% include 'pessoal/_form_cargo.html' %}
     </form>
@@ -34,7 +34,7 @@
         url: {
             parent: {},
             related: {
-                add: "{% url 'pessoal_add_setor' %}",
+                add: "{% url 'pessoal:add_setor' %}",
             },
         }
     })

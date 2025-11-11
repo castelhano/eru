@@ -37,7 +37,7 @@ def funcionarios(request):
             # checa se existe funcionario com matricula informada na consulta, se sim abre form de edicao para funcionario
             if Funcionario.objects.filter(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all()).exists():
                 funcionario = Funcionario.objects.get(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all())
-                return redirect('pessoal_funcionario_id', funcionario.id)
+                return redirect('pessoal:funcionario_id', funcionario.id)
             else:
                 # criterio de consulta nao corresponde a uma matricula, busca avancada por nome
                 criterios = request.GET['pesquisa'].split(' ')
@@ -76,7 +76,7 @@ def funcionarios(request):
                 messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
         except:
             messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
-            return redirect('pessoal_funcionarios')
+            return redirect('pessoal:funcionarios')
     return render(request, 'pessoal/funcionarios.html', options)
 
 @login_required
@@ -108,10 +108,10 @@ def setor_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal_setor_add')
+                return redirect('pessoal:setor_add')
             except:
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal_setor_add')
+                return redirect('pessoal:setor_add')
     else:
         form = SetorForm()
     return render(request,'pessoal/setor_add.html',{'form':form})
@@ -138,10 +138,10 @@ def cargo_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal_cargo_add')
+                return redirect('pessoal:cargo_add')
             except:
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal_cargo_add')
+                return redirect('pessoal:cargo_add')
     else:
         form = CargoForm()
     return render(request,'pessoal/cargo_add.html',{'form':form})
@@ -176,10 +176,10 @@ def funcionario_add(request):
                 l.save()
                 if not has_warnings:
                     messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
-                return redirect('pessoal_funcionario_id', registro.id)
+                return redirect('pessoal:funcionario_id', registro.id)
             except:
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'] + f' <b>{registro.matricula}</b>')
-                return redirect('pessoal_funcionario_add')
+                return redirect('pessoal:funcionario_add')
     else:
         form = FuncionarioForm()
     return render(request,'pessoal/funcionario_add.html', {'form':form})
@@ -200,10 +200,10 @@ def evento_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal_evento_add')
+                return redirect('pessoal:evento_add')
             except:
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal_evento_add')
+                return redirect('pessoal:evento_add')
     else:
         form = EventoForm()
     return render(request,'pessoal/evento_add.html',{'form':form})
@@ -224,10 +224,10 @@ def grupo_evento_add(request):
             l.mensagem = "CREATED"
             l.save()
             messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-            return redirect('pessoal_grupo_evento_add')
+            return redirect('pessoal:grupo_evento_add')
             # except:
             #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-            #     return redirect('pessoal_grupo_evento_add')
+            #     return redirect('pessoal:grupo_evento_add')
     else:
         form = GrupoEventoForm()
     return render(request,'pessoal/grupo_evento_add.html',{'form':form})
@@ -255,7 +255,7 @@ def funcionario_id(request,id):
         funcionario = Funcionario.objects.get(pk=id, empresa__in=request.user.profile.empresas.all())
     except Exception as e:
         messages.warning(request,'Funcionário <b>não localizado</b>')
-        return redirect('pessoal_funcionarios')
+        return redirect('pessoal:funcionarios')
     form = FuncionarioForm(instance=funcionario)
     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
@@ -291,7 +291,7 @@ def setor_update(request,id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_setor_id', id)
+        return redirect('pessoal:setor_id', id)
     else:
         return render(request,'pessoal/setor_id.html',{'form':form,'setor':setor})
 
@@ -325,7 +325,7 @@ def cargo_update(request,id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_cargo_id', id)
+        return redirect('pessoal:cargo_id', id)
     else:
         return render(request,'pessoal/cargo_id.html',{'form':form,'cargo':cargo})
 
@@ -335,7 +335,7 @@ def funcionario_update(request,id):
     funcionario = Funcionario.objects.get(pk=id)
     if funcionario.status == 'D':
         messages.error(request,'<span data-i18n="personal.sys.cantMoveDismissEmployee"><b>Erro:</b> Não é possivel movimentar funcionários desligados</span>')
-        return redirect('pessoal_funcionario_id', id)
+        return redirect('pessoal:funcionario_id', id)
     form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
     if form.is_valid():
         has_warnings = False
@@ -361,7 +361,7 @@ def funcionario_update(request,id):
         l.save()
         if not has_warnings:
             messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' mat: <b>{registro.matricula}</b>')
-        return redirect('pessoal_funcionario_id', id)
+        return redirect('pessoal:funcionario_id', id)
     else:
         return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
@@ -380,7 +380,7 @@ def evento_update(request,id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_evento_id', id)
+        return redirect('pessoal:evento_id', id)
     else:
         return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
@@ -399,7 +399,7 @@ def grupo_evento_update(request,id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_grupo_evento_id', id)
+        return redirect('pessoal:grupo_evento_id', id)
     else:
         return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
 
@@ -418,10 +418,10 @@ def setor_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_setores')
+        return redirect('pessoal:setores')
     except:
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_setor_id', id)
+        return redirect('pessoal:setor_id', id)
 
 @login_required
 @permission_required('pessoal.delete_cargo', login_url="/handler/403")
@@ -437,10 +437,10 @@ def cargo_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_cargos')
+        return redirect('pessoal:cargos')
     except:
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_cargo_id', id)
+        return redirect('pessoal:cargo_id', id)
 
 @login_required
 @permission_required('pessoal.delete_funcionario', login_url="/handler/403")
@@ -456,10 +456,10 @@ def funcionario_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request,settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.matricula}</b>')
-        return redirect('pessoal_funcionarios')
+        return redirect('pessoal:funcionarios')
     except:
         messages.error(request,'ERRO ao apagar funcionario')
-        return redirect('pessoal_funcionario_id', id)
+        return redirect('pessoal:funcionario_id', id)
 
 @login_required
 @permission_required('pessoal.delete_evento', login_url="/handler/403")
@@ -475,10 +475,10 @@ def evento_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_eventos')
+        return redirect('pessoal:eventos')
     except:
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_evento_id', id)
+        return redirect('pessoal:evento_id', id)
 
 @login_required
 @permission_required('pessoal.delete_grupoevento', login_url="/handler/403")
@@ -494,10 +494,10 @@ def grupo_evento_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_grupo_eventos')
+        return redirect('pessoal:grupo_eventos')
     except:
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal_grupo_evento_id', id)
+        return redirect('pessoal:grupo_evento_id', id)
 
 # Metodos Ajax
 @login_required

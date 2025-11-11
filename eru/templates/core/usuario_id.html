@@ -10,7 +10,7 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
@@ -23,7 +23,7 @@
       </li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'core_usuario_update' usuario.id|safe %}" method="POST" autocomplete="off" novalidate>
+  <form id="app_form" action="{% url 'usuario_update' usuario.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'core/_form_usuario.html' %}
   </form>
@@ -42,7 +42,7 @@
         <div class="row mt-2">
           <div class="col text-end">
             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'core_usuario_delete' usuario.id|safe %}">Excluir</a>
+            <a class="btn btn-danger px-3" href="{% url 'usuario_delete' usuario.id|safe %}">Excluir</a>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@
     selectPopulate: [
       {
         target: document.getElementById('id_empresas'),
-        url: '{% url 'core_get_empresas' %}',
+        url: '{% url 'get_empresas' %}',
         params: 'usuario=new',
         then: ()=>{
           let selected = []; // Armazena empresas atuais habilitadas para o usuario
@@ -110,7 +110,7 @@
       {% if not usuario.is_superuser %}
       {
         target: document.getElementById('id_grupos'),
-        url: '{% url 'core_get_grupos' %}',
+        url: '{% url 'get_grupos' %}',
         params: 'usuario=new',
         value: 'name',
         then: ()=>{
@@ -124,7 +124,7 @@
       },
       {
         target: document.getElementById('id_perms'),
-        url: '{% url 'core_get_user_perms' %}',
+        url: '{% url 'get_user_perms' %}',
         params: 'usuario=new',
         then: (data)=>{
           let options = {};

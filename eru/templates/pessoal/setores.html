@@ -10,7 +10,7 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             {% if perms.pessoal.add_setor %}
-            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal_setor_add' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:setor_add' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -43,7 +43,7 @@
                         <td>{{setor.nome}}</td>
                         <td>{{setor.ativos}}</td>
                         {% if perms.pessoal.change_setor %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal_setor_id' setor.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:setor_id' setor.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

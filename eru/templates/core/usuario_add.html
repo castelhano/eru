@@ -11,10 +11,10 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'core_usuario_add' %}" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'usuario_add' %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'core/_form_usuario.html' %}
   </form>
@@ -31,11 +31,11 @@
   {% block add_script %}
   const form = new jsForm(document.getElementById('app_form'), {
     selectPopulate: [
-      {target: document.getElementById('id_empresas'), url: '{% url 'core_get_empresas' %}', params: 'usuario=new',then: ()=>{const selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'});}},
-      {target: document.getElementById('id_grupos'), url: '{% url 'core_get_grupos' %}', params: 'usuario=new', value: 'name', then: ()=>{const selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {canFilter: true, emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});}},
+      {target: document.getElementById('id_empresas'), url: '{% url 'get_empresas' %}', params: 'usuario=new',then: ()=>{const selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'});}},
+      {target: document.getElementById('id_grupos'), url: '{% url 'get_grupos' %}', params: 'usuario=new', value: 'name', then: ()=>{const selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {canFilter: true, emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});}},
       {
         target: document.getElementById('id_perms'),
-        url: '{% url 'core_get_user_perms' %}',
+        url: '{% url 'get_user_perms' %}',
         params: 'usuario=new',
         then: (data)=>{
           let options = {};

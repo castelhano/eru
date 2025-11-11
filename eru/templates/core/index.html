@@ -22,15 +22,15 @@ const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   // size: 'lg',
   items: [
-    {% if perms.trafego.view_linha %}{icon: 'bi bi-sign-merge-left-fill', color: 'primary', href: '{% url 'trafego_linhas' %}', 'data-i18n': 'apps.routes', desc: '<span data-i18n="apps.routes">Linhas</span>'}, {% endif %}
-    {% if perms.trafego.view_planejamento %}{icon: 'bi bi-shuffle', color: 'primary', href: '{% url 'trafego_planejamentos' %}', 'data-i18n': 'apps.planning', desc: '<span data-i18n="apps.planning">Planejamento</span>'}, {% endif %}
-    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', href: '{% url 'pessoal_funcionarios' %}', 'data-i18n': 'apps.employee', desc: '<span data-i18n="apps.employee">Funcionário</span>'}, {% endif %}
+    {% if perms.trafego.view_linha %}{icon: 'bi bi-sign-merge-left-fill', color: 'primary', href: '{% url 'trafego:linhas' %}', 'data-i18n': 'apps.routes', desc: '<span data-i18n="apps.routes">Linhas</span>'}, {% endif %}
+    {% if perms.trafego.view_planejamento %}{icon: 'bi bi-shuffle', color: 'primary', href: '{% url 'trafego:planejamentos' %}', 'data-i18n': 'apps.planning', desc: '<span data-i18n="apps.planning">Planejamento</span>'}, {% endif %}
+    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', href: '{% url 'pessoal:funcionarios' %}', 'data-i18n': 'apps.employee', desc: '<span data-i18n="apps.employee">Funcionário</span>'}, {% endif %}
     // {text: 'Trafego', 'data-i18n': 'index.apps.planning', desc: 'Keybind'},
     // {icon: 'bi bi-person-fill-lock', color: 'danger', onclick: ()=>{appNotify('danger', '<b>Atenção:</b> Travando Sisttema')}, desc: 'Onclick exemplo'},
     // {
     //   icon: 'bi bi-ubuntu',
     //   color: 'success',
-    //   // href: '{% url 'core_empresas' %}',
+    //   // href: '{% url 'empresas' %}',
     //   // desc: 'Exemplo com dropdown',
     //   menu: [
     //     {text: 'Novo', href: 'bar', icon: 'bi bi-plus-lg'},

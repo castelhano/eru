@@ -17,8 +17,8 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a id="tab_link_base" class="nav-link navTab active" data-seq="0" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_empresa').focus();},220);" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
       <li class="nav-item"><a id="tab_link_extensoes" class="nav-link navTab" data-seq="1" data-bs-toggle="tab" data-bs-target="#extensoes" onclick="setTimeout(function(){document.getElementById('id_extensao_ida').focus();},220);" href="#"><i class="bi bi-rulers"></i></a></li>
-      <li class="nav-item ms-1"><a id="tab_link_trajetos" class="nav-link navTab text-purple" data-seq="2" href="{% url 'trafego_trajetos' linha.id|safe %}" title="Trajetos [Ctrl + 3]"><i class="bi bi-arrow-left-right"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item ms-1"><a id="tab_link_trajetos" class="nav-link navTab text-purple" data-seq="2" href="{% url 'trafego:trajetos' linha.id|safe %}" title="Trajetos [Ctrl + 3]"><i class="bi bi-arrow-left-right"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
@@ -31,7 +31,7 @@
       </li>
     </ul>
   </div>
-  <form id="trafego_form" action="{% url 'trafego_linha_update' linha.id|safe %}" method="POST" autocomplete="off">
+  <form id="trafego_form" action="{% url 'trafego:linha_update' linha.id|safe %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'trafego/_form_linha.html' %}
   </form>
@@ -50,7 +50,7 @@
         <div class="row mt-2">
           <div class="col text-end">
             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'trafego_linha_delete' linha.id|safe %}" data-i18n="common.remove">Excluir</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego:linha_delete' linha.id|safe %}" data-i18n="common.remove">Excluir</a>
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
-        <form action="{% url 'trafego_patamar_update' %}" method="post">
+        <form action="{% url 'trafego:patamar_update' %}" method="post">
           {% csrf_token %}
           <div class="row">
             <div class="col">

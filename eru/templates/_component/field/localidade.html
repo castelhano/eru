@@ -40,7 +40,7 @@
 					if(!onloading && document.activeElement != el){validadeLocalidade(target)}; // Se usuario registrar valor antes do retorno no ajax, chama novamente validador
 				}
 			};
-			xhttp.open("GET", "{% url 'trafego_get_localidades' %}?filtro={{filtro}}&pesquisa=" + el.value, true);
+			xhttp.open("GET", "{% url 'trafego:get_localidades' %}?filtro={{filtro}}&pesquisa=" + el.value, true);
 			xhttp.send();
 		}
 		else{dl.innerHTML = '';el.classList.remove('is-invalid');}

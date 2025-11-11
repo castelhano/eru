@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="collapse{% if not dados %} show{% endif %}" id="filters">
-      <form id="filter_form" action="{% url 'trafego_passageiros' %}" method="POST" autocomplete="off">
+      <form id="filter_form" action="{% url 'trafego:passageiros' %}" method="POST" autocomplete="off">
         {% csrf_token %}
         <div class="row g-1">
           <div class="col-lg-2 mb-lg-1 form-floating">

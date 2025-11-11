@@ -12,12 +12,12 @@
 {% endblock%}
 
 {% block content_fluid %}
-<a href="{% url 'trafego_trajetos' linha.id|safe %}"></a>
+<a href="{% url 'trafego:trajetos' linha.id|safe %}"></a>
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linha_id' linha.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:linha_id' linha.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
   <div class="card-body tab-content">
@@ -32,7 +32,7 @@
     </div>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
       {% if perms.trafego.change_linha %}
-      <form id="app_form" action="{% url 'trafego_trajetos' linha.id|safe %}" method="POST" autocomplete="off">
+      <form id="app_form" action="{% url 'trafego:trajetos' linha.id|safe %}" method="POST" autocomplete="off">
         {% csrf_token %}
         <div id="form_fields" class="row mt-2 collapse">
           <div class="col">
@@ -90,7 +90,7 @@
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego:trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
                     {% endif %}
                   </div>
                 </li>
@@ -117,7 +117,7 @@
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego:trajeto_delete' p.id|safe %}"><i class="bi bi-x"></i></a>
                     {% endif %}
                   </div>
                 </li>
@@ -144,7 +144,7 @@
                     {% endwith %}
                     <span class="btn btn-sm btn-primary py-0 disabled" style="width: 35px;">{{p.seq|safe}}</span>
                     {% if perms.trafego.change_linha %}
-                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego_trajeto_delete' p.id|safe %}"><i class="bi bi-x-lg"></i></a>
+                    <a class="btn btn-sm btn-dark py-0" href="{% url 'trafego:trajeto_delete' p.id|safe %}"><i class="bi bi-x-lg"></i></a>
                     {% endif %}
                   </div>
                 </li>

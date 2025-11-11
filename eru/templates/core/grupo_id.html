@@ -10,7 +10,7 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'core_grupos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'grupos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
@@ -23,7 +23,7 @@
       </li>
     </ul>
   </div>
-  <form action="{% url 'core_grupo_update' grupo.id|safe %}" method="POST" autocomplete="off">
+  <form action="{% url 'grupo_update' grupo.id|safe %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'core/_form_grupo.html' %}
   </form>
@@ -42,7 +42,7 @@
         <div class="row mt-2">
           <div class="col text-end">
             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'core_grupo_delete' grupo.id|safe %}">Excluir</a>
+            <a class="btn btn-danger px-3" href="{% url 'grupo_delete' grupo.id|safe %}">Excluir</a>
           </div>
         </div>
       </div>

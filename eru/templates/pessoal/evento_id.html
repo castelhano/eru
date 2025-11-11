@@ -8,7 +8,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_eventos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
@@ -21,7 +21,7 @@
             </li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_evento_update' evento.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:evento_update' evento.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_evento.html' %}
     </form>
@@ -40,7 +40,7 @@
                 <div class="row mt-2">
                     <div class="col text-end">
                         <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="{% url 'pessoal_evento_delete' evento.id|safe %}" data-i18n="common.delete">Excluir</a>
+                        <a class="btn btn-danger px-3" href="{% url 'pessoal:evento_delete' evento.id|safe %}" data-i18n="common.delete">Excluir</a>
                     </div>
                 </div>
             </div>
@@ -101,10 +101,10 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
     },
     url: {
         parent: {
-            show: "{% url 'pessoal_get_grupos_evento' %}",
+            show: "{% url 'pessoal:get_grupos_evento' %}",
         },
         related: {
-             add: "{% url 'pessoal_add_grupo_evento' %}",
+             add: "{% url 'pessoal:add_grupo_evento' %}",
         }
     }    
 })

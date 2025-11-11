@@ -36,7 +36,7 @@ def linhas(request):
             empresa = request.user.profile.empresas.filter(id=request.GET.get('empresa', None)).get()
         except:
             messages.error(request,'Empresa <b>não encontrada</b> ou <b>não habilitada</b>')
-            return redirect('trafego_linhas')
+            return redirect('trafego:linhas')
         linhas = linhas.filter(empresa=empresa)
         empresa_display = empresa.nome
     else:
@@ -93,7 +93,7 @@ def planejamentos(request):
     if request.GET.get('pesquisa', None):
         if Planejamento.objects.filter(codigo=request.GET['pesquisa']).exists():
             planejamento = Planejamento.objects.get(codigo=request.GET['pesquisa'])
-            return redirect('trafego_planejamento_id', planejamento.id)
+            return redirect('trafego:planejamento_id', planejamento.id)
         else:
             planejamentos = planejamentos.filter(linha__codigo=request.GET['pesquisa'])
     else:
@@ -137,7 +137,7 @@ def localidade_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request,f'Localidade <b>{registro.nome}</b> criada')
-                return redirect('trafego_localidade_add')
+                return redirect('trafego:localidade_add')
             except:
                 pass
     else:
@@ -161,7 +161,7 @@ def linha_add(request):
                 l.mensagem = "CREATED"
                 l.save()
                 messages.success(request,f'Linha <b>{registro.codigo}</b> criada')
-                return redirect('trafego_linha_id',registro.id)
+                return redirect('trafego:linha_id',registro.id)
             except:
                 messages.error(request,'<b>Erro</b> ao salvar linha, comunique ao administrador do sistema')
     else:
@@ -203,7 +203,7 @@ def planejamento_add(request):
                         last_viagem = Viagem.objects.create(**v)
                     except Exception as e:
                         messages.error(request,f'<b>Erro</b>{e}, algumas viagens NÃO foram importadas')
-                        return redirect('trafego_planejamento_add')
+                        return redirect('trafego:planejamento_add')
             # Se planejamento for marcado como ativo, inativa planejamento atual
             if registro.ativo:
                 Planejamento.objects.filter(empresa=registro.empresa,linha=registro.linha,dia_tipo=registro.dia_tipo,ativo=True).exclude(id=registro.id).update(ativo=False)
@@ -215,7 +215,7 @@ def planejamento_add(request):
             l.mensagem = "CREATED"
             l.save()
             messages.success(request,'Planejamento <b>' + registro.codigo + '</b> criado')
-            return redirect('trafego_planejamento_id', registro.id)
+            return redirect('trafego:planejamento_id', registro.id)
     else:
         form = PlanejamentoForm()
     return render(request,'trafego/planejamento_add.html',{'form':form})
@@ -346,7 +346,7 @@ def localidade_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,f'Localidade <b>{registro.nome}</b> alterada')
-        return redirect('trafego_localidade_id', id)
+        return redirect('trafego:localidade_id', id)
     else:
         return render(request,'trafego/localidade_id.html',{'form':form,'localidade':localidade})
 
@@ -365,7 +365,7 @@ def linha_update(request, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request,f'Linha <b>{registro.codigo}</b> alterada')
-        return redirect('trafego_linha_id', id)
+        return redirect('trafego:linha_id', id)
     else:
         return render(request,'trafego/linha_id.html',{'form':form,'linha':linha})
 
@@ -397,7 +397,7 @@ def patamar_update(request):
             has_errors.append(patamar.ida > 540 or patamar.volta > 540) # INICIALMENTE CONSIDERADO VALOR MAXIMO PARA FAIXA DE 7 HORAS DE CICLO
             if True in has_errors:
                 messages.error(request,f'<b>Erro: [PTC 1] Valores de patamar inválidos')
-                return redirect('trafego_linha_id', linha.id)
+                return redirect('trafego:linha_id', linha.id)
             patamar.save()
                 
             patamares = Patamar.objects.filter(linha=linha).exclude(id=patamar.id)
@@ -415,7 +415,7 @@ def patamar_update(request):
                 messages.error(request,f'<b>Erro: [PTC 2]</b> {retorno[1]}')
         except Exception as e:
             messages.error(request,f'<b>Erro: [PTU 3]</b> {e}')
-    return redirect('trafego_linha_id', linha.id)
+    return redirect('trafego:linha_id', linha.id)
 
 def patamar_tratar_conflitos(patamar, patamares):
     try:
@@ -489,7 +489,7 @@ def planejamento_update(request,id):
                     last_viagem = Viagem.objects.create(**v)
                 except Exception as e:
                     messages.error(request,f'<b>Erro</b>{e}, algumas viagens NÃO foram importadas')
-                    return redirect('trafego_planejamento_id', planejamento.id)
+                    return redirect('trafego:planejamento_id', planejamento.id)
         # Se planejamento for marcado como ativo, inativa planejamento atual
         try:
             if registro.ativo:
@@ -502,10 +502,10 @@ def planejamento_update(request,id):
             l.mensagem = "UPDATE"
             l.save()
             messages.success(request,'Planejamento <b>' + registro.codigo + '</b> alterado')
-            return redirect('trafego_planejamento_id', id)
+            return redirect('trafego:planejamento_id', id)
         except Exception as e:
             messages.error(request,f'<b>Erro</b> ao concluir operação: {e}')
-            return redirect('trafego_planejamento_id', planejamento.id)
+            return redirect('trafego:planejamento_id', planejamento.id)
     else:
         return render(request,'trafego/planejamento_id.html',{'form':form,'planejamento':planejamento})
 
@@ -536,7 +536,7 @@ def planejamento_grid_update(request, id):
         l.mensagem = "UPDATED GRID"
         l.save()
         messages.success(request,f'Planejamento <b>{planejamento.codigo}</b> atualizado')
-    return redirect('trafego_planejamento_id', id)
+    return redirect('trafego:planejamento_id', id)
 
 # METODOS DELETE
 @login_required
@@ -553,10 +553,10 @@ def localidade_delete(request, id):
         l.save()
         registro.delete()
         messages.warning(request,'Localidade apagada. Essa operação não pode ser desfeita')
-        return redirect('trafego_localidades')
+        return redirect('trafego:localidades')
     except:
         messages.error(request,'<b>Erro</b> ao apagar localidade.')
-        return redirect('trafego_localidade_id', id)
+        return redirect('trafego:localidade_id', id)
 
 @login_required
 @permission_required('trafego.delete_linha', login_url="/handler/403")
@@ -572,10 +572,10 @@ def linha_delete(request, id):
         l.save()
         registro.delete()
         messages.warning(request,'Linha apagada. Essa operação não pode ser desfeita')
-        return redirect('trafego_linhas')
+        return redirect('trafego:linhas')
     except:
         messages.error(request,'<b>Erro</b> ao apagar linha')
-        return redirect('trafego_linha_id', id)
+        return redirect('trafego:linha_id', id)
 
 @login_required
 @permission_required('trafego.change_linha', login_url="/handler/403")
@@ -593,10 +593,10 @@ def trajeto_delete(request, id):
         for p in Trajeto.objects.filter(linha=registro.linha, sentido=registro.sentido, seq__gte=registro.seq):
             p.seq -= 1
             p.save()        
-        return redirect('trafego_trajetos', registro.linha.id)
+        return redirect('trafego:trajetos', registro.linha.id)
     except:
         messages.error(request,'<b>Erro</b> ao atualizar trajeto')
-        return redirect('trafego_trajetos', registro.linha.id)
+        return redirect('trafego:trajetos', registro.linha.id)
 
 @login_required
 @permission_required('trafego.delete_planejamento', login_url="/handler/403")
@@ -612,10 +612,10 @@ def planejamento_delete(request,id):
         l.save()
         registro.delete()
         messages.warning(request,'Planejamento apagado. Essa operação não pode ser desfeita')
-        return redirect('trafego_planejamentos')
+        return redirect('trafego:planejamentos')
     except:
         messages.error(request,'ERRO ao apagar planejamento')
-        return redirect('trafego_planejamento_id', id)
+        return redirect('trafego:planejamento_id', id)
 
 # METODOS AJAX
 def get_linha(request):

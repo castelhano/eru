@@ -9,10 +9,10 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_setores' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:setores' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_setor_add' %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:setor_add' %}" method="POST" autocomplete="off" novalidate>
         {% csrf_token %}
         {% include 'pessoal/_form_setor.html' %}
     </form>

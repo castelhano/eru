@@ -267,7 +267,7 @@
                 }
             }
         };
-        xhttp.open("GET", "{% url 'pessoal_get_setores' %}", true);
+        xhttp.open("GET", "{% url 'pessoal:get_setores' %}", true);
         xhttp.send();
     }
     carregaSetores(true);
@@ -291,7 +291,7 @@
                     }
                 }
             };
-            xhttp.open("GET", "{% url 'pessoal_get_cargos' %}?setor=" + setor, true);
+            xhttp.open("GET", "{% url 'pessoal:get_cargos' %}?setor=" + setor, true);
             xhttp.send();
         }
     }

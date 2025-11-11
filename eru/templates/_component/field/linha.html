@@ -39,7 +39,7 @@
           }
     		}
     	};
-    	xhttp.open("GET", "{% url 'trafego_get_linha' %}?empresa=" + empresa + "&codigo=" + codigo.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
+    	xhttp.open("GET", "{% url 'trafego:get_linha' %}?empresa=" + empresa + "&codigo=" + codigo.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
     	xhttp.send();  
     }
     else{

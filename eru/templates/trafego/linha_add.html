@@ -18,10 +18,10 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_empresa').focus();},220);" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
       <li class="nav-item"><a id="tab_link_extensoes" class="nav-link" data-bs-toggle="tab" data-bs-target="#extensoes" onclick="setTimeout(function(){document.getElementById('id_extensao_ida').focus();},220);" href="#"><i class="bi bi-rulers"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'trafego_linha_add' %}" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'trafego:linha_add' %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'trafego/_form_linha.html' %}
   </form>

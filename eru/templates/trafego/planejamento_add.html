@@ -6,15 +6,15 @@
 {% block canvas_menu %}{% include "_component/menu/trafego.html" %}{% endblock%}
 
 {% block content_fluid %}
-<!-- <a class="d-none" id="clear" href="{% url 'trafego_planejamento_add' %}"></a> -->
+<!-- <a class="d-none" id="clear" href="{% url 'trafego:planejamento_add' %}"></a> -->
 <div class="card mt-2">
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_planejamentos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:planejamentos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'trafego_planejamento_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off">
+  <form id="app_form" action="{% url 'trafego:planejamento_add' %}" method="POST" enctype="multipart/form-data" autocomplete="off">
     {% csrf_token %}
     <div class="card-body tab-content">
       <h5 class="card-title mb-3">Novo Planejamento</h5>

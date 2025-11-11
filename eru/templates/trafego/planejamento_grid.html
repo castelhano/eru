@@ -124,8 +124,8 @@ data-appConfirm="true"
 data-appConfirmTitle="<i class='bi bi-info-circle-fill me-2'></i>Retornar" 
 data-appConfirmMessage="Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?" 
 data-appConfirmText="Voltar"
-class="d-none" href="{% url 'trafego_planejamento_id' planejamento.id|safe %}"></a>
-<form id="grid_form" action="{% url 'trafego_planejamento_grid_update' planejamento.id|safe %}" method="POST" autocomplete="off">
+class="d-none" href="{% url 'trafego:planejamento_id' planejamento.id|safe %}"></a>
+<form id="grid_form" action="{% url 'trafego:planejamento_grid_update' planejamento.id|safe %}" method="POST" autocomplete="off">
     {% csrf_token %}
     <input type="hidden" name="planejamento" id="id_planejamento" value="">
 </form>

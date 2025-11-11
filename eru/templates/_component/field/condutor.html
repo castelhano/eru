@@ -40,7 +40,7 @@
           }
         }
       };
-      xhttp_condutor.open("GET", "{% url 'pessoal_get_funcionario' %}?empresa=" + empresa.value + "&matricula=" + matricula.value + "&funcaofixa=M&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
+      xhttp_condutor.open("GET", "{% url 'pessoal:get_funcionario' %}?empresa=" + empresa.value + "&matricula=" + matricula.value + "&funcaofixa=M&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
       xhttp_condutor.send();  
     }
     else{cleanCondutor();}

@@ -13,7 +13,7 @@
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       <li class="nav-item"><a class="nav-link pointer" id="search" data-bs-toggle="modal" data-bs-target="#search_modal" onclick="setTimeout(function(){document.getElementById('id_pesquisa').focus();},480);" title="CTRL + /"><i class="bi bi-search"></i></a></li>
       {% if perms.trafego.add_planejamento %}
-      <li class="nav-item"><a class="nav-link border" id="add" href="{% url 'trafego_planejamento_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item"><a class="nav-link border" id="add" href="{% url 'trafego:planejamento_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
@@ -54,7 +54,7 @@
             <td class="d-none d-lg-table-cell">{{planejamento.data_criacao|date:'d/m/Y'}}</td>
             <td class="d-none d-lg-table-cell">{{planejamento.usuario.username|title}}</td>
             {% if perms.trafego.change_planejamento %}
-            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_planejamento_id' planejamento.id %}"><i class="bi {% if planejamento.pin %}bi-pin-fill{% else %}bi-pen-fill{% endif %}"></i></a></td>
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego:planejamento_id' planejamento.id %}"><i class="bi {% if planejamento.pin %}bi-pin-fill{% else %}bi-pen-fill{% endif %}"></i></a></td>
             {% endif %}
           </tr>
           {% endfor %}
@@ -72,7 +72,7 @@
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
-        <form id="trafego_form" action="{% url 'trafego_planejamentos' %}" method="GET" autocomplete="off">
+        <form id="trafego_form" action="{% url 'trafego:planejamentos' %}" method="GET" autocomplete="off">
           <div class="row g-1">
             <div class="form-floating mb-1 col-lg-12">
               <input type="search" class="form-control" name="pesquisa" value="" id="id_pesquisa" placeholder=" ">

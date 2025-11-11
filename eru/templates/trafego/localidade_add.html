@@ -10,10 +10,10 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego_localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'trafego_localidade_add' %}" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'trafego:localidade_add' %}" method="POST" autocomplete="off">
     {% csrf_token %}
     <div class="card-body tab-content">
       <h5 class="card-title mb-3">Cadastro de Localidade</h5>

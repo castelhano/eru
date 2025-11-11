@@ -6,7 +6,7 @@
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
-        <form id="planejamento_form" action="{% url 'trafego_planejamento_update' planejamento.id|safe %}" method="POST" autocomplete="off">
+        <form id="planejamento_form" action="{% url 'trafego:planejamento_update' planejamento.id|safe %}" method="POST" autocomplete="off">
           {% csrf_token %}
         <div class="row g-1">
           <div class="col-lg-8">{% include "_component/field/empresa.html" with empresa_atual=planejamento.empresa.id|safe attrs='onchange="cleanLinha()" autofocus' %}</div>
@@ -59,7 +59,7 @@
         <div class="row mt-2">
           <div class="col text-end">
             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'trafego_planejamento_delete' planejamento.id|safe %}">Excluir</a>
+            <a class="btn btn-danger px-3" href="{% url 'trafego:planejamento_delete' planejamento.id|safe %}">Excluir</a>
           </div>
         </div>
       </div>

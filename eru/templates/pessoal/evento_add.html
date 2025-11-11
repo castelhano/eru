@@ -9,10 +9,10 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal_eventos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal_evento_add' %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:evento_add' %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_evento.html' %}
     </form>
@@ -42,12 +42,12 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
     },
     url: {
         parent: {
-            show: "{% url 'pessoal_get_grupos_evento' %}",
+            show: "{% url 'pessoal:get_grupos_evento' %}",
         },
         related: {
-             add: "{% url 'pessoal_add_grupo_evento' %}",
-             show: "{% url 'pessoal_get_grupos_evento' %}",
-             change: "{% url 'pessoal_update_grupo_evento' %}",
+             add: "{% url 'pessoal:add_grupo_evento' %}",
+             show: "{% url 'pessoal:get_grupos_evento' %}",
+             change: "{% url 'pessoal:update_grupo_evento' %}",
         }
     }    
 })

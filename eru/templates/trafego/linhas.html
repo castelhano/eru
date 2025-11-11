@@ -11,7 +11,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a id="tab_link_base" class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.trafego.add_linha %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'trafego_linha_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'trafego:linha_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
@@ -78,7 +78,7 @@
             <td class="d-none d-lg-table-cell">{{linha.destino.nome}}</td>
             <td class="d-none d-sm-table-cell">{{linha.inativa|yesno:'<b class="text-secondary">Inativa</b>,<b class="text-success">Ativa</b>'|safe}}</td>
             {% if perms.trafego.change_linha %}
-            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego_linha_id' linha.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'trafego:linha_id' linha.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
             {% endif %}
           </tr>
           {% endfor %}

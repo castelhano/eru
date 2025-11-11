@@ -12,7 +12,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.core.add_empresa %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'core_empresa_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'empresa_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
@@ -67,7 +67,7 @@
             <td class="d-none">{{empresa.fone}}</td>
             <td class="d-none">{{empresa.fax}}</td>
             {% if perms.core.change_empresa %}
-            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'core_empresa_id' empresa.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
+            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'empresa_id' empresa.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
             {% endif %}
           </tr>
           {% endfor %}
