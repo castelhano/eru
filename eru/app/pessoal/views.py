@@ -271,7 +271,7 @@ def evento_id(request,id):
 def grupo_evento_id(request,id):
     grupo_evento = GrupoEvento.objects.get(pk=id)
     form = GrupoEventoForm(instance=grupo_evento)
-    return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
+    return render(request,'pessoal/grupo_evento_id.html', {'form':form,'grupo_evento':grupo_evento})
 
 
 
@@ -494,7 +494,7 @@ def grupo_evento_delete(request,id):
         registro.delete()
         l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:grupo_eventos')
+        return redirect('pessoal:grupos_evento')
     except:
         messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:grupo_evento_id', id)

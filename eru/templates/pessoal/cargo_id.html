@@ -9,6 +9,7 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="eventos" href="" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
@@ -97,6 +98,10 @@
         title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',
         icon: 'bi bi-diagram-3-fill',
     });
+
+    appKeyMap.bind('alt+e', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'', icon: 'bi bi-link-45deg text-orange', desc:'Exibe eventos do cargo', origin: 'pessoal:cargo_id'})
+
+
     
     {% endblock %}
 </script>

@@ -31,7 +31,7 @@ class RelatedAddon {
             },
             styles: {
                 dialog: 'min-width:500px;max-width:800px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
-                spinner: 'position: absolute;top: 10px; right: 20px;',
+                spinner: 'position: absolute;top: 10px; right: 45px;',
                 addOn: '',
                 submit: '',
                 cancel: 'position: absolute; top: 15px; right: 15px;',

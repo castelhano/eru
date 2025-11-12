@@ -11,19 +11,20 @@ class SetorForm(forms.ModelForm):
     class Meta:
         model = Setor
         fields = ['nome']
-    nome = forms.CharField(error_messages={'required': 'Preencha o nome do setor'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+    nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
 class GrupoEventoForm(forms.ModelForm):
     class Meta:
         model = GrupoEvento
         fields = ['nome']
+    nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
 class CargoForm(forms.ModelForm):
     class Meta:
         model = Cargo
         fields = ['nome','setor','atividades']
-    setor = forms.ModelChoiceField(error_messages={'required': 'Selecione um setor'},queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select','autofocus':'autofocus'}))
-    nome = forms.CharField(error_messages={'required': 'Preencha o nome do cargo'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+    setor = forms.ModelChoiceField(queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     atividades = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'data-i18n':'[placeholder]personal.position.jobResponsibilities', 'placeholder':'Atividades do cargo', 'rows':'15'}))
     funcao_fixa = forms.MultipleChoiceField(required=False, choices=FuncaoFixa.FFIXA_CHOICES, widget=forms.SelectMultiple(attrs={'class':'form-select fw-bold'}))
     
@@ -44,7 +45,7 @@ class DependenteForm(forms.ModelForm):
     class Meta:
         model = Dependente
         fields = ['funcionario','nome','parentesco','sexo','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf']
-    nome = forms.CharField(error_messages={'required': 'Informe o nome do dependente'}, max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+    nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     parentesco = forms.ChoiceField(required=False,choices=Dependente.PARENTESCO, widget=forms.Select(attrs={'class':'form-select'}))
     sexo = forms.ChoiceField(required=False,choices=Funcionario.SEXO_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     data_nascimento = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
@@ -58,8 +59,8 @@ class FuncionarioForm(forms.ModelForm):
     class Meta:
         model = Funcionario
         fields = ['empresa','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne']
-    matricula = forms.CharField(error_messages={'required': 'Informe a matricula do funcionario','unique':'Matricula já cadastrada para outro funcionário'},max_length=6,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
-    nome = forms.CharField(error_messages={'required': 'Informe o nome do funcionario'}, max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    matricula = forms.CharField(max_length=6,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
+    nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     apelido = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     nome_social = forms.CharField(required=False, max_length=200, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     sexo = forms.ChoiceField(required=False,choices=Funcionario.SEXO_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
@@ -100,9 +101,10 @@ class FuncionarioForm(forms.ModelForm):
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
-        fields = ['nome','rastreio','grupo']
-    nome = forms.CharField(error_messages={'required': 'Informe o nome do evento'}, max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+        fields = ['nome','rastreio','tipo','grupo']
+    nome = forms.CharField(max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
+    tipo = forms.ChoiceField(required=False, choices=Evento.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')

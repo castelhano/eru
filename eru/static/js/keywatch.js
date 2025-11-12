@@ -77,22 +77,9 @@ class Keywatch{
         }
         
         // adiciona listeners basico para document
-        this._addEvent(document, 'keydown', (ev)=>{
-            // ao utilizar selects nativos, por padrao, o navegador para de enviar eventos com o select aberto, gerando inconsistencia 
-            // nas teclas precionadas em this.pressed, para previnir este problema eh agendado limpeza
-            if(ev.target.tagName === 'SELECT' && (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') && (ev.altKey || ev.ctrlKey)){
-                // Dropdown do select foi aberto via teclado (alt+arrowdown ou ctrl+arrowdown)
-                // Agenda limpeza do array pressed após o dropdown fechar (estimado em ~300ms)
-                if(this._selectDropdownCloseTimer){clearTimeout(this._selectDropdownCloseTimer)}
-                this._selectDropdownCloseTimer = setTimeout(()=>{
-                    this.pressed = [];
-                    this._selectDropdownCloseTimer = null;
-                }, this.cleanDelay);
-            }
-            this._eventHandler(ev, this)
-        }, false);
+        this._addEvent(document, 'keydown', (ev)=>{ this._eventHandler(ev, this) }, false);
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
-        this._addEvent(window, 'blur', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
+        this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
         //--
         if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
@@ -124,7 +111,8 @@ class Keywatch{
     _eventHandler(ev){
         if(this.locked){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
-            if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
+            let key = this._normalize(ev.key);
+            if(ev.key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
@@ -152,11 +140,14 @@ class Keywatch{
         }
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
-            let find = this._eventsMatch(scope, ev); // Busca match de composicao
-            if(ev.key && this.pressed.indexOf(ev.key.toLowerCase()) > -1){ this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
+            this._eventsMatch(scope, ev); // Busca match de composicao
+            let key = this._normalize(ev.key);
+            if(ev.key && this.pressed.indexOf(key) > -1){ this.pressed.splice(this.pressed.indexOf(key), 1);} 
             else if(ev.code == 'Altleft'){ this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
+            if(ev.key.toLowerCase() == 'escape'){ this.pressed = [] }
         }
     }
+    _normalize(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/çÇ/g, "c").toLowerCase() }
     
     // cria entrada em this.handlers
     _spread(event){

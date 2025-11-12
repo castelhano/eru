@@ -96,9 +96,9 @@
 
 <script>
     {% block add_script %}
-    let imaskElements = _formRun();
-    const form = new jsForm(document.getElementById('app_form'), {
-        imask: imaskElements
+    const [cpf, cnh] = _formRun();
+    const form = new jsForm('#app_form', {
+        imask: [cpf, cnh]
     })
     {% endblock %}
 </script>

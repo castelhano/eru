@@ -247,7 +247,7 @@ class jsSelectm{
             input: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
             groupInput: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
             groupLabel: '',
-            groupCounter: 'badge bg-body-tertiary fw-normal ms-2',
+            groupCounter: 'badge bg-body-secondary fw-normal ms-2 text-body',
             checkAll: 'pointer user-select-none',
             checkAllText: 'text-body-tertiary',
             uncheck: 'bi bi-square me-2',
