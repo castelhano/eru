@@ -259,6 +259,7 @@ class Evento(models.Model):
     )
     nome = models.CharField(max_length=100, blank=False)
     rastreio = models.CharField(max_length=40, blank=True)
+    tipo = models.CharField(max_length=3, choices=TIPOS, default='P', blank=False)
     grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.evento', objeto_id=self.id).order_by('-data')[:15]
@@ -278,6 +279,7 @@ class EventoMovimentacao(models.Model):
     inicio = models.DateField(blank=False, null=False, default=datetime.today)
     fim = models.DateField(blank=True, null=True)
     valor = models.CharField(max_length=250, blank=True)
+    tipo = models.CharField(max_length=3, choices=TIPOS, default='V', blank=False)
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True

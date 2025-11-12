@@ -11,13 +11,6 @@
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
---
-# Problema conhecido:
-# ao abrir caixa de opcoes de elemento select usando o atalho padrão (alt+arrowdown) teclas ficam presas em this.pressed (navegador nao aciona 
-# eventos com options aberta), para tratar, analisamos evento change no document e limpamos this.pressed, e no evento keyup limpamos pressed ao usar 
-# a tecla esc para fechar a caixa de opcoes
-# unico cenario que problema persiste eh ao usar a tecla enter sem altear a opcao do select (selecionar opcao ja ativa)
-# eh possivel definir {selectDisable: true} ao instanciar para desativar atalhos com foco em selects, outra possibilidade eh nao usar selects nativos
 */
 class Keywatch{
     constructor(options={}){
@@ -45,16 +38,16 @@ class Keywatch{
             'data-i18n': undefined,
             'i18n-dynamicKey': false
         }
-        this.defaultOptions = {                         // configuracoes padrao para classe
+        this.defaultOptions = { // configuracoes padrao para classe
             splitKey: '+',
             separator: ';',
             tabOnEnter: true,
-            selectDisable: false,                        // se select disabled == true, atalhos com o focus em selects nao seram analisados
-            shortcutMaplist: "alt+k",                   // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
+            cleanDelay: 300, // tempo em milissegundos para limpeza de this.pressed em elementos select (trata prblema de teclas presas)
+            shortcutMaplist: "alt+k", // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
             shortcutMaplistIcon: "bi bi-alt",
-            shortcutMaplistOnlyContextActive: true,    // se true so mostra atalhados do contexto ativo (alem do all)
-            i18nHandler: null,                          // integracao com lib i18n, se ativa deve informar objeto instanciado
+            shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
+            i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
@@ -73,7 +66,7 @@ class Keywatch{
             else{this[k] = this.defaultOptions[k]}
         }
         
-        this.modifier = {                          // itens para conversao de codigo
+        this.modifier = {                  // itens para conversao de codigo
             'ctrl': 'control',
             '[space]': ' ',
             'esc': 'escape',
@@ -84,11 +77,23 @@ class Keywatch{
         }
         
         // adiciona listeners basico para document
-        this._addEvent(document, 'keydown', (ev)=>{this._eventHandler(ev, this)}, false);
+        this._addEvent(document, 'keydown', (ev)=>{
+            // ao utilizar selects nativos, por padrao, o navegador para de enviar eventos com o select aberto, gerando inconsistencia 
+            // nas teclas precionadas em this.pressed, para previnir este problema eh agendado limpeza
+            if(ev.target.tagName === 'SELECT' && (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') && (ev.altKey || ev.ctrlKey)){
+                // Dropdown do select foi aberto via teclado (alt+arrowdown ou ctrl+arrowdown)
+                // Agenda limpeza do array pressed após o dropdown fechar (estimado em ~300ms)
+                if(this._selectDropdownCloseTimer){clearTimeout(this._selectDropdownCloseTimer)}
+                this._selectDropdownCloseTimer = setTimeout(()=>{
+                    this.pressed = [];
+                    this._selectDropdownCloseTimer = null;
+                }, this.cleanDelay);
+            }
+            this._eventHandler(ev, this)
+        }, false);
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
-        this._addEvent(document, 'change', (ev)=>{this.pressed = []}, false); // previne teclas travadas no pressed ao usar um elemento select
         this._addEvent(window, 'blur', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
-        //**** */
+        //--
         if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
     }
@@ -118,13 +123,12 @@ class Keywatch{
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
         if(this.locked){return false}
-        if(this.selectDisable && ev.target.tagName == 'SELECT'){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             if(ev.key && !this.pressed.includes(ev.key.toLowerCase())){this.pressed.push(ev.key.toLowerCase())}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
-                // caso nao localizado nem diretamente do evento nem em composicao, verifica se ev.key eh Enter e se originou de input / select
+                // caso nao localizado atalho, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
                 // para desativar tabulacao em um input especifico atribua data-keywatch='none' para nao tabular (nao submete form) ou data-keywatch='default' para submit
                 try{
@@ -151,8 +155,6 @@ class Keywatch{
             let find = this._eventsMatch(scope, ev); // Busca match de composicao
             if(ev.key && this.pressed.indexOf(ev.key.toLowerCase()) > -1){ this.pressed.splice(this.pressed.indexOf(ev.key.toLowerCase()), 1);} 
             else if(ev.code == 'Altleft'){ this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
-            // el selects geram inconsistencia ao abrir opcoes usando atalho teclado (alt+arrowdown) ficando com teclas presas no this.pressed
-            if(ev.key.toLowerCase() == 'escape' && ev.target.tagName.toLowerCase() == 'select'){this.pressed = []} // el select gera inconsistencia ao abrir
         }
     }
     

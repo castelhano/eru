@@ -111,7 +111,7 @@
     selectPopulate: [
     {
       target: document.getElementById('id_empresa'), 
-      url: '{% url 'core_get_empresas' %}',
+      url: '{% url 'get_empresas' %}',
       emptyRow: {innerHTML: 'Todas'},
       then: ()=>{if({{empresa|default:'false'}}){document.getElementById('id_empresa').value = '{{empresa}}'}}
     }

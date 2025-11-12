@@ -2,6 +2,7 @@ import os
 import json
 import threading
 import csv
+from django.urls import reverse
 from django.db.models import Count
 from pathlib import Path
 from django.shortcuts import render, redirect
@@ -660,9 +661,10 @@ def get_localidades(request):
         for item in localidades:
             item_dict = {'#':item.id, 'Nome':item.nome, 'GAR': 'GAR' if item.eh_garagem else '', 'T Turno': 'T Turno' if item.troca_turno else '', 'Controle': 'Controle' if item.ponto_de_controle else ''}
             if request.user.has_perm('trafego.change_localidade'):
-                item_dict['cnt'] = f'<a class="btn btn-sm btn-dark float-end" href="/trafego_localidade_id/{item.id}"><i class="bi bi-pen-fill"></i></a>'
+                url = reverse('trafego:localidade_id', kwargs={'id': item.id})
+                item_dict['cnt'] = f'<a class="btn btn-sm btn-dark float-end" href="{url}"><i class="bi bi-pen-fill"></i></a>'
             itens.append(item_dict)
         dataJSON = json.dumps(itens)
         return HttpResponse(dataJSON)
     except:
-        return HttpResponse('')
+        return HttpResponse('[]')

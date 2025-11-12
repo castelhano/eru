@@ -7,10 +7,7 @@
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @depend   boostrap 5.x, bootsrap icons
 
-TODO: ERRO ao salvar, aparentemente nao esta carregando as opcoes em this.selected dos itens precarragados
-
-Metodo onchange deve encaminhar como elemento array com os options que sofreram modificacao [1,3,8]
-
+TODO: Metodo onchange deve encaminhar como elemento array com os options que sofreram modificacao [1,3,8]
 */
 class jsSelectm{
     constructor(el, options){

@@ -14,6 +14,7 @@ class jsTable{
     constructor(target, options){
         // Variaveis internas ********
         this.table = typeof target == 'string' ? document.querySelector(target) : target; // Aponta para tabela alvo
+        if(!this.table){ throw new Error(`jsTable: target not found (${target})`) }
         this.raw = []; // Guarda todos os TRs da tabela
         this.filteredRows = []; // Guarda as rows filtradas
         this.rowsCountLabel = null; // Span com a qtde de registros na tabela
@@ -67,7 +68,7 @@ class jsTable{
         this.buildListeners();
         
         if(this.enablePaginate){this.paginate();}
-        if(this.keyBind){this.__appKeyMapIntegration();}
+        if(this.keyBind && typeof appKeyMap !== 'undefined'){this.__appKeyMapIntegration();}
         if(!this.table.caption.hasChildNodes()){this.table.caption.style.display = 'none'} // oculta caption caso nao tiver nenhum elemento (export, filter, etc)
     }
     buildControls(){
@@ -110,13 +111,12 @@ class jsTable{
             let capFilter = document.createElement('div');
             capFilter.classList = 'col';
             this.filterInput = document.createElement('input');
-            this.filterInput.id = 'jsTable_filterinput';
             this.filterInput.type = 'text';
             this.filterInput.disabled = this.filterCols.length ? false : true; // Disabled elemento se nao informado colunas para filtrar (filterCols)
             this.filterInput.classList = 'form-control form-control-sm';
             this.filterInput.placeholder = i18n ? i18n.getEntry('common.filter__posfix:*') || 'Filtrar*' : 'Filtrar*';
             this.filterInput.setAttribute('data-i18n', '[placeholder]common.filter__posfix:*');
-            this.filterInput.autocomplete = false;
+            this.filterInput.autocomplete = 'off';
             this.filterInput.oninput = (e) => this.filter(e);
             capFilter.appendChild(this.filterInput);
             capRow.appendChild(capFilter);
@@ -136,7 +136,6 @@ class jsTable{
             this.exportButtonCSV.onclick = (e) => this.exportCsv(e);
             this.onclickObjs.push(this.exportButtonCSV);
             this.exportButtonCSV.innerHTML = 'CSV';
-            this.exportButtonCSV.id = 'jsTableDownloadCSV';
             this.controlsGroup.appendChild(this.exportButtonCSV);
         }
         if(this.canExportJson){
@@ -311,7 +310,6 @@ class jsTable{
         rows = sortedRows; // Atualiza campos (filteredRows ou no raw)
         if(this.enablePaginate){this.paginate()} // Se paginacao habilitada, refaz paginacao
         else{rows.forEach((e) => this.tbody.append(e))} // Caso nao, atualiza o tbody da tabela
-        
         this.thead.querySelectorAll("th").forEach(th => th.classList.remove("th-sort-asc", "th-sort-desc"));
         this.thead.querySelector(`th:nth-child(${ column + 1})`).classList.toggle("th-sort-asc", asc);
         this.thead.querySelector(`th:nth-child(${ column + 1})`).classList.toggle("th-sort-desc", !asc);
@@ -383,15 +381,16 @@ class jsTable{
             csv.push(foot.substring(0, foot.length - 1));
         }
         let csv_string = csv.join('\n');
-        let filename = `${this.fileName}.csv`;
+        let blob = new Blob([csv_string], {type: 'text/csv;charset=utf-8;'});
+        let url = URL.createObjectURL(blob);
         let link = document.createElement('a');
         link.style.display = 'none';
-        link.setAttribute('target', '_blank');
-        link.setAttribute('href', 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURIComponent(csv_string));
-        link.setAttribute('download', filename);
+        link.href = url;
+        link.download = `${this.fileName}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         let originalClasslist = e.target.className;
         e.target.classList = 'btn btn-sm btn-success';
         try {dotAlert('success', 'Arquivo <b>csv</b> gerado com <b>sucesso</b>')}catch(error){}
@@ -403,7 +402,7 @@ class jsTable{
     addEmptyRow(){this.tbody.innerHTML = `<tr class="emptyRow"><td data-type="emptyRow" colspan="${this.headers.length}">${this.emptyTableMessage}</td></tr>`;}
     validateTable(){ // Metodo chamado em tabelas previamente criadas, normaliza e categoriza elementos  
         if(!this.table.caption){ // Cria o caption da tabela caso nao exista
-            this.table.caption = document.createElement('caption');
+            this.table.caption = this.table.createCaption();
         }
         else{this.caption = this.table.caption.innerHTML;this.table.caption.innerHTML = ''} // Limpa o caption atual, sera refeito no metodo buildControls
         this.table.caption.style.position = 'relative'; // Ajusta o posicionamento do caption para relative
