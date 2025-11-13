@@ -12,11 +12,14 @@
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if perms.pessoal.view_eventofuncionario %}
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
+            {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" data-i18n="common.history">Historico</a></li>
-                    <li><a class="dropdown-item" href="{# url 'pessoal_export_funcionario_csv' funcionario.id|safe #}">Baixar CSV</a></li>
+                    <li><a class="dropdown-item" href="{# url 'pessoal:export_funcionario_csv' funcionario.id|safe #}">Baixar CSV</a></li>
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{# url 'pessoal_dependentes' funcionario.id|safe#}">Dependentes</a></li>{% endif %}
                     {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{# url 'pessoal_afastamentos' funcionario.id|safe #}">Afastamentos</a></li>{% endif %}
                     {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
@@ -100,5 +103,9 @@
     const form = new jsForm('#app_form', {
         imask: [cpf, cnh]
     })
+
+    {% if perms.pessoal.view_eventofuncionario %}
+    appKeyMap.bind('alt+e', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
+    {% endif %}
     {% endblock %}
 </script>

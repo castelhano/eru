@@ -112,10 +112,12 @@ class FuncaoFixa(models.Model):
     nome = models.CharField(max_length=3,choices=FFIXA_CHOICES,unique=True, blank=False)
     cargos = models.ManyToManyField(Cargo, related_name="ffixas")
     def __str__(self):
-        return self.get_nome_display
+        return self.get_nome_display()
     def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.funcao_fixa',objeto_id=self.id).order_by('-data')[:15]
+        logs = Log.objects.filter(modelo='pessoal.funcao_fixa', objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+    class Meta:
+        permissions = []
     
     
 class Funcionario(Pessoa):

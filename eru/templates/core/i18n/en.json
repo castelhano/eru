@@ -8,6 +8,7 @@
         "back": "Back",
         "blocked": "Blocked",
         "cancel": "Cancel",
+        "category": "Category#Categories",
         "city": "City#Cities",
         "classification": "Classification",
         "clean": "Clean",
@@ -19,13 +20,16 @@
         "delete": "Delete",
         "description": "Description#Descriptions",
         "detail": "Detail#Details",
+        "district": "District#Districts",
         "edit": "Edit",
         "end": "End",
         "email": "Email",
         "employee": "Employee#Employees",
         "error": "Error#Errors",
+        "expired": "Expired",
         "export": "Export#Exports",
         "garage": "Garage#Garages",
+        "gender": "Gender",
         "filter": "Filter#Filters",
         "fone": "Fone#Fones",
         "group": "Group#Groups",
@@ -37,6 +41,7 @@
         "module": "Module",
         "name": "Name",
         "neighborhood": "Neighborhood#Neighborhoods",
+        "new": "New",
         "object": "Object",
         "only": "Only",
         "operation": "Operation",
@@ -53,6 +58,7 @@
         "search": "Search",
         "sector": "Sector",
         "settings": "Settings",
+        "state": "State",
         "start": "Start",
         "status": "Status",
         "track": "Track",
@@ -60,6 +66,7 @@
         "type": "Type#Types",
         "undo": "Undo",
         "user": "User#Users",
+        "valid": "Valid",
         "wait": "Wait",
         "warning": "Warning"
     },
@@ -123,7 +130,7 @@
     "apps":{
         "routes": "Routes",
         "planning": "Planning",
-        "employee": "Employee"
+        "personal": "Personal"
     },
     "index": {
         "darkTheme":"Dark theme",

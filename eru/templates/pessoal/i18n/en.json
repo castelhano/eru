@@ -1,16 +1,46 @@
 {
     "personal":{
         "common":{
+            "employeeId": "Employee Id",
+            "event": "Event#Events",
             "personal": "Personal#Personals",
-            "event": "Event#Events"
+            "nickname": "Nickname"
         },
         "employee": {
             "form": {
-                "terminationReason": "Reason for termination"
+                "birthDate": "Date of Birth",
+                "driversLicense": "Driver's License",
+                "driversLicenseIssuance": "Driver's license issuance",
+                "driversLicenseValidity": "Driver's license validity",
+                "electoralZone": "Electoral zone",
+                "employeeRegistration": "Employee Registration",
+                "hireDate": "Hire Birth",
+                "issuingAuthority": "Issuing authority",
+                "issueDate": "Issue date",
+                "fathersName": "Father's name",
+                "firstLicense": "First License",
+                "fullName": "Full name",
+                "maritalStatus": "Marital status",
+                "militaryLicense": "Military license",
+                "mothersName": "Mothers's name",
+                "personWithSpecialNeeds": "Person with special needs",
+                "pollingStation": "Polling station",
+                "socialName": "Social name",
+                "terminationDate": "Termination date",
+                "terminationReason": "Termination reason",
+                "tabBase": "Displays basic employee information",
+                "tabDocs": "Displays employee documents",
+                "tabAddress": "Displays address and contact information",
+                "tabDetail": "Displays general employee details",
+                "tabEvents": "Displays employee events",
+                "voterRegistration": "Voter registration"
             }
         },
         "position":{
-            "jobResponsibilities": "Job responsibilities"
+            "jobResponsibilities": "Job responsibilities",
+            "form":{
+                "tabEvents": "Displays position events"
+            }
         },
         "fixedPosition":{
             "form": {

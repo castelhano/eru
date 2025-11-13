@@ -10,7 +10,7 @@
 * --
 * Read me **: 
 * Ver 2.0 alterado forma de declaracao de modificadores, removido data-i18n-[bold, transform, pluralize]
-* declaracao eh feita toda em data-i18n="[placeholder]common.company__she__plural__captalize__bold:c__prefix:R$__posfix: pt-BR"
+* declaracao eh feita toda em data-i18n="[placeholder]common.company__she__plural__captalize__bold:c__var:teste,5,4__prefix:R$__posfix: pt-BR"
 * alteracao multipla no elemento data-i18n="[placeholder]foo.bar;[title]foo.fei"
 */
 

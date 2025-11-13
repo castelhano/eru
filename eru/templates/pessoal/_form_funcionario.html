@@ -1,6 +1,6 @@
 {% load static %}
 <div class="card-body">
-    <h5 class="card-title mb-3">Cadastro de Funcionário</h5>
+    <h5 class="card-title mb-3" data-i18n="personal.employee.form.employeeRegistration">Cadastro de Funcionário</h5>
     <div class="row g-lg-3">
         <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
             {% if funcionario.foto %}
@@ -13,9 +13,9 @@
                     <div class="col">
                         <div class="d-grid">
                             {% if not funcionario %}
-                            <a class="btn btn-sm btn-light px-4 px-lg-0 disabled">NOVO</a>
+                            <a class="btn btn-sm btn-light px-4 px-lg-0 disabled" data-i18n="common.new__toUpperCase">NOVO</a>
                             {% elif funcionario.status == 'A' %}
-                            <a class="btn btn-sm btn-success px-4 px-lg-0 disabled">ATIVO</a>
+                            <a class="btn btn-sm btn-success px-4 px-lg-0 disabled" data-i18n="common.active__toUpperCase">ATIVO</a>
                             {% else %}
                             <a class="btn btn-sm btn-warning px-4 px-lg-0 disabled text-uppercase">{{funcionario.get_status_display}}</a>
                             {% endif %}
@@ -30,28 +30,28 @@
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.matricula }}
-                            <label for="id_matricula">Matricula</label>
+                            <label for="id_matricula" data-i18n="personal.common.employeeId">Matricula</label>
                         </div>
                         {% include "_component/field/empresa.html" with container_classlist='form-floating col mb-1' empresa_atual=funcionario.empresa.id|safe attrs='autofocus' %}
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-9">
                             {{ form.nome }}
-                            <label for="id_nome">Nome completo</label>
+                            <label for="id_nome" data-i18n="personal.employee.form.fullName">Nome completo</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-3">
                             {{ form.regime }}
-                            <label for="id_regime">Regime de Trabalho</label>
+                            <label for="id_regime" data-i18n="common.regime">Regime</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-9">
                             {{ form.nome_social }}
-                            <label for="id_nome_social">Nome Social</label>
+                            <label for="id_nome_social" data-i18n="personal.employee.form.socialName">Nome Social</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-3">
                             {{ form.apelido }}
-                            <label for="id_apelido">Apelido</label>
+                            <label for="id_apelido" data-i18n="personal.common.nickname">Apelido</label>
                         </div>
                     </div>
                     <div class="row g-1">
@@ -59,36 +59,36 @@
                             <select class="form-select" id="id_setor" name="setor" onchange="carregaCargos()">
                                 <option value="">---------</option>
                             </select>
-                            <label for="id_setor">Setor</label>
+                            <label for="id_setor" data-i18n="common.sector">Setor</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             <select class="form-select" id="id_cargo" name="cargo">
                                 <option value="">---------</option>
                             </select>
-                            <label for="id_cargo">Cargo</label>
+                            <label for="id_cargo" data-i18n="common.position">Cargo</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.sexo }}
-                            <label for="id_sexo">Sexo</label>
+                            <label for="id_sexo" data-i18n="common.gender">Sexo</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-3">
                             {{ form.data_nascimento }}
-                            <label for="id_data_nascimento">Data Nascimento</label>
+                            <label for="id_data_nascimento" data-i18n="personal.employee.form.birthDate">Data de Nascimento</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-4">
                             {{ form.data_admissao }}
-                            <label for="id_data_admissao">Data Admissão</label>
+                            <label for="id_data_admissao" data-i18n="personal.employee.form.hireDate">Data Admissão</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-4">
                             {{ form.estado_civil }}
-                            <label for="id_estado_civil">Estado Civil</label>
+                            <label for="id_estado_civil" data-i18n="personal.employee.form.maritalStatus">Estado Civil</label>
                         </div>
                         {% if perms.pessoal.associar_usuario %}
                         <div class="form-floating mb-1 col-lg-4">
                             {{ form.usuario }}
-                            <label for="id_usuario">Usuário</label>
+                            <label for="id_usuario" data-i18n="common.user">Usuário</label>
                         </div>
                         {% endif %}
                     </div>
@@ -96,30 +96,30 @@
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-4">
                             <input type="date" class="form-control fw-bold" id="id_data_desligamento" value="{{funcionario.data_desligamento|date:'Y-m-d'}}" disabled>
-                            <label for="id_data_desligamento">Data Desligamento</label>
+                            <label for="id_data_desligamento" data-i18n="personal.employee.form.terminationDate">Data Desligamento</label>
                         </div>
                         <div class="form-floating mb-1 col-lg">
                             <input type="text" class="form-control fw-bold" id="id_motivo_desligamento" value=" {{funcionario.get_motivo_desligamento_display }}" disabled>
-                            <label for="id_motivo_desligamento">Motivo Desligamento</label>
+                            <label for="id_motivo_desligamento" data-i18n="personal.employee.form.terminationReason">Motivo Desligamento</label>
                         </div>
                     </div>
                     {% endif %}
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.nome_pai }}
-                            <label for="id_nome_pai">Nome Pai</label>
+                            <label for="id_nome_pai" data-i18n="personal.employee.form.fathersName">Nome Pai</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.nome_mae }}
-                            <label for="id_nome_mae">Nome Mãe</label>
+                            <label for="id_nome_mae" data-i18n="personal.employee.form.mothersName">Nome Mãe</label>
                         </div>
                     </div>
                     <input type="hidden" name="foto_data_url" id="id_foto_data_url">
                     <div class="form-check form-switch mt-2">
                         {{form.pne}}
-                        <label class="form-check-label" for="id_pne">PNE Portador de necessidades especiais</label>
+                        <label class="form-check-label" for="id_pne" data-i18n="personal.employee.form.personWithSpecialNeeds">PNE Portador de necessidades especiais</label>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="documents" role="tabpanel">
@@ -130,11 +130,11 @@
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.rg_orgao_expedidor }}
-                            <label for="id_rg_orgao_expedidor">RG Orgão Expedidor</label>
+                            <label for="id_rg_orgao_expedidor" data-i18n="personal.employee.form.issuingAuthority__prefix:RG ">RG Orgão Expedidor</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-4">
                             {{ form.rg_emissao }}
-                            <label for="id_rg_emissao">RG Data de emissão</label>
+                            <label for="id_rg_emissao" data-i18n="personal.employee.form.issueDate__prefix:RG ">RG Data de emissão</label>
                         </div>
                     </div>
                     <div class="row g-1">
@@ -144,55 +144,55 @@
                         </div>
                         <div class="form-floating mb-1 col-lg-7">
                             {{ form.reservista }}
-                            <label for="id_reservista">Reservista</label>
+                            <label for="id_reservista" data-i18n="personal.employee.form.militaryLicense">Reservista</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.titulo_eleitor }}
-                            <label for="id_titulo_eleitor">Titulo eleitor</label>
+                            <label for="id_titulo_eleitor" data-i18n="personal.employee.form.voterRegistration">Titulo eleitor</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.titulo_zona }}
-                            <label for="id_titulo_zona">Zona</label>
+                            <label for="id_titulo_zona" data-i18n="personal.employee.form.electoralZone">Zona</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-4">
                             {{ form.titulo_secao }}
-                            <label for="id_titulo_secao">Seção</label>
+                            <label for="id_titulo_secao" data-i18n="personal.employee.form.pollingStation">Seção</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.cnh }}
-                            <label for="id_cnh">CNH</label>
+                            <label for="id_cnh" data-i18n="personal.employee.form.driversLicense">CNH</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg">
                             {{ form.cnh_primeira_habilitacao }}
-                            <label for="id_cnh_primeira_habilitacao">Primeira Habilitação</label>
+                            <label for="id_cnh_primeira_habilitacao" data-i18n="personal.employee.form.firstLicense">Primeira Habilitação</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-auto" style="min-width: 130px;">
                             {{ form.cnh_categoria }}
-                            <label for="id_cnh_categoria">Categoria</label>
+                            <label for="id_cnh_categoria" data-i18n="common.category">Categoria</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.cnh_emissao }}
-                            <label for="id_cnh_emissao">CNH Emissão</label>
+                            <label for="id_cnh_emissao" data-i18n="personal.employee.form.driversLicenseIssuance">CNH Emissão</label>
                         </div>
                         <div class="form-floating col-lg">
                             {{ form.cnh_validade }}
-                            <label for="id_cnh_validade">CNH Validade</label>
+                            <label for="id_cnh_validade" data-i18n="personal.employee.form.driversLicenseValidity">CNH Validade</label>
                         </div>
                         <div class="form-floating col-lg">
                             {% if funcionario.cnh_validade == None %}
                             <input type="text" class="form-control" id="id_situacao_cnh" value="" disabled>
                             {% elif funcionario.cnh_eh_valida %}
-                            <input type="text" class="form-control" id="id_situacao_cnh" value="No prazo" disabled>
+                            <input type="text" class="form-control" id="id_situacao_cnh" data-i18n="common.valid" value="Valida" disabled>
                             {% else %}
-                            <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" value="Vencida" disabled>
+                            <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" data-i18n="common.expired" value="Vencida" disabled>
                             {% endif %}
-                            <label for="id_situacao_cnh">Status</label>
+                            <label for="id_situacao_cnh" data-i18n="common.status">Status</label>
                         </div>
                     </div>
                 </div>
@@ -200,35 +200,35 @@
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-lg-12">
                             {{ form.endereco }}
-                            <label for="id_endereco">Endereço</label>
+                            <label for="id_endereco" data-i18n="common.address">Endereço</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col" style="max-width: 100px;">
                             {{ form.uf }}
-                            <label for="id_uf">UF</label>
+                            <label for="id_uf" data-i18n="common.state">UF</label>
                         </div>
                         <div class="form-floating mb-lg-1 col">
                             {{ form.cidade }}
-                            <label for="id_cidade">Cidade</label>
+                            <label for="id_cidade" data-i18n="common.city">Cidade</label>
                         </div>
                         <div class="form-floating mb-1 col-lg">
                             {{ form.bairro }}
-                            <label for="id_bairro">Bairro</label>
+                            <label for="id_bairro" data-i18n="common.district">Bairro</label>
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.fone1 }}
-                            <label for="id_fone1">Fone 01</label>
+                            <label for="id_fone1" data-i18n="common.fone__posfix: 01">Fone 01</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.fone2 }}
-                            <label for="id_fone2">Fone 02</label>
+                            <label for="id_fone2" data-i18n="common.fone__posfix: 02">Fone 02</label>
                         </div>
                         <div class="form-floating mb-1 col-lg-6">
                             {{ form.email }}
-                            <label for="id_email">Email</label>
+                            <label for="id_email" data-i18n="common.email">Email</label>
                         </div>
                     </div>
                 </div>
@@ -236,7 +236,7 @@
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.detalhe }}
-                            <label for="id_nome">Detalhes</label>
+                            <label for="id_nome" data-i18n="common.detail__plural">Detalhes</label>
                         </div>
                     </div>
                 </div>    
@@ -245,7 +245,7 @@
     </div>
     <div class="row mt-3">
         <div class="col">
-            <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"{% if 'funcionario_id' in request.get_full_path and not perms.pessoal.change_funcionario %} disabled{% endif %}><b>G</b>ravar</button>
+            <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save__bold:g" {% if 'funcionario_id' in request.get_full_path and not perms.pessoal.change_funcionario %} disabled{% endif %}><b>G</b>ravar</button>
         </div>
     </div>
 </div>
@@ -299,10 +299,10 @@
     function _formRun(){
         const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
         const cnh = IMask(document.getElementById('id_cnh'), {mask: '000.000.000-00'})
-        appKeyMap.bind('ctrl+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com dados básicos do funcionário', origin: '_form_funcionario'})
-        appKeyMap.bind('ctrl+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com documentos do funcionário', origin: '_form_funcionario'})
-        appKeyMap.bind('ctrl+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com endereço e informações de contato', origin: '_form_funcionario'})
-        appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', desc: 'Exibe aba com detalhes gerais do funcionário', origin: '_form_funcionario'})
+        appKeyMap.bind('ctrl+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: 'Exibe dados básicos do funcionário', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('ctrl+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDocs', desc: 'Exibe documentos do funcionário', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('ctrl+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabAddress', desc: 'Exibe endereço e informações de contato', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: 'Exibe detalhes gerais do funcionário', origin: 'pessoal:_form_funcionario'})
         return [cpf, cnh]
     }
 </script>
