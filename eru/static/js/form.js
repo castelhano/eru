@@ -173,24 +173,26 @@ class jsForm{
     __validateRequired(el, notify=true){
         let max = el.getAttribute('maxlength');
         let min = el.getAttribute('minlength');
+        let fieldI18nName = el.dataset.i18n ? i18n.getEntry(el.dataset.i18n) || el.name : el.name; 
         if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter entre ${el.minLength} e ${el.maxLength} caracteres`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ter no ${max ? 'máximo' : 'mínimo'} ${max ? el.maxLength : el.minLength} caracteres`, {autodismiss: false})}
+            if(notify && max && min){appNotify('warning', i18n.getEntry(`sys.fieldRequiresMaxMinLength__varb:${[fieldI18nName.captalize(),min,max]}`) || `<b>${fieldI18nName.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', max ? i18n.getEntry(`sys.fieldExceededMaxLength__varb:${[fieldI18nName.captalize(), max]}`) || `<b>${fieldI18nName.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : i18n.getEntry(`sys.fieldRequiresMinLength__varb:${[fieldI18nName, min]}`) || `<b>${fieldI18nName.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
         }
         else if(el.required && el.value == ''){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', `jsform: O campo <b>${el.name}</b> é obrigatório`, {autodismiss: false})}
+            if(notify){appNotify('warning', `${i18n.getEntry('sys.fieldRequired__posfix::') || 'Campo obrigatorio:'} <b>${fieldI18nName.captalize()}</b>`, {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
     __validateNumber(el, notify=true){
         let max = parseFloat(el.getAttribute('max')) || null;
         let min = parseFloat(el.getAttribute('min')) || null;
+        let fieldI18nName = el.dataset.i18n ? i18n.getEntry(el.dataset.i18n) || el.name : el.name; 
         if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser entre ${min} e ${max}`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', `jsform: <b>${el.name}</b> deve ser no ${max ? 'máximo' : 'mínimo'} ${max ? max : min}`, {autodismiss: false})}
+            if(notify && max && min){appNotify('warning', i18n.getEntry(`sys.fieldRequiresMaxMinValue__varb:${[fieldI18nName.captalize(),min,max]}`) || `<b>${fieldI18nName.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', max ? i18n.getEntry(`sys.fieldExceededMaxValue__varb:${[fieldI18nName.captalize(), max]}`) || `Campo <b>${fieldI18nName.captalize()}</b> aceita valor máximo de <b>${max}</b>` : i18n.getEntry(`sys.fieldRequiresMinValue__varb:${[fieldI18nName, min]}`) || `<b>${fieldI18nName.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
             
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
@@ -199,7 +201,7 @@ class jsForm{
     __validateEmail(el, notify=true){
         if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', 'jsform: <b>Email</b> tem formato inválido', {autodismiss: false})}
+            if(notify){appNotify('warning', i18n.getEntry('sys.emailIsNotValid') || '<b>Email</b> tem formato inválido', {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
@@ -289,18 +291,18 @@ class jsForm{
         // Verifica se existe validacao adicional na pagina de origem
         for(let i in this.customValidation){
             try {
-                let el = this.form.querySelector(`#id_${i}`);
+                let el = this.form.querySelector(`[name='${i}']`);
                 let resp = this.customValidation[i](el.value);
                 if(!resp[0]){
                     el.classList.add('is-invalid');
                     if(resp[1]){
-                        appNotify('warning', `jsform: ${resp[1]}`, {autodismiss: false});
+                        appNotify('warning', resp[1] || '', {autodismiss: false});
                     }
                 }
                 else{el.classList.remove('is-invalid')}
             } catch (e){
                 console.log(`jsform: ERRO customValidation para ${i} inválido, verifique dados informados`);
-                console.log(`Deve existir no form field com ID id_${i}, e retorno deve ser um array, ex: [false, 'Texto de ajuda'] ou [true]`);
+                console.log(e);
             }
         }
 
@@ -321,9 +323,7 @@ class jsForm{
             this.form.querySelectorAll('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
             return true;
         }
-        // appAlert('warning', '<b>jsform</b>: Existem campo(s) inválidos, corriga antes de prosseguir');
         return false;
-        
     }
     __imaskValidate(){
         for(let i in this.imask){
