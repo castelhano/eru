@@ -32,7 +32,7 @@ class I18n{
         this.unsupported = localStorage.getItem('i18nUnsupported') ? JSON.parse(localStorage.getItem('i18nUnsupported'))  : {};
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         this.modificatorAttrs = ['plural', 'she'];
-        this.composedAttrs = ['bold','prefix', 'posfix'];
+        this.composedAttrs = ['bold','prefix', 'posfix', 'var', 'varb'];
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
             if(options.hasOwnProperty(k)){this[k] = options[k]}
@@ -231,6 +231,8 @@ class I18n{
             if(entry.transform){result = result[entry.transform]()}
             if(entry.prefix){result = entry.prefix + result }
             if(entry.posfix){result = result + entry.posfix}
+            if(entry.var){ entry.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
+            if(entry.varb){ entry.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})}
             if(entry.bold && entry.entry.toLowerCase().includes(String(entry.bold).toLowerCase())){
                 entry.bold = String(entry.bold).toLowerCase(); // converte em string
                 let indexStart = result.toLowerCase().indexOf(entry.bold);
@@ -289,6 +291,8 @@ class I18n{
                 if(e.transform){result = result[e.transform]()}
                 if(e.prefix){result = e.prefix + result }
                 if(e.posfix){result = result + e.posfix}
+                if(e.var){ e.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
+                if(e.varb){ e.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})}
                 if(e.bold && result.toLowerCase().includes(String(e.bold).toLowerCase())){
                     e.bold = String(e.bold).toLowerCase();
                     let indexStart = result.toLowerCase().indexOf(e.bold);
