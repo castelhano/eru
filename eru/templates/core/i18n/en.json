@@ -21,6 +21,7 @@
         "description": "Description#Descriptions",
         "detail": "Detail#Details",
         "district": "District#Districts",
+        "divorced": "Divorced",
         "edit": "Edit",
         "end": "End",
         "email": "Email",
@@ -28,14 +29,18 @@
         "error": "Error#Errors",
         "expired": "Expired",
         "export": "Export#Exports",
+        "female": "Female",
         "garage": "Garage#Garages",
         "gender": "Gender",
         "filter": "Filter#Filters",
         "fone": "Fone#Fones",
+        "formula": "Formula#Formulas",
         "group": "Group#Groups",
         "history": "History",
         "import": "Import",
         "key": "Key#Keys",
+        "married": "Married",
+        "male": "Male",
         "metric": "Metric#Metrics",
         "model": "Model",
         "module": "Module",
@@ -45,6 +50,7 @@
         "object": "Object",
         "only": "Only",
         "operation": "Operation",
+        "other": "Other#Others",
         "password": "Password",
         "permission": "Permission#Permissions",
         "position": "Position",
@@ -53,11 +59,13 @@
         "regime": "Regime",
         "register": "Register",
         "registered": "Registered",
+        "regulator": "Regulator#Regulators",
         "remove": "Remove",
         "save": "Save",
         "search": "Search",
         "sector": "Sector",
         "settings": "Settings",
+        "single": "Single",
         "state": "State",
         "start": "Start",
         "status": "Status",
@@ -67,19 +75,25 @@
         "undo": "Undo",
         "user": "User#Users",
         "valid": "Valid",
+        "value": "Value#Values",
         "wait": "Wait",
-        "warning": "Warning"
+        "warning": "Warning",
+        "widower": "Widower"
+    },
+    "compound": {
+        "notInformed": "Not informed"
     },
     "company": {
-        "companyName": "Company Name",
+        "companyName": "Company name",
         "municipalReg": "Municipal Reg",
         "stateReg": "State Reg",
         "zipCode": "Zip code"
         
     },
     "sys": {
-        "401": "Permission denied, please check with your system administrator",
-        "500": "Server error, if problem persists, contact the administrator",
+        "400": "[400] Bad request, please check with your system administrator",
+        "401": "[401] Permission denied, please check with your system administrator",
+        "500": "[500] Server error, if problem persists, contact the administrator",
         "changeHistory": "Change history",
         "confirmOperation": "Confirm Operation",
         "contactAdminOnError": "If the error persists, contact the administrator",
@@ -192,6 +206,7 @@
         "previousPage":"Table: Show previous page"
     },
     "jsForm": {
+        "downloadAsCsv": "Download data as CSV",
         "relatedAddon": {
             "showAddContext": "Displays form for adding record",
             "showTableContext": "Displays records list"

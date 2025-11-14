@@ -45,7 +45,7 @@ class DependenteForm(forms.ModelForm):
     class Meta:
         model = Dependente
         fields = ['funcionario','nome','parentesco','sexo','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf']
-    nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+    nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus', 'data-i18n': 'common.name'}))
     parentesco = forms.ChoiceField(required=False,choices=Dependente.PARENTESCO, widget=forms.Select(attrs={'class':'form-select'}))
     sexo = forms.ChoiceField(required=False,choices=Funcionario.SEXO_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     data_nascimento = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))

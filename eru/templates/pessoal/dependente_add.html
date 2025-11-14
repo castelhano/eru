@@ -1,0 +1,30 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Dependente{% endblock %}
+{% block title_i18n %}personal.common.dependant{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:dependentes' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+        </ul>
+    </div>
+    <form id="app_form" action="{% url 'pessoal:dependente_add' funcionario.id|safe %}" method="POST" autocomplete="off" novalidate>
+    {% csrf_token %}
+    {% include 'pessoal/_form_dependente.html' %}
+    </form>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+{% block add_script %}
+const form = new jsForm(document.getElementById('app_form'), {})
+{% endblock %}
+</script>

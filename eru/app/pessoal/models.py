@@ -2,18 +2,19 @@ from django.db import models
 from core.models import Empresa, Log, ImageField as core_ImageField
 from datetime import datetime, date
 from django.contrib.auth.models import User
+from django.utils.safestring import mark_safe
 
 class Pessoa(models.Model):
     ESTADO_CIVIL_CHOICES = (
-        ("S","Solteiro (a)"),
-        ("C","Casado (a)"),
-        ("D","Divorciado (a)"),
-        ("V","Viuvo (a)"),
+        ("S", mark_safe('<span data-i18n="common.single">Solteiro</span>')),
+        ("C", mark_safe('<span data-i18n="common.married">Casado</span>')),
+        ("D", mark_safe('<span data-i18n="common.divorced">Divorciado</span>')),
+        ("V", mark_safe('<span data-i18n="common.widower">Viuvo</span>')),
     )
     SEXO_CHOICES = (
-        ('N','Nao Informado'),
-        ('M','Masculino'),
-        ('F','Feminino'),
+        ('N', mark_safe('<span data-i18n="compound.notInformed">Nao informado</span>')),
+        ('M', mark_safe('<span data-i18n="common.male">Masculino</span>')),
+        ('F', mark_safe('<span data-i18n="common.female">Feminino</span>')),
     )
     CNH_CATEGORIAS = (
         ("","----"),
@@ -104,10 +105,10 @@ class Cargo(models.Model):
 
 class FuncaoFixa(models.Model):
     FFIXA_CHOICES = (
-        ("M","Motorista"),
-        ("A","Auxiliar"),
-        ("T","Trafego"),
-        ("O","Oficina"),
+        ("M", mark_safe('<span data-i18n="personal.common.driver">Motorista</span>')),
+        ("A", mark_safe('<span data-i18n="personal.common.assistant">Auxiliar</span>')),
+        ("T", mark_safe('<span data-i18n="personal.common.traffic">Trafego</span>')),
+        ("O", mark_safe('<span data-i18n="personal.common.mechanics">Oficina</span>')),
     )
     nome = models.CharField(max_length=3,choices=FFIXA_CHOICES,unique=True, blank=False)
     cargos = models.ManyToManyField(Cargo, related_name="ffixas")
@@ -122,22 +123,22 @@ class FuncaoFixa(models.Model):
     
 class Funcionario(Pessoa):
     STATUS_CHOICES = (
-        ("A","Ativo"),
-        ("F","Afastado"),
-        ("D","Desligado"),
+        ("A", mark_safe('<span data-i18n="common.active">Ativo</span>')),
+        ("F", mark_safe('<span data-i18n="personal.common.onLeave">Afastado</span>')),
+        ("D", mark_safe('<span data-i18n="personal.common.terminated">Desligado</span>')),
     )
     MOTIVOS_DESLIGAMENTO = (
-        ("EM","Pelo Empregador"),
-        ("JC","Por Justa Causa"),
-        ("PD","Pedido de Desligamento"),
-        ("RI","Rescisao Indireta"),
-        ("AB","Abandono de Emprego"),
-        ("DJ","Descisao Judicial")
+        ("EM", mark_safe('<span data-i18n="personal.common.dismissed">Pelo Empregador</span>')),
+        ("JC", mark_safe('<span data-i18n="personal.employee.form.forJustCause">Por Justa Causa</span>')),
+        ("PD", mark_safe('<span data-i18n="personal.common.resign">Pedido de Desligamento</span>')),
+        ("RI", mark_safe('<span data-i18n="personal.employee.form.indirectTermination">Rescisao Indireta</span>')),
+        ("AB", mark_safe('<span data-i18n="personal.employee.form.abandonment">Abandono de Emprego</span>')),
+        ("DJ", mark_safe('<span data-i18n="personal.employee.form.judicialTermination">Descisao Judicial</span>'))
     )
     REGIME_CHOICES = (
         ("CLT","CLT"),
-        ("PJ","Pessoa Juridica"),
-        ("AP","Aprendiz"),
+        ("PJ", mark_safe('<span data-i18n="personal.employee.form.legalEntity">Pessoa Juridica</span>')),
+        ("AP", mark_safe('<span data-i18n="personal.common.apprentice">Aprendiz</span>')),
     )
     empresa = models.ForeignKey(Empresa, blank=True, null=True, on_delete=models.RESTRICT)
     matricula = models.CharField(max_length=15, unique=True, blank=False)
@@ -163,17 +164,17 @@ class Funcionario(Pessoa):
         return Dependente.objects.filter(funcionario=self).order_by('nome')
     def afastamentos(self):
         return Afastamento.objects.filter(funcionario=self).order_by('data_afastamento')
-    def desligamento(self, data, motivo):
-        try:
-            if self.status == 'A': # Desligamento restrito a funcionarios ativos
-                self.status = 'D'
-                self.data_desligamento = data
-                self.motivo_desligamento = motivo
-                return [True,'DESLIGADO',f'Funcionario {self.matricula} desligado']
-            else:
-                return [False,'Fail','Somente funcionários ativos podem ser desligados']                
-        except:
-            return [False,'Erro ao desligar funcionario']
+    # def desligamento(self, data, motivo):
+    #     try:
+    #         if self.status == 'A': # Desligamento restrito a funcionarios ativos
+    #             self.status = 'D'
+    #             self.data_desligamento = data
+    #             self.motivo_desligamento = motivo
+    #             return [True,'DESLIGADO',f'Funcionario {self.matricula} desligado']
+    #         else:
+    #             return [False,'Fail','Somente funcionários ativos podem ser desligados']                
+    #     except:
+    #         return [False,'Erro ao desligar funcionario']
     def foto_url(self):
         return self.foto.url if self.foto else None
     def foto_name(self):
@@ -191,16 +192,16 @@ class Funcionario(Pessoa):
 
 class Afastamento(models.Model):
     MOTIVO_AFASTAMENTO = (
-        ("D","Doenca"),
-        ("A","Acidente Trabalho"),
-        ("O","Outro")
+        ("D", mark_safe('<span data-i18n="personal.common.illness">Doenca</span>')),
+        ("A", mark_safe('<span data-i18n="personal.employee.form.workplaceAccident">Acidente Trabalho</span>')),
+        ("O", mark_safe('<span data-i18n="common.other">Outro</span>'))
     )
     ORIGEM_CHOICES = (
-        ("I","INSS"),
-        ("E","Escala"),
-        ("S","Sindicato"),
-        ("G","Gestora"),
-        ("O","Outros")
+        ("I", "INSS"),
+        ("E", mark_safe('<span data-i18n="personal.common.schedule">Escala</span>')),
+        ("S", mark_safe('<span data-i18n="personal.common.syndicate">Sindicato</span>')),
+        ("G", mark_safe('<span data-i18n="common.regulator">Gestora</span>')),
+        ("O", mark_safe('<span data-i18n="common.other">Outro</span>'))
     )
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)
     motivo = models.CharField(max_length=3, choices=MOTIVO_AFASTAMENTO, default='D', blank=True)
@@ -216,15 +217,15 @@ class Afastamento(models.Model):
 
 class Dependente(models.Model):
     PARENTESCO = (
-        ("C","Conjuge"),
-        ("F","Filho / Enteado"),
-        ("I","Irmao"),
-        ("P","Pai / Mae"),
-        ("S","Sogro / Sogra"),
-        ("A","Avo / Bisavo"),
-        ("N","Neto / Bisneto"),
-        ("In","Incapaz"),
-        ("M","Outros menores"),
+        ("C", mark_safe('<span data-i18n="personal.common.spouse">Conjuge</span>')),
+        ("F", mark_safe('<span data-i18n="personal.employee.form.sonStepson">Filho / Enteado</span>')),
+        ("I", mark_safe('<span data-i18n="personal.common.brother">Irmao</span>')),
+        ("P", mark_safe('<span data-i18n="personal.employee.form.fatherMother">Pai / Mae</span>')),
+        ("S", mark_safe('<span data-i18n="personal.common.fatherMotherInLaw">Sogro / Sogra</span>')),
+        ("A", mark_safe('<span data-i18n="personal.common.ascendant">Ascendente</span>')),
+        ("N", mark_safe('<span data-i18n="personal.common.descendant">Descendente</span>')),
+        ("In", mark_safe('<span data-i18n="personal.common.incapable">Incapaz</span>')),
+        ("M", mark_safe('<span data-i18n="common.other">Outro</span>')),
     )
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)
     nome = models.CharField(max_length=230, blank=False)
@@ -255,9 +256,9 @@ class GrupoEvento(models.Model):
 
 class Evento(models.Model):
     TIPOS = (
-        ("P","Provento"),
-        ("D","Desconto"),
-        ("R","Referencia"),
+        ("P", mark_safe('<span data-i18n="personal.common.profit">Provento</span>')),
+        ("D", mark_safe('<span data-i18n="personal.common.deduction">Desconto</span>')),
+        ("R", mark_safe('<span data-i18n="personal.common.reference">Referencia</span>')),
     )
     nome = models.CharField(max_length=100, blank=False)
     rastreio = models.CharField(max_length=40, blank=True)
@@ -275,9 +276,10 @@ class MotivoReajuste(models.Model):
 
 class EventoMovimentacao(models.Model):
     TIPOS = (
-        ("V","Valor"),
-        ("F","Formula"),
+        ("V", mark_safe('<span data-i18n="common.value">Valor</span>')),
+        ("F", mark_safe('<span data-i18n="common.formula">Formula</span>')),
     )
+    evento = models.ForeignKey(Evento, on_delete=models.RESTRICT)
     inicio = models.DateField(blank=False, null=False, default=datetime.today)
     fim = models.DateField(blank=True, null=True)
     valor = models.CharField(max_length=250, blank=True)

@@ -4,11 +4,17 @@ from . import views
 app_name = 'pessoal'
 
 urlpatterns = [
+    path('',views.funcionarios,name='funcionarios'),
     path('funcionarios',views.funcionarios,name='funcionarios'),
     path('funcionario_add',views.funcionario_add,name='funcionario_add'),
     path('funcionario_id/<int:id>',views.funcionario_id,name='funcionario_id'),
     path('funcionario_update/<int:id>',views.funcionario_update,name='funcionario_update'),
     path('funcionario_delete/<int:id>/delete',views.funcionario_delete,name='funcionario_delete'),
+    path('dependentes/<int:id>',views.dependentes,name='dependentes'),
+    path('dependente_add/<int:id>',views.dependente_add,name='dependente_add'),
+    path('dependente_id/<int:id>',views.dependente_id,name='dependente_id'),
+    path('dependente_update/<int:id>',views.dependente_update,name='dependente_update'),
+    path('dependente_delete/<int:id>/delete',views.dependente_delete,name='funcionario_delete'),
     path('setores',views.setores,name='setores'),
     path('setor_add',views.setor_add,name='setor_add'),
     path('setor_id/<int:id>',views.setor_id,name='setor_id'),
@@ -24,6 +30,7 @@ urlpatterns = [
     path('evento_id/<int:id>',views.evento_id,name='evento_id'),
     path('evento_update/<int:id>',views.evento_update,name='evento_update'),
     path('evento_delete/<int:id>/delete',views.evento_delete,name='evento_delete'),
+    path('eventos_related', views.eventos_related,name='eventos_related'),
     path('grupos_evento',views.grupos_evento,name='grupos_evento'),
     path('grupo_evento_add',views.grupo_evento_add,name='grupo_evento_add'),
     path('grupo_evento_id/<int:id>',views.grupo_evento_id,name='grupo_evento_id'),

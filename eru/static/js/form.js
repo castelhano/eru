@@ -22,6 +22,7 @@ class jsForm{
             beforeSubmit: () => { return true },        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
             customValidation: {},                       // [**] detalhes abaixo
             novalidate: false,                          // Setar {novalidate: true} para desativar validacao do formulario
+            csvSeparator: ';',                          // Separador para exportacao dos dados em CSV
             modalBody: null,                            // Usar (modalBody: container) para criacao de modal (bootstrap modal) de filtros
             modalTrigger: null,                         // Elemento acionador do modal
             triggerShortcut: 'f2',                      // Teclas de atalho (integracao com keywatch) para acionamento do modal
@@ -99,6 +100,33 @@ class jsForm{
             resp[el.name] = Array.from(el.options).filter(function (option) { return option.selected; }).map(function (option) {return option.value});
         })
         return resp;
+    }
+    exportCSV(opt={}){ // retorna em formato csv os dados do formulario
+        let csv = [];
+        let options = Object.assign({textarea: false}, opt)
+        let ignore = [...['csrfmiddlewaretoken'], ...options?.ignore || []];
+        let data = this.get();
+        for(let el in data){
+            // nao exporta itens no array ignore nem elementos textarea
+            if(ignore.includes(el) || (this[el].tagName == 'TEXTAREA' && !options.textarea)){continue}
+            if(this[el].tagName == 'SELECT' && this[el].multiple == false){ // em caso de selects, insere no arquivo tando o value quanto o innerHTML
+                csv.push([i18n.getEntry(this[el].dataset?.i18n + '__posfix:_id') || el.captalize() + '_id', this[el].value].join(this.csvSeparator)) 
+                csv.push([i18n.getEntry(this[el].dataset?.i18n) || el.captalize().replace('_', ' '), this[el].selectedOptions[0].innerText.trim()].join(this.csvSeparator)) 
+            }
+            else{ csv.push([i18n.getEntry(this[el].dataset?.i18n) || el.captalize().replace('_', ' '), data[el]].join(this.csvSeparator)) }
+        }
+        let csv_string = csv.join('\n');
+        let BOM = '\ufeff'; // adicionado no Blob para evitar problemas de compatibildiade com excel
+        let blob = new Blob([BOM, csv_string], {type: 'text/csv;charset=utf-8;'});
+        let url = URL.createObjectURL(blob);
+        let link = document.createElement('a');
+        link.style.display = 'none';
+        link.href = url;
+        link.download = 'data.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
     disabled(fields){ // Recebe array com nome dos campos a serem desabilitados
         if(fields){

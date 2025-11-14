@@ -1,0 +1,50 @@
+<div class="card-body tab-content">
+    <h5 class="card-title"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.dependant">Dependente</b></h5>
+    <h6 class="text-orange mb-3">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row">
+            <div class="col col-lg">
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg-8">
+                        {{ form.nome }}
+                        <label for="id_nome" data-i18n="common.name">Nome</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg-4">
+                        {{ form.parentesco }}
+                        <label for="id_parentesco" data-i18n="personal.common.kinship">Parentesco</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.sexo }}
+                        <label for="id_sexo" data-i18n="common.gender">Sexo</label>
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.data_nascimento }}
+                        <label for="id_data_nascimento" data-i18n="personal.employee.form.birthDate">Nascimento</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg-4">
+                        {{ form.cpf }}
+                        <label for="id_cpf">CPF</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.rg }}
+                        <label for="id_rg">RG</label>
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.rg_emissao }}
+                        <label for="id_rg_emissao" data-i18n="personal.employee.form.issueDate__prefix:RG ">RG Emissão</label>
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.rg_orgao_expedidor }}
+                        <label for="id_rg_orgao_expedidor" data-i18n="personal.employee.form.issuingAuthority__prefix:RG ">RG Orgão Expedidor</label>
+                    </div>
+                </div>
+                <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save__bold:s"><b>G</b>ravar</button>                
+            </div>
+            <div class="col-lg-4 border-start"></div>
+        </div>
+    </div>
+</div>

@@ -80,16 +80,38 @@ def funcionarios(request):
     return render(request, 'pessoal/funcionarios.html', options)
 
 @login_required
+@permission_required('pessoal.view_dependente', login_url="/handler/403")
+def dependentes(request, id):
+    funcionario = Funcionario.objects.get(pk=id)
+    dependentes = Dependente.objects.filter(funcionario=funcionario).order_by('nome')
+    return render(request,'pessoal/dependentes.html',{'dependentes':dependentes, 'funcionario':funcionario})
+
+
+@login_required
 @permission_required('pessoal.view_evento', login_url="/handler/403")
 def eventos(request):
     eventos = Evento.objects.all().order_by('nome')
     return render(request,'pessoal/eventos.html',{'eventos':eventos})
 
 @login_required
+def eventos_related(request):
+    if request.method == 'GET':
+        if not request.GET.get('type', None) or not request.GET.get('pk'):
+            messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>002_0001</b>')
+        if request.GET['type'] == 'cargo':
+            eventos = EventoCargo.objects.filter(cargo=request.GET['pk']).order_by('nome')
+        return render(request,'pessoal/eventos.html',{'eventos':eventos})
+    
+    messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>002_0002</b>')
+    return redirect('index')
+    
+
+@login_required
 @permission_required('pessoal.view_grupoevento', login_url="/handler/403")
 def grupos_evento(request):
     grupos_evento = GrupoEvento.objects.all().order_by('nome')
     return render(request,'pessoal/grupos_evento.html',{'grupos_evento':grupos_evento})
+
 
 # Metodos ADD
 @login_required
@@ -185,6 +207,33 @@ def funcionario_add(request):
     return render(request,'pessoal/funcionario_add.html', {'form':form})
 
 @login_required
+@permission_required('pessoal.add_dependente', login_url="/handler/403")
+def dependente_add(request, id):
+    if request.method == 'POST':
+        form = DependenteForm(request.POST)
+        if form.is_valid():
+            try:
+                registro = form.save()
+                l = Log()
+                l.modelo = "pessoal.dependente"
+                l.objeto_id = registro.id
+                l.objeto_str = registro.nome[0:48]
+                l.usuario = request.user
+                l.mensagem = "CREATED"
+                l.save()
+                messages.success(request, settings.DEFAULT_MESSAGES['created'])
+                return redirect('pessoal:dependente_add')
+            except:
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+                return redirect('pessoal:dependente_add')
+    else:
+        funcionario = Funcionario.objects.get(pk=id)
+        _new = Dependente()
+        _new.funcionario = funcionario
+        form = DependenteForm(instance=_new)
+    return render(request,'pessoal/dependente_add.html',{'form':form, 'funcionario':funcionario})
+
+@login_required
 @permission_required('pessoal.add_evento', login_url="/handler/403")
 def evento_add(request):
     if request.method == 'POST':
@@ -258,6 +307,13 @@ def funcionario_id(request,id):
         return redirect('pessoal:funcionarios')
     form = FuncionarioForm(instance=funcionario)
     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
+
+@login_required
+@permission_required('pessoal.change_dependente', login_url="/handler/403")
+def dependente_id(request,id):
+    dependente = Dependente.objects.get(pk=id)
+    form = DependenteForm(instance=dependente)
+    return render(request,'pessoal/dependente_id.html',{'form':form,'dependente':dependente})
 
 @login_required
 @permission_required('pessoal.change_evento', login_url="/handler/403")
@@ -366,6 +422,25 @@ def funcionario_update(request,id):
         return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
 @login_required
+@permission_required('pessoal.change_dependente', login_url="/handler/403")
+def dependente_update(request,id):
+    dependente = Dependente.objects.get(pk=id)
+    form = DependenteForm(request.POST, instance=dependente)
+    if form.is_valid():
+        registro = form.save()
+        l = Log()
+        l.modelo = "pessoal.dependente"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "UPDATE"
+        l.save()
+        messages.success(request, settings.DEFAULT_MESSAGES['updated'])
+        return redirect('pessoal:dependente_id', id)
+    else:
+        return render(request,'pessoal/dependente_id.html',{'form':form,'dependente':dependente})
+
+@login_required
 @permission_required('pessoal.change_evento', login_url="/handler/403")
 def evento_update(request,id):
     evento = Evento.objects.get(pk=id)
@@ -460,6 +535,25 @@ def funcionario_delete(request,id):
     except:
         messages.error(request,'ERRO ao apagar funcionario')
         return redirect('pessoal:funcionario_id', id)
+
+@login_required
+@permission_required('pessoal.delete_dependente', login_url="/handler/403")
+def dependente_delete(request,id):
+    try:
+        registro = Dependente.objects.get(pk=id)
+        l = Log()
+        l.modelo = "pessoal.dependente"
+        l.objeto_id = registro.id
+        l.objeto_str = registro.nome[0:48]
+        l.usuario = request.user
+        l.mensagem = "DELETE"
+        registro.delete()
+        l.save()
+        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal:dependentes')
+    except:
+        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
+        return redirect('pessoal:dependente_id', id)
 
 @login_required
 @permission_required('pessoal.delete_evento', login_url="/handler/403")

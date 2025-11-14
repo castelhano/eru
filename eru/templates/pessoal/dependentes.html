@@ -1,0 +1,88 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Dependente{% endblock %}
+{% block title_i18n %}personal.common.dependant__plural{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            {% if perms.pessoal.add_dependente %}
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:dependente_add' funcionario.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_id' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    {% if perms.core.view_log %}
+                    <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=pessoal.dependente&mensagem=DELETE" target="_blank" data-i18n="sys.exclusionLogs">Log de Exclusões</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.dependant__plural">Dependentes</span></h5>
+        <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+            <table id="main_table" class="table border table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th class="d-nonee" data-i18n="personal.common.employeeId">Matricula</th>
+                        <th class="d-nonee" data-i18n="common.employee">Funcionário</th>
+                        <th data-i18n="common.name">Nome</th>
+                        <th data-i18n="personal.common.kinship">Parentesco</th>
+                        <th class="d-none" data-i18n="common.gender">Sexo</th>
+                        <th class="d-none" data-i18n="personal.employee.form.birthDate">Dta Nascimento</th>
+                        <th data-i18n="common.age">Idade</th>
+                        <th class="d-none">RG</th>
+                        <th class="d-none" data-i18n="personal.employee.form.issueDate__prefix:RG ">RG Emissão</th>
+                        <th class="d-none" data-i18n="personal.employee.form.issuingAuthority__prefix:RG ">RG Orgão expedidor</th>
+                        <th class="d-none">CPF</th>
+                        {% if perms.pessoal.change_dependente %}
+                        <th>&nbsp;</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dependente in dependentes %}
+                    <tr>
+                        <td class="d-none">{{dependente.id|safe}}</td>
+                        <td class="d-none">{{dependente.funcionario.matricula}}</td>
+                        <td>{{dependente.funcionario.nome}}</td>
+                        <td>{{dependente.nome}}</td>
+                        <td>{{dependente.get_parentesco_display|default:''}}</td>
+                        <td class="d-none">{{dependente.get_sexo_display|default:''}}</td>
+                        <td class="d-none">{{dependente.data_nascimento|date:'d/m/Y'|default:''}}</td>
+                        <td>{{dependente.idade}}</td>
+                        <td class="d-none">{{dependente.rg}}</td>
+                        <td class="d-none">{{dependente.rg_emissao}}</td>
+                        <td class="d-none">{{dependente.rg_orgao_expedidor}}</td>
+                        <td class="d-none">{{dependente.cpf}}</td>
+                        {% if perms.pessoal.change_dependente %}
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:dependente_id' dependente.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/table.js' %}"></script>
+{% endblock %}
+<script>
+{% block add_script %}
+const table = new jsTable(document.getElementById('main_table'),{
+    canFilter: true,
+    filterCols: ['nome']
+});
+{% endblock %}
+</script>

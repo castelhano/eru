@@ -95,6 +95,9 @@ MESSAGE_TAGS = {
 }
 
 DEFAULT_MESSAGES = {
+    '400': f'<span data-i18n="sys.400">[400] Erro de requisição, por favor verifique com o administrador do sistema</span>',
+    '401': f'<span data-i18n="sys.401">[401] Permissão negada, por favor verifique com o administrador do sistema</span>',
+    '500': f'<span data-i18n="sys.500">[500] Erro de servidor, se o problema persistir, contate o administrador</span>',
     'created': f'<span data-i18n="sys.recordCreated">Registro criado com sucesso</span>',
     'deleted': '<span data-i18n="sys.recordDeleted">Registro excluido, essa operação não pode ser desfeita</span>',
     'updated': '<span data-i18n="sys.recordUpdated">Registro atualizado com sucesso</span>',
