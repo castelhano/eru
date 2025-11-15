@@ -1,8 +1,8 @@
 <div class="card-body tab-content">
     <h5 class="card-title mb-3"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.event">Event</b></h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
-        <div class="row">
-            <div class="col col-lg-3">
+        <div class="row g-2">
+            <div class="col-lg col-lg-3 order-2 order-lg-1">
                 <div class="row g-1">
                     <div class="form-floating mb-1 col">
                         {{ form.nome }}
@@ -29,7 +29,8 @@
                 </div>
                 <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save__bold:g"><b>G</b>ravar</button>                
             </div>
-            <div class="col border-start">
+            <div class="col-lg col-lg-2 order-1 order-lg-2">{{form.empresas}}</div>
+            <div class="col-lg border-start ms-lg-1 order-3">
                 <small class="d-block border-bottom mb-1 pb-1" data-i18n="personal.event.form.trackingHelp__prefix:** ">** Rastreio usado para composição de formulas para módulo de folha</small>
                 <ol class="fs-7">
                     <li data-i18n="personal.event.form.trackingHelp_r1">Deve iniciar com letra (alpha)</li>

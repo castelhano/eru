@@ -10,7 +10,7 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventocargo %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventos_related' 'cargo' cargo.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>

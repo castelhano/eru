@@ -101,11 +101,15 @@ class FuncionarioForm(forms.ModelForm):
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
-        fields = ['nome','rastreio','tipo','grupo']
+        fields = ['nome','rastreio','tipo','grupo','empresas']
     nome = forms.CharField(max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
     tipo = forms.ChoiceField(required=False, choices=Evento.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['empresas'].queryset = user.profile.empresas.all()
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')
         # Verifica se o valor corresponde à expressão regular

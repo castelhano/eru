@@ -94,16 +94,18 @@ def eventos(request):
     return render(request,'pessoal/eventos.html',{'eventos':eventos})
 
 @login_required
-def eventos_related(request):
-    if request.method == 'GET':
-        if not request.GET.get('type', None) or not request.GET.get('pk'):
-            messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>002_0001</b>')
-        if request.GET['type'] == 'cargo':
-            eventos = EventoCargo.objects.filter(cargo=request.GET['pk']).order_by('nome')
-        return render(request,'pessoal/eventos.html',{'eventos':eventos})
-    
-    messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>002_0002</b>')
-    return redirect('index')
+def eventos_related(request, related, id):
+    options = {"type": related}
+    if related == 'cargo':
+        options['cargo'] = Cargo.objects.get(pk=id)
+        options['eventos'] = EventoCargo.objects.filter(cargo=options['cargo']).order_by('evento__nome')
+    elif related == 'funcionario':
+        options['funcionario'] = Funcionario.objects.get(pk=id)
+        options['eventos'] = EventoFuncionario.objects.filter(funcionario=options['funcionario']).order_by('evento__nome')
+    else:
+        messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>pessoal:eventos_related, invalid type</b>')
+        return redirect('index')
+    return render(request,'pessoal/eventos_related.html', options)
     
 
 @login_required
@@ -254,7 +256,7 @@ def evento_add(request):
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
                 return redirect('pessoal:evento_add')
     else:
-        form = EventoForm()
+        form = EventoForm(user=request.user)
     return render(request,'pessoal/evento_add.html',{'form':form})
 
 @login_required
@@ -319,7 +321,7 @@ def dependente_id(request,id):
 @permission_required('pessoal.change_evento', login_url="/handler/403")
 def evento_id(request,id):
     evento = Evento.objects.get(pk=id)
-    form = EventoForm(instance=evento)
+    form = EventoForm(user=request.user, instance=evento)
     return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
 
 @login_required

@@ -13,7 +13,7 @@
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventofuncionario %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventos_related' 'funcionario' funcionario.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>

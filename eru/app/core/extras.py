@@ -27,4 +27,3 @@ def create_image(data_url, file_path, file_name, older_prefix_to_remove=False):
         return [True]
     except Exception as e:
         return [False, str(e)]
-    

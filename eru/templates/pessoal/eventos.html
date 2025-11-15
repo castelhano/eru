@@ -1,4 +1,5 @@
 {% extends "layout/app.html" %}
+{% load tag_extra %}
 {% load static %}
 {% block title %}Eventos{% endblock %}
 {% block title_i18n %}personal.common.event__plural__{% endblock %}
@@ -29,8 +30,9 @@
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
+                        <th class="d-none d-lg-table-cell" data-i18n="common.company__plural">Empresas</th>
                         <th data-i18n="common.name">Nome</th>
-                        <th data-i18n="common.key">Chave</th>
+                        <th class="d-none d-lg-table-cell" data-i18n="common.key">Chave</th>
                         <th data-i18n="common.group">Grupo</th>
                         {% if perms.pessoal.change_evento %}
                         <th>&nbsp;</th>
@@ -40,8 +42,9 @@
                 <tbody>
                     {% for evento in eventos %}
                     <tr>
+                        <td class="d-none d-lg-table-cell fit">{{evento.empresas.all|join:';'|badge_list:'bg-purple'}}</td>
                         <td>{{evento.nome}}</td>
-                        <td>{{evento.rastreio}}</td>
+                        <td class="d-none d-lg-table-cell" >{{evento.rastreio}}</td>
                         <td>{{evento.grupo|default:''}}</td>
                         {% if perms.pessoal.change_evento %}
                         <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_id' evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
@@ -65,7 +68,7 @@
 const table = new jsTable(document.getElementById('main_table'), {
     enablePaginate: true,
     canFilter: true,
-    filterCols: [i18n.getEntry('common.name') || 'Nome', i18n.getEntry('common.key') || 'Chave']
+    filterCols: ['Nome', 'Empresas']
 });
 {% endblock %}
 </script>

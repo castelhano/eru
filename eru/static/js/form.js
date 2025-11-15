@@ -260,6 +260,8 @@ class jsForm{
         let separator = document.createElement('hr');
         let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
         this.cancel = document.createElement('button');
+        this.cancel.type = 'button';
+        this.cancel.setAttribute('data-bs-dismiss', 'modal');
         for(let key in this.cancelSchema){this.cancel[key] = this.cancelSchema[key]}
         this.submit = document.createElement('button');
         for(let key in this.submitSchema){this.submit[key] = this.submitSchema[key]}

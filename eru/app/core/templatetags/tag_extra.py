@@ -1,6 +1,7 @@
 from datetime import date
 from django import template
 from urllib.parse import urlparse, parse_qs
+from django.utils.safestring import mark_safe
 import datetime
 
 
@@ -170,3 +171,10 @@ def maximo(value, limit):
 @register.filter
 def minimo(value, limit):
     return min(value, limit)
+
+@register.filter
+def badge_list(value, style):
+    badges = ''
+    for k in value.split(';'):
+        badges += f'<span class="badge me-1 {style}">{k}</span>'
+    return mark_safe(badges)

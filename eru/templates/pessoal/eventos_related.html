@@ -12,7 +12,11 @@
             {% if perms.app.add_modelo %}
             <li class="nav-item ms-1"><a class="nav-link border" id="add" href="url"><i class="bi bi-plus-lg text-success"></i></a></li>
             {% endif %}
-            <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
+            {% if type == 'cargo' %}
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_id' cargo.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% elif type == 'funcionario' %}
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_id' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
@@ -25,6 +29,8 @@
     </div>
     <div class="card-body tab-content">
         <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="common.event__plural">Eventos</span></h5>
+        <h6 class="text-body-secondary">{{cargo.empresa.razao_social}}{{funcionario.empresa.razao_social}}</h6>
+        <h6><span>{{type|capfirst}}:</span> <span class="text-orange">{{cargo.nome}}{{funcionario.matricula}} {{funcionario.nome}}</span></h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>

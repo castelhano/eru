@@ -268,6 +268,11 @@ class Keywatch{
         }
     }
     unbindAll(){this.handlers = {}} // limpa todos os atalhos
+    overwrite(scope, method, options){ // sobregrava atalho informado (se existir), caso nao exista apenas cria novo atalho
+        Object.assign(options, this.handlerOptions);
+        this.unbind(scope, options);
+        this.bind(scope, method, options);
+    }
     getContext(){return this.context}
     addContext(context, desc=''){if(context && !this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
     setContext(context='default', desc=''){

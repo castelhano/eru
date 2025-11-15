@@ -82,6 +82,7 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
 <script src="{% static 'js/related.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
@@ -92,6 +93,7 @@ const form = new jsForm(document.getElementById('app_form'), {})
 const rastreio = IMask(document.getElementById('id_rastreio'), {
     mask: /^[a-zA-Z][a-zA-Z0-9_]*$/,
 })
+const empresas = new jsSelectm('#id_empresas', {})
 
 {% if perms.pessoal.add_grupoevento %}
 const grupoRelated = new RelatedAddon('#id_grupo', {

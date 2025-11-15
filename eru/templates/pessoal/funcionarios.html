@@ -125,7 +125,7 @@
 <form action="{% url 'pessoal:funcionarios' %}" method="POST" id="filterForm" style="display: none;" autocomplete="off" novalidate>
   {% csrf_token %}
   <div class="row">
-    <div class="col-6 col-lg-3">
+    <div class="col-lg col-lg-3">
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select class="form-select" id="id_empresa" name="empresa"></select>
@@ -163,7 +163,7 @@
         </div>
       </div>
     </div>
-    <div class="col border-start">
+    <div class="col-lg border-start mt-3 mt-lg-0">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" role="switch" name="pne" id="id_pne">
         <label class="form-check-label" for="id_pne"><span data-i18n="common.only">Somente</span> PNE</label>
