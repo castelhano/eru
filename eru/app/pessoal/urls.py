@@ -31,6 +31,7 @@ urlpatterns = [
     path('evento_update/<int:id>',views.evento_update,name='evento_update'),
     path('evento_delete/<int:id>/delete',views.evento_delete,name='evento_delete'),
     path('eventos_related/<str:related>/<int:id>', views.eventos_related,name='eventos_related'),
+    path('evento_related_add/<str:related>/<int:id>', views.evento_related_add,name='evento_related_add'),
     path('grupos_evento',views.grupos_evento,name='grupos_evento'),
     path('grupo_evento_add',views.grupo_evento_add,name='grupo_evento_add'),
     path('grupo_evento_id/<int:id>',views.grupo_evento_id,name='grupo_evento_id'),

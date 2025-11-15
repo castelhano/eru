@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 import json
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
-from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm
+from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoCargoForm, EventoFuncionarioForm
 from .filters import FuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
@@ -95,7 +95,9 @@ def eventos(request):
 
 @login_required
 def eventos_related(request, related, id):
-    options = {"type": related}
+    if not request.user.has_perm(f"pessoal.view_evento{related}"):
+        return redirect('handler', 403)
+    options = {"related": related}
     if related == 'cargo':
         options['cargo'] = Cargo.objects.get(pk=id)
         options['eventos'] = EventoCargo.objects.filter(cargo=options['cargo']).order_by('evento__nome')
@@ -103,7 +105,7 @@ def eventos_related(request, related, id):
         options['funcionario'] = Funcionario.objects.get(pk=id)
         options['eventos'] = EventoFuncionario.objects.filter(funcionario=options['funcionario']).order_by('evento__nome')
     else:
-        messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>pessoal:eventos_related, invalid type</b>')
+        messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>pessoal:eventos_related, invalid related</b>')
         return redirect('index')
     return render(request,'pessoal/eventos_related.html', options)
     
@@ -258,6 +260,38 @@ def evento_add(request):
     else:
         form = EventoForm(user=request.user)
     return render(request,'pessoal/evento_add.html',{'form':form})
+
+@login_required
+def evento_related_add(request, related, id):
+    if not request.user.has_perm(f"pessoal.view_evento{related}"):
+        return redirect('handler', 403)
+    if request.method == 'POST':
+        if related == 'cargo':
+            form = EventoCargoForm(request.POST)
+        elif related == 'funcionario':
+            form = EventoFuncionarioForm(request.POST)
+        if form.is_valid():
+            try:
+                registro = form.save()
+                l = Log()
+                l.modelo = f"pessoal.evento{{related}}"
+                l.objeto_id = registro.id
+                l.objeto_str = registro.evento.nome[0:48]
+                l.usuario = request.user
+                l.mensagem = "CREATED"
+                l.save()
+                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
+            except:
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+        return redirect('pessoal:eventos_related', related, id)
+    else:
+        if related == 'cargo':
+            form = EventoCargoForm()
+            model = Cargo.objects.get(pk=id)
+        elif related == 'funcionario':
+            form = EventoFuncionarioForm()
+            model = Funcionario.objects.get(pk=id)
+        return render(request,'pessoal/evento_related_add.html', {'form':form, 'model':model})
 
 @login_required
 @permission_required('pessoal.add_grupoevento', login_url="/handler/403")

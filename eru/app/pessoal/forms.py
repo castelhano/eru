@@ -1,6 +1,6 @@
 import re
 from django import forms
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento
+from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, EventoCargo, EventoFuncionario, MotivoReajuste
 from django.contrib.auth.models import User
 from datetime import date
 from django.conf import settings
@@ -116,3 +116,25 @@ class EventoForm(forms.ModelForm):
         if rastreio_value and not RASTREIO_REGEX.match(rastreio_value):
             raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
         return rastreio_value
+
+class EventoCargoForm(forms.ModelForm):
+    class Meta:
+        model = EventoCargo
+        fields = ['cargo','evento','inicio','fim','tipo','valor','motivo']
+    evento = forms.ModelChoiceField(queryset = Evento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+    inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
+    fim = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
+    valor = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    tipo = forms.ChoiceField(required=False, choices=EventoCargo.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
+    motivo = forms.ModelChoiceField(queryset = MotivoReajuste.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+
+class EventoFuncionarioForm(forms.ModelForm):
+    class Meta:
+        model = EventoFuncionario
+        fields = ['funcionario','evento','inicio','fim','tipo','valor','motivo']
+    evento = forms.ModelChoiceField(queryset = Evento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+    inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
+    fim = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
+    valor = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    tipo = forms.ChoiceField(required=False, choices=EventoFuncionario.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
+    motivo = forms.ModelChoiceField(queryset = MotivoReajuste.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
