@@ -1,5 +1,4 @@
 {% extends "layout/app.html" %}
-{% load tag_extra %}
 {% load static %}
 {% block title %}Eventos{% endblock %}
 {% block title_i18n %}personal.common.event__plural__{% endblock %}
@@ -30,7 +29,6 @@
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
-                        <th class="d-none d-lg-table-cell" data-i18n="common.company__plural">Empresas</th>
                         <th data-i18n="common.name">Nome</th>
                         <th class="d-none d-lg-table-cell" data-i18n="common.key">Chave</th>
                         <th data-i18n="common.group">Grupo</th>
@@ -42,7 +40,6 @@
                 <tbody>
                     {% for evento in eventos %}
                     <tr>
-                        <td class="d-none d-lg-table-cell fit">{{evento.empresas.all|join:';'|badge_list:'bg-purple'}}</td>
                         <td>{{evento.nome}}</td>
                         <td class="d-none d-lg-table-cell" >{{evento.rastreio}}</td>
                         <td>{{evento.grupo|default:''}}</td>

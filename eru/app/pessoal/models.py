@@ -264,16 +264,19 @@ class Evento(models.Model):
     rastreio = models.CharField(max_length=40, blank=True)
     tipo = models.CharField(max_length=3, choices=TIPOS, default='P', blank=False)
     grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
-    empresas = models.ManyToManyField(Empresa, related_name="eventos")
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.evento', objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+    def __str__(self):
+        return self.nome
 
 class MotivoReajuste(models.Model):
     nome = models.CharField(max_length=100, blank=False)
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.motivo_reajuste', objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+    def __str__(self):
+        return self.nome
 
 class EventoMovimentacao(models.Model):
     TIPOS = (
@@ -291,6 +294,7 @@ class EventoMovimentacao(models.Model):
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
+    empresas = models.ManyToManyField(Empresa, related_name="eventos_cargo")
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.evento_cargo',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)

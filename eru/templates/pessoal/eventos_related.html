@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Eventos{% endblock %}
-{% block title_i18n %}common.event__plural{% endblock %}
+{% block title_i18n %}personal.common.event__plural{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -31,32 +31,46 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="common.event__plural">Eventos</span></h5>
-        <h6 class="text-body-secondary">{{cargo.empresa.razao_social}}{{funcionario.empresa.razao_social}}</h6>
-        <h6><span>{{related|capfirst}}:</span> <span class="text-orange">{{cargo.nome}}{{funcionario.matricula}} {{funcionario.nome}}</span></h6>
+        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.event__plural">Eventos</span></h5>
+        <h6 class="text-orange">
+            {% if related == 'cargo' %}
+                <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{cargo.nome}}
+            {% elif related == 'funcionario' %}
+                <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{funcionario.matricula}} - {{funcionario.nome}}
+            {% endif %}</h6>
+        </h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
                         <th>Nome</th>
-                        {% if perms.pessoal.change_modelo %}
+                        <th class="d-none d-lg-table-cell">Inicio</th>
+                        <th class="d-none d-lg-table-cell">Fim</th>
+                        <th>Tipo</th>
+                        <th class="d-none">Valor</th>
+                        <th class="d-none d-md-table-cell">Motivo</th>
+                        {% if related == 'cargo' and perms.pessoal.change_eventocargo or related == 'funcionario' and perms.pessoal.change_eventofuncionario %}
                         <th>&nbsp;</th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for modelo in modelos %}
+                    {% for model in eventos %}
                     <tr>
-                        <td>{{modelo.nome}}</td>
-                        {% if perms.pessoal.change_modelo %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="url" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td>{{model.evento.nome}}</td>
+                        <td class="d-none d-lg-table-cell">{{model.inicio|date:'d/m/Y'}}</td>
+                        <td class="d-none d-lg-table-cell">{{model.fim|date:'d/m/Y'|default:''}}</td>
+                        <td>{{model.get_tipo_display}}</td>
+                        <td class="d-none">{{model.valor}}</td>
+                        <td class="d-none d-md-table-cell">{{model.motivo}}</td>
+                        {% if related == 'cargo' and perms.pessoal.change_eventocargo or related == 'funcionario' and perms.pessoal.change_eventofuncionario %}
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_related_id' related model.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="tab-pane fade" id="foo" role="tabpanel">outra tab</div>
     </div>
 </div>
 
@@ -67,6 +81,10 @@
 {% endblock %}
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'),{});
+const table = new jsTable(document.getElementById('main_table'),{
+    canFilter: true,
+    filterCols: ['Nome'],
+    enablePaginate: true
+});
 {% endblock %}
 </script>

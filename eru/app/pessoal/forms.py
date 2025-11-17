@@ -97,19 +97,20 @@ class FuncionarioForm(forms.ModelForm):
     status = forms.ChoiceField(required=False, choices=Funcionario.STATUS_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
 
+class MotivoReajusteForm(forms.ModelForm):
+    class Meta:
+        model = MotivoReajuste
+        fields = ['nome']
+    nome = forms.CharField(max_length=60, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
 class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
-        fields = ['nome','rastreio','tipo','grupo','empresas']
+        fields = ['nome','rastreio','tipo','grupo']
     nome = forms.CharField(max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
     tipo = forms.ChoiceField(required=False, choices=Evento.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['empresas'].queryset = user.profile.empresas.all()
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')
         # Verifica se o valor corresponde à expressão regular
@@ -117,24 +118,36 @@ class EventoForm(forms.ModelForm):
             raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
         return rastreio_value
 
-class EventoCargoForm(forms.ModelForm):
-    class Meta:
-        model = EventoCargo
-        fields = ['cargo','evento','inicio','fim','tipo','valor','motivo']
-    evento = forms.ModelChoiceField(queryset = Evento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
-    inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    fim = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    valor = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    tipo = forms.ChoiceField(required=False, choices=EventoCargo.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
-    motivo = forms.ModelChoiceField(queryset = MotivoReajuste.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
 
-class EventoFuncionarioForm(forms.ModelForm):
-    class Meta:
-        model = EventoFuncionario
-        fields = ['funcionario','evento','inicio','fim','tipo','valor','motivo']
-    evento = forms.ModelChoiceField(queryset = Evento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+class EventoMovimentacaoBaseForm(forms.ModelForm):
     inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    fim = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    valor = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    tipo = forms.ChoiceField(required=False, choices=EventoFuncionario.TIPOS, widget=forms.Select(attrs={'class':'form-select'}))
-    motivo = forms.ModelChoiceField(queryset = MotivoReajuste.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+    class Meta:
+        fields = ['evento', 'inicio', 'fim', 'tipo', 'valor', 'motivo']
+        widgets = {
+            'evento': forms.Select(attrs={'class': 'form-select'}),
+            'fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'valor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'motivo': forms.Select(attrs={'class': 'form-select'}),
+        }
+    def clean_valor(self):
+        valor_value = self.cleaned_data.get('valor')
+        if self.cleaned_data.get('tipo') == 'valor':
+            valor_value = valor_value.replace('.', '').replace(',','.')
+        return valor_value
+
+class EventoCargoForm(EventoMovimentacaoBaseForm):
+    class Meta(EventoMovimentacaoBaseForm.Meta):
+        model = EventoCargo
+        fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'empresas']
+        widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['empresas'].queryset = user.profile.empresas.all()
+
+class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
+    class Meta(EventoMovimentacaoBaseForm.Meta):
+        model = EventoFuncionario
+        fields = EventoMovimentacaoBaseForm.Meta.fields + ['funcionario']
+        widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()

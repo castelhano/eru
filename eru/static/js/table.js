@@ -252,9 +252,20 @@ class jsTable{
         }
     }
     goToPage(page){this.activePage = page;this.paginate();}
-    previousPage(){if(!this.enablePaginate || this.activePage == 1){return false}this.activePage--;this.paginate();}
-    nextPage(){if(!this.enablePaginate || this.activePage == this.lastPage){return false}this.activePage++;this.paginate();}
+    previousPage(){
+        if(!this.enablePaginate || this.activePage == 1){return false}
+        document.activeElement.blur();
+        this.activePage--;
+        this.paginate();
+    }
+    nextPage(){
+        if(!this.enablePaginate || this.activePage == this.lastPage){return false}
+        document.activeElement.blur();
+        this.activePage++;
+        this.paginate();
+    }
     nextRow(){
+        document.activeElement.blur(); // remove o foco de qualquer elemento 
         let tableRowsCount = this.tbody.querySelectorAll('tr:not(.emptyRow)').length;
         if(tableRowsCount == 0){return false;} // Se tabela vazia nao executa codigo
         if(tableRowsCount == this.activeRow + 1){this.firstRow();return false;} // Se estiver apontando para a ultima linha, retorna para a primeira
@@ -267,6 +278,7 @@ class jsTable{
         this.activeRowEl = this.tbody.querySelectorAll('tr')[this.activeRow]; // Aponta para tr em foco
     }
     previousRow(){
+        document.activeElement.blur(); // remove o foco de qualquer elemento 
         let tableRowsCount = this.tbody.querySelectorAll('tr:not(.emptyRow)').length;
         if(tableRowsCount == 0){return false;} // Se tabela vazia nao executa codigo
         if(this.activeRow == 0){this.lastRow();return false;} // Se estiver apontando para a primeira linha, foca ultima linha da tabela
@@ -279,6 +291,7 @@ class jsTable{
         this.activeRowEl = this.tbody.querySelectorAll('tr')[this.activeRow]; // Aponta para tr em foco
     }
     firstRow(){
+        document.activeElement.blur(); // remove o foco de qualquer elemento 
         let tableRowsCount = this.tbody.querySelectorAll('tr:not(.emptyRow)').length;
         if(tableRowsCount == 0){return false;} // Se tabela vazia nao executa codigo
         if(this.activeRow != null){this.tbody.querySelectorAll('tr')[this.activeRow].classList.remove(this.activeRowClass);} // Remove classe da linha em foco atual}
@@ -287,6 +300,7 @@ class jsTable{
         this.tbody.querySelectorAll('tr')[0].focus(); // Move o foco
     }
     lastRow(){
+        document.activeElement.blur(); // remove o foco de qualquer elemento 
         let tableRowsCount = this.tbody.querySelectorAll('tr:not(.emptyRow)').length;
         if(tableRowsCount == 0){return false;} // Se tabela vazia nao executa codigo
         if(this.activeRow != null){this.tbody.querySelectorAll('tr')[this.activeRow].classList.remove(this.activeRowClass);} // Remove classe da linha em foco atual}
@@ -298,7 +312,7 @@ class jsTable{
             try {this.tbody.querySelectorAll('tr')[this.activeRow].querySelector(this.actionRowSelector).click();}catch(e){}
         }
     }
-    sort(column, asc=true){
+    sort(column, asc=true){document.activeElement.blur(); // remove o foco de qualquer elemento 
         if(this.raw.length == 0){ return null } // Se tabela for vazia, nao executa processo para classificar
         const modifier = asc ? 1 : -1; // Modificador para classificar em order crecente (asc=true) ou decrescente (asc=false)
         let rows = this.filteredRows.length > 0 ? this.filteredRows : this.raw; // Busca linhas em this.filteredRows (caso filtrado) ou em this.raw caso nao

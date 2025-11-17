@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Evento{% endblock %}
-{% block title_i18n %}common.event{% endblock %}
+{% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -12,7 +12,7 @@
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventos_related' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:evento_related' related model.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:evento_related_add' related model.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_evento_related.html' %}
     </form>
@@ -22,10 +22,33 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-const form = new jsForm(document.getElementById('app_form'), {})
+
+{% if related == 'cargo' %}
+const empresas = new jsSelectm('#id_empresas', {
+    title: i18n.getEntry('common.company__plural') || '<span data-i18n="common.company__plural">Empresas</span>'
+})
+{% endif %}
+
+
+const numberMaks = {
+    mask: Number,
+    scale: 2,
+    thousandsSeparator: '.',
+    padFractionalZeros: true,
+    normalizeZeros: true,
+    radix: ',',
+    mapToRadix: ['.',','],
+}
+
+const valor = IMask(document.getElementById('id_valor'), numberMaks)
+const form = new jsForm(document.getElementById('app_form'), {
+    imask: [valor],
+})
 {% endblock %}
 </script>

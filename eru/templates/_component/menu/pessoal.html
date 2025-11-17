@@ -12,7 +12,8 @@
         {type: 'separator'},
         {name: '<b><u>E</u></b>vento', id:'menu_evento', href: '{% url 'pessoal:eventos' %}', 'data-i18n': 'personal.common.event__bold:e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b>G</b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupos_evento' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupos_evento' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivos_reajuste' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(cadastro.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',
@@ -29,7 +30,8 @@
     {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {display: false}){% endif %}
     
     
     i18n.addApp('pessoal');

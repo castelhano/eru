@@ -79,6 +79,7 @@
         },
         "event": {
             "groupEvent": "Group Event",
+            "changeReason": "Change reason",
             "form": {
                 "groupName": "Group name",
                 "groupEventRegister": "Group event register",

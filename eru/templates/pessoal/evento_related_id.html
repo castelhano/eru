@@ -8,12 +8,12 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:eventos_related' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" data-i18n="common.history">Historico</a></li>
-                    {% if perms.pessoal.delete_evento %}
+                    {% if related == 'cargo' and perms.pessoal.delete_eventocargo or related == 'funcionario' and perms.pessoal.delete_eventofuncionario %}
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
                     {% endif %}
@@ -21,13 +21,13 @@
             </li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:evento_update' evento.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:evento_related_update' related evento.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
-    {% include 'pessoal/_form_evento.html' %}
+    {% include 'pessoal/_form_evento_related.html' %}
     </form>
 </div>
 
-{% if perms.pessoal.delete_evento %}
+{% if related == 'cargo' and perms.pessoal.delete_eventocargo or related == 'funcionario' and perms.pessoal.delete_eventofuncionario %}
 <div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -40,7 +40,7 @@
                 <div class="row mt-2">
                     <div class="col text-end">
                         <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="{% url 'pessoal:evento_delete' evento.id|safe %}" data-i18n="common.delete">Excluir</a>
+                        <a class="btn btn-danger px-3" href="{% url 'pessoal:evento_related_delete' related evento.id|safe %}" data-i18n="common.delete">Excluir</a>
                     </div>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                             </tr>
                         </thead>
                     <tbody class="fs-7">
-                    {% for i in evento.ultimas_alteracoes %}
+                    {% for i in modelo.ultimas_alteracoes %}
                         <tr>
                             <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
                             <td>{{i.mensagem}}</td>
@@ -82,31 +82,34 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
-<script src="{% static 'js/related.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-const form = new jsForm(document.getElementById('app_form'), {})
-const rastreio = IMask(document.getElementById('id_rastreio'), {
-    mask: /^[a-zA-Z][a-zA-Z0-9_]*$/,
-})
-{% if perms.pessoal.add_grupoevento %}
-const grupoRelated = new RelatedAddon('#id_grupo', {
-    title: i18n.getEntry('personal.event.groupEventRegister') || 'Cadastro de Grupo de Evento',
-    labels: {
-        nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
-    },
-    url: {
-        parent: {
-            show: "{% url 'pessoal:get_grupos_evento' %}",
-        },
-        related: {
-             add: "{% url 'pessoal:add_grupo_evento' %}",
-        }
-    }    
+
+{% if related == 'cargo' %}
+const empresas = new jsSelectm('#id_empresas', {
+    title: i18n.getEntry('common.company__plural') || '<span data-i18n="common.company__plural">Empresas</span>'
 })
 {% endif %}
+
+
+const numberMaks = {
+    mask: Number,
+    scale: 2,
+    thousandsSeparator: '.',
+    padFractionalZeros: true,
+    normalizeZeros: true,
+    radix: ',',
+    mapToRadix: ['.',','],
+}
+
+const valor = document.getElementById('id_valor');
+const valorMask = IMask(valor, numberMaks)
+const form = new jsForm(document.getElementById('app_form'), {
+    imask: [valorMask],
+})
 {% endblock %}
 </script>

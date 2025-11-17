@@ -1,0 +1,52 @@
+<div class="card-body tab-content">
+    <h5 class="card-title"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.event">Event</b></h5>
+    <h6 class="mb-3 text-orange">
+        {% if related == 'cargo' %}
+            <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{model.nome}}
+        {% elif related == 'funcionario' %}
+            <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{model.matricula}} - {{model.nome}}
+        {% endif %}</h6>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row g-2">
+            <div class="col-lg col-lg-6">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.inicio }}
+                        <label for="id_inicio" data-i18n="common.start">Inicio</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.fim }}
+                        <label for="id_fim" data-i18n="common.end">Fim</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.tipo }}
+                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.valor }}
+                        <label for="id_valor" data-i18n="common.value">Valor</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.evento }}
+                        <label for="id_evento" data-i18n="personal.common.event">Evento</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.motivo }}
+                        <label for="id_motivo" data-i18n="common.reason">Motivo</label>
+                    </div>
+                </div>
+                <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save__bold:g"><b>G</b>ravar</button>
+                <input type="hidden" name="{{related}}" value="{{model.id|safe}}">
+            </div>
+            <div class="col-lg col-lg-3 col-xl-2 border-start ms-lg-1 order-3">
+                <div class="row">
+                    <div class="col">{{form.empresas}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
