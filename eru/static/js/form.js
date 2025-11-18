@@ -256,7 +256,7 @@ class jsForm{
         let modalDialog = document.createElement('div'); modalDialog.classList = 'modal-dialog modal-fullscreen';
         let modalContent = document.createElement('div'); modalContent.classList = 'modal-content';
         let modalBody = document.createElement('div'); modalBody.classList = 'modal-body';
-        let modalTitle = document.createElement('h5'); modalTitle.setAttribute('data-i18n', 'sys.filterQuery');modalTitle.innerHTML = 'Filtrar Consulta';
+        let modalTitle = document.createElement('h6'); modalTitle.setAttribute('data-i18n', 'sys.filterQuery');modalTitle.innerHTML = 'Filtrar Consulta';
         let separator = document.createElement('hr');
         let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
         this.cancel = document.createElement('button');

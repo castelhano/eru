@@ -291,12 +291,17 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True
+    def _finalizar_registros_anteriores(self):
+        pass
+    def save(self, *args, **kwargs):
+        self._finalizar_registros_anteriores()
+        super().save(*args, **kwargs)
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
     empresas = models.ManyToManyField(Empresa, related_name="eventos_cargo")
     def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.evento_cargo',objeto_id=self.id).order_by('-data')[:15]
+        logs = Log.objects.filter(modelo='pessoal.evento_cargo', objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
 
 class EventoFuncionario(EventoMovimentacao):

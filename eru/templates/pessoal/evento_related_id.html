@@ -65,7 +65,7 @@
                             </tr>
                         </thead>
                     <tbody class="fs-7">
-                    {% for i in modelo.ultimas_alteracoes %}
+                    {% for i in evento.ultimas_alteracoes %}
                         <tr>
                             <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
                             <td>{{i.mensagem}}</td>
@@ -95,21 +95,39 @@ const empresas = new jsSelectm('#id_empresas', {
 })
 {% endif %}
 
-
 const numberMaks = {
     mask: Number,
     scale: 2,
-    thousandsSeparator: '.',
+    thousandsSeparator: ',',
     padFractionalZeros: true,
     normalizeZeros: true,
-    radix: ',',
-    mapToRadix: ['.',','],
+    radix: '.',
+    mapToRadix: [','],
 }
 
+const formulaMask = {
+    mask: /[\s\S]*/
+}
+
+// valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
 const valor = document.getElementById('id_valor');
-const valorMask = IMask(valor, numberMaks)
+const tipo = document.getElementById('id_tipo');
+
+const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
 const form = new jsForm(document.getElementById('app_form'), {
     imask: [valorMask],
 })
+
+tipo.onchange = (ev)=>{
+    if(ev.target.value == 'V'){ 
+        valorMask.value = '';
+        valorMask.updateOptions(numberMaks) 
+    }
+    else{ 
+        valorMask.value = '';
+        valorMask.updateOptions(formulaMask) 
+    }
+}
+
 {% endblock %}
 </script>

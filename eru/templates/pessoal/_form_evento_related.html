@@ -24,9 +24,12 @@
                         {{ form.tipo }}
                         <label for="id_tipo" data-i18n="common.type">Tipo</label>
                     </div>
-                    <div class="form-floating mb-1 col-lg">
-                        {{ form.valor }}
-                        <label for="id_valor" data-i18n="common.value">Valor</label>
+                    <div class="col-lg input-group mb-1">
+                        <div class="form-floating">
+                            {{ form.valor }}
+                            <label for="id_valor" data-i18n="common.value">Valor</label>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="btnCheckFormula" tabindex="-1"{% if evento == None or evento.tipo == 'V' %} disabled{% endif %}><i class="bi bi-braces-asterisk"></i></button>
                     </div>
                 </div>
                 <div class="row g-1">

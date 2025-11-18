@@ -126,15 +126,10 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
         widgets = {
             'evento': forms.Select(attrs={'class': 'form-select'}),
             'fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'valor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'valor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
             'motivo': forms.Select(attrs={'class': 'form-select'}),
         }
-    def clean_valor(self):
-        valor_value = self.cleaned_data.get('valor')
-        if self.cleaned_data.get('tipo') == 'valor':
-            valor_value = valor_value.replace('.', '').replace(',','.')
-        return valor_value
 
 class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):

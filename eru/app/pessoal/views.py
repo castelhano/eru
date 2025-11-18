@@ -98,6 +98,7 @@ def eventos_related(request, related, id):
     if not request.user.has_perm(f"pessoal.view_evento{related}"):
         return redirect('handler', 403)
     options = {"related": related}
+    options['form'] = EventoCargoForm()
     if related == 'cargo':
         options['cargo'] = Cargo.objects.get(pk=id)
         options['eventos'] = EventoCargo.objects.filter(cargo=options['cargo']).order_by('evento__nome')
@@ -280,7 +281,7 @@ def evento_related_add(request, related, id):
             try:
                 registro = form.save()
                 l = Log()
-                l.modelo = f"pessoal.evento{{related}}"
+                l.modelo = f"pessoal.evento_{related}"
                 l.objeto_id = registro.id
                 l.objeto_str = registro.evento.nome[0:48]
                 l.usuario = request.user
@@ -579,7 +580,7 @@ def evento_related_update(request, related, id):
         l.mensagem = "UPDATE"
         l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.evento.nome}</b>')
-        return redirect(f'pessoal:evento_{related}_id', related, id)
+        return redirect(f'pessoal:evento_related_id', related, id)
     else:
         return render(request,f'pessoal/evento_{related}_id.html',{'form':form, 'evento':evento})
 

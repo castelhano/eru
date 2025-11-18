@@ -4,6 +4,7 @@
 {% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
+
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
@@ -39,16 +40,37 @@ const empresas = new jsSelectm('#id_empresas', {
 const numberMaks = {
     mask: Number,
     scale: 2,
-    thousandsSeparator: '.',
+    thousandsSeparator: ',',
     padFractionalZeros: true,
     normalizeZeros: true,
-    radix: ',',
-    mapToRadix: ['.',','],
+    radix: '.',
+    mapToRadix: [','],
 }
 
-const valor = IMask(document.getElementById('id_valor'), numberMaks)
+const formulaMask = {
+    mask: /[\s\S]*/
+}
+
+// valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
+const valor = document.getElementById('id_valor');
+const tipo = document.getElementById('id_tipo');
+const btnCheck = document.getElementById('btnCheckFormula');
+const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
 const form = new jsForm(document.getElementById('app_form'), {
-    imask: [valor],
+    imask: [valorMask],
 })
+
+tipo.onchange = (ev)=>{
+    if(ev.target.value == 'V'){ 
+        valorMask.value = '';
+        valorMask.updateOptions(numberMaks);
+        btnCheck.disabled = true;
+    }
+    else{ 
+        valorMask.value = '';
+        valorMask.updateOptions(formulaMask);
+        btnCheck.disabled = false;
+    }
+}
 {% endblock %}
 </script>

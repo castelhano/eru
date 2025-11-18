@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load tag_extra %}
 {% block title %}Eventos{% endblock %}
 {% block title_i18n %}personal.common.event__plural{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
@@ -13,6 +14,7 @@
                 {% if perms.pessoal.add_eventocargo %}
                 <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'cargo' cargo.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
                 {% endif %}
+            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
             <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_id' cargo.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% elif related == 'funcionario' %}
                 {% if perms.pessoal.add_eventofuncionario %}
@@ -43,7 +45,8 @@
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
-                        <th>Nome</th>
+                        <th class="d-none d-md-table-cell" data-i18n="common.company__plural__posfix:*">Empresas</th>
+                        <th data-i18n="common.name__posfix:*">Nome</th>
                         <th class="d-none d-lg-table-cell">Inicio</th>
                         <th class="d-none d-lg-table-cell">Fim</th>
                         <th>Tipo</th>
@@ -57,6 +60,7 @@
                 <tbody>
                     {% for model in eventos %}
                     <tr>
+                        <td class="fit d-none d-md-table-cell">{{model.empresas.all|join:';'|badge_list:'bg-body-secondary text-body-secondary'}}</td>
                         <td>{{model.evento.nome}}</td>
                         <td class="d-none d-lg-table-cell">{{model.inicio|date:'d/m/Y'}}</td>
                         <td class="d-none d-lg-table-cell">{{model.fim|date:'d/m/Y'|default:''}}</td>
@@ -74,17 +78,48 @@
     </div>
 </div>
 
+<div id="filterModal" style="display: none;">
+    <form action="" id="filterForm">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.evento }}
+                        <label for="id_evento">Evento</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 border-start">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" name="inativos" id="id_inativos">
+                    <label class="form-check-label" for="id_inativos">Incluir inativos</label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 {% endblock%}
 
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
+
+const form = new jsForm('#filterForm', {
+    modalBody: document.getElementById('filterModal'),
+    modalTrigger: document.getElementById('filterBtn'),
+    modalFocus: document.getElementById('id_evento'),
+
+})
+
 const table = new jsTable(document.getElementById('main_table'),{
     canFilter: true,
-    filterCols: ['Nome'],
+    filterCols: ['Nome', 'Empresas'],
     enablePaginate: true
 });
+
 {% endblock %}
 </script>
