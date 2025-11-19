@@ -13,7 +13,7 @@
   				let obj = JSON.parse(this.responseText);
   				empresas = document.getElementById("id_empresa");
 					empresa_atual = '{{empresa_atual}}';
-					if({{blank_row|default:'false'}}){empresas.innerHTML = '<option value="" data-i18n="common.all">{{blank_row_message|default:'Todas'}}</option>' }
+					if({{blank_row|default:'false'}}){empresas.innerHTML = `<option value="" data-i18n="common.all">${ i18n ? i18n.getEntry('common.all') || '{{blank_row_message}}' || '--' : '{{blank_row_message}}' || '--'}</option>` }
   				for(key in obj){
 					empresas.innerHTML += `<option value="${obj[key].pk}" ${obj[key].pk == empresa_atual ? 'selected' : ''}>${obj[key].fields.nome}</option>`;
 				}
