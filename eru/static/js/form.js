@@ -266,10 +266,27 @@ class jsForm{
         this.submit = document.createElement('button');
         for(let key in this.submitSchema){this.submit[key] = this.submitSchema[key]}
         this.submit.addEventListener('click', ()=>{
-            if(this.modalBody.tagName == 'FORM'){this.modalBody.submit()}
+            if(this.modalBody.tagName == 'FORM'){
+                const formData = new FormData(this.modalBody);
+                const params = new URLSearchParams();
+                for (const [name, value] of formData) {
+                    if(value.trim() !== ''){ params.append(name, value) }
+                }
+                const actionUrl = this.modalBody.getAttribute('action') || window.location.pathname;
+                window.location.href = actionUrl + '?' + params.toString();
+                // this.modalBody.submit()
+            
+            }
             else{
-                let form = this.modalBody.querySelector('form');
-                if(form){form.submit()}
+                const form = this.modalBody.querySelector('form');
+                const formData = new FormData(form);
+                const params = new URLSearchParams();
+                for (const [name, value] of formData) {
+                    if(value.trim() !== ''){ params.append(name, value) }
+                }
+                const actionUrl = form.getAttribute('action') || window.location.pathname;
+                window.location.href = actionUrl + '?' + params.toString();
+                // if(form){form.submit()}
             }
         })
 

@@ -121,11 +121,11 @@ class EventoForm(forms.ModelForm):
 
 class EventoMovimentacaoBaseForm(forms.ModelForm):
     inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
+    fim = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
     class Meta:
         fields = ['evento', 'inicio', 'fim', 'tipo', 'valor', 'motivo']
         widgets = {
             'evento': forms.Select(attrs={'class': 'form-select'}),
-            'fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'valor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': ' '}),
             'motivo': forms.Select(attrs={'class': 'form-select'}),

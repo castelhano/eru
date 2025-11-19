@@ -4,24 +4,39 @@
 </div>
 
 <script>
-  function getEmpresas() {
-  	var xhttp = new XMLHttpRequest();
-  	xhttp.onreadystatechange = function() {
-  		if(this.readyState == 4 && this.status == 200){
-  			if(this.responseText == ''){}
-  			else{
-  				let obj = JSON.parse(this.responseText);
-  				empresas = document.getElementById("id_empresa");
-					empresa_atual = '{{empresa_atual}}';
-					if({{blank_row|default:'false'}}){empresas.innerHTML = `<option value="" data-i18n="common.all">${ i18n ? i18n.getEntry('common.all') || '{{blank_row_message}}' || '--' : '{{blank_row_message}}' || '--'}</option>` }
-  				for(key in obj){
-					empresas.innerHTML += `<option value="${obj[key].pk}" ${obj[key].pk == empresa_atual ? 'selected' : ''}>${obj[key].fields.nome}</option>`;
-				}
-  			}
-  		}
-  	};
-  	xhttp.open("GET", "{% url 'get_empresas' %}", true);
-  	xhttp.send();
+  /**
+   * Popula o select de empresas via AJAX e retorna uma Promise
+   * @returns {Promise<void>}
+   */
+  function setupEmpresasComponent() {
+    const selectEmpresa = document.getElementById("id_empresa");
+    const empresaAtual = '{{empresa_atual}}';
+    const blankRowEnabled = {{blank_row|default:'false'}};
+
+    return fetch("{% url 'get_empresas' %}")
+      .then(response => response.json())
+      .then(data => {
+        let optionsHtml = '';
+
+        if (blankRowEnabled) {
+          const blankMessage = i18n ? i18n.getEntry('common.all') || '{{blank_row_message|default:"--"}}' : '{{blank_row_message|default:"--"}}';
+          optionsHtml += `<option value="" data-i18n="common.all">${blankMessage}</option>`;
+        }
+        
+        data.forEach(empresa => {
+          const selected = empresa.pk == empresaAtual ? 'selected' : '';
+          optionsHtml += `<option value="${empresa.pk}" ${selected}>${empresa.fields.nome}</option>`;
+        });
+
+        selectEmpresa.innerHTML = optionsHtml;
+        selectEmpresa.dispatchEvent(new Event('componentLoaded'));
+      })
+      .catch(error => {
+        console.error("Erro ao carregar empresas:", error);
+        throw error; 
+      });
   }
-  getEmpresas();
+  // caso ainda nao exista, cria lista para os promisses
+  if (!window.componentPromises) { window.componentPromises = []}
+  window.componentPromises.push(setupEmpresasComponent());
 </script>

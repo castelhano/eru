@@ -5,13 +5,13 @@ import json
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
-from .filters import FuncionarioFilter
+from .filters import FuncionarioFilter, EventoCargoFilter, EventoFuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.models import Log
 from core.extras import create_image
 from django.conf import settings
-from datetime import datetime
+from datetime import datetime, date
 
 
 @login_required
@@ -98,13 +98,32 @@ def eventos_related(request, related, id):
     if not request.user.has_perm(f"pessoal.view_evento{related}"):
         return redirect('handler', 403)
     options = {"related": related}
-    options['form'] = EventoCargoForm()
+    options['form'] = EventoCargoForm() # usa o cargo form apenas para efeito de consulta no template
+    # options['form'] = EventoCargoForm({'tipo': ''}) # usa o cargo form apenas para efeito de consulta no template
+    options['form'].fields['tipo'].required = False
+    empty_choice = [('', "---------")]
+    options['form'].fields['tipo'].choices = empty_choice + list(options['form'].fields['tipo'].choices)
+
     if related == 'cargo':
-        options['cargo'] = Cargo.objects.get(pk=id)
-        options['eventos'] = EventoCargo.objects.filter(cargo=options['cargo']).order_by('evento__nome')
+        options['model'] = Cargo.objects.get(pk=id)
+        options['eventos'] = EventoCargo.objects.filter(cargo=options['model'], empresas__in=request.user.profile.empresas.all()).order_by('evento__nome')
+        if not request.GET or not request.GET.get('fim', None):
+            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
+        if request.GET:
+            rel_filter = EventoCargoFilter(request.GET, queryset=options['eventos'])
+            options['eventos'] = rel_filter.qs
+            if len(options['eventos']) == 0:
+                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
     elif related == 'funcionario':
-        options['funcionario'] = Funcionario.objects.get(pk=id)
-        options['eventos'] = EventoFuncionario.objects.filter(funcionario=options['funcionario']).order_by('evento__nome')
+        options['model'] = Funcionario.objects.get(pk=id)
+        options['eventos'] = EventoFuncionario.objects.filter(funcionario=options['model']).order_by('evento__nome')
+        if not request.GET or not request.GET.get('fim', None):
+            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
+        if request.GET:
+            rel_filter = EventoFuncionarioFilter(request.POST, queryset=options['eventos'])
+            options['eventos'] = rel_filter.qs
+            if len(options['eventos']) == 0:
+                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
     else:
         messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>pessoal:eventos_related, invalid related</b>')
         return redirect('index')

@@ -12,15 +12,15 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             {% if related == 'cargo' %}
                 {% if perms.pessoal.add_eventocargo %}
-                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'cargo' cargo.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'cargo' model.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
                 {% endif %}
             <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_id' cargo.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_id' model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% elif related == 'funcionario' %}
                 {% if perms.pessoal.add_eventofuncionario %}
-                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'funcionario' funcionario.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'funcionario' model.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
                 {% endif %}
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_id' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_id' model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -36,9 +36,9 @@
         <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.event__plural">Eventos</span></h5>
         <h6 class="text-orange">
             {% if related == 'cargo' %}
-                <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{cargo.nome}}
+                <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{model.nome}}
             {% elif related == 'funcionario' %}
-                <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{funcionario.matricula}} - {{funcionario.nome}}
+                <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{model.matricula}} - {{model.nome}}
             {% endif %}</h6>
         </h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -81,20 +81,36 @@
 <div id="filterModal" style="display: none;">
     <form action="" id="filterForm">
         <div class="row">
-            <div class="col-lg-3">
+            <div class="col-md-6 col-lg-5">
                 <div class="row g-1">
+                    {% include "_component/field/empresa.html" with blank_row='true' container_classlist='form-floating col-lg mb-lg-1' %}
                     <div class="form-floating mb-1 col-lg">
                         {{ form.evento }}
-                        <label for="id_evento">Evento</label>
+                        <label for="id_evento" data-i18n="personal.common.event">Evento</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg">
+                        {{ form.tipo }}
+                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.motivo }}
+                        <label for="id_motivo" data-i18n="common.reason">Motivo</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg">
+                        <input type="date" class="form-control" name="inicio" id="id_inicio">
+                        <label for="id_inicio" data-i18n="common.start">Inicio</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.fim }}
+                        <label for="id_fim" data-i18n="common.end">Fim</label>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 border-start">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" name="inativos" id="id_inativos">
-                    <label class="form-check-label" for="id_inativos">Incluir inativos</label>
-                </div>
-            </div>
+            <div class="col-lg-6 border-start"></div>
         </div>
     </form>
 </div>
@@ -104,16 +120,23 @@
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
 
 const form = new jsForm('#filterForm', {
+    novalidate: true,
     modalBody: document.getElementById('filterModal'),
     modalTrigger: document.getElementById('filterBtn'),
-    modalFocus: document.getElementById('id_evento'),
+    modalFocus: document.getElementById('id_empresa'),
 
 })
+
+// executa o carregamento do form apos o retorno de todos os ajax
+// Promise.all(window.componentPromises || []).then(()=>{ form.load(urlMap()) })
+// executa o carregamento do form apos conclusao do componente empresa
+form.empresa.addEventListener('componentLoaded', ()=>{ form.load(urlMap()) })
 
 const table = new jsTable(document.getElementById('main_table'),{
     canFilter: true,
