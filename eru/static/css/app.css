@@ -1,5 +1,4 @@
 
-
 .cursor-default{cursor: default;}
 .pointer{cursor: pointer;}
 .help{cursor: help;}
@@ -173,6 +172,13 @@ pre, code{user-select: all;}
 .slideIn{animation-fill-mode: both; animation-name: slideIn; animation-duration: 0.5s;}
 @keyframes slideIn{from{transform:translate3d(0,100%,0);visibility:visible;}to{transform:translate3d(0,0,0);}}
 
+
+.autocomplete-results{}
+.autocomplete-results ul{}
+.autocomplete-results li{}
+.autocomplete-results li.highlighted{
+    background-color: #198754;
+}
 
 
 

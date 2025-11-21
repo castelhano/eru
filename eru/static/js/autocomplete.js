@@ -1,35 +1,35 @@
 class Autocomplete {
     /**
-     * Inicializa a instância do Autocomplete.
-     * @param {string|HTMLInputElement|HTMLTextAreaElement} inputSelector - Seletor CSS ou referência ao elemento input/textarea.
-     * @param {Array<string>} data - Array de strings com os dados para autocompletar.
-     * @param {object} options - Opções de configuração (opcional).
+     * Inicializa a instancia do Autocomplete
+     * @param {string|HTMLInputElement|HTMLTextAreaElement} inputSelector - Seletor CSS ou referencia ao elemento input/textarea
+     * @param {Array<string>} data - Array de strings com os dados para autocompletar
+     * @param {object} options - Opcoes de configuracao (opcional)
      */
-    constructor(inputSelector, data, options = {}) {
-        // Variáveis de instância (privadas ou protegidas por convenção)
+    constructor(inputSelector, data=[], options = {}) {
+        // Variaveis de instancia (privadas ou protegidas por convencao)
         this.inputElement = typeof inputSelector === 'string' ? document.querySelector(inputSelector) : inputSelector;
         this.data = data;
         this.options = {
-            minLength: options.minLength || 1, // Número mínimo de caracteres para começar a buscar
-            maxResults: options.maxResults || 10, // Número máximo de resultados exibidos
+            minLength: options.minLength || 2, // Numero minimo de caracteres para comecar a buscar
+            maxResults: options.maxResults || 10, // Numero maximo de resultados exibidos
             matchSubstring: options.matchSubstring || true, // Permitir busca por substring em qualquer parte do texto
-            caseSensitive: options.caseSensitive || false, // Diferenciar maiúsculas de minúsculas
+            caseSensitive: options.caseSensitive || false, // Diferenciar maiusculas de minusculas
             ...options
         };
-        this.autocompleteContainer = null; // Contêiner para a lista de sugestões
-        this.selectedIndex = -1; // Índice do item selecionado na lista (para navegação via teclado)
+        this.autocompleteContainer = null; // Conteiner para a lista de sugestoes
+        this.selectedIndex = -1; // Indice do item selecionado na lista (para navegacao via teclado)
 
-        // Verificação básica do elemento de input
-        if (!this.inputElement || !(this.inputElement instanceof HTMLInputElement || this.inputElement instanceof HTMLTextAreaElement)) {
-            console.error('Elemento de input inválido fornecido.');
+        // Verificacao basica do elemento de input
+        if((this.inputElement.tagName.toLowerCase() === 'textarea') || (this.inputElement.tagName.toLowerCase() === 'input' && (['text','search'].includes(this.inputElement.type.toLowerCase())))){
+        // if (!this.inputElement || (this.inputElement.nodeName == 'INPUT' && !['text', 'search'].includes(this.inputElement.type)) && !(this.inputElement instanceof HTMLTextAreaElement)){
+            console.error('Autocomplete: Element must be a input (text or search) or textearea');
             return;
         }
-
         this._init();
     }
 
     /**
-     * Método de inicialização que anexa os listeners de eventos.
+     * Metodo de inicializacao que anexa os listeners de eventos
      * @private
      */
     _init() {
@@ -40,58 +40,56 @@ class Autocomplete {
     }
 
     /**
-     * Cria e anexa o contêiner de sugestões ao DOM.
+     * Cria e anexa o conteiner de sugestoes ao DOM
      * @private
      */
     _createContainer() {
         this.autocompleteContainer = document.createElement('ul');
         this.autocompleteContainer.classList.add('autocomplete-results');
-        // Posicione o contêiner abaixo do input no DOM, por exemplo, após o input.
+        // Posicione o conteiner abaixo do input no DOM, por exemplo, apos o input
         this.inputElement.parentNode.insertBefore(this.autocompleteContainer, this.inputElement.nextSibling);
     }
 
     /**
-     * Lida com o evento de 'input' (digitação).
+     * Lida com o evento de 'input' (digitacao)
      * @private
      */
     _handleInput(event) {
-        const query = event.target.value;
+        if(event.data == ' '){return} // se a tecla digitada for espaco nao realiza sugestao
+        let end = this.inputElement.selectionStart;        
+        let start = Math.max(this.inputElement.value.lastIndexOf(' ', end - 1), 0);
+        const query = this.inputElement.value.substring(start, end);
         if (query.length >= this.options.minLength) {
             const results = this._filterData(query);
             this._renderResults(results);
-        } else {
-            this._hideResults();
-        }
+        } else { this._hideResults() }
     }
 
     /**
-     * Filtra os dados com base na consulta, suportando busca por substring.
+     * Filtra os dados com base na consulta, suportando busca por substring
      * @private
-     * @param {string} query - O texto digitado.
-     * @returns {Array<string>} Os resultados filtrados.
+     * @param {string} query - O texto digitado
+     * @returns {Array<string>} Os resultados filtrados
      */
     _filterData(query) {
-        // Normaliza a consulta se não for case-sensitive
+        // Normaliza a consulta se nao for case-sensitive
         const normalizedQuery = this.options.caseSensitive ? query : query.toLowerCase();
 
         return this.data
             .filter(item => {
                 const normalizedItem = this.options.caseSensitive ? item : item.toLowerCase();
                 // Usa includes() para pesquisa de substring em qualquer lugar do texto
-                return normalizedItem.includes(normalizedQuery); //
+                return normalizedItem.includes(normalizedQuery);
             })
-            .slice(0, this.options.maxResults); // Limita o número de resultados
+            .slice(0, this.options.maxResults); // Limita o numero de resultados
     }
 
     /**
-     * Renderiza a lista de resultados no contêiner.
+     * Renderiza a lista de resultados no conteiner
      * @private
-     * @param {Array<string>} results - Os resultados a serem exibidos.
+     * @param {Array<string>} results - Os resultados a serem exibidos
      */
     _renderResults(results) {
-        this.autocompleteContainer.innerHTML = '';
-        this.selectedIndex = -1;
-
         if (results.length === 0) {
             this._hideResults();
             return;
@@ -100,7 +98,7 @@ class Autocomplete {
         results.forEach((result, index) => {
             const li = document.createElement('li');
             li.textContent = result;
-            li.addEventListener('click', () => this._selectResult(result));
+            // li.addEventListener('click', () => this._selectResult(result));
             this.autocompleteContainer.appendChild(li);
         });
 
@@ -108,29 +106,30 @@ class Autocomplete {
     }
 
     /**
-     * Esconde a lista de resultados.
+     * Esconde a lista de resultados
      * @private
      */
     _hideResults() {
         this.autocompleteContainer.style.display = 'none';
         this.autocompleteContainer.innerHTML = '';
+        this.selectedIndex = -1;
     }
 
     /**
-     * Seleciona um resultado e atualiza o input.
+     * Seleciona um resultado e atualiza o input
      * @private
-     * @param {string} result - O resultado selecionado.
+     * @param {string} result - O resultado selecionado
      */
     _selectResult(result) {
-        this.inputElement.value = result;
+        // this.inputElement.value = result;
         this._hideResults();
-        // Disparar evento personalizado se necessário (ex: 'autocomplete:select')
+        // Disparar evento personalizado se necessario (ex: 'autocomplete:select')
         const selectEvent = new CustomEvent('autocomplete:select', { detail: result });
         this.inputElement.dispatchEvent(selectEvent);
     }
 
     /**
-     * Lida com a navegação via teclado (Arrow Up/Down, Enter).
+     * Lida com a navegacao via teclado (Arrow Up/Down, Enter)
      * @private
      */
     _handleKeyDown(event) {
@@ -155,9 +154,9 @@ class Autocomplete {
     }
 
     /**
-     * Adiciona destaque visual ao item selecionado.
+     * Adiciona destaque visual ao item selecionado
      * @private
-     * @param {Array<HTMLLIElement>} items - A lista de elementos <li>.
+     * @param {Array<HTMLLIElement>} items - A lista de elementos <li>
      */
     _highlightItem(items) {
         items.forEach(item => item.classList.remove('highlighted'));
@@ -167,7 +166,7 @@ class Autocomplete {
     }
 
     /**
-     * Esconde os resultados quando o input perde o foco (blur).
+     * Esconde os resultados quando o input perde o foco (blur)
      * @private
      */
     _handleBlur() {
@@ -175,24 +174,3 @@ class Autocomplete {
         setTimeout(() => this._hideResults(), 100);
     }
 }
-
-//******************  */
-
-Dicas para Performance e Compatibilidade
-Manipulação Eficiente do DOM:
-Minimize a reflow e repaint do navegador. Em vez de adicionar itens li um por um, crie um fragmento de documento (DocumentFragment) com todos os itens e adicione-o ao autocompleteContainer de uma só vez.
-Reutilize o contêiner (autocompleteContainer) em vez de criar e destruir a cada busca. Apenas limpe o conteúdo interno (innerHTML = '') e adicione os novos resultados.
-Otimização do Filtro de Dados:
-Para grandes volumes de dados, a função _filterData pode ser custosa. Considere o uso de algoritmos de busca mais eficientes, como o algoritmo de busca KMP ou Tries, se a performance for crítica. Para a maioria dos casos, Array.prototype.filter() e String.prototype.includes() são performáticos o suficiente.
-Execute operações de normalização (como toLowerCase()) apenas uma vez, talvez durante o carregamento inicial dos dados ou no constructor, em vez de em cada evento de input.
-Compatibilidade e Boas Práticas:
-Use const e let em vez de var para melhor escopo e evitar problemas de hoisting.
-O código acima usa JavaScript puro (Vanilla JS), o que garante excelente compatibilidade com todos os navegadores modernos, sem depender de bibliotecas externas. Teste em vários navegadores para garantir.
-Utilize o método addEventListener() para vincular eventos, pois é o padrão moderno e compatível.
-Adicione um pequeno atraso (setTimeout) no evento blur para permitir que o clique no item da lista seja registrado antes que a lista desapareça.
-Experiência do Usuário (UX):
-Adicione CSS para estilizar o autocompleteContainer e a classe .highlighted, fazendo a interface ser responsiva e acessível.
-Use atributos aria-* para melhorar a acessibilidade para usuários que dependem de leitores de tela.
-Com este modelo e dicas, você terá uma base sólida para uma biblioteca de autocomplete eficiente e robusta.
-
-

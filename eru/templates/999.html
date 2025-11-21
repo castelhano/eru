@@ -52,6 +52,11 @@
                     <label for="id_salario">Salario</label>
                 </div>
             </div>
+            <div class="row">
+                <div class="col">
+                    <textarea name="myText" id="id_myText"></textarea>
+                </div>
+            </div>
             <div class="row mt-2">
                 <div class="col">
                     <button class="btn btn-sm btn-primary" id="submit" type="submit"><b>G</b>ravar</button>
@@ -177,12 +182,17 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/autocomplete.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
+
+const autocomplete = new Autocomplete('#id_empresa', ['foo','bar','non'], {})
+// const autocomplete = new Autocomplete('#id_myText', ['foo','bar','non'], {})
+
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,
