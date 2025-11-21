@@ -61,7 +61,7 @@ class I18n{
             this.translate(lng, false);
         }
         else if(this.language != this.defaultLanguage){
-            console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`);
+            if(Object.entries(this.db).length > 0){ console.log(`${timeNow({showSeconds: true})} | i18n: Translating for localStorage`) }
             this.translate(this.language, false)
         }
     }
@@ -75,8 +75,8 @@ class I18n{
             window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0];
             return;
         }
-        if(lng == this.language){
-            // Caso linguagem seja a mesma de this.language chama o metodo refresh (necessario ao importar DB do localStorage)
+        if(lng == this.language && Object.entries(this.db).length > 0){
+            // Caso linguagem seja a mesma de this.language (e ja existe DB iniciado) chama o metodo refresh (necessario ao importar DB do localStorage)
             if(this.switcher){this.switcher.value = this.language}  // Ajusta switcher se existir
             this.refresh();
             return
@@ -250,6 +250,20 @@ class I18n{
     // Obs.: Caso reload=false, lembrar de setar novamente i18n.addApp('seu app')
     clearAll(reload=true){ 
         localStorage.removeItem('i18nLanguage');
+        localStorage.removeItem('i18nDB');
+        localStorage.removeItem('i18nApps');
+        localStorage.removeItem('i18nUnsupported');
+        if(reload){ // recarrega pagina com idioma default
+            window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0];
+        }
+        else{
+            this.db = {};
+            this.apps = [];
+            this.language = this.defaultLanguage;
+        }
+    }
+    // Similar ao clearAll, porem mantem o idioma selecionado pelo usuario
+    clearData(reload=true){ 
         localStorage.removeItem('i18nDB');
         localStorage.removeItem('i18nApps');
         localStorage.removeItem('i18nUnsupported');

@@ -83,8 +83,9 @@
         "widower": "Widower"
     },
     "compound": {
-        "notInformed": "Not informed",
-        "includeInactiveEntries": "Include inactive entries"
+        "checkAll": "Check all $1",
+        "includeInactiveEntries": "Include inactive entries",
+        "notInformed": "Not informed"
     },
     "company": {
         "companyName": "Company name",

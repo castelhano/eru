@@ -87,8 +87,8 @@
                 "trackingHelp_r1": "It must start with the letter (alpha)",
                 "trackingHelp_r2": "It can contain letters (uppercase and lowercase), numbers and underline",
                 "trackingHelp_r3": "Special characters and spaces are not allowed",
-                "trackingHelp_r4": "Maximum of 20 characters"
-
+                "trackingHelp_r4": "Maximum of 20 characters",
+                "validateFormula": "Validate Formula"
             }
         },
         "sys":{

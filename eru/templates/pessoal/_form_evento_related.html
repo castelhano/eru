@@ -29,7 +29,7 @@
                             {{ form.valor }}
                             <label for="id_valor" data-i18n="common.value">Valor</label>
                         </div>
-                        <button type="button" class="btn btn-primary" id="btnCheckFormula" tabindex="-1"{% if evento == None or evento.tipo == 'V' %} disabled{% endif %}><i class="bi bi-braces-asterisk"></i></button>
+                        <button type="button" class="btn btn-primary" id="btnCheckFormula" title="Validar Fórmula" data-i18n="[title]personal.event.form.validateFormula" tabindex="-1"{% if evento == None or evento.tipo == 'V' %} disabled{% endif %}><i class="bi bi-braces-asterisk"></i></button>
                     </div>
                 </div>
                 <div class="row g-1">

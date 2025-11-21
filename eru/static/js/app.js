@@ -150,7 +150,7 @@ function confirmOnClick(options){
 
 // Script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
 function appOnLogout(url){
-  i18n.clearAll(false);
+  i18n.clearData(false);
   //--
   location.href = url;
 }
