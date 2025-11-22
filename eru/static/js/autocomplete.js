@@ -20,7 +20,12 @@ class Autocomplete {
         this.selectedIndex = -1; // Indice do item selecionado na lista (para navegacao via teclado)
 
         // Verificacao basica do elemento de input
-        if((this.inputElement.tagName.toLowerCase() === 'textarea') || (this.inputElement.tagName.toLowerCase() === 'input' && (['text','search'].includes(this.inputElement.type.toLowerCase())))){
+        if(
+                !(
+                    this.inputElement.tagName.toLowerCase() === 'textarea' || 
+                    (this.inputElement.tagName.toLowerCase() === 'input' && ['text','search'].includes(this.inputElement.type.toLowerCase()))
+                )
+        ){
         // if (!this.inputElement || (this.inputElement.nodeName == 'INPUT' && !['text', 'search'].includes(this.inputElement.type)) && !(this.inputElement instanceof HTMLTextAreaElement)){
             console.error('Autocomplete: Element must be a input (text or search) or textearea');
             return;
@@ -34,7 +39,7 @@ class Autocomplete {
      */
     _init() {
         this.inputElement.addEventListener('input', this._handleInput.bind(this));
-        this.inputElement.addEventListener('keydown', this._handleKeyDown.bind(this));
+        this.inputElement.addEventListener('keydown', this._handleKeyDown.bind(this), true);
         this.inputElement.addEventListener('blur', this._handleBlur.bind(this));
         this._createContainer();
     }
@@ -44,6 +49,7 @@ class Autocomplete {
      * @private
      */
     _createContainer() {
+        this.inputElement.parentNode.style.positiom = 'relative';
         this.autocompleteContainer = document.createElement('ul');
         this.autocompleteContainer.classList.add('autocomplete-results');
         // Posicione o conteiner abaixo do input no DOM, por exemplo, apos o input
@@ -55,10 +61,17 @@ class Autocomplete {
      * @private
      */
     _handleInput(event) {
-        if(event.data == ' '){return} // se a tecla digitada for espaco nao realiza sugestao
-        let end = this.inputElement.selectionStart;        
-        let start = Math.max(this.inputElement.value.lastIndexOf(' ', end - 1), 0);
+        if(event.data == ' '){  // se a tecla digitada for espaco nao realiza sugestao
+            this._hideResults()
+            return
+        }
+        let cursorPosition = this.inputElement.selectionStart;
+        let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
+        // let end = Math.min(this.inputElement.value.indexOf(' ', cursorPosition), this.inputElement.value.length);
+        let end = this.inputElement.value.indexOf(' ', cursorPosition);
+        end = (end === -1) ? this.inputElement.value.length : end;
         const query = this.inputElement.value.substring(start, end);
+        
         if (query.length >= this.options.minLength) {
             const results = this._filterData(query);
             this._renderResults(results);
@@ -94,6 +107,7 @@ class Autocomplete {
             this._hideResults();
             return;
         }
+        this.autocompleteContainer.innerHTML = '';
 
         results.forEach((result, index) => {
             const li = document.createElement('li');
@@ -113,6 +127,7 @@ class Autocomplete {
         this.autocompleteContainer.style.display = 'none';
         this.autocompleteContainer.innerHTML = '';
         this.selectedIndex = -1;
+        this.inputElement.removeAttribute('data-keywatch'); // reativa tabulacao na tecla enter para input para evitar conflito 
     }
 
     /**
@@ -139,18 +154,27 @@ class Autocomplete {
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
+            this.inputElement.setAttribute('data-keywatch','none'); // desativa tabulacao na tecla enter para input para evitar conflito 
             this.selectedIndex = (this.selectedIndex + 1) % items.length;
             this._highlightItem(items);
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
+            this.inputElement.setAttribute('data-keywatch','none'); // desativa tabulacao na tecla enter para input para evitar conflito 
             this.selectedIndex = (this.selectedIndex - 1 + items.length) % items.length;
             this._highlightItem(items);
         } else if (event.key === 'Enter') {
             event.preventDefault();
             if (this.selectedIndex > -1) {
-                items[this.selectedIndex].click();
+                let cursorPosition = this.inputElement.selectionStart;
+                let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
+                let end = this.inputElement.value.indexOf(' ', cursorPosition);
+                end = (end === -1) ? this.inputElement.value.length : end;
+                // let end = Math.min(this.inputElement.value.indexOf(' ', cursorPosition), this.inputElement.value.length);
+                this.inputElement.value = this.inputElement.value.slice(0, start) + items[this.selectedIndex].innerHTML + this.inputElement.value.slice(end);
+                this.inputElement.setSelectionRange(start + items[this.selectedIndex].innerHTML.length, start + items[this.selectedIndex].innerHTML.length);
+                this._hideResults();
             }
-        }
+        } else if (event.key === 'Escape') { this._hideResults() }
     }
 
     /**

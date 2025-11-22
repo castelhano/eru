@@ -173,11 +173,26 @@ pre, code{user-select: all;}
 @keyframes slideIn{from{transform:translate3d(0,100%,0);visibility:visible;}to{transform:translate3d(0,0,0);}}
 
 
-.autocomplete-results{}
-.autocomplete-results ul{}
-.autocomplete-results li{}
+.autocomplete-results{
+    display: none;
+    position: absolute;
+    min-width: 250px;
+    margin-top: 8px;
+    padding: 10px;
+    background-color: rgba(var(--bs-tertiary-bg-rgb), 1);
+    list-style: none;
+    border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    z-index: 1000;
+}
+.autocomplete-results li{
+    padding: 5px;
+    padding-left: 10px;
+    border-radius: 5px;
+}
 .autocomplete-results li.highlighted{
-    background-color: #198754;
+    background-color: #9394F1;
+    color: #0D0B1E;
 }
 
 
