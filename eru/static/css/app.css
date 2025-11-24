@@ -190,11 +190,8 @@ pre, code{user-select: all;}
     padding-left: 10px;
     border-radius: 5px;
 }
-.autocomplete-results li.highlighted{
-    background-color: #9394F1;
-    color: #0D0B1E;
-}
-
-
+.autocomplete-results li:hover{ cursor: pointer; }
+.autocomplete-results .emphasis{ color: #F35B04; font-weight: 600; }
+.autocomplete-results li.highlighted, .autocomplete-results li:hover{ background-color: #9394F1; color: #0D0B1E; }
 
 dialog::backdrop { background-color: rgba(0, 0, 0, 0.5) }

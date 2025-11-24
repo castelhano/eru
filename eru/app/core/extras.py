@@ -27,3 +27,29 @@ def create_image(data_url, file_path, file_name, older_prefix_to_remove=False):
         return [True]
     except Exception as e:
         return [False, str(e)]
+
+
+
+def get_props(model_class):
+    """
+    Extrai uma lista contendo os nomes de todos os atributos decorados
+    com '@property' em uma classe de modelo Django.
+
+    Esta funcao usa introspeccao de classe do Python para identificar 
+    dinamicamente as propriedades definidas. E util para documentacao 
+    ou validacao dos aliases disponiveis para o usuario final.
+
+    Args:
+        model_class (class): A classe do modelo Django a ser inspecionada
+                             (ex: Funcionario, Cargo)
+
+    Returns:
+        list: Uma lista de strings contendo os nomes das properties
+              Ex: ['F_salario_base', 'F_nome_completo']
+    """
+    prop_list = []
+    for name, value in model_class.__dict__.items():
+        # Verifica se o valor do atributo é do tipo 'property'
+        if isinstance(value, property):
+            prop_list.append(name)
+    return prop_list

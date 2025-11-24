@@ -4,6 +4,7 @@
 {% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
+{% block style %} {% include 'pessoal/_form_evento_related_modal_style.css' %} {% endblock style %}
 
 {% block content_fluid %}
 <div class="card mt-2">
@@ -19,73 +20,21 @@
     </form>
 </div>
 
+{% include 'pessoal/_form_evento_related_modal.html' %}
+
 {% endblock%}
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/selectm.js' %}"></script>
+<script src="{% static 'js/autocomplete.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
 
-{% if related == 'cargo' %}
-const empresas = new jsSelectm('#id_empresas', {
-    title: i18n.getEntry('common.company__plural') || '<span data-i18n="common.company__plural">Empresas</span>'
-})
-appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
-    icon: 'bi bi-check-square-fill', 
-    'data-i18n': `compound.checkAll__var:${[i18n.getEntry('common.company__plural__toLowerCase') || 'empresas']}`, 
-    desc: 'Marca todas as empresas', 
-    origin: 'pessoal:evento_related_add'
-})
-{% endif %}
+{% include 'pessoal/_form_evento_related.js' %}
 
-
-const numberMaks = {
-    mask: Number,
-    scale: 2,
-    thousandsSeparator: ',',
-    padFractionalZeros: true,
-    normalizeZeros: true,
-    radix: '.',
-    mapToRadix: [','],
-}
-
-const formulaMask = {
-    mask: /[\s\S]*/
-}
-
-// valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
-const valor = document.getElementById('id_valor');
-const tipo = document.getElementById('id_tipo');
-const btnCheck = document.getElementById('btnCheckFormula');
-const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
-const form = new jsForm(document.getElementById('app_form'), {
-    imask: [valorMask],
-    customValidation: {
-        'valor': (val)=>{
-            if(form.tipo == 'V'){return true}
-            // aqui deve ser validado a formula
-            return [true];
-        }
-    },
-})
-
-
-
-tipo.onchange = (ev)=>{
-    if(ev.target.value == 'V'){ 
-        valorMask.value = '';
-        valorMask.updateOptions(numberMaks);
-        btnCheck.disabled = true;
-    }
-    else{ 
-        valorMask.value = '';
-        valorMask.updateOptions(formulaMask);
-        btnCheck.disabled = false;
-    }
-}
 {% endblock %}
 </script>

@@ -6,27 +6,24 @@ class Autocomplete {
      * @param {object} options - Opcoes de configuracao (opcional)
      */
     constructor(inputSelector, data=[], options = {}) {
-        // Variaveis de instancia (privadas ou protegidas por convencao)
         this.inputElement = typeof inputSelector === 'string' ? document.querySelector(inputSelector) : inputSelector;
         this.data = data;
-        this.options = {
-            minLength: options.minLength || 2, // Numero minimo de caracteres para comecar a buscar
-            maxResults: options.maxResults || 10, // Numero maximo de resultados exibidos
-            matchSubstring: options.matchSubstring || true, // Permitir busca por substring em qualquer parte do texto
-            caseSensitive: options.caseSensitive || false, // Diferenciar maiusculas de minusculas
-            ...options
+        this.defaultOptions = {
+            minLength: 2, // Numero minimo de caracteres para comecar a buscar
+            maxResults: 10, // Numero maximo de resultados exibidos
+            caseSensitive: false, // Diferenciar maiusculas de minusculas
+            enable: true,
+            prefix: '', // Adiciona prefixo ao valor que sera renderizado no input
+            posfix: '', // Adiciona posfixo ao valor que sera renderizado no input
+            onchange: ()=>{}, // function a ser executada sempre que valor do input for alterado
         };
+        this.options = Object.assign({}, this.defaultOptions, options)
         this.autocompleteContainer = null; // Conteiner para a lista de sugestoes
         this.selectedIndex = -1; // Indice do item selecionado na lista (para navegacao via teclado)
+       
 
         // Verificacao basica do elemento de input
-        if(
-                !(
-                    this.inputElement.tagName.toLowerCase() === 'textarea' || 
-                    (this.inputElement.tagName.toLowerCase() === 'input' && ['text','search'].includes(this.inputElement.type.toLowerCase()))
-                )
-        ){
-        // if (!this.inputElement || (this.inputElement.nodeName == 'INPUT' && !['text', 'search'].includes(this.inputElement.type)) && !(this.inputElement instanceof HTMLTextAreaElement)){
+        if(!(this.inputElement.tagName.toLowerCase() === 'textarea' || (this.inputElement.tagName.toLowerCase() === 'input' && ['text','search'].includes(this.inputElement.type.toLowerCase())))){
             console.error('Autocomplete: Element must be a input (text or search) or textearea');
             return;
         }
@@ -40,8 +37,8 @@ class Autocomplete {
     _init() {
         this.inputElement.addEventListener('input', this._handleInput.bind(this));
         this.inputElement.addEventListener('keydown', this._handleKeyDown.bind(this), true);
-        this.inputElement.addEventListener('blur', this._handleBlur.bind(this));
         this._createContainer();
+        this.autocompleteContainer.addEventListener('click', this._handleClick.bind(this));
     }
 
     /**
@@ -49,10 +46,10 @@ class Autocomplete {
      * @private
      */
     _createContainer() {
-        this.inputElement.parentNode.style.positiom = 'relative';
+        this.inputElement.parentNode.style.position = 'relative';
         this.autocompleteContainer = document.createElement('ul');
         this.autocompleteContainer.classList.add('autocomplete-results');
-        // Posicione o conteiner abaixo do input no DOM, por exemplo, apos o input
+        // Posiciona conteiner abaixo do input no DOM
         this.inputElement.parentNode.insertBefore(this.autocompleteContainer, this.inputElement.nextSibling);
     }
 
@@ -61,20 +58,20 @@ class Autocomplete {
      * @private
      */
     _handleInput(event) {
-        if(event.data == ' '){  // se a tecla digitada for espaco nao realiza sugestao
+        if(!this.enable){return} // Se this.enable == false desativa analise do input
+        if(event.data == ' ' || event.data == null){  // se a tecla digitada for espaco nao realiza sugestao
             this._hideResults()
             return
         }
         let cursorPosition = this.inputElement.selectionStart;
         let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
-        // let end = Math.min(this.inputElement.value.indexOf(' ', cursorPosition), this.inputElement.value.length);
         let end = this.inputElement.value.indexOf(' ', cursorPosition);
         end = (end === -1) ? this.inputElement.value.length : end;
         const query = this.inputElement.value.substring(start, end);
         
         if (query.length >= this.options.minLength) {
             const results = this._filterData(query);
-            this._renderResults(results);
+            this._renderResults(results, query);
         } else { this._hideResults() }
     }
 
@@ -102,7 +99,7 @@ class Autocomplete {
      * @private
      * @param {Array<string>} results - Os resultados a serem exibidos
      */
-    _renderResults(results) {
+    _renderResults(results, query) {
         if (results.length === 0) {
             this._hideResults();
             return;
@@ -111,8 +108,7 @@ class Autocomplete {
 
         results.forEach((result, index) => {
             const li = document.createElement('li');
-            li.textContent = result;
-            // li.addEventListener('click', () => this._selectResult(result));
+            li.innerHTML = this._highlightMatch(result, query);
             this.autocompleteContainer.appendChild(li);
         });
 
@@ -127,20 +123,27 @@ class Autocomplete {
         this.autocompleteContainer.style.display = 'none';
         this.autocompleteContainer.innerHTML = '';
         this.selectedIndex = -1;
-        this.inputElement.removeAttribute('data-keywatch'); // reativa tabulacao na tecla enter para input para evitar conflito 
     }
 
     /**
-     * Seleciona um resultado e atualiza o input
+     * Plota resultado no input, e dispara evento
      * @private
      * @param {string} result - O resultado selecionado
      */
     _selectResult(result) {
-        // this.inputElement.value = result;
+        result = this.options.prefix + result + this.options.posfix;
+        let cursorPosition = this.inputElement.selectionStart;
+        let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
+        let end = this.inputElement.value.indexOf(' ', cursorPosition);
+        end = (end === -1) ? this.inputElement.value.length : end;
+        this.inputElement.value = this.inputElement.value.slice(0, start) + result + this.inputElement.value.slice(end);
+        this.inputElement.focus();
+        this.inputElement.setSelectionRange(start + result.length, start + result.length);
         this._hideResults();
-        // Disparar evento personalizado se necessario (ex: 'autocomplete:select')
-        const selectEvent = new CustomEvent('autocomplete:select', { detail: result });
+        // Dispara evento no input de valor selecionado
+        const selectEvent = new CustomEvent('autocomplete:select', { entry: result });
         this.inputElement.dispatchEvent(selectEvent);
+        this.options.onchange();
     }
 
     /**
@@ -154,27 +157,27 @@ class Autocomplete {
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
-            this.inputElement.setAttribute('data-keywatch','none'); // desativa tabulacao na tecla enter para input para evitar conflito 
             this.selectedIndex = (this.selectedIndex + 1) % items.length;
             this._highlightItem(items);
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-            this.inputElement.setAttribute('data-keywatch','none'); // desativa tabulacao na tecla enter para input para evitar conflito 
             this.selectedIndex = (this.selectedIndex - 1 + items.length) % items.length;
             this._highlightItem(items);
         } else if (event.key === 'Enter') {
             event.preventDefault();
             if (this.selectedIndex > -1) {
-                let cursorPosition = this.inputElement.selectionStart;
-                let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
-                let end = this.inputElement.value.indexOf(' ', cursorPosition);
-                end = (end === -1) ? this.inputElement.value.length : end;
-                // let end = Math.min(this.inputElement.value.indexOf(' ', cursorPosition), this.inputElement.value.length);
-                this.inputElement.value = this.inputElement.value.slice(0, start) + items[this.selectedIndex].innerHTML + this.inputElement.value.slice(end);
-                this.inputElement.setSelectionRange(start + items[this.selectedIndex].innerHTML.length, start + items[this.selectedIndex].innerHTML.length);
-                this._hideResults();
+                this._selectResult(items[this.selectedIndex].textContent);
             }
         } else if (event.key === 'Escape') { this._hideResults() }
+    }
+
+    /**
+     * Lida com evento click (selecao de entrada via mouse) na lista de opcoes
+     * @private
+     * @param {event} event - Evento a ser tratado
+     */
+    _handleClick(event) {
+        if (event.target.nodeName === 'LI') { this._selectResult(event.target.textContent) }
     }
 
     /**
@@ -190,11 +193,18 @@ class Autocomplete {
     }
 
     /**
-     * Esconde os resultados quando o input perde o foco (blur)
+     * Adiciona destaque visual ao texto correspondente no item
      * @private
+     * @param {string} item - String com texto que sera renderizado
+     * @param {string} match - Substring correspondente para destaque
      */
-    _handleBlur() {
-        // Pequeno atraso para permitir o clique em um item da lista antes de esconder
-        setTimeout(() => this._hideResults(), 100);
-    }
+    _highlightMatch(item, match){ return item.replaceAll(match, `<span class="emphasis">${match}</span>`) }
+
+
+    /**
+     * Adiciona destaque visual ao texto correspondente no item
+     * @public
+     * @param {Array<HTMLLIElement>} data - Lista com opcoes de sugestao para autocompletar
+     */
+    setData(data){ this.data }
 }

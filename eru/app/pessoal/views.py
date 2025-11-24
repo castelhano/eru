@@ -9,7 +9,7 @@ from .filters import FuncionarioFilter, EventoCargoFilter, EventoFuncionarioFilt
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.models import Log
-from core.extras import create_image
+from core.extras import create_image, get_props
 from django.conf import settings
 from datetime import datetime, date
 
@@ -317,13 +317,14 @@ def evento_related_add(request, related, id):
                 model = Funcionario.objects.get(pk=id)
             return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model})
     else:
+        prop_func = get_props(Funcionario)
         if related == 'cargo':
             form = EventoCargoForm(user=request.user)
             model = Cargo.objects.get(pk=id)
         elif related == 'funcionario':
             form = EventoFuncionarioForm()
             model = Funcionario.objects.get(pk=id)
-        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model})
+        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': prop_func})
 
 @login_required
 @permission_required('pessoal.add_grupoevento', login_url="/handler/403")
@@ -419,6 +420,7 @@ def evento_related_id(request, related, id):
     if not request.user.has_perm(f"pessoal.view_evento{related}"):
         return redirect('handler', 403)
     options = {'related':related}
+    options['props'] = get_props(Funcionario)
     if related == 'cargo':
         options['evento'] = EventoCargo.objects.get(pk=id)
         options['model'] = options['evento'].cargo

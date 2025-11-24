@@ -182,6 +182,9 @@ class Funcionario(Pessoa):
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.funcionario',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+    @property
+    def F_pne(self):
+        return self.pne
     class Meta:
         permissions = [
             ("associar_usuario", "Pode associar usuario a funcionário"),

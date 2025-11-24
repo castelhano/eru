@@ -216,6 +216,9 @@
             "showTableContext": "Displays records list"
         }
     },
+    "autocomplete": {
+        "multiline": "Multiline"
+    },
     "selectm": {
         "checkAll": "Check all",
         "uncheckAll": "Uncheck all"

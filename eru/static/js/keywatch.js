@@ -120,7 +120,8 @@ class Keywatch{
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
                 // para desativar tabulacao em um input especifico atribua data-keywatch='none' para nao tabular (nao submete form) ou data-keywatch='default' para submit
                 try{
-                    if(ev.target.dataset?.keywatch == 'submit'){return false} // Adicione attr data-keywatch='default' no input para assumir evento padrao (submit do form)
+                    // Adicione attr data-keywatch='default' no input para assumir evento padrao (submit do form)
+                    if(ev.target.dataset?.keywatch == 'default'){return false}
                     ev.preventDefault();
                     if(ev.target.dataset?.keywatch == 'none'){return false} // Adicione attr data-keywatch='none' no input que queira evitar tabulacao no enter mais nao submeter
                     let form = ev.target.form;
