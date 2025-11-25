@@ -264,7 +264,7 @@ class Evento(models.Model):
         ("R", mark_safe('<span data-i18n="personal.common.reference">Referencia</span>')),
     )
     nome = models.CharField(max_length=100, blank=False)
-    rastreio = models.CharField(max_length=40, blank=True)
+    rastreio = models.CharField(max_length=40, blank=False, unique=True)
     tipo = models.CharField(max_length=3, choices=TIPOS, default='P', blank=False)
     grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
     def ultimas_alteracoes(self):

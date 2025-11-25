@@ -21,6 +21,7 @@ class Keywatch{
             all: 'Atalhos Globais',
             default: 'Atalhos Base',
         };
+        this.contextPool  = [];                      // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
         this.locked = false;                         // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
         this.context = 'default';                    // contexto ativo
         this.handlerOptions = {                      // configuracoes padrao para shortcut
@@ -276,9 +277,16 @@ class Keywatch{
     }
     getContext(){return this.context}
     addContext(context, desc=''){if(context && !this.contexts.hasOwnProperty(context)){this.contexts[context] = desc}}
-    setContext(context='default', desc=''){
+    setContext(context, desc=''){
+        // se nao informado contexto, assume ultimo contexto da pilha ou se vazio ajusta para default
+        if(!context){ 
+            this.context = this.contextPool.pop() || 'default';
+            this.contextLabel.innerHTML = this.context;
+            return;
+        }
         if(!this.contexts.hasOwnProperty(context)){this.addContext(context, desc)} // Se novo contexto, chama metodo addContext
         else if(desc){this.contexts[context] = desc} // Desc pode ser alterado pelo metodo setContext
+        this.contextPool.push(this.context);
         this.context = context;
         this.contextLabel.innerHTML = context;
     }

@@ -104,11 +104,10 @@ class RelatedAddon {
         this.model.dialog.style.zIndex = '10';
         this.model.dialog.addEventListener('beforetoggle', (ev)=>{
             if(ev.newState == 'open'){
-                appPreviousContext = appKeyMap.getContext();
                 appKeyMap.setContext(`relatedAddon#${this.context == 'show' ? 'show' : 'set'}`);
             }
             else if(ev.newState == 'closed'){
-                appKeyMap.setContext(appPreviousContext);
+                appKeyMap.setContext();
             }
         })
         // --

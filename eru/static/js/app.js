@@ -1,7 +1,6 @@
 const appModalConfirm = new bootstrap.Modal(document.getElementById('appModalConfirm'), {});
 const appModalLoading = new bootstrap.Modal(document.getElementById('appModalLoading'), {keyboard: false});
 var pageshow_persisted = false;      // flag informa se pagina foi construida pelo cache do navegador (em geral no history back)
-var appPreviousContext = 'default';  // usado para rollback de contexto
 
 String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + this.slice(1) }
 
@@ -203,7 +202,7 @@ function deepMerge(target, ...sources) {
 document.addEventListener("DOMContentLoaded", function(event) {
 
   // retorna context para anterior a abertura do modal de confirmacao
-  appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext(appPreviousContext)})
+  appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
   if(document.querySelector('[data-appConfirm="true"]')){
     appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação', 'data-i18n':'sys.confirmOperation'})
   }
@@ -213,7 +212,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     let timeout, interv, span;
     el.onclick = (e)=>{
       e.preventDefault();
-      appPreviousContext = appKeyMap.getContext();
       appKeyMap.setContext('appConfirmModal');
       if(span){
         clearInterval(interv);

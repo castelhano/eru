@@ -514,7 +514,7 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
     _build(){
         this.select = document.createElement('select');this.select.multiple = true;this.select.style.display = 'none';this.select.name = `${this.el.name}_multiple`;
         this.dialog = document.createElement('dialog');this.dialog.classList = this.dialogClasslist;this.dialog.style.margin = '0px';this.dialog.style.zIndex = '10';
-        this.dialog.addEventListener('close', ()=>{appKeyMap.setContext(appPreviousContext)})
+        this.dialog.addEventListener('close', ()=>{appKeyMap.setContext()})
         this.dialog.style.width = this.dialogWidth;
         this.textarea = document.createElement('textarea');this.textarea.classList = this.textareaClasslist;this.textarea.rows = this.textareaRows;
         this.confirmButton = document.createElement('button');this.confirmButton.type = 'button';this.confirmButton.classList = this.confirmButtonClasslist;this.confirmButton.innerHTML = this.confirmButtonText;this.confirmButton.title = this.shortcut ? this.shortcut.toUpperCase() : '';
@@ -560,7 +560,7 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
         this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
         this.btn.onclick = ()=>{
             if(this.dialog.open){this.dialog.close()}
-            else{this.dialog.show(); appPreviousContext = appKeyMap.getContext(); appKeyMap.setContext('multipleAddonModal')}
+            else{this.dialog.show(); appKeyMap.setContext('multipleAddonModal')}
         }
         let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
         // carrega componente junto ao controle original, usa classes de input-group do bootstrap

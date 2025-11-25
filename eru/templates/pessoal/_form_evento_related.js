@@ -30,14 +30,18 @@ const formulaMask = {
 const valor = document.getElementById('id_valor');
 const tipo = document.getElementById('id_tipo');
 const btnCheck = document.getElementById('btnCheckFormula');
-const btnFormulaModal = document.getElementById('btnFormulaModal');
+const btnModal = document.getElementById('btnFormulaModal');
 const formulaModal = document.getElementById('formulaModal');
 const formulaTextarea = document.getElementById('id_formula');
+formulaModal.addEventListener('beforetoggle', (ev)=>{
+    if(ev.newState == 'open'){ appKeyMap.setContext('modal:formula') }
+    else if(ev.newState == 'closed'){ appKeyMap.setContext() }
+})
+
 btnFormulaModal.onclick = ()=>{
     formulaTextarea.value = valor.value;
     formulaModal.showModal();
 }
-const btnModal = document.getElementById('btnFormulaModal');
 const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
 const form = new jsForm(document.getElementById('app_form'), {
     imask: [valorMask],
@@ -71,4 +75,13 @@ tipo.onchange = (ev)=>{
 const autocomplete = new Autocomplete(valor, {{props|safe}}, {
     enable: form.tipo == 'F',
     onchange: ()=>{ valorMask.updateValue() }
+})
+
+appKeyMap.bind('ctrl+enter', ()=>{
+    if(form.tipo == 'V'){return}
+    btnModal.click();
+}, {
+    icon: 'bi bi-terminal-fill', 'data-i18n': 'personal.event.form.multilineFormula__posfix: <span class="badge bg-orange ms-2">Valor</span>', origin: 'pessoal:_form_evento_related.js',
+    element: form.valor,
+    desc: 'Fórmula multilinha <span class="badge bg-orange ms-2">Valor</span>' 
 })
