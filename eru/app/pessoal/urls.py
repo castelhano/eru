@@ -35,6 +35,7 @@ urlpatterns = [
     path('evento_related_id/<str:related>/<int:id>', views.evento_related_id,name='evento_related_id'),
     path('evento_related_update/<str:related>/<int:id>', views.evento_related_update,name='evento_related_update'),
     path('evento_related_delete/<str:related>/<int:id>', views.evento_related_delete,name='evento_related_delete'),
+    path('evento_related_copy', views.evento_related_copy,name='evento_related_copy'),
     path('grupos_evento',views.grupos_evento,name='grupos_evento'),
     path('grupo_evento_add',views.grupo_evento_add,name='grupo_evento_add'),
     path('grupo_evento_id/<int:id>',views.grupo_evento_id,name='grupo_evento_id'),
@@ -52,4 +53,5 @@ urlpatterns = [
     path('add_grupo_evento',views.add_grupo_evento,name='add_grupo_evento'),
     path('update_grupo_evento', views.update_grupo_evento,name='update_grupo_evento'),
     path('delete_grupo_evento', views.delete_grupo_evento,name='delete_grupo_evento'),
+    path('get_funcionario',views.get_funcionario,name='get_funcionario'),
 ]

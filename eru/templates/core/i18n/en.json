@@ -43,6 +43,7 @@
         "married": "Married",
         "male": "Male",
         "metric": "Metric#Metrics",
+        "migration": "Migration#Migrations",
         "model": "Model",
         "module": "Module",
         "name": "Name",

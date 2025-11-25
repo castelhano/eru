@@ -326,6 +326,24 @@ def evento_related_add(request, related, id):
             model = Funcionario.objects.get(pk=id)
         return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': prop_func})
 
+# Copia um ou mais eventos de um modelo para outro, podendo ser cargo ou funcionario
+@login_required
+def evento_related_copy(request):
+    # if not request.user.has_perm(f"pessoal.add_evento{related}"):
+    #     return redirect('handler', 403)
+    if request.method == 'POST':
+        if related == 'cargo':
+            pass
+        elif related == 'funcionario':
+            pass
+        else:
+            messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_copy [bad request]</b>')
+            return redirect('index')
+    else:
+        return render(request, 'pessoal/evento_related_copy.html')
+
+    
+
 @login_required
 @permission_required('pessoal.add_grupoevento', login_url="/handler/403")
 def grupo_evento_add(request):
@@ -920,3 +938,26 @@ def delete_grupo_evento(request):
         except Exception as e:
             return JsonResponse({'error': e, 'status': 'error'}, status=500)
     return JsonResponse({'status': 'invalid request'}, status=400)
+
+# metodos ajax
+@login_required
+def get_funcionario(request):
+    # Metodo retorna JSON com dados dado funcionario informado
+    if request.method != 'GET':
+        return JsonResponse({'status': 'bad request', 'message': 'Expected get request '}, status=400)
+    try:
+        matricula = request.GET.get('matricula', None)
+        funcaofixa = request.GET.get('funcaofixa', None)
+        incluir_inativos = request.GET.get('incluir_inativos', None)
+        params  = dict(matricula=matricula)
+        if funcaofixa:
+            params['cargo__ffixas__nome'] = funcaofixa
+        if incluir_inativos != 'True':
+            params['status'] = 'A'
+        funcionario = Funcionario.objects.get(**params)
+        obj = serializers.serialize('json', [funcionario])
+        return HttpResponse(obj, content_type="application/json")
+    except Funcionario.DoesNotExist:
+        return JsonResponse({'status': 404, 'message': settings.DEFAULT_MESSAGES['filterError']}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 500, 'message': e}, status=500)

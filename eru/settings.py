@@ -103,7 +103,7 @@ DEFAULT_MESSAGES = {
     'updated': '<span data-i18n="sys.recordUpdated">Registro atualizado com sucesso</span>',
     'deleteError': '<span data-i18n="sys.recordErrorOnDelete">Erro ao tentar apagar registro</span>',
     'emptyQuery': '<i class="bi bi-exclamation-triangle-fill me-2"></i><span data-i18n="sys.noResultsFound">Nenhum resultado encontrado com os critérios informados</span>',
-    'filterError': '<span data-i18n="sys.recordErrorOnFilter">Erro ao buscar dados solictados</span>',
+    'filterError': '<span data-i18n="sys.recordErrorOnFilter">Erro ao buscar dados solicitados</span>',
     'saveError': '<span data-i18n="sys.recordErrorOnSaved">Erro ao salvar registro</span>',
     'notMatchCriteria': '<span data-i18n="sys.notMatchCriteria">Os críterios de pelo menos um campo não foram atendidos, verifique os valores lançados</span>'
 }

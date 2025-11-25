@@ -80,6 +80,7 @@
         "event": {
             "groupEvent": "Group Event",
             "changeReason": "Change reason",
+            "baseModel": "Base Model",
             "form": {
                 "groupName": "Group name",
                 "groupEventRegister": "Group event register",
