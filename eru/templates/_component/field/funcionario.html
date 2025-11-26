@@ -24,57 +24,24 @@
     let nome = document.getElementById("id_nome_funcionario");
     let funcionario = document.getElementById("id_funcionario");
     if (matricula.value === '') { cleanFuncionário(); return; }
-    let url = "{% url 'pessoal:get_funcionario' %}?matricula=" + matricula.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}";
+    let url = "{% url 'funcionario-api-por-matricula' %}?mat=" + matricula.value;
     try {
       let response = await fetch(url);
-      if (!response.ok) { 
-        return response.json().then(errorData=>{}) // PAREI AQUIII
+      if (!response.ok) {  // se nao localizado registro (ex 404)
+        let errorData = await response.json(); 
+        cleanFuncionário();
         matricula.classList.add('is-invalid');
-        console.log(response);
+        nome.value = i18n.getEntry('personal.sys.registrationNumberNotFound') || 'Matrícula não encontrada';
         return;
-        
-        // nome.value = response.message;
-        // if(response.status == 404){
-
-        // }
-        
-       }
-      
+      }
+      // se localizado matricula, carrega dados no componente
       let responseText = await response.text();
-      
-      
       if (responseText) {
-        let result = JSON.parse(responseText)[0];
+        let result = JSON.parse(responseText);
         matricula.classList.remove('is-invalid');
-        matricula.value = result.pk;
+        funcionario.value = result.pk;
+        nome.value = result.nome;
       } 
-    } catch (error) {
-      
-      // 6. Capturar e tratar erros (ex: falha de rede, erro no servidor)
-      // console.error("Ocorreu um erro na requisição fetch:", error);
-      // Opcional: exibir mensagem de erro genérica na UI
-      // nome.value = 'Erro ao comunicar com o servidor';
-      // matricula.classList.add('is-invalid');
-    }
-    // if(matricula.value != ''){
-    //   var xhttp_funcionario = new XMLHttpRequest();
-    //   xhttp_funcionario.onreadystatechange = function() {
-    //     if(this.readyState == 4 && this.status == 200){
-    //       if(this.responseText == ''){
-    //         document.getElementById("id_matricula_funcionario").classList.add('is-invalid');
-    //         document.getElementById("id_nome_funcionario").value = 'Funcionário não cadastrado / habilitado';  
-    //         funcionario.value = '';
-    //       }
-    //       else{
-    //         matricula.classList.remove('is-invalid');
-    //         nome.value = this.responseText.split(';')[1];
-    //         funcionario.value = this.responseText.split(';')[0];
-    //       }
-    //     }
-    //   };
-    //   xhttp_funcionario.open("GET", "{% url 'pessoal:get_funcionario' %}?matricula=" + matricula.value + "&incluir_inativos={{incluir_inativos}}&multiempresa={{multiempresa}}", true);
-    //   xhttp_funcionario.send();  
-    // }
-    // else{cleanFuncionário();}
+    } catch (error) { console.warn("Erro capturado no try/catch:", error.message) }
   }  
 </script>

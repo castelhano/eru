@@ -7,5 +7,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('core.urls')),
     path('trafego/',include('trafego.urls')),
-    path('pessoal/',include('pessoal.urls')),
+    path('pessoal/',include('pessoal.urls_web')),
+    path('api/', include('pessoal.urls_api')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

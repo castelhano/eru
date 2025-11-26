@@ -1,7 +1,13 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 import json
+#--
+from rest_framework import viewsets, permissions, status
+from .serializers import FuncionarioSerializer
+from rest_framework.response import Response
+from rest_framework.decorators import action
+#--
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
@@ -961,3 +967,24 @@ def get_funcionario(request):
         return JsonResponse({'status': 404, 'message': settings.DEFAULT_MESSAGES['filterError']}, status=404)
     except Exception as e:
         return JsonResponse({'status': 500, 'message': e}, status=500)
+
+# APIs
+class FuncionarioViewSet(viewsets.ModelViewSet):
+    queryset = Funcionario.objects.filter(status='A').order_by('nome')
+    serializer_class = FuncionarioSerializer
+    permission_classes = [permissions.DjangoModelPermissions] 
+    @action(detail=False, methods=['get'])
+    def por_matricula(self, request, *args, **kwargs):
+        # Captura o parâmetro 'mat' da query string: ?mat=12345
+        matricula_param = request.query_params.get('mat', None)
+        
+        if not matricula_param:
+            return Response(
+                {"error": "Param 'mat' required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        funcionario = get_object_or_404(Funcionario, matricula=matricula_param)
+        
+        serializer = self.get_serializer(funcionario)
+        return Response(serializer.data)

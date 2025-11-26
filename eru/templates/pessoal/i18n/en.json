@@ -94,7 +94,8 @@
             }
         },
         "sys":{
-            "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees"
+            "cantMoveDismissEmployee": "<b>Error:</b> It is not possible to move dismissed employees",
+            "registrationNumberNotFound":"Registration number not found"
         },
         "shortcuts": {
             "selectFieldCompany": "Focus field Company",
