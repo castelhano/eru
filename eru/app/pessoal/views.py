@@ -1,12 +1,15 @@
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 import json
 #--
 from rest_framework import viewsets, permissions, status
-from .serializers import FuncionarioSerializer
+from .serializers import FuncionarioSerializer, CargoSerializer
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from django_filters.rest_framework import DjangoFilterBackend
 #--
 from django.core import serializers
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
@@ -150,29 +153,42 @@ def motivos_reajuste(request):
 
 
 # Metodos ADD
-@login_required
-@permission_required('pessoal.add_setor', login_url="/handler/403")
-def setor_add(request):
-    if request.method == 'POST':
-        form = SetorForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.setor"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal:setor_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:setor_add')
-    else:
-        form = SetorForm()
-    return render(request,'pessoal/setor_add.html',{'form':form})
+# @login_required
+# @permission_required('pessoal.add_setor', login_url="/handler/403")
+class setor_add(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Setor
+    form_class = SetorForm
+    template_name = 'pessoal/setor_add.html'
+    success_url = reverse_lazy('pessoal:setores')
+    permission_required = 'pessoal.add_setor'
+    login_url = '/handler/403'
+    def form_valid(self, form):
+        messages.success(self.request, settings.DEFAULT_MESSAGES['created'] + f' <b>{form.cleaned_data['nome']}</b>')
+        return super().form_valid(form)
+
+# @login_required
+# @permission_required('pessoal.add_setor', login_url="/handler/403")
+# def setor_add(request):
+#     if request.method == 'POST':
+#         form = SetorForm(request.POST)
+#         if form.is_valid():
+#             try:
+#                 registro = form.save()
+#                 l = Log()
+#                 l.modelo = "pessoal.setor"
+#                 l.objeto_id = registro.id
+#                 l.objeto_str = registro.nome[0:48]
+#                 l.usuario = request.user
+#                 l.mensagem = "CREATED"
+#                 l.save()
+#                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
+#                 return redirect('pessoal:setor_add')
+#             except:
+#                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+#                 return redirect('pessoal:setor_add')
+#     else:
+#         form = SetorForm()
+#     return render(request,'pessoal/setor_add.html',{'form':form})
 
 @login_required
 @permission_required('pessoal.add_cargo', login_url="/handler/403")
@@ -482,13 +498,13 @@ def setor_update(request,id):
     form = SetorForm(request.POST, instance=setor)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "pessoal.setor"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
+        # l = Log()
+        # l.modelo = "pessoal.setor"
+        # l.objeto_id = registro.id
+        # l.objeto_str = registro.nome[0:48]
+        # l.usuario = request.user
+        # l.mensagem = "UPDATE"
+        # l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:setor_id', id)
     else:
@@ -673,14 +689,14 @@ def motivo_reajuste_update(request,id):
 def setor_delete(request,id):
     try:
         registro = Setor.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.setor"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
+        # l = Log()
+        # l.modelo = "pessoal.setor"
+        # l.objeto_id = registro.id
+        # l.objeto_str = registro.nome[0:48]
+        # l.usuario = request.user
+        # l.mensagem = "DELETE"
         registro.delete()
-        l.save()
+        # l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:setores')
     except:
@@ -834,14 +850,14 @@ def get_setores(request):
     obj = serializers.serialize('json', setores)
     return HttpResponse(obj, content_type="application/json")
 
-@login_required
-def get_cargos(request):
-    try:
-        cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
-        obj = serializers.serialize('json', cargos)
-    except Exception as e:
-        obj = []
-    return HttpResponse(obj, content_type="application/json")
+# @login_required
+# def get_cargos(request):
+#     try:
+#         cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
+#         obj = serializers.serialize('json', cargos)
+#     except Exception as e:
+#         obj = []
+#     return HttpResponse(obj, content_type="application/json")
 
 @login_required
 def get_grupos_evento(request):
@@ -972,19 +988,26 @@ def get_funcionario(request):
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.filter(status='A').order_by('nome')
     serializer_class = FuncionarioSerializer
+    permission_classes = [permissions.DjangoModelPermissions]
+    filterset_fields = ['matricula']
+    # @action(detail=False, methods=['get'])
+    # def por_matricula(self, request, *args, **kwargs):
+    #     # Captura o parâmetro 'mat' da query string: ?mat=12345
+    #     matricula_param = request.query_params.get('mat', None)
+        
+    #     if not matricula_param:
+    #         return Response(
+    #             {"error": "Param 'mat' required"},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+        
+    #     funcionario = get_object_or_404(Funcionario, matricula=matricula_param)
+        
+    #     serializer = self.get_serializer(funcionario)
+    #     return Response(serializer.data)
+
+class CargoViewSet(viewsets.ModelViewSet):
+    queryset = Cargo.objects.all().order_by('nome')
+    serializer_class = CargoSerializer
     permission_classes = [permissions.DjangoModelPermissions] 
-    @action(detail=False, methods=['get'])
-    def por_matricula(self, request, *args, **kwargs):
-        # Captura o parâmetro 'mat' da query string: ?mat=12345
-        matricula_param = request.query_params.get('mat', None)
-        
-        if not matricula_param:
-            return Response(
-                {"error": "Param 'mat' required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        funcionario = get_object_or_404(Funcionario, matricula=matricula_param)
-        
-        serializer = self.get_serializer(funcionario)
-        return Response(serializer.data)
+    filterset_fields = ['setor']

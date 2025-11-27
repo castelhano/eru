@@ -40,7 +40,7 @@
                 <div class="row mt-2">
                     <div class="col text-end">
                         <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="url">Excluir</a>
+                        <a class="btn btn-danger px-3" href="{% url 'pessoal:setor_delete' setor.id|safe %}">Excluir</a>
                     </div>
                 </div>
             </div>

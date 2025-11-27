@@ -296,6 +296,13 @@ class Keywatch{
         // se nao informado event.type assume 'keydown' como padrao
         // ## So deve ser usado para shortcut unico (sem entrada multipla)
         if(!options.hasOwnProperty('type')){options.type = 'keydown'}
+        let reservados = {
+            'alt+c': '[reserv] Cadastro',
+            'alt+r': '[reserv] Relatorios',
+            'alt+t': '[reserv] Ferramentas',
+            'alt+u': '[reserv] Configuracoes',
+        }
+        if(reservados.hasOwnProperty(scope)){console.log(reservados[scope])}
         scope = scope.replace(this.splitKey, ',');
         if(options.context){ // se informado contexto verifica se atalho existe no contexto
             if(!this.contexts.hasOwnProperty(options.context) || !this.handlers?.[options.type]?.[options.context]){return true}

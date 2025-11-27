@@ -72,6 +72,7 @@
         "state": "State",
         "start": "Start",
         "status": "Status",
+        "tool": "Tool#Tools",
         "track": "Track",
         "tracking": "Tracking",
         "type": "Type#Types",
@@ -125,6 +126,7 @@
         "recordDeleted": "Record deleted, this operation cannot be undone",
         "recordErrorOnDelete": "Error on delete record",
         "recordErrorOnFilter": "Error fetching requested data",
+        "recordErrorOnFilterDuplicated": "Duplicated registry found ($1)",
         "recordErrorOnSaved": "Error on saving record",
         "recordUpdated": "Record updated successfully",
         "startDate": "Start Date",
@@ -143,7 +145,8 @@
             "showFilters": "Show page filters",
             "showSysPanel": "Show system panel",
             "submitFilters": "Performs search with informed filters",
-            "submitForm": "Save changes"
+            "submitForm": "Save changes",
+            "toolsMenu": "Open tools menu"
         }
     },
     "apps":{

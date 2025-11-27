@@ -1,37 +1,58 @@
 <script>
 
-    const cadastro = new canvasNavDropdown({
-        name: '<b>C</b>adastro',
+    const menuCadastro = new canvasNavDropdown({
+        name: '<b><u>C</u></b>adastro',
         icon: 'bi bi-list',
         'data-i18n': 'common.register__bold:c',
         itens: [
-        {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionarios' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(cadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setores' %}', 'data-i18n': 'common.sector__bold:s', keybind: ['s', ()=>{if(cadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargos' %}', 'data-i18n': 'common.position__bold:o', keybind: ['o', ()=>{if(cadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionarios' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setores' %}', 'data-i18n': 'common.sector__bold:s', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargos' %}', 'data-i18n': 'common.position__bold:o', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_evento %}
         {type: 'separator'},
-        {name: '<b><u>E</u></b>vento', id:'menu_evento', href: '{% url 'pessoal:eventos' %}', 'data-i18n': 'personal.common.event__bold:e', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]},
+        {name: '<b><u>E</u></b>vento', id:'menu_evento', href: '{% url 'pessoal:eventos' %}', 'data-i18n': 'personal.common.event__bold:e', keybind: ['e', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupos_evento' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivos_reajuste' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(cadastro.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupos_evento' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivos_reajuste' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',
             (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
                 canvasNavActive(true); // Exibe o canvasNav (caso oculto)
-                cadastro.click();
-                setTimeout(()=>{cadastro.focus()}, 340);
+                menuCadastro.click();
+                setTimeout(()=>{menuCadastro.focus()}, 340);
             },
             {'data-i18n': 'sys.shortcuts.registerMenu', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
-    {% if perms.pessoal.view_funcionario %}appKeyMap.bind('c+f', ()=>{document.getElementById('menu_funcionario').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_funcionario %}appKeyMap.bind('c+f', ()=>{document.getElementById('menu_funcionario').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+
+    const menuFerramentas = new canvasNavDropdown({
+        name: 'Ferramen<b><u>t</u></b>as',
+        icon: 'bi bi-tools',
+        'data-i18n': 'common.tool__plural__bold:t',
+        itens: [
+        {% if perms.pessoal.change_evento %}{name: '<b><u>R</u></b>eplicar eventos', id:'menu_evento_copy', href: '{% url 'pessoal:evento_related_copy' %}', 'data-i18n': 'personal.event.replicateEvents__bold:r', keybind: ['r', ()=>{if(menuFerramentas.isOpen()){document.getElementById('menu_evento_copy').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        ],
+        keybind: [
+            'alt+t',
+            (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+                canvasNavActive(true); // Exibe o canvasNav (caso oculto)
+                menuFerramentas.click();
+                setTimeout(()=>{menuFerramentas.focus()}, 340);
+            },
+            {'data-i18n': 'sys.shortcuts.toolsMenu', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de Ferramentas'}
+        ]
+    })
+    // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
+    {% if perms.pessoal.change_evento %}appKeyMap.bind('t+r', ()=>{document.getElementById('menu_evento_copy').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+
     
     
     i18n.addApp('pessoal');

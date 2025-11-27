@@ -81,6 +81,7 @@
             "groupEvent": "Group Event",
             "changeReason": "Change reason",
             "baseModel": "Base Model",
+            "replicateEvents": "Replicate events",
             "form": {
                 "groupName": "Group name",
                 "groupEventRegister": "Group event register",

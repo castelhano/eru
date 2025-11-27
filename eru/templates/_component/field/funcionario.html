@@ -24,20 +24,29 @@
     let nome = document.getElementById("id_nome_funcionario");
     let funcionario = document.getElementById("id_funcionario");
     if (matricula.value === '') { cleanFuncionário(); return; }
-    let url = "{% url 'funcionario-api-por-matricula' %}?mat=" + matricula.value;
+    let url = "{% url 'funcionario-api-list' %}?matricula=" + matricula.value;
     try {
       let response = await fetch(url);
-      if (!response.ok) {  // se nao localizado registro (ex 404)
-        let errorData = await response.json(); 
-        cleanFuncionário();
-        matricula.classList.add('is-invalid');
-        nome.value = i18n.getEntry('personal.sys.registrationNumberNotFound') || 'Matrícula não encontrada';
-        return;
+      if (!response.ok) {  // se erro na resposta
+        let errorData = await response.json();
+        console.log(errorData);
       }
       // se localizado matricula, carrega dados no componente
       let responseText = await response.text();
       if (responseText) {
         let result = JSON.parse(responseText);
+        if(result.length == 0){ // se retorno for uma lista vazia
+          cleanFuncionário();
+          matricula.classList.add('is-invalid');
+          nome.value = i18n.getEntry('personal.sys.registrationNumberNotFound') || 'Matrícula não encontrada';
+          return;
+        }
+        else if(result.length > 1){
+          matricula.classList.add('is-invalid');
+          nome.value = i18n.getEntry(`personal.sys.recordErrorOnFilterDuplicated__var:${[i18n.getEntry('personal.common.employeeId') || 'Matricula']}`) || 'Registro duplicado encontrado';
+          return;
+        }
+        result = result[0]
         matricula.classList.remove('is-invalid');
         funcionario.value = result.pk;
         nome.value = result.nome;

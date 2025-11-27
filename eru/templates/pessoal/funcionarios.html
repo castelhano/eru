@@ -225,13 +225,13 @@
     
   })
   
-  document.getElementById('id_setor').addEventListener('change', (ev)=>{
-    if(ev.target.value == ''){return}
-    else{
-      let cargos = new selectPopulate({target: filterForm.cargo, url: '{% url "pessoal:get_cargos" %}', params: `setor=${ev.target.value}`, emptyRow:{}})
-    }
+  // document.getElementById('id_setor').addEventListener('change', (ev)=>{
+  //   if(ev.target.value == ''){return}
+  //   else{
+  //     let cargos = new selectPopulate({target: filterForm.cargo, url: '{% url "cargo-api-list" %}', params: `setor=${ev.target.value}`, emptyRow:{}})
+  //   }
     
-  })
+  // })
 
   
   {% endblock %}

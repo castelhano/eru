@@ -3,6 +3,7 @@ from core.models import Empresa, Log, ImageField as core_ImageField
 from datetime import datetime, date
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
+from auditlog.registry import auditlog
 
 class Pessoa(models.Model):
     ESTADO_CIVIL_CHOICES = (
@@ -84,6 +85,7 @@ class Setor(models.Model):
     def ultimas_alteracoes(self):
         logs = Log.objects.filter(modelo='pessoal.setor',objeto_id=self.id).order_by('-data')[:15]
         return reversed(logs)
+auditlog.register(Setor)
 
 class Cargo(models.Model):
     nome = models.CharField(max_length=50, unique=True, blank=False)
