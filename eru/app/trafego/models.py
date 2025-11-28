@@ -1,9 +1,10 @@
 from django.db import models
 from datetime import datetime
-from core.models import Empresa, Log
+from core.models import Empresa
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 import json
+from auditlog.registry import auditlog
 
 
 
@@ -14,10 +15,7 @@ class Localidade(models.Model):
     ponto_de_controle = models.BooleanField(default=False)
     def __str__(self):
         return self.nome
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='trafego.localidade',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
-
+auditlog.register(Localidade)
 
 class Linha(models.Model):
     CLASSIFICACAO_CHOICES = (
@@ -51,9 +49,6 @@ class Linha(models.Model):
     detalhe = models.TextField(blank=True)
     def __str__(self):
         return self.codigo
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='trafego.linha', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     def patamares(self):
         return Patamar.objects.filter(linha=self).order_by('inicial')
     def params(self): # Retorna detalhamento dos patamares em formato JSON para integracao com jsMarch ex: {0:{fromMin: 55, toMin: 40, ...}}
@@ -75,6 +70,7 @@ class Linha(models.Model):
             ("dop_linha", "Pode acessar DOP"),
             ("demanda_update", "Pode atualizar demanda"),
         ]
+auditlog.register(Linha)
 
 class Trajeto(models.Model):
     SENTIDO_CHOICES = (
@@ -102,9 +98,6 @@ class Patamar(models.Model):
     volta = models.PositiveIntegerField(blank=True, null=True)
     intervalo_ida = models.PositiveIntegerField(blank=True, null=True)
     intervalo_volta = models.PositiveIntegerField(blank=True, null=True)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='trafego.patamar',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     class Meta:
         default_permissions = ('change',)
 
@@ -178,9 +171,7 @@ class Planejamento(models.Model):
             for i in range(p['inicial'], p['final'] + 1, 1):
                 params[i] = {'ida': p['ida'], 'volta': p['volta'], 'intervalo_ida': p['intervalo_ida'], 'intervalo_volta': p['intervalo_volta'], 'demanda_ida': 0, 'demanda_volta': 0}
         return json.dumps(params)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='trafego.planejamento',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
+auditlog.register(Planejamento)
 
 class Carro(models.Model):
     CLASSIFICACAO_CHOICES = (

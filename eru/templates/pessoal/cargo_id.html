@@ -12,16 +12,14 @@
             {% if perms.pessoal.view_eventocargo %}
             <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventos_related' 'cargo' cargo.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
             {% endif %}
+            {% if perms.pessoal.delete_cargo %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" data-i18n="common.history">Historico</a></li>
-                    {% if perms.pessoal.delete_cargo %}
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
-                    {% endif %}
                 </ul>
             </li>
+            {% endif %}
         </ul>
     </div>
     <form id="app_form" action="{% url 'pessoal:cargo_update' cargo.id|safe %}" method="POST" autocomplete="off" novalidate>
@@ -53,39 +51,6 @@
 {% endif %}
 
 {% endblock%}
-
-{% block outer_content %}
-<div class="modal fade" id="history_modal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
-                <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-            </div>
-            <div class="modal-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Operação</th>
-                            <th>Usuário</th>
-                        </tr>
-                    </thead>
-                    <tbody class="fs-7">
-                        {% for i in cargo.ultimas_alteracoes %}
-                        <tr>
-                            <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
-                            <td>{{i.mensagem}}</td>
-                            <td>{{i.usuario.username|upper|default:'None'}}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>

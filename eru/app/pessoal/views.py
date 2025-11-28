@@ -7,7 +7,7 @@ from django.http import HttpResponse, JsonResponse
 import json
 #--
 from rest_framework import viewsets, permissions, status
-from .serializers import FuncionarioSerializer, CargoSerializer
+from .serializers import FuncionarioSerializer
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 #--
@@ -17,7 +17,6 @@ from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, Depen
 from .filters import FuncionarioFilter, EventoCargoFilter, EventoFuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from core.models import Log
 from core.extras import create_image, get_props
 from django.conf import settings
 from datetime import datetime, date
@@ -166,30 +165,6 @@ class setor_add(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         messages.success(self.request, settings.DEFAULT_MESSAGES['created'] + f' <b>{form.cleaned_data['nome']}</b>')
         return super().form_valid(form)
 
-# @login_required
-# @permission_required('pessoal.add_setor', login_url="/handler/403")
-# def setor_add(request):
-#     if request.method == 'POST':
-#         form = SetorForm(request.POST)
-#         if form.is_valid():
-#             try:
-#                 registro = form.save()
-#                 l = Log()
-#                 l.modelo = "pessoal.setor"
-#                 l.objeto_id = registro.id
-#                 l.objeto_str = registro.nome[0:48]
-#                 l.usuario = request.user
-#                 l.mensagem = "CREATED"
-#                 l.save()
-#                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-#                 return redirect('pessoal:setor_add')
-#             except:
-#                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-#                 return redirect('pessoal:setor_add')
-#     else:
-#         form = SetorForm()
-#     return render(request,'pessoal/setor_add.html',{'form':form})
-
 @login_required
 @permission_required('pessoal.add_cargo', login_url="/handler/403")
 def cargo_add(request):
@@ -204,13 +179,6 @@ def cargo_add(request):
                     else:
                         ff = FuncaoFixa.objects.create(nome=ffixa)
                     ff.cargos.add(registro)
-                l = Log()
-                l.modelo = "pessoal.cargo"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
                 return redirect('pessoal:cargo_add')
             except:
@@ -241,13 +209,6 @@ def funcionario_add(request):
                         has_warnings = True
                         messages.warning(request,'<b>Erro ao salvar foto:</b> ' + result[1])
                 registro.save()
-                l = Log()
-                l.modelo = "pessoal.funcionario"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.matricula + ' - ' + registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 if not has_warnings:
                     messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
                 return redirect('pessoal:funcionario_id', registro.id)
@@ -266,13 +227,6 @@ def dependente_add(request, id):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.dependente"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'])
                 return redirect('pessoal:dependente_add')
             except:
@@ -293,13 +247,6 @@ def evento_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.evento"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
                 return redirect('pessoal:evento_add')
             except:
@@ -321,13 +268,6 @@ def evento_related_add(request, related, id):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = f"pessoal.evento_{related}"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.evento.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
             except:
                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
@@ -374,13 +314,6 @@ def grupo_evento_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.grupo_evento"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
                 return redirect('pessoal:grupo_evento_add')
             except:
@@ -398,13 +331,6 @@ def motivo_reajuste_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.motivo_reajuste"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
                 return redirect('pessoal:motivo_reajuste_add')
             except:
@@ -498,13 +424,6 @@ def setor_update(request,id):
     form = SetorForm(request.POST, instance=setor)
     if form.is_valid():
         registro = form.save()
-        # l = Log()
-        # l.modelo = "pessoal.setor"
-        # l.objeto_id = registro.id
-        # l.objeto_str = registro.nome[0:48]
-        # l.usuario = request.user
-        # l.mensagem = "UPDATE"
-        # l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:setor_id', id)
     else:
@@ -532,13 +451,6 @@ def cargo_update(request,id):
         for item in flist:
             if registro.ffixas.filter(nome=item).exists():
                 FuncaoFixa.objects.get(nome=item).cargos.remove(registro)
-        l = Log()
-        l.modelo = "pessoal.cargo"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:cargo_id', id)
     else:
@@ -567,13 +479,6 @@ def funcionario_update(request,id):
                 has_warnings = True
                 messages.warning(request, settings.DEFAULT_MESSAGES['saveError'] + f' pic: result[1]')
         registro.save()
-        l = Log()
-        l.modelo = "pessoal.funcionario"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         if not has_warnings:
             messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' mat: <b>{registro.matricula}</b>')
         return redirect('pessoal:funcionario_id', id)
@@ -587,13 +492,6 @@ def dependente_update(request,id):
     form = DependenteForm(request.POST, instance=dependente)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "pessoal.dependente"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'])
         return redirect('pessoal:dependente_id', id)
     else:
@@ -606,13 +504,6 @@ def evento_update(request,id):
     form = EventoForm(request.POST, instance=evento)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "pessoal.evento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:evento_id', id)
     else:
@@ -633,13 +524,6 @@ def evento_related_update(request, related, id):
         return redirect('pessoal:evento_related_id', related, id)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = f"pessoal.evento_{related}"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.evento.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.evento.nome}</b>')
         return redirect(f'pessoal:evento_related_id', related, id)
     else:
@@ -652,13 +536,6 @@ def grupo_evento_update(request,id):
     form = GrupoEventoForm(request.POST, instance=grupo_evento)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "pessoal.grupo_evento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:grupo_evento_id', id)
     else:
@@ -671,13 +548,6 @@ def motivo_reajuste_update(request,id):
     form = MotivoReajusteForm(request.POST, instance=motivo_reajuste)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "pessoal.motivo_reajuste"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:motivo_reajuste_id', id)
     else:
@@ -689,14 +559,7 @@ def motivo_reajuste_update(request,id):
 def setor_delete(request,id):
     try:
         registro = Setor.objects.get(pk=id)
-        # l = Log()
-        # l.modelo = "pessoal.setor"
-        # l.objeto_id = registro.id
-        # l.objeto_str = registro.nome[0:48]
-        # l.usuario = request.user
-        # l.mensagem = "DELETE"
         registro.delete()
-        # l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:setores')
     except:
@@ -708,14 +571,7 @@ def setor_delete(request,id):
 def cargo_delete(request,id):
     try:
         registro = Cargo.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.cargo"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:cargos')
     except:
@@ -727,14 +583,7 @@ def cargo_delete(request,id):
 def funcionario_delete(request,id):
     try:
         registro = Funcionario.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.funcionario"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request,settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.matricula}</b>')
         return redirect('pessoal:funcionarios')
     except:
@@ -746,14 +595,7 @@ def funcionario_delete(request,id):
 def dependente_delete(request,id):
     try:
         registro = Dependente.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.dependente"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:dependentes')
     except:
@@ -765,14 +607,7 @@ def dependente_delete(request,id):
 def evento_delete(request,id):
     try:
         registro = Evento.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.evento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:eventos')
     except:
@@ -791,14 +626,7 @@ def evento_related_delete(request, related, id):
         else:
             messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_update [bad request]</b>')
             return redirect('pessoal:evento_related_id', related, id)
-        l = Log()
-        l.modelo = "pessoal.evento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:eventos')
     except:
@@ -810,14 +638,7 @@ def evento_related_delete(request, related, id):
 def grupo_evento_delete(request,id):
     try:
         registro = GrupoEvento.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.grupo_evento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:grupos_evento')
     except:
@@ -829,14 +650,7 @@ def grupo_evento_delete(request,id):
 def motivo_reajuste_delete(request,id):
     try:
         registro = MotivoReajuste.objects.get(pk=id)
-        l = Log()
-        l.modelo = "pessoal.motivo_reajuste"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome[0:48]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
         return redirect('pessoal:motivos_reajuste')
     except:
@@ -850,14 +664,14 @@ def get_setores(request):
     obj = serializers.serialize('json', setores)
     return HttpResponse(obj, content_type="application/json")
 
-# @login_required
-# def get_cargos(request):
-#     try:
-#         cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
-#         obj = serializers.serialize('json', cargos)
-#     except Exception as e:
-#         obj = []
-#     return HttpResponse(obj, content_type="application/json")
+@login_required
+def get_cargos(request):
+    try:
+        cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
+        obj = serializers.serialize('json', cargos)
+    except Exception as e:
+        obj = []
+    return HttpResponse(obj, content_type="application/json")
 
 @login_required
 def get_grupos_evento(request):
@@ -877,13 +691,6 @@ def add_grupo_evento(request):
         form = GrupoEventoForm(data)
         if form.is_valid():
             grupo_evento = form.save()
-            l = Log()
-            l.modelo = "pessoal.grupo_evento"
-            l.objeto_id = grupo_evento.id
-            l.objeto_str = grupo_evento.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "CREATED"
-            l.save()
             return JsonResponse({'pk': grupo_evento.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': grupo_evento.nome}, 'status': 'success'}, status=200)
         else:
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
@@ -899,13 +706,6 @@ def add_setor(request):
         form = SetorForm(data)
         if form.is_valid():
             setor = form.save()
-            l = Log()
-            l.modelo = "pessoal.setor"
-            l.objeto_id = setor.id
-            l.objeto_str = setor.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "CREATED"
-            l.save()
             return JsonResponse({'pk': setor.id, 'model': 'pessoal.setor', 'fields': {'nome': setor.nome}, 'status': 'success'}, status=200)
         else:
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
@@ -924,13 +724,6 @@ def update_grupo_evento(request):
             form = GrupoEventoForm(data, instance=grupo)
             if form.is_valid():
                 registro = form.save()
-                l = Log()
-                l.modelo = "pessoal.grupo_evento"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "UPDATE"
-                l.save()
                 return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
         except Exception as e:
@@ -948,41 +741,11 @@ def delete_grupo_evento(request):
             if not data['pk']:
                 return JsonResponse({'status': 'field pk expected on request'}, status=400)
             registro = GrupoEvento.objects.get(pk=data['pk'])
-            l = Log()
-            l.modelo = "pessoal.setor"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.nome[0:48]
-            l.usuario = request.user
-            l.mensagem = "DELETE"
             registro.delete()
-            l.save()
             return JsonResponse({'pk': data['pk'], 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
         except Exception as e:
             return JsonResponse({'error': e, 'status': 'error'}, status=500)
     return JsonResponse({'status': 'invalid request'}, status=400)
-
-# metodos ajax
-@login_required
-def get_funcionario(request):
-    # Metodo retorna JSON com dados dado funcionario informado
-    if request.method != 'GET':
-        return JsonResponse({'status': 'bad request', 'message': 'Expected get request '}, status=400)
-    try:
-        matricula = request.GET.get('matricula', None)
-        funcaofixa = request.GET.get('funcaofixa', None)
-        incluir_inativos = request.GET.get('incluir_inativos', None)
-        params  = dict(matricula=matricula)
-        if funcaofixa:
-            params['cargo__ffixas__nome'] = funcaofixa
-        if incluir_inativos != 'True':
-            params['status'] = 'A'
-        funcionario = Funcionario.objects.get(**params)
-        obj = serializers.serialize('json', [funcionario])
-        return HttpResponse(obj, content_type="application/json")
-    except Funcionario.DoesNotExist:
-        return JsonResponse({'status': 404, 'message': settings.DEFAULT_MESSAGES['filterError']}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 500, 'message': e}, status=500)
 
 # APIs
 class FuncionarioViewSet(viewsets.ModelViewSet):
@@ -990,24 +753,3 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     serializer_class = FuncionarioSerializer
     permission_classes = [permissions.DjangoModelPermissions]
     filterset_fields = ['matricula']
-    # @action(detail=False, methods=['get'])
-    # def por_matricula(self, request, *args, **kwargs):
-    #     # Captura o parâmetro 'mat' da query string: ?mat=12345
-    #     matricula_param = request.query_params.get('mat', None)
-        
-    #     if not matricula_param:
-    #         return Response(
-    #             {"error": "Param 'mat' required"},
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-        
-    #     funcionario = get_object_or_404(Funcionario, matricula=matricula_param)
-        
-    #     serializer = self.get_serializer(funcionario)
-    #     return Response(serializer.data)
-
-class CargoViewSet(viewsets.ModelViewSet):
-    queryset = Cargo.objects.all().order_by('nome')
-    serializer_class = CargoSerializer
-    permission_classes = [permissions.DjangoModelPermissions] 
-    filterset_fields = ['setor']

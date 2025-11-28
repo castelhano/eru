@@ -11,16 +11,14 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'empresas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      {% if perms.core.delete_empresa %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
-          <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal">Historico</a></li>
-          {% if perms.core.delete_empresa %}
-          <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal">Excluir Empresa</a></li>
-          {% endif %}
         </ul>
       </li>
+      {% endif %}
     </ul>
   </div>
   <form id="app_form" action="{% url 'empresa_update' empresa.id|safe %}" enctype="multipart/form-data" method="POST" autocomplete="off">
@@ -50,37 +48,6 @@
   </div>
 </div>
 {% endif %}
-
-
-<div class="modal fade" id="history_modal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="row">
-        <div class="col"><h5 class="ms-3 mt-3">Histórico <sup>(last 15)</sup></h5></div>
-        <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      </div>
-      <div class="modal-body">
-        <table class="table table-sm">
-          <thead>
-            <th>Data</th>
-            <th>Operação</th>
-            <th>Usuário</th>
-          </thead>
-          <tbody class="fs-7">
-            {% for i in empresa.ultimas_alteracoes %}
-              <tr>
-                <td>{{i.data|date:'d/m/Y H:i:s'}}</td>
-                <td>{{i.mensagem}}</td>
-                <td>{{i.usuario.username|upper|default:'None'}}</td>
-              </tr>            
-            {% endfor %}            
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
 {% endblock%}
 
 {% block add_script_src %}

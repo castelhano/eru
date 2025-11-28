@@ -3,6 +3,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+admin.site.site_header = "System Admin"     # Header principal admin
+admin.site.index_title = "ERU"              # Título da página inicial do admin
+admin.site.site_title = "Admin"             # Título da aba do navegador
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('core.urls')),

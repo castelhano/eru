@@ -7,7 +7,7 @@ from django.db.models import Count
 from pathlib import Path
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from core.models import Empresa, Log, Job
+from core.models import Empresa, Job
 from .models import Linha, Localidade, Trajeto, Patamar, Planejamento, Carro, Viagem, Passageiro
 from .forms import LinhaForm, LocalidadeForm, TrajetoForm, PlanejamentoForm, PassageiroForm
 from django.contrib.auth.decorators import login_required, permission_required
@@ -67,13 +67,6 @@ def trajetos(request, id_linha):
                         p.seq += 1
                         p.save()
                 registro.save()
-                l = Log()
-                l.modelo = "trafego.linha"
-                l.objeto_id = registro.linha.id
-                l.objeto_str = registro.linha.codigo
-                l.usuario = request.user
-                l.mensagem = "UPDATE"
-                l.save()
             except Exception as e:
                 messages.error(request,f'<b>Erro:</b> {e}')
         else:
@@ -130,13 +123,6 @@ def localidade_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "trafego.localidade"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request,f'Localidade <b>{registro.nome}</b> criada')
                 return redirect('trafego:localidade_add')
             except:
@@ -154,13 +140,6 @@ def linha_add(request):
             try:
                 registro = form.save()
                 Patamar.objects.create(**{'linha': registro, 'inicial': 0, 'final': 23, 'ida': 50, 'volta': 50, 'intervalo_ida': 10, 'intervalo_volta': 1}) # Inicia patamares da linha
-                l = Log()
-                l.modelo = "trafego.linha"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.codigo + ' - ' + registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request,f'Linha <b>{registro.codigo}</b> criada')
                 return redirect('trafego:linha_id',registro.id)
             except:
@@ -208,13 +187,6 @@ def planejamento_add(request):
             # Se planejamento for marcado como ativo, inativa planejamento atual
             if registro.ativo:
                 Planejamento.objects.filter(empresa=registro.empresa,linha=registro.linha,dia_tipo=registro.dia_tipo,ativo=True).exclude(id=registro.id).update(ativo=False)
-            l = Log()
-            l.modelo = "trafego.planejamento"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.codigo
-            l.usuario = request.user
-            l.mensagem = "CREATED"
-            l.save()
             messages.success(request,'Planejamento <b>' + registro.codigo + '</b> criado')
             return redirect('trafego:planejamento_id', registro.id)
     else:
@@ -339,13 +311,6 @@ def localidade_update(request, id):
     form = LocalidadeForm(request.POST, instance=localidade)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "trafego.localidade"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,f'Localidade <b>{registro.nome}</b> alterada')
         return redirect('trafego:localidade_id', id)
     else:
@@ -358,13 +323,6 @@ def linha_update(request, id):
     form = LinhaForm(request.POST, instance=linha)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "trafego.linha"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.codigo[0:10] + ' - ' + registro.nome[0:38]
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,f'Linha <b>{registro.codigo}</b> alterada')
         return redirect('trafego:linha_id', id)
     else:
@@ -404,13 +362,6 @@ def patamar_update(request):
             patamares = Patamar.objects.filter(linha=linha).exclude(id=patamar.id)
             retorno = patamar_tratar_conflitos(patamar, patamares)
             if retorno[0]:
-                l = Log()
-                l.modelo = "trafego.linha"
-                l.objeto_id = linha.id
-                l.objeto_str = linha.codigo + ' - ' + linha.nome
-                l.usuario = request.user
-                l.mensagem = "PATAMAR UPDATE"
-                l.save()
                 messages.success(request,'Patamares <b>atualizados</b>')
             else:
                 messages.error(request,f'<b>Erro: [PTC 2]</b> {retorno[1]}')
@@ -495,13 +446,6 @@ def planejamento_update(request,id):
         try:
             if registro.ativo:
                 Planejamento.objects.filter(empresa=registro.empresa,linha=registro.linha,dia_tipo=registro.dia_tipo,ativo=True).exclude(id=registro.id).update(ativo=False)
-            l = Log()
-            l.modelo = "trafego.planejamento"
-            l.objeto_id = registro.id
-            l.objeto_str = registro.codigo
-            l.usuario = request.user
-            l.mensagem = "UPDATE"
-            l.save()
             messages.success(request,'Planejamento <b>' + registro.codigo + '</b> alterado')
             return redirect('trafego:planejamento_id', id)
         except Exception as e:
@@ -529,13 +473,6 @@ def planejamento_grid_update(request, id):
                 viagem['origem'] = Localidade.objects.get(id=viagem['origem'])
                 viagem['destino'] = Localidade.objects.get(id=viagem['destino'])
                 Viagem.objects.create(**viagem)
-        l = Log()
-        l.modelo = "trafego.planejamento"
-        l.objeto_id = planejamento.id
-        l.objeto_str = planejamento.codigo
-        l.usuario = request.user
-        l.mensagem = "UPDATED GRID"
-        l.save()
         messages.success(request,f'Planejamento <b>{planejamento.codigo}</b> atualizado')
     return redirect('trafego:planejamento_id', id)
 
@@ -545,13 +482,6 @@ def planejamento_grid_update(request, id):
 def localidade_delete(request, id):
     try:
         registro = Localidade.objects.get(pk=id)
-        l = Log()
-        l.modelo = "trafego.localidade"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome
-        l.usuario = request.user
-        l.mensagem = "DELETE"
-        l.save()
         registro.delete()
         messages.warning(request,'Localidade apagada. Essa operação não pode ser desfeita')
         return redirect('trafego:localidades')
@@ -564,13 +494,6 @@ def localidade_delete(request, id):
 def linha_delete(request, id):
     try:
         registro = Linha.objects.get(pk=id)
-        l = Log()
-        l.modelo = "trafego.linha"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.codigo + ' -  ' + registro.nome[0:38]
-        l.usuario = request.user
-        l.mensagem = "DELETE"
-        l.save()
         registro.delete()
         messages.warning(request,'Linha apagada. Essa operação não pode ser desfeita')
         return redirect('trafego:linhas')
@@ -583,13 +506,6 @@ def linha_delete(request, id):
 def trajeto_delete(request, id):
     try:
         registro = Trajeto.objects.get(pk=id)
-        l = Log()
-        l.modelo = "trafego.linha"
-        l.objeto_id = registro.linha.id
-        l.objeto_str = registro.linha.codigo
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         registro.delete()
         for p in Trajeto.objects.filter(linha=registro.linha, sentido=registro.sentido, seq__gte=registro.seq):
             p.seq -= 1
@@ -604,13 +520,6 @@ def trajeto_delete(request, id):
 def planejamento_delete(request,id):
     try:
         registro = Planejamento.objects.get(pk=id)
-        l = Log()
-        l.modelo = "trafego.planejamento"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.codigo
-        l.usuario = request.user
-        l.mensagem = "DELETE"
-        l.save()
         registro.delete()
         messages.warning(request,'Planejamento apagado. Essa operação não pode ser desfeita')
         return redirect('trafego:planejamentos')

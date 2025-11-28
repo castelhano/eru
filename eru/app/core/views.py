@@ -1,10 +1,9 @@
-# import time # Only in development: time.sleep(5) atrasa em 5 segundos
 import re, os, json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
-from .models import Empresa, Log, Settings, Job
+from .models import Empresa, Settings, Job
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from .filters import UserFilter
 from django.contrib.auth.models import User, Group, Permission
@@ -62,13 +61,13 @@ def usuarios(request):
 @login_required
 @permission_required('core.view_log', login_url="/handler/403")
 def logs(request):
-    target_model = request.GET.get('target_model',None)
-    mensagem = request.GET.get('mensagem', None)
-    related = request.GET.get('related', None)
-    logs = Log.objects.filter(modelo=target_model,mensagem=mensagem)
-    if related:
-        logs = logs.filter(objeto_related=related)
-    return render(request,'core/logs.html',{'logs':logs})
+    # target_model = request.GET.get('target_model',None)
+    # mensagem = request.GET.get('mensagem', None)
+    # related = request.GET.get('related', None)
+    # logs = Log.objects.filter(modelo=target_model,mensagem=mensagem)
+    # if related:
+    #     logs = logs.filter(objeto_related=related)
+    return render(request, 'core/logs.html')
 
 @login_required
 def jobs(request):
@@ -108,13 +107,6 @@ def settings(request):
         if Settings.objects.all().count() == 0:
             settings = Settings()
             settings.save()
-            l = Log()
-            l.modelo = "core.settings"
-            l.objeto_id = settings.id
-            l.objeto_str = 'n/a'
-            l.usuario = request.user
-            l.mensagem = "AUTO CREATED"
-            l.save()
         else:
             settings = None
             messages.error(request,'<b>Erro::</b> Identificado duplicatas nas configurações do sistema, entre em contato com o administrador.')
@@ -130,13 +122,6 @@ def empresa_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "core.empresa"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.nome[0:48]
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request,'Empresa <b>' + registro.nome + '</b> criada')
                 return redirect('empresas')
             except:
@@ -179,13 +164,6 @@ def usuario_add(request):
                 for empresa in request.POST.getlist('empresas'):
                     e = Empresa.objects.get(id=empresa)
                     registro.profile.empresas.add(e)
-                l = Log()
-                l.modelo = "auth.user"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.username
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request,'Usuario <b>' + registro.username + '</b> criado')
                 return redirect('usuario_id', registro.id)
             except:
@@ -203,13 +181,6 @@ def grupo_add(request):
         if form.is_valid():
             try:
                 registro = form.save()
-                l = Log()
-                l.modelo = "auth.group"
-                l.objeto_id = registro.id
-                l.objeto_str = registro.name
-                l.usuario = request.user
-                l.mensagem = "CREATED"
-                l.save()
                 messages.success(request,'Grupo <b>' + registro.name + '</b> criado')
                 return redirect('grupos')
             except:
@@ -255,13 +226,6 @@ def empresa_update(request, id):
     form = EmpresaForm(request.POST, request.FILES, instance=empresa)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "core.empresa"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,'Empresa <b>' + registro.nome + '</b> alterada')
         return redirect('empresa_id',id)
     else:
@@ -298,13 +262,6 @@ def usuario_update(request, id):
         for empresa in request.POST.getlist('empresas'):
             e = Empresa.objects.get(id=empresa)
             registro.profile.empresas.add(e)
-        l = Log()
-        l.modelo = "auth.user"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.username
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,'Usuario <b>' + registro.username + '</b> alterado')
         return redirect('usuario_id',id)
     else:
@@ -317,13 +274,6 @@ def grupo_update(request, id):
     form = GroupForm(request.POST, instance=grupo)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "auth.group"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.name
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,'Grupo <b>' + registro.name + '</b> alterado')
         return redirect('grupo_id',id)
     else:
@@ -336,13 +286,6 @@ def settings_update(request, id):
     form = SettingsForm(request.POST, instance=settings)
     if form.is_valid():
         registro = form.save()
-        l = Log()
-        l.modelo = "core.settings"
-        l.objeto_id = registro.id
-        l.objeto_str = 'n/a'
-        l.usuario = request.user
-        l.mensagem = "UPDATE"
-        l.save()
         messages.success(request,'Configurações <b>atualizadas</b> com sucesso')
         return redirect('settings')
     else:
@@ -354,14 +297,7 @@ def settings_update(request, id):
 def empresa_delete(request, id):
     try:
         registro = Empresa.objects.get(pk=id)
-        l = Log()
-        l.modelo = "core.empresa"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.nome
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request,'Empresa <b>' + registro.nome + '</b> apagada')
         return redirect('empresas')
     except:
@@ -373,14 +309,7 @@ def empresa_delete(request, id):
 def usuario_delete(request, id):
     try:
         registro = User.objects.get(pk=id)
-        l = Log()
-        l.modelo = "auth.user"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.username
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request,'Usuario <b>' + registro.username + '</b> apagado')
         return redirect('usuarios')
     except:
@@ -392,14 +321,7 @@ def usuario_delete(request, id):
 def grupo_delete(request, id):
     try:
         registro = Group.objects.get(pk=id)
-        l = Log()
-        l.modelo = "auth.group"
-        l.objeto_id = registro.id
-        l.objeto_str = registro.name
-        l.usuario = request.user
-        l.mensagem = "DELETE"
         registro.delete()
-        l.save()
         messages.warning(request,'Grupo <b>' + registro.name + '</b> apagado')
         return redirect('grupos')
     except:

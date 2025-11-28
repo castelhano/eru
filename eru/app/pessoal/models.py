@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import Empresa, Log, ImageField as core_ImageField
+from core.models import Empresa, ImageField as core_ImageField
 from datetime import datetime, date
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
@@ -82,9 +82,6 @@ class Setor(models.Model):
         return self.nome
     def ativos(self):
         return Funcionario.objects.filter(cargo__setor=self, status='A').count()
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.setor',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
 auditlog.register(Setor)
 
 class Cargo(models.Model):
@@ -99,11 +96,9 @@ class Cargo(models.Model):
         return self.ffixas.all()
     def funcoes_fixas_list(self):
         return list(self.ffixas.values_list('nome', flat=True))
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.cargo',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     class Meta:
         ordering = ['nome']
+auditlog.register(Cargo)
 
 class FuncaoFixa(models.Model):
     FFIXA_CHOICES = (
@@ -116,11 +111,9 @@ class FuncaoFixa(models.Model):
     cargos = models.ManyToManyField(Cargo, related_name="ffixas")
     def __str__(self):
         return self.get_nome_display()
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.funcao_fixa', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     class Meta:
         permissions = []
+auditlog.register(FuncaoFixa)
     
     
 class Funcionario(Pessoa):
@@ -181,9 +174,6 @@ class Funcionario(Pessoa):
         return self.foto.url if self.foto else None
     def foto_name(self):
         return self.foto.name.split('/')[-1]
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.funcionario',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     @property
     def F_pne(self):
         return self.pne
@@ -194,6 +184,7 @@ class Funcionario(Pessoa):
             ("desligar_funcionario", "Pode desligar funcionário"),
             ("dashboard_funcionario", "Pode acessar dashboard pessoal"),
         ]
+auditlog.register(Funcionario)
 
 class Afastamento(models.Model):
     MOTIVO_AFASTAMENTO = (
@@ -216,9 +207,7 @@ class Afastamento(models.Model):
     reabilitado = models.BooleanField(default=False)
     remunerado = models.BooleanField(default=False)
     detalhe = models.TextField(blank=True)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.afastamento',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
+auditlog.register(Afastamento)
 
 class Dependente(models.Model):
     PARENTESCO = (
@@ -241,23 +230,19 @@ class Dependente(models.Model):
     rg_emissao = models.DateField(blank=True, null=True)
     rg_orgao_expedidor = models.CharField(max_length=15, blank=True)
     cpf = models.CharField(max_length=20,blank=True)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.dependente',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     def idade(self):
         if self.data_nascimento:
             hoje = date.today()
             return hoje.year - self.data_nascimento.year - ((hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day))
         else:
             return ''
+auditlog.register(Dependente)
 
 class GrupoEvento(models.Model):
     nome = models.CharField(max_length=100, blank=False, unique=True)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.grupo_evento',objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     def __str__(self):
         return self.nome
+auditlog.register(GrupoEvento)
 
 class Evento(models.Model):
     TIPOS = (
@@ -269,19 +254,15 @@ class Evento(models.Model):
     rastreio = models.CharField(max_length=40, blank=False, unique=True)
     tipo = models.CharField(max_length=3, choices=TIPOS, default='P', blank=False)
     grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.evento', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     def __str__(self):
         return self.nome
+auditlog.register(Evento)
 
 class MotivoReajuste(models.Model):
     nome = models.CharField(max_length=100, blank=False)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.motivo_reajuste', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
     def __str__(self):
         return self.nome
+auditlog.register(MotivoReajuste)
 
 class EventoMovimentacao(models.Model):
     TIPOS = (
@@ -305,12 +286,8 @@ class EventoMovimentacao(models.Model):
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
     empresas = models.ManyToManyField(Empresa, related_name="eventos_cargo")
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.evento_cargo', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
+auditlog.register(EventoCargo)
 
 class EventoFuncionario(EventoMovimentacao):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)
-    def ultimas_alteracoes(self):
-        logs = Log.objects.filter(modelo='pessoal.evento_funcionario', objeto_id=self.id).order_by('-data')[:15]
-        return reversed(logs)
+auditlog.register(EventoFuncionario)

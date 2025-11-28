@@ -36,6 +36,22 @@ function urlUpdate(uri, key, value) {
   function urlFilter(filter, value){location.href = urlUpdate(window.location.href, filter, value);}
   
   /*
+  * urlCleanNFilter Limpa filtros atuais e submete pagina com novos filtros
+  *
+  * @version  1.0
+  * @since    10/02/2022
+  * @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+  * @param    {Array} filters Lista com nome dos filtros
+  * @param    {Array} values Lista com valores dos filtros
+  * @example  urlCleanNFilter(['id','status'], [22, 1])
+  */
+  function urlCleanNFilter(filters, values){
+    let h = window.location.href.split('?')[0];
+    for(i=0;i < filters.length; i++){ h = urlUpdate(h , filters[i], values[i]);}
+      location.href = h;
+  }
+  
+  /*
   * urlFilterTo Semelhante a urlFilter() porem nao atualiza pagina corrente, deve ser informado nova url para adicionar parametro
   *
   * @version  1.0

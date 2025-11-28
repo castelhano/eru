@@ -47,11 +47,10 @@ urlpatterns = [
     path('motivo_reajuste_update/<int:id>',views.motivo_reajuste_update,name='motivo_reajuste_update'),
     path('motivo_reajuste_delete/<int:id>/delete',views.motivo_reajuste_delete,name='motivo_reajuste_delete'),
     path('get_setores',views.get_setores,name='get_setores'),
-    # path('get_cargos',views.get_cargos,name='get_cargos'),
+    path('get_cargos',views.get_cargos,name='get_cargos'),
     path('get_grupos_evento',views.get_grupos_evento,name='get_grupos_evento'),
     path('add_setor',views.add_setor,name='add_setor'),
     path('add_grupo_evento',views.add_grupo_evento,name='add_grupo_evento'),
     path('update_grupo_evento', views.update_grupo_evento,name='update_grupo_evento'),
     path('delete_grupo_evento', views.delete_grupo_evento,name='delete_grupo_evento'),
-    path('get_funcionario',views.get_funcionario,name='get_funcionario'),
 ]

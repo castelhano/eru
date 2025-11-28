@@ -56,8 +56,8 @@
               <div class="col-lg">
                 <span>Consultas Rápidas:</span>
                 <ul class="list-unstyled">
-                  <li><a href="#" onclick="urlFilter('cnh_validade__lte', dateToday({days: 30, native: true}))">Condutores CNH vencendo</a></li>
-                  <li><a href="#" onclick="urlFilter('status', 'F')">Funcionários Afastados</a></li>
+                  <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte'], [dateToday({days: 30, native: true})])">Condutores CNH vencendo</a></li>
+                  <li><a href="#" onclick="urlCleanNFilter(['status'], ['F'])">Funcionários Afastados</a></li>
                   <li><hr class="my-1"></li>
                   <li><a href="#">item</a></li>
                 </ul>
@@ -195,8 +195,8 @@
     {nome: 'regime'},
     ],
     selectPopulate: [
-      {target: document.getElementById('id_empresa'), url: '{% url 'get_empresas' %}', emptyRow: {innerHTML: 'Todas'}},
-      {target: document.getElementById('id_setor'), url: '{% url 'pessoal:get_setores' %}', emptyRow: {}},
+      {target: document.getElementById('id_empresa'), url: '{% url 'get_empresas' %}', emptyRow: {innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}},
+      {target: document.getElementById('id_setor'), url: '{% url 'pessoal:get_setores' %}', emptyRow: {innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}},
     ]
   })
   
@@ -225,14 +225,14 @@
     
   })
   
-  // document.getElementById('id_setor').addEventListener('change', (ev)=>{
-  //   if(ev.target.value == ''){return}
-  //   else{
-  //     let cargos = new selectPopulate({target: filterForm.cargo, url: '{% url "cargo-api-list" %}', params: `setor=${ev.target.value}`, emptyRow:{}})
-  //   }
+  let cargos = new selectPopulate({wait: true, target: filterForm.cargo, url: '{% url "pessoal:get_cargos" %}', emptyRow:{innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}})
+  document.getElementById('id_setor').addEventListener('change', (ev)=>{
+    if(ev.target.value == ''){return}
+    else{
+      cargos.params = `?setor=${filterForm.cargo__setor.value}`;
+      cargos.reload();
+    }
     
-  // })
-
-  
+  }) 
   {% endblock %}
 </script>
