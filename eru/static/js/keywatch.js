@@ -1,7 +1,7 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 **
-* @version  6.2
+* @version  6.3
 * @since    05/08/2024
 * @release  31/10/2025 [removido suporte para teclas de acento ex ~ ´]
 * @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{'data-i18n'='my.key'})
@@ -11,6 +11,9 @@
 * @example  appKeyMap.bind('ctrl+e', ()=>{...do something})
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
+--
+* Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input
+* 
 */
 class Keywatch{
     constructor(options={}){
@@ -21,10 +24,11 @@ class Keywatch{
             all: 'Atalhos Globais',
             default: 'Atalhos Base',
         };
-        this.contextPool  = [];                      // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
-        this.locked = false;                         // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
-        this.context = 'default';                    // contexto ativo
-        this.handlerOptions = {                      // configuracoes padrao para shortcut
+        this.contextPool = [];                     // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
+        this.composedMatch = '';                   // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
+        this.locked = false;                       // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
+        this.context = 'default';                  // contexto ativo
+        this.handlerOptions = {                    // configuracoes padrao para shortcut
             context: 'default',
             desc: '',
             icon: null,
@@ -37,7 +41,8 @@ class Keywatch{
             preventDefault: true,
             useCapture: false,
             'data-i18n': undefined,
-            'i18n-dynamicKey': false
+            'i18n-dynamicKey': false,
+            composed: false                         // composed sera true caso usado modificadores nao convencionais, definido automaticamente na lib
         }
         this.defaultOptions = { // configuracoes padrao para classe
             splitKey: '+',
@@ -49,6 +54,7 @@ class Keywatch{
             shortcutMaplistIcon: "bi bi-alt",
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
+            composedTrigger: ';', // caractere que confirma atalhos 'composed' (atalhos com modificadores nao convencionais)
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
@@ -93,12 +99,25 @@ class Keywatch{
     _eventsMatch(scope, ev){
         let prev = false; // prevent default
         let count = 0;
+        if(scope == this.composedTrigger && this.composedMatch){ scope = this.composedMatch }
         let list = [
             ...this.handlers?.[ev.type]?.[this.context]?.[scope] || [],
             ...this.handlers?.[ev.type]?.['all']?.[scope] || []
         ];
         list.forEach((el)=>{
             if(el.element == document || el.element == ev.target){
+                if(
+                    el.composed && 
+                    !this.composedMatch && 
+                    ['input', 'textarea','select'].includes(ev.target.nodeName.toLowerCase())
+                ){ 
+                // em caso de teclas composed (que usa modificadores nao convencionais) apenas
+                // salva scope em this.composedMatch e aguarda acionamento do trigger na proxima
+                // tecla precionada
+                    this.composedMatch = scope;
+                    count += 1;
+                    return;
+                }
                 el.method(ev, el);
                 count += 1;
                 prev = prev || el.preventDefault;
@@ -115,7 +134,8 @@ class Keywatch{
             let key = this._normalize(ev.key);
             if(ev.key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
-            let find = this._eventsMatch(scope, ev); // Busca match de composicao
+            let find = this._eventsMatch(scope, ev); // Busca (e executa) match de composicao
+            if(!find && this.composedMatch){ this.composedMatch = '' }
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
                 // caso nao localizado atalho, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
@@ -141,7 +161,7 @@ class Keywatch{
             }
         }
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
-            let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
+            let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();            
             this._eventsMatch(scope, ev); // Busca match de composicao
             let key = this._normalize(ev.key);
             if(ev.key && this.pressed.indexOf(key) > -1){ this.pressed.splice(this.pressed.indexOf(key), 1);} 
@@ -208,6 +228,8 @@ class Keywatch{
             event.schema = scope;
             event.method = method;
             if(index > 0){event.display = false} // evita de exibir duplicatas no modal de atalhos para atalhos multiplos
+            let defaultMods = ['control','shift','alt','meta'];
+            event.composed = event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
             this._spread(event);
         })
     }
