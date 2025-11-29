@@ -12,8 +12,10 @@
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
 --
-* Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input
-* 
+* Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input impondo a seguinte restrição:
+* atalhos que usam teclas basicas como modificador, se o foco estiver num input nao sera acionado de maneira imediata, nestes casos espera que tecla de 
+* confirmacao (this.composedTrigger default:';') apareca logo na sequencia, ou seja o atalho 'c+o' sera acionado imediato quando foco nao estiver em input
+* e somente ap precionar ; logo apos precionar c+o
 */
 class Keywatch{
     constructor(options={}){
@@ -25,7 +27,8 @@ class Keywatch{
             default: 'Atalhos Base',
         };
         this.contextPool = [];                     // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
-        this.composedMatch = '';                   // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
+        // this.composedMatch = '';                   // 
+        this.composedMatch = [];                   // ['c,o', ['keydown','keyup']]
         this.locked = false;                       // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
         this.context = 'default';                  // contexto ativo
         this.handlerOptions = {                    // configuracoes padrao para shortcut
@@ -99,30 +102,42 @@ class Keywatch{
     _eventsMatch(scope, ev){
         let prev = false; // prevent default
         let count = 0;
-        if(scope == this.composedTrigger && this.composedMatch){ scope = this.composedMatch }
-        let list = [
+        let list = [];
+        // composedMatch carregado na interacao anterior, seguido do trigger
+        // this.composedMatch armazena scope e evento encontrado, ex ['c,o', ['keydown']], lista deve buscar no evento encontrado (ou em ambos)
+        if(scope == this.composedTrigger && this.composedMatch.length > 0){ scope = this.composedMatch[0] }
+        list = [
             ...this.handlers?.[ev.type]?.[this.context]?.[scope] || [],
             ...this.handlers?.[ev.type]?.['all']?.[scope] || []
         ];
         list.forEach((el)=>{
             if(el.element == document || el.element == ev.target){
+                let composed = this.composedMatch.length == 0 || !this.composedMatch[1].includes(ev.type);
                 if(
                     el.composed && 
-                    !this.composedMatch && 
+                    composed && 
                     ['input', 'textarea','select'].includes(ev.target.nodeName.toLowerCase())
                 ){ 
-                // em caso de teclas composed (que usa modificadores nao convencionais) apenas
-                // salva scope em this.composedMatch e aguarda acionamento do trigger na proxima
-                // tecla precionada
-                    this.composedMatch = scope;
+                    // em caso de teclas composed (que usa modificadores nao convencionais) apenas
+                    // salva scope em this.composedMatch e aguarda acionamento do trigger na proxima
+                    // tecla precionada. Precisa validar se nao existe entrada para outro evento (keyup ou keydown)
+                    this.composedMatch = (this.composedMatch.length === 0) 
+                    ? [scope, [ev.type]] 
+                    : (this.composedMatch[1].includes(ev.type) 
+                    ? this.composedMatch 
+                    : (this.composedMatch[1].push(ev.type), this.composedMatch));
                     count += 1;
                     return;
                 }
                 el.method(ev, el);
                 count += 1;
                 prev = prev || el.preventDefault;
+                this.composedMatch = (this.composedMatch.length > 0 && this.composedMatch[1].includes(ev.type)) 
+                ? (this.composedMatch[1].length === 1 ? [] : [this.composedMatch[0], this.composedMatch[1].filter(type => type !== ev.type)]) 
+                : this.composedMatch;
             }
         })
+        
         if(prev){ev.preventDefault()}
         return count;
     }
@@ -135,7 +150,7 @@ class Keywatch{
             if(ev.key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca (e executa) match de composicao
-            if(!find && this.composedMatch){ this.composedMatch = '' }
+            if(!find && this.composedMatch){ this.composedMatch = [] }
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
                 // caso nao localizado atalho, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
