@@ -26,12 +26,12 @@
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
-    {% if perms.pessoal.view_funcionario %}appKeyMap.bind('c+f', ()=>{document.getElementById('menu_funcionario').click()}, {keydown: false, keyup: true, display: false}){% endif %}
-    {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {keydown: false, keyup: true, display: false}){% endif %}
-    {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {keydown: false, keyup: true, display: false}){% endif %}
-    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {keydown: false, keyup: true, display: false}){% endif %}
-    {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {keydown: false, keyup: true, display: false}){% endif %}
-    {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.view_funcionario %}appKeyMap.bind('c+f', ()=>{document.getElementById('menu_funcionario').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_setor %}appKeyMap.bind('c+s', ()=>{document.getElementById('menu_setor').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_cargo %}appKeyMap.bind('c+o', ()=>{document.getElementById('menu_cargo').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_evento %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
+    {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {display: false}){% endif %}
 
     const menuFerramentas = new canvasNavDropdown({
         name: 'Ferramen<b><u>t</u></b>as',
