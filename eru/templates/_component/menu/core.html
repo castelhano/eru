@@ -23,18 +23,35 @@
     {% if perms.core.view_empresa %}appKeyMap.bind('c+e', ()=>{document.getElementById('menu_empresa').click()}, {display: false}){% endif %}
     {% if perms.auth.view_user %}appKeyMap.bind('c+u', ()=>{document.getElementById('menu_usuario').click()}, {display: false}){% endif %}
     {% if perms.auth.view_group %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo').click()}, {display: false}){% endif %}
+    
     {% if perms.core.view_settings %}
-    const settings = new canvasNavLink({
+    const menuSettings = new canvasNavLink({
         name: 'Config<b><u>u</u></b>rações',
-        id: 'menu_settings',
+        id: 'menu_menuSettings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'settings' %}',
-        'data-i18n': 'common.settings__bold:u',
+        'data-i18n': 'common.menuSettings__bold:u',
         keybind: [
             'alt+u',
-            ()=>{settings.click()},
-            {'data-i18n':"common.settings", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+            ()=>{menuSettings.click()},
+            {'data-i18n':"common.menuSettings", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+        ]
+    })
+    {% endif %}
+    
+    {% if perms.auditlog.view_logentry %}
+    const menuLogs = new canvasNavLink({
+        name: 'Logs',
+        id: 'menu_menuLogs',
+        class: 'text-warning',
+        icon: 'bi bi-database-fill-lock',
+        href: '{% url 'logs' %}',
+        'data-i18n': 'common.menuLogs__bold:u',
+        keybind: [
+            'alt+u',
+            ()=>{menuLogs.click()},
+            {'data-i18n':"common.menuLogs", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
         ]
     })
     {% endif %}
