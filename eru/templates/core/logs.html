@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load tag_extra %}
 {% block title %}Logs{% endblock %}
 
 {% block content_fluid %}
@@ -7,13 +8,80 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link pointer" id="back" title="ALT + V" onclick="window.close();"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
   <div class="card-body tab-content">
     <h5 class="card-title">Logs</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
       
+      <form id="filterForm" action="{% url 'logs' %}" method="POST" autocomplete="off">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col bg-body-secondary py-2">
+            <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+                <div class="btn-group" role="group">
+                  <input type="date" id="id_timestamp_min" name="timestamp_min" class="form-control" autofocus>
+                </div>            
+              <div class="btn-group me-2" role="group">
+                <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
+              </div>            
+              <div class="btn-group me-2" role="group">
+                <div class="input-group">
+                  <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
+                  <span class="input-group-text fs-7">entradas</span>
+                </div>
+              </div>
+              <div class="btn-group me-2" role="group">
+                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="Usuario">
+              </div>
+              <div class="btn-group me-2" role="group">
+                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" data-i18n="[title]sys.shortcuts.cleanFilters" onclick="appKeyMap.run('alt+l')"><i class="bi bi-eraser-fill"></i></button>
+                <button type="submit" class="btn btn-sm btn-dark border">Filtrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-lg-auto">
+            <select name="content_type" id="id_content_type" style="display: none;" multiple>
+              {% for model in models %}
+              <option value="{{model.id}}" data-group="{{model.app_label}}">{{model.model}}</option>                
+              {% endfor %}        
+            </select>
+          </div>
+          <div class="col-lg border-start mt-3 mt-lg-0 pt-0">
+            <table id="table_logs" class="table table-sm border table-striped table-hover fs-7">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>App</th>
+                  <th>Model</th>
+                  <th>Ref</th>
+                  <th>IP</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                <tr>
+                  <td>{{log.timestamp|date:'d/m/y H:i'}}</td>
+                  <td>{{log.actor|capfirst}}</td>
+                  <td>{{log.action|auditlog_action}}</td>
+                  <td>{{log.content_type.app_label|capfirst}}</td>
+                  <td>{{log.content_type.model|capfirst}}</td>
+                  <td>{{log.object_repr|truncatechars:10}}</td>
+                  <td>{{log.remote_addr|default:'<i>unknown</td>i>'}}</td>
+                  <td class="text-end"><a href="" class="btn btn-sm btn-dark" title="Detalhes"><i class="bi bi-shuffle"></i></a></td>
+                </tr>                  
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </form>
+
     </div>
   </div>
 </div>
@@ -21,8 +89,23 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/selectm.js' %}"></script>
 {% endblock %}
 
 <script>
-{% block add_script %} {% endblock %}
+  {% block add_script %}  
+  
+  const form = new jsForm('#filterForm', {})
+  form.load({{data|safe}});
+  if(!form.timestamp_min.value){ form.timestamp_min.value = dateToday({native: true, days:-1}) }
+  if(!form.timestamp_max.value){ form.timestamp_max.value = dateToday({native: true}) }
+
+  const modelos = new jsSelectm('#id_content_type', { sort: true })
+  const table = new jsTable('#table_logs', {
+    canFilter: true,
+    filterCols: ['User','Action']
+  })
+  
+  {% endblock %}
 </script>

@@ -67,7 +67,7 @@ dialog:focus-visible{outline: none!important;}
 .btn-outline-purple:hover{background-color: #6f42c1!important;color: #FFF!important;}
 
 .btn-phantom{background-color: transparent;}
-.btn-phantom:hover, .btn-phantom:focus{background-color: var(--bs-secondary-bg);}
+.btn-phantom:hover, .btn-phantom:focus{background-color: var(--bs-tertiary-bg);}
 .btn-phantom.active{border-color: transparent;background-color: var(--bs-success);}
 .btn-phantom-success{color: rgb(var(--bs-success-rgb));}
 .btn-phantom-success:hover{background-color: #198754;color: #FFF;}

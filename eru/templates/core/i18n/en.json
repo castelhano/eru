@@ -40,6 +40,7 @@
         "import": "Import",
         "inactive": "Inactive#Inactives",
         "key": "Key#Keys",
+        "log": "Log#Logs",
         "married": "Married",
         "male": "Male",
         "metric": "Metric#Metrics",
@@ -135,18 +136,21 @@
         },
         "shortcuts": {
             "addRegistry": "Add new registry",
+            "cleanFilters": "Clean filters",
             "clearSelection": "Clear selection",
             "goIndexPage": "Return to initial page",
             "goPreviousNode": "Return to origin",
             "logout": "End system session (logout)",
             "moduleRoot": "Return to module initial page",
+            "moduleSettings": "Module settings",
             "registerMenu": "Open register menu",
             "reload": "Reload page (clean filters)",
             "showFilters": "Show page filters",
             "showSysPanel": "Show system panel",
             "submitFilters": "Performs search with informed filters",
             "submitForm": "Save changes",
-            "toolsMenu": "Open tools menu"
+            "toolsMenu": "Open tools menu",
+            "viewLogs": "View logs"
         }
     },
     "apps":{

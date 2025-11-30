@@ -58,6 +58,7 @@ class Keywatch{
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
             composedTrigger: ';', // caractere que confirma atalhos 'composed' (atalhos com modificadores nao convencionais)
+            reserve: {},    // lista de atalhos reservados, sera usada apenas para notificacao pelo metodo avail
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
@@ -333,13 +334,7 @@ class Keywatch{
         // se nao informado event.type assume 'keydown' como padrao
         // ## So deve ser usado para shortcut unico (sem entrada multipla)
         if(!options.hasOwnProperty('type')){options.type = 'keydown'}
-        let reservados = {
-            'alt+c': '[reserv] Cadastro',
-            'alt+r': '[reserv] Relatorios',
-            'alt+t': '[reserv] Ferramentas',
-            'alt+u': '[reserv] Configuracoes',
-        }
-        if(reservados.hasOwnProperty(scope)){console.log(reservados[scope])}
+        if(this.reserve.hasOwnProperty(scope)){console.log(this.reserve[scope])}
         scope = scope.replace(this.splitKey, ',');
         if(options.context){ // se informado contexto verifica se atalho existe no contexto
             if(!this.contexts.hasOwnProperty(options.context) || !this.handlers?.[options.type]?.[options.context]){return true}
@@ -352,6 +347,7 @@ class Keywatch{
             return true;
         }
     }
+    getReserve(){return this.reserve}
     duplicated(context='default'){ // retorna lista com detalhes dos schemas duplicados (leva em consideracao evento, contexto e elemento)
         let duplicatedList = [];
         for(let ev in this.handlers){

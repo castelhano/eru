@@ -167,7 +167,27 @@
             autoDetect: false, 
             switcher: document.getElementById('id_language'), 
         })
-        const appKeyMap = new Keywatch({i18nHandler: i18n}); // Inicia lib para captura de shortcuts
+        const appKeyMap = new Keywatch({ // Inicia lib para captura de shortcuts
+            i18nHandler: i18n,
+            reserve: { // padrao de atalhos reservados, usado para alerta junto ao metodo avail
+                'alt+d': '{*} Download',
+                'alt+g': '{*} Save record',
+                'alt+i': '{*} Index page',
+                'alt+l': '{*} Reload page',
+                'alt+m': '{*} Sys navbar',
+                'alt+n': '{*} New record',
+                'alt+q': '{*} Logout',
+                'alt+v': '{*} Back',
+                'alt+.': '{*} App Root',
+                'ctrl+arrowdown': '{*} Next register',
+                'ctrl+enter': '{*} Access register / register detail',
+                'ctrl+arrowleft': '{*} Previous page',
+                'ctrl+arrowright': '{*} Next page',
+                'ctrl+arrowup': '{*} Previous row',
+                'ctrl+f': '{*} Local search',
+                'f2': '{*} Filter page',
+            },
+        }); 
         {% if perms.core.debug %}
         appKeyMap.bind('s+backspace', ()=>{
             let apps = i18n.apps;
@@ -213,7 +233,6 @@
         if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.addRegistry', icon: 'bi bi-plus-square-fill text-success', desc:'Novo registro'})}
         if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.submitForm', icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})}
         if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.goPreviousNode', icon: 'bi bi-arrow-up', desc:'Retorna origem'})}
-        // if(document.querySelector('[data-bs-toggle="dropdown"]')){appKeyMap.bind('f1', () => {try{bootstrap.Modal.getOrCreateInstance(document.getElementById('history_modal')).show()}catch(e){}}, {'data-i18n':'sys.changeHistory', icon: 'bi bi-code-slash', desc:'Historico de alterações'})}
         appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0]}, {'data-i18n':'sys.shortcuts.reload', icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {'data-i18n':'sys.shortcuts.showSysPanel', icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.logout', icon: 'bi bi-power', desc:'Encerra sessão no sistema'})

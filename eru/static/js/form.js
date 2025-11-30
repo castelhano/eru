@@ -82,9 +82,14 @@ class jsForm{
             if(data.hasOwnProperty(el.el.input.name)){el.value = data[el.el.input.name]}; // Carrega valores ajustados em campos imask
         })
         for(let key in data){ // Carrega demais valores do dicionario
-            if(!ignore.includes(key) && !this.imaskFieldNames.includes(key)){try{this.form.querySelector(`#id_${key}`).value = data[key]}catch(e){}}
+            if(!ignore.includes(key) && !this.imaskFieldNames.includes(key)){
+                try{
+                    // se valor informado for um array, 
+                    if(Array.isArray(data[key]) && this[key] && this[key].nodeName == 'SELECT' && this[key].multiple){ [...this[key].options].forEach(o => { o.selected = data[key].includes(o.value) }) }
+                    else{ this.form.querySelector(`#id_${key}`).value = data[key] }
+                }catch(e){console.log(e)}
+            }
         }
-
     }
     get(field){ // Retorna valor do campo especificado ou na omissao dicionario com todos os campos do form
         let formData = new FormData(this.form);

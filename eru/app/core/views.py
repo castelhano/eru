@@ -3,9 +3,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
+from django.apps import apps
+from auditlog.models import LogEntry
 from .models import Empresa, Settings, Job
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
-from .filters import UserFilter
+from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
@@ -59,15 +61,18 @@ def usuarios(request):
     return render(request,'core/usuarios.html', context)
 
 @login_required
-@permission_required('core.view_log', login_url="/handler/403")
+@permission_required('auditlog.view_logentry', login_url="/handler/403")
 def logs(request):
-    # target_model = request.GET.get('target_model',None)
-    # mensagem = request.GET.get('mensagem', None)
-    # related = request.GET.get('related', None)
-    # logs = Log.objects.filter(modelo=target_model,mensagem=mensagem)
-    # if related:
-    #     logs = logs.filter(objeto_related=related)
-    return render(request, 'core/logs.html')
+    context = {}
+    if request.method == 'POST':
+        data = request.POST.copy()
+        data['content_type'] = request.POST.getlist('content_type')
+        data.pop('csrfmiddlewaretoken', None)
+        context['data'] = json.dumps(data)
+        context['logs'] = LogEntryFilter(request.POST, queryset=LogEntry.objects.all().order_by('-timestamp')).qs
+    target_apps = ['auth','core','trafego','pessoal']
+    context['models'] = ContentType.objects.filter(app_label__in=target_apps).order_by('app_label', 'model')
+    return render(request, 'core/logs.html', context)
 
 @login_required
 def jobs(request):

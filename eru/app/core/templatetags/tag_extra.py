@@ -178,3 +178,12 @@ def badge_list(value, style):
     for k in value.split(';'):
         badges += f'<span class="badge me-1 {style}">{k}</span>'
     return mark_safe(badges)
+
+@register.filter
+def auditlog_action(value):
+    tags = {
+        0: mark_safe('<span class="badge text-bg-success">Create</span>'),
+        1: mark_safe('<span class="badge text-bg-primary">Update</span>'),
+        2: mark_safe('<span class="badge text-bg-orange">Delete</span>')
+    }
+    return tags.get(value, value)

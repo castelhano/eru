@@ -73,7 +73,7 @@ class jsSelectm{
         }
         if(this.config.groupCounter){ this._groupCounterUpdate() }
         
-        if(this.config.checkAll){ // adiciona controle de marcar todos para cada grupo
+        if(this.config.checkAll){ // adiciona controle de 'marcar todos' para cada grupo
             for(let group in this.model.groups){
                 this._checkAllUpdateStatus(this._containerGetState(this.model.groups[group].wrapper) , this.model.groups[group].checkAll);
                 if(this.config.disabled){ this.model.groups[group].checkAll.container.classList.add('disabled') }
@@ -98,7 +98,7 @@ class jsSelectm{
             if(opt.selected != el.selected){el.selected = opt.selected}
             options[el.value] = opt;
             if(el.selected && !selected.includes(el.value)){selected.push(el.value)}
-        });
+        });        
         return {options: options, selected: selected}
     }
     _normalizeOptions(){ 
@@ -137,7 +137,6 @@ class jsSelectm{
             group = undefined;
         }
         if(group && !this.groups[group]){return}
-        // if(group == undefined && state == undefined){return}
         
         if(group){
             this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
@@ -401,7 +400,7 @@ class jsSelectm{
         for(let option in this.options){ 
             if(this.options[option]?.['data-group']){
                 // cria entrada em this.groups caso nao exista, ocorre ao adicionar option{group: 'x'} ao invez de usar groups
-                if(!this.groups[this.options[option]?.['data-group']]){this.groups[this.options[option]['data-group']] = [this.options[option].value]}
+                if(!this.groups[this.options[option]?.['data-group']]){ this.groups[this.options[option]['data-group']] = [this.options[option].value]}
                 else if(!this.groups[this.options[option]['data-group']].includes(this.options[option].value)){this.groups[this.options[option]['data-group']].push(this.options[option].value)}
                 // valida entrada em this.model.groups
                 if(model.groups[this.options[option]['data-group']]){ // se grupo ja existe cria option e insere no grupo
@@ -416,6 +415,16 @@ class jsSelectm{
                 model.options[option] = this._addOption(this.options[option]);  // cria entrada em this.model para option
                 model.wrapper.appendChild(model.options[option].container); // adiciona option no wrapper
             }
+        }
+        if(this.config.sort){ // se sort = true, classifica nome dos grupos em ordem crescente (usando o innerText)
+            let itens = [...model.accordion.children].sort((a, b) => {
+                let textoA = a.innerText.toUpperCase(); // Usar toUpperCase para ordenação sem distinção de maiúsculas/minúsculas
+                let textoB = b.innerText.toUpperCase();
+                if (textoA < textoB) { return -1 }
+                if (textoA > textoB) { return 1 }
+                return 0;
+            });
+            itens.forEach(item => { model.accordion.appendChild(item); });
         }
         return model;
     }

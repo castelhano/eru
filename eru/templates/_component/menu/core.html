@@ -31,27 +31,27 @@
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
         href: '{% url 'settings' %}',
-        'data-i18n': 'common.menuSettings__bold:u',
+        'data-i18n': 'common.settings__bold:u',
         keybind: [
             'alt+u',
             ()=>{menuSettings.click()},
-            {'data-i18n':"common.menuSettings", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+            {'data-i18n':"sys.shortcuts.moduleSettings", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
         ]
     })
     {% endif %}
     
     {% if perms.auditlog.view_logentry %}
     const menuLogs = new canvasNavLink({
-        name: 'Logs',
+        name: 'L<b><u>o</u></b>gs',
         id: 'menu_menuLogs',
         class: 'text-warning',
         icon: 'bi bi-database-fill-lock',
         href: '{% url 'logs' %}',
-        'data-i18n': 'common.menuLogs__bold:u',
+        'data-i18n': 'common.log__plural__bold:o',
         keybind: [
-            'alt+u',
+            'alt+o',
             ()=>{menuLogs.click()},
-            {'data-i18n':"common.menuLogs", icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+            {'data-i18n':"sys.shortcuts.viewLogs", icon: 'bi bi-database-fill-lock text-warning', desc: 'Exibir logs'}
         ]
     })
     {% endif %}

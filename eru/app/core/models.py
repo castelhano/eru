@@ -53,6 +53,7 @@ class Empresa(models.Model):
         permissions = [
             ("dashboard_empresa", "Pode usar o dashboard empresa"),
         ]
+auditlog.register(Empresa)
 
 class Job(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
@@ -71,9 +72,8 @@ class Profile(models.Model):
     empresas = models.ManyToManyField(Empresa)
     force_password_change = models.BooleanField(default=True)
     config = models.TextField(blank=True)
-    def alertas(self):
-        alertas = Alerta.objects.filter(to_user=self.user,lido=False).order_by('data')
-        return alertas
+    def __str__(self):
+        return self.user.username
     def allow_empresa(self, id): # Verifica se empresa esta habilitada para usuario
         return self.empresas.filter(pk=id).exists()
     class Meta:
@@ -84,6 +84,7 @@ class Profile(models.Model):
         ]
         default_permissions = []
 auditlog.register(Profile)
+auditlog.register(User)
 
 class Settings(models.Model):
     quantidade_caracteres_senha = models.PositiveIntegerField(default=8)
