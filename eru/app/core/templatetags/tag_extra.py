@@ -3,6 +3,7 @@ from django import template
 from urllib.parse import urlparse, parse_qs
 from django.utils.safestring import mark_safe
 import datetime
+import json
 
 
 register = template.Library()
@@ -184,6 +185,18 @@ def auditlog_action(value):
     tags = {
         0: mark_safe('<span class="badge text-bg-success">Create</span>'),
         1: mark_safe('<span class="badge text-bg-primary">Update</span>'),
-        2: mark_safe('<span class="badge text-bg-orange">Delete</span>')
+        2: mark_safe('<span class="badge bg-orange">Delete</span>')
     }
     return tags.get(value, value)
+
+#Retorna json valido
+@register.filter
+def json_encode(value):
+    if isinstance(value, str):
+        try:
+            obj = json.loads(value)
+            return mark_safe(json.dumps(obj, ensure_ascii=False))
+        except json.JSONDecodeError:
+            return mark_safe(json.dumps(value, ensure_ascii=False))
+    else:
+        return mark_safe(json.dumps(value, ensure_ascii=False))

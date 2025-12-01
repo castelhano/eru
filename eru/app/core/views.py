@@ -485,13 +485,15 @@ def i18n(request):
             if os.path.exists(fpath): # Verifica se arquivo base existe
                 f = open(fpath, 'r', encoding='utf-8')
                 data = json.load(f)
+                data['i18nSelectedLanguage'] = lng
                 f.close()
-            elif '-' in lng: # Caso linguagem tenha especificacoa regional ex en-US
+            elif '-' in lng: # Caso linguagem tenha especificacao regional ex en-US
                 generic_lng = lng.split('-')[0]
                 fpath = f'{ROOT.TEMPLATES_DIR}{app}/i18n/{generic_lng}.json'
                 if os.path.exists(fpath): # Verifica se existe idioma generico (sem especificacao regional, se sim retorna ele)
                     f = open(fpath, 'r', encoding='utf-8')
                     data = json.load(f)
+                    data['i18nSelectedLanguage'] = generic_lng
                     f.close()
             else:
                 return HttpResponse(f'Not found correspondent for language "{lng}" in app "{app}"')

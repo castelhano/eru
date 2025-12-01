@@ -3,6 +3,8 @@
 {% load tag_extra %}
 {% block title %}Logs{% endblock %}
 
+{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+
 {% block content_fluid %}
 <div class="card mt-2">
   <div class="card-header">
@@ -25,18 +27,27 @@
               <div class="btn-group me-2" role="group">
                 <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
               </div>            
+              <div class="input-group me-2" role="group">
+                <span class="input-group-text fs-7" data-i18n="common.action">Ação</span>
+                <select name="action" id="id_action" class="form-select form-select-sm">
+                  <option value="" data-i18n="common.all" selected>Todas</option>
+                  <option value="0" data-i18n="common.create">Criar</option>
+                  <option value="1" data-i18n="common.update">Atualizar</option>
+                  <option value="2" data-i18n="common.delete">Excluir</option>
+                </select>
+              </div>            
               <div class="btn-group me-2" role="group">
                 <div class="input-group">
                   <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
-                  <span class="input-group-text fs-7">entradas</span>
+                  <span class="input-group-text fs-7" data-i18n="common.entry__plural__toLowerCase">entradas</span>
                 </div>
               </div>
               <div class="btn-group me-2" role="group">
-                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="Usuario">
+                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" data-i18n="[placeholder]common.user" placeholder="Usuario">
               </div>
               <div class="btn-group me-2" role="group">
-                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" data-i18n="[title]sys.shortcuts.cleanFilters" onclick="appKeyMap.run('alt+l')"><i class="bi bi-eraser-fill"></i></button>
-                <button type="submit" class="btn btn-sm btn-dark border">Filtrar</button>
+                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" data-i18n="[title]sys.shortcuts.cleanFilters" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
+                <button type="submit" id="submit" class="btn btn-sm btn-dark border">Filtrar</button>
               </div>
             </div>
           </div>
@@ -50,41 +61,75 @@
             </select>
           </div>
           <div class="col-lg border-start mt-3 mt-lg-0 pt-0">
-            <table id="table_logs" class="table table-sm border table-striped table-hover fs-7">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>App</th>
-                  <th>Model</th>
-                  <th>Ref</th>
-                  <th>IP</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for log in logs %}
-                <tr>
-                  <td>{{log.timestamp|date:'d/m/y H:i'}}</td>
-                  <td>{{log.actor|capfirst}}</td>
-                  <td>{{log.action|auditlog_action}}</td>
-                  <td>{{log.content_type.app_label|capfirst}}</td>
-                  <td>{{log.content_type.model|capfirst}}</td>
-                  <td>{{log.object_repr|truncatechars:10}}</td>
-                  <td>{{log.remote_addr|default:'<i>unknown</td>i>'}}</td>
-                  <td class="text-end"><a href="" class="btn btn-sm btn-dark" title="Detalhes"><i class="bi bi-shuffle"></i></a></td>
-                </tr>                  
-                {% endfor %}
-              </tbody>
-            </table>
+            <div class="table-responsive-lg">
+              <table id="table_logs" class="table table-sm border table-striped table-hover fs-7">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th class="d-none d-lg-table-cell">App</th>
+                    <th>Model</th>
+                    <th>Ref</th>
+                    <th class="d-none d-lg-table-cell">IP</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in logs %}
+                  <tr id="log-row-{{ log.id }}">
+                    <td>{{log.timestamp|date:'d/m/y H:i'}}</td>
+                    <td>{{log.actor|capfirst}}</td>
+                    <td>{{log.action|auditlog_action}}</td>
+                    <td class="d-none d-lg-table-cell">{{log.content_type.app_label|capfirst}}</td>
+                    <td>{{log.content_type.model|capfirst}}</td>
+                    <td>{{log.object_repr|truncatechars:15}}</td>
+                    <td class="d-none d-lg-table-cell">{{log.remote_addr|default:'<i>unknown</td>i>'}}</td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-dark" title="Detalhes" 
+                        onclick="showDetails(this)" 
+                        data-detail="log-detail-{{ log.id|safe }}"
+                        ><i class="bi bi-shuffle"></i></button>
+                      </td>
+                    </tr>
+                    <script type="application/json" id="log-detail-{{ log.id|safe }}">{{ log.changes|json_encode }}</script>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
           </div>
         </div>
       </form>
-
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="detail_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h6 data-i18n="index.logDetail">Detalhes do Log</h6>
+        <hr>
+        <p><span data-i18n="index.totalOf">Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span data-i18n="index.fieldsAffected">campos afetados</span>.</p>
+        <table class="table table-sm border table-striped">
+          <thead>
+            <tr>
+              <th data-i18n="common.field">Campo</th>
+              <th data-i18n="common.before">Antes</th>
+              <th data-i18n="common.after">Depois</th>
+            </tr>
+          </thead>
+          <tbody id="log_detail_tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer py-1">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" data-i18n="common.close">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock%}
 
 {% block add_script_src %}
@@ -106,6 +151,25 @@
     canFilter: true,
     filterCols: ['User','Action']
   })
+
+
+  const logs_tbody = document.getElementById('log_detail_tbody');
+  const logs_counter = document.getElementById('log_detail_counter');
+  const detailModal = new bootstrap.Modal('#detail_modal', {})
+  detailModal._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
+  
+  function showDetails(el){
+    let data = JSON.parse(document.getElementById(el.dataset.detail).textContent);
+    logs_tbody.innerHTML = '';
+    for(let key in data){
+      logs_tbody.innerHTML += `<tr><td class="bg-secondary-subtle">${key}</td><td class="text-body-secondary">${data[key][0] || '<i>null</i>'}</td><td>${data[key][1].replace('None', '<i>null</i>')}</td></tr>`;
+    }
+    logs_counter.innerHTML = String(Object.entries(data).length).padStart(2, '0');
+    appKeyMap.setContext('logs_modal');
+    detailModal.show();
+  }
+
+
   
   {% endblock %}
 </script>

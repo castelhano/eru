@@ -23,7 +23,6 @@ class UserFilter(django_filters.FilterSet):
         model = User
         fields = ['username', 'email', 'is_superuser', 'is_staff', 'is_active', 'last_login', 'last_login__lte', 'never_login']
 
-    # actor = ModelChoiceFilter(queryset=User.objects.all(), field_name='actor', label='User')
     # Filtro para o campo 'action' (CREATE=0, UPDATE=1, DELETE=2)
     # action = django_filters.ChoiceFilter(choices=LogEntry.Action.choices, label='Action')
     # Filtro para o campo 'content_type' (o modelo afetado)
@@ -31,6 +30,11 @@ class UserFilter(django_filters.FilterSet):
     # Filtro para o campo 'timestamp' (data/hora)
 class LogEntryFilter(django_filters.FilterSet):
     timestamp = DateFromToRangeFilter(widget=RangeWidget(attrs={'type': 'date'}), label='Interval')
+    actor = django_filters.CharFilter(
+        field_name='actor__username', 
+        # lookup_expr='icontains', # 'icontains' permite uma busca parcial e insensivel a maiusculas/minusculas
+        # label='Username'
+    )
     content_type = ModelMultipleChoiceFilter(
         queryset=ContentType.objects.all(),
         label='Content Type',

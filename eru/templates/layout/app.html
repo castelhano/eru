@@ -63,7 +63,7 @@
                         </div>
                         <div class="col-auto">
                             <select class="form-select-sm border-0 btn-phantom pe-1" name="language" id="id_language">
-                                <option value="pt-BR" selected>Português</option>
+                                <option value="pt" selected>Português</option>
                                 <option value="en">English</option>
                             </select>
                         </div>
@@ -164,9 +164,11 @@
         const i18n = new I18n({
             apps: ['core'],
             url: "{% url 'i18n' %}",
-            autoDetect: false, 
+            autoDetect: true, 
             switcher: document.getElementById('id_language'), 
         })
+
+        // i18n.translate('pt');
         const appKeyMap = new Keywatch({ // Inicia lib para captura de shortcuts
             i18nHandler: i18n,
             reserve: { // padrao de atalhos reservados, usado para alerta junto ao metodo avail
