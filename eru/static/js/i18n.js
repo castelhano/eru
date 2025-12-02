@@ -306,7 +306,12 @@ class I18n{
                 if(e.transform){result = result[e.transform]()}
                 if(e.prefix){result = e.prefix + result }
                 if(e.posfix){result = result + e.posfix}
-                if(e.var){ e.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
+                if(e.var){ 
+                    console.log(e);
+                    
+                    console.log(e.var);
+                    
+                    e.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
                 if(e.varb){ e.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})}
                 if(e.bold && result.toLowerCase().includes(String(e.bold).toLowerCase())){
                     e.bold = String(e.bold).toLowerCase();

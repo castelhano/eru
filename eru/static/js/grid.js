@@ -122,10 +122,11 @@ class jsGrid{
             el.setAttribute('data-jsGrid-clickable', true);
             el.classList.add('pointer');
         }
-        if(options?.desc){
+        if(options?.desc || options?.['data-i18n']){
             let desc = document.createElement('span');
+            if(options['data-i18n']){ desc.setAttribute('data-i18n', options['data-i18n']) }
             desc.classList = 'jsGrid-label user-select-none';
-            desc.innerHTML = options.desc;
+            desc.innerHTML = options?.desc || i18n.getEntry(options['data-i18n']) || '';
             el.appendChild(desc);
         }
         if(options?.menu){

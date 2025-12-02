@@ -47,11 +47,11 @@
                     data-keywatch="default" 
                     required 
                     autofocus>
-                    <label for="id_pesquisa"><span>Consulta</span>*</label>
+                    <label for="id_pesquisa"><span data-i18n="common.criterion">Critério</span>*</label>
                   </div>
                   <button type="submit" id="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
                 </div>
-                <small>*Consulta <code>matricula</code> ou <code>nome</code>.</small>
+                <small id="employeeSearchHelp" data-i18n="personal.employee.lookupCriteria__var:*"></small>
               </div>
               <div class="col-lg">
                 <span>Consultas Rápidas:</span>
@@ -181,7 +181,6 @@
 
 <script>
   {% block add_script %}
-  
   const form = new jsForm(document.getElementById('app_form'), {})
   
   const filterForm = new jsForm(document.getElementById('filterForm'), {
