@@ -29,6 +29,8 @@ class I18n{
         this.waiting = [];       // fila de processos (ajax) aguardando resposta do servidor 
         // dicionario das linguagens sem suporte
         this.unsupported = localStorage.getItem('i18nUnsupported') ? JSON.parse(localStorage.getItem('i18nUnsupported'))  : {};
+        this.callback_list = localStorage.getItem('i18nCallback_list') ? JSON.parse(localStorage.getItem('i18nCallback_list'))  : {};
+        // dicionario de comutador para idiomas (preenchido de maneira automatica) ex {'pt-BR': 'pt'}
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         this.modificatorAttrs = ['plural', 'she'];
         this.composedAttrs = ['bold','prefix', 'posfix', 'var', 'varb'];
@@ -38,10 +40,7 @@ class I18n{
             else{this[k] = defaultOptions[k]}
         }
         // this.language armazena o idioma ativo, inicia setado com defaultLanguage
-        console.log('localstorage: ', localStorage.getItem('i18nLanguage'));
         this.language = localStorage.getItem('i18nLanguage') || (this.autoDetect ? (navigator.language || navigator.userLanguage) : this.defaultLanguage);
-        console.log('this.language: ', this.language);
-        
         if(this.apps.length == 0 && options?.apps && Array.isArray(options.apps)){this.apps = options.apps}
         if(this.switcher){this.setSwitcher(this.switcher)}
     }
@@ -57,15 +56,17 @@ class I18n{
     }
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
+    _updateSwitch(){
+        if(this.switcher && Array.from(this.switcher.options).some(o => o.value === this.language)){this.switcher.value = this.language}
+    }
     translate(lng, restartCron=true){
         if(restartCron){ this.startAt = Date.now() } // se chamada fora no metodo init reinicia medicao do tempo do processo
         
         // se existe arquivo de traducao localmente traduz pelo arquivo
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking localy for '${lng}' translate schema`);
-        if(this.db.hasOwnProperty(this.language)){
+        if(this.db.hasOwnProperty(lng)){
             console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
-            // Ajusta a opcao seleciona no switcher (se existir)
-            if(this.switcher && Array.from(this.switcher.options).some(o => o.value === this.language)){this.switcher.value = this.language}
+            this._updateSwitch();
             this.refresh();
             return;
         }
@@ -77,12 +78,26 @@ class I18n{
             if(this.callbackLanguage && this.unsupported[el] && this.unsupported[el].includes(this.callbackLanguage)){callbackLng ++}
         })
         if(this.apps.length == unsupport){ // sem suporte para a linguagem em nenhum dos apps listados
+            if(this.callback_list.hasOwnProperty(lng)){ // verifica se existe idioma alternativo baixado
+                console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' commuted for '${this.callback_list[lng]}', start translating`);
+                this.language = this.callback_list[lng];
+                this._updateSwitch();
+                this.refresh();
+                return;
+            }
             if(!this.callbackLanguage || this.apps.length == callbackLng){ // sem suporte tbm para callbackLanguage, termina codigo
                 console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, login again to force new check`);
                 return;
             }
             else if(this.callbackLanguage != lng){
-            // callbackLanguage ainda nao consultado server ou existe suporte (pelo menos parcial) para callbackLanguage
+                if(this.db.hasOwnProperty(this.callbackLanguage)){
+                    console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, using callbackLanguage '${this.callbackLanguage}'`);
+                    this.language = this.callbackLanguage;
+                    this._updateSwitch();
+                    this.refresh();
+                    return;
+                }
+                // callbackLanguage ainda nao consultado, busca no server
                 console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, checking for callbackLanguage '${this.callbackLanguage}'`);
                 lng = this.callbackLanguage;
             }
@@ -91,29 +106,33 @@ class I18n{
                 return;
             }
         }
-        if(this.db.hasOwnProperty(lng)){ // Se idioma ja existir na base local, altera para idioma informado e chama metodo refresh
-            console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
-            this.language = lng;
-            localStorage.setItem('i18nLanguage', lng);
-            // Ajusta switcher se existir
-            if(this.switcher && Array.from(this.switcher.options).some(o => o.value === this.language)){this.switcher.value = this.language}
-            this.refresh();
-            return;
-        }
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking server for '${lng}' translate schema`);
         let promisses = []; // Armazena todas as promisses para chegar se todas retornaram, antes do refresh()
-        this.apps.forEach((el)=>{
+        this.apps.forEach((el, index)=>{
+            // se app ja consultado para lng e verificado que nao tem arquivo de traducao, retorna e busca por prossimo app
+            if(this.unsupported.hasOwnProperty(el) && this.unsupported[el].hasOwnProperty(lng)){return}
             let promise = this.__getLanguage(lng, el).then((resp)=>{
                 if(Object.keys(resp).length == 0){ // se nao retornado dados, adiciona em unsupported
-                    // verifica se langage ja esta inclusa no array, se nao faz o push
-                    if(this.unsupported.hasOwnProperty(el)){ !this.unsupported[el].includes(lng) && this.unsupported[el].push(lng) }
+                    if(this.unsupported.hasOwnProperty(el)){ this.unsupported[el].push(lng) }
                     else{ this.unsupported[el] = [lng] }
                     return;
                 }
-                if(resp.i18nSelectedLanguage != lng){ // servidor nao localizou arquivo para lng mais retornou idioma base ex(pt-BR retornou pt)
-                    lng
-
+                if(index == 0 && resp.i18nSelectedLanguage != lng){
+                // servidor nao localizou arquivo para lng mais retornou idioma base ex(pt-BR retornou pt)
+                // Lib espera que o primeiro app adicionado tenha suporte para todas as linguagens, se o app principal retornar
+                // idioma alternativo para determinado idioma (ex 'pt-BR' = 'pt') lib assume 'pt' para demais aplicacoes, indiferente
+                // se criado arquivo para pt-BR em aplicacao secundaria
+                    console.log(`${timeNow({showSeconds: true})} | i18n: No suport for "${lng}" commuted language for "${resp.i18nSelectedLanguage}"`);
+                    this.callback_list[lng] = resp.i18nSelectedLanguage;
+                    this.apps.forEach((e)=>{ // marca todas as aplicacoes como unsuported para lng informada
+                        if(this.unsupported[e]){this.unsupported[e].push(lng)}
+                        else{this.unsupported[e] = [lng]}
+                    })
+                    lng = resp.i18nSelectedLanguage;
                 }
+                // se app secundario nao tem suporte para lng mais retornou alternativo, entradas de traducao sao adicionadas 
+                // no idioma do app principal, ou seja app principal achou traducao para pt-BR (criado db)
+                // mais app secundario retornou pt, dados sao inseridos no idioma pt-BR e this.language se mantem pt-BR
                 this.__updateDb(lng, resp); // Insere dicionario no db
             })
             promisses.push(promise)
@@ -121,41 +140,34 @@ class I18n{
         Promise.all(promisses).then((r)=>{
             if(!this.db[lng]){
                 console.log(`${timeNow({showSeconds: true})} | i18n: [WARNING] No translation files found for "${lng}"`);
-                if(this.callbackLanguage){
+                if(this.callbackLanguage && this.callbackLanguage != lng){
                     console.log(`${timeNow({showSeconds: true})} | i18n: Calling for callback language "${this.callbackLanguage}"`);
                     this.translate(this.callbackLanguage)
+                    return;
                 }
-                // Se informado switcher, seleciona novamente a linguagem ativa
-                if(this.switcher && Array.from(this.switcher.options).some(o => o.value === this.language)){ this.switcher.value = this.language }
-                localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));  // Salva language no localstorage
+                // Se informado switcher, seleciona novamente a linguagem ativa (caso alterado via switch)
+                this._updateSwitch();
+                localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));      // Salva language no localstorage
+                localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
                 return;
             }
             this.language = lng;                                    // Altera idioma carregado
             localStorage.setItem('i18nLanguage', lng);              // Salva language no localstorage
             localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));  // Salva language no localstorage
-            if(this.switcher){this.switcher.value = this.language}  // Ajusta switcher se existir
+            localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
+            this._updateSwitch();                                   // atualiza switch
             this.refresh();                                         // Chama metodo para plotar alteracoes na pagina
         })
     }
-    __getLanguage(lng, app){
-        let instance=this;
-        return new Promise(function(resolve, reject) {
-            let xhr = new XMLHttpRequest();
-            xhr.onload = function() {
-                try{
-                    let d = JSON.parse(this.responseText);
-                    if(typeof d != 'object'){d = JSON.parse(d)}
-                    resolve(d);
-                }
-                catch(e){
-                    console.log(`${timeNow({showSeconds: true})} | i18n: [WARNING] ${this.responseText}`);
-                    resolve({})
-                }
-            };
-            xhr.onerror = reject;
-            xhr.open(instance?.method || 'GET', `${instance.url}?app=${app}&lng=${lng}`);
-            xhr.send();
-        });
+    async __getLanguage(lng, app) {
+        let url = `${this.url}?app=${app}&lng=${lng}`;
+        try {
+            let response = await fetch(url);
+            if (!response.ok) { return {} }
+            let data = await response.json();
+            return data;
+            
+        } catch (error) { return {} }
     }
     __updateDb(lng, schemas){ // Recebe json com entradas de idioma e adiciona em this.db
         if(!this.db.hasOwnProperty(lng)){this.db[lng] = {}} // Inicia entrada para idioma caso ainda nao exista
@@ -255,6 +267,7 @@ class I18n{
         localStorage.removeItem('i18nDB');
         localStorage.removeItem('i18nApps');
         localStorage.removeItem('i18nUnsupported');
+        localStorage.removeItem('i18nCallback_list');
         if(reload){ // recarrega pagina com idioma default
             window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.replace('update','id').split("?")[0].split('#')[0];
         }

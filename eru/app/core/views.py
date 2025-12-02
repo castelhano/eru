@@ -12,7 +12,7 @@ from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.conf import settings as ROOT
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 
 @login_required
@@ -496,11 +496,11 @@ def i18n(request):
                     data['i18nSelectedLanguage'] = generic_lng
                     f.close()
             else:
-                return HttpResponse(f'Not found correspondent for language "{lng}" in app "{app}"')
+                return JsonResponse({})
         except Exception as e:
-            return HttpResponse('Server Error....')
+            return JsonResponse({}, status=500)
         return HttpResponse(json.dumps(data))
-    return HttpResponse('Access denied')
+    return JsonResponse({}, status=401)
 
 @login_required
 def get_empresas(request):
