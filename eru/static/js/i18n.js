@@ -60,6 +60,8 @@ class I18n{
         if(this.switcher && Array.from(this.switcher.options).some(o => o.value === this.language)){this.switcher.value = this.language}
     }
     translate(lng, restartCron=true){
+        console.log('translate');
+        
         if(restartCron){ this.startAt = Date.now() } // se chamada fora no metodo init reinicia medicao do tempo do processo
         
         // se existe arquivo de traducao localmente traduz pelo arquivo
@@ -133,7 +135,9 @@ class I18n{
                 // se app secundario nao tem suporte para lng mais retornou alternativo, entradas de traducao sao adicionadas 
                 // no idioma do app principal, ou seja app principal achou traducao para pt-BR (criado db)
                 // mais app secundario retornou pt, dados sao inseridos no idioma pt-BR e this.language se mantem pt-BR
-                this.__updateDb(lng, resp); // Insere dicionario no db
+                delete resp.i18nSelectedLanguage; // remove entrada i18nSelectedLanguage antes de salvar db
+                this.__updateDb(lng, resp, el); // Insere dicionario no db
+                
             })
             promisses.push(promise)
         })        
@@ -169,18 +173,20 @@ class I18n{
             
         } catch (error) { return {} }
     }
-    __updateDb(lng, schemas){ // Recebe json com entradas de idioma e adiciona em this.db
+    __updateDb(lng, schemas, app){ // Recebe json com entradas de idioma e adiciona em this.db
         if(!this.db.hasOwnProperty(lng)){this.db[lng] = {}} // Inicia entrada para idioma caso ainda nao exista
         let target = this.db[lng];
         for (const key in schemas) {
             if (schemas.hasOwnProperty(key)) {
                 if (typeof schemas[key] === 'object' && schemas[key] !== null && typeof target[key] === 'object' && target[key] !== null && !Array.isArray(schemas[key]) && !Array.isArray(target[key])){
                     // If both are objects (not arrays), recurse
-                    target[key] = this.__updateDb(target[key], schemas[key]);
+                    target[key] = this.__updateDb(target[key], schemas[key], app);
                 }
                 else {target[key] = schemas[key]} // Otherwise, directly assign or overwrite
             }
         }
+        if(this.db[lng]?.i18nActiveApps && !this.db[lng].i18nActiveApps.includes(app)){this.db[lng].i18nActiveApps.push(app)}
+        else if(!this.db[lng]?.i18nActiveApps){this.db[lng].i18nActiveApps = [app]}
         localStorage.setItem('i18nApps', this.apps)
         localStorage.setItem('i18nDB', JSON.stringify(this.db))
         return true;
@@ -213,12 +219,12 @@ class I18n{
         return result;
     }
     addApp(app){ // Adiciona app no array this.apps, busca schema para idioma ativo e chama metodo refresh
-        if(this.apps.includes(app)){return}
+        if(this.db?.[this.language]?.i18nActiveApps.includes(app)){return}
         this.waiting.push(`addApp_${app}`)
         console.log(`${timeNow({showSeconds: true})} | i18n: Adding app "${app}"`);
-        this.apps.push(app);
+        if(!this.apps[app]){ this.apps.push(app) }
         this.__getLanguage(this.language, app).then((resp)=>{
-            this.__updateDb(this.language, resp);
+            this.__updateDb(this.language, resp, app);
             this.waiting.splice(this.waiting.indexOf(`addApp_${app}`, 1))
             if(this.waiting.length == 0){this.init()}
         })

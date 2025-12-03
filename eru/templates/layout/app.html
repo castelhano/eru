@@ -194,9 +194,10 @@
         appKeyMap.bind('s+backspace', ()=>{
             let apps = i18n.apps;
             i18n.clearAll(false);
-            i18n.apps = apps;
+            // i18n.apps = apps;
+            apps.forEach((app)=>{i18n.addApp(app)})
             i18n.translate('en');
-            i18n.switcher.value = 'en';
+            // i18n.switcher.value = 'en';
             appNotify('warning', 'i18n storage clear');
         }, {desc:'<i class="bi bi-shield-lock-fill me-2 text-orange"></i>Clear localStorage for i18n then translate for "en"'})
         {% endif %}

@@ -162,7 +162,13 @@
     let data = JSON.parse(document.getElementById(el.dataset.detail).textContent);
     logs_tbody.innerHTML = '';
     for(let key in data){
-      logs_tbody.innerHTML += `<tr><td class="bg-secondary-subtle">${key}</td><td class="text-body-secondary">${data[key][0] || '<i>null</i>'}</td><td>${data[key][1].replace('None', '<i>null</i>')}</td></tr>`;
+      if(Array.isArray(data[key])){  
+        logs_tbody.innerHTML += `<tr><td class="bg-secondary-subtle">${key}</td><td class="text-body-secondary">${data[key][0] || '<i>null</i>'}</td><td>${data[key][1].replace('None', '<i>null</i>')}</td></tr>`;
+      }
+      else if(data[key]?.type == 'm2m'){
+        logs_tbody.innerHTML += `<tr><td class="bg-secondary-subtle">${key} M2M</td><td colspan="2"><b class="text-purple me-2">${data[key]['operation']}:</b> ${data[key]['objects'].join(';')}</td></tr>`;
+        
+      }
     }
     logs_counter.innerHTML = String(Object.entries(data).length).padStart(2, '0');
     appKeyMap.setContext('logs_modal');

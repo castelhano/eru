@@ -83,7 +83,6 @@ class Profile(models.Model):
             ("docs", "Acessar documentacao do sistema"),
         ]
         default_permissions = []
-auditlog.register(Profile)
 auditlog.register(User, exclude_fields=['last_login'])
 
 class Settings(models.Model):
