@@ -58,6 +58,7 @@ class Keywatch{
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
             composedTrigger: ';', // caractere que confirma atalhos 'composed' (atalhos com modificadores nao convencionais)
+            composedListener: ()=>{}, // funcao eh acionada sempre que um atalho composed eh iniciado ou finalizado
             reserve: {},    // lista de atalhos reservados, sera usada apenas para notificacao pelo metodo avail
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
@@ -127,6 +128,7 @@ class Keywatch{
                     : (this.composedMatch[1].includes(ev.type) 
                     ? this.composedMatch 
                     : (this.composedMatch[1].push(ev.type), this.composedMatch));
+                    this.composedListener(true, scope);
                     count += 1;
                     return;
                 }

@@ -31,6 +31,7 @@
         "end": "Fim#Fins",
         "email": "Email#Emails",
         "employee": "Funcionário#Funcionários",
+        "employeeId": "Matricula#Matriculas",
         "entry": "Registro#Registros",
         "error": "Erro#Erros",
         "expired": "Expirado#Expirados",

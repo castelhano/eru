@@ -51,7 +51,7 @@
                   </div>
                   <button type="submit" id="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
                 </div>
-                <small id="employeeSearchHelp" data-i18n="personal.employee.lookupCriteria__var:*"></small>
+                <small id="employeeSearchHelp" data-i18n="personal.employee.lookupCriteria__var:$funcSearchCriteria"></small>
               </div>
               <div class="col-lg">
                 <span>Consultas Rápidas:</span>
@@ -181,6 +181,8 @@
 
 <script>
   {% block add_script %}
+
+  i18n.addVar('funcSearchCriteria', [i18n.getEntry('common.name'), i18n.getEntry('common.employeeId')])
   const form = new jsForm(document.getElementById('app_form'), {})
   
   const filterForm = new jsForm(document.getElementById('filterForm'), {

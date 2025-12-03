@@ -1,7 +1,7 @@
 <div class="row g-1" id="funcionario_container"{% if hide %} style="display:none"{% endif %}>
   <div class="form-floating mb-1 col" style="max-width: 130px;">
     <input type="text" class="form-control" name="matricula" maxlength="6" id="id_matricula_funcionario" value="{{matricula}}"  data-form="novalidate" placeholder=" " onfocusout="getFuncionário();{{onfocusout}}"{% if autofocus %} autofocus{% endif %}{% if required %} REQUIRED{% endif %}>
-    <label for="id_matricula_funcionario">Matricula</label>
+    <label for="id_matricula_funcionario" data-i18n="common.employeeId">Matricula</label>
   </div>
   <div class="form-floating mb-1 col">
     <input type="text" class="form-control" name="nome_funcionario" id="id_nome_funcionario" value="{{nome}}" disabled>

@@ -26,15 +26,20 @@ class I18n{
             callbackLanguage: null,                     // Idioma a ser buscado caso nao localizado arquivo de traducao
             switcher: null,                             // Elemento select para troca de idioma 
         }
-        this.waiting = [];       // fila de processos (ajax) aguardando resposta do servidor 
+        this.waiting = [];      // fila de processos (ajax) aguardando resposta do servidor 
+        this.unsupported = [];  // lista dos idiomas nao suportados
+        this.variables = {}     // variaveis carregadas, usadas para composicao de entradas com __var: ou __varb: 
         // dicionario de comutador para idiomas (preenchido de maneira automatica) ex {'pt-BR': 'pt'}
         this.callback_list = localStorage.getItem('i18nCallback_list') ? JSON.parse(localStorage.getItem('i18nCallback_list'))  : {};
         // funcoes auxiliares de traducao, uso (common.all__toUpperCase)
         this.functionAttrs = ['toUpperCase', 'toLowerCase', 'captalize'];
         // funcoes de modificador uso (common.all__plural)
         this.modificatorAttrs = ['plural', 'she'];
-        // funcoes de composicao, espera variavel uso (common.all__bold:c)
+        // funcoes de composicao, espera variavel uso (common.all__bold:c), ou (common.custo__prefix:R$ )
         // no caso de var e varb variavel deve ser uma lista, ou referencia ao dicionario de variaveis
+        // uso (1) el.innerHTML = i18n.getEntry(`foo.bar__var:${[(1+2), 'teste']}`)
+        // uso (2) <span data-i18n="foo.bar__var:Foo,Bar">
+        // uso (3) <span data-i18n="foo.bar__var:$refs">, e no javascript i18n.addVar('refs', [1, 'teste'])
         this.composedAttrs = ['bold','prefix', 'posfix', 'var', 'varb'];
         
         for(let k in defaultOptions){ // carrega configuracoes para classe
@@ -59,9 +64,13 @@ class I18n{
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
     _updateSwitch(){ if(this.switcher){ this.switcher.value = this.language} }
+
     translate(lng, restartCron=true){
         if(restartCron){ this.startAt = Date.now() } // se chamada fora no metodo init reinicia medicao do tempo do processo
-        
+        if(this.unsupported.includes(lng)){
+            console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, login again to force new check`);
+            return;
+        }
         // se existe arquivo de traducao localmente traduz pelo arquivo
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking localy for '${lng}' translate schema`);
         let pendingApps = [...this.apps];
@@ -74,92 +83,45 @@ class I18n{
                 return;
             }
         }
-        // verifica se linguagem esta marcada como nao suportada, ao requisitar server se nao retorna dicionario para linguagem adiciona 
-        // automaticamente idioma em this.unsupported
-        // let unsupport = 0, callbackLng = 0;
-        // pendingApps.forEach((el)=>{
-        //     if(this.unsupported[el] && this.unsupported[el].includes(lng)){unsupport ++}
-        //     if(this.callbackLanguage && this.unsupported[el] && this.unsupported[el].includes(this.callbackLanguage)){callbackLng ++}
-        // })
-        // if(this.apps.length == unsupport){ // sem suporte para a linguagem em nenhum dos apps listados
-        //     if(this.callback_list.hasOwnProperty(lng)){ // verifica se existe idioma alternativo baixado
-        //         console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' commuted for '${this.callback_list[lng]}', start translating`);
-        //         this.language = this.callback_list[lng];
-        //         this._updateSwitch();
-        //         this.refresh();
-        //         return;
-        //     }
-        //     if(!this.callbackLanguage || this.apps.length == callbackLng){ // sem suporte tbm para callbackLanguage, termina codigo
-        //         console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, login again to force new check`);
-        //         return;
-        //     }
-        //     else if(this.callbackLanguage != lng){
-        //         if(this.db.hasOwnProperty(this.callbackLanguage)){
-        //             console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, using callbackLanguage '${this.callbackLanguage}'`);
-        //             this.language = this.callbackLanguage;
-        //             this._updateSwitch();
-        //             this.refresh();
-        //             return;
-        //         }
-        //         // callbackLanguage ainda nao consultado, busca no server
-        //         console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' not supported in last check, checking for callbackLanguage '${this.callbackLanguage}'`);
-        //         lng = this.callbackLanguage;
-        //     }
-        //     else{
-        //         console.log(`${timeNow({showSeconds: true})} | i18n: Language '${lng}' (is callbackLanguage) not supported in last check, login again to force new check`);
-        //         return;
-        //     }
-        // }
         console.log(`${timeNow({showSeconds: true})} | i18n: Checking server for '${lng}' translate in apps [${pendingApps.join(',')}]`);
         let promisses = []; // Armazena todas as promisses para chegar se todas retornaram, antes do refresh()
-        pendingApps.forEach((el, index)=>{
-            // se app ja consultado para lng e verificado que nao tem arquivo de traducao, retorna e busca por prossimo app
-            // if(this.unsupported.hasOwnProperty(el) && this.unsupported[el].hasOwnProperty(lng)){return}
+        pendingApps.forEach((el)=>{
             let promise = this.__getLanguage(lng, el).then((resp)=>{
+                // carrega o app no dicionario do idioma
                 if(this.db?.[lng]){this.db[lng].i18nActiveApps.push(el)}
-                if(Object.keys(resp).length == 0){ // se nao retornado dados, termina bloco
-                    // if(this.unsupported.hasOwnProperty(el)){ this.unsupported[el].push(lng) }
-                    // else{ this.unsupported[el] = [lng] }
-                    return;
-                }
-                if(index == 0 && resp.i18nSelectedLanguage != lng){
-                // servidor nao localizou arquivo para lng mais retornou idioma base ex(pt-BR retornou pt)
-                // Lib espera que o primeiro app adicionado tenha suporte para todas as linguagens, se o app principal retornar
-                // idioma alternativo para determinado idioma (ex 'pt-BR' = 'pt') lib assume 'pt' para demais aplicacoes, indiferente
-                // se criado arquivo para pt-BR em aplicacao secundaria
+                if(Object.keys(resp).length == 0){ return } // se nao retornado dados, termina bloco
+                // let respLngIsGeneric = resp.i18nSelectedLanguage == this.language.split('-')[0];
+                if(resp.i18nSelectedLanguage != lng){
+                // servidor nao localizou arquivo para lng mais retornou idioma alternativo ex (pt-BR retornou pt)
+                // define idioma alternativo como ativo a adiciona commutador, sempre que lng for solicitado traducao direciona
+                // de maneira automatica para idioma alternativo 
                     console.log(`${timeNow({showSeconds: true})} | i18n: No suport for "${lng}" commuted language for "${resp.i18nSelectedLanguage}"`);
                     this.callback_list[lng] = resp.i18nSelectedLanguage;
-                    // this.apps.forEach((e)=>{ // marca todas as aplicacoes como unsuported para lng informada
-                    //     if(this.unsupported[e]){this.unsupported[e].push(lng)}
-                    //     else{this.unsupported[e] = [lng]}
-                    // })
                     lng = resp.i18nSelectedLanguage;
                 }
-                // se app secundario nao tem suporte para lng mais retornou alternativo, entradas de traducao sao adicionadas 
-                // no idioma do app principal, ou seja app principal achou traducao para pt-BR (criado db)
-                // mais app secundario retornou pt, dados sao inseridos no idioma pt-BR e this.language se mantem pt-BR
                 delete resp.i18nSelectedLanguage; // remove entrada i18nSelectedLanguage antes de salvar db
                 this.__updateDb(lng, resp, el); // Insere dicionario no db
                 
             })
             promisses.push(promise)
-        })        
+        })
         Promise.all(promisses).then((r)=>{
             if(!this.db[lng]){
                 console.log(`${timeNow({showSeconds: true})} | i18n: [WARNING] No translation files found for "${lng}"`);
+                this.unsupported.push(lng); // adiciona lng na lista de idiomas nao suportados
+                localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));      // Salva language no localstorage
+                localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
+                this._updateSwitch();
                 if(this.callbackLanguage && this.callbackLanguage != lng){
                     console.log(`${timeNow({showSeconds: true})} | i18n: Calling for callback language "${this.callbackLanguage}"`);
                     this.translate(this.callbackLanguage)
                     return;
                 }
-                this._updateSwitch();
-                // localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));      // Salva language no localstorage
-                localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
                 return;
             }
             this.language = lng;                                    // Altera idioma carregado
             localStorage.setItem('i18nLanguage', lng);              // Salva language no localstorage
-            // localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));  // Salva language no localstorage
+            localStorage.setItem('i18nUnsupported', JSON.stringify(this.unsupported));  // Salva language no localstorage
             localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
             this._updateSwitch();                                   // atualiza switch
             this.refresh();                                         // Chama metodo para plotar alteracoes na pagina
@@ -212,8 +174,9 @@ class I18n{
                 if(this.modificatorAttrs.includes(attr)){entry[attr] = true}
                 if(this.composedAttrs.includes(attr.split(':')[0])){
                     // trata ex. __posfix::
-                    if(attr.split(':').length == 3 && attr.split(':')[2] == ''){entry[attr.split(':')[0]] = ':'}
-                    else{ entry[attr.split(':')[0]] = attr.split(':')[1] }
+                    let attr_split = attr.split(':');
+                    if(attr_split.length == 3 && attr_split[2] == ''){entry[attr_split[0]] = ':'}
+                    else{ entry[attr_split[0]] = attr_split[1] }
                 }
             })
             result.push(entry)
@@ -225,36 +188,65 @@ class I18n{
         console.log(`${timeNow({showSeconds: true})} | i18n: Adding app "${app}"`);
         this.apps.push(app);
     }
+    addVar(name, list){
+        if(!name || !list || typeof name != 'string' || !Array.isArray(list)){ 
+            console.log(`i18n: addApp expect a string at first position and array at second position`);
+            return;
+        }
+        this.variables[name] = list;
+    }
     setSwitcher(el){ // Define html element para alternar manualmente idioma
         // Apenas elementos select (de selecao unica) sao aceitos
         if(el.type != 'select-one'){console.log(`i18n: [ERROR] Switcher must be a select element (multiple not accepted)`);return;}
         el.addEventListener('change', ()=>{this.translate(el.value)})
     }
+    _processEntry(entry){ // recebe dict de detachEntry, inclui resultado ajustado no dict antes de retornar
+        let result;
+        try{ result = entry.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]) }
+        catch(err){return Object.assign({result: false}, entry)}
+        if(!result){return Object.assign({result: false}, entry)}
+        
+        if(entry.she && result.split('#').length > 2){ // she solicita inflexao de genero feminino
+            if(entry.plural && result.split('#').length > 3){result = result.split('#')[3]}
+            else{ result = result.split('#')[2] }
+        }
+        else if(entry.plural && result.includes('#')){result = result.split('#')[1]}
+        else{result = result.split('#')[0]}
+        if(entry.transform){result = result[entry.transform]()}
+        if(entry.prefix){ result = entry.prefix + result }
+        if(entry.posfix){ result = result + entry.posfix }
+        if(entry.var){ 
+            if(entry.var[0] == '$' && this.variables[entry.var.substring(1)]){
+                this.variables[entry.var.substring(1)].forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})
+            }
+            else{
+                entry.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})
+            }
+        }
+        if(entry.varb){
+            if(entry.varb[0] == '$' && this.variables[entry.varb.substring(1)]){
+                this.variables[entry.varb.substring(1)].forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})
+            }
+            else{
+                entry.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})
+            }
+        }
+        if(entry.bold && entry.entry.toLowerCase().includes(String(entry.bold).toLowerCase())){
+            entry.bold = String(entry.bold).toLowerCase(); // converte em string
+            let indexStart = result.toLowerCase().indexOf(entry.bold);
+            let indexEnd = indexStart + entry.bold.length;
+            let substring = result.slice(indexStart, indexEnd);
+            if(indexStart > 0){ result = result.slice(0, indexStart) + '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
+            else{ result = '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
+        }
+        else if(entry.bold){ result += ` <sup><b>${entry.bold.toUpperCase()}</b></sup>` }
+        return Object.assign({}, entry, {result: result});
+    }
     getEntry(original_entry){
         try{
             let entry = this.__detachEntry(original_entry)[0]; // getEntry analisa somente a primeira entry (caso informado mais de uma)
-            let result = entry.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]);
-            if(entry.she && result.split('#').length > 2){ // she solicita inflexao de genero feminino
-                if(entry.plural && result.split('#').length > 3){result = result.split('#')[3]}
-                else{ result = result.split('#')[2] }
-            }
-            else if(entry.plural && result.includes('#')){result = result.split('#')[1]}
-            else{result = result.split('#')[0]}
-            if(entry.transform){result = result[entry.transform]()}
-            if(entry.prefix){result = entry.prefix + result }
-            if(entry.posfix){result = result + entry.posfix}
-            if(entry.var){ entry.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
-            if(entry.varb){ entry.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})}
-            if(entry.bold && entry.entry.toLowerCase().includes(String(entry.bold).toLowerCase())){
-                entry.bold = String(entry.bold).toLowerCase(); // converte em string
-                let indexStart = result.toLowerCase().indexOf(entry.bold);
-                let indexEnd = indexStart + entry.bold.length;
-                let substring = result.slice(indexStart, indexEnd);
-                if(indexStart > 0){ result = result.slice(0, indexStart) + '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
-                else{ result = '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
-            }
-            else if(entry.bold){ result += ` <sup><b>${entry.bold.toUpperCase()}</b></sup>` }
-            return result;
+            let resp = this._processEntry(entry);
+            return resp.result || null;
         }
         catch(e){return null}
     }
@@ -284,48 +276,16 @@ class I18n{
         let els = document.querySelectorAll('[data-i18n]');
         // remove elemento sem valor em data-i18n
         els = Array.from(els).filter(el => { return el.getAttribute('data-i18n') !== null && el.getAttribute('data-i18n') !== '' });
-        let errorCount = 0;
         els.forEach((el)=>{
             let entries = this.__detachEntry(el.dataset.i18n);
             entries.forEach((e)=>{
-                let result;
-                try{
-                    result = e.entry.split('.').reduce((previous, current) => previous[current], this.db[this.language]);
-                    if(!result){throw ''}
-                }
-                catch(err){
-                    errorCount++;
-                    let key = this.__detachEntry(el.getAttribute('data-i18n'))
-                    console.log(`i18n: [MISSING KEY] ${key?.entry || el.getAttribute('data-i18n')} for ${this.language}`);
+                let resp = this._processEntry(e);
+                if(!resp.result){
+                    console.log(`i18n: [MISSING KEY] ${resp.entry} for ${this.language}`);
                     return;
                 }
-                if(e.she && result.split('#').length > 2){ // she solicita inflexao de genero feminino
-                    if(e.plural && result.split('#').length > 3){result = result.split('#')[3]}
-                    else{ result = result.split('#')[2] }
-                }
-                else if(e.plural && result.includes('#')){result = result.split('#')[1]}
-                else{result = result.split('#')[0]}
-                if(e.transform){result = result[e.transform]()}
-                if(e.prefix){result = e.prefix + result }
-                if(e.posfix){result = result + e.posfix}
-                if(e.var){ 
-                    console.log(e);
-                    console.log(e.var);
-                    
-                    e.var.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, el)})}
-                if(e.varb){ e.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})}
-                if(e.bold && result.toLowerCase().includes(String(e.bold).toLowerCase())){
-                    e.bold = String(e.bold).toLowerCase();
-                    let indexStart = result.toLowerCase().indexOf(e.bold);
-                    let indexEnd = indexStart + e.bold.length;
-                    let substring = result.slice(indexStart, indexEnd);
-                    if(indexStart > 0){ result = result.slice(0, indexStart) + '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
-                    else{ result = '<b><u>' + substring + '</u></b>' + result.slice(indexEnd, result.length) }
-                }
-                else if(e.bold){ result += ` <sup><b>${e.bold.toUpperCase()}</b></sup>` }
-                //--
-                if(e.target){ el[e.target] = result }
-                else{ el.innerHTML = result }
+                if(e.target){ el[e.target] = resp.result }
+                else{ el.innerHTML = resp.result }
             })
         })
         this.endAt = Date.now();

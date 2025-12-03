@@ -27,6 +27,7 @@
             "traffic": "Tráfego"
         },
         "employee": {
+            "lookupCriteria": "Pesquisa por $1 ou $2",
             "form": {
                 "abandonment": "Abandono",
                 "birthDate": "Data de Nascimento",

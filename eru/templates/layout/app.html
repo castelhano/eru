@@ -171,6 +171,9 @@
         // i18n.translate('pt');
         const appKeyMap = new Keywatch({ // Inicia lib para captura de shortcuts
             i18nHandler: i18n,
+            composedListener: (status, scope)=>{
+                appNotify('success', `${status ? 'ON' : 'FALSE'}`)
+            },
             reserve: { // padrao de atalhos reservados, usado para alerta junto ao metodo avail
                 'alt+d': '{*} Download',
                 'alt+g': '{*} Save record',
