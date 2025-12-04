@@ -138,7 +138,7 @@ class Keywatch{
                 this.composedMatch = (this.composedMatch.length > 0 && this.composedMatch[1].includes(ev.type)) 
                 ? (this.composedMatch[1].length === 1 ? [] : [this.composedMatch[0], this.composedMatch[1].filter(type => type !== ev.type)]) 
                 : this.composedMatch;
-                
+                if(this.composedMatch.length == 0){this.composedListener(false, scope);}
             }
         })        
         if(prev){ev.preventDefault()}
@@ -153,7 +153,7 @@ class Keywatch{
             if(ev.key && !this.pressed.includes(key)){this.pressed.push(key)}
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();
             let find = this._eventsMatch(scope, ev); // Busca (e executa) match de composicao
-            if(!find && ev.key != this.composedTrigger && this.composedMatch){ this.composedMatch = [] }
+            if(!find && ev.key != this.composedTrigger && this.composedMatch.length > 0){ this.composedMatch = []; this.composedListener(false, scope);}
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
                 // caso nao localizado atalho, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao

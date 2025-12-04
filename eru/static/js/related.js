@@ -30,7 +30,7 @@ class RelatedAddon {
                 }
             },
             styles: {
-                dialog: 'min-width:500px;max-width:800px;min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
+                dialog: 'min-height:300px;position:fixed;top:30px;left:50%; padding-bottom: 60px;transform: translate(-50%, 0);',
                 spinner: 'position: absolute;top: 10px; right: 45px;',
                 addOn: '',
                 submit: '',
@@ -52,7 +52,7 @@ class RelatedAddon {
                 inputText: '',
             },
             classlist: {
-                dialog: 'border-2 border-secondary bg-dark-subtle',
+                dialog: 'related border-2 border-secondary bg-dark-subtle',
                 spinner: 'spinner-grow text-success',
                 title: 'text-body-secondary mb-2 pb-2 border-bottom',
                 footer: 'border-top p-2 text-end',

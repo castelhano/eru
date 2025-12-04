@@ -172,6 +172,8 @@ pre, code{user-select: all;}
 .slideIn{animation-fill-mode: both; animation-name: slideIn; animation-duration: 0.5s;}
 @keyframes slideIn{from{transform:translate3d(0,100%,0);visibility:visible;}to{transform:translate3d(0,0,0);}}
 
+.pulse { animation-fill-mode: both; animation-name: pulse; animation-timing-function: ease-in-out; animation-duration: 0.5s; animation-iteration-count: 3; }
+@keyframes pulse {from{transform: scale3d(1, 1, 1);} 50%{transform: scale3d(1.1, 1.1, 1.1);}to{transform: scale3d(1, 1, 1);}}
 
 .autocomplete-results{
     display: none;
@@ -195,3 +197,19 @@ pre, code{user-select: all;}
 .autocomplete-results li.highlighted, .autocomplete-results li:hover{ background-color: #9394F1; color: #0D0B1E; }
 
 dialog::backdrop { background-color: rgba(0, 0, 0, 0.5) }
+
+dialog.related  {
+  width: 100%; /* Garante que o dialog use toda a largura disponível */
+  box-sizing: border-box; /* Inclui padding/border no cálculo da largura total */
+  margin: 0; /* Remove margens padrão que poderiam impedir 100% de largura */
+  padding: 1rem; /* Adiciona algum padding interno */
+}
+
+@media (min-width: 768px) {
+  dialog.related {
+    min-width: 500px; /* Define a largura mínima para 500px */
+    width: auto; /* Permite que o width se ajuste ao conteúdo, mas respeitando o min-width */
+    max-width: 100%; /* Garante que não ultrapasse a tela em viewports muito grandes, se necessário */
+    margin: auto; /* Centraliza o dialog na tela em viewports maiores */
+  }
+}

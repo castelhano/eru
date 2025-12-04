@@ -148,6 +148,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Keywatch composed shortcut UI alert -->
+    <div id="keywatchComposedUIAlert" class="badge bg-purple position-fixed p-2 w-4 h-4 pulse" style="z-index: 1031; top:10px; right: 70px; display: none;"></div>
     
     
     {% block outer_content %}{% endblock %}
@@ -168,11 +171,12 @@
             switcher: document.getElementById('id_language'), 
         })
 
-        // i18n.translate('pt');
+        const keywatchComposedUIAlert = document.getElementById('keywatchComposedUIAlert');
         const appKeyMap = new Keywatch({ // Inicia lib para captura de shortcuts
             i18nHandler: i18n,
             composedListener: (status, scope)=>{
-                appNotify('success', `${status ? 'ON' : 'FALSE'}`)
+                if(status){ keywatchComposedUIAlert.style.display = 'block' }
+                else{ keywatchComposedUIAlert.style.display = 'none' }
             },
             reserve: { // padrao de atalhos reservados, usado para alerta junto ao metodo avail
                 'alt+d': '{*} Download',
@@ -192,7 +196,8 @@
                 'ctrl+f': '{*} Local search',
                 'f2': '{*} Filter page',
             },
-        }); 
+        });
+        keywatchComposedUIAlert.innerHTML = appKeyMap.composedTrigger;
         {% if perms.core.debug %}
         appKeyMap.bind('s+backspace', ()=>{
             
