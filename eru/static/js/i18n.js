@@ -78,6 +78,8 @@ class I18n{
             pendingApps = this.apps.filter(item => !new Set(this.db[lng].i18nActiveApps).has(item));
             if(pendingApps.length == 0){
                 console.log(`${timeNow({showSeconds: true})} | i18n: Found schema for '${lng}' localy, stating translation`);
+                this.language = lng;
+                localStorage.setItem('i18nLanguage', this.language); // Salva language no localstorage
                 this._updateSwitch();
                 this.refresh();
                 return;
@@ -231,7 +233,8 @@ class I18n{
                 entry.varb.split(',').forEach((el, index)=>{ result = result.replace(`$${index + 1}`, `<b>${el}</b>`)})
             }
         }
-        if(entry.bold && entry.entry.toLowerCase().includes(String(entry.bold).toLowerCase())){
+        
+        if(entry.bold && result.toLowerCase().includes(String(entry.bold).toLowerCase())){
             entry.bold = String(entry.bold).toLowerCase(); // converte em string
             let indexStart = result.toLowerCase().indexOf(entry.bold);
             let indexEnd = indexStart + entry.bold.length;

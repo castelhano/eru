@@ -12,7 +12,7 @@
 * @example  appKeyMap.bind('g+i;alt+i', ()=>{...do something}, {desc: 'Responde tanto no g+i quanto no alt+i', context: 'userModal'})
 * @example  appKeyMap.bind('g+i', (ev, shortcut)=>{...do something}, {keyup: true, keydown: false, useCapture: true})
 --
-* Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input impondo a seguinte restrição:
+* Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input impondo a seguinte restriçao:
 * atalhos que usam teclas basicas como modificador, se o foco estiver num input nao sera acionado de maneira imediata, nestes casos espera que tecla de 
 * confirmacao (this.composedTrigger default:';') apareca logo na sequencia, ou seja o atalho 'c+o' sera acionado imediato quando foco nao estiver em input
 * e somente ap precionar ; logo apos precionar c+o
@@ -27,7 +27,6 @@ class Keywatch{
             default: 'Atalhos Base',
         };
         this.contextPool = [];                     // pilha de contextos, ao usar setContext('foo') adiciona contexto na pilha e setContex() carrega ultimo contexto
-        // this.composedMatch = '';                   // 
         this.composedMatch = [];                   // ['c,o', ['keydown','keyup']]
         this.locked = false;                       // se true desativa atalhos gerados fora da classe, usado para travar atalhos quando usando o shortcutModal
         this.context = 'default';                  // contexto ativo
@@ -51,9 +50,8 @@ class Keywatch{
             splitKey: '+',
             separator: ';',
             tabOnEnter: true,
-            cleanDelay: 300, // tempo em milissegundos para limpeza de this.pressed em elementos select (trata prblema de teclas presas)
             shortcutMaplist: "alt+k", // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
-            shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na página",
+            shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na pagina",
             shortcutMaplistIcon: "bi bi-alt",
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
             i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
@@ -91,6 +89,7 @@ class Keywatch{
         // adiciona listeners basico para document
         this._addEvent(document, 'keydown', (ev)=>{ this._eventHandler(ev, this) }, false);
         this._addEvent(document, 'keyup', (ev)=>{this._eventHandler(ev, this)}, false);
+        this._addEvent(document, 'change', (ev)=>{this.pressed = []}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
         //--
         if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
@@ -165,14 +164,17 @@ class Keywatch{
                     if(ev.target.dataset?.keywatch == 'none'){return false} // Adicione attr data-keywatch='none' no input que queira evitar tabulacao no enter mais nao submeter
                     let form = ev.target.form;
                     let index = Array.prototype.indexOf.call(form, ev.target);
-                    if(form.elements[index + 1].disabled == false && !form.elements[index + 1]?.readOnly == true && form.elements[index + 1].offsetParent != null && form.elements[index + 1].tabIndex >= 0){form.elements[index + 1].focus();}
+                    let nextIndex = index + 1;
+                    if(nextIndex < form.elements.length && this._isFieldFocusable(form.elements[nextIndex])){
+                        form.elements[nextIndex].focus();
+                    }
                     else{
-                        let el = ev.target.form.elements;
-                        let i = index + 1;
-                        let escape = false;
-                        while(i <= el.length && !escape){
-                            if(form.elements[i].disabled == false && !form.elements[i]?.readOnly == true && form.elements[i].offsetParent != null && form.elements[i].tabIndex >= 0){form.elements[i].focus();escape = true;}
-                            else{i++;}
+                        // busca proximo elemento focavel apos o index
+                        for(let i = nextIndex; i < form.elements.length; i++){
+                            if(this._isFieldFocusable(form.elements[i])){
+                                form.elements[i].focus();
+                                break;
+                            }
                         }
                     }
                 }catch(e){}
@@ -181,29 +183,60 @@ class Keywatch{
         else if(ev.type == 'keyup'){ // no keyup remove a tecla de this.pressed
             let scope = this.pressed.length == 1 ? this.pressed[0] : [this.pressed.slice(0, -1).sort(), this.pressed[this.pressed.length - 1]].join();            
             this._eventsMatch(scope, ev); // Busca match de composicao
-            let key = this._normalize(ev.key);
-            if(ev.key && this.pressed.indexOf(key) > -1){ this.pressed.splice(this.pressed.indexOf(key), 1);} 
-            else if(ev.code == 'Altleft'){ this.pressed.splice(this.pressed.indexOf('alt'), 1)} // alt usado em combinacoes (alt+1+2) pode retornar simbolo diferente em ev.key
+            this._removeKeyFromPressed(ev);
             if(ev.key.toLowerCase() == 'escape'){ this.pressed = [] }
         }
     }
     _normalize(str){ return str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/çÇ/g, "c").toLowerCase() }
     
+    // valida se campo pode receber foco
+    _isFieldFocusable(element){
+        return !element?.disabled && !element?.readOnly && element?.offsetParent != null && element?.tabIndex >= 0;
+    }
+    
+    // remove tecla de this.pressed no keyup, funciona com qualquer modificador (alt, ctrl, shift, meta)
+    _removeKeyFromPressed(ev){
+        let keyToRemove = this._normalize(ev.key);
+        let index = this.pressed.indexOf(keyToRemove);
+        
+        // se nao encontrou pela chave normalizada, tenta pelos codigos conhecidos
+        // necessario para modificadores que retornam caracteres especiais em keyup (ex: alt+1+2 retorna simbolo em ev.key)
+        if(index === -1){
+            const modifierCodes = {
+                'AltLeft': 'alt',
+                'AltRight': 'alt',
+                'ControlLeft': 'control',
+                'ControlRight': 'control',
+                'ShiftLeft': 'shift',
+                'ShiftRight': 'shift',
+                'MetaLeft': 'meta',
+                'MetaRight': 'meta'
+            };
+            if(modifierCodes[ev.code]){
+                keyToRemove = modifierCodes[ev.code];
+                index = this.pressed.indexOf(keyToRemove);
+            }
+        }
+        if(index > -1){ this.pressed.splice(index, 1) }
+    }
+    
     // cria entrada em this.handlers
     _spread(event){
+        const sortComparator = (a, b) => a.useCapture === b.useCapture ? 0 : a.useCapture ? -1 : 1;
+        
         if(event.keydown){
             if(!this.handlers.hasOwnProperty('keydown')){this.handlers.keydown = {}}
             if(!this.handlers.keydown.hasOwnProperty(event.context)){this.handlers.keydown[event.context] = {}}
             if(!this.handlers.keydown[event.context].hasOwnProperty(event.scope)){this.handlers.keydown[event.context][event.scope] = []}
             this.handlers.keydown[event.context][event.scope].push(event);
-            this.handlers.keydown[event.context][event.scope].sort((a,b)=>{return a.useCapture == b.useCapture ? 0 : a.useCapture ? -1 : 1;});
+            this.handlers.keydown[event.context][event.scope].sort(sortComparator);
         }
         if(event.keyup){
             if(!this.handlers.hasOwnProperty('keyup')){this.handlers.keyup = {}}
             if(!this.handlers.keyup.hasOwnProperty(event.context)){this.handlers.keyup[event.context] = {}}
             if(!this.handlers.keyup[event.context].hasOwnProperty(event.scope)){this.handlers.keyup[event.context][event.scope] = []}
             this.handlers.keyup[event.context][event.scope].push(event);
-            this.handlers.keyup[event.context][event.scope].sort((a,b)=>{return a.useCapture == b.useCapture ? 0 : a.useCapture ? -1 : 1;});
+            this.handlers.keyup[event.context][event.scope].sort(sortComparator);
         }
     }
     
@@ -297,16 +330,24 @@ class Keywatch{
         for(let type in this.handlers){
             for(let context in this.handlers[type]){
                 for(let scope in this.handlers[type][context]){
-                    let residual = []
-                    this.handlers[type][context][scope].forEach((el)=>{
-                        if(el.group != group){residual.push(el)}
-                    })
-                    if(residual.length > 0){this.handlers[type][context][scope] = residual}
-                    else{delete this.handlers[type][context][scope]}
+                    const original = this.handlers[type][context][scope];
+                    const residual = original.filter(el => el.group !== group);
+                    
+                    if(residual.length > 0){
+                        this.handlers[type][context][scope] = residual;
+                    } else {
+                        delete this.handlers[type][context][scope];
+                    }
                 }
-                if(Object.keys(this.handlers[type][context]).length === 0){delete this.handlers[type][context]}
+                // limpa contextos vazios
+                if(Object.keys(this.handlers[type][context]).length === 0){
+                    delete this.handlers[type][context];
+                }
             }
-            if(Object.keys(this.handlers[type]).length === 0){delete this.handlers[type]}
+            // limpa tipos vazios
+            if(Object.keys(this.handlers[type]).length === 0){
+                delete this.handlers[type];
+            }
         }
     }
     unbindAll(){this.handlers = {}} // limpa todos os atalhos
@@ -406,7 +447,7 @@ class Keywatch{
         document.body.appendChild(this.shortcutModal);
     }
     _refreshMapTable(source=this.handlers){ // atualiza tabela com shortcuts
-        this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
+        const fragment = document.createDocumentFragment();
         for(let type in source){ // percorre todos os types
             for(let context in source[type]){ // percorre todos os contextos
                 // Se shortcutMaplistOnlyContextActive = true so mostra shortcuts do contexto ativo e do all 
@@ -425,35 +466,51 @@ class Keywatch{
                         }
                         let desc = el?.icon ? `<i class="${el.icon} me-2"></i>` : '';
                         desc += this.i18nHandler && el['data-i18n'] ? this.i18nHandler.getEntry(el['data-i18n']) || el?.desc || '' : el?.desc || '';
-                        let tr = `
-                        <tr>
-                        <td>${shortcut}</td>
-                        <td${el['data-i18n'] ? " data-i18n='" + el['data-i18n'] + "'" : "" }${el['data-i18n-dynamicKey'] ? ' data-i18n-dynamicKey=true' : ''}>${desc}</td>
-                        <td title="${title}">${this.shortcutModalTableDetailItemText}</td>
-                        </tr>
-                        `;
-                        this.shortcutModalTableTbody.innerHTML += tr;
-                        
+
+                        const tr = document.createElement('tr');
+
+                        const tdShortcut = document.createElement('td');
+                        tdShortcut.innerHTML = shortcut;
+                        tr.appendChild(tdShortcut);
+
+                        const tdDesc = document.createElement('td');
+                        if(el['data-i18n']){ tdDesc.setAttribute('data-i18n', el['data-i18n']); }
+                        if(el['data-i18n-dynamicKey']){ tdDesc.setAttribute('data-i18n-dynamicKey', 'true'); }
+                        tdDesc.innerHTML = desc;
+                        tr.appendChild(tdDesc);
+
+                        const tdDetail = document.createElement('td');
+                        tdDetail.title = title;
+                        tdDetail.innerHTML = this.shortcutModalTableDetailItemText;
+                        tr.appendChild(tdDetail);
+
+                        fragment.appendChild(tr);
                     })
                 }
             }
         }
+        this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
+        this.shortcutModalTableTbody.appendChild(fragment);
         // Se utilizando integracao com i18n ajusta demais campos (inpit fields, etc)
         if(this.i18nHandler){
             this.shortcutSearchInput.placeholder = this.i18nHandler.getEntry('shortcuts.keywatch.searchInputPlaceholder') || this.defaultOptions.searchInputPlaceholder;
         }
     }
     _filterMapTable(ev){
-        let term = this.shortcutSearchInput.value.toLowerCase();
-        let trs = this.shortcutModalTableTbody.querySelectorAll('tr');
-        for(let i = 0; i < trs.length; i++){
-            let tds = trs[i].querySelectorAll('td');
-            let rowValue = tds[0].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
-            rowValue += tds[1].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
-            rowValue += tds[2].innerHTML.replace(/<[^>]*>/g,'').toLowerCase();
-            if(rowValue.replaceAll(/&nbsp;| /g,'').indexOf(term) < 0){trs[i].style.display = 'none'}
-            else{trs[i].style.display = 'table-row'}
-        }
+        const term = this.shortcutSearchInput.value.toLowerCase().replace(/\s+/g, '');
+        const htmlTagRegex = /<[^>]*>/g;
+        const noBreakRegex = /&nbsp;/g;
+        const trs = this.shortcutModalTableTbody.querySelectorAll('tr');
+        
+        trs.forEach((tr) => {
+            const tds = tr.querySelectorAll('td');
+            // usa textContent ao invés de innerHTML para melhor performance
+            let rowValue = '';
+            for(let i = 0; i < tds.length; i++){
+                rowValue += tds[i].textContent.toLowerCase().replace(/\s+/g, '');
+            }
+            tr.style.display = rowValue.includes(term) ? 'table-row' : 'none';
+        });
     }
     
     _humanize(entry){ // recebe um schema de atalho e formata para exibicao na tabela de atalhos
