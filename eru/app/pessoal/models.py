@@ -273,7 +273,7 @@ class EventoMovimentacao(models.Model):
     inicio = models.DateField(blank=False, null=False, default=datetime.today)
     fim = models.DateField(blank=True, null=True)
     tipo = models.CharField(max_length=3, choices=TIPOS, default='V', blank=False)
-    valor = models.CharField(max_length=250, blank=True)
+    valor = models.TextField(blank=True)
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True

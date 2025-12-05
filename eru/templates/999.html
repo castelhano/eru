@@ -4,8 +4,9 @@
 
 
 <style>
-{% block style %}{% endblock %}
+{% block style %} {% include 'pessoal/_form_evento_related_modal_style.css' %} {% endblock style %}
 </style>
+
 
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
@@ -182,12 +183,20 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script src="{% static 'js/vendor/prism.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/autocomplete.js' %}"></script>
 <script src="{% static 'js/docs.js' %}"></script>
 {% endblock %}
 
 
 <script>
 {% block add_script %}
+
+const data = ['F_pne', 'F_he50', 'F_he100']
+
+const textareaAutocomplete = new Autocomplete('#textareaAutocomplete', data, {
+    enable: true
+});
+const textAutocomplete = new Autocomplete('#textAutocomplete', data);
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,

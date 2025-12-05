@@ -4,8 +4,6 @@
 {% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
-{% block style %} {% include 'pessoal/_form_evento_related_modal_style.css' %} {% endblock style %}
-
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
@@ -19,8 +17,6 @@
     {% include 'pessoal/_form_evento_related.html' %}
     </form>
 </div>
-
-{% include 'pessoal/_form_evento_related_modal.html' %}
 
 {% endblock%}
 

@@ -8,7 +8,7 @@
         {% endif %}</h6>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-2">
-            <div class="col-lg col-lg-6">
+            <div class="col col-lg-4">
                 <div class="row g-1">
                     <div class="form-floating mb-1 col-lg">
                         {{ form.inicio }}
@@ -21,20 +21,6 @@
                 </div>
                 <div class="row g-1">
                     <div class="form-floating mb-1 col-lg">
-                        {{ form.tipo }}
-                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
-                    </div>
-                    <div class="col-lg input-group mb-1">
-                        <div class="form-floating">
-                            {{ form.valor }}
-                            <label for="id_valor" data-i18n="common.value">Valor</label>
-                        </div>
-                        <button type="button" class="btn btn-secondary"{% if evento == None or evento.tipo == 'V' %} style="display: none"{% endif %} id="btnFormulaModal" title="Multilinha" data-i18n="[title]autocomplete.multiline" tabindex="-1"><i class="bi bi-terminal"></i></button>
-                        <button type="button" class="btn btn-primary" id="btnCheckFormula" title="Validar Fórmula" data-i18n="[title]personal.event.form.validateFormula" tabindex="-1"{% if evento == None or evento.tipo == 'F' %} disabled{% endif %}><i class="bi bi-braces-asterisk"></i></button>
-                    </div>
-                </div>
-                <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg">
                         {{ form.evento }}
                         <label for="id_evento" data-i18n="personal.common.event">Evento</label>
                     </div>
@@ -43,14 +29,31 @@
                         <label for="id_motivo" data-i18n="common.reason">Motivo</label>
                     </div>
                 </div>
-                <button type="submit" id="submit" class="btn btn-primary mt-1" title="ALT + G" data-i18n="common.save__bold:g"><b>G</b>ravar</button>
-                <input type="hidden" name="{{related}}" value="{{model.id|safe}}">
-            </div>
-            <div class="col-lg col-lg-3 col-xl-2 border-start ms-lg-1 order-3">
                 <div class="row">
                     <div class="col">{{form.empresas}}</div>
                 </div>
+                <input type="hidden" name="{{related}}" value="{{model.id|safe}}">
             </div>
+            <div class="col col-lg">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.tipo }}
+                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        {{ form.valor }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col text-end">
+                        <button type="button" id="id_validade" class="btn btn-sm btn-warning" data-i18n="common.validate">Validar</button>
+                        <button type="submit" id="submit" class="btn btn-sm btn-primary" title="ALT + G" data-i18n="common.save__bold:g"><b>G</b>ravar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col col-lg border-start"></div>
         </div>
     </div>
 </div>

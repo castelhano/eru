@@ -280,13 +280,14 @@ def evento_related_add(request, related, id):
             return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model})
     else:
         prop_func = get_props(Funcionario)
+        props_custom = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
         if related == 'cargo':
             form = EventoCargoForm(user=request.user)
             model = Cargo.objects.get(pk=id)
         elif related == 'funcionario':
             form = EventoFuncionarioForm()
             model = Funcionario.objects.get(pk=id)
-        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': prop_func})
+        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': prop_func + props_custom})
 
 # Copia um ou mais eventos de um modelo para outro, podendo ser cargo ou funcionario
 @login_required

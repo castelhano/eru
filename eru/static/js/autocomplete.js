@@ -15,6 +15,7 @@ class Autocomplete {
             enable: true,
             prefix: '', // Adiciona prefixo ao valor que sera renderizado no input
             posfix: '', // Adiciona posfixo ao valor que sera renderizado no input
+            tabValue: '    ', // ao precionar tab em textarea previne comportamento default e insere tabValue
             onchange: ()=>{}, // function a ser executada sempre que valor do input for alterado
         };
         this.options = Object.assign({}, this.defaultOptions, options)
@@ -58,10 +59,10 @@ class Autocomplete {
      * @private
      */
     _handleInput(event) {
-        if(!this.enable){return} // Se this.enable == false desativa analise do input
+        if(!this.options.enable){return} // Se this.options.enable == false desativa analise do input
         if(event.data == ' ' || event.data == null){  // se a tecla digitada for espaco nao realiza sugestao
-            this._hideResults()
-            return
+            this._hideResults();
+            return;
         }
         let cursorPosition = this.inputElement.selectionStart;
         let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
@@ -151,10 +152,24 @@ class Autocomplete {
      * @private
      */
     _handleKeyDown(event) {
+        if(!this.options.enable) return;
+        // alterar comportamento tecla tab em textarea com instancia Autocomplete de forma que insira tabulacao no texto
+        // ao invez de assumir comportamento padrao (mudar foco para proximo elemento)
+        if(event.key === 'Tab' && event.target.nodeName == 'TEXTAREA'){
+            event.preventDefault();            
+            const start = this.inputElement.selectionStart;
+            const end = this.inputElement.selectionEnd;
+            // insere a tabulacao no texto, na posicao do cursor
+            this.inputElement.value = this.inputElement.value.substring(0, start) + this.options.tabValue + this.inputElement.value.substring(end);
+            
+            // mve o cursor para o final do texto inserido (mantem a usabilidade)
+            this.inputElement.selectionStart = start + this.options.tabValue.length;
+            this.inputElement.selectionEnd = start + this.options.tabValue.length;
+            return;
+        }
+        
         const items = Array.from(this.autocompleteContainer.children);
-
         if (items.length === 0) return;
-
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             this.selectedIndex = (this.selectedIndex + 1) % items.length;

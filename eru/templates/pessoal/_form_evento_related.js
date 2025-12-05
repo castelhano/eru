@@ -29,20 +29,8 @@ const formulaMask = {
 // valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
 const valor = document.getElementById('id_valor');
 const tipo = document.getElementById('id_tipo');
-const btnCheck = document.getElementById('btnCheckFormula');
-const btnModal = document.getElementById('btnFormulaModal');
-const formulaModal = document.getElementById('formulaModal');
-const formulaTextarea = document.getElementById('id_formula');
-formulaModal.addEventListener('beforetoggle', (ev)=>{
-    if(ev.newState == 'open'){ appKeyMap.setContext('modal:formula') }
-    else if(ev.newState == 'closed'){ appKeyMap.setContext() }
-})
-
-btnFormulaModal.onclick = ()=>{
-    formulaTextarea.value = valor.value;
-    formulaModal.showModal();
-}
 const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
+
 const form = new jsForm(document.getElementById('app_form'), {
     imask: [valorMask],
     customValidation: {
@@ -57,31 +45,16 @@ tipo.onchange = (ev)=>{
     if(ev.target.value == 'V'){ 
         valorMask.value = '';
         valorMask.updateOptions(numberMaks);
-        btnCheck.disabled = true;
-        btnModal.style.display = 'none';
-        autocomplete.enable = false;
-        valor.removeAttribute('data-keywatch'); // reativa tabulacao na tecla enter
+        autocomplete.options.enable = false;
     }
     else{ 
         valorMask.value = '';
         valorMask.updateOptions(formulaMask);
-        btnCheck.disabled = false;
-        btnModal.style.display = 'block';
-        autocomplete.enable = true;
-        valor.setAttribute('data-keywatch', 'none'); // desativa tabulacao na tecla enter
+        autocomplete.options.enable = true;
     }
 }
 
 const autocomplete = new Autocomplete(valor, {{props|safe}}, {
-    enable: form.tipo == 'F',
+    enable: form.tipo.value == 'F',
     onchange: ()=>{ valorMask.updateValue() }
-})
-
-appKeyMap.bind('ctrl+enter', ()=>{
-    if(form.tipo == 'V'){return}
-    btnModal.click();
-}, {
-    icon: 'bi bi-terminal-fill', 'data-i18n': 'personal.event.form.multilineFormula__posfix: <span class="badge bg-orange ms-2">Valor</span>', origin: 'pessoal:_form_evento_related.js',
-    element: form.valor,
-    desc: 'Fórmula multilinha <span class="badge bg-orange ms-2">Valor</span>' 
 })
