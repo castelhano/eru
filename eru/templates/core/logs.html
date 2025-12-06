@@ -91,8 +91,8 @@
                         data-detail="log-detail-{{ log.id|safe }}"
                         ><i class="bi bi-shuffle"></i></button>
                       </td>
+                      <script type="application/json" id="log-detail-{{ log.id|safe }}">{{ log.changes|json_encode }}</script>
                     </tr>
-                    <script type="application/json" id="log-detail-{{ log.id|safe }}">{{ log.changes|json_encode }}</script>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -111,7 +111,7 @@
         <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
         <h6 data-i18n="index.logDetail">Detalhes do Log</h6>
         <hr>
-        <p><span data-i18n="index.totalOf">Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span data-i18n="index.fieldsAffected">campos afetados</span>.</p>
+        <p><span id="log_detail_badge"></span><span data-i18n="index.totalOf">Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span data-i18n="index.fieldsAffected">campos afetados</span>.</p>
         <table class="table table-sm border table-striped">
           <thead>
             <tr>
@@ -142,14 +142,17 @@
   {% block add_script %}  
   
   const form = new jsForm('#filterForm', {})
+  
   form.load({{data|safe}});
   if(!form.timestamp_min.value){ form.timestamp_min.value = dateToday({native: true, days:-1}) }
   if(!form.timestamp_max.value){ form.timestamp_max.value = dateToday({native: true}) }
 
   const modelos = new jsSelectm('#id_content_type', { sort: true })
+  
   const table = new jsTable('#table_logs', {
     canFilter: true,
-    filterCols: ['User','Action']
+    filterCols: ['User','Action'],
+    enablePaginate: true,
   })
 
 

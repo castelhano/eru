@@ -114,7 +114,7 @@ def eventos_related(request, related, id):
 
     if related == 'cargo':
         options['model'] = Cargo.objects.get(pk=id)
-        options['eventos'] = EventoCargo.objects.filter(cargo=options['model'], empresas__in=request.user.profile.empresas.all()).order_by('evento__nome')
+        options['eventos'] = EventoCargo.objects.filter(cargo=options['model'], empresas__in=request.user.profile.empresas.all()).order_by('evento__nome').distinct()
         if not request.GET or not request.GET.get('fim', None):
             options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
         if request.GET:
@@ -681,6 +681,21 @@ def get_grupos_evento(request):
     grupos_evento = GrupoEvento.objects.all().order_by('nome')
     obj = serializers.serialize('json', grupos_evento)
     return HttpResponse(obj, content_type="application/json")
+
+@login_required
+def add_motivo_reajuste(request):
+    if not request.user.has_perm("pessoal.add_motivoreajuste"):
+        return JsonResponse({'status': 'access denied'}, status=401)
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        form = MotivoReajusteForm(data)
+        if form.is_valid():
+            motivo_reajuste = form.save()
+            return JsonResponse({'pk': motivo_reajuste.id, 'model': 'pessoal.motivoreajuste', 'fields': {'nome': motivo_reajuste.nome}, 'status': 'success'}, status=200)
+        else:
+            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+    return JsonResponse({'status': 'invalid request'}, status=400)
 
 @login_required
 def add_grupo_evento(request):

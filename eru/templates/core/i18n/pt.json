@@ -98,7 +98,8 @@
     "compound": {
         "checkAll": "Marcar todos os $1",
         "includeInactiveEntries": "Incluir registros inativos",
-        "notInformed": "Não informado"
+        "notInformed": "Não informado",
+        "registerOf": "Cadastro de $1"
     },
     "company": {
         "companyName": "Nome da empresa",

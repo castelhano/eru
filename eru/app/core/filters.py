@@ -23,11 +23,7 @@ class UserFilter(django_filters.FilterSet):
         model = User
         fields = ['username', 'email', 'is_superuser', 'is_staff', 'is_active', 'last_login', 'last_login__lte', 'never_login']
 
-    # Filtro para o campo 'action' (CREATE=0, UPDATE=1, DELETE=2)
-    # action = django_filters.ChoiceFilter(choices=LogEntry.Action.choices, label='Action')
-    # Filtro para o campo 'content_type' (o modelo afetado)
-    # content_type = ModelChoiceFilter(queryset=ContentType.objects.all(), label='Model')
-    # Filtro para o campo 'timestamp' (data/hora)
+
 class LogEntryFilter(django_filters.FilterSet):
     timestamp = DateFromToRangeFilter(widget=RangeWidget(attrs={'type': 'date'}), label='Interval')
     actor = django_filters.CharFilter(
@@ -42,3 +38,5 @@ class LogEntryFilter(django_filters.FilterSet):
     class Meta:
         model = LogEntry
         fields = ['actor', 'action', 'content_type', 'timestamp']
+
+

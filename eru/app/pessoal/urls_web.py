@@ -51,6 +51,7 @@ urlpatterns = [
     path('get_grupos_evento',views.get_grupos_evento,name='get_grupos_evento'),
     path('add_setor',views.add_setor,name='add_setor'),
     path('add_grupo_evento',views.add_grupo_evento,name='add_grupo_evento'),
+    path('add_motivo_reajuste',views.add_motivo_reajuste,name='add_motivo_reajuste'),
     path('update_grupo_evento', views.update_grupo_evento,name='update_grupo_evento'),
     path('delete_grupo_evento', views.delete_grupo_evento,name='delete_grupo_evento'),
 ]

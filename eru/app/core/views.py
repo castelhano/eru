@@ -70,6 +70,10 @@ def logs(request):
         data.pop('csrfmiddlewaretoken', None)
         context['data'] = json.dumps(data)
         context['logs'] = LogEntryFilter(request.POST, queryset=LogEntry.objects.all().order_by('-timestamp')).qs
+        max_entries = 100      # quantidade maxima de registros a exibir(pode ser alterado no template)
+        if 'entries' in request.POST and request.POST['entries'].isdigit():
+            max_entries = int(request.POST['entries'])
+        context['logs'] = context['logs'][:max_entries]     # limita resultados da consulta
     target_apps = ['auth','core','trafego','pessoal']
     context['models'] = ContentType.objects.filter(app_label__in=target_apps).order_by('app_label', 'model')
     return render(request, 'core/logs.html', context)

@@ -98,7 +98,8 @@
     "compound": {
         "checkAll": "Check all $1",
         "includeInactiveEntries": "Include inactive entries",
-        "notInformed": "Not informed"
+        "notInformed": "Not informed",
+        "registerOf": "Register of $1"
     },
     "company": {
         "companyName": "Company name",

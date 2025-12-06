@@ -58,3 +58,23 @@ const autocomplete = new Autocomplete(valor, {{props|safe}}, {
     enable: form.tipo.value == 'F',
     onchange: ()=>{ valorMask.updateValue() }
 })
+
+{% if perms.pessoal.add_motivoreajuste %}
+  console.log('FOOOOOOOOO');
+  
+  i18n.addVar('motivoReajuste', [i18n.getEntry('personal.event.changeReason') || 'Motivo Reajuste'])
+  const motivoRelated = new RelatedAddon('#id_motivo', {
+    title: i18n.getEntry('compound.registerOf__varb:$motivoReajuste') || 'Cadastro de Motivo Reajuste',
+    labels: {
+      nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
+    },
+    url: {
+      // parent: {
+      //   show: "{# url 'pessoal:get_grupos_evento' #}",
+      // },
+      related: {
+        add: "{% url 'pessoal:add_motivo_reajuste' %}",
+      }
+    }    
+  })
+  {% endif %}
