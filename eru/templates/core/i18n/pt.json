@@ -244,5 +244,9 @@
     "selectm": {
         "checkAll": "Marcar tudo",
         "uncheckAll": "Desmarcar tudo"
+    },
+    "asteval": {
+        "pythonSyntaxError": "Erro de sintaxe python",
+        "syntaxValid":"A sintaxe é válida"
     }
 }

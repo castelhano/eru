@@ -45,7 +45,13 @@
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
+                        {% if related == 'cargo' %}
                         <th class="d-none d-md-table-cell" data-i18n="common.company__plural__posfix:*">Empresas</th>
+                        <th class="d-none" data-i18n="common.position">Cargo</th>
+                        {% elif related == 'funcionario' %}
+                        <th class="d-none" data-i18n="common.employeeId">Matricula</th>
+                        <th class="d-none" data-i18n="common.name">Nome</th>
+                        {% endif %}
                         <th data-i18n="common.name__posfix:*">Nome</th>
                         <th class="d-none d-lg-table-cell">Inicio</th>
                         <th class="d-none d-lg-table-cell">Fim</th>
@@ -60,7 +66,13 @@
                 <tbody>
                     {% for model in eventos %}
                     <tr>
+                        {% if related == 'cargo' %}
                         <td class="fit d-none d-md-table-cell">{{model.empresas.all|join:';'|badge_list:'bg-body-secondary text-body-secondary'}}</td>
+                        <td class="d-none">{{model.cargo.nome}}</td>
+                        {% elif related == 'funcionario' %}
+                        <td class="d-none">{{model.funcionario.matricula}}</td>
+                        <td class="d-none">{{model.funcionario.nome}}</td>
+                        {% endif %}
                         <td>{{model.evento.nome}}</td>
                         <td class="d-none d-lg-table-cell">{{model.inicio|date:'d/m/Y'}}</td>
                         <td class="d-none d-lg-table-cell">{{model.fim|date:'d/m/Y'|default:''}}</td>

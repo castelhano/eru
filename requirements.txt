@@ -1,4 +1,5 @@
 asgiref==3.8.1
+asteval==1.0.7
 chardet==5.2.0
 Django==5.2.7
 django-auditlog==3.3.0

@@ -1,4 +1,6 @@
 import re, os, json
+from asteval import Interpreter
+from builtins import SyntaxError, IndentationError 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
@@ -554,6 +556,7 @@ def get_user_perms(request):
     except:
         return HttpResponse('')
 
+
 @login_required
 def get_group_perms(request):
     try:
@@ -577,3 +580,31 @@ def get_group_perms(request):
         return HttpResponse(dataJSON)
     except:
         return HttpResponse('')
+
+
+def asteval_run(expression, vars_dict):
+    # expression espera uma string com calculo a ser realizado
+    aeval = Interpreter(builtins_readonly=True)
+    aeval.symtable.update(vars_dict)
+    result = aeval(expression)      # tenta interpretar codigo
+    if aeval.error:
+        error_message = aeval.error[0].get_error()
+        return {'status': False, 'type': error_message[0], 'message': error_message[1]}
+    return {'status': True, 'result': result }
+
+# @csrf_exempt
+@login_required
+def formula_validate(request):
+    try:
+        data = json.loads(request.body)
+        expression = data.get('valor', '').strip()
+        if not expression:
+            return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressão vazia'}, status=400)
+        result = asteval_run(expression, {'F_pne': True})
+        if not result['status']:
+            return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
+        return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval válida'}, status=200)
+    except json.JSONDecodeError as e:
+        return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)

@@ -10,8 +10,6 @@ appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
 })
 {% endif %}
 
-
-
 const numberMaks = {
     mask: Number,
     scale: 2,
@@ -27,8 +25,18 @@ const formulaMask = {
 }
 
 // valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
-const valor = document.getElementById('id_valor');
 const tipo = document.getElementById('id_tipo');
+const valor = document.getElementById('id_valor');
+const responseValidade = document.getElementById('responseValidate');
+const validadeBtn = document.getElementById('id_validade');
+const submitBtn = document.getElementById('submit');
+
+valor.oninput = ()=>{
+// ao alterar valor, exige validacao
+submitBtn.disabled = true;
+responseValidade.innerHTML = '';
+}
+validadeBtn.onclick = ()=>{syntaxCheck()};
 const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
 
 const form = new jsForm(document.getElementById('app_form'), {
@@ -60,8 +68,6 @@ const autocomplete = new Autocomplete(valor, {{props|safe}}, {
 })
 
 {% if perms.pessoal.add_motivoreajuste %}
-  console.log('FOOOOOOOOO');
-  
   i18n.addVar('motivoReajuste', [i18n.getEntry('personal.event.changeReason') || 'Motivo Reajuste'])
   const motivoRelated = new RelatedAddon('#id_motivo', {
     title: i18n.getEntry('compound.registerOf__varb:$motivoReajuste') || 'Cadastro de Motivo Reajuste',
@@ -78,3 +84,33 @@ const autocomplete = new Autocomplete(valor, {{props|safe}}, {
     }    
   })
   {% endif %}
+
+
+async function syntaxCheck() {
+    const url = "{% url 'formula_validate' %}";
+    responseValidade.textContent = "Validando sintaxe no servidor...";
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ valor: valor.value })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            responseValidade.innerHTML = `<i class="bi bi-check2-circle text-success me-2"></i> ${i18n.getEntry('asteval.syntaxValid') || 'Sintaxe é valida'}`
+            document.getElementById('submit').disabled = false;
+        } else {
+            responseValidade.innerHTML = `<i class="bi bi-x-octagon-fill text-danger me-2"></i> [ <b>${result.type}</b> ] <br>--<br>${result.message}`;
+            document.getElementById('submit').disabled = true;
+        }
+    } catch (error) {        
+        responseValidade.innerHTML = i18n.getEntry('sys.500') || '[500] Erro no servidor, se o problema persistir, contate o administrador';
+        document.getElementById('submit').disabled = false;
+    }
+}

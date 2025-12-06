@@ -36,4 +36,5 @@ urlpatterns = [
     path('get_grupos',views.get_grupos,name='get_grupos'),
     path('get_user_perms',views.get_user_perms,name='get_user_perms'),
     path('get_group_perms',views.get_group_perms,name='get_group_perms'),
+    path('api/formula_validate',views.formula_validate,name='formula_validate'),
 ]
