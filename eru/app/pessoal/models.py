@@ -277,11 +277,21 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True
-    def _finalizar_registros_anteriores(self):
-        pass
     def save(self, *args, **kwargs):
         self._finalizar_registros_anteriores()
         super().save(*args, **kwargs)
+
+# Eventos podem ser inseridos para empresas / cargos / funcionarios
+# mesmo evento em escopos diferentes sao aplicados seguindo ordem de prioridade:
+# 1) Funcionario
+# 2) Cargo
+# 3) Empresa (mais generico)
+##########
+# !! deve ser tratado duplicidade de evento no mesmo escopo
+class EventoEmpresa(EventoMovimentacao):
+    empresas = models.ManyToManyField(Empresa, related_name="eventos_empresa")
+auditlog.register(EventoEmpresa)
+
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
