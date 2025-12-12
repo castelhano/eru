@@ -161,37 +161,46 @@ class EventoCargoForm(EventoMovimentacaoBaseForm):
         # Lista IDs das empresas para construcao da consulta Q
         empresa_ids = empresas_qs.values_list('id', flat=True)
 
-        # Logica de verificacao de sobreposicao:
-        # Conflito ocorre se:
-        # (inicio_existente <= fim_novo OU fim_existente is NULL) E
-        # (fim_existente >= inicio_novo OU fim_existente is NULL)
-        
-        # Expressao Q para verificar qualquer sobreposicao de periodo
+        # ---------------------------------------------------------------
+        # LÓGICA DE VERIFICAÇÃO DE SOBREPOSIÇÃO REVISADA E CORRIGIDA:
+        # ---------------------------------------------------------------
+
+        # Um registro existente conflita se:
+        # A) Ele está em aberto (fim IS NULL) E sua data de início é <= à data de fim do novo registro (ou None)
+        # B) Ele tem uma data de fim, e seus períodos se sobrepõem.
+
+        # Condição 1: Conflito com registros existentes que estão em aberto (fim=None)
+        q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
+
+        # Condição 2: Conflito com registros existentes que já foram fechados (fim IS NOT NULL)
+        q_fechado = Q(
+            fim__isnull=False,
+            # O registro existente começa antes do novo registro terminar (ou é None) E
+            inicio__lte=fim if fim else date.max,
+            # O registro existente termina depois do novo registro começar
+            fim__gte=inicio
+        )
+
+        # Combinamos as duas condições possíveis de conflito
         conflitos_possiveis = EventoCargo.objects.filter(
             evento=evento_pai,
             empresas__id__in=empresa_ids,
         ).exclude(
-            pk=self.instance.pk
+            pk=self.instance.pk # Exclui o objeto atual se for uma edição
         ).filter(
-            # A logica de sobreposicao temporal padrao:
-            Q(
-                Q(fim__gte=inicio) | Q(fim__isnull=True),
-                Q(inicio__lte=fim) | Q(fim__isnull=True, inicio__lte=date.max if fim is None else fim)
-            )
-            # Simplificando a logica de sobreposicao temporal (mais comum):
-            # O registro existente comeca antes do novo registro terminar E
-            # O registro existente termina depois do novo registro comecar
-        ).filter(
-            Q(inicio__lte=fim if fim else date.max), 
-            Q(Q(fim__gte=inicio) | Q(fim__isnull=True))
+            q_aberto | q_fechado # Aplica a lógica de sobreposição combinada
         )
 
-        # Se encontrado algum registro que se sobrepoe, levantamos um erro.
         if conflitos_possiveis.exists():
-            raise forms.ValidationError(
-                "Já existe um registro de movimentacao que conflita com as datas e empresas selecionadas. "
-                "Por favor, ajuste as datas do novo evento."
+            # Melhorar a mensagem de erro para o usuário final
+            msg = (
+                "Já existe um registro de movimentação que conflita com as datas e empresas selecionadas. "
+                "Períodos de conflito identificados. Por favor, ajuste as datas do novo evento."
             )
+            # Você pode até listar os IDs dos registros conflitantes para depuração:
+            # print(f"Conflitos com PKS: {list(conflitos_possiveis.values_list('pk', flat=True))}")
+            raise forms.ValidationError(msg)
+
         return cleaned_data
 
 class EventoFuncionarioForm(EventoMovimentacaoBaseForm):

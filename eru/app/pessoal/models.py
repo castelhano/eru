@@ -277,9 +277,9 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True
-    def save(self, *args, **kwargs):
-        self._finalizar_registros_anteriores()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # self._finalizar_registros_anteriores()
+    #     super().save(*args, **kwargs)
 
 # Eventos podem ser inseridos para empresas / cargos / funcionarios
 # mesmo evento em escopos diferentes sao aplicados seguindo ordem de prioridade:

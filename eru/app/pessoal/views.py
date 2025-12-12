@@ -266,11 +266,11 @@ def evento_related_add(request, related, id):
         elif related == 'funcionario':
             form = EventoFuncionarioForm(request.POST)
         if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+            # try:
+            registro = form.save()
+            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
+            # except:
+            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
             return redirect('pessoal:eventos_related', related, id)
         else:
             if related == 'cargo':
