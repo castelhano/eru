@@ -12,9 +12,9 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 #--
 from django.core import serializers
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoCargo, EventoFuncionario
-from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
-from .filters import FuncionarioFilter, EventoCargoFilter, EventoFuncionarioFilter
+from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
+from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
+from .filters import FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from core.extras import create_image, get_props
@@ -107,12 +107,20 @@ def eventos_related(request, related, id):
         return redirect('handler', 403)
     options = {"related": related}
     options['form'] = EventoCargoForm() # usa o cargo form apenas para efeito de consulta no template
-    # options['form'] = EventoCargoForm({'tipo': ''}) # usa o cargo form apenas para efeito de consulta no template
     options['form'].fields['tipo'].required = False
     empty_choice = [('', "---------")]
     options['form'].fields['tipo'].choices = empty_choice + list(options['form'].fields['tipo'].choices)
 
-    if related == 'cargo':
+    if related == 'empresa':
+        options['eventos'] = EventoEmpresa.objects.filter(empresas__in=request.user.profile.empresas.all()).order_by('evento__nome').distinct()
+        if not request.GET or not request.GET.get('fim', None):
+            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
+        if request.GET:
+            rel_filter = EventoEmpresaFilter(request.GET, queryset=options['eventos'])
+            options['eventos'] = rel_filter.qs
+            if len(options['eventos']) == 0:
+                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
+    elif related == 'cargo':
         options['model'] = Cargo.objects.get(pk=id)
         options['eventos'] = EventoCargo.objects.filter(cargo=options['model'], empresas__in=request.user.profile.empresas.all()).order_by('evento__nome').distinct()
         if not request.GET or not request.GET.get('fim', None):
@@ -256,38 +264,51 @@ def evento_add(request):
         form = EventoForm()
     return render(request,'pessoal/evento_add.html',{'form':form})
 
+
+def getEventProps():
+    prop_func = get_props(Funcionario)
+    props_custom = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
+    return prop_func + props_custom
+
+
+
 @login_required
 def evento_related_add(request, related, id):
     if not request.user.has_perm(f"pessoal.view_evento{related}"):
         return redirect('handler', 403)
     if request.method == 'POST':
-        if related == 'cargo':
+        if related == 'empresa':
+            form = EventoEmpresaForm(request.POST, user=request.user)
+        elif related == 'cargo':
             form = EventoCargoForm(request.POST, user=request.user)
         elif related == 'funcionario':
             form = EventoFuncionarioForm(request.POST)
         if form.is_valid():
-            # try:
-            registro = form.save()
-            messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
-            # except:
-            #     messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
+            try:
+                registro = form.save()
+                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
+            except:
+                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
             return redirect('pessoal:eventos_related', related, id)
         else:
-            if related == 'cargo':
+            if related == 'empresa':
+                model = {'id':0,'pk':0}
+            elif related == 'cargo':
                 model = Cargo.objects.get(pk=id)
             elif related == 'funcionario':
                 model = Funcionario.objects.get(pk=id)
-            return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model})
+            return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': getEventProps()})
     else:
-        prop_func = get_props(Funcionario)
-        props_custom = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
-        if related == 'cargo':
+        if related == 'empresa':
+            form = EventoEmpresaForm(user=request.user)
+            model = {'id':0,'pk':0}
+        elif related == 'cargo':
             form = EventoCargoForm(user=request.user)
             model = Cargo.objects.get(pk=id)
         elif related == 'funcionario':
             form = EventoFuncionarioForm()
             model = Funcionario.objects.get(pk=id)
-        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': prop_func + props_custom})
+        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': getEventProps()})
 
 # Copia um ou mais eventos de um modelo para outro, podendo ser cargo ou funcionario
 @login_required
@@ -386,9 +407,12 @@ def evento_id(request,id):
 def evento_related_id(request, related, id):
     if not request.user.has_perm(f"pessoal.view_evento{related}"):
         return redirect('handler', 403)
-    options = {'related':related}
-    options['props'] = get_props(Funcionario)
-    if related == 'cargo':
+    options = {'related':related, 'props': getEventProps()}
+    if related == 'empresa':
+        options['evento'] = EventoEmpresa.objects.get(pk=id)
+        options['model'] = {'id':0, 'pk':0}
+        options['form'] = EventoEmpresaForm(instance=options['evento'])
+    elif related == 'cargo':
         options['evento'] = EventoCargo.objects.get(pk=id)
         options['model'] = options['evento'].cargo
         options['form'] = EventoCargoForm(instance=options['evento'])
@@ -514,7 +538,10 @@ def evento_update(request,id):
 def evento_related_update(request, related, id):
     if not request.user.has_perm(f"pessoal.change_evento{related}"):
         return redirect('handler', 403)
-    if related == 'cargo':
+    if related == 'empresa':
+        evento = EventoEmpresa.objects.get(pk=id)
+        form = EventoEmpresaForm(request.POST, instance=evento)
+    elif related == 'cargo':
         evento = EventoCargo.objects.get(pk=id)
         form = EventoCargoForm(request.POST, instance=evento)
     elif related == 'funcionario':
@@ -528,7 +555,14 @@ def evento_related_update(request, related, id):
         messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.evento.nome}</b>')
         return redirect(f'pessoal:evento_related_id', related, id)
     else:
-        return render(request,f'pessoal/evento_{related}_id.html',{'form':form, 'evento':evento})
+        options = {'related': related, 'form':form, 'evento': evento}
+        if related == 'empresa':
+            options['model'] = {'id':0,'pk':0}
+        elif related == 'cargo':
+            options['model'] = evento.cargo
+        elif related == 'funcionario':
+            options['model'] = evento.funcionario
+        return render(request,f'pessoal/evento_related_id.html', options)
 
 @login_required
 @permission_required('pessoal.change_grupoevento', login_url="/handler/403")

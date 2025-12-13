@@ -99,7 +99,8 @@
         "checkAll": "Marcar todos os $1",
         "includeInactiveEntries": "Incluir registros inativos",
         "notInformed": "Não informado",
-        "registerOf": "Cadastro de $1"
+        "registerOf": "Cadastro de $1",
+        "startDate": "Data inicio"
     },
     "company": {
         "companyName": "Nome da empresa",
@@ -141,7 +142,7 @@
         "recordErrorOnFilterDuplicated": "Registro duplicado encontrado ($1)",
         "recordErrorOnSaved": "Erro ao salvar registro",
         "recordUpdated": "Registro atualizado com sucesso",
-        "startDate": "Data de início",
+        "endDateLowerThanStart": "Data de fim não pode ser menor que data de inicio",
         "i18n":{
             "translationFileNotFound": "Nenhum arquivo de tradução encontrado para o idioma selecionado"
         },

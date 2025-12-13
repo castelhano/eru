@@ -1,4 +1,4 @@
-{% if related == 'cargo' %}
+{% if related == 'cargo' or related == 'empresa' %}
 const empresas = new jsSelectm('#id_empresas', {
     title: i18n.getEntry('common.company__plural') || '<span data-i18n="common.company__plural">Empresas</span>'
 })
@@ -62,7 +62,7 @@ tipo.onchange = (ev)=>{
     }
 }
 
-const autocomplete = new Autocomplete(valor, {{props|safe}}, {
+const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
     enable: form.tipo.value == 'F',
     onchange: ()=>{ valorMask.updateValue() }
 })

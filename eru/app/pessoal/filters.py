@@ -1,6 +1,6 @@
 import django_filters
 from core.models import Empresa
-from .models import Funcionario, Evento, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import Funcionario, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
 
 class FuncionarioFilter(django_filters.FilterSet):
@@ -34,3 +34,9 @@ class EventoFuncionarioFilter(EventoMovimentacaoFilterSet):
     class Meta(EventoMovimentacaoFilterSet.Meta):
         model = EventoFuncionario
         fields = EventoMovimentacaoFilterSet.Meta.fields + ['funcionario'] # Adiciona o campo 'funcionario'
+
+class EventoEmpresaFilter(EventoMovimentacaoFilterSet):
+    empresa = django_filters.ModelChoiceFilter(queryset=Empresa.objects.all(), field_name='empresas', label="Empresa")
+    class Meta(EventoMovimentacaoFilterSet.Meta):
+        model = EventoEmpresa
+        fields = EventoMovimentacaoFilterSet.Meta.fields + ['empresa'] # Adiciona o campo 'empresa'

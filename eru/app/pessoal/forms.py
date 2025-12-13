@@ -1,7 +1,7 @@
 import re
 from django import forms
 from django.db.models import Q
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 from django.contrib.auth.models import User
 from datetime import date
 from django.conf import settings
@@ -131,6 +131,70 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
             'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': 'Valor', 'data-i18n': '[placeholder]common.value'}),
             'motivo': forms.Select(attrs={'class': 'form-select'}),
         }
+    def get_context_filters(self, cleaned_data):
+        """
+        Deve ser sobrescrito pelos formularios filhos
+        Retorna um dicionario de filtros (Q objects ou kwargs) que definem o 'contexto' do conflito
+        Ex: {'empresas__id__in': [1, 2]} ou {'funcionario': obj_funcionario}
+        """
+        raise NotImplementedError("Subclasses devem implementar 'get_context_filters'.")
+
+    def get_model_class(self):
+        """
+        Deve ser sobrescrito pelos formularios filhos.
+        Retorna a classe do modelo Django associada ao formulario.
+        Ex: return EventoCargo
+        """
+        raise NotImplementedError("Subclasses devem implementar 'get_model_class'.")
+
+    def clean(self):
+        # A logica centralizada de validacao de sobreposicao.
+        cleaned_data = super().clean()
+
+        inicio = cleaned_data.get('inicio')
+        fim = cleaned_data.get('fim')
+        evento_pai = cleaned_data.get('evento')
+
+        # Se campos criticos estiverem faltando, paramos aqui (validacao basica falhou)
+        if not all([inicio, evento_pai]):
+            return cleaned_data
+
+        # Garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
+        if fim and inicio > fim:
+            raise forms.ValidationError('<span data-i18n="sys.endDateLowerThanStart"></span>')
+
+        # 1. Obter os filtros de contexto especificos do formulario filho (Cargo, Funcionario, Empresa)
+        context_filters = self.get_context_filters(cleaned_data)
+        
+        # 2. Obter o modelo correto para consultar (EventoCargo, EventoFuncionario, etc.)
+        ModelClass = self.get_model_class()
+
+        # Adiciona o filtro base comum a todos: mesmo tipo de evento pai
+        base_filters = Q(evento=evento_pai)
+        
+        # Combina os filtros base com os filtros de contexto fornecidos pelo filho
+        full_filters = base_filters & Q(**context_filters) if isinstance(context_filters, dict) else base_filters & context_filters
+
+        # Logica de sobreposicao
+        q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
+        q_fechado = Q(
+            fim__isnull=False,
+            inicio__lte=fim if fim else date.max,
+            fim__gte=inicio
+        )
+
+        conflitos_possiveis = ModelClass.objects.filter(
+            full_filters # Aplica todos os filtros de contexto e evento
+        ).exclude(
+            pk=self.instance.pk # Exclui o objeto atual se for uma edicao
+        ).filter(
+            q_aberto | q_fechado # Aplica a logica de sobreposicao combinada
+        )
+
+        if conflitos_possiveis.exists():
+            raise forms.ValidationError('<span data-i18n="personal.event.form.eventErroDuplicatedPeriod"></span>') 
+            
+        return cleaned_data
 
 class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
@@ -141,70 +205,48 @@ class EventoCargoForm(EventoMovimentacaoBaseForm):
         super().__init__(*args, **kwargs)
         if user:
             self.fields['empresas'].queryset = user.profile.empresas.all()
-    def clean(self):
-        # evento_cargo nao pode conflitar datas com eventos "finalizados" anteriores
-        cleaned_data = super().clean()
-
-        inicio = cleaned_data.get('inicio')
-        fim = cleaned_data.get('fim')
-        evento_pai = cleaned_data.get('evento')
-        empresas_qs = cleaned_data.get('empresas') # QuerySet de Empresas
-
-        # Se algum campo critico estiver faltando devido a um erro de validacao anterior, paramos aqui.
-        if not all([inicio, evento_pai, empresas_qs]):
-            return cleaned_data
-
-        # Garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
-        if fim and inicio > fim:
-            raise forms.ValidationError("A data de inicio nao pode ser posterior a data de fim.")
-
-        # Lista IDs das empresas para construcao da consulta Q
-        empresa_ids = empresas_qs.values_list('id', flat=True)
-
-        # ---------------------------------------------------------------
-        # LÓGICA DE VERIFICAÇÃO DE SOBREPOSIÇÃO REVISADA E CORRIGIDA:
-        # ---------------------------------------------------------------
-
-        # Um registro existente conflita se:
-        # A) Ele está em aberto (fim IS NULL) E sua data de início é <= à data de fim do novo registro (ou None)
-        # B) Ele tem uma data de fim, e seus períodos se sobrepõem.
-
-        # Condição 1: Conflito com registros existentes que estão em aberto (fim=None)
-        q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
-
-        # Condição 2: Conflito com registros existentes que já foram fechados (fim IS NOT NULL)
-        q_fechado = Q(
-            fim__isnull=False,
-            # O registro existente começa antes do novo registro terminar (ou é None) E
-            inicio__lte=fim if fim else date.max,
-            # O registro existente termina depois do novo registro começar
-            fim__gte=inicio
-        )
-
-        # Combinamos as duas condições possíveis de conflito
-        conflitos_possiveis = EventoCargo.objects.filter(
-            evento=evento_pai,
-            empresas__id__in=empresa_ids,
-        ).exclude(
-            pk=self.instance.pk # Exclui o objeto atual se for uma edição
-        ).filter(
-            q_aberto | q_fechado # Aplica a lógica de sobreposição combinada
-        )
-
-        if conflitos_possiveis.exists():
-            # Melhorar a mensagem de erro para o usuário final
-            msg = (
-                "Já existe um registro de movimentação que conflita com as datas e empresas selecionadas. "
-                "Períodos de conflito identificados. Por favor, ajuste as datas do novo evento."
-            )
-            # Você pode até listar os IDs dos registros conflitantes para depuração:
-            # print(f"Conflitos com PKS: {list(conflitos_possiveis.values_list('pk', flat=True))}")
-            raise forms.ValidationError(msg)
-
-        return cleaned_data
+    def get_model_class(self):
+        return EventoCargo
+    def get_context_filters(self, cleaned_data):
+        # Implementa o filtro especifico para Cargo: checa conflito APENAS nas empresas selecionadas
+        empresas_qs = cleaned_data.get('empresas')
+        if empresas_qs:
+            empresa_ids = empresas_qs.values_list('id', flat=True)
+            # Retorna um dicionario de kwargs para o filtro Q(**kwargs)
+            return {'empresas__id__in': empresa_ids}
+        return {} # Retorna vazio se nao houver empresas (embora 'empresas' deva ser obrigatorio neste contexto)
+    
 
 class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoFuncionario
         fields = EventoMovimentacaoBaseForm.Meta.fields + ['funcionario']
         widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
+    def get_model_class(self):
+        return EventoFuncionario
+    def get_context_filters(self, cleaned_data):
+        # Implementa o filtro especifico para Funcionario: checa conflito APENAS para funcionario alvo
+        funcionario = cleaned_data.get('funcionario')
+        if funcionario:
+            # Retorna um dicionario simples
+            return {'funcionario': funcionario}
+        return {}
+
+class EventoEmpresaForm(EventoMovimentacaoBaseForm):
+    class Meta(EventoMovimentacaoBaseForm.Meta):
+        model = EventoEmpresa
+        fields = EventoMovimentacaoBaseForm.Meta.fields + ['empresas']
+        widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['empresas'].queryset = user.profile.empresas.all()
+    def get_model_class(self):
+        return EventoEmpresa
+    def get_context_filters(self, cleaned_data):
+        # Implementa o filtro especifico para Empresa: checa conflito APENAS nas empresas selecionadas
+        empresas_qs = cleaned_data.get('empresas')
+        if empresas_qs:
+            empresa_ids = empresas_qs.values_list('id', flat=True)
+            return {'empresas__id__in': empresa_ids}
+        return {}

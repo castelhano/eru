@@ -33,11 +33,13 @@
     {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('c+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('c+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {display: false}){% endif %}
 
+
     const menuFerramentas = new canvasNavDropdown({
         name: 'Ferramen<b><u>t</u></b>as',
         icon: 'bi bi-tools',
         'data-i18n': 'common.tool__plural__bold:t',
         itens: [
+        {% if perms.pessoal.view_eventoempresa %}{name: '<b><u>E</u></b>ventos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventos_related' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:e', keybind: ['e', ()=>{if(menuFerramentas.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.change_evento %}{name: '<b><u>R</u></b>eplicar eventos', id:'menu_evento_copy', href: '{% url 'pessoal:evento_related_copy' %}', 'data-i18n': 'personal.event.replicateEvents__bold:r', keybind: ['r', ()=>{if(menuFerramentas.isOpen()){document.getElementById('menu_evento_copy').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
@@ -51,6 +53,7 @@
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
+    {% if perms.pessoal.view_eventoempresa %}appKeyMap.bind('t+e', ()=>{document.getElementById('menu_eventos_globais').click()}, {display: false}){% endif %}
     {% if perms.pessoal.change_evento %}appKeyMap.bind('t+r', ()=>{document.getElementById('menu_evento_copy').click()}, {keydown: false, keyup: true, display: false}){% endif %}
 
     

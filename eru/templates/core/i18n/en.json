@@ -99,14 +99,14 @@
         "checkAll": "Check all $1",
         "includeInactiveEntries": "Include inactive entries",
         "notInformed": "Not informed",
-        "registerOf": "Register of $1"
+        "registerOf": "Register of $1",
+        "startDate": "Start Date"
     },
     "company": {
         "companyName": "Company name",
         "municipalReg": "Municipal Reg",
         "stateReg": "State Reg",
-        "zipCode": "Zip code"
-        
+        "zipCode": "Zip code"  
     },
     "sys": {
         "400": "[400] Bad request, please check with your system administrator",
@@ -141,7 +141,7 @@
         "recordErrorOnFilterDuplicated": "Duplicated registry found ($1)",
         "recordErrorOnSaved": "Error on saving record",
         "recordUpdated": "Record updated successfully",
-        "startDate": "Start Date",
+        "endDateLowerThanStart": "The end date cannot be earlier than the start date",
         "i18n":{
             "translationFileNotFound": "No translation file found for selected language"
         },

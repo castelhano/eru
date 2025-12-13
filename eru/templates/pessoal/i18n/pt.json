@@ -79,11 +79,13 @@
             }
         },
         "event": {
+            "globalEvents": "Eventos Globais",
             "groupEvent": "Evento de Grupo",
             "changeReason": "Motivo da mudança",
             "baseModel": "Modelo Base",
             "replicateEvents": "Replicar eventos",
             "form": {
+                "eventErroDuplicatedPeriod": "Existe registro ativo no periodo informado",
                 "groupName": "Nome do grupo",
                 "groupEventRegister": "Registro de evento de grupo",
                 "multilineFormula": "Fórmula de várias linhas",

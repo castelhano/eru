@@ -1,7 +1,9 @@
 <div class="card-body tab-content">
     <h5 class="card-title"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.event">Event</b></h5>
     <h6 class="mb-3 text-orange">
-        {% if related == 'cargo' %}
+        {% if related == 'empresa' %}
+            <span data-i18n="personal.event.globalEvents">Eventos Globais</span>
+        {% elif related == 'cargo' %}
             <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{model.nome}}
         {% elif related == 'funcionario' %}
             <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{model.matricula}} - {{model.nome}}
@@ -32,7 +34,7 @@
                 <div class="row">
                     <div class="col">{{form.empresas}}</div>
                 </div>
-                <input type="hidden" name="{{related}}" value="{{model.id|safe}}">
+                <input type="hidden" name="{{related}}" value="{{model.id|safe|default:0}}">
             </div>
             <div class="col col-lg">
                 <div class="row g-1">

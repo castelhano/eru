@@ -287,11 +287,10 @@ class EventoMovimentacao(models.Model):
 # 2) Cargo
 # 3) Empresa (mais generico)
 ##########
-# !! deve ser tratado duplicidade de evento no mesmo escopo
+# !! deve ser tratado duplicidade de evento no mesmo escopo no form
 class EventoEmpresa(EventoMovimentacao):
     empresas = models.ManyToManyField(Empresa, related_name="eventos_empresa")
 auditlog.register(EventoEmpresa)
-
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
