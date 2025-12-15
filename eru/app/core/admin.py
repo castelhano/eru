@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.contrib.auth.models import User, Group
 from .models import Empresa
+from .forms import UserForm, GroupForm
 
 @admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
@@ -14,3 +17,17 @@ class LogEntryAdmin(admin.ModelAdmin):
         return super().get_queryset(request)
 
 admin.site.register(Empresa)
+
+# Custom User Admin
+class CustomUserAdmin(UserAdmin):
+    form = UserForm
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+# Custom Group Admin
+class CustomGroupAdmin(GroupAdmin):
+    form = GroupForm
+
+admin.site.unregister(Group)
+admin.site.register(Group, CustomGroupAdmin)

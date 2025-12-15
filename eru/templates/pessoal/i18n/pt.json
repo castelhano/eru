@@ -80,7 +80,7 @@
         },
         "event": {
             "globalEvents": "Eventos Globais",
-            "groupEvent": "Evento de Grupo",
+            "groupEvent": "Grupo de Evento",
             "changeReason": "Motivo da mudança",
             "baseModel": "Modelo Base",
             "replicateEvents": "Replicar eventos",

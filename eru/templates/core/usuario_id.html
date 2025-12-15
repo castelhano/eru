@@ -58,59 +58,6 @@
 
 <script>
   {% block add_script %}
-  const form = new jsForm(document.getElementById('app_form'), {
-    selectPopulate: [
-      {
-        target: document.getElementById('id_empresas'),
-        url: '{% url 'get_empresas' %}',
-        params: 'usuario=new',
-        then: ()=>{
-          let selected = []; // Armazena empresas atuais habilitadas para o usuario
-          {% for empresa in usuario.profile.empresas.all %} selected.push('{{empresa.id|safe}}'); {% endfor %}
-          
-          window.selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{
-            selected: selected,
-          });
-        }
-      },
-      {% if not usuario.is_superuser %}
-      {
-        target: document.getElementById('id_grupos'),
-        url: '{% url 'get_grupos' %}',
-        params: 'usuario=new',
-        value: 'name',
-        then: ()=>{
-          let selected = [] // Armazena os grupos atuais do usuario
-          {% for grupo in usuario.groups.all %} selected.push('{{grupo.id|safe}}'); {% endfor %}
-          window.selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {
-            selected: selected,
-            canFilter: true,
-          });
-        }
-      },
-      {
-        target: document.getElementById('id_perms'),
-        url: '{% url 'get_user_perms' %}',
-        params: 'usuario=new',
-        then: (data)=>{
-          let options = {};
-          let selected = [] // Armazena os perms atuais do usuario
-          {% for perm in usuario.user_permissions.all %} selected.push('{{perm.pk|safe}}'); {% endfor %}
-          for(item in data){
-            let opt = { value: String(data[item].pk), 'data-group': String(data[item].fields.app_label) };
-            opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
-            options[String(data[item].pk)] = opt;
-          }
-          window.selectPerms = new jsSelectm(document.getElementById('id_perms'), {
-            sort: false,
-            options: options,
-            canFilter: true,
-            selected: selected,
-          });
-        }
-      }
-      {% endif %}
-    ]
-  })  
+  const empresas = new jsSelectm('#id_empresas', {})
   {% endblock %}
 </script>

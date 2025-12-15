@@ -1,13 +1,14 @@
 import re, os, json
 from asteval import Interpreter
-from builtins import SyntaxError, IndentationError 
+import math
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
-from django.apps import apps
+from django.db import transaction
+# from django.apps import apps
 from auditlog.models import LogEntry
-from .models import Empresa, Settings, Job
+from .models import Empresa, Settings, Job, Profile
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
@@ -15,6 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.conf import settings as ROOT
 from django.http import HttpResponse, JsonResponse
+
 
 
 @login_required
@@ -215,7 +217,8 @@ def empresa_id(request, id):
 @permission_required('auth.change_user', login_url="/handler/403")
 def usuario_id(request, id):
     usuario = User.objects.get(id=id)
-    form = UserForm(instance=usuario)
+    profile, created = Profile.objects.get_or_create(user=usuario)
+    form = UserForm(instance=usuario, initial={'empresas': profile.empresas.all()})
     return render(request,'core/usuario_id.html',{'form':form,'usuario':usuario})
 
 @login_required
@@ -249,30 +252,36 @@ def usuario_update(request, id):
     form = UserForm(request.POST, instance=usuario)
     if form.is_valid():
         registro = form.save(commit=False)
-        if 'force_password_change' in request.POST:
-            registro.profile.force_password_change = True
-        else:
-            registro.profile.force_password_change = False
+        with transaction.atomic():
+            registro.save()
+            profile, created = Profile.objects.get_or_create(user=registro)
+            form.save_m2m()
+            profile.empresas.set(form.cleaned_data['empresas'])
+            profile.save()
+        # if 'force_password_change' in request.POST:
+        #     registro.profile.force_password_change = True
+        # else:
+        #     registro.profile.force_password_change = False
         
-        if 'reset_password' in request.POST and request.POST['reset_password'] != '':
-            registro.set_password(request.POST['reset_password'])
-            registro.profile.force_password_change = True
+        # if 'reset_password' in request.POST and request.POST['reset_password'] != '':
+        #     registro.set_password(request.POST['reset_password'])
+        #     registro.profile.force_password_change = True
             
-        registro.save()
-        registro.groups.clear()
-        for grupo in request.POST.getlist('grupos'):
-            g = Group.objects.get(id=grupo)
-            g.user_set.add(registro)
+        # registro.save()
+        # registro.groups.clear()
+        # for grupo in request.POST.getlist('grupos'):
+        #     g = Group.objects.get(id=grupo)
+        #     g.user_set.add(registro)
         
-        registro.user_permissions.clear()
-        for perm in request.POST.getlist('perms'):
-            p = Permission.objects.get(id=perm)
-            p.user_set.add(registro)
+        # registro.user_permissions.clear()
+        # for perm in request.POST.getlist('perms'):
+        #     p = Permission.objects.get(id=perm)
+        #     p.user_set.add(registro)
         
-        registro.profile.empresas.clear()
-        for empresa in request.POST.getlist('empresas'):
-            e = Empresa.objects.get(id=empresa)
-            registro.profile.empresas.add(e)
+        # registro.profile.empresas.clear()
+        # for empresa in request.POST.getlist('empresas'):
+        #     e = Empresa.objects.get(id=empresa)
+        #     registro.profile.empresas.add(e)
         messages.success(request,'Usuario <b>' + registro.username + '</b> alterado')
         return redirect('usuario_id',id)
     else:
@@ -584,27 +593,28 @@ def get_group_perms(request):
 
 def asteval_run(expression, vars_dict):
     # expression espera uma string com calculo a ser realizado
-    aeval = Interpreter(builtins_readonly=True)
+    whitelist = {
+        'sqrt': math.sqrt,
+        'sin': math.sin,
+        'cos': math.cos,
+        'log': math.log,
+        'e': math.e,
+        'pi': math.pi,
+        # Adicione operadores lógicos se necessário (and, or, not são nativos)
+        'True': True,
+        'False': False,
+    }
+    aeval = Interpreter(
+        minimal=True,
+        user_symbols=whitelist,
+        use_numpy=False,
+        with_if=True,
+        with_ifexp=True,
+        builtins_readonly=True
+    )
     aeval.symtable.update(vars_dict)
     result = aeval(expression)      # tenta interpretar codigo
     if aeval.error:
         error_message = aeval.error[0].get_error()
         return {'status': False, 'type': error_message[0], 'message': error_message[1]}
     return {'status': True, 'result': result }
-
-# @csrf_exempt
-@login_required
-def formula_validate(request):
-    try:
-        data = json.loads(request.body)
-        expression = data.get('valor', '').strip()
-        if not expression:
-            return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressão vazia'}, status=400)
-        result = asteval_run(expression, {'F_pne': True})
-        if not result['status']:
-            return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
-        return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval válida'}, status=200)
-    except json.JSONDecodeError as e:
-        return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)

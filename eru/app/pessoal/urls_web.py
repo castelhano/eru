@@ -54,4 +54,5 @@ urlpatterns = [
     path('add_motivo_reajuste',views.add_motivo_reajuste,name='add_motivo_reajuste'),
     path('update_grupo_evento', views.update_grupo_evento,name='update_grupo_evento'),
     path('delete_grupo_evento', views.delete_grupo_evento,name='delete_grupo_evento'),
+    path('api/formula_validate',views.formula_validate,name='formula_validate'),
 ]

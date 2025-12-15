@@ -84,6 +84,7 @@ class Profile(models.Model):
         ]
         default_permissions = []
 auditlog.register(User, exclude_fields=['last_login'])
+auditlog.register(Profile, m2m_fields={"empresas"}, exclude_fields=['config'])
 
 class Settings(models.Model):
     quantidade_caracteres_senha = models.PositiveIntegerField(default=8)

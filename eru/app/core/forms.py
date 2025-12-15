@@ -1,12 +1,20 @@
 from django import forms
 from django.forms import Field
 from .models import Empresa, Settings
-# from datetime import date
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext_lazy as _
+from itertools import groupby
 
 Field.default_error_messages['required'] = _('<span data-i18n="sys.fieldRequired">Campo obrigatório</span>')
 Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Campo duplicado, precisa ser unico</span>')
+
+def get_grouped_permissions():
+    permissions = Permission.objects.all().select_related('content_type').order_by('content_type__app_label', 'codename')
+    grouped = groupby(permissions, lambda p: p.content_type.app_label)
+    choices = []
+    for app_label, perms in grouped:
+        choices.append((app_label, [(p.id, f"{p.content_type.app_label}: {p.codename}") for p in perms]))
+    return choices
 
 class EmpresaForm(forms.ModelForm):
     class Meta:
@@ -33,7 +41,7 @@ class EmpresaForm(forms.ModelForm):
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active']
+        fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active', 'groups', 'user_permissions']
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
     first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
@@ -41,13 +49,36 @@ class UserForm(forms.ModelForm):
     is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all(),
+        required=False,
+    )
+    user_permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        required=False,
+    )
+    empresas = forms.ModelMultipleChoiceField(
+        queryset=Empresa.objects.all(),
+        required=False,
+    )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['user_permissions'].choices = get_grouped_permissions()
 
 class GroupForm(forms.ModelForm):
     class Meta:
         model = Group
         fields = ['name','permissions']
     name = forms.CharField(error_messages={'required': 'Nome do grupo requerido', 'unique': 'Grupo com este nome ja existe'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['permissions'].choices = get_grouped_permissions()
 
 
 class SettingsForm(forms.ModelForm):

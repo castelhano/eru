@@ -60,6 +60,7 @@ tipo.onchange = (ev)=>{
         valorMask.updateOptions(formulaMask);
         autocomplete.options.enable = true;
     }
+    submitBtn.disabled = true; // ao alterar o tipo obriga validar formula novamente
 }
 
 const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
@@ -87,7 +88,7 @@ const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
 
 
 async function syntaxCheck() {
-    const url = "{% url 'formula_validate' %}";
+    const url = "{% url 'pessoal:formula_validate' %}";
     responseValidade.textContent = "Validando sintaxe no servidor...";
     
     try {

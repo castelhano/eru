@@ -43,6 +43,40 @@ class Autocomplete {
     }
 
     /**
+     * Encontra a posicao do ultimo delimitador (espaco ou quebra de linha) antes da posicao dada
+     * @private
+     * @param {string} text - O texto do input
+     * @param {number} pos - Posicao do cursor
+     * @returns {number} Posicao de inicio da palavra
+     */
+    _findLastDelimiter(text, pos) {
+        const delimiters = [' ', '\n'];
+        let lastPos = -1;
+        for (let delim of delimiters) {
+            let idx = text.lastIndexOf(delim, pos - 1);
+            if (idx > lastPos) lastPos = idx;
+        }
+        return Math.max(lastPos + 1, 0);
+    }
+
+    /**
+     * Encontra a posicao do proximo delimitador (espaco ou quebra de linha) apos a posicao dada
+     * @private
+     * @param {string} text - O texto do input
+     * @param {number} pos - Posicao do cursor
+     * @returns {number} Posicao de fim da palavra
+     */
+    _findNextDelimiter(text, pos) {
+        const delimiters = [' ', '\n'];
+        let nextPos = text.length;
+        for (let delim of delimiters) {
+            let idx = text.indexOf(delim, pos);
+            if (idx !== -1 && idx < nextPos) nextPos = idx;
+        }
+        return nextPos;
+    }
+
+    /**
      * Cria e anexa o conteiner de sugestoes ao DOM
      * @private
      */
@@ -60,14 +94,13 @@ class Autocomplete {
      */
     _handleInput(event) {
         if(!this.options.enable){return} // Se this.options.enable == false desativa analise do input
-        if(event.data == ' ' || event.data == null){  // se a tecla digitada for espaco nao realiza sugestao
+        if(event.data == ' ' || event.data == '\n' || event.data == null){  // se a tecla digitada for espaco ou quebra de linha nao realiza sugestao
             this._hideResults();
             return;
         }
         let cursorPosition = this.inputElement.selectionStart;
-        let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
-        let end = this.inputElement.value.indexOf(' ', cursorPosition);
-        end = (end === -1) ? this.inputElement.value.length : end;
+        let start = this._findLastDelimiter(this.inputElement.value, cursorPosition);
+        let end = this._findNextDelimiter(this.inputElement.value, cursorPosition);
         const query = this.inputElement.value.substring(start, end);
         
         if (query.length >= this.options.minLength) {
@@ -134,9 +167,8 @@ class Autocomplete {
     _selectResult(result) {
         result = this.options.prefix + result + this.options.posfix;
         let cursorPosition = this.inputElement.selectionStart;
-        let start = Math.max(this.inputElement.value.lastIndexOf(' ', cursorPosition - 1) + 1, 0);
-        let end = this.inputElement.value.indexOf(' ', cursorPosition);
-        end = (end === -1) ? this.inputElement.value.length : end;
+        let start = this._findLastDelimiter(this.inputElement.value, cursorPosition);
+        let end = this._findNextDelimiter(this.inputElement.value, cursorPosition);
         this.inputElement.value = this.inputElement.value.slice(0, start) + result + this.inputElement.value.slice(end);
         this.inputElement.focus();
         this.inputElement.setSelectionRange(start + result.length, start + result.length);
@@ -217,9 +249,9 @@ class Autocomplete {
 
 
     /**
-     * Adiciona destaque visual ao texto correspondente no item
+     * Atualiza os dados para autocompletar
      * @public
-     * @param {Array<HTMLLIElement>} data - Lista com opcoes de sugestao para autocompletar
+     * @param {Array<string>} data - Lista com opcoes de sugestao para autocompletar
      */
-    setData(data){ this.data }
+    setData(data) { this.data = data; }
 }

@@ -29,30 +29,7 @@
 
 <script>
   {% block add_script %}
-  const form = new jsForm(document.getElementById('app_form'), {
-    selectPopulate: [
-      {target: document.getElementById('id_empresas'), url: '{% url 'get_empresas' %}', params: 'usuario=new',then: ()=>{const selectEmpresas = new jsSelectm(document.getElementById('id_empresas'),{emptySelectMessage: '<small class="text-body-secondary">Nenhuma empresa disponivel</small>'});}},
-      {target: document.getElementById('id_grupos'), url: '{% url 'get_grupos' %}', params: 'usuario=new', value: 'name', then: ()=>{const selectGrupos = new jsSelectm(document.getElementById('id_grupos'), {canFilter: true, emptySelectMessage: '<small class="text-body-secondary">Nenhum grupo cadastrado</small>'});}},
-      {
-        target: document.getElementById('id_perms'),
-        url: '{% url 'get_user_perms' %}',
-        params: 'usuario=new',
-        then: (data)=>{
-          let options = {};
-          for(let item in data){
-            let opt = { value: data[item].pk, 'data-group': String(data[item].fields.app_label) };
-            opt.text = `<span class="text-purple">${data[item].fields.app_label}</span>: ${data[item].fields.description}`;
-            options[data[item].pk] = opt;
-          }
-          const selectPerms = new jsSelectm(document.getElementById('id_perms'), {
-            sort: false,
-            options: options,
-            canFilter: true,
-          });
-        }
-      }
-    ]
-  })
+  const form = new jsForm(document.getElementById('app_form'), {})
   
   {% endblock %}
 </script>
