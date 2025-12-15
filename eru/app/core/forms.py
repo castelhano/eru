@@ -5,17 +5,18 @@ from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from itertools import groupby
 from functools import lru_cache
+from django.utils.safestring import mark_safe
 
 Field.default_error_messages['required'] = _('<span data-i18n="sys.fieldRequired">Campo obrigatório</span>')
 Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Campo duplicado, precisa ser unico</span>')
 
 @lru_cache(maxsize=1)
 def get_grouped_permissions():
-    permissions = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label', 'codename')
+    permissions = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label','content_type__model', 'codename')
     grouped = groupby(permissions, lambda p: p.content_type.app_label)
     choices = []
     for app_label, perms in grouped:
-        choices.append((app_label, [(p.id, f"{p.content_type.app_label}: {p.codename}") for p in perms]))
+        choices.append((app_label, [(p.id, f"<span class='text-purple'>{p.content_type.model}</span>: {p.name}") for p in perms]))
     return choices
 
 class EmpresaForm(forms.ModelForm):

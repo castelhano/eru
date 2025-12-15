@@ -6,7 +6,6 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
 from django.db import transaction
-# from django.apps import apps
 from auditlog.models import LogEntry
 from .models import Empresa, Settings, Job, Profile
 from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm

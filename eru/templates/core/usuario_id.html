@@ -59,9 +59,11 @@
 <script>
   {% block add_script %}
   const empresas = new jsSelectm('#id_empresas', {})
+  {% if not usuario.is_superuser %}
   const grupos = new jsSelectm('#id_groups', {})
   const permissoes = new jsSelectm('#id_user_permissions', {
     canFilter: true
   })
+  {% endif %}
   {% endblock %}
 </script>
