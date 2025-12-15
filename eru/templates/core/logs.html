@@ -55,9 +55,13 @@
         <div class="row mt-3">
           <div class="col-lg-auto">
             <select name="content_type" id="id_content_type" style="display: none;" multiple>
-              {% for model in models %}
-              <option value="{{model.id}}" data-group="{{model.app_label}}">{{model.model}}</option>                
-              {% endfor %}        
+              {% for app, models_in_app in grouped_models.items %}
+              <optgroup label="{{app|capfirst}}">
+                {% for model in models_in_app %}
+                <option value="{{model.id}}">{{model.model|capfirst}}</option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
             </select>
           </div>
           <div class="col-lg border-start mt-3 mt-lg-0 pt-0">

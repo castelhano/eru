@@ -4,12 +4,14 @@ from .models import Empresa, Settings
 from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from itertools import groupby
+from functools import lru_cache
 
 Field.default_error_messages['required'] = _('<span data-i18n="sys.fieldRequired">Campo obrigatório</span>')
 Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Campo duplicado, precisa ser unico</span>')
 
+@lru_cache(maxsize=1)
 def get_grouped_permissions():
-    permissions = Permission.objects.all().select_related('content_type').order_by('content_type__app_label', 'codename')
+    permissions = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label', 'codename')
     grouped = groupby(permissions, lambda p: p.content_type.app_label)
     choices = []
     for app_label, perms in grouped:
@@ -49,19 +51,9 @@ class UserForm(forms.ModelForm):
     is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
-    groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all(),
-        required=False,
-    )
-    user_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
-        required=False,
-    )
-    empresas = forms.ModelMultipleChoiceField(
-        queryset=Empresa.objects.all(),
-        required=False,
-    )
-
+    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
+    user_permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
+    empresas = forms.ModelMultipleChoiceField(queryset=Empresa.objects.all(), required=False)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['user_permissions'].choices = get_grouped_permissions()
@@ -70,12 +62,8 @@ class GroupForm(forms.ModelForm):
     class Meta:
         model = Group
         fields = ['name','permissions']
-    name = forms.CharField(error_messages={'required': 'Nome do grupo requerido', 'unique': 'Grupo com este nome ja existe'},widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
-    permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
-        required=False,
-    )
-
+    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+    permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['permissions'].choices = get_grouped_permissions()

@@ -79,7 +79,14 @@ def logs(request):
             max_entries = int(request.POST['entries'])
         context['logs'] = context['logs'][:max_entries]     # limita resultados da consulta
     target_apps = ['auth','core','trafego','pessoal']
-    context['models'] = ContentType.objects.filter(app_label__in=target_apps).order_by('app_label', 'model')
+    models = ContentType.objects.filter(app_label__in=target_apps).order_by('app_label', 'model')
+    grouped_models = {}
+    for model in models:
+        app = model.app_label
+        if app not in grouped_models:
+            grouped_models[app] = []
+        grouped_models[app].append(model)
+    context['grouped_models'] = grouped_models
     return render(request, 'core/logs.html', context)
 
 @login_required

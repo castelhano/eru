@@ -27,19 +27,8 @@
 <script>
   {% block add_script %}
 
-  let options = {};
-  {% for perm in permissions %}
-    options[{{perm.pk|safe}}] = {
-      value: '{{perm.pk|safe}}',
-      text: '<span class="text-purple">{{perm.content_type.model}}</span>: {{perm.name}}',
-      'data-group': '{{perm.content_type.app_label}}'
-    }
-  {% endfor %}
-
-  
   const select = new jsSelectm('#id_permissions', {
     title: 'Permissões',
-    options: options,
     canFilter: true
   });
   
