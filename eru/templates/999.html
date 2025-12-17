@@ -3,10 +3,6 @@
 {% block title %}Handler: 999{% endblock %}
 
 
-<style>
-{% block style %} {% include 'pessoal/_form_evento_related_modal_style.css' %} {% endblock style %}
-</style>
-
 
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
@@ -17,6 +13,7 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
+<input type="month" class="form-control">
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -191,12 +188,6 @@ appKeyMap.showKeymap() // Exibe modal com shortcuts disponiveis</code></pre>
 <script>
 {% block add_script %}
 
-const data = ['F_pne', 'F_he50', 'F_he100']
-
-const textareaAutocomplete = new Autocomplete('#textareaAutocomplete', data, {
-    enable: true
-});
-const textAutocomplete = new Autocomplete('#textAutocomplete', data);
 const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
 const salario = IMask(document.getElementById('id_salario'), {
     mask: Number,

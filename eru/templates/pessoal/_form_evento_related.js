@@ -28,15 +28,24 @@ const formulaMask = {
 const tipo = document.getElementById('id_tipo');
 const valor = document.getElementById('id_valor');
 const responseValidade = document.getElementById('responseValidate');
-const validadeBtn = document.getElementById('id_validade');
+const validateBtn = document.getElementById('id_validate');
 const submitBtn = document.getElementById('submit');
+
+const submitShortcut = appKeyMap.getShortcut('alt+g');
+submitShortcut['data-i18n'] = 'personal.event.form.saveOrValidateFormula';
+submitShortcut.desc = i18n.getEntry(submitShortcut['data-i18n']) || 'Salvar ou Validar formula';
+submitShortcut.method = ()=>{
+    if(submitBtn.disabled){validateBtn.click()}
+    else{submitBtn.click()}
+}
+
 
 valor.oninput = ()=>{
 // ao alterar valor, exige validacao
 submitBtn.disabled = true;
 responseValidade.innerHTML = '';
 }
-validadeBtn.onclick = ()=>{syntaxCheck()};
+validateBtn.onclick = ()=>{syntaxCheck()};
 const valorMask = IMask(valor, tipo.value == 'V' ? numberMaks : formulaMask)
 
 const form = new jsForm(document.getElementById('app_form'), {

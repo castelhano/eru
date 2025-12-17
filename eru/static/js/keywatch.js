@@ -239,7 +239,14 @@ class Keywatch{
             this.handlers.keyup[event.context][event.scope].sort(sortComparator);
         }
     }
-    
+    // retorna (caso exista) shortcut com a combinacao informada
+    getShortcut(scope, options={}){
+        options = Object.assign({keydown: true, keyup: false, context: 'default'}, options)
+        let ajustedScope = this._getScope(scope).join(',');
+        let type = options.keydown ? 'keydown' : options.keyup ? 'keyup' : false;
+        if([undefined, 0].includes(this.handlers?.[type]?.[options.context]?.[ajustedScope])) return false;
+        return this.handlers[type][options.context][ajustedScope][0];
+    }
     // retorna lista com modificadores e key ex. getScope('g+u+i') = [['g','u'], 'i'], mods retornados classificados
     _getScope(scope){
         let keys = scope.split(this.splitKey);

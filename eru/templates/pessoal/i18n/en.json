@@ -89,6 +89,7 @@
                 "groupName": "Group name",
                 "groupEventRegister": "Group event register",
                 "multilineFormula": "Multiline formula",
+                "saveOrValidateFormula": "Save or Validate formula",
                 "trackingHelp": "Tracking used for formula composition for payroll module",
                 "trackingHelp_r1": "It must start with the letter (alpha)",
                 "trackingHelp_r2": "It can contain letters (uppercase and lowercase), numbers and underline",

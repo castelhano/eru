@@ -264,30 +264,6 @@ def usuario_update(request, id):
             form.save_m2m()
             profile.empresas.set(form.cleaned_data['empresas'])
             profile.save()
-        # if 'force_password_change' in request.POST:
-        #     registro.profile.force_password_change = True
-        # else:
-        #     registro.profile.force_password_change = False
-        
-        # if 'reset_password' in request.POST and request.POST['reset_password'] != '':
-        #     registro.set_password(request.POST['reset_password'])
-        #     registro.profile.force_password_change = True
-            
-        # registro.save()
-        # registro.groups.clear()
-        # for grupo in request.POST.getlist('grupos'):
-        #     g = Group.objects.get(id=grupo)
-        #     g.user_set.add(registro)
-        
-        # registro.user_permissions.clear()
-        # for perm in request.POST.getlist('perms'):
-        #     p = Permission.objects.get(id=perm)
-        #     p.user_set.add(registro)
-        
-        # registro.profile.empresas.clear()
-        # for empresa in request.POST.getlist('empresas'):
-        #     e = Empresa.objects.get(id=empresa)
-        #     registro.profile.empresas.add(e)
         messages.success(request,'Usuario <b>' + registro.username + '</b> alterado')
         return redirect('usuario_id',id)
     else:
@@ -493,7 +469,7 @@ def initializeProfileConfig():
 # @version  1.0
 # @since    02/10/2025
 # @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
-# @desc     Arquivos json dever ser salvos na pasta o respectivo app/i18n e nome do arquivo deve corresponder ao idioma
+# @desc     Arquivos json dever ser salvos na pasta app/i18n (do respectivo app) e nome do arquivo deve corresponder ao idioma (ex: pt-BR.json)
 #           ex: en.json ou en-US.json
 @login_required
 def i18n(request):
@@ -555,8 +531,6 @@ def get_user_perms(request):
         else:
             usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
             perms = Permission.objects.filter(user=usuario).exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
-        # obj = serializers.serialize('json', perms)
-        # return HttpResponse(obj, content_type="application/json")
         itens = []
         for item in perms:
             item_dict = {'model': 'auth.perms', 'pk':item.id,'fields': {
@@ -606,7 +580,7 @@ def asteval_run(expression, vars_dict):
         'log': math.log,
         'e': math.e,
         'pi': math.pi,
-        # Adicione operadores lógicos se necessário (and, or, not são nativos)
+        # Adicione operadores logicos se necessario (and, or, not sao nativos)
         'True': True,
         'False': False,
     }

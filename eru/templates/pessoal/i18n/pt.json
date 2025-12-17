@@ -89,6 +89,7 @@
                 "groupName": "Nome do grupo",
                 "groupEventRegister": "Registro de evento de grupo",
                 "multilineFormula": "Fórmula de várias linhas",
+                "saveOrValidateFormula": "Salvar ou Validar fórmula",
                 "trackingHelp": "Rastreamento usado para composição de fórmula para o módulo de folha de pagamento",
                 "trackingHelp_r1": "Deve começar com letra (alfa)",
                 "trackingHelp_r2": "Pode conter letras (maiúsculas e minúsculas), números e sublinhado",
