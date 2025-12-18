@@ -60,6 +60,7 @@ class FuncionarioForm(forms.ModelForm):
     class Meta:
         model = Funcionario
         fields = ['empresa','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne']
+    # empresa = forms.ModelChoiceField(queryset = Empresa.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     matricula = forms.CharField(max_length=6,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus', 'data-i18n': 'personal.common.employeeId'}))
     nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n':'common.name'}))
     apelido = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n': 'personal.common.nickname'}))
@@ -97,6 +98,16 @@ class FuncionarioForm(forms.ModelForm):
     detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'style':'min-height:300px'}))
     status = forms.ChoiceField(required=False, choices=Funcionario.STATUS_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(FuncionarioForm, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['empresa'].queryset = user.profile.empresas.all()
+            self.fields['empresa'].widget.attrs.update({
+                'class': 'form-select',
+                'autofocus': 'autofocus',
+                'placeholder': ' ',
+            })
 
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:

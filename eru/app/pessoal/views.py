@@ -1,8 +1,7 @@
-from builtins import SyntaxError, IndentationError 
-from core.views import asteval_run
 from django.views.generic.edit import CreateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -40,7 +39,7 @@ def cargos(request):
 @permission_required('pessoal.view_funcionario', login_url="/handler/403")
 def funcionarios(request):
     options = {
-        "form": FuncionarioForm()
+        "form": FuncionarioForm(user=request.user)
     }
     if request.method == 'GET':
         if request.GET.get('pesquisa'):
@@ -162,8 +161,6 @@ def motivos_reajuste(request):
 
 
 # Metodos ADD
-# @login_required
-# @permission_required('pessoal.add_setor', login_url="/handler/403")
 class setor_add(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Setor
     form_class = SetorForm
@@ -198,36 +195,67 @@ def cargo_add(request):
         form = CargoForm()
     return render(request,'pessoal/cargo_add.html',{'form':form})
 
-@login_required
-@permission_required('pessoal.add_funcionario', login_url="/handler/403")
-def funcionario_add(request):
-    if request.method == 'POST':
-        form = FuncionarioForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                has_warnings = False
-                registro = form.save(commit=False)
-                if request.POST['foto_data_url'] != '':
-                    prefix = f'{registro.empresa.id}_{registro.matricula}'
-                    today = datetime.now()
-                    timestamp = datetime.timestamp(today)
-                    file_name = f'{prefix}_{timestamp}.png'
-                    result = create_image(request.POST['foto_data_url'], f'{settings.MEDIA_ROOT}/pessoal/fotos', file_name, f'{prefix}_')
-                    if result[0]:
-                        registro.foto = f'pessoal/fotos/{file_name}'
-                    else:
-                        has_warnings = True
-                        messages.warning(request,'<b>Erro ao salvar foto:</b> ' + result[1])
-                registro.save()
-                if not has_warnings:
-                    messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
-                return redirect('pessoal:funcionario_id', registro.id)
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'] + f' <b>{registro.matricula}</b>')
-                return redirect('pessoal:funcionario_add')
-    else:
-        form = FuncionarioForm()
-    return render(request,'pessoal/funcionario_add.html', {'form':form})
+
+class funcionario_add(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Funcionario
+    form_class = FuncionarioForm
+    template_name = 'pessoal/funcionario_add.html'
+    permission_required = 'pessoal.add_funcionario'
+    success_message = "Funcionário %(matricula)s criado com sucesso!"
+
+    def get_form_kwargs(self):
+        """Injeta o usuário no formulário."""
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        """Processamento da foto"""
+        registro = form.save(commit=False)
+        foto_data = self.request.POST.get('foto_data_url')
+
+        if foto_data:
+            file_name = f"{registro.empresa.id}_{registro.matricula}_{datetime.now().timestamp()}.png"
+            create_image(foto_data, f"{settings.MEDIA_ROOT}/pessoal/fotos", file_name)
+            registro.foto = f"pessoal/fotos/{file_name}"
+            
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('pessoal:funcionario_id', kwargs={'pk': self.object.id})
+
+
+
+# @login_required
+# @permission_required('pessoal.add_funcionario', login_url="/handler/403")
+# def funcionario_add(request):
+#     if request.method == 'POST':
+#         form = FuncionarioForm(request.POST, request.FILES, user=request.user)
+#         if form.is_valid():
+#             try:
+#                 has_warnings = False
+#                 registro = form.save(commit=False)
+#                 if request.POST['foto_data_url'] != '':
+#                     prefix = f'{registro.empresa.id}_{registro.matricula}'
+#                     today = datetime.now()
+#                     timestamp = datetime.timestamp(today)
+#                     file_name = f'{prefix}_{timestamp}.png'
+#                     result = create_image(request.POST['foto_data_url'], f'{settings.MEDIA_ROOT}/pessoal/fotos', file_name, f'{prefix}_')
+#                     if result[0]:
+#                         registro.foto = f'pessoal/fotos/{file_name}'
+#                     else:
+#                         has_warnings = True
+#                         messages.warning(request,'<b>Erro ao salvar foto:</b> ' + result[1])
+#                 registro.save()
+#                 if not has_warnings:
+#                     messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
+#                 return redirect('pessoal:funcionario_id', registro.id)
+#             except:
+#                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'] + f' <b>{registro.matricula}</b>')
+#                 return redirect('pessoal:funcionario_add')
+#     else:
+#         form = FuncionarioForm(user=request.user)
+#     return render(request,'pessoal/funcionario_add.html', {'form':form})
 
 @login_required
 @permission_required('pessoal.add_dependente', login_url="/handler/403")
@@ -390,7 +418,7 @@ def funcionario_id(request,id):
     except Exception as e:
         messages.warning(request,'Funcionário <b>não localizado</b>')
         return redirect('pessoal:funcionarios')
-    form = FuncionarioForm(instance=funcionario)
+    form = FuncionarioForm(instance=funcionario, user=request.user)
     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
 @login_required
