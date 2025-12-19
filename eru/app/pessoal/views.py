@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 #--
 from django.core import serializers
+from core.views import asteval_run
 from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
 from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
 from .filters import FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
@@ -300,8 +301,7 @@ def evento_add(request):
 def getEventProps(asDict=False):
     prop_func = get_props(Funcionario)
     props_custom = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
-    return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom 
-
+    return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom
 
 
 @login_required
@@ -833,20 +833,20 @@ def delete_grupo_evento(request):
 
 @login_required
 def formula_validate(request):
-    try:
-        data = json.loads(request.body)
-        expression = data.get('valor', '').strip()
-        if not expression:
-            return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressão vazia'}, status=400)
-        
-        result = asteval_run(expression, getEventProps(True))
-        if not result['status']:
-            return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
-        return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval válida'}, status=200)
-    except json.JSONDecodeError as e:
-        return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)
+    # try:
+    data = json.loads(request.body)
+    expression = data.get('valor', '').strip()
+    if not expression:
+        return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressão vazia'}, status=400)
+    
+    result = asteval_run(expression, getEventProps(True))
+    if not result['status']:
+        return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
+    return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval válida'}, status=200)
+    # except json.JSONDecodeError as e:
+    #     return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
+    # except Exception as e:
+    #     return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)
 
 
 # APIs

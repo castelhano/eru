@@ -177,6 +177,12 @@ class Funcionario(Pessoa):
     @property
     def F_pne(self):
         return self.pne
+    @property
+    def F_anosEmpresa(self):
+        return 0
+    @property
+    def F_diasEmpresa(self):
+        return 0
     class Meta:
         permissions = [
             ("associar_usuario", "Pode associar usuario a funcionário"),
