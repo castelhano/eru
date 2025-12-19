@@ -254,10 +254,10 @@ class Evento(models.Model):
     TIPOS = (
         ("P", mark_safe('<span data-i18n="personal.common.profit">Provento</span>')),
         ("D", mark_safe('<span data-i18n="personal.common.deduction">Desconto</span>')),
-        ("R", mark_safe('<span data-i18n="personal.common.reference">Referencia</span>')),
+        ("R", mark_safe('<span data-i18n="personal.common.reference">Referência</span>')),
     )
     nome = models.CharField(max_length=100, blank=False)
-    rastreio = models.CharField(max_length=40, blank=False, unique=True)
+    rastreio = models.SlugField(unique=True)
     tipo = models.CharField(max_length=3, choices=TIPOS, default='P', blank=False)
     grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
     def __str__(self):
@@ -283,13 +283,9 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT)
     class Meta:
         abstract = True
-    # def save(self, *args, **kwargs):
-    #     # self._finalizar_registros_anteriores()
-    #     super().save(*args, **kwargs)
-
 # Eventos podem ser inseridos para empresas / cargos / funcionarios
 # mesmo evento em escopos diferentes sao aplicados seguindo ordem de prioridade:
-# 1) Funcionario
+# 1) Funcionario (mais especifico)
 # 2) Cargo
 # 3) Empresa (mais generico)
 ##########
