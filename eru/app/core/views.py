@@ -1,27 +1,27 @@
-import re, os, json
+import os, json, math
 from asteval import Interpreter
-import math
-from django.shortcuts import render, redirect
-from django.views.generic import ListView, TemplateView
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse, reverse_lazy
+from django.views import View
+from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
+from django.contrib.auth import views as auth_views, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
-from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.contrib.messages.views import SuccessMessageMixin
 from auditlog.models import LogEntry
-from .models import Empresa, Filial, Settings, Job, Profile
-from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm
+from .models import Empresa, Settings, Profile
+from .constants import DEFAULT_MESSAGES
+from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
-from django.conf import settings as ROOT
-from django.http import HttpResponse, JsonResponse
+from django.conf import settings
+from django.http import JsonResponse
 
 
 
-class IndexView(LoginRequiredMixin, TemplateView):
+class IndexView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'core/index.html'
     def dispatch(self, request, *args, **kwargs):
         if getattr(request.user.profile, 'force_password_change', False):
@@ -29,21 +29,19 @@ class IndexView(LoginRequiredMixin, TemplateView):
             return redirect('change_password')
         return super().dispatch(request, *args, **kwargs)
 
-class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Empresa
     template_name = 'core/empresas.html'
     context_object_name = 'empresas'
     permission_required = 'core.view_empresa'
-    login_url = '/handler/403'
     def get_queryset(self):
         return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
 
-class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Group
     template_name = 'core/grupos.html'
     context_object_name = 'grupos'
     permission_required = 'auth.view_group'
-    login_url = '/handler/403'
     def get_queryset(self):
         queryset = Group.objects.all().order_by('name')
         users_filter = self.request.GET.get('users')
@@ -55,12 +53,11 @@ class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['users_filter'] = self.request.GET.get('users')
         return context
 
-class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = User
     template_name = 'core/usuarios_grupo.html'
     context_object_name = 'usuarios'   
     permission_required = 'auth.view_group'
-    login_url = '/handler/403'
     def get_queryset(self):
         self.grupo = get_object_or_404(Group, pk=self.kwargs.get('id'))        
         return User.objects.filter(groups=self.grupo).order_by('username')
@@ -69,12 +66,11 @@ class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, List
         context['grupo'] = self.grupo
         return context
 
-class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = User
     template_name = 'core/usuarios.html'
     context_object_name = 'usuarios'
     permission_required = 'auth.view_user'
-    login_url = '/handler/403'
     def get_queryset(self):
         return User.objects.all().order_by('username')
     def get_context_data(self, **kwargs):
@@ -89,10 +85,9 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
                 context['usuarios'] = self.get_queryset()
         return context
 
-class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
     template_name = 'core/logs.html'
     permission_required = 'auditlog.view_logentry'
-    login_url = "/handler/403"
     def get_grouped_models(self):
         # agrupa permissions por app_label
         target_apps = ['auth', 'core', 'trafego', 'pessoal']
@@ -126,349 +121,255 @@ class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView
         context['logs'] = logs_qs[:max_entries]
         return self.render_to_response(context)
 
+class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+    model = Settings
+    form_class = SettingsForm
+    template_name = 'core/settings.html'
+    permission_required = 'core.view_settings'
+    success_url = reverse_lazy('core:settings')  # redireciona para mesma pagina ao salvar
+    def get_object(self, queryset=None):
+        try:
+            obj, created = Settings.objects.get_or_create(pk=1)
+            return obj
+        except Settings.MultipleObjectsReturned: messages.error( self.request, '<b>Erro:</b> Identificado duplicatas nas configurações. Contate o administrador.' )
+            return None
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['settings'] = self.object
+        return context
+    def form_valid(self, form):
+        messages.success(self.request, "Configurações atualizadas com sucesso!")
+        return super().form_valid(form)
 
-@login_required
-@permission_required('core.view_settings', login_url="/handler/403")
-def settings(request):
-    try: # Busca configuracao do app
-        settings = Settings.objects.all().get()
-    except: # Caso ainda nao configurado, inicia com configuracao basica
-        if Settings.objects.all().count() == 0:
-            settings = Settings()
-            settings.save()
-        else:
-            settings = None
-            messages.error(request,'<b>Erro::</b> Identificado duplicatas nas configurações do sistema, entre em contato com o administrador.')
-    form = SettingsForm(instance=settings)
-    return render(request,'core/settings.html',{'form':form,'settings':settings})
 
 # METODOS ADD
-@login_required
-@permission_required('core.add_empresa', login_url="/handler/403")
-def empresa_add(request):
-    if request.method == 'POST':
-        form = EmpresaForm(request.POST, request.FILES)
-        if form.is_valid():
+class EmpresaCreateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, BaseCreateView):
+    model = Empresa
+    form_class = EmpresaForm
+    template_name = 'core/empresa_add.html'
+    success_url = reverse_lazy('empresas')
+    permission_required = 'core.add_empresa'
+
+
+class UsuarioCreateView(BaseCreateView):
+    form_class = UserForm
+    template_name = 'core/usuario_add.html'
+    permission_required = 'auth.add_user'
+    def get_success_url(self):
+        return reverse('usuario_id', kwargs={'pk': self.object.id})
+    @transaction.atomic
+    def form_valid(self, form):
+        try:
+            self.object = form.save(commit=False)
+            self.object.set_password(form.cleaned_data['password'])
+            self.object.save()
             try:
-                registro = form.save()
-                messages.success(request,'Empresa <b>' + registro.nome + '</b> criada')
-                return redirect('empresas')
-            except:
-                messages.error(request,'Erro ao inserir empresa [INVALID FORM]')
-                return redirect('empresas')
-    else:
-        form = EmpresaForm()
-    return render(request,'core/empresa_add.html',{'form':form})
+                settings = Settings.objects.get()
+            except Settings.DoesNotExist:
+                settings = Settings()
+            profile = self.object.profile
+            config = initialize_profile_config()
+            if settings.historico_senhas_nao_repetir > 0:
+                config["history_password"] = [self.object.password]
+            else:
+                config["history_password"] = []
+            profile.config = config
+            profile.save()
+            grupos = self.request.POST.getlist('grupos')
+            if grupos:
+                self.object.groups.set(Group.objects.filter(id__in=grupos))
+            perms = self.request.POST.getlist('perms')
+            if perms:
+                self.object.user_permissions.set(Permission.objects.filter(id__in=perms))
+            filiais = self.request.POST.getlist('filiais')
+            if filiais:
+                profile.filiais.set(Filial.objects.filter(id__in=filiais))
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, DEFAULT_MESSAGES['saveError'])
+            return self.form_invalid(form)
 
-@login_required
-@permission_required('auth.add_user', login_url="/handler/403")
-def usuario_add(request):
-    if request.method == 'POST':
-        form = UserForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save(commit=False)
-                registro.set_password(request.POST['password'])
-                registro.save()
-                try: # Carrega configuracoes do app
-                    settings = Settings.objects.all().get()
-                except: # Caso nao gerado configuracoes iniciais carrega definicoes basicas
-                    settings = Settings()
-                profile = registro.profile
-                config = initializeProfileConfig()
-                if settings.historico_senhas_nao_repetir > 0:
-                    config["history_password"] = [registro.password]
-                else:
-                    config["history_password"] = []
-                profile.config = json.dumps(config)
-                profile.save()
-                for grupo in request.POST.getlist('grupos'):
-                    g = Group.objects.get(id=grupo)
-                    g.user_set.add(registro)
-                
-                for perm in request.POST.getlist('perms'):
-                    p = Permission.objects.get(id=perm)
-                    p.user_set.add(registro)
-                
-                for empresa in request.POST.getlist('empresas'):
-                    e = Empresa.objects.get(id=empresa)
-                    registro.profile.empresas.add(e)
-                messages.success(request,'Usuario <b>' + registro.username + '</b> criado')
-                return redirect('usuario_id', registro.id)
-            except:
-                messages.error(request,'Erro ao inserir usuario [INVALID FORM]')
-                return redirect('usuarios')
-    else:
-        form = UserForm()
-    return render(request,'core/usuario_add.html',{'form':form})
-
-@login_required
-@permission_required('auth.add_group', login_url="/handler/403")
-def grupo_add(request):
-    if request.method == 'POST':
-        form = GroupForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request,'Grupo <b>' + registro.name + '</b> criado')
-                return redirect('grupos')
-            except:
-                messages.error(request,'Erro ao inserir grupo [INVALID FORM]')
-                return redirect('grupos')
-    else:
-        form = GroupForm()
-        exclude_itens = ['sessions','contenttypes','admin']
-        permissions = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens)
-    return render(request,'core/grupo_add.html',{'form':form, 'permissions': permissions})
-
-# METODOS GET
-@login_required
-@permission_required('core.change_empresa', login_url="/handler/403")
-def empresa_id(request, id):
-    empresa = Empresa.objects.get(id=id)
-    form = EmpresaForm(instance=empresa)
-    return render(request,'core/empresa_id.html',{'form':form,'empresa':empresa})
-
-@login_required
-@permission_required('auth.change_user', login_url="/handler/403")
-def usuario_id(request, id):
-    usuario = User.objects.get(id=id)
-    profile, created = Profile.objects.get_or_create(user=usuario)
-    form = UserForm(instance=usuario, initial={'empresas': profile.empresas.all()})
-    return render(request,'core/usuario_id.html',{'form':form,'usuario':usuario})
-
-@login_required
-@permission_required('auth.change_group', login_url="/handler/403")
-def grupo_id(request, id):
-    grupo = Group.objects.get(id=id)
-    grupo_perms = list(grupo.permissions.values_list('pk', flat=True))
-    form = GroupForm(instance=grupo)
-    exclude_itens = ['sessions','contenttypes','admin']
-    permissions = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens)
-    return render(request,'core/grupo_id.html',{'form':form,'grupo':grupo, 'permissions': permissions, 'grupo_perms': grupo_perms})
+class GrupoCreateView(BaseCreateView):
+    form_class = GroupForm
+    template_name = 'core/grupo_add.html'
+    permission_required = 'auth.add_group'
+    success_url = reverse_lazy('grupos')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        exclude_itens = ['sessions', 'contenttypes', 'admin']
+        context['permissions'] = Permission.objects.all().exclude(
+            content_type__app_label__in=exclude_itens
+        ).select_related('content_type').order_by('content_type__app_label', 'codename')
+        return context
 
 
 # METODOS UPDATE
-@login_required
-@permission_required('core.change_empresa', login_url="/handler/403")
-def empresa_update(request, id):
-    empresa = Empresa.objects.get(pk=id)
-    form = EmpresaForm(request.POST, request.FILES, instance=empresa)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request,'Empresa <b>' + registro.nome + '</b> alterada')
-        return redirect('empresa_id',id)
-    else:
-        return render(request,'core/empresa_id.html',{'form':form,'empresa':empresa})
+class EmpresaUpdateView(BaseUpdateView):
+    model = Empresa
+    form_class = EmpresaForm
+    template_name = 'core/empresa_id.html'
+    permission_required = 'core.change_empresa'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['empresa'] = self.object 
+        return context
+    def get_success_url(self):
+        return reverse('empresa_id', kwargs={'pk': self.object.id})
 
-@login_required
-@permission_required('auth.change_user', login_url="/handler/403")
-def usuario_update(request, id):
-    usuario = User.objects.get(pk=id)
-    form = UserForm(request.POST, instance=usuario)
-    if form.is_valid():
-        registro = form.save(commit=False)
-        with transaction.atomic():
-            registro.save()
-            profile, created = Profile.objects.get_or_create(user=registro)
+class UsuarioUpdateView(BaseUpdateView):
+    model = User
+    form_class = UserForm
+    template_name = 'core/usuario_id.html'
+    permission_required = 'auth.change_user'
+    def get_success_url(self):
+        return reverse('usuario_id', kwargs={'pk': self.object.id})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuario'] = self.object
+        return context
+    @transaction.atomic
+    def form_valid(self, form):
+        try:
+            self.object = form.save()
+            profile, _ = Profile.objects.get_or_create(user=self.object)
             form.save_m2m()
-            profile.empresas.set(form.cleaned_data['empresas'])
+            filiais = form.cleaned_data.get('filiais')
+            if filiais is not None:
+                profile.filiais.set(filiais)
             profile.save()
-        messages.success(request,'Usuario <b>' + registro.username + '</b> alterado')
-        return redirect('usuario_id',id)
-    else:
-        return render(request,'core/usuario_id.html',{'form':form,'usuario':usuario})
+            return super().form_valid(form)
+        except Exception as e:
+            messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
+            return self.form_invalid(form)
 
-@login_required
-@permission_required('auth.change_group', login_url="/handler/403")
-def grupo_update(request, id):
-    grupo = Group.objects.get(pk=id)
-    form = GroupForm(request.POST, instance=grupo)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request,'Grupo <b>' + registro.name + '</b> alterado')
-        return redirect('grupo_id',id)
-    else:
-        return render(request,'core/grupo_id.html',{'form':form,'grupo':grupo})
+class GrupoUpdateView(BaseUpdateView):
+    model = Group
+    form_class = GroupForm
+    template_name = 'core/grupo_id.html'
+    permission_required = 'auth.change_group'
+    def get_success_url(self):
+        return reverse('grupo_id', kwargs={'pk': self.object.id})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['grupo'] = self.object
+        exclude_itens = ['sessions', 'contenttypes', 'admin']
+        context['permissions'] = Permission.objects.all().exclude(
+            content_type__app_label__in=exclude_itens
+        ).select_related('content_type').order_by('content_type__app_label', 'codename')
+        return context
 
-@login_required
-@permission_required('core.change_settings', login_url="/handler/403")
-def settings_update(request, id):
-    settings = Settings.objects.get(pk=id)
-    form = SettingsForm(request.POST, instance=settings)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request,'Configurações <b>atualizadas</b> com sucesso')
-        return redirect('settings')
-    else:
-        return render(request,'core/settings.html',{'form':form,'settings':settings})
+class SettingsUpdateView(BaseUpdateView):
+    model = Settings
+    form_class = SettingsForm
+    template_name = 'core/settings.html'
+    permission_required = 'core.change_settings'
+    success_url = reverse_lazy('settings')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['settings'] = self.object
+        return context
+
 
 # METODOS DELETE
-@login_required
-@permission_required('core.delete_empresa', login_url="/handler/403")
-def empresa_delete(request, id):
-    try:
-        registro = Empresa.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request,'Empresa <b>' + registro.nome + '</b> apagada')
-        return redirect('empresas')
-    except:
-        messages.error(request,'ERRO ao apagar empresa')
-        return redirect('empresa_id', id)
+class EmpresaDeleteView(BaseDeleteView):
+    model = Empresa
+    permission_required = 'core.delete_empresa'
+    success_url = reverse_lazy('empresas')
 
-@login_required
-@permission_required('auth.delete_user', login_url="/handler/403")
-def usuario_delete(request, id):
-    try:
-        registro = User.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request,'Usuario <b>' + registro.username + '</b> apagado')
-        return redirect('usuarios')
-    except:
-        messages.error(request,'ERRO ao apagar usuario')
-        return redirect('usuario_id', id)
+class UsuarioDeleteView(BaseDeleteView):
+    model = User
+    permission_required = 'auth.delete_user'
+    success_url = reverse_lazy('usuarios')
 
-@login_required
-@permission_required('auth.delete_group', login_url="/handler/403")
-def grupo_delete(request, id):
-    try:
-        registro = Group.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request,'Grupo <b>' + registro.name + '</b> apagado')
-        return redirect('grupos')
-    except:
-        messages.error(request,'ERRO ao apagar grupo')
-        return redirect('grupo_id', id)
+class GrupoDeleteView(BaseDeleteView):
+    model = Grupo
+    permission_required = 'auth.delete_group'
+    success_url = reverse_lazy('grupos')
+
 
 # AUTENTICACAO E PERMISSAO
-def login(request):
-    return render(request,'core/login.html')
-
-def authenticate(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        if User.objects.filter(username=username).exists():
-            user = auth.authenticate(request, username=username, password=password)
-            if user is not None:
-                auth.login(request, user)
-                profile = request.user.profile
-                if request.user.profile.config == '': # Inicializa config do profile caso ainda nao initializado
-                    profile.config = json.dumps(initializeProfileConfig())
-                else:
-                    config = json.loads(profile.config)
-                    config["password_errors_count"] = 0                    
-                    profile.config = json.dumps(config)
-                profile.save()
-                if request.POST['next'] != '':
-                    return redirect(request.POST['next'])
-                return redirect('index')
-        try: # Carrega configuracoes do app
-            settings = Settings.objects.all().get()
-        except: # Caso nao gerado configuracoes iniciais carrega definicoes padrao
+class CustomLoginView(auth_views.LoginView):
+    template_name = 'core/login.html'
+    redirect_authenticated_user = True # usuario logado ja eh direcionado diretamente para index
+    def form_valid(self, form):
+        user = form.get_user()
+        auth.login(self.request, user)
+        profile = user.profile
+        config = profile.config if profile.config else initialize_profile_config()
+        config["password_errors_count"] = 0
+        profile.config = config
+        profile.save()
+        return super().form_valid(form)
+    def form_invalid(self, form):
+        username = form.cleaned_data.get('username')
+        try:
+            settings = Settings.objects.get()
+        except Settings.DoesNotExist:
             settings = Settings()
-        if settings.quantidade_tentantivas_erradas > 0:
-            try:
-                user = User.objects.get(username=request.POST['username'])
-            except User.DoesNotExist:
-                user = None
-            if user and user.is_active:
-                config = json.loads(user.profile.config) if user.profile.config != '' else initializeProfileConfig()
-                if config["password_errors_count"] + 1 == settings.quantidade_tentantivas_erradas: # Chegou ao limite de tentativas erradas
-                    config["password_errors_count"] = 0
-                    user.is_active = False
-                    user.save()
-                    messages.error(request,'Exedeu limite de tentativas, conta bloqueada, procure o administrador')
-                else:
-                    config["password_errors_count"] += 1
-                    messages.error(request,'Senha inválida, tentativas: <b>%s</b>' %(settings.quantidade_tentantivas_erradas - config["password_errors_count"]))
-                profile = user.profile
-                profile.config = json.dumps(config)
-                profile.save()
-            elif user and not user.is_active:
-                messages.error(request,'Conta bloqueada')
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            user = None
+        if user and settings.quantidade_tentantivas_erradas > 0:
+            if not user.is_active:
+                messages.error(self.request, 'Conta bloqueada. Procure o administrador.')
+                return super().form_invalid(form)
+            profile = user.profile
+            config = profile.config if profile.config else initialize_profile_config()
+            config["password_errors_count"] = config.get("password_errors_count", 0) + 1
+            if config["password_errors_count"] >= settings.quantidade_tentantivas_erradas:
+                user.is_active = False
+                user.save()
+                config["password_errors_count"] = 0
+                messages.error(self.request, 'Excedeu limite de tentativas, conta bloqueada!')
             else:
-                messages.error(request,'Erro, falha na autenticação')
+                tentativas_restantes = settings.quantidade_tentantivas_erradas - config["password_errors_count"]
+                messages.error(self.request, f'Senha inválida. Tentativas restantes: <b>{tentativas_restantes}</b>')
+            profile.config = config
+            profile.save()
         else:
-            messages.error(request,'Erro, falha na autenticação')
-    return redirect('login')
+            messages.error(self.request, 'Erro: falha na autenticação.')
+        return super().form_invalid(form)
 
-@login_required
-def change_password(request):
-    try: # Carrega configuracoes do app
-        settings = Settings.objects.all().get()
-    except: # Caso nao gerado configuracoes iniciais carrega definicoes padrao
-        settings = Settings()
-    if request.method == 'POST':
-        password_current = request.POST['password_current']
-        password = request.POST['password']
-        password_confirm = request.POST['password_confirm']
+class CustomPasswordChangeView(auth_views.PasswordChangeView):
+    form_class = CustomPasswordChangeForm
+    template_name = 'core/change_password.html'
+    success_url = reverse_lazy('login')
+    @transaction.atomic
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = self.request.user
+        profile = user.profile
+        try:
+            settings = Settings.objects.get()
+        except Settings.DoesNotExist:
+            settings = Settings()
+        if settings.historico_senhas_nao_repetir > 0:
+            config = profile.config if profile.config else initialize_profile_config()
+            history = config.get("history_password", [])
+            history.append(user.password)
+            if len(history) > settings.historico_senhas_nao_repetir:
+                history = history[-settings.historico_senhas_nao_repetir:]
+            config["history_password"] = history
+            profile.config = config
+            profile.force_password_change = False
+            profile.save()
+        messages.success(self.request, 'Senha alterada com sucesso!')
+        update_session_auth_hash(self.request, user)
+        return response
 
-        if request.user.check_password(password_current):
-            if password == password_confirm:
-                if password_current != password:
-                    if password_valid(request, password):
-                        request.user.set_password(password)
-                        request.user.profile.force_password_change = False
-                        request.user.save()
-                        if settings.historico_senhas_nao_repetir > 0: # Atualiza o historico de senhas no profile
-                            profile = request.user.profile
-                            config = json.loads(profile.config)
-                            if len(config["history_password"]) >= settings.historico_senhas_nao_repetir:
-                                config["history_password"] = config["history_password"][len(config["history_password"]) - settings.historico_senhas_nao_repetir + 1:] # Remove historico excedente
-                                config["history_password"].append(request.user.password) # Carrega novo password
-                            else:
-                                config["history_password"].append(request.user.password)
-                            profile.config = json.dumps(config)
-                            profile.save()
-                        messages.success(request, 'Senha alterada')
-                        return redirect('login')
-                    else:
-                        messages.error(request,'Senha não atende aos requisitos')
-                else:
-                    messages.error(request, 'Nova senha não pode ser igual a senha atual')
-            else:
-                messages.error(request, 'Senhas nova e confirmação não são iguais')
-        else:
-            messages.error(request, 'Senha atual não confere')
-        return render(request,'core/change_password.html', {'settings':settings})
-    else:
-        return render(request,'core/change_password.html', {'settings':settings})
-
-def logout(request):
-    auth.logout(request)
-    return redirect('index')
-
-@login_required
-def handler(request, code):
-    return render(request,f'{code}.html')
+class HandlerView(LoginRequiredMixin, BaseTemplateView):
+    def get_template_names(self):
+        code = self.kwargs.get('code')
+        template_name = f"{code}.html"
+        return [template_name]
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['error_code'] = self.kwargs.get('code')
+        return context
 
 
-def password_valid(request, password):
-    try: # Carrega configuracoes do app
-        settings = Settings.objects.all().get()
-    except: # Caso nao gerado configuracoes iniciais carrega definicoes basicas
-        settings = Settings()
-
-    if len(password) < settings.quantidade_caracteres_senha:
-        return False
-    if settings.senha_exige_numero and re.search('[0-9]',password) is None:
-        return False
-    if settings.senha_exige_maiuscula and re.search('^(?=.*[a-z])(?=.*[A-Z])',password) is None:
-        return False
-    elif settings.senha_exige_alpha and re.search('[a-z]',password, re.IGNORECASE) is None:
-        return False
-    if settings.senha_exige_caractere and re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", password) is None:
-        return False
-    if settings.historico_senhas_nao_repetir > 0:
-        profile = request.user.profile
-        config = json.loads(profile.config) if profile.config != '' else initializeProfileConfig()
-        for pw in config["history_password"]:
-            if check_password(password, pw):
-                return False
-    return True
-
-def initializeProfileConfig():
+def initialize_profile_config():
     return {"history_password":[], "password_errors_count": 0}
 
 
@@ -481,105 +382,40 @@ def initializeProfileConfig():
 # @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
 # @desc     Arquivos json dever ser salvos na pasta app/i18n (do respectivo app) e nome do arquivo deve corresponder ao idioma (ex: pt-BR.json)
 #           ex: en.json ou en-US.json
-@login_required
-def i18n(request):
-    data = None
-    if request.method == 'GET':
+class I18nView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
         app = request.GET.get('app')
         lng = request.GET.get('lng')
+        if not app or not lng:
+            return JsonResponse({'error': 'Request params app and lng'}, status=400)
         try:
-            fpath = f'{ROOT.TEMPLATES_DIR}{app}/i18n/{lng}.json'
-            if os.path.exists(fpath): # Verifica se arquivo base existe
-                f = open(fpath, 'r', encoding='utf-8')
-                data = json.load(f)
-                data['i18nSelectedLanguage'] = lng
-                f.close()
-            elif '-' in lng: # Caso linguagem tenha especificacao regional ex en-US
+            base_path = os.path.join(settings.TEMPLATES_DIR, app, 'i18n')
+            fpath = os.path.join(base_path, f'{lng}.json')
+            if not os.path.exists(fpath) and '-' in lng:
                 generic_lng = lng.split('-')[0]
-                fpath = f'{ROOT.TEMPLATES_DIR}{app}/i18n/{generic_lng}.json'
-                if os.path.exists(fpath): # Verifica se existe idioma generico (sem especificacao regional, se sim retorna ele)
-                    f = open(fpath, 'r', encoding='utf-8')
+                fpath = os.path.join(base_path, f'{generic_lng}.json')
+                selected_lng = generic_lng
+            else:
+                selected_lng = lng
+            if os.path.exists(fpath):
+                with open(fpath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    data['i18nSelectedLanguage'] = generic_lng
-                    f.close()
-            else:
-                return JsonResponse({})
+                    data['i18nSelectedLanguage'] = selected_lng
+                return JsonResponse(data)
+            return JsonResponse({}, status=404)
         except Exception as e:
-            return JsonResponse({}, status=500)
-        return HttpResponse(json.dumps(data))
-    return JsonResponse({}, status=401)
+            return JsonResponse({'error': str(e)}, status=500)
 
-@login_required
-def get_empresas(request):
-    # Metodo retorna JSON com dados das empresas
-    if request.GET.get('usuario', None) == 'new':
-        empresas = Empresa.objects.all().order_by('nome')
-    else:
-        usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
-        empresas = usuario.profile.empresas.all().order_by('nome')
-    obj = serializers.serialize('json', empresas)
-    return HttpResponse(obj, content_type="application/json")
-
-@login_required
-def get_grupos(request):
-    # Metodo retorna JSON com dados de auth.groups
-    if request.GET.get('usuario', None) == 'new':
-        grupos = Group.objects.all().order_by('name')
-    else:
-        usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
-        grupos = Group.objects.filter(user=usuario).order_by('name')
-    obj = serializers.serialize('json', grupos)
-    return HttpResponse(obj, content_type="application/json")
-
-@login_required
-def get_user_perms(request):
-    # retorna permissoes para usuario (** nao ajustar para serializers)
-    try:
-        exclude_itens = ['sessions','contenttypes','admin']
-        if request.GET.get('usuario', None) == 'new':
-            perms = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
-        else:
-            usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET['usuario'])
-            perms = Permission.objects.filter(user=usuario).exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
-        itens = []
-        for item in perms:
-            item_dict = {'model': 'auth.perms', 'pk':item.id,'fields': {
-                'app_label': item.content_type.app_label,
-                'model': item.content_type.model,
-                'description': item.name
-            }}
-                # 'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'
-            itens.append(item_dict)
-        dataJSON = json.dumps(itens)
-        return HttpResponse(dataJSON)
-    except:
-        return HttpResponse('')
-
-
-@login_required
-def get_group_perms(request):
-    try:
-        tipo = request.GET.get('tipo',None)
-        if request.GET.get('grupo',None) != 'new':
-            grupo = Group.objects.get(id=request.GET.get('grupo',None))
-            if tipo == 'disponiveis':
-                perms = Permission.objects.all().exclude(group=grupo).order_by('content_type__app_label', 'content_type__model', 'name')
-            elif tipo == 'cadastrados':
-                perms = Permission.objects.all().filter(group=grupo).order_by('content_type__app_label', 'content_type__model', 'name')
-            else:
-                pass
-        else:
-            exclude_itens = ['admin','contenttypes','sessions']
-            perms = Permission.objects.all().exclude(content_type__app_label__in=exclude_itens).order_by('content_type__app_label', 'content_type__model', 'name')
-        itens = {}
-        for item in perms:
-            item_dict = {'model': 'auth.groupPerms', 'pk':item.id,'fields': {'nome':f'{item.content_type.app_label} | {item.content_type.model} | {item.name}'}}
-            itens.append(item_dict)
-        dataJSON = json.dumps(itens)
-        return HttpResponse(dataJSON)
-    except:
-        return HttpResponse('')
-
+# @login_required
+# def get_empresas(request):
+#     # Metodo retorna JSON com dados das empresas
+#     if request.GET.get('usuario', None) == 'new':
+#         empresas = Empresa.objects.all().order_by('nome')
+#     else:
+#         usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
+#         empresas = usuario.profile.empresas.all().order_by('nome')
+#     obj = serializers.serialize('json', empresas)
+#     return HttpResponse(obj, content_type="application/json")
 
 def asteval_run(expression, vars_dict):
     # expression espera uma string com calculo a ser realizado

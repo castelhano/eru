@@ -1,6 +1,9 @@
 from django import forms
 from django.forms import Field
 from .models import Empresa, Filial, Settings
+from django.contrib.auth.forms import PasswordChangeForm
+from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from itertools import groupby
@@ -87,3 +90,32 @@ class SettingsForm(forms.ModelForm):
     senha_exige_caractere = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
     historico_senhas_nao_repetir = forms.IntegerField(required=False, initial=0, widget=forms.TextInput(attrs={'class': 'form-control form-control-sm','type':'number','min':'0','max':'10'}))
     quantidade_tentantivas_erradas = forms.IntegerField(required=False, initial=3, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'10'}))
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def clean_new_password1(self):
+        password = self.cleaned_data.get("password")
+        user = self.user
+        try:
+            settings = Settings.objects.get()
+        except Settings.DoesNotExist:
+            settings = Settings()
+        if len(password) < settings.quantidade_caracteres_senha:
+            raise ValidationError(f"A senha deve ter pelo menos {settings.quantidade_caracteres_senha} caracteres.")
+        if settings.senha_exige_numero and not re.search(r'[0-9]', password):
+            raise ValidationError("A senha deve conter pelo menos um número.")
+        if settings.senha_exige_maiuscula:
+            if not re.search(r'[a-z]', password) or not re.search(r'[A-Z]', password):
+                raise ValidationError("A senha deve conter letras maiúsculas e minúsculas.")
+        elif settings.senha_exige_alpha and not re.search(r'[a-zA-Z]', password):
+            raise ValidationError("A senha deve conter pelo menos uma letra.")
+        if settings.senha_exige_caractere:
+            if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]", password):
+                raise ValidationError("A senha deve conter pelo menos um caractere especial.")
+        if settings.historico_senhas_nao_repetir > 0:
+            profile = user.profile
+            config = profile.config if profile.config else {}
+            history = config.get("history_password", [])
+            for old_password_hash in history:
+                if check_password(password, old_password_hash):
+                    raise ValidationError("Você já usou esta senha anteriormente. Por favor, escolha uma senha nova.")
+        return password

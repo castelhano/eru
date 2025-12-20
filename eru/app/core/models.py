@@ -64,7 +64,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     filiais = models.ManyToManyField(Filial)
     force_password_change = models.BooleanField(default=True)
-    config = models.TextField(blank=True)
+    config = models.JSONField(default=dict, blank=True, null=True)
     def __str__(self):
         return self.user.username
     def allow_filial(self, id): # Verifica se filial esta habilitada para usuario

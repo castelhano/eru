@@ -100,14 +100,10 @@ class FuncionarioForm(forms.ModelForm):
     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
-        super(FuncionarioForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if user:
-            self.fields['empresa'].queryset = user.profile.empresas.all()
-            self.fields['empresa'].widget.attrs.update({
-                'class': 'form-select',
-                'autofocus': 'autofocus',
-                'placeholder': ' ',
-            })
+            self.fields['filial'].queryset = user.profile.filiais.all()
+            self.fields['filial'].widget.attrs.update({ 'class': 'form-select', 'autofocus': 'autofocus', 'placeholder': ' '})
 
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:

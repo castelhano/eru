@@ -1,4 +1,5 @@
-from django.views.generic.edit import CreateView
+from django.http import HttpResponseRedirect
+from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -24,239 +25,252 @@ from django.conf import settings
 from datetime import datetime, date
 
 
-@login_required
-@permission_required('pessoal.view_setor', login_url="/handler/403")
-def setores(request):
-    setores = Setor.objects.all().order_by('nome')
-    return render(request,'pessoal/setores.html', {'setores' : setores})
+class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Setor
+    template_name = 'core/setores.html'
+    context_object_name = 'setores'
+    permission_required = 'pessoal.view_setor'
+    queryset = Setor.objects.all().order_by('nome')
 
-@login_required
-@permission_required('pessoal.view_cargo', login_url="/handler/403")
-def cargos(request):
-    cargos = Cargo.objects.all().order_by('nome')
-    return render(request,'pessoal/cargos.html',{'cargos':cargos})
+class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Cargo
+    template_name = 'core/cargos.html'
+    context_object_name = 'cargos'
+    permission_required = 'pessoal.view_cargo'
+    queryset = Cargo.objects.all().order_by('nome')
 
-@login_required
-@permission_required('pessoal.view_funcionario', login_url="/handler/403")
-def funcionarios(request):
-    options = {
-        "form": FuncionarioForm(user=request.user)
-    }
-    if request.method == 'GET':
-        if request.GET.get('pesquisa'):
-            # checa se existe funcionario com matricula informada na consulta, se sim abre form de edicao para funcionario
-            if Funcionario.objects.filter(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all()).exists():
-                funcionario = Funcionario.objects.get(matricula=request.GET['pesquisa'], empresa__in=request.user.profile.empresas.all())
-                return redirect('pessoal:funcionario_id', funcionario.id)
-            else:
-                # criterio de consulta nao corresponde a uma matricula, busca avancada por nome
-                criterios = request.GET['pesquisa'].split(' ')
-                
-                # incia consulta setando somente funcionarios nas empresa autorizadas
-                query = Q(empresa__in=request.user.profile.empresas.all())
+class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Funcionario
+    template_name = 'pessoal/funcionarios.html'
+    context_object_name = 'funcionarios'
+    permission_required = 'pessoal.view_funcionario'
+    def dispatch(self, request, *args, **kwargs):
+        # analisa a pesquisa, se corresponder a uma matricula, redireciona para funcionario_id
+        pesquisa = request.GET.get('pesquisa')
+        if pesquisa:
+            filiais_autorizadas = request.user.profile.filiais.all()
+            funcionario = Funcionario.objects.filter(
+                matricula=pesquisa, 
+                filial__in=filiais_autorizadas
+            ).first()
+            if funcionario:
+                return redirect('pessoal:funcionario_id', pk=funcionario.id)
+        return super().dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        user = self.request.user
+        filiais_autorizadas = request.user.profile.filiais.all()       
+        queryset = Funcionario.objects.filter(filial__in=filiais_autorizadas).order_by('matricula')
+        pesquisa = self.request.GET.get('pesquisa')
+        # quebra pesquisa em lista de nomes e busca nomes pesquisados em qualquer ordem e posicao no field
+        if pesquisa:
+            criterios = pesquisa.split(' ')
+            query = Q()
+            for nome in criterios:
+                query &= Q(nome__icontains=nome)
+            queryset = queryset.filter(query)
+        data = self.request.POST if self.request.method == 'POST' else self.request.GET
+        # so aplica filtros se nao for busca por nome
+        if data and not pesquisa:
+            try:
+                func_filter = FuncionarioFilter(data, queryset=queryset)
+                queryset = func_filter.qs
+            except Exception:
+                messages.warning(self.request, settings.DEFAULT_MESSAGES.get('filterError'))
+        if not queryset.exists() and (self.request.GET or self.request.POST):
+            messages.warning(self.request, settings.DEFAULT_MESSAGES.get('emptyQuery'))
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = FuncionarioForm(user=self.request.user)
+        return context
 
-                # Analise parcialmente cada nome informado buscando correspondencia 
-                for nome in criterios:
-                    query &= Q(nome__icontains=nome)
-                
-                options['funcionarios'] = Funcionario.objects.filter(query)
-                if len(options['funcionarios']) == 0:
-                    messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-        else:
-            if request.GET:
-                # Se veio parametros pelo get realiza a consulta
-                options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
-                try:
-                    func_filter = FuncionarioFilter(request.GET, queryset=options['funcionarios'])
-                    options['funcionarios'] = func_filter.qs
-                    if len(options['funcionarios']) == 0:
-                        messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-                except:
-                    messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
-            else:
-                # Se veio por metodo get sem filtro, apenas exibe pagina base para consulta
-                pass
-    else:
-        # Request via POST vindo de um form de filtros, cria query e retorna resultados compativeis
-        options['funcionarios'] = Funcionario.objects.filter(empresa__in=request.user.profile.empresas.all()).order_by('matricula')
-        try:
-            func_filter = FuncionarioFilter(request.POST, queryset=options['funcionarios'])
-            options['funcionarios'] = func_filter.qs
-            if len(options['funcionarios']) == 0:
-                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-        except:
-            messages.warning(request, settings.DEFAULT_MESSAGES['filterError'])
-            return redirect('pessoal:funcionarios')
-    return render(request, 'pessoal/funcionarios.html', options)
-
-@login_required
-@permission_required('pessoal.view_dependente', login_url="/handler/403")
-def dependentes(request, id):
-    funcionario = Funcionario.objects.get(pk=id)
-    dependentes = Dependente.objects.filter(funcionario=funcionario).order_by('nome')
-    return render(request,'pessoal/dependentes.html',{'dependentes':dependentes, 'funcionario':funcionario})
+class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Dependente
+    template_name = 'pessoal/dependentes.html'
+    context_object_name = 'dependentes'
+    permission_required = 'pessoal.view_dependente'
+    def get_queryset(self):
+        funcionario_id = self.kwargs.get('id')
+        filiais_pemitidas = self.request.user.profile.filiais.all()
+        self.funcionario = get_object_or_404(
+            Funcionario, 
+            pk=funcionario_id, 
+            filial__in=filiais_pemitidas
+        )        
+        return Dependente.objects.filter(funcionario=self.funcionario).order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.funcionario
+        return context
 
 
-@login_required
-@permission_required('pessoal.view_evento', login_url="/handler/403")
-def eventos(request):
-    eventos = Evento.objects.all().order_by('nome')
-    return render(request,'pessoal/eventos.html',{'eventos':eventos})
+class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Evento
+    template_name = 'core/eventos.html'
+    context_object_name = 'eventos'
+    permission_required = 'pessoal.view_evento'
+    queryset = Evento.objects.all().order_by('nome')
 
-@login_required
-def eventos_related(request, related, id):
-    if not request.user.has_perm(f"pessoal.view_evento{related}"):
-        return redirect('handler', 403)
-    options = {"related": related}
-    options['form'] = EventoCargoForm() # usa o cargo form apenas para efeito de consulta no template
-    options['form'].fields['tipo'].required = False
-    empty_choice = [('', "---------")]
-    options['form'].fields['tipo'].choices = empty_choice + list(options['form'].fields['tipo'].choices)
+class EventoRelatedListView(LoginRequiredMixin, BaseListView):
+    # view polimorfica que opera com modelos EventoEmpresa, EventoCargo, EventoFuncionario
+    # espera receber related com modelo a ser utilizado
+    template_name = 'pessoal/eventos_related.html'
+    context_object_name = 'eventos'
+    def dispatch(self, request, *args, **kwargs):
+        self.related = kwargs.get('related')
+        self.related_id = kwargs.get('id')
+        perm_name = f"pessoal.view_evento{self.related}"
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', code=403)
+        if self.related not in ['empresa', 'cargo', 'funcionario']:
+            messages.error(request, f"{settings.DEFAULT_MESSAGES['400']} <b>pessoal:eventos_related, invalid related</b>")
+            return redirect('index')
+        return super().dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        user = self.request.user
+        filiais_autorizadas = user.profile.filiais.all()
+        queryset = None
+        if self.related == 'empresa':
+            queryset = EventoEmpresa.objects.filter(
+                filiais__in=filiais_autorizadas
+            ).order_by('evento__nome').distinct()
+            self.filter_class = EventoEmpresaFilter
+        elif self.related == 'cargo':
+            self.related_model_obj = get_object_or_404(Cargo, pk=self.related_id)
+            queryset = EventoCargo.objects.filter(
+                cargo=self.related_model_obj, 
+                filiais__in=filiais_autorizadas
+            ).order_by('evento__nome').distinct()
+            self.filter_class = EventoCargoFilter
+        elif self.related == 'funcionario':
+            self.related_model_obj = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
+            queryset = EventoFuncionario.objects.filter(
+                funcionario=self.related_model_obj
+            ).order_by('evento__nome')
+            self.filter_class = EventoFuncionarioFilter
+        # filtro padrao: excluir eventos vencidos (fim < hoje) se nao houver filtro de data
+        if not self.request.GET.get('fim'):
+            queryset = queryset.exclude(fim__lt=date.today())
+        if self.request.GET:
+            rel_filter = self.filter_class(self.request.GET, queryset=queryset)
+            queryset = rel_filter.qs
+            if not queryset.exists():
+                messages.warning(self.request, settings.DEFAULT_MESSAGES['emptyQuery'])
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['related'] = self.related
+        if hasattr(self, 'related_model_obj'):
+            context['model'] = self.related_model_obj
+        form = EventoCargoForm()
+        form.fields['tipo'].required = False
+        choices = [('', "---------")] + list(form.fields['tipo'].choices)
+        form.fields['tipo'].choices = [c for c in choices if c[0] != ''] # Evita duplicar o vazio se ja existir
+        form.fields['tipo'].choices = [('', "---------")] + [c for c in form.fields['tipo'].choices if c[0] != '']
+        context['form'] = form
+        return context
 
-    if related == 'empresa':
-        options['eventos'] = EventoEmpresa.objects.filter(empresas__in=request.user.profile.empresas.all()).order_by('evento__nome').distinct()
-        if not request.GET or not request.GET.get('fim', None):
-            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
-        if request.GET:
-            rel_filter = EventoEmpresaFilter(request.GET, queryset=options['eventos'])
-            options['eventos'] = rel_filter.qs
-            if len(options['eventos']) == 0:
-                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-    elif related == 'cargo':
-        options['model'] = Cargo.objects.get(pk=id)
-        options['eventos'] = EventoCargo.objects.filter(cargo=options['model'], empresas__in=request.user.profile.empresas.all()).order_by('evento__nome').distinct()
-        if not request.GET or not request.GET.get('fim', None):
-            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
-        if request.GET:
-            rel_filter = EventoCargoFilter(request.GET, queryset=options['eventos'])
-            options['eventos'] = rel_filter.qs
-            if len(options['eventos']) == 0:
-                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-    elif related == 'funcionario':
-        options['model'] = Funcionario.objects.get(pk=id)
-        options['eventos'] = EventoFuncionario.objects.filter(funcionario=options['model']).order_by('evento__nome')
-        if not request.GET or not request.GET.get('fim', None):
-            options['eventos'] = options['eventos'].exclude(fim__lt=date.today())
-        if request.GET:
-            rel_filter = EventoFuncionarioFilter(request.POST, queryset=options['eventos'])
-            options['eventos'] = rel_filter.qs
-            if len(options['eventos']) == 0:
-                messages.warning(request, settings.DEFAULT_MESSAGES['emptyQuery'])
-    else:
-        messages.error(request, settings.DEFAULT_MESSAGES['400'] + ' <b>pessoal:eventos_related, invalid related</b>')
-        return redirect('index')
-    return render(request,'pessoal/eventos_related.html', options)
-    
+class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = GrupoEvento
+    template_name = 'pessoal/grupos_evento.html'
+    context_object_name = 'grupos_evento'
+    permission_required = 'pessoal.view_grupoevento'
+    queryset = GrupoEvento.objects.all().order_by('nome')
 
-@login_required
-@permission_required('pessoal.view_grupoevento', login_url="/handler/403")
-def grupos_evento(request):
-    grupos_evento = GrupoEvento.objects.all().order_by('nome')
-    return render(request,'pessoal/grupos_evento.html',{'grupos_evento':grupos_evento})
+class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = GrupoEvento
+    template_name = 'pessoal/grupos_evento.html'
+    context_object_name = 'grupos_evento'
+    permission_required = 'pessoal.view_grupoevento'
+    queryset = GrupoEvento.objects.all().order_by('nome')
 
-@login_required
-@permission_required('pessoal.view_motivoreajuste', login_url="/handler/403")
-def motivos_reajuste(request):
-    motivos_reajuste = MotivoReajuste.objects.all().order_by('nome')
-    return render(request,'pessoal/motivos_reajuste.html',{'motivos_reajuste':motivos_reajuste})
+
+class MotivoReajusteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = MotivoReajuste
+    template_name = 'pessoal/grupos_evento.html'
+    context_object_name = 'motivos_reajuste'
+    permission_required = 'pessoal.view_motivoreajuste'
+    queryset = MotivoReajuste.objects.all().order_by('nome')
 
 
 # Metodos ADD
-class setor_add(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class SetorCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Setor
     form_class = SetorForm
     template_name = 'pessoal/setor_add.html'
     success_url = reverse_lazy('pessoal:setores')
     permission_required = 'pessoal.add_setor'
-    login_url = '/handler/403'
+
+
+class CargoCreateView(BaseCreateView):
+    model = Cargo
+    form_class = CargoForm
+    template_name = 'pessoal/cargo_add.html'
+    permission_required = 'pessoal.add_cargo'
+    success_url = reverse_lazy('pessoal:cargo_add')
+    @transaction.atomic
     def form_valid(self, form):
-        messages.success(self.request, settings.DEFAULT_MESSAGES['created'] + f' <b>{form.cleaned_data['nome']}</b>')
-        return super().form_valid(form)
-
-@login_required
-@permission_required('pessoal.add_cargo', login_url="/handler/403")
-def cargo_add(request):
-    if request.method == 'POST':
-        form = CargoForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                for ffixa in request.POST.getlist('funcao_fixa'):
-                    if FuncaoFixa.objects.filter(nome=ffixa).exists():
-                        ff = FuncaoFixa.objects.get(nome=ffixa)
-                    else:
-                        ff = FuncaoFixa.objects.create(nome=ffixa)
-                    ff.cargos.add(registro)
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal:cargo_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:cargo_add')
-    else:
-        form = CargoForm()
-    return render(request,'pessoal/cargo_add.html',{'form':form})
+        try:
+            self.object = form.save()
+            funcoes_fixas_nomes = self.request.POST.getlist('funcao_fixa')
+            for nome_funcao in funcoes_fixas_nomes:
+                funcao, created = FuncaoFixa.objects.get_or_create(nome=nome_funcao)
+                funcao.cargos.add(self.object)
+            messages.success(self.request, settings.DEFAULT_MESSAGES['created'])
+            return HttpResponseRedirect(self.get_success_url())
+        except Exception:
+            messages.error(self.request, settings.DEFAULT_MESSAGES['saveError'])
+            return self.form_invalid(form)
 
 
-class funcionario_add(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView):
+
+class FuncionarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_add.html'
     permission_required = 'pessoal.add_funcionario'
-    success_message = "Funcionário %(matricula)s criado com sucesso!"
-
     def get_form_kwargs(self):
-        """Injeta o usuário no formulário."""
+        # injeta o usuario no formulario
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
-
     def form_valid(self, form):
-        """Processamento da foto"""
+        # processamento da foto
         registro = form.save(commit=False)
         foto_data = self.request.POST.get('foto_data_url')
-
         if foto_data:
             file_name = f"{registro.empresa.id}_{registro.matricula}_{datetime.now().timestamp()}.png"
             create_image(foto_data, f"{settings.MEDIA_ROOT}/pessoal/fotos", file_name)
             registro.foto = f"pessoal/fotos/{file_name}"
-            
         return super().form_valid(form)
-
     def get_success_url(self):
         return reverse('pessoal:funcionario_id', kwargs={'pk': self.object.id})
 
 
-
-# @login_required
-# @permission_required('pessoal.add_funcionario', login_url="/handler/403")
-# def funcionario_add(request):
-#     if request.method == 'POST':
-#         form = FuncionarioForm(request.POST, request.FILES, user=request.user)
-#         if form.is_valid():
-#             try:
-#                 has_warnings = False
-#                 registro = form.save(commit=False)
-#                 if request.POST['foto_data_url'] != '':
-#                     prefix = f'{registro.empresa.id}_{registro.matricula}'
-#                     today = datetime.now()
-#                     timestamp = datetime.timestamp(today)
-#                     file_name = f'{prefix}_{timestamp}.png'
-#                     result = create_image(request.POST['foto_data_url'], f'{settings.MEDIA_ROOT}/pessoal/fotos', file_name, f'{prefix}_')
-#                     if result[0]:
-#                         registro.foto = f'pessoal/fotos/{file_name}'
-#                     else:
-#                         has_warnings = True
-#                         messages.warning(request,'<b>Erro ao salvar foto:</b> ' + result[1])
-#                 registro.save()
-#                 if not has_warnings:
-#                     messages.success(request,settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.matricula}</b>')
-#                 return redirect('pessoal:funcionario_id', registro.id)
-#             except:
-#                 messages.error(request, settings.DEFAULT_MESSAGES['saveError'] + f' <b>{registro.matricula}</b>')
-#                 return redirect('pessoal:funcionario_add')
-#     else:
-#         form = FuncionarioForm(user=request.user)
-#     return render(request,'pessoal/funcionario_add.html', {'form':form})
+class DependenteCreateView(BaseCreateView):
+    model = Dependente
+    form_class = DependenteForm
+    template_name = 'pessoal/dependente_add.html'
+    permission_required = 'pessoal.add_dependente'
+    def get_success_url(self):
+        return reverse('pessoal:dependente_add', kwargs={'id': self.kwargs.get('id')})
+    def get_initial(self):
+        # preenche o campo 'funcionario' no formulario automaticamente via GET
+        # tambem serve como trava de seguranca por Filial
+        initial = super().get_initial()
+        filiais_permitidas = self.request.user.profile.filiais.all()
+        self.funcionario = get_object_or_404(
+            Funcionario, 
+            pk=self.kwargs.get('id'), 
+            filial__in=filiais_permitidas
+        )
+        initial['funcionario'] = self.funcionario
+        return initial
+    def get_context_data(self, **kwargs):
+        # injeta o objeto 'funcionario' no contexto para exibicao no template
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.funcionario
+        return context
 
 @login_required
 @permission_required('pessoal.add_dependente', login_url="/handler/403")
@@ -416,7 +430,7 @@ def funcionario_id(request,id):
     try:
         funcionario = Funcionario.objects.get(pk=id, empresa__in=request.user.profile.empresas.all())
     except Exception as e:
-        messages.warning(request,'Funcionário <b>não localizado</b>')
+        messages.warning(request,'Funcionario <b>nao localizado</b>')
         return redirect('pessoal:funcionarios')
     form = FuncionarioForm(instance=funcionario, user=request.user)
     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
@@ -518,7 +532,7 @@ def cargo_update(request,id):
 def funcionario_update(request,id):
     funcionario = Funcionario.objects.get(pk=id)
     if funcionario.status == 'D':
-        messages.error(request,'<span data-i18n="personal.sys.cantMoveDismissEmployee"><b>Erro:</b> Não é possivel movimentar funcionários desligados</span>')
+        messages.error(request,'<span data-i18n="personal.sys.cantMoveDismissEmployee"><b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
         return redirect('pessoal:funcionario_id', id)
     form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
     if form.is_valid():
@@ -837,12 +851,12 @@ def formula_validate(request):
     data = json.loads(request.body)
     expression = data.get('valor', '').strip()
     if not expression:
-        return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressão vazia'}, status=400)
+        return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressao vazia'}, status=400)
     
     result = asteval_run(expression, getEventProps(True))
     if not result['status']:
         return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
-    return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval válida'}, status=200)
+    return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval valida'}, status=200)
     # except json.JSONDecodeError as e:
     #     return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
     # except Exception as e:
