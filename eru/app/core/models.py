@@ -31,7 +31,15 @@ class FileField(models.FileField):
 class Empresa(models.Model):
     nome = models.CharField(max_length=50, unique=True, blank=False)
     razao_social = models.CharField(max_length=150, blank=True)
-    cnpj = models.CharField(max_length=25, blank=True)
+    cnpj_base = models.CharField(max_length=20, blank=True)
+    def __str__(self):
+        return self.nome
+auditlog.register(Empresa)
+
+class Filial(models.Model):
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
+    nome = models.CharField(max_length=50, unique=True, blank=False)
+    cnpj = models.CharField(max_length=20, blank=True)
     inscricao_estadual = models.CharField(max_length=25, blank=True)
     inscricao_municipal = models.CharField(max_length=25, blank=True)
     cnae = models.CharField(max_length=20, blank=True)
@@ -49,38 +57,22 @@ class Empresa(models.Model):
         return self.nome
     def logo_filename(self):
         return os.path.basename(self.logo.name)
-    class Meta:
-        permissions = [
-            ("dashboard_empresa", "Pode usar o dashboard empresa"),
-        ]
-auditlog.register(Empresa)
+auditlog.register(Filial)
 
-class Job(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
-    modulo = models.CharField(max_length=60, blank=False)
-    referencia = models.CharField(max_length=60, blank=False)
-    inicio = models.DateTimeField(default=datetime.now)
-    termino = models.DateTimeField(blank=True, null=True)
-    erros = models.FileField(upload_to="core/jobs/", blank=True)
-    anexo = models.FileField(upload_to="core/jobs/", blank=True)
-    status = models.CharField(max_length=60, default='<span class="text-secondary">Processando</span>')
-    class Meta:
-        default_permissions = []
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    empresas = models.ManyToManyField(Empresa)
+    filiais = models.ManyToManyField(Filial)
     force_password_change = models.BooleanField(default=True)
     config = models.TextField(blank=True)
     def __str__(self):
         return self.user.username
-    def allow_empresa(self, id): # Verifica se empresa esta habilitada para usuario
-        return self.empresas.filter(pk=id).exists()
+    def allow_filial(self, id): # Verifica se filial esta habilitada para usuario
+        return self.filiais.filter(pk=id).exists()
     class Meta:
         permissions = [
-            ("console", "Pode abrir o console"),
-            ("debug", "DEBUG System"),
-            ("docs", "Acessar documentacao do sistema"),
+            ("debug", "Can debug system"),
+            ("docs", "Can access system docs"),
         ]
         default_permissions = []
 auditlog.register(User, exclude_fields=['last_login'])
@@ -103,6 +95,6 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+# @receiver(post_save, sender=User)
+# def save_user_profile(sender, instance, **kwargs):
+#     instance.profile.save()

@@ -2,13 +2,16 @@ import re, os, json
 from asteval import Interpreter
 import math
 from django.shortcuts import render, redirect
+from django.views.generic import ListView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth, messages
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from auditlog.models import LogEntry
-from .models import Empresa, Settings, Job, Profile
-from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm
+from .models import Empresa, Filial, Settings, Job, Profile
+from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -18,104 +21,111 @@ from django.http import HttpResponse, JsonResponse
 
 
 
-@login_required
-def index(request):
-    if request.user.profile.force_password_change == True:
-        messages.warning(request,'<b>Atenção.</b> É necessário trocar sua senha')
-        return redirect('change_password')
-    return render(request,'core/index.html')
+class IndexView(LoginRequiredMixin, TemplateView):
+    template_name = 'core/index.html'
+    def dispatch(self, request, *args, **kwargs):
+        if getattr(request.user.profile, 'force_password_change', False):
+            messages.warning( request, '<b>Atenção.</b> É necessário trocar sua senha para continuar.' )
+            return redirect('change_password')
+        return super().dispatch(request, *args, **kwargs)
 
-@login_required
-@permission_required('core.view_empresa', login_url="/handler/403")
-def empresas(request):
-    empresas = Empresa.objects.all().order_by('nome')
-    if request.method == 'POST':
-        empresas = empresas.filter(nome__contains=request.POST['pesquisa'])
-    return render(request,'core/empresas.html',{'empresas':empresas})
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = Empresa
+    template_name = 'core/empresas.html'
+    context_object_name = 'empresas'
+    permission_required = 'core.view_empresa'
+    login_url = '/handler/403'
+    def get_queryset(self):
+        return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
 
-@login_required
-@permission_required('auth.view_group', login_url="/handler/403")
-def grupos(request):
-    grupos = Group.objects.all().order_by('name')
-    if request.GET.get('users', None) and request.GET['users'] == 'false':
-        grupos = grupos.filter(user=None)
-    return render(request,'core/grupos.html',{'grupos':grupos})
+class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = Group
+    template_name = 'core/grupos.html'
+    context_object_name = 'grupos'
+    permission_required = 'auth.view_group'
+    login_url = '/handler/403'
+    def get_queryset(self):
+        queryset = Group.objects.all().order_by('name')
+        users_filter = self.request.GET.get('users')
+        if users_filter == 'false':
+            queryset = queryset.filter(user__isnull=True)
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users_filter'] = self.request.GET.get('users')
+        return context
 
-@login_required
-@permission_required('auth.view_group', login_url="/handler/403")
-def usuarios_grupo(request, id):
-    grupo = Group.objects.get(pk=id)
-    usuarios = User.objects.filter(groups=grupo)
-    return render(request, 'core/usuarios_grupo.html',{'grupo':grupo,'usuarios':usuarios})
+class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = User
+    template_name = 'core/usuarios_grupo.html'
+    context_object_name = 'usuarios'   
+    permission_required = 'auth.view_group'
+    login_url = '/handler/403'
+    def get_queryset(self):
+        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('id'))        
+        return User.objects.filter(groups=self.grupo).order_by('username')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['grupo'] = self.grupo
+        return context
 
+class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = User
+    template_name = 'core/usuarios.html'
+    context_object_name = 'usuarios'
+    permission_required = 'auth.view_user'
+    login_url = '/handler/403'
+    def get_queryset(self):
+        return User.objects.all().order_by('username')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.GET:
+            try:
+                user_filter = UserFilter(self.request.GET, queryset=self.get_queryset())
+                context['usuarios'] = user_filter.qs
+                context['filter'] = user_filter
+            except Exception:
+                messages.warning(self.request, '<b>Erro</b> ao filtrar usuário. Exibindo lista completa.')
+                context['usuarios'] = self.get_queryset()
+        return context
 
-@login_required
-@permission_required('auth.view_user', login_url="/handler/403")
-def usuarios(request):
-    context = {}
-    context['usuarios'] = User.objects.all().order_by('username')
-    if request.GET:
-        try:
-            user_filter = UserFilter(request.GET, queryset=context['usuarios'])
-            context['usuarios'] = user_filter.qs
-        except:
-            messages.warning(request,'<b>Erro</b> ao filtrar usuário..')
-            return redirect('usuarios')
-    return render(request,'core/usuarios.html', context)
-
-@login_required
-@permission_required('auditlog.view_logentry', login_url="/handler/403")
-def logs(request):
-    context = {}
-    if request.method == 'POST':
+class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    template_name = 'core/logs.html'
+    permission_required = 'auditlog.view_logentry'
+    login_url = "/handler/403"
+    def get_grouped_models(self):
+        # agrupa permissions por app_label
+        target_apps = ['auth', 'core', 'trafego', 'pessoal']
+        models = ContentType.objects.filter(app_label__in=target_apps ).order_by('app_label', 'model')
+        grouped_models = {}
+        for model in models:
+            app = model.app_label
+            if app not in grouped_models:
+                grouped_models[app] = []
+            grouped_models[app].append(model)
+        return grouped_models
+    def get_context_data(self, **kwargs):
+        # prepara contexto incial (GET)
+        context = super().get_context_data(**kwargs)
+        context['grouped_models'] = self.get_grouped_models()
+        return context
+    def post(self, request, *args, **kwargs):
+        # manipula POST aplicando filtros com django-filter
+        context = self.get_context_data()
         data = request.POST.copy()
         data['content_type'] = request.POST.getlist('content_type')
         data.pop('csrfmiddlewaretoken', None)
         context['data'] = json.dumps(data)
-        context['logs'] = LogEntryFilter(request.POST, queryset=LogEntry.objects.all().order_by('-timestamp')).qs
-        max_entries = 100      # quantidade maxima de registros a exibir(pode ser alterado no template)
-        if 'entries' in request.POST and request.POST['entries'].isdigit():
-            max_entries = int(request.POST['entries'])
-        context['logs'] = context['logs'][:max_entries]     # limita resultados da consulta
-    target_apps = ['auth','core','trafego','pessoal']
-    models = ContentType.objects.filter(app_label__in=target_apps).order_by('app_label', 'model')
-    grouped_models = {}
-    for model in models:
-        app = model.app_label
-        if app not in grouped_models:
-            grouped_models[app] = []
-        grouped_models[app].append(model)
-    context['grouped_models'] = grouped_models
-    return render(request, 'core/logs.html', context)
+        queryset = LogEntry.objects.all().order_by('-timestamp')
+        log_filter = LogEntryFilter(request.POST, queryset=queryset)
+        logs_qs = log_filter.qs
+        max_entries = 100
+        entries_input = request.POST.get('entries')
+        if entries_input and entries_input.isdigit():
+            max_entries = int(entries_input)
+        context['logs'] = logs_qs[:max_entries]
+        return self.render_to_response(context)
 
-@login_required
-def jobs(request):
-    jobs = Job.objects.filter(usuario=request.user).order_by('-inicio')
-    return render(request,'core/jobs.html',{'jobs':jobs})
-
-@login_required
-def jobs_download(request, id):
-    job = Job.objects.get(pk=id)
-    if request.GET['type'] == 'erros':
-        file = job.erros
-    else:
-        file = job.anexo
-    filename = file.name.split('/')[-1]
-    response = HttpResponse(file.file)
-    response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-    return response
-
-@login_required
-def jobs_clean(request):
-    jobs = Job.objects.filter(usuario=request.user).exclude(termino=None)
-    for job in jobs:
-        if job.erros:
-            os.remove(job.erros.path) # REMOVE ARQUIVO FISICO
-        if job.anexo:
-            os.remove(job.anexo.path) # REMOVE ARQUIVO FISICO
-        job.delete()
-    messages.warning(request,'Registros <b>removidos</b> do servidor')
-    return redirect('jobs')
 
 @login_required
 @permission_required('core.view_settings', login_url="/handler/403")

@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import Empresa, ImageField as core_ImageField
+from core.models import Empresa, Filial, ImageField as core_ImageField
 from datetime import datetime, date
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
@@ -135,7 +135,7 @@ class Funcionario(Pessoa):
         ("PJ", mark_safe('<span data-i18n="personal.employee.form.legalEntity">Pessoa Juridica</span>')),
         ("AP", mark_safe('<span data-i18n="personal.common.apprentice">Aprendiz</span>')),
     )
-    empresa = models.ForeignKey(Empresa, blank=True, null=True, on_delete=models.RESTRICT)
+    filial = models.ForeignKey(Filial, blank=True, null=True, on_delete=models.RESTRICT)
     matricula = models.CharField(max_length=15, unique=True, blank=False)
     cargo = models.ForeignKey(Cargo, blank=True, null=True, on_delete=models.RESTRICT)
     regime = models.CharField(max_length=5, choices=REGIME_CHOICES, default='CLT', blank=True)
