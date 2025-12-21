@@ -8,7 +8,7 @@
             {{ form.username }}
             <label for="id_username" data-i18n="auth.username">Username</label>
           </div>
-          {% if 'usuario_add' in request.get_full_path %}
+          {% if 'new' in request.get_full_path %}
           <div class="form-floating mb-1 col-lg">
             <input type="password" class="form-control" name="password" id="id_password">
             <label for="id_password" data-i18n="common.password">Senha</label>
@@ -84,7 +84,7 @@
         </div>
       </div>
       <div class="col-lg">
-        {% if 'usuario_add' in request.get_full_path %}
+        {% if 'new' in request.get_full_path %}
         <div class="form-check form-switch mt-1">
           <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
           <label class="form-check-label" for="mostrar_senha">Mostra Senha</label>
@@ -107,7 +107,7 @@
           {{form.is_superuser}}
           <label class="form-check-label text-danger" for="id_is_superuser">Super Usuário</label>
         </div>
-        {% if 'usuario_id' in request.get_full_path %}
+        {% if 'update' in request.get_full_path %}
         <hr />
         <div class="form-check form-switch">
           <input type="checkbox" class="form-check-input" name="force_password_change" id="id_force_password_change"{% if usuario.profile.force_password_change %} checked{% endif %}>
@@ -127,7 +127,7 @@
 </div>
 
 <script>
-  {% if 'usuario_add' in request.get_full_path %}
+  {% if 'new' in request.get_full_path %}
   function switchSenha(){
     if(document.getElementById('mostrar_senha').checked){document.getElementById('id_password').type = 'text';}
     else{document.getElementById('id_password').type = 'password';}

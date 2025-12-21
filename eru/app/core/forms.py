@@ -1,6 +1,7 @@
+import re
 from django import forms
 from django.forms import Field
-from .models import Empresa, Filial, Settings
+from .models import Empresa, Filial, Settings, Profile
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password
@@ -51,6 +52,7 @@ class FilialForm(forms.ModelForm):
 
 
 class UserForm(forms.ModelForm):
+    password = forms.CharField(required=False)
     class Meta:
         model = User
         fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active', 'groups', 'user_permissions']
@@ -67,6 +69,11 @@ class UserForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['user_permissions'].choices = get_grouped_permissions()
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['filiais', 'force_password_change']
 
 class GroupForm(forms.ModelForm):
     class Meta:
@@ -92,8 +99,30 @@ class SettingsForm(forms.ModelForm):
     quantidade_tentantivas_erradas = forms.IntegerField(required=False, initial=3, widget=forms.TextInput(attrs={'class': 'form-control','type':'number','min':'0','max':'10'}))
 
 class CustomPasswordChangeForm(PasswordChangeForm):
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get("new_password1")
+        profile = getattr(user, 'profile', None)
+        if commit and profile:
+            try:
+                settings = Settings.objects.get()
+                limit = settings.historico_senhas_nao_repetir
+            except Settings.DoesNotExist:
+                limit = 0
+            if limit > 0:
+                config = profile.config if profile.config else {}
+                history = config.get("history_password", [])
+                history.insert(0, make_password(password))
+                config["history_password"] = history[:limit]
+                profile.config = config
+            profile.force_password_change = False
+            profile.save()
+        if commit:
+            user.save()
+        return user
+    
     def clean_new_password1(self):
-        password = self.cleaned_data.get("password")
+        password = self.cleaned_data.get("new_password1")
         user = self.user
         try:
             settings = Settings.objects.get()

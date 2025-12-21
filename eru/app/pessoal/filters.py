@@ -11,7 +11,7 @@ class FuncionarioFilter(django_filters.FilterSet):
     )
     class Meta:
         model = Funcionario
-        fields = ['empresa', 'status', 'motivo_desligamento', 'regime', 'cargo__setor', 'pne', 'cnh_validade__lte']
+        fields = ['filial', 'status', 'motivo_desligamento', 'regime', 'cargo__setor', 'pne', 'cnh_validade__lte']
 
 
 

@@ -1,18 +1,18 @@
 from django.contrib import messages
-from django.views.generic import UpdateView, ListView, TemplateView, DeleteView
+from django.views.generic import UpdateView, ListView, CreateView, TemplateView, DeleteView
 from core.constants import DEFAULT_MESSAGES
 
 
-class BaseListView(LoginRequiredMixin, ListView):
+class BaseListView(ListView):
     login_url = '/handler/403'
     raise_exception = False
     
 
-class BaseTemplateView(LoginRequiredMixin, TemplateView):
+class BaseTemplateView(TemplateView):
     login_url = '/handler/403'
     raise_exception = False
 
-class BaseCreateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView):
+class BaseCreateView(CreateView):
     login_url = '/handler/403'
     raise_exception = False
     success_message = DEFAULT_MESSAGES.get('created')
@@ -28,7 +28,7 @@ class BaseUpdateView(UpdateView):
         messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
         return super().form_invalid(form)
 
-class BaseDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class BaseDeleteView(DeleteView):
     login_url = '/handler/403'
     raise_exception = False
     error_url = None    # caso em alguma view queira alterar destino no erro, especificar error_url

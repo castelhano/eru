@@ -72,9 +72,12 @@
                     <ul id="customCanvasNavMenu" class="navbar-nav justify-content-end flex-grow-1 mt-2"></ul>
                     {% block canvasNav %}{% endblock %}
                     <div class="position-sticky mt-2" style="top: 95%;">
-                        <button class="btn btn-sm btn-primary me-1" id="logout" type="button"><i class="bi bi-power me-2"></i>Logout</button>
+                        <form action="{% url 'logout' %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-primary me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>Logout</button>
+                        </form>
                         <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span data-i18n="common.password">Senha</span></a>
-                        <a href="{% url 'jobs' %}" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
+                        <a href="" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                     </div>
                 </div>
             </div>

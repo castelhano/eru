@@ -11,10 +11,10 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'usuarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'usuario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-  <form id="app_form" action="{% url 'usuario_add' %}" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'usuario_create' %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'core/_form_usuario.html' %}
   </form>

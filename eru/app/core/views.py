@@ -3,7 +3,7 @@ from asteval import Interpreter
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
+from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from django.contrib.auth import views as auth_views, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import auth, messages
@@ -12,12 +12,12 @@ from django.contrib.messages.views import SuccessMessageMixin
 from auditlog.models import LogEntry
 from .models import Empresa, Settings, Profile
 from .constants import DEFAULT_MESSAGES
-from .forms import EmpresaForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
+from .forms import EmpresaForm, UserForm, GroupForm, ProfileForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 
 # metodo auxiliar para inicializar campo config em profile
 def initialize_profile_config():
@@ -26,7 +26,10 @@ def initialize_profile_config():
 class IndexView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'core/index.html'
     def dispatch(self, request, *args, **kwargs):
-        if getattr(request.user.profile, 'force_password_change', False):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+        profile = getattr(request.user, 'profile', None)
+        if profile and profile.force_password_change:
             messages.warning( request, '<b>Atenção.</b> É necessário trocar sua senha para continuar.' )
             return redirect('change_password')
         return super().dispatch(request, *args, **kwargs)
@@ -199,21 +202,6 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView)
         return context
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Empresa
     template_name = 'core/empresas.html'
@@ -261,7 +249,8 @@ class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdate
         try:
             obj, created = Settings.objects.get_or_create(pk=1)
             return obj
-        except Settings.MultipleObjectsReturned: messages.error( self.request, '<b>Erro:</b> Identificado duplicatas nas configurações. Contate o administrador.' )
+        except Settings.MultipleObjectsReturned:
+            messages.error( self.request, '<b>Erro:</b> Identificado duplicatas nas configurações. Contate o administrador.')
             return None
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -286,7 +275,7 @@ class UsuarioCreateView(BaseCreateView):
     template_name = 'core/usuario_add.html'
     permission_required = 'auth.add_user'
     def get_success_url(self):
-        return reverse('usuario_id', kwargs={'pk': self.object.id})
+        return reverse('usuario_update', kwargs={'pk': self.object.id})
     @transaction.atomic
     def form_valid(self, form):
         try:
@@ -344,7 +333,7 @@ class EmpresaUpdateView(BaseUpdateView):
         context['empresa'] = self.object 
         return context
     def get_success_url(self):
-        return reverse('empresa_id', kwargs={'pk': self.object.id})
+        return reverse('empresa_update', kwargs={'pk': self.object.id})
 
 class UsuarioUpdateView(BaseUpdateView):
     model = User
@@ -352,24 +341,44 @@ class UsuarioUpdateView(BaseUpdateView):
     template_name = 'core/usuario_id.html'
     permission_required = 'auth.change_user'
     def get_success_url(self):
-        return reverse('usuario_id', kwargs={'pk': self.object.id})
+        return reverse('usuario_update', kwargs={'pk': self.object.id})
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['usuario'] = self.object
         return context
     @transaction.atomic
     def form_valid(self, form):
-        try:
-            self.object = form.save()
-            profile, _ = Profile.objects.get_or_create(user=self.object)
-            form.save_m2m()
-            filiais = form.cleaned_data.get('filiais')
-            if filiais is not None:
-                profile.filiais.set(filiais)
-            profile.save()
-            return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
+        profile_instance, _ = Profile.objects.get_or_create(user=self.object)
+        profile_form = ProfileForm(self.request.POST, instance=profile_instance)
+        if form.is_valid() and profile_form.is_valid():
+            try:
+                user = form.save(commit=False)
+                password = form.cleaned_data.get('password')
+                if password:
+                    user.set_password(password)
+                user.save()
+                groups = form.cleaned_data.get('groups')
+                if groups is not None:
+                    self.object.groups.set(groups)
+                permissions = form.cleaned_data.get('user_permissions')
+                if permissions is not None:
+                    self.object.user_permissions.set(permissions)
+                profile_form.save()
+                messages.success(self.request, "Usuário atualizado com sucesso!")
+                return HttpResponseRedirect(self.get_success_url())
+            except Exception as e:
+                print('cai elxxxxxeee')
+                print(e)
+                messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
+                return self.form_invalid(form)
+        else:
+            print("--- ERROS NO USER FORM ---")
+            print(form.errors.as_data())
+            
+            # Como estamos usando dois forms, o erro pode estar no segundo
+            if 'profile_form' in locals() or 'profile_form' in globals():
+                print("--- ERROS NO PROFILE FORM ---")
+                print(profile_form.errors.as_data())
             return self.form_invalid(form)
 
 class GrupoUpdateView(BaseUpdateView):
@@ -378,7 +387,7 @@ class GrupoUpdateView(BaseUpdateView):
     template_name = 'core/grupo_id.html'
     permission_required = 'auth.change_group'
     def get_success_url(self):
-        return reverse('grupo_id', kwargs={'pk': self.object.id})
+        return reverse('grupo_update', kwargs={'pk': self.object.id})
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['grupo'] = self.object
@@ -412,7 +421,7 @@ class UsuarioDeleteView(BaseDeleteView):
     success_url = reverse_lazy('usuarios')
 
 class GrupoDeleteView(BaseDeleteView):
-    model = Grupo
+    model = Group
     permission_required = 'auth.delete_group'
     success_url = reverse_lazy('grupos')
 

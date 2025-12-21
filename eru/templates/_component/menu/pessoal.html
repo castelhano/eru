@@ -5,9 +5,9 @@
         icon: 'bi bi-list',
         'data-i18n': 'common.register__bold:c',
         itens: [
-        {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionarios' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setores' %}', 'data-i18n': 'common.sector__bold:s', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargos' %}', 'data-i18n': 'common.position__bold:o', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionario_list' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setor_list' %}', 'data-i18n': 'common.sector__bold:s', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargo_list' %}', 'data-i18n': 'common.position__bold:o', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',
@@ -30,14 +30,13 @@
         icon: 'bi bi-braces-asterisk',
         'data-i18n': 'personal.common.event__plural__bold:e',
         itens: [
-        {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:eventos' %}', 'data-i18n': 'personal.common.event__bold:t', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupos_evento' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivos_reajuste' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', 'data-i18n': 'personal.common.event__bold:t', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupo_evento_list' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivo_reajuste_list' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_eventoempresa %}
         {type: 'separator'},
-        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventos_related' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:v', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
+        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:evento_related_list' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:v', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
-        {% if perms.pessoal.change_evento %}{name: '<b><u>R</u></b>eplicar eventos', id:'menu_evento_copy', href: '{% url 'pessoal:evento_related_copy' %}', 'data-i18n': 'personal.event.replicateEvents__bold:r', keybind: ['r', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento_copy').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+e',

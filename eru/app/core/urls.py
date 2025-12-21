@@ -5,8 +5,8 @@ from . import views
 
 urlpatterns = [
     path('',views.IndexView.as_view(),name='index'),
-    path('index',views.index,name='index'),
-    path('login',auth_views.CustomLoginView.as_view(template_name='core/login.html'), name='login'),
+    path('index',views.IndexView.as_view(),name='index'),
+    path('login',views.CustomLoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout', auth_views.LogoutView.as_view(), name='logout'),
     path('change_password',views.CustomPasswordChangeView.as_view(),name='change_password'),
     path('handler/<int:code>',views.HandlerView.as_view(),name='handler'),
@@ -16,5 +16,5 @@ urlpatterns = [
     *generate_urls('Grupo', views),
     *generate_urls('Empresa', views),
     path('usuarios_grupo/<int:pk>',views.UsuariosPorGrupoListView.as_view(),name='usuarios_grupo'),
-    path('settings/<int:pk>/update',views.SettingsUpdateView.as_view(),name='settings_update'),
+    path('settings',views.SettingsUpdateView.as_view(),name='settings'),
 ]

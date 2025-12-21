@@ -89,14 +89,15 @@ class Cargo(models.Model):
     nome = models.CharField(max_length=50, unique=True, blank=False)
     setor = models.ForeignKey(Setor, on_delete=models.PROTECT)
     atividades = models.TextField(blank=True)
+    funcoes_fixas = models.ManyToManyField('FuncaoFixa', related_name="cargos", blank=True)
     def __str__(self):
         return self.nome
     def ativos(self):
         return Funcionario.objects.filter(cargo=self, status='A').count()
-    def funcoes_fixas(self):
-        return self.ffixas.all()
-    def funcoes_fixas_list(self):
-        return list(self.ffixas.values_list('nome', flat=True))
+    # def funcoes_fixas(self):
+    #     return self.ffixas.all()
+    # def funcoes_fixas_list(self):
+    #     return list(self.ffixas.values_list('nome', flat=True))
     class Meta:
         ordering = ['nome']
 auditlog.register(Cargo)
@@ -109,7 +110,6 @@ class FuncaoFixa(models.Model):
         ("O", mark_safe('<span data-i18n="personal.common.mechanics">Oficina</span>')),
     )
     nome = models.CharField(max_length=3,choices=FFIXA_CHOICES,unique=True, blank=False)
-    cargos = models.ManyToManyField(Cargo, related_name="ffixas")
     def __str__(self):
         return self.get_nome_display()
     class Meta:

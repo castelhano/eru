@@ -34,7 +34,7 @@ def linhas(request):
     linhas = Linha.objects.filter(inativa=inativa).order_by('codigo')
     if request.GET.get('empresa', None):
         try:
-            empresa = request.user.profile.empresas.filter(id=request.GET.get('empresa', None)).get()
+            empresa = request.user.profile.filiais.filter(id=request.GET.get('empresa', None)).get()
         except:
             messages.error(request,'Empresa <b>não encontrada</b> ou <b>não habilitada</b>')
             return redirect('trafego:linhas')
@@ -42,7 +42,7 @@ def linhas(request):
         empresa_display = empresa.nome
     else:
         empresa_display = 'Todas'
-        linhas = linhas.filter(empresa__in=request.user.profile.empresas.all())
+        linhas = linhas.filter(empresa__in=request.user.profile.filiais.all())
     metrics = dict(status_display = 'Inativas' if inativa == 'True' else 'Ativas', empresa_display = empresa_display)
     return render(request,'trafego/linhas.html', {'linhas' : linhas, 'metrics':metrics})
 

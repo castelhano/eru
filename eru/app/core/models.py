@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.db.models.signals import post_save
-from django.dispatch import receiver
 from auditlog.registry import auditlog
 
 # EXTENDED **********************************************
@@ -62,7 +61,7 @@ auditlog.register(Filial)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    filiais = models.ManyToManyField(Filial)
+    filiais = models.ManyToManyField(Filial, blank=True)
     force_password_change = models.BooleanField(default=True)
     config = models.JSONField(default=dict, blank=True, null=True)
     def __str__(self):
@@ -76,7 +75,7 @@ class Profile(models.Model):
         ]
         default_permissions = []
 auditlog.register(User, exclude_fields=['last_login'])
-auditlog.register(Profile, m2m_fields={"empresas"}, exclude_fields=['config'])
+auditlog.register(Profile, m2m_fields={"filiais"}, exclude_fields=['config'])
 
 class Settings(models.Model):
     quantidade_caracteres_senha = models.PositiveIntegerField(default=8)
@@ -89,12 +88,3 @@ class Settings(models.Model):
     class Meta:
         default_permissions = ('view','change',)
 auditlog.register(Settings)
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-# @receiver(post_save, sender=User)
-# def save_user_profile(sender, instance, **kwargs):
-#     instance.profile.save()

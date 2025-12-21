@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.conf import settings
 # core
 from core.mixins import AjaxableListMixin, AjaxableFormMixin
-from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
+from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from core.views import asteval_run
 from core.extras import get_props
 # third-party

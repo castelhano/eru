@@ -11,7 +11,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.auth.add_group %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'grupo_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'grupo_create' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       {% if perms.core.view_log %}
       <li class="nav-item dropdown ms-auto">
@@ -47,7 +47,7 @@
                 <td>{{grupo.user_set.count}}</td>
                 <td class="text-end fit py-1">
                   {% if perms.auth.change_group %}
-                  <a class="btn btn-sm btn-dark" href="{% url 'grupo_id' grupo.id|safe %}"><i class="bi bi-pen-fill"></i></a>
+                  <a class="btn btn-sm btn-dark" href="{% url 'grupo_update' grupo.id|safe %}"><i class="bi bi-pen-fill"></i></a>
                   {% endif %}
                   <a class="btn btn-sm btn-warning" href="{% url 'usuarios_grupo' grupo.id|safe %}" title="Usuarios do grupo"><i class="bi bi-people-fill"></i></a>
                 </td>
@@ -59,7 +59,7 @@
       </div>
       <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2" style="min-width: 200px;">
         <div class="filter-container">
-          <h6 class="text-body-secondary d-flex justify-content-between"><span data-i18n="common.filter__plural__posfix::">Filtros</span><a class="text-body-secondary text-decoration-none fs-8" data-i18n="common.clean" href="{% url 'grupos' %}">Limpar</a></h6>
+          <h6 class="text-body-secondary d-flex justify-content-between"><span data-i18n="common.filter__plural__posfix::">Filtros</span><a class="text-body-secondary text-decoration-none fs-8" data-i18n="common.clean" href="{% url 'grupo_list' %}">Limpar</a></h6>
           <ul class="list-unstyled">
             <li><hr class="my-1"></li>
             <li><span id="id_sem_associacoes" data-i18n="auth.noUsers" class="link pointer" onclick="urlFilter('users','false')">Sem Usuários</span></li>

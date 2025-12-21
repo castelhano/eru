@@ -23,7 +23,7 @@
 </head>
 <body class="text-center bg-body">
   <main class="form-signin">
-    <form role="form" id="login_form" action="{% url 'authenticate' %}" method="POST" autocomplete="off">
+    <form role="form" id="login_form" action="{% url 'login' %}" method="POST" autocomplete="off">
       {% csrf_token %}
       <img id="logo" class="mb-4" src="{% static 'img/logo-dark.png' %}" alt="" width="90" height="74">
       <div style="height: 74;"><span class="logo"></span></div>
