@@ -19,7 +19,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.http import JsonResponse
 
-
+# metodo auxiliar para inicializar campo config em profile
+def initialize_profile_config():
+    return {"history_password":[], "password_errors_count": 0}
 
 class IndexView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'core/index.html'
@@ -29,60 +31,84 @@ class IndexView(LoginRequiredMixin, BaseTemplateView):
             return redirect('change_password')
         return super().dispatch(request, *args, **kwargs)
 
-class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = Empresa
-    template_name = 'core/empresas.html'
-    context_object_name = 'empresas'
-    permission_required = 'core.view_empresa'
-    def get_queryset(self):
-        return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
+class CustomLoginView(auth_views.LoginView):
+    template_name = 'core/login.html'
+    redirect_authenticated_user = True # usuario logado ja eh direcionado diretamente para index
+    def form_valid(self, form):
+        user = form.get_user()
+        auth.login(self.request, user)
+        profile = user.profile
+        config = profile.config if profile.config else initialize_profile_config()
+        config["password_errors_count"] = 0
+        profile.config = config
+        profile.save()
+        return super().form_valid(form)
+    def form_invalid(self, form):
+        username = form.cleaned_data.get('username')
+        try:
+            settings = Settings.objects.get()
+        except Settings.DoesNotExist:
+            settings = Settings()
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            user = None
+        if user and settings.quantidade_tentantivas_erradas > 0:
+            if not user.is_active:
+                messages.error(self.request, 'Conta bloqueada. Procure o administrador.')
+                return super().form_invalid(form)
+            profile = user.profile
+            config = profile.config if profile.config else initialize_profile_config()
+            config["password_errors_count"] = config.get("password_errors_count", 0) + 1
+            if config["password_errors_count"] >= settings.quantidade_tentantivas_erradas:
+                user.is_active = False
+                user.save()
+                config["password_errors_count"] = 0
+                messages.error(self.request, 'Excedeu limite de tentativas, conta bloqueada!')
+            else:
+                tentativas_restantes = settings.quantidade_tentantivas_erradas - config["password_errors_count"]
+                messages.error(self.request, f'Senha inválida. Tentativas restantes: <b>{tentativas_restantes}</b>')
+            profile.config = config
+            profile.save()
+        else:
+            messages.error(self.request, 'Erro: falha na autenticação.')
+        return super().form_invalid(form)
 
-class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = Group
-    template_name = 'core/grupos.html'
-    context_object_name = 'grupos'
-    permission_required = 'auth.view_group'
-    def get_queryset(self):
-        queryset = Group.objects.all().order_by('name')
-        users_filter = self.request.GET.get('users')
-        if users_filter == 'false':
-            queryset = queryset.filter(user__isnull=True)
-        return queryset
+class CustomPasswordChangeView(auth_views.PasswordChangeView):
+    form_class = CustomPasswordChangeForm
+    template_name = 'core/change_password.html'
+    success_url = reverse_lazy('login')
+    @transaction.atomic
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        user = self.request.user
+        profile = user.profile
+        try:
+            settings = Settings.objects.get()
+        except Settings.DoesNotExist:
+            settings = Settings()
+        if settings.historico_senhas_nao_repetir > 0:
+            config = profile.config if profile.config else initialize_profile_config()
+            history = config.get("history_password", [])
+            history.append(user.password)
+            if len(history) > settings.historico_senhas_nao_repetir:
+                history = history[-settings.historico_senhas_nao_repetir:]
+            config["history_password"] = history
+            profile.config = config
+            profile.force_password_change = False
+            profile.save()
+        messages.success(self.request, 'Senha alterada com sucesso!')
+        update_session_auth_hash(self.request, user)
+        return response
+
+class HandlerView(LoginRequiredMixin, BaseTemplateView):
+    def get_template_names(self):
+        code = self.kwargs.get('code')
+        template_name = f"{code}.html"
+        return [template_name]
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users_filter'] = self.request.GET.get('users')
-        return context
-
-class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = User
-    template_name = 'core/usuarios_grupo.html'
-    context_object_name = 'usuarios'   
-    permission_required = 'auth.view_group'
-    def get_queryset(self):
-        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('id'))        
-        return User.objects.filter(groups=self.grupo).order_by('username')
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['grupo'] = self.grupo
-        return context
-
-class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = User
-    template_name = 'core/usuarios.html'
-    context_object_name = 'usuarios'
-    permission_required = 'auth.view_user'
-    def get_queryset(self):
-        return User.objects.all().order_by('username')
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.GET:
-            try:
-                user_filter = UserFilter(self.request.GET, queryset=self.get_queryset())
-                context['usuarios'] = user_filter.qs
-                context['filter'] = user_filter
-            except Exception:
-                messages.warning(self.request, '<b>Erro</b> ao filtrar usuário. Exibindo lista completa.')
-                context['usuarios'] = self.get_queryset()
+        context['error_code'] = self.kwargs.get('code')
         return context
 
 class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
@@ -120,6 +146,110 @@ class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplate
             max_entries = int(entries_input)
         context['logs'] = logs_qs[:max_entries]
         return self.render_to_response(context)
+
+# i18n: Retorna dicionario de dados (json) com linguagem solicitada (se existir)
+# --
+# @version  1.0
+# @since    02/10/2025
+# @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+# @desc     Arquivos json dever ser salvos na pasta app/i18n (do respectivo app) e nome do arquivo deve corresponder ao idioma (ex: pt-BR.json)
+#           ex: en.json ou en-US.json
+class I18nView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        app = request.GET.get('app')
+        lng = request.GET.get('lng')
+        if not app or not lng:
+            return JsonResponse({'error': 'Request params app and lng'}, status=400)
+        try:
+            base_path = os.path.join(settings.TEMPLATES_DIR, app, 'i18n')
+            fpath = os.path.join(base_path, f'{lng}.json')
+            if not os.path.exists(fpath) and '-' in lng:
+                generic_lng = lng.split('-')[0]
+                fpath = os.path.join(base_path, f'{generic_lng}.json')
+                selected_lng = generic_lng
+            else:
+                selected_lng = lng
+            if os.path.exists(fpath):
+                with open(fpath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    data['i18nSelectedLanguage'] = selected_lng
+                return JsonResponse(data)
+            return JsonResponse({}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = User
+    template_name = 'core/usuarios.html'
+    context_object_name = 'usuarios'
+    permission_required = 'auth.view_user'
+    def get_queryset(self):
+        return User.objects.all().order_by('username')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.GET:
+            try:
+                user_filter = UserFilter(self.request.GET, queryset=self.get_queryset())
+                context['usuarios'] = user_filter.qs
+                context['filter'] = user_filter
+            except Exception:
+                messages.warning(self.request, '<b>Erro</b> ao filtrar usuário. Exibindo lista completa.')
+                context['usuarios'] = self.get_queryset()
+        return context
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Empresa
+    template_name = 'core/empresas.html'
+    context_object_name = 'empresas'
+    permission_required = 'core.view_empresa'
+    def get_queryset(self):
+        return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
+
+class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Group
+    template_name = 'core/grupos.html'
+    context_object_name = 'grupos'
+    permission_required = 'auth.view_group'
+    def get_queryset(self):
+        queryset = Group.objects.all().order_by('name')
+        users_filter = self.request.GET.get('users')
+        if users_filter == 'false':
+            queryset = queryset.filter(user__isnull=True)
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['users_filter'] = self.request.GET.get('users')
+        return context
+
+class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = User
+    template_name = 'core/usuarios_grupo.html'
+    context_object_name = 'usuarios'   
+    permission_required = 'auth.view_group'
+    def get_queryset(self):
+        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('id'))        
+        return User.objects.filter(groups=self.grupo).order_by('username')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['grupo'] = self.grupo
+        return context
 
 class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Settings
@@ -287,124 +417,11 @@ class GrupoDeleteView(BaseDeleteView):
     success_url = reverse_lazy('grupos')
 
 
-# AUTENTICACAO E PERMISSAO
-class CustomLoginView(auth_views.LoginView):
-    template_name = 'core/login.html'
-    redirect_authenticated_user = True # usuario logado ja eh direcionado diretamente para index
-    def form_valid(self, form):
-        user = form.get_user()
-        auth.login(self.request, user)
-        profile = user.profile
-        config = profile.config if profile.config else initialize_profile_config()
-        config["password_errors_count"] = 0
-        profile.config = config
-        profile.save()
-        return super().form_valid(form)
-    def form_invalid(self, form):
-        username = form.cleaned_data.get('username')
-        try:
-            settings = Settings.objects.get()
-        except Settings.DoesNotExist:
-            settings = Settings()
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            user = None
-        if user and settings.quantidade_tentantivas_erradas > 0:
-            if not user.is_active:
-                messages.error(self.request, 'Conta bloqueada. Procure o administrador.')
-                return super().form_invalid(form)
-            profile = user.profile
-            config = profile.config if profile.config else initialize_profile_config()
-            config["password_errors_count"] = config.get("password_errors_count", 0) + 1
-            if config["password_errors_count"] >= settings.quantidade_tentantivas_erradas:
-                user.is_active = False
-                user.save()
-                config["password_errors_count"] = 0
-                messages.error(self.request, 'Excedeu limite de tentativas, conta bloqueada!')
-            else:
-                tentativas_restantes = settings.quantidade_tentantivas_erradas - config["password_errors_count"]
-                messages.error(self.request, f'Senha inválida. Tentativas restantes: <b>{tentativas_restantes}</b>')
-            profile.config = config
-            profile.save()
-        else:
-            messages.error(self.request, 'Erro: falha na autenticação.')
-        return super().form_invalid(form)
-
-class CustomPasswordChangeView(auth_views.PasswordChangeView):
-    form_class = CustomPasswordChangeForm
-    template_name = 'core/change_password.html'
-    success_url = reverse_lazy('login')
-    @transaction.atomic
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        user = self.request.user
-        profile = user.profile
-        try:
-            settings = Settings.objects.get()
-        except Settings.DoesNotExist:
-            settings = Settings()
-        if settings.historico_senhas_nao_repetir > 0:
-            config = profile.config if profile.config else initialize_profile_config()
-            history = config.get("history_password", [])
-            history.append(user.password)
-            if len(history) > settings.historico_senhas_nao_repetir:
-                history = history[-settings.historico_senhas_nao_repetir:]
-            config["history_password"] = history
-            profile.config = config
-            profile.force_password_change = False
-            profile.save()
-        messages.success(self.request, 'Senha alterada com sucesso!')
-        update_session_auth_hash(self.request, user)
-        return response
-
-class HandlerView(LoginRequiredMixin, BaseTemplateView):
-    def get_template_names(self):
-        code = self.kwargs.get('code')
-        template_name = f"{code}.html"
-        return [template_name]
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['error_code'] = self.kwargs.get('code')
-        return context
 
 
-def initialize_profile_config():
-    return {"history_password":[], "password_errors_count": 0}
 
 
-# AJAX METODOS
 
-# i18n: Retorna dicionario de dados (json) com linguagem solicitada (se existir)
-# --
-# @version  1.0
-# @since    02/10/2025
-# @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
-# @desc     Arquivos json dever ser salvos na pasta app/i18n (do respectivo app) e nome do arquivo deve corresponder ao idioma (ex: pt-BR.json)
-#           ex: en.json ou en-US.json
-class I18nView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        app = request.GET.get('app')
-        lng = request.GET.get('lng')
-        if not app or not lng:
-            return JsonResponse({'error': 'Request params app and lng'}, status=400)
-        try:
-            base_path = os.path.join(settings.TEMPLATES_DIR, app, 'i18n')
-            fpath = os.path.join(base_path, f'{lng}.json')
-            if not os.path.exists(fpath) and '-' in lng:
-                generic_lng = lng.split('-')[0]
-                fpath = os.path.join(base_path, f'{generic_lng}.json')
-                selected_lng = generic_lng
-            else:
-                selected_lng = lng
-            if os.path.exists(fpath):
-                with open(fpath, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    data['i18nSelectedLanguage'] = selected_lng
-                return JsonResponse(data)
-            return JsonResponse({}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
 
 # @login_required
 # def get_empresas(request):

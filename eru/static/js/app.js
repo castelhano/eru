@@ -147,11 +147,10 @@ function confirmOnClick(options){
   appModalConfirm.show()
 }
 
-// Script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
+// script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
 function appOnLogout(url){
   i18n.clearData(false);
-  //--
-  location.href = url;
+   return true;
 }
 
 function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item))}

@@ -3,6 +3,7 @@ from core.models import Empresa, Filial, ImageField as core_ImageField
 from datetime import datetime, date
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
+from core.extras import create_image
 from auditlog.registry import auditlog
 
 class Pessoa(models.Model):
@@ -148,6 +149,21 @@ class Funcionario(Pessoa):
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, default='A', blank=True)    
     def __str__(self):
         return self.matricula
+    def process_and_save_photo(self, foto_data_url):
+        if not foto_data_url:
+            return
+        folder_relative = "pessoal/fotos"
+        folder_path = Path(settings.MEDIA_ROOT) / folder_relative
+        folder_path.mkdir(parents=True, exist_ok=True)
+        file_name = f"{self.empresa.id}_{self.matricula}_{int(datetime.now().timestamp())}.png"
+        create_image(foto_data_url, str(folder_path), file_name)
+        self.foto = f"{folder_relative}/{file_name}"
+        self.save(update_fields=['foto'])
+    def delete(self, *args, **kwargs):
+        # ao excluir funcionario, caso ele tenha foto, apaga registro fisico
+        if self.foto:
+            self.foto.delete(save=False)
+        super().delete(*args, **kwargs)
     def admissao_anos(self):
         if self.data_admissao != None:
             diferenca = date.today() - self.data_admissao
@@ -159,21 +175,13 @@ class Funcionario(Pessoa):
         return Dependente.objects.filter(funcionario=self).order_by('nome')
     def afastamentos(self):
         return Afastamento.objects.filter(funcionario=self).order_by('data_afastamento')
-    # def desligamento(self, data, motivo):
-    #     try:
-    #         if self.status == 'A': # Desligamento restrito a funcionarios ativos
-    #             self.status = 'D'
-    #             self.data_desligamento = data
-    #             self.motivo_desligamento = motivo
-    #             return [True,'DESLIGADO',f'Funcionario {self.matricula} desligado']
-    #         else:
-    #             return [False,'Fail','Somente funcionários ativos podem ser desligados']                
-    #     except:
-    #         return [False,'Erro ao desligar funcionario']
     def foto_url(self):
         return self.foto.url if self.foto else None
     def foto_name(self):
         return self.foto.name.split('/')[-1]
+    @property
+    def F_ehEditavel(self):
+        return self.status != 'D'
     @property
     def F_pne(self):
         return self.pne
@@ -183,6 +191,16 @@ class Funcionario(Pessoa):
     @property
     def F_diasEmpresa(self):
         return 0
+    def clean(self):
+        if self.pk: # eh um update
+            original = Funcionario.objects.get(pk=self.pk)
+            if original.status == 'D' and self.status == 'D':
+                raise ValidationError("Não é possível alterar dados de funcionários desligados.")
+        super().clean()
+    def save(self, *args, **kwargs):
+        if self.pk and Funcionario.objects.get(pk=self.pk).status == 'D':
+            raise PermissionError("Alteração bloqueada: Funcionário Desligado.")
+        super().save(*args, **kwargs)
     class Meta:
         permissions = [
             ("associar_usuario", "Pode associar usuario a funcionário"),

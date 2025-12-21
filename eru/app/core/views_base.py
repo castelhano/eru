@@ -31,7 +31,22 @@ class BaseUpdateView(UpdateView):
 class BaseDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     login_url = '/handler/403'
     raise_exception = False
+    error_url = None    # caso em alguma view queira alterar destino no erro, especificar error_url
     def delete(self, request, *args, **kwargs):
-        response = super().delete(request, *args, **kwargs)
-        messages.warning(self.request, DEFAULT_MESSAGES.get('deleted'))
-        return response
+        self.object = self.get_object()
+        fallback_error_url = self.error_url or request.META.get('HTTP_REFERER')
+        # 1) definie url de retorno para pagina de origem
+        if not fallback_error_url and hasattr(self.object, 'get_absolute_url'):
+            fallback_error_url = self.object.get_absolute_url()
+        # 2) caso nao consiga redireciona para mesma pagina definida para success_url 
+        if not fallback_error_url:
+            fallback_error_url = self.get_success_url()
+        try:
+            response = super().delete(request, *args, **kwargs)
+            return response
+        except (ProtectedError, IntegrityError):
+            messages.error( self.request, settings.DEFAULT_MESSAGES.get('deleteError'))
+            return redirect(fallback_error_url)
+        except Exception as e:
+            messages.error(self.request, settings.DEFAULT_MESSAGES.get('500'))
+            return redirect(fallback_error_url)

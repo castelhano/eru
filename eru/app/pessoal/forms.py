@@ -23,11 +23,10 @@ class GrupoEventoForm(forms.ModelForm):
 class CargoForm(forms.ModelForm):
     class Meta:
         model = Cargo
-        fields = ['nome','setor','atividades']
+        fields = ['nome','setor','atividades', 'ffixas']
     nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     setor = forms.ModelChoiceField(queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     atividades = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'data-i18n':'[placeholder]personal.position.jobResponsibilities', 'placeholder':'Atividades do cargo', 'rows':'15'}))
-    funcao_fixa = forms.MultipleChoiceField(required=False, choices=FuncaoFixa.FFIXA_CHOICES, widget=forms.SelectMultiple(attrs={'class':'form-select fw-bold'}))
     
 class AfastamentoForm(forms.ModelForm):
     class Meta:

@@ -1,30 +1,34 @@
-from django.http import HttpResponseRedirect
-from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
-from django.urls import reverse_lazy, reverse
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
 import json
-#--
-from rest_framework import viewsets, permissions, status
-from .serializers import FuncionarioSerializer
-from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-#--
-from django.core import serializers
-from core.views import asteval_run
-from .models import Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
-from .forms import SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
-from .filters import FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
-from django.contrib.auth.decorators import login_required, permission_required
+from datetime import date
+from django.views import View
+from django.urls import reverse_lazy, reverse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
-from core.extras import create_image, get_props
+from django.db.models import Q
+from django.http import JsonResponse
 from django.conf import settings
-from datetime import datetime, date
-
-
+# core
+from core.mixins import AjaxableListMixin, AjaxableFormMixin
+from core.view_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
+from core.views import asteval_run
+from core.extras import get_props
+# third-party
+from rest_framework import viewsets, permissions
+from .serializers import FuncionarioSerializer
+# local app
+from .models import (
+    Setor, Cargo, Funcionario, FuncaoFixa, Afastamento, Dependente,
+    Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
+)
+from .forms import (
+    SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm,
+    EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
+)
+from .filters import (
+    FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
+)
+# ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Setor
     template_name = 'core/setores.html'
@@ -170,14 +174,7 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
         context['form'] = form
         return context
 
-class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = GrupoEvento
-    template_name = 'pessoal/grupos_evento.html'
-    context_object_name = 'grupos_evento'
-    permission_required = 'pessoal.view_grupoevento'
-    queryset = GrupoEvento.objects.all().order_by('nome')
-
-class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
     model = GrupoEvento
     template_name = 'pessoal/grupos_evento.html'
     context_object_name = 'grupos_evento'
@@ -208,43 +205,24 @@ class CargoCreateView(BaseCreateView):
     template_name = 'pessoal/cargo_add.html'
     permission_required = 'pessoal.add_cargo'
     success_url = reverse_lazy('pessoal:cargo_add')
-    @transaction.atomic
-    def form_valid(self, form):
-        try:
-            self.object = form.save()
-            funcoes_fixas_nomes = self.request.POST.getlist('funcao_fixa')
-            for nome_funcao in funcoes_fixas_nomes:
-                funcao, created = FuncaoFixa.objects.get_or_create(nome=nome_funcao)
-                funcao.cargos.add(self.object)
-            messages.success(self.request, settings.DEFAULT_MESSAGES['created'])
-            return HttpResponseRedirect(self.get_success_url())
-        except Exception:
-            messages.error(self.request, settings.DEFAULT_MESSAGES['saveError'])
-            return self.form_invalid(form)
 
-
-
-class FuncionarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+class FuncionarioCreateView(BaseCreateView):
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_add.html'
     permission_required = 'pessoal.add_funcionario'
     def get_form_kwargs(self):
-        # injeta o usuario no formulario
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
     def form_valid(self, form):
-        # processamento da foto
-        registro = form.save(commit=False)
+        response = super().form_valid(form)
         foto_data = self.request.POST.get('foto_data_url')
         if foto_data:
-            file_name = f"{registro.empresa.id}_{registro.matricula}_{datetime.now().timestamp()}.png"
-            create_image(foto_data, f"{settings.MEDIA_ROOT}/pessoal/fotos", file_name)
-            registro.foto = f"pessoal/fotos/{file_name}"
-        return super().form_valid(form)
+            self.object.process_and_save_photo(foto_data)
+        return response
     def get_success_url(self):
-        return reverse('pessoal:funcionario_id', kwargs={'pk': self.object.id})
+        return reverse('pessoal:funcionario_id', kwargs={'id': self.object.id})
 
 
 class DependenteCreateView(BaseCreateView):
@@ -272,42 +250,14 @@ class DependenteCreateView(BaseCreateView):
         context['funcionario'] = self.funcionario
         return context
 
-@login_required
-@permission_required('pessoal.add_dependente', login_url="/handler/403")
-def dependente_add(request, id):
-    if request.method == 'POST':
-        form = DependenteForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'])
-                return redirect('pessoal:dependente_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:dependente_add')
-    else:
-        funcionario = Funcionario.objects.get(pk=id)
-        _new = Dependente()
-        _new.funcionario = funcionario
-        form = DependenteForm(instance=_new)
-    return render(request,'pessoal/dependente_add.html',{'form':form, 'funcionario':funcionario})
 
-@login_required
-@permission_required('pessoal.add_evento', login_url="/handler/403")
-def evento_add(request):
-    if request.method == 'POST':
-        form = EventoForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal:evento_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:evento_add')
-    else:
-        form = EventoForm()
-    return render(request,'pessoal/evento_add.html',{'form':form})
+class EventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+    model = Evento
+    form_class = EventoForm
+    template_name = 'pessoal/evento_add.html'
+    success_url = reverse_lazy('pessoal:eventos')
+    permission_required = 'pessoal.add_evento'
+
 
 # Retorna lista com todas as variaveis utilizadas para composicao de formula em eventos
 # busca tanto eventos criados pelo usuario quanto props definidas nos modelos alvo
@@ -318,549 +268,351 @@ def getEventProps(asDict=False):
     return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom
 
 
-@login_required
-def evento_related_add(request, related, id):
-    if not request.user.has_perm(f"pessoal.view_evento{related}"):
-        return redirect('handler', 403)
-    if request.method == 'POST':
-        if related == 'empresa':
-            form = EventoEmpresaForm(request.POST, user=request.user)
-        elif related == 'cargo':
-            form = EventoCargoForm(request.POST, user=request.user)
-        elif related == 'funcionario':
-            form = EventoFuncionarioForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.evento.nome}</b>')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-            return redirect('pessoal:eventos_related', related, id)
-        else:
-            if related == 'empresa':
-                model = {'id':0,'pk':0}
-            elif related == 'cargo':
-                model = Cargo.objects.get(pk=id)
-            elif related == 'funcionario':
-                model = Funcionario.objects.get(pk=id)
-            return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': getEventProps()})
-    else:
-        if related == 'empresa':
-            form = EventoEmpresaForm(user=request.user)
-            model = {'id':0,'pk':0}
-        elif related == 'cargo':
-            form = EventoCargoForm(user=request.user)
-            model = Cargo.objects.get(pk=id)
-        elif related == 'funcionario':
-            form = EventoFuncionarioForm()
-            model = Funcionario.objects.get(pk=id)
-        return render(request,'pessoal/evento_related_add.html', {'form':form, 'related':related, 'model':model, 'props': getEventProps()})
-
-# Copia um ou mais eventos de um modelo para outro, podendo ser cargo ou funcionario
-@login_required
-def evento_related_copy(request):
-    # if not request.user.has_perm(f"pessoal.add_evento{related}"):
-    #     return redirect('handler', 403)
-    if request.method == 'POST':
-        if related == 'cargo':
-            pass
-        elif related == 'funcionario':
-            pass
-        else:
-            messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_copy [bad request]</b>')
+class EventoRelatedCreateView(BaseCreateView):
+    template_name = 'pessoal/evento_related_add.html'
+    def dispatch(self, request, *args, **kwargs):
+        self.related = kwargs.get('related')
+        self.related_id = kwargs.get('id')
+        perm_name = f"pessoal.view_evento{self.related}"
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', code=403)
+        if self.related not in ['empresa', 'cargo', 'funcionario']:
+            messages.error(request, f"{settings.DEFAULT_MESSAGES['400']} <b>pessoal:evento_related_add, invalid related</b>")
             return redirect('index')
-    else:
-        return render(request, 'pessoal/evento_related_copy.html')
-
+        return super().dispatch(request, *args, **kwargs)
+    def get_form_class(self):
+        forms_map = {
+            'empresa': EventoEmpresaForm,
+            'cargo': EventoCargoForm,
+            'funcionario': EventoFuncionarioForm,
+        }
+        return forms_map.get(self.related)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # empresa e cargo recebem o parametro user
+        if self.related in ['empresa', 'cargo']:
+            kwargs['user'] = self.request.user
+        return kwargs
+    def get_context_data(self, **kwargs):
+        # prepara contexto para o template
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        filiais_autorizadas = user.profile.filiais.all()
+        context['related'] = self.related
+        context['props'] = getEventProps()
+        # busca o objeto relacionado para exibicao no template (funcionario, cargo, empresa (id p empresa eh desconsiderado, sempre usar 0))
+        if self.related == 'empresa':
+            context['model'] = {'id': 0, 'pk': 0}
+        elif self.related == 'cargo':
+            context['model'] = get_object_or_404(Cargo, pk=self.related_id)
+        elif self.related == 'funcionario':
+            # funcionario so sera listado para filiais autorizadas para o utilizador
+            context['model'] = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
+        return context
+    def get_success_url(self):
+        return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'id': self.related_id})
     
 
-@login_required
-@permission_required('pessoal.add_grupoevento', login_url="/handler/403")
-def grupo_evento_add(request):
-    if request.method == 'POST':
-        form = GrupoEventoForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal:grupo_evento_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:grupo_evento_add')
-    else:
-        form = GrupoEventoForm()
-    return render(request,'pessoal/grupo_evento_add.html',{'form':form})
+class GrupoEventoCreateView(BaseCreateView):
+    model = GrupoEvento
+    form_class = GrupoEventoForm
+    template_name = 'pessoal/grupo_evento_add.html'
+    permission_required = 'pessoal.add_grupoevento'
+    success_url = reverse_lazy('pessoal:grupo_evento_add')
 
-@login_required
-@permission_required('pessoal.add_motivoreajuste', login_url="/handler/403")
-def motivo_reajuste_add(request):
-    if request.method == 'POST':
-        form = MotivoReajusteForm(request.POST)
-        if form.is_valid():
-            try:
-                registro = form.save()
-                messages.success(request, settings.DEFAULT_MESSAGES['created'] + f' <b>{registro.nome}</b>')
-                return redirect('pessoal:motivo_reajuste_add')
-            except:
-                messages.error(request, settings.DEFAULT_MESSAGES['saveError'])
-                return redirect('pessoal:motivo_reajuste_add')
-    else:
-        form = MotivoReajusteForm()
-    return render(request,'pessoal/motivo_reajuste_add.html',{'form':form})
+
+class MotivoReajusteCreateView(AjaxableFormMixin, BaseCreateView):
+    model = MotivoReajuste
+    form_class = MotivoReajusteForm
+    template_name = 'pessoal/motivo_reajuste_add.html'
+    permission_required = 'pessoal.add_motivoreajuste'
+    success_url = reverse_lazy('pessoal:motivo_reajuste_add')
 
 
 # Metodos GET
-@login_required
-@permission_required('pessoal.change_setor', login_url="/handler/403")
-def setor_id(request,id):
-    setor = Setor.objects.get(pk=id)
-    form = SetorForm(instance=setor)
-    return render(request,'pessoal/setor_id.html',{'form':form,'setor':setor})
+# @login_required
+# @permission_required('pessoal.view_funcionario', login_url="/handler/403")
+# def funcionario_id(request,id):
+#     try:
+#         funcionario = Funcionario.objects.get(pk=id, empresa__in=request.user.profile.empresas.all())
+#     except Exception as e:
+#         messages.warning(request,'Funcionario <b>nao localizado</b>')
+#         return redirect('pessoal:funcionarios')
+#     form = FuncionarioForm(instance=funcionario, user=request.user)
+#     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
-@login_required
-@permission_required('pessoal.change_cargo', login_url="/handler/403")
-def cargo_id(request,id):
-    cargo = Cargo.objects.get(pk=id)
-    form = CargoForm(instance=cargo)
-    return render(request,'pessoal/cargo_id.html',{'form':form,'cargo':cargo})
 
-@login_required
-@permission_required('pessoal.view_funcionario', login_url="/handler/403")
-def funcionario_id(request,id):
-    try:
-        funcionario = Funcionario.objects.get(pk=id, empresa__in=request.user.profile.empresas.all())
-    except Exception as e:
-        messages.warning(request,'Funcionario <b>nao localizado</b>')
-        return redirect('pessoal:funcionarios')
-    form = FuncionarioForm(instance=funcionario, user=request.user)
-    return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
 
-@login_required
-@permission_required('pessoal.change_dependente', login_url="/handler/403")
-def dependente_id(request,id):
-    dependente = Dependente.objects.get(pk=id)
-    form = DependenteForm(instance=dependente)
-    return render(request,'pessoal/dependente_id.html',{'form':form,'dependente':dependente})
-
-@login_required
-@permission_required('pessoal.change_evento', login_url="/handler/403")
-def evento_id(request,id):
-    evento = Evento.objects.get(pk=id)
-    form = EventoForm(instance=evento)
-    return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
-
-@login_required
-def evento_related_id(request, related, id):
-    if not request.user.has_perm(f"pessoal.view_evento{related}"):
-        return redirect('handler', 403)
-    options = {'related':related, 'props': getEventProps()}
-    if related == 'empresa':
-        options['evento'] = EventoEmpresa.objects.get(pk=id)
-        options['model'] = {'id':0, 'pk':0}
-        options['form'] = EventoEmpresaForm(instance=options['evento'])
-    elif related == 'cargo':
-        options['evento'] = EventoCargo.objects.get(pk=id)
-        options['model'] = options['evento'].cargo
-        options['form'] = EventoCargoForm(instance=options['evento'])
-    elif related == 'funcionario':
-        options['evento'] = EventoFuncionario.objects.get(pk=id)
-        options['model'] = options['evento'].funcionario
-        options['form'] = EventoFuncionarioForm(instance=options['evento'])
-    else:
-        messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_id [bad request]</b>')
-        return redirect('pessoal:eventos_related', related, id)
-    return render(request,'pessoal/evento_related_id.html', options)
-
-@login_required
-@permission_required('pessoal.change_grupoevento', login_url="/handler/403")
-def grupo_evento_id(request,id):
-    grupo_evento = GrupoEvento.objects.get(pk=id)
-    form = GrupoEventoForm(instance=grupo_evento)
-    return render(request,'pessoal/grupo_evento_id.html', {'form':form,'grupo_evento':grupo_evento})
-
-@login_required
-@permission_required('pessoal.change_motivoreajuste', login_url="/handler/403")
-def motivo_reajuste_id(request,id):
-    motivo_reajuste = MotivoReajuste.objects.get(pk=id)
-    form = GrupoEventoForm(instance=motivo_reajuste)
-    return render(request,'pessoal/motivo_reajuste_id.html', {'form':form,'motivo_reajuste':motivo_reajuste})
-
+# @login_required
+# def evento_related_id(request, related, id):
+#     if not request.user.has_perm(f"pessoal.view_evento{related}"):
+#         return redirect('handler', 403)
+#     options = {'related':related, 'props': getEventProps()}
+#     if related == 'empresa':
+#         options['evento'] = EventoEmpresa.objects.get(pk=id)
+#         options['model'] = {'id':0, 'pk':0}
+#         options['form'] = EventoEmpresaForm(instance=options['evento'])
+#     elif related == 'cargo':
+#         options['evento'] = EventoCargo.objects.get(pk=id)
+#         options['model'] = options['evento'].cargo
+#         options['form'] = EventoCargoForm(instance=options['evento'])
+#     elif related == 'funcionario':
+#         options['evento'] = EventoFuncionario.objects.get(pk=id)
+#         options['model'] = options['evento'].funcionario
+#         options['form'] = EventoFuncionarioForm(instance=options['evento'])
+#     else:
+#         messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_id [bad request]</b>')
+#         return redirect('pessoal:eventos_related', related, id)
+#     return render(request,'pessoal/evento_related_id.html', options)
 
 
 # Metodos UPDATE
-@login_required
-@permission_required('pessoal.change_setor', login_url="/handler/403")
-def setor_update(request,id):
-    setor = Setor.objects.get(pk=id)
-    form = SetorForm(request.POST, instance=setor)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:setor_id', id)
-    else:
-        return render(request,'pessoal/setor_id.html',{'form':form,'setor':setor})
+class SetorUpdateView(BaseUpdateView):
+    model = Setor
+    form_class = SetorForm
+    template_name = 'pessoal/setor_id.html' # Mantendo o seu template original
+    context_object_name = 'setor'           # Permite usar {{ setor.nome }} no HTML
+    permission_required = 'pessoal.change_setor'
+    def get_success_url(self):
+        return reverse('pessoal:setor_id', kwargs={'id': self.object.id})
 
-@login_required
-@permission_required('pessoal.change_cargo', login_url="/handler/403")
-def cargo_update(request,id):
-    cargo = Cargo.objects.get(pk=id)
-    form = CargoForm(request.POST, instance=cargo)
-    if form.is_valid():
-        registro = form.save()
-        flist = [chave for chave, valor in FuncaoFixa.FFIXA_CHOICES] # inicia lista com as funcoes fixas existentes
-        for ffixa in request.POST.getlist('funcao_fixa'):
-            if registro.ffixas.filter(nome=ffixa).exists():
-                # se funcao fixa ja esta associada a funcao nada precisa ser feito
-                flist.remove(ffixa)
-            else:
-                if FuncaoFixa.objects.filter(nome=ffixa).exists():
-                    ff = FuncaoFixa.objects.get(nome=ffixa)
-                else:
-                    ff = FuncaoFixa.objects.create(nome=ffixa)
-                ff.cargos.add(registro)
-                flist.remove(ffixa)
-        for item in flist:
-            if registro.ffixas.filter(nome=item).exists():
-                FuncaoFixa.objects.get(nome=item).cargos.remove(registro)
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:cargo_id', id)
-    else:
-        return render(request,'pessoal/cargo_id.html',{'form':form,'cargo':cargo})
 
-@login_required
-@permission_required('pessoal.change_funcionario', login_url="/handler/403")
-def funcionario_update(request,id):
-    funcionario = Funcionario.objects.get(pk=id)
-    if funcionario.status == 'D':
-        messages.error(request,'<span data-i18n="personal.sys.cantMoveDismissEmployee"><b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
-        return redirect('pessoal:funcionario_id', id)
-    form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
-    if form.is_valid():
-        has_warnings = False
-        registro = form.save(commit=False)
-        if request.POST['foto_data_url'] != '':
-            prefix = f'{registro.empresa.id}_{registro.matricula}'
-            today = datetime.now()
-            timestamp = datetime.timestamp(today)
-            file_name = f'{prefix}_{timestamp}.png'
-            result = create_image(request.POST['foto_data_url'], f'{settings.MEDIA_ROOT}/pessoal/fotos', file_name, f'{prefix}_')
-            if result[0]:
-                registro.foto = f'pessoal/fotos/{file_name}'
-            else:
-                has_warnings = True
-                messages.warning(request, settings.DEFAULT_MESSAGES['saveError'] + f' pic: result[1]')
-        registro.save()
-        if not has_warnings:
-            messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' mat: <b>{registro.matricula}</b>')
-        return redirect('pessoal:funcionario_id', id)
-    else:
-        return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
+class CargoUpdateView(BaseUpdateView):
+    model = Cargo
+    form_class = CargoForm
+    template_name = 'pessoal/cargo_id.html'
+    context_object_name = 'cargo'
+    permission_required = 'pessoal.change_cargo'
+    def get_success_url(self):
+        return reverse('pessoal:cargo_id', kwargs={'id': self.object.id})
 
-@login_required
-@permission_required('pessoal.change_dependente', login_url="/handler/403")
-def dependente_update(request,id):
-    dependente = Dependente.objects.get(pk=id)
-    form = DependenteForm(request.POST, instance=dependente)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'])
-        return redirect('pessoal:dependente_id', id)
-    else:
-        return render(request,'pessoal/dependente_id.html',{'form':form,'dependente':dependente})
 
-@login_required
-@permission_required('pessoal.change_evento', login_url="/handler/403")
-def evento_update(request,id):
-    evento = Evento.objects.get(pk=id)
-    form = EventoForm(request.POST, instance=evento)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:evento_id', id)
-    else:
-        return render(request,'pessoal/evento_id.html',{'form':form,'evento':evento})
+class FuncionarioUpdateView(BaseUpdateView):
+    model = Funcionario
+    form_class = FuncionarioForm
+    template_name = 'pessoal/funcionario_id.html'
+    context_object_name = 'funcionario'
+    permission_required = 'pessoal.change_funcionario'
+    def dispatch(self, request, *args, **kwargs):
+        funcionario = self.get_object()
+        if not funcionario.F_ehEditavel:
+            messages.error( request, '<span data-i18n="personal.sys.cantMoveDismissEmployee">' '<b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
+            return redirect('pessoal:funcionario_id', id=funcionario.id)
+        return super().dispatch(request, *args, **kwargs)
+    def get_form_kwargs(self):
+        # inseta usuario para tratativa no form de empresa/filial
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    def form_valid(self, form):
+        self.object = form.save()
+        foto_data = self.request.POST.get('foto_data_url')
+        if foto_data:
+            try:
+                self.object.process_and_save_photo(foto_data)
+            except Exception as e:
+                messages.warning(
+                    self.request, 
+                    f"{settings.DEFAULT_MESSAGES['saveError']} Erro ao processar imagem: {str(e)}"
+                )
+        return redirect(self.get_success_url())
+    def get_success_url(self):
+        return reverse('pessoal:funcionario_id', kwargs={'id': self.object.id})
 
-@login_required
-def evento_related_update(request, related, id):
-    if not request.user.has_perm(f"pessoal.change_evento{related}"):
-        return redirect('handler', 403)
-    if related == 'empresa':
-        evento = EventoEmpresa.objects.get(pk=id)
-        form = EventoEmpresaForm(request.POST, instance=evento)
-    elif related == 'cargo':
-        evento = EventoCargo.objects.get(pk=id)
-        form = EventoCargoForm(request.POST, instance=evento)
-    elif related == 'funcionario':
-        evento = EventoFuncionario.objects.get(pk=id)
-        form = EventoFuncionarioForm(request.POST, instance=evento)
-    else:
-        messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_update [bad request]</b>')
-        return redirect('pessoal:evento_related_id', related, id)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.evento.nome}</b>')
-        return redirect(f'pessoal:evento_related_id', related, id)
-    else:
-        options = {'related': related, 'form':form, 'evento': evento}
-        if related == 'empresa':
-            options['model'] = {'id':0,'pk':0}
-        elif related == 'cargo':
-            options['model'] = evento.cargo
-        elif related == 'funcionario':
-            options['model'] = evento.funcionario
-        return render(request,f'pessoal/evento_related_id.html', options)
+class DependenteUpdateView(BaseUpdateView):
+    model = Dependente
+    form_class = DependenteForm
+    template_name = 'pessoal/dependente_id.html'
+    context_object_name = 'dependente'
+    permission_required = 'pessoal.change_dependente'
+    def dispatch(self, request, *args, **kwargs):
+        # so permite edicao de dependentes de funcionarios ativos
+        dependente = self.get_object()
+        if not dependente.funcionario.F_ehEditavel:
+            messages.error(
+                request,
+                '<span data-i18n="personal.sys.cantMoveDismissEmployee">'
+                '<b>Erro:</b> Nao é possivel alterar dados de dependentes de funcionários desligados</span>'
+            )
+            return redirect('pessoal:dependente_id', id=dependente.id)
+        return super().dispatch(request, *args, **kwargs)
+    def get_success_url(self):
+        return reverse('pessoal:dependente_id', kwargs={'id': self.object.id})
 
-@login_required
-@permission_required('pessoal.change_grupoevento', login_url="/handler/403")
-def grupo_evento_update(request,id):
-    grupo_evento = GrupoEvento.objects.get(pk=id)
-    form = GrupoEventoForm(request.POST, instance=grupo_evento)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:grupo_evento_id', id)
-    else:
-        return render(request,'pessoal/grupo_evento_id.html',{'form':form,'grupo_evento':grupo_evento})
+class EventoUpdateView(BaseUpdateView):
+    model = Evento
+    form_class = EventoForm
+    template_name = 'pessoal/evento_id.html'
+    context_object_name = 'evento'
+    permission_required = 'pessoal.change_evento'
+    def get_success_url(self):
+        return reverse('pessoal:evento_id', kwargs={'id': self.object.id})
 
-@login_required
-@permission_required('pessoal.change_motivoreajuste', login_url="/handler/403")
-def motivo_reajuste_update(request,id):
-    motivo_reajuste = MotivoReajuste.objects.get(pk=id)
-    form = MotivoReajusteForm(request.POST, instance=motivo_reajuste)
-    if form.is_valid():
-        registro = form.save()
-        messages.success(request, settings.DEFAULT_MESSAGES['updated'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:motivo_reajuste_id', id)
-    else:
-        return render(request,'pessoal/motivo_reajuste_id.html',{'form':form,'motivo_reajuste':motivo_reajuste})
+
+class EventoRelatedUpdateView(BaseUpdateView):
+    template_name = 'pessoal/evento_related_id.html'
+    def dispatch(self, request, *args, **kwargs):
+        self.related = kwargs.get('related')
+        self.related_id = kwargs.get('id')
+        perm_name = f"pessoal.change_evento{self.related}"
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', 403)
+        if self.related not in ['empresa', 'cargo', 'funcionario']:
+            messages.error(
+                request, 
+                f"{settings.DEFAULT_MESSAGES['400']} <b>evento_related_update [bad request]</b>"
+            )
+            return redirect('index') # Ou para uma página de erro apropriada
+        return super().dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        # define o modelo alvo
+        if self.related == 'empresa':
+            return EventoEmpresa.objects.all()
+        elif self.related == 'cargo':
+            return EventoCargo.objects.all()
+        elif self.related == 'funcionario':
+            return EventoFuncionario.objects.all()
+        return None
+    def get_form_class(self):
+        # define o form alvo
+        forms_map = {
+            'empresa': EventoEmpresaForm,
+            'cargo': EventoCargoForm,
+            'funcionario': EventoFuncionarioForm,
+        }
+        return forms_map.get(self.related)
+
+    def get_context_data(self, **kwargs):
+        # prepara p contexto para o template
+        context = super().get_context_data(**kwargs)
+        evento_obj = self.object # O objeto já foi carregado pela UpdateView
+        context['related'] = self.related
+        context['evento'] = evento_obj
+        if self.related == 'empresa':
+            context['model'] = {'id': 0, 'pk': 0}
+        elif self.related == 'cargo':
+            context['model'] = evento_obj.cargo
+        elif self.related == 'funcionario':
+            context['model'] = evento_obj.funcionario
+        return context
+    def get_success_url(self):
+        return reverse('pessoal:evento_related_id', kwargs={ 'related': self.related, 'id': self.related_id })
+
+
+class GrupoEventoUpdateView(BaseUpdateView):
+    model = GrupoEvento
+    form_class = GrupoEventoForm
+    template_name = 'pessoal/grupo_evento_id.html'
+    context_object_name = 'grupo_evento'
+    permission_required = 'pessoal.change_grupoevento'
+    def get_success_url(self):
+        return reverse('pessoal:grupo_evento_id', kwargs={'id': self.object.id})
+
+
+class MotivoReajusteUpdateView(BaseUpdateView):
+    model = MotivoReajuste
+    form_class = MotivoReajusteForm
+    template_name = 'pessoal/motivo_reajuste_id.html'
+    context_object_name = 'motivo_reajuste'
+    permission_required = 'pessoal.change_motivoreajuste'
+    def get_success_url(self):
+        return reverse('pessoal:motivo_reajuste_id', kwargs={'id': self.object.id})
 
 # Metodos DELETE
-@login_required
-@permission_required('pessoal.delete_setor', login_url="/handler/403")
-def setor_delete(request,id):
-    try:
-        registro = Setor.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:setores')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:setor_id', id)
+class SetorDeleteView(BaseDeleteView):
+    model = Setor
+    permission_required = 'pessoal.delete_setor'
+    success_url = reverse_lazy('pessoal:setores')
 
-@login_required
-@permission_required('pessoal.delete_cargo', login_url="/handler/403")
-def cargo_delete(request,id):
-    try:
-        registro = Cargo.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:cargos')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:cargo_id', id)
+class CargoDeleteView(BaseDeleteView):
+    model = Cargo
+    permission_required = 'pessoal.delete_cargo'
+    success_url = reverse_lazy('pessoal:cargos')
 
-@login_required
-@permission_required('pessoal.delete_funcionario', login_url="/handler/403")
-def funcionario_delete(request,id):
-    try:
-        registro = Funcionario.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request,settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.matricula}</b>')
-        return redirect('pessoal:funcionarios')
-    except:
-        messages.error(request,'ERRO ao apagar funcionario')
-        return redirect('pessoal:funcionario_id', id)
 
-@login_required
-@permission_required('pessoal.delete_dependente', login_url="/handler/403")
-def dependente_delete(request,id):
-    try:
-        registro = Dependente.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:dependentes')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:dependente_id', id)
+class FuncionarioDeleteView(BaseDeleteView):
+    model = Funcionario
+    permission_required = 'pessoal.delete_funcionario'
+    success_url = reverse_lazy('pessoal:funcionarios')
 
-@login_required
-@permission_required('pessoal.delete_evento', login_url="/handler/403")
-def evento_delete(request,id):
-    try:
-        registro = Evento.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:eventos')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:evento_id', id)
+class DependenteDeleteView(BaseDeleteView):
+    model = Dependente
+    permission_required = 'pessoal.delete_dependente'
+    success_url = reverse_lazy('pessoal:dependentes')
 
-@login_required
-def evento_related_delete(request, related, id):
-    if not request.user.has_perm(f"pessoal.delete_evento{related}"):
-        return redirect('handler', 403)
-    try:
-        if related == 'cargo':
-            registro = EventoCargo.objects.get(pk=id)
-        elif related == 'funcionario':
-            registro = EventoFuncionario.objects.get(pk=id)
-        else:
-            messages.error(request, settings.DEFAULT_MESSAGES['400'] + f' <b>evento_related_update [bad request]</b>')
-            return redirect('pessoal:evento_related_id', related, id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:eventos')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:evento_id', id)
+class EventoDeleteView(BaseDeleteView):
+    model = Evento
+    permission_required = 'pessoal.delete_evento'
+    success_url = reverse_lazy('pessoal:eventos')
 
-@login_required
-@permission_required('pessoal.delete_grupoevento', login_url="/handler/403")
-def grupo_evento_delete(request,id):
-    try:
-        registro = GrupoEvento.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:grupos_evento')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:grupo_evento_id', id)
 
-@login_required
-@permission_required('pessoal.delete_motivoreajuste', login_url="/handler/403")
-def motivo_reajuste_delete(request,id):
-    try:
-        registro = MotivoReajuste.objects.get(pk=id)
-        registro.delete()
-        messages.warning(request, settings.DEFAULT_MESSAGES['deleted'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:motivos_reajuste')
-    except:
-        messages.error(request, settings.DEFAULT_MESSAGES['deleteError'] + f' <b>{registro.nome}</b>')
-        return redirect('pessoal:motivo_reajuste_id', id)
+class EventoRelatedDeleteView(BaseDeleteView):
+    success_url = reverse_lazy('pessoal:eventos')
+    def dispatch(self, request, *args, **kwargs):
+        self.related = kwargs.get('related')
+        perm_name = f"pessoal.delete_evento{self.related}"
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', 403)
+        if self.related not in ['empresa', 'cargo', 'funcionario']:
+            messages.error(request, f"{settings.DEFAULT_MESSAGES['400']} <b>evento_related_delete [bad request: invalid related]</b>")
+            return redirect('pessoal:eventos')
+        return super().dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        # retorna modelos alvo
+        if self.related == 'empresa':
+            return EventoEmpresa.objects.all()
+        elif self.related == 'cargo':
+            return EventoCargo.objects.all()
+        elif self.related == 'funcionario':
+            return EventoFuncionario.objects.all()
+        return None
+
+class GrupoEventoDeleteView(BaseDeleteView):
+    model = GrupoEvento
+    permission_required = 'pessoal.delete_grupoevento'
+    success_url = reverse_lazy('pessoal:grupos_evento')
+
+
+class MotivoReajusteDeleteView(BaseDeleteView):
+    model = MotivoReajuste
+    permission_required = 'pessoal.delete_motivoreajuste'
+    success_url = reverse_lazy('pessoal:motivos_reajuste')
+
 
 # Metodos Ajax
-@login_required
-def get_setores(request):
-    setores = Setor.objects.all().order_by('nome')
-    obj = serializers.serialize('json', setores)
-    return HttpResponse(obj, content_type="application/json")
-
-@login_required
-def get_cargos(request):
-    try:
-        cargos = Cargo.objects.filter(setor__id=request.GET.get('setor',None))
-        obj = serializers.serialize('json', cargos)
-    except Exception as e:
-        obj = []
-    return HttpResponse(obj, content_type="application/json")
-
-@login_required
-def get_grupos_evento(request):
-    if not request.user.has_perm("pessoal.view_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    grupos_evento = GrupoEvento.objects.all().order_by('nome')
-    obj = serializers.serialize('json', grupos_evento)
-    return HttpResponse(obj, content_type="application/json")
-
-@login_required
-def add_motivo_reajuste(request):
-    if not request.user.has_perm("pessoal.add_motivoreajuste"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        form = MotivoReajusteForm(data)
-        if form.is_valid():
-            motivo_reajuste = form.save()
-            return JsonResponse({'pk': motivo_reajuste.id, 'model': 'pessoal.motivoreajuste', 'fields': {'nome': motivo_reajuste.nome}, 'status': 'success'}, status=200)
-        else:
-            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-    return JsonResponse({'status': 'invalid request'}, status=400)
-
-@login_required
-def add_grupo_evento(request):
-    if not request.user.has_perm("pessoal.add_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        form = GrupoEventoForm(data)
-        if form.is_valid():
-            grupo_evento = form.save()
-            return JsonResponse({'pk': grupo_evento.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': grupo_evento.nome}, 'status': 'success'}, status=200)
-        else:
-            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-    return JsonResponse({'status': 'invalid request'}, status=400)
-
-@login_required
-def add_setor(request):
-    if not request.user.has_perm("pessoal.add_setor"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        form = SetorForm(data)
-        if form.is_valid():
-            setor = form.save()
-            return JsonResponse({'pk': setor.id, 'model': 'pessoal.setor', 'fields': {'nome': setor.nome}, 'status': 'success'}, status=200)
-        else:
-            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-    return JsonResponse({'status': 'invalid request'}, status=400)
-
-@login_required
-def update_grupo_evento(request):
-    if not request.user.has_perm("pessoal.change_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    if request.method == 'POST':
+class FormulaValidateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """
+    View para validacao de sintaxe Python/Asteval em formulas
+    Processa requisicoes JSON e retorna o resultado da avaliacao segura
+    """
+    permission_required = "pessoal.view_evento"
+    raise_exception = True
+    def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
-            if not data['pk']:
-                return JsonResponse({'status': 'field pk expected on request'}, status=400)
-            grupo = GrupoEvento.objects.get(pk=data['pk'])
-            form = GrupoEventoForm(data, instance=grupo)
-            if form.is_valid():
-                registro = form.save()
-                return JsonResponse({'pk': registro.id, 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
-            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+            expression = data.get('valor', '').strip()
+            if not expression:
+                return JsonResponse({
+                    'status': 'erro', 
+                    'type': 'Empty', 
+                    'message': 'Expressao vazia'
+                }, status=400)
+            result = asteval_run(expression, getEventProps(True))
+            if not result['status']:
+                return JsonResponse({
+                    'status': 'erro', 
+                    'type': result['type'], 
+                    'message': result['message'] 
+                }, status=400)
+            return JsonResponse({
+                'status': 'ok', 
+                'result': result['result'], 
+                'msg': 'Sintaxe Python/Asteval válida'
+            }, status=200)
+        except json.JSONDecodeError as e:
+            return JsonResponse({'status': 'erro', 'cod': 2, 'msg': 'JSON inválido'}, status=400)
         except Exception as e:
-            return JsonResponse({'error': e, 'status': 'error'}, status=500)
-    return JsonResponse({'status': 'invalid request'}, status=400)
-
-
-@login_required
-def delete_grupo_evento(request):
-    if not request.user.has_perm("pessoal.delete_grupoevento"):
-        return JsonResponse({'status': 'access denied'}, status=401)
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            if not data['pk']:
-                return JsonResponse({'status': 'field pk expected on request'}, status=400)
-            registro = GrupoEvento.objects.get(pk=data['pk'])
-            registro.delete()
-            return JsonResponse({'pk': data['pk'], 'model': 'pessoal.grupoevento', 'fields': {'nome': registro.nome}, 'status': 'success'}, status=200)
-        except Exception as e:
-            return JsonResponse({'error': e, 'status': 'error'}, status=500)
-    return JsonResponse({'status': 'invalid request'}, status=400)
-
-
-
-@login_required
-def formula_validate(request):
-    # try:
-    data = json.loads(request.body)
-    expression = data.get('valor', '').strip()
-    if not expression:
-        return JsonResponse({'status': 'erro', 'type': 'Empty', 'message': 'Expressao vazia'}, status=400)
-    
-    result = asteval_run(expression, getEventProps(True))
-    if not result['status']:
-        return JsonResponse({ 'status': 'erro', 'type': result['type'], 'message': result['message'] }, status=400)
-    return JsonResponse({'status': 'ok', 'result': result['result'], 'msg': 'Sintaxe Python/Asteval valida'}, status=200)
-    # except json.JSONDecodeError as e:
-    #     return JsonResponse({'status': 'erro', 'cod': 2, 'msg': str(e)}, status=400)
-    # except Exception as e:
-    #     return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)
+            return JsonResponse({'status': 'erro', 'cod': 3, 'msg': str(e)}, status=500)
 
 
 # APIs
