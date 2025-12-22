@@ -30,6 +30,9 @@
 <script>
   {% block add_script %}
   const form = new jsForm(document.getElementById('app_form'), {})
+  const empresas = new jsSelectm('#id_empresas', {})
+  const grupos = new jsSelectm('#id_groups', {})
+  const permissoes = new jsSelectm('#id_user_permissions', { canFilter: true })
   
   {% endblock %}
 </script>

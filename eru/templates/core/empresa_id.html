@@ -10,7 +10,10 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'empresa_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      {% if perms.core.add_filial %}
+      <li class="nav-item ms-1"><a class="nav-link active" id="add" href="{% url 'filial_create' empresa.id|safe %}"><i class="bi bi-plus-square-fill text-success me-2"></i> <span class="text-success-emphasis">Filial</span></a></li>
+      {% endif %}
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'empresa_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.core.delete_empresa %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -53,15 +56,14 @@
 {% block add_script_src %}
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 
 <script>
   {% block add_script %}
 
-  const cnpj = IMask(document.getElementById('id_cnpj'),{mask: '00.000.000/0000-00'})
-  const cep = IMask(document.getElementById('id_cep'),{mask: '00.000-000'})
-  const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})
-  const fax = IMask(document.getElementById('id_fax'),{mask: '(00) 0000-0000'})
-  const form = new jsForm(document.getElementById('app_form'), {imask: [cnpj, cep, fone, fax]});
+  const cnpj = IMask(document.getElementById('id_cnpj_base'),{mask: '00.000.000/0000'})
+  const form = new jsForm(document.getElementById('app_form'), {imask: [cnpj]});
+  const table = new jsTable('#filiais_list', {})
   {% endblock %}
 </script>

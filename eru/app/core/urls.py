@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from utils.routing import generate_urls
+from utils.routing import generate_urls, generate_urls_related
 from . import views
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     *generate_urls('Usuario', views),
     *generate_urls('Grupo', views),
     *generate_urls('Empresa', views),
+    *generate_urls_related('Filial', views),
     path('usuarios_grupo/<int:pk>',views.UsuariosPorGrupoListView.as_view(),name='usuarios_grupo'),
     path('settings',views.SettingsUpdateView.as_view(),name='settings'),
 ]

@@ -8,8 +8,9 @@
         "all": "Todos",
         "attention": "Atenção#Atenções",
         "back": "Voltar",
-        "blocked": "Bloqueado#Bloqueados",
         "before": "Antes",
+        "blocked": "Bloqueado#Bloqueados",
+        "branch": "Filial#Filiais",
         "cancel": "Cancelar",
         "category": "Categoria#Categorias",
         "city": "Cidade#Cidades",
@@ -103,7 +104,7 @@
         "startDate": "Data inicio"
     },
     "company": {
-        "companyName": "Nome da empresa",
+        "companyName": "Razão Social",
         "municipalReg": "Inscrição municipal",
         "stateReg": "Inscrição estadual",
         "zipCode": "CEP"

@@ -33,17 +33,8 @@
             <th>#</th>
             <th data-i18n="common.name__posfix:*">Nome</th>
             <th class="d-none d-lg-table-cell" data-i18n="company.companyName">Razão Social</th>
-            <th class="d-none d-lg-table-cell">CNPJ</th>
-            <th class="d-none" data-i18n="company.stateReg">Insc Estadual</th>
-            <th class="d-none" data-i18n="company.municipalReg">Insc Municipal</th>
-            <th class="d-none">Cnae</th>
-            <th class="d-none" data-i18n="common.address">Endereço</th>
-            <th class="d-none" data-i18n="common.neighborhood">Bairro</th>
-            <th class="d-none" data-i18n="common.city">Cidade</th>
-            <th class="d-none">UF</th>
-            <th class="d-none" data-i18n="company.zipCode">CEP</th>
-            <th class="d-none" data-i18n="common.fone">Fone</th>
-            <th class="d-none">Fax</th>
+            <th class="d-none d-lg-table-cell">CNPJ base</th>
+            <th class="d-none d-lg-table-cell" data-i18n="common.branch__plural">Filiais</th>
             {% if perms.core.change_empresa %}
             <th>&nbsp;</th>
             {% endif %}
@@ -55,17 +46,12 @@
             <td>{{empresa.id|safe}}</td>
             <td>{{empresa.nome}}</td>
             <td class="d-none d-lg-table-cell">{{empresa.razao_social}}</td>
-            <td class="d-none d-lg-table-cell">{{empresa.cnpj}}</td>
-            <td class="d-none">{{empresa.inscricao_estadual}}</td>
-            <td class="d-none">{{empresa.inscricao_municipal}}</td>
-            <td class="d-none">{{empresa.cnae}}</td>
-            <td class="d-none">{{empresa.endereco}}</td>
-            <td class="d-none">{{empresa.bairro}}</td>
-            <td class="d-none">{{empresa.cidade}}</td>
-            <td class="d-none">{{empresa.uf}}</td>
-            <td class="d-none">{{empresa.cep}}</td>
-            <td class="d-none">{{empresa.fone}}</td>
-            <td class="d-none">{{empresa.fax}}</td>
+            <td class="d-none d-lg-table-cell">{{empresa.cnpj_base}}</td>
+            <td class="d-none d-lg-table-cell">
+              {% for filial in empresa.filiais.all %}
+                <span class="badge bg-body-secondary text-body">{{filial.nome|truncatechars:18}}</span>
+              {% endfor %}
+            </td>
             {% if perms.core.change_empresa %}
             <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'empresa_update' empresa.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
             {% endif %}

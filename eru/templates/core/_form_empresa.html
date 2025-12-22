@@ -1,88 +1,78 @@
 <div class="card-body tab-content">
-  <h5 class="card-title mb-3">Cadastro de Empresa</h5>
+  <h5 class="card-title mb-3"><span data-i18n="common.register">Cadastro</span>: <span class="text-purple" data-i18n="common.company">Empresa</span></h5>
   <div class="tab-pane fade show active" id="base" role="tabpanel">
-    <div class="row g-1">
-      <div class="form-floating mb-lg-1 col-lg">
-        {{ form.nome }}
-        <label for="id_nome">Nome abreviado</label>
+    <div class="row">
+      <div class="col col-lg-6">
+        <div class="row g-1">
+          <div class="form-floating mb-lg-1 col col-lg">
+            {{ form.nome }}
+            <label for="id_nome">Nome abreviado</label>
+          </div>
+          <div class="form-floating mb-1 col col-lg">
+            {{ form.cnpj_base }}
+            <label for="id_cnpj_base">CNPJ base</label>
+          </div>
+        </div>
+        <div class="row g-1">
+          <div class="form-floating mb-lg-1 col col-lg">
+            {{ form.razao_social }}
+            <label for="id_razao_social">Razão Social</label>
+          </div>
+        </div>
       </div>
-      <div class="form-floating mb-lg-1 col-lg-2">
-        {{ form.fone }}
-        <label for="id_fone">Fone</label>
+      {% if 'update' in request.get_full_path %}
+      <div class="col-lg">
+        <table id="filiais_list" class="table table-sm border table-striped table-hover">
+          <caption><h5 class="m-0">Filiais</h5></caption>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="d-none">Empresa</th>
+              <th>Nome</th>
+              <th class="d-none d-lg-table-cell">CNPJ</th>
+              <th class="d-none">Insc Estadual</th>
+              <th class="d-none">Insc Municipal</th>
+              <th class="d-none">CNAE</th>
+              <th class="d-none">Endereço</th>
+              <th class="d-none">Bairro</th>
+              <th class="d-none">Cidade</th>
+              <th class="d-none">UF</th>
+              <th class="d-none">CEP</th>
+              <th class="d-none">Fone</th>
+              <th class="d-none">Fax</th>
+              {% if perms.core.change_filial %}
+              <th class="d-none">&nbsp;</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for filial in empresa.filiais.all %}
+              <tr>
+                <td>{{filial.id|safe}}</td>
+                <td class="d-none">{{filial.empresa.nome}}</td>
+                <td>{{filial.nome}}</td>
+                <td class="d-none d-lg-table-cell">{{filial.cnpj}}</td>
+                <td class="d-none">{{filial.inscricao_estadual}}</td>
+                <td class="d-none">{{filial.inscricao_municipal}}</td>
+                <td class="d-none">{{filial.cnae}}</td>
+                <td class="d-none">{{filial.endereco}}</td>
+                <td class="d-none">{{filial.bairro}}</td>
+                <td class="d-none">{{filial.cidade}}</td>
+                <td class="d-none">{{filial.uf}}</td>
+                <td class="d-none">{{filial.cep}}</td>
+                <td class="d-none">{{filial.fone}}</td>
+                <td class="d-none">{{filial.fax}}</td>
+                {% if perms.core.change_filial %}
+                <td class="text-end fit py-1">
+                  <a class="btn btn-sm btn-dark" href="{% url 'filial_update' filial.id|safe %}"><i class="bi bi-pen-fill"></i></a>
+                </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="form-floating mb-lg-1 col-lg-2">
-        {{ form.fax }}
-        <label for="id_fax">Fax</label>
-      </div>
-      <div class="form-floating mb-1 col-lg-3">
-        {{ form.cnpj }}
-        <label for="id_cnpj">CNPJ empresa</label>
-      </div>
-    </div>
-    <div class="row g-1">
-      <div class="form-floating mb-lg-1 col-lg-6">
-        {{ form.razao_social }}
-        <label for="id_razao_social">Razão Social</label>
-      </div>
-      <div class="form-floating mb-lg-1 col-lg-3">
-        {{ form.inscricao_estadual }}
-        <label for="id_inscricao_estadual">Inscrição Estadual</label>
-      </div>
-      <div class="form-floating mb-1 col-lg-3">
-        {{ form.inscricao_municipal }}
-        <label for="id_inscricao_municipal">Inscrição Municipal</label>
-      </div>
-    </div>
-    <div class="row g-1">
-      <div class="form-floating mb-lg-1 col-lg-9">
-        {{ form.endereco }}
-        <label for="id_endereco">Endereço</label>
-      </div>
-      <div class="form-floating mb-1 col-lg-3">
-        {{ form.cep }}
-        <label for="id_cep">CEP</label>
-      </div>
-    </div>
-    <div class="row g-1">
-      <div class="form-floating mb-lg-1 col" style="max-width: 100px;">
-        {{ form.uf }}
-        <label for="id_uf">UF</label>
-      </div>
-      <div class="form-floating mb-lg-1 col">
-        {{ form.cidade }}
-        <label for="id_cidade">Cidade</label>
-      </div>
-      <div class="form-floating mb-1 col-lg">
-        {{ form.bairro }}
-        <label for="id_bairro">Bairro</label>
-      </div>
-    </div>
-    <div class="row g-1">
-      <div class="form-floating mb-lg-1 col-lg-2">
-        {{ form.cnae }}
-        <label for="id_cnae">Cnae principal</label>
-      </div>
-      <div class="form-floating mb-1 col-lg-10">
-        {{ form.atividade }}
-        <label for="id_atividade">Descrição da atividade</label>
-      </div>
-    </div>
-    <div class="row g-1">
-      <span class="ps-1 mt-2 pb-1"><b>Logo:</b></span>
-    	<div class="col-md">
-    		{{ form.logo }}
-    	</div>
-      {% if empresa.logo %}
-    	<div class="col-md-auto text-center mt-2 mt-md-0">
-    		<img src="{{empresa.logo.url}}" style="max-width: 200px;">
-    	</div>
       {% endif %}
-    </div>
-    <hr>
-    <div class="row g-1 mt-2">
-      <div class="mb-1 col-12">
-        {{ form.footer }}
-      </div>
     </div>
   </div>
   

@@ -8,11 +8,11 @@ from django.contrib.auth import views as auth_views, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import auth, messages
 from django.db import transaction
-from django.contrib.messages.views import SuccessMessageMixin
 from auditlog.models import LogEntry
-from .models import Empresa, Settings, Profile
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
-from .forms import EmpresaForm, UserForm, GroupForm, ProfileForm, SettingsForm, CustomPasswordChangeForm
+from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, ProfileForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -40,7 +40,10 @@ class CustomLoginView(auth_views.LoginView):
     def form_valid(self, form):
         user = form.get_user()
         auth.login(self.request, user)
-        profile = user.profile
+        try:
+            profile = user.profile
+        except ObjectDoesNotExist:
+            profile, created = Profile.objects.get_or_create(user=user)
         config = profile.config if profile.config else initialize_profile_config()
         config["password_errors_count"] = 0
         profile.config = config
@@ -262,12 +265,26 @@ class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdate
 
 
 # METODOS ADD
-class EmpresaCreateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, BaseCreateView):
+class EmpresaCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Empresa
     form_class = EmpresaForm
     template_name = 'core/empresa_add.html'
-    success_url = reverse_lazy('empresas')
     permission_required = 'core.add_empresa'
+    def get_success_url(self):
+        return reverse('empresa_update', kwargs={'pk': self.object.pk})
+
+
+class FilialCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+    model = Filial
+    form_class = FilialForm
+    template_name = 'core/filial_add.html'
+    permission_required = 'core.add_filial'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['empresa'] = get_object_or_404(Empresa, pk=self.kwargs.get('pk'))
+        return context
+    def get_success_url(self):
+        return reverse('empresa_update', kwargs={'pk': self.object.empresa.pk})
 
 
 class UsuarioCreateView(BaseCreateView):
@@ -278,7 +295,7 @@ class UsuarioCreateView(BaseCreateView):
         return reverse('usuario_update', kwargs={'pk': self.object.id})
     @transaction.atomic
     def form_valid(self, form):
-        try:
+        # try:
             self.object = form.save(commit=False)
             self.object.set_password(form.cleaned_data['password'])
             self.object.save()
@@ -286,7 +303,7 @@ class UsuarioCreateView(BaseCreateView):
                 settings = Settings.objects.get()
             except Settings.DoesNotExist:
                 settings = Settings()
-            profile = self.object.profile
+            profile = Profile.objects.create(user=self.object)
             config = initialize_profile_config()
             if settings.historico_senhas_nao_repetir > 0:
                 config["history_password"] = [self.object.password]
@@ -304,15 +321,15 @@ class UsuarioCreateView(BaseCreateView):
             if filiais:
                 profile.filiais.set(Filial.objects.filter(id__in=filiais))
             return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, DEFAULT_MESSAGES['saveError'])
-            return self.form_invalid(form)
+        # except Exception as e:
+        #     messages.error(self.request, DEFAULT_MESSAGES['saveError'])
+        #     return self.form_invalid(form)
 
 class GrupoCreateView(BaseCreateView):
     form_class = GroupForm
     template_name = 'core/grupo_add.html'
     permission_required = 'auth.add_group'
-    success_url = reverse_lazy('grupos')
+    success_url = reverse_lazy('grupo_list')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         exclude_itens = ['sessions', 'contenttypes', 'admin']
@@ -334,6 +351,19 @@ class EmpresaUpdateView(BaseUpdateView):
         return context
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.id})
+
+class FilialUpdateView(BaseUpdateView):
+    model = Filial
+    form_class = FilialForm
+    template_name = 'core/filial_id.html'
+    permission_required = 'core.change_filial'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filial'] = self.object 
+        context['empresa'] = self.object.empresa 
+        return context
+    def get_success_url(self):
+        return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
 
 class UsuarioUpdateView(BaseUpdateView):
     model = User
@@ -413,17 +443,17 @@ class SettingsUpdateView(BaseUpdateView):
 class EmpresaDeleteView(BaseDeleteView):
     model = Empresa
     permission_required = 'core.delete_empresa'
-    success_url = reverse_lazy('empresas')
+    success_url = reverse_lazy('empresa_list')
 
 class UsuarioDeleteView(BaseDeleteView):
     model = User
     permission_required = 'auth.delete_user'
-    success_url = reverse_lazy('usuarios')
+    success_url = reverse_lazy('usuario_list')
 
 class GrupoDeleteView(BaseDeleteView):
     model = Group
     permission_required = 'auth.delete_group'
-    success_url = reverse_lazy('grupos')
+    success_url = reverse_lazy('grupo_list')
 
 
 

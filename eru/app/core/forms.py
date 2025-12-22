@@ -29,12 +29,14 @@ class EmpresaForm(forms.ModelForm):
         fields = ['nome','razao_social','cnpj_base']
     nome = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
     razao_social = forms.CharField(required=False, max_length=80,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cnpj_base = forms.CharField(required=False, max_length=8 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    cnpj_base = forms.CharField(required=False, max_length=15 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
 
 class FilialForm(forms.ModelForm):
     class Meta:
-        fields = ['empresa','nome','cnpj','inscricao_estadual','inscricao_municipal','cnae','atividade','endereco','bairro','cidade','uf','cep','fone','fax','logo','footer']
-    nome = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+        model = Filial
+        fields = ['empresa','nome','nome_fantasia','cnpj','inscricao_estadual','inscricao_municipal','cnae','atividade','endereco','bairro','cidade','uf','cep','fone','fax','logo','footer']
+    nome = forms.CharField(max_length=35, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+    nome_fantasia = forms.CharField(required=False, max_length=80,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     cnpj = forms.CharField(required=False, max_length=18 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     inscricao_estadual = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     inscricao_municipal = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
