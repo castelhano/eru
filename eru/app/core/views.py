@@ -286,48 +286,14 @@ class FilialCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVi
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.empresa.pk})
 
-
 class UsuarioCreateView(BaseCreateView):
+    model = User
     form_class = UserForm
     template_name = 'core/usuario_add.html'
-    permission_required = 'auth.add_user'
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['empresas'] = Empresa.objects.prefetch_related('filiais').all()
-        return context
+    context_object_name = 'usuario'
     def get_success_url(self):
-        return reverse('usuario_update', kwargs={'pk': self.object.id})
-    @transaction.atomic
-    def form_valid(self, form):
-        try:
-            self.object = form.save(commit=False)
-            self.object.set_password(form.cleaned_data['password'])
-            self.object.save()
-            try:
-                settings = Settings.objects.get()
-            except Settings.DoesNotExist:
-                settings = Settings()
-            profile = Profile.objects.create(user=self.object)
-            config = initialize_profile_config()
-            if settings.historico_senhas_nao_repetir > 0:
-                config["history_password"] = [self.object.password]
-            else:
-                config["history_password"] = []
-            profile.config = config
-            profile.save()
-            grupos = self.request.POST.getlist('grupos')
-            if grupos:
-                self.object.groups.set(Group.objects.filter(id__in=grupos))
-            perms = self.request.POST.getlist('perms')
-            if perms:
-                self.object.user_permissions.set(Permission.objects.filter(id__in=perms))
-            filiais = self.request.POST.getlist('filiais')
-            if filiais:
-                profile.filiais.set(Filial.objects.filter(id__in=filiais))
-            return super().form_valid(form)
-        except Exception as e:
-            messages.error(self.request, DEFAULT_MESSAGES['saveError'])
-            return self.form_invalid(form)
+        return reverse('usuario_update', kwargs={'pk': self.object.pk})
+
 
 class GrupoCreateView(BaseCreateView):
     form_class = GroupForm
@@ -376,12 +342,10 @@ class UsuarioUpdateView(BaseUpdateView):
     template_name = 'core/usuario_id.html'
     success_url = reverse_lazy('usuario_list')
     context_object_name = 'usuario'
+    def get_queryset(self):
+        return super().get_queryset().select_related('profile')
     def get_success_url(self):
         return reverse('usuario_update', kwargs={'pk': self.object.pk})
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     return context
-
 
 
 # class UsuarioUpdateView(BaseUpdateView):
