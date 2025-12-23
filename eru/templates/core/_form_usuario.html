@@ -8,17 +8,15 @@
             {{ form.username }}
             <label for="id_username" data-i18n="auth.username">Username</label>
           </div>
-          {% if 'new' in request.get_full_path %}
           <div class="form-floating mb-1 col-lg">
+            {% if 'new' in request.get_full_path %}
             <input type="password" class="form-control" name="password" id="id_password">
             <label for="id_password" data-i18n="common.password">Senha</label>
+            {% else %}              
+            <input type="password" class="form-control" name="password" id="id_password" disabled>
+            <label for="id_password" data-i18n="auth.passwordReset">Reiniciar senha</label>
+            {% endif %}              
           </div>
-          {% else %}
-          <div class="form-floating mb-1 col-lg">
-            <input type="text" class="form-control" name="reset_password" id="id_reset_password" placeholder="" disabled>
-            <label for="id_reset_password" data-i18n="auth.passwordReset">Reiniciar senha</label>
-          </div>
-          {% endif %}              
         </div>
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-6">
@@ -44,9 +42,7 @@
             <div id="accordion_empresas" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
                 <div class="row g-1">
-                  <div class="mb-1 col-lg">
-                    {{form.empresas}}
-                  </div>
+                  <div class="mb-1 col-lg">{{form.filiais}}</div>
                 </div>
               </div>
             </div>
@@ -84,14 +80,13 @@
         </div>
       </div>
       <div class="col-lg">
-        {% if 'new' in request.get_full_path %}
         <div class="form-check form-switch mt-1">
           <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
           <label class="form-check-label" for="mostrar_senha">Mostra Senha</label>
         </div>
-        {% else %}
+        {% if 'update' in request.get_full_path %}
         <div class="form-check form-switch mt-2 mt-lg-1">
-          <input type="checkbox" class="form-check-input" id="resetar_senha" name="" value="" onclick="switchSenha();">
+          <input type="checkbox" class="form-check-input" id="resetar_senha" name="" value="" onclick="resetPassword();">
           <label class="form-check-label" for="resetar_senha">Reiniciar Password</label>
         </div>
         {% endif %}
@@ -127,15 +122,16 @@
 </div>
 
 <script>
-  {% if 'new' in request.get_full_path %}
+  
   function switchSenha(){
     if(document.getElementById('mostrar_senha').checked){document.getElementById('id_password').type = 'text';}
     else{document.getElementById('id_password').type = 'password';}
   }
-  {% else %}
-  function switchSenha(){
-    if(document.getElementById('resetar_senha').checked){document.getElementById('id_reset_password').disabled = false;document.getElementById('id_reset_password').focus();}
-    else{document.getElementById('id_reset_password').disabled = true;}
+  function resetPassword(){
+    if(document.getElementById('resetar_senha').checked){
+      document.getElementById('id_password').disabled = false;
+      document.getElementById('id_password').focus();
+    }
+    else{document.getElementById('id_password').disabled = true;}
   }
-  {% endif %} 
 </script>

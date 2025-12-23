@@ -1,6 +1,8 @@
 import re
+from itertools import groupby
 from django import forms
 from django.forms import Field
+from django.forms.models import ModelChoiceIterator, ModelMultipleChoiceField
 from .models import Empresa, Filial, Settings, Profile
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
@@ -14,14 +16,7 @@ from django.utils.safestring import mark_safe
 Field.default_error_messages['required'] = _('<span data-i18n="sys.fieldRequired">Campo obrigatório</span>')
 Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Campo duplicado, precisa ser unico</span>')
 
-@lru_cache(maxsize=1)
-def get_grouped_permissions():
-    permissions = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label','content_type__model', 'codename')
-    grouped = groupby(permissions, lambda p: p.content_type.app_label)
-    choices = []
-    for app_label, perms in grouped:
-        choices.append((app_label, [(p.id, f"<span class='text-purple'>{p.content_type.model}</span>: {p.name}") for p in perms]))
-    return choices
+
 
 class EmpresaForm(forms.ModelForm):
     class Meta:
@@ -53,29 +48,295 @@ class FilialForm(forms.ModelForm):
     footer = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','style':'min-height:200px;','placeholder':'Rodapé padrão MD Report'}))
 
 
+
+@lru_cache(maxsize=1)
+def get_grouped_permissions():
+    perms = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label', 'content_type__model')
+    return [(app.capitalize(), [(p.id, f"{p.content_type.model}: {p.name}") for p in g]) 
+            for app, g in groupby(perms, lambda p: p.content_type.app_label)]
+
+def get_grouped_filiais():
+    filiais = Filial.objects.select_related('empresa').order_by('empresa__nome', 'nome')
+    return [(emp, [(f.id, str(f)) for f in g]) for emp, g in groupby(filiais, lambda f: f.empresa.nome)]
+
 class UserForm(forms.ModelForm):
-    password = forms.CharField(required=False)
+    password = forms.CharField(required=False, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
+    force_password_change = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}))
     class Meta:
         model = User
-        fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active', 'groups', 'user_permissions']
-    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
-    first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    email = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','type':'email'}))
-    is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
-    is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
-    is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
-    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
-    user_permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
-    empresas = forms.ModelMultipleChoiceField(queryset=Empresa.objects.all(), required=False)
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control fw-bold', 'autofocus': True}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+        }
     def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
+        # Injeção de choices agrupadas dinamicamente
         self.fields['user_permissions'].choices = get_grouped_permissions()
+        self.fields['filiais'].choices = get_grouped_filiais()
+        
+        if instance and instance.pk:
+            profile, _ = Profile.objects.get_or_create(user=instance)
+            self.fields['filiais'].initial = profile.filiais.all()
+            self.fields['force_password_change'].initial = profile.force_password_change
 
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ['filiais', 'force_password_change']
+        # Aplica form-control em massa para campos de texto/select
+        for name, field in self.fields.items():
+            if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect)):
+                field.widget.attrs.setdefault('class', 'form-control')
+                field.widget.attrs.update({'placeholder': ' '})
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data.get("password"):
+            user.set_password(self.cleaned_data["password"])
+        if commit:
+            user.save()
+            self.save_m2m()
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.force_password_change = self.cleaned_data['force_password_change']
+            profile.save()
+            profile.filiais.set(self.cleaned_data['filiais'])
+        return user
+
+
+
+
+
+
+
+
+
+
+
+# class UserForm(forms.ModelForm):
+#     filiais = GroupedModelMultipleChoiceField(
+#         queryset=Filial.objects.all(),
+#         required=False,
+#         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'})
+#     )
+    
+#     password = forms.CharField(
+#         required=False,
+#         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Deixe em branco para não alterar'})
+#     )
+#     force_password_change = forms.BooleanField(
+#         required=False, 
+#         label="Forçar troca de senha",
+#         widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'})
+#     )
+
+#     class Meta:
+#         model = User
+#         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
+    # username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
+    # first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # email = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','type':'email'}))
+    # is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
+    # user_permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+        
+#         # 1. Carrega as permissões agrupadas do cache
+#         self.fields['user_permissions'].choices = get_grouped_permissions()
+        
+#         # 2. Se estiver editando, preenche as filiais do Profile
+#         profile_instance = None
+#         if self.instance and self.instance.pk:
+#             profile_instance, _ = Profile.objects.get_or_create(user=self.instance)
+#             self.fields['filiais'].initial = profile_instance.filiais.all()
+#         self.profile_form = ProfileForm(*args, **kwargs, instance=profile_instance, prefix='profile')
+#         self.fields.update(self.profile_form.fields)
+#     def is_valid(self):
+#         # O UserForm só é válido se o ProfileForm também for
+#         user_form_valid = super().is_valid()
+#         # Precisamos popular os dados do profile_form antes de validar
+#         self.profile_form.data = self.data
+#         self.profile_form.is_bound = self.is_bound
+#         return user_form_valid and self.profile_form.is_valid()    
+#     def save(self, commit=True):
+#         # Salva o User (sem commit primeiro para tratar a senha)
+#         user = super().save(commit=False)
+        
+#         password = self.cleaned_data.get("password")
+#         if password:
+#             user.set_password(password)
+        
+#         if commit:
+#             user.save()
+#             # Salva Groups e Permissions (M2M nativo do User)
+#             self.save_m2m()
+            
+#             # Salva o Profile e as Filiais (M2M customizado)
+#             profile = self.profile_form.save(commit=False)
+#             profile.user = user # Garante o vínculo 1to1
+#             profile.save()
+#             profile.filiais.set(self.cleaned_data['filiais'])
+#             # profile, _ = Profile.objects.get_or_create(user=user)
+#             # profile.filiais.set(self.cleaned_data['filiais'])
+#             # profile.save()
+            
+#         return user
+
+
+# class UserForm(forms.ModelForm):
+#     # Campo Filiais com iterador performático
+#     filiais = GroupedModelMultipleChoiceField(
+#         queryset=Filial.objects.all(),
+#         required=False,
+#         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'})
+#     )
+
+#     password = forms.CharField(
+#         required=False,
+#         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Senha'})
+#     )
+
+#     class Meta:
+#         model = User
+#         fields = ['username', 'first_name', 'last_name', 'email', 
+#                   'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+        
+#         # 1. Aplica o agrupamento de permissões vindo do Cache
+#         self.fields['user_permissions'].choices = get_permission_choices()
+        
+#         # 2. Configura o estado inicial das filiais se estiver editando (Update)
+#         if self.instance and self.instance.pk:
+#             try:
+#                 # Busca as filiais do profile para preencher o form
+#                 self.fields['filiais'].initial = self.instance.profile.filiais.values_list('id', flat=True)
+#             except Profile.DoesNotExist:
+#                 pass
+
+#         # 3. Estilização em massa
+#         for name, field in self.fields.items():
+#             if not isinstance(field.widget, forms.CheckboxInput):
+#                 field.widget.attrs.update({'class': 'form-control'})
+
+#     def save(self, commit=True):
+#         # O commit=False é essencial para tratarmos a senha e o profile
+#         user = super().save(commit=False)
+        
+#         password = self.cleaned_data.get("password")
+#         if password:
+#             user.set_password(password)
+        
+#         if commit:
+#             user.save()
+#             # Salva campos M2M nativos (groups e permissions)
+#             self.save_m2m()
+            
+#             # Salva a extensão Profile e as Filiais
+#             profile, _ = Profile.objects.get_or_create(user=user)
+#             profile.filiais.set(self.cleaned_data['filiais'])
+#             profile.save()
+            
+#         return user
+
+
+
+
+
+
+
+
+
+
+
+
+# class UserForm(forms.ModelForm):
+#     filiais = GroupedModelMultipleChoiceField( queryset=Filial.objects.all(), required=False)
+#     password = forms.CharField(required=False)
+#     class Meta:
+#         model = User
+#         fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active', 'groups', 'user_permissions']
+    # username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
+    # first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # email = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','type':'email'}))
+    # is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # # groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
+    # # user_permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
+#     def __init__(self, *args, **kwargs):
+#         super(UserForm, self).__init__(*args, **kwargs)
+#         if self.instance and self.instance.pk:
+#             try:
+#                 self.fields['filiais'].initial = self.instance.profile.filiais.all()
+#             except Profile.DoesNotExist:
+#                 pass
+#         self.fields['user_permissions'].choices = get_grouped_permissions()
+#         novo_agrupamento = []
+#         empresas = Empresa.objects.all().prefetch_related('filiais')
+#         for empresa in empresas:
+#             filiais_da_empresa = [
+#                 (filial.id, str(filial)) 
+#                 for filial in empresa.filiais.all()
+#             ]
+#             if filiais_da_empresa:
+#                 novo_agrupamento.append((empresa.nome, filiais_da_empresa))
+#         self.fields['filiais'].choices = novo_agrupamento
+#     def save(self, commit=True):
+#         user = super().save(commit=False)
+#         password = self.cleaned_data.get("password")
+#         if password:
+#             user.set_password(password)
+#         if commit:
+#             user.save()
+#             self.save_m2m()
+#             profile, _ = Profile.objects.get_or_create(user=user)
+#             profile.filiais.set(self.cleaned_data['filiais'])
+#             profile.save()
+#         return user
+
+
+
+
+
+
+# class UserForm(forms.ModelForm):
+#     password = forms.CharField(required=False)
+#     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.none())
+#     class Meta:
+#         model = User
+#         fields = ['username','first_name','last_name','email','is_superuser','is_staff','is_active', 'groups', 'user_permissions']
+    # username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus'}))
+    # first_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # last_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+    # email = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','type':'email'}))
+    # is_superuser = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_staff = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # is_active = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
+    # groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
+    # user_permissions = forms.ModelMultipleChoiceField(queryset=Permission.objects.all(), required=False)
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.fields['user_permissions'].choices = get_grouped_permissions()
+    #     novo_agrupamento = []
+    #     empresas = Empresa.objects.all().prefetch_related('filiais')
+    #     for empresa in empresas:
+    #         filiais_da_empresa = [
+    #             (filial.id, str(filial)) 
+    #             for filial in empresa.filiais.all()
+    #         ]
+    #         if filiais_da_empresa:
+    #             novo_agrupamento.append((empresa.nome, filiais_da_empresa))
+    #     self.fields['filiais'].choices = novo_agrupamento
+
+    
 
 class GroupForm(forms.ModelForm):
     class Meta:
@@ -105,6 +366,7 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         user = super().save(commit=False)
         password = self.cleaned_data.get("new_password1")
         profile = getattr(user, 'profile', None)
+        
         if commit and profile:
             try:
                 settings = Settings.objects.get()

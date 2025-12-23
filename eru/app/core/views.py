@@ -12,7 +12,7 @@ from auditlog.models import LogEntry
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
-from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, ProfileForm, SettingsForm, CustomPasswordChangeForm
+from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -291,11 +291,15 @@ class UsuarioCreateView(BaseCreateView):
     form_class = UserForm
     template_name = 'core/usuario_add.html'
     permission_required = 'auth.add_user'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['empresas'] = Empresa.objects.prefetch_related('filiais').all()
+        return context
     def get_success_url(self):
         return reverse('usuario_update', kwargs={'pk': self.object.id})
     @transaction.atomic
     def form_valid(self, form):
-        # try:
+        try:
             self.object = form.save(commit=False)
             self.object.set_password(form.cleaned_data['password'])
             self.object.save()
@@ -321,9 +325,9 @@ class UsuarioCreateView(BaseCreateView):
             if filiais:
                 profile.filiais.set(Filial.objects.filter(id__in=filiais))
             return super().form_valid(form)
-        # except Exception as e:
-        #     messages.error(self.request, DEFAULT_MESSAGES['saveError'])
-        #     return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, DEFAULT_MESSAGES['saveError'])
+            return self.form_invalid(form)
 
 class GrupoCreateView(BaseCreateView):
     form_class = GroupForm
@@ -365,51 +369,62 @@ class FilialUpdateView(BaseUpdateView):
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
 
+
 class UsuarioUpdateView(BaseUpdateView):
     model = User
     form_class = UserForm
     template_name = 'core/usuario_id.html'
-    permission_required = 'auth.change_user'
+    success_url = reverse_lazy('usuario_list')
+    context_object_name = 'usuario'
     def get_success_url(self):
-        return reverse('usuario_update', kwargs={'pk': self.object.id})
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['usuario'] = self.object
-        return context
-    @transaction.atomic
-    def form_valid(self, form):
-        profile_instance, _ = Profile.objects.get_or_create(user=self.object)
-        profile_form = ProfileForm(self.request.POST, instance=profile_instance)
-        if form.is_valid() and profile_form.is_valid():
-            try:
-                user = form.save(commit=False)
-                password = form.cleaned_data.get('password')
-                if password:
-                    user.set_password(password)
-                user.save()
-                groups = form.cleaned_data.get('groups')
-                if groups is not None:
-                    self.object.groups.set(groups)
-                permissions = form.cleaned_data.get('user_permissions')
-                if permissions is not None:
-                    self.object.user_permissions.set(permissions)
-                profile_form.save()
-                messages.success(self.request, "Usuário atualizado com sucesso!")
-                return HttpResponseRedirect(self.get_success_url())
-            except Exception as e:
-                print('cai elxxxxxeee')
-                print(e)
-                messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
-                return self.form_invalid(form)
-        else:
-            print("--- ERROS NO USER FORM ---")
-            print(form.errors.as_data())
+        return reverse('usuario_update', kwargs={'pk': self.object.pk})
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     return context
+
+
+
+# class UsuarioUpdateView(BaseUpdateView):
+#     model = User
+#     form_class = UserForm
+#     template_name = 'core/usuario_id.html'
+#     permission_required = 'auth.change_user'
+#     def get_success_url(self):
+#         return reverse('usuario_update', kwargs={'pk': self.object.id})
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['usuario'] = self.object
+#         context['empresas'] = Empresa.objects.prefetch_related('filiais').all()
+#         return context
+#     @transaction.atomic
+#     def form_valid(self, form):
+#         profile_instance, _ = Profile.objects.get_or_create(user=self.object)
+#         profile_form = ProfileForm(self.request.POST, instance=profile_instance)
+#         if form.is_valid() and profile_form.is_valid():
+#             # try:
+#                 print("--- DADOS BRUTOS DO POST ---")
+#                 print(self.request.POST)
+#                 user = form.save(commit=False)
+#                 password = form.cleaned_data.get('password')
+#                 if password:
+#                     user.set_password(password)
+#                 user.save()
+#                 form.save_m2m()
+#                 profile_form.save()
+#                 messages.success(self.request, "Usuário atualizado com sucesso!")
+#                 return HttpResponseRedirect(self.get_success_url())
+#             # except Exception as e:
+#             #     messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
+#             #     return self.form_invalid(form)
+#         else:
+#             print("--- ERROS NO USER FORM ---")
+#             print(form.errors.as_data())
             
-            # Como estamos usando dois forms, o erro pode estar no segundo
-            if 'profile_form' in locals() or 'profile_form' in globals():
-                print("--- ERROS NO PROFILE FORM ---")
-                print(profile_form.errors.as_data())
-            return self.form_invalid(form)
+#             # Como estamos usando dois forms, o erro pode estar no segundo
+#             if 'profile_form' in locals() or 'profile_form' in globals():
+#                 print("--- ERROS NO PROFILE FORM ---")
+#                 print(profile_form.errors.as_data())
+#             return self.form_invalid(form)
 
 class GrupoUpdateView(BaseUpdateView):
     model = Group

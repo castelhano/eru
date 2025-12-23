@@ -131,14 +131,20 @@ class jsSelectm{
         // Detecta optgroup e agrupa options
         this.select.querySelectorAll('optgroup, option').forEach((el) => {
             if (el.tagName === 'OPTGROUP') {
-                let groupName = el.label || el.getAttribute('label') || 'Grupo';
-                groups[groupName] = [];
-                el.querySelectorAll('option').forEach((opt) => {
-                    let optConfig = this._parseOption(opt);
-                    options[opt.value] = { ...optConfig, 'data-group': groupName };
-                    groups[groupName].push(opt.value);
-                    if (opt.selected && !selected.includes(opt.value)) selected.push(opt.value);
-                });
+                let opts = el.querySelectorAll('option');
+                if (opts.length > 0) {
+                    let groupName = el.label || el.getAttribute('label') || 'Grupo';
+                    groups[groupName] = { options: [], dataI18n: el.getAttribute('data-i18n') };
+                    opts.forEach((opt) => {
+                        let optConfig = this._parseOption(opt);
+                        options[opt.value] = { ...optConfig, 'data-group': groupName };
+                        groups[groupName].options.push(opt.value);
+                        if (opt.selected && !selected.includes(opt.value)) selected.push(opt.value);
+                    });
+                } else {
+                    // Remove optgroup vazio para evitar conflitos
+                    el.remove();
+                }
             } else if (el.tagName === 'OPTION' && !el.closest('optgroup')) {
                 let optConfig = this._parseOption(el);
                 options[el.value] = optConfig;
@@ -499,9 +505,9 @@ class jsSelectm{
         let summary = {default: {total: 0, selected: 0}}
         let groupsCount = [0,0];
         for(let group in this.groups){
-            let entry = {total: this.groups[group].length, selected: 0};
+            let entry = {total: this.groups[group].options.length, selected: 0};
             groupsCount[0] += entry.total;
-            this.groups[group].forEach((el)=>{
+            this.groups[group].options.forEach((el)=>{
                 if(this.selected.includes(el)){
                     entry.selected += 1;
                     groupsCount[1] += 1;
@@ -666,10 +672,10 @@ class jsSelectm{
                 // Para compatibilidade, se group informado, trata como optgroup
                 let groupName = option.group;
                 if(!this.groups[groupName]){ 
-                    this.groups[groupName] = [];
+                    this.groups[groupName] = { options: [], dataI18n: null };
                     this._addGroup(groupName, [], this.model);
                 }
-                this.groups[groupName].push(option.value);
+                this.groups[groupName].options.push(option.value);
                 opt.container.setAttribute('data-group', groupName);
                 this.model.groups[groupName].options[option.value] = opt;
                 this.model.groups[groupName].wrapper.appendChild(opt.container);
@@ -717,11 +723,13 @@ class jsSelectm{
         let acc_button = document.createElement('div');
         acc_button.classList = 'accordion-button collapsed fs-6 py-2';
         acc_button.setAttribute('data-bs-toggle','collapse');
-        acc_button.setAttribute('data-bs-target',`[data-groupContainer=${name}]`);
+        acc_button.setAttribute('data-bs-target',`[data-groupContainer="${name}"]`);
         let acc_button_text = document.createElement('span');
         acc_button_text.style = this.config.styles.groupLabel;
         acc_button_text.classList = this.config.classlist.groupLabel;
-        acc_button_text.innerHTML = name;
+        let dataI18n = this.groups[name]?.dataI18n;
+        acc_button_text.innerHTML = dataI18n ? (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry(dataI18n) || name : name) : name;
+        if(dataI18n) acc_button_text.setAttribute('data-i18n', dataI18n);
         acc_button.appendChild(acc_button_text);
         if(this.config.groupCounter){
             model.groups[name].groupCounter = document.createElement('span');
