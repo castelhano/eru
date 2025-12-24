@@ -39,8 +39,11 @@
         <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do grupo?</p>
         <div class="row mt-2">
           <div class="col text-end">
-            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-            <a class="btn btn-danger px-3" href="{% url 'grupo_delete' grupo.id|safe %}">Excluir</a>
+            <form action="{% url 'grupo_delete' grupo.id|safe %}" method="POST">
+              {% csrf_token %}
+              <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+              <button class="btn btn-danger px-3" type="submit">Excluir</button>
+            </form>
           </div>
         </div>
       </div>

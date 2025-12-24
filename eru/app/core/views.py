@@ -52,7 +52,7 @@ class CustomLoginView(auth_views.LoginView):
     def form_invalid(self, form):
         username = form.cleaned_data.get('username')
         try:
-            settings = Settings.objects.get()
+            settings = Settings.objects.first()
         except Settings.DoesNotExist:
             settings = Settings()
         try:
@@ -235,7 +235,7 @@ class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, Base
     context_object_name = 'usuarios'   
     permission_required = 'auth.view_group'
     def get_queryset(self):
-        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('id'))        
+        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('pk'))        
         return User.objects.filter(groups=self.grupo).order_by('username')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -333,7 +333,7 @@ class FilialUpdateView(BaseUpdateView):
         context['empresa'] = self.object.empresa 
         return context
     def get_success_url(self):
-        return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
+        return reverse('filial_update', kwargs={'pk': self.object.id})
 
 
 class UsuarioUpdateView(BaseUpdateView):
@@ -347,48 +347,6 @@ class UsuarioUpdateView(BaseUpdateView):
     def get_success_url(self):
         return reverse('usuario_update', kwargs={'pk': self.object.pk})
 
-
-# class UsuarioUpdateView(BaseUpdateView):
-#     model = User
-#     form_class = UserForm
-#     template_name = 'core/usuario_id.html'
-#     permission_required = 'auth.change_user'
-#     def get_success_url(self):
-#         return reverse('usuario_update', kwargs={'pk': self.object.id})
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['usuario'] = self.object
-#         context['empresas'] = Empresa.objects.prefetch_related('filiais').all()
-#         return context
-#     @transaction.atomic
-#     def form_valid(self, form):
-#         profile_instance, _ = Profile.objects.get_or_create(user=self.object)
-#         profile_form = ProfileForm(self.request.POST, instance=profile_instance)
-#         if form.is_valid() and profile_form.is_valid():
-#             # try:
-#                 print("--- DADOS BRUTOS DO POST ---")
-#                 print(self.request.POST)
-#                 user = form.save(commit=False)
-#                 password = form.cleaned_data.get('password')
-#                 if password:
-#                     user.set_password(password)
-#                 user.save()
-#                 form.save_m2m()
-#                 profile_form.save()
-#                 messages.success(self.request, "Usuário atualizado com sucesso!")
-#                 return HttpResponseRedirect(self.get_success_url())
-#             # except Exception as e:
-#             #     messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
-#             #     return self.form_invalid(form)
-#         else:
-#             print("--- ERROS NO USER FORM ---")
-#             print(form.errors.as_data())
-            
-#             # Como estamos usando dois forms, o erro pode estar no segundo
-#             if 'profile_form' in locals() or 'profile_form' in globals():
-#                 print("--- ERROS NO PROFILE FORM ---")
-#                 print(profile_form.errors.as_data())
-#             return self.form_invalid(form)
 
 class GrupoUpdateView(BaseUpdateView):
     model = Group
@@ -406,16 +364,22 @@ class GrupoUpdateView(BaseUpdateView):
         ).select_related('content_type').order_by('content_type__app_label', 'codename')
         return context
 
+# classe Settings opera como singleton
 class SettingsUpdateView(BaseUpdateView):
     model = Settings
     form_class = SettingsForm
     template_name = 'core/settings.html'
     permission_required = 'core.change_settings'
+    context_object_name = 'settings'
     success_url = reverse_lazy('settings')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['settings'] = self.object
         return context
+    def get_object(self, queryset=None):
+        # recuperar instancia ou cria (no primeiro uso) com valores default
+        obj, created = Settings.objects.get_or_create(pk=1)
+        return obj
 
 
 # METODOS DELETE
@@ -423,6 +387,12 @@ class EmpresaDeleteView(BaseDeleteView):
     model = Empresa
     permission_required = 'core.delete_empresa'
     success_url = reverse_lazy('empresa_list')
+
+class FilialDeleteView(BaseDeleteView):
+    model = Filial
+    permission_required = 'core.delete_filial'
+    def get_success_url(self):
+        return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
 
 class UsuarioDeleteView(BaseDeleteView):
     model = User
@@ -434,23 +404,6 @@ class GrupoDeleteView(BaseDeleteView):
     permission_required = 'auth.delete_group'
     success_url = reverse_lazy('grupo_list')
 
-
-
-
-
-
-
-
-# @login_required
-# def get_empresas(request):
-#     # Metodo retorna JSON com dados das empresas
-#     if request.GET.get('usuario', None) == 'new':
-#         empresas = Empresa.objects.all().order_by('nome')
-#     else:
-#         usuario = request.user if request.GET.get('usuario', None) == None else User.objects.get(id=request.GET.get('usuario', None))
-#         empresas = usuario.profile.empresas.all().order_by('nome')
-#     obj = serializers.serialize('json', empresas)
-#     return HttpResponse(obj, content_type="application/json")
 
 def asteval_run(expression, vars_dict):
     # expression espera uma string com calculo a ser realizado

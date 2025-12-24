@@ -105,6 +105,7 @@
     },
     "company": {
         "companyName": "Company name",
+        "tradeName": "Trade name",
         "municipalReg": "Municipal Reg",
         "stateReg": "State Reg",
         "zipCode": "Zip code"  

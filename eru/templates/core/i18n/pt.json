@@ -105,6 +105,7 @@
     },
     "company": {
         "companyName": "Razão Social",
+        "tradeName": "Nome Fantasia",
         "municipalReg": "Inscrição municipal",
         "stateReg": "Inscrição estadual",
         "zipCode": "CEP"

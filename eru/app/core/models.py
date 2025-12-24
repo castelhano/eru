@@ -87,6 +87,12 @@ class Settings(models.Model):
     senha_exige_caractere = models.BooleanField(default=False)
     historico_senhas_nao_repetir = models.PositiveIntegerField(default=0)
     quantidade_tentantivas_erradas = models.PositiveIntegerField(default=3)
+    def __str__(self):
+        return 'Singleton'
+    def save(self, *args, **kwargs):
+        # forca edicao / adicao sempre do ID 1 (impedindo duplicidade de registro)
+        self.pk = 1
+        super(Settings, self).save(*args, **kwargs)
     class Meta:
         default_permissions = ('view','change',)
 auditlog.register(Settings)
