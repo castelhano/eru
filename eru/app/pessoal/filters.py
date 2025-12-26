@@ -14,7 +14,6 @@ class FuncionarioFilter(django_filters.FilterSet):
         fields = ['filial', 'status', 'motivo_desligamento', 'regime', 'cargo__setor', 'pne', 'cnh_validade__lte']
 
 
-
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
     inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')
     fim = django_filters.DateFilter(field_name="fim", lookup_expr='lte')

@@ -41,7 +41,12 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
     template_name = 'pessoal/cargos.html'
     context_object_name = 'cargos'
     permission_required = 'pessoal.view_cargo'
-    queryset = Cargo.objects.all().order_by('nome')
+    def get_queryset(self):
+        queryset = Cargo.objects.all().order_by('nome')
+        setor_id = self.request.GET.get('cargo__setor') or self.request.GET.get('setor')
+        if setor_id:
+            queryset = queryset.filter(setor_id=setor_id)
+        return queryset
 
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Funcionario
@@ -91,6 +96,7 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
         context = super().get_context_data(**kwargs)
         # Passagem do usuário para o Form para filtrar escolhas de filial, se necessário
         context['form'] = FuncionarioForm(user=self.request.user)
+        context['setores'] = Setor.objects.all().order_by('nome')
         return context
 
 

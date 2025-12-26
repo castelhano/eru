@@ -151,13 +151,20 @@
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
-          <select name="cargo__setor" id="id_setor" class="form-select"></select>
+          <select name="cargo__setor" id="id_setor" class="form-select" onchange="updateCargos(this.value)">
+            <option value="" data-i18n="common.all">Todos</option>
+            {% for setor in setores %}
+            <option value="{{ setor.id }}">{{ setor.nome }}</option>
+            {% endfor %}
+          </select>
           <label for="id_setor" data-i18n="common.sector__bold:t">Se<b class="text-body"><u>t</u></b>or</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
-          <select name="cargo" id="id_cargo" class="form-select"><option value="" data-i18n="common.all">Todos</option></select>
+          <select class="form-select" id="id_cargo" name="cargo">
+            <option value="" data-i18n="common.all">Todos</option>
+          </select>
           <label for="id_cargo" data-i18n="common.position__bold:g">Car<b class="text-body"><u>g</u></b>o</label>
         </div>
       </div>
@@ -181,7 +188,6 @@
 
 <script>
   {% block add_script %}
-
   i18n.addVar('funcSearchCriteria', [i18n.getEntry('common.name'), i18n.getEntry('common.employeeId')])
   const form = new jsForm(document.getElementById('app_form'), {})
   
@@ -198,21 +204,43 @@
   
   // Ao escolher uma empresa nos filtros marca status = ativo
   filterForm.empresa.addEventListener('change', ()=>{if(filterForm.status.value == ''){filterForm.status.value = 'A'}})
-
+  
+  function updateCargos(setorId) {
+    const cargoSelect = document.getElementById('id_cargo');
+    cargoSelect.innerHTML = '<option value="" data-i18n="common.all">Todos</option>';
+    if (!setorId) return;
+    fetch(`{% url 'pessoal:cargo_list' %}?cargo__setor=${setorId}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      data.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.pk;
+        option.textContent = opt.fields.nome;
+        cargoSelect.appendChild(option);
+      });
+    })
+    .catch(error => console.error('Erro ao buscar cargos:', error));
+  }
+  
+  
+  
+  
   // Adiciona atalhos para modal de filtros
   appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
   appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
   appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
   appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
   appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
-
-
+  
+  
   const table = new jsTable(document.getElementById('main_table'), {
     enablePaginate: true,
     canFilter: true,
     filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
   });
-
+  
   document.getElementById('id_status').addEventListener('change', (ev)=>{
     if(ev.target.value == 'D'){
       document.getElementById('motivoDesligamentoContainer').classList.remove('d-none');
@@ -220,6 +248,9 @@
     else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
     
   })
+  
+  
+  
   
   {% endblock %}
 </script>
