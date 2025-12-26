@@ -9,10 +9,10 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventos_related' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:eventorelated_list' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:evento_related_add' related model.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:eventorelated_create' related model.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_evento_related.html' %}
     </form>

@@ -10,23 +10,22 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            {% if related == 'empresa' %}
-                {% if perms.pessoal.add_eventoempresa %}
-                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'empresa' 0 %}"><i class="bi bi-plus-lg text-success"></i></a></li>
-                {% endif %}
+            {% with add_perm="pessoal.add_evento"|add:related %}
+            {% if perms|proxy_perm:add_perm %}
+            <li class="nav-item ms-1">
+                <a class="nav-link border" id="add" href="{% url 'pessoal:eventorelated_create' related model.id|default:0|safe %}">
+                    <i class="bi bi-plus-lg text-success"></i>
+                </a>
+            </li>
+            {% endif %}
+            {% endwith %}
             <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
-            {% elif related == 'cargo' %}
-                {% if perms.pessoal.add_eventocargo %}
-                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'cargo' model.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
-                {% endif %}
-            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_id' model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
-            {% elif related == 'funcionario' %}
-                {% if perms.pessoal.add_eventofuncionario %}
-                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_related_add' 'funcionario' model.id|safe %}"><i class="bi bi-plus-lg text-success"></i></a></li>
-                {% endif %}
-            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_id' model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if related != 'empresa' %}
+            <li class="nav-item">
+                <a class="nav-link" id="back" href="{% url 'pessoal:'|add:related|add:'_update' model.id|safe %}">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -38,6 +37,37 @@
             </li>
         </ul>
     </div>
+    <!-- <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            {# if related == 'empresa' #}
+                {# if perms.pessoal.add_eventoempresa #}
+                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{# url 'pessoal:eventorelated_create' 'empresa' 0 #}"><i class="bi bi-plus-lg text-success"></i></a></li>
+                {# endif #}
+            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
+            {# elif related == 'cargo' #}
+                {# if perms.pessoal.add_eventocargo #}
+                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{# url 'pessoal:eventorelated_create' 'cargo' model.id|safe #}"><i class="bi bi-plus-lg text-success"></i></a></li>
+                {# endif #}
+            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{# url 'pessoal:cargo_update' model.id|safe #}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {# elif related == 'funcionario' #}
+                {# if perms.pessoal.add_eventofuncionario #}
+                <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{# url 'pessoal:eventorelated_create' 'funcionario' model.id|safe #}"><i class="bi bi-plus-lg text-success"></i></a></li>
+                {# endif #}
+            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{# url 'pessoal:funcionario_update' model.id|safe #}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {# endif #}
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    {# if perms.core.view_log #}
+                    <li><a class="dropdown-item pointer" href="{# url 'logs' #}?target_model=pessoal.{{related}}&mensagem=DELETE" target="_blank" data-i18n="sys.exclusionLogs">Log de Exclusões</a></li>
+                    {# endif #}
+                </ul>
+            </li>
+        </ul>
+    </div> -->
     <div class="card-body tab-content">
         <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.event__plural">Eventos</span></h5>
         <h6 class="text-orange">

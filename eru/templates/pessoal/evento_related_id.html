@@ -9,7 +9,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:eventos_related' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:eventorelated_list' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 {% if related == 'empresa' and perms.pessoal.delete_eventoempresa or related == 'cargo' and perms.pessoal.delete_eventocargo or related == 'funcionario' and perms.pessoal.delete_eventofuncionario %}
@@ -20,7 +20,7 @@
             </li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:evento_related_update' related evento.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:eventorelated_update' related evento.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_evento_related.html' %}
     </form>
@@ -38,8 +38,11 @@
                 <p><b class="text-danger" data-i18n="common.warning">Atenção!!</b> <span data-i18n="sys.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="{% url 'pessoal:evento_related_delete' related evento.id|safe %}" data-i18n="common.delete">Excluir</a>
+                        <form action="{% url 'pessoal:eventorelated_delete' related evento.id|safe %}" method="POST">
+                            {% csrf_token %}
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
+                            <button class="btn btn-danger px-3" type="submit" data-i18n="common.delete">Excluir</button>
+                        </form>
                     </div>
                 </div>
             </div>

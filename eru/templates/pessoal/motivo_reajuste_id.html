@@ -8,7 +8,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:motivos_reajuste' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:motivoreajuste_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 {% if perms.pessoal.delete_motivoreajuste %}
@@ -19,7 +19,7 @@
             </li>
         </ul>
     </div>
-    <form id="pessoal_form" action="{% url 'pessoal:motivo_reajuste_update' motivo_reajuste.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="pessoal_form" action="{% url 'pessoal:motivoreajuste_update' motivo_reajuste.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_motivo_reajuste.html' %}
     </form>
@@ -37,8 +37,11 @@
                 <p><b class="text-danger" data-i18n="common.warning">Atenção!!</b> <span data-i18n="sys.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="{% url 'pessoal:motivo_reajuste_delete' motivo_reajuste.id|safe %}" data-i18n="common.delete">Excluir</a>
+                        <form action="{% url 'pessoal:motivoreajuste_delete' motivo_reajuste.id|safe %}" method="POST">
+                            {% csrf_token %}
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
+                            <button class="btn btn-danger px-3" type="submit" data-i18n="common.delete">Excluir</button>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -86,37 +86,23 @@ class Setor(models.Model):
 auditlog.register(Setor)
 
 class Cargo(models.Model):
+    class FuncaoTipo(models.TextChoices):
+        MOTORISTA = "M", mark_safe('<span data-i18n="personal.common.driver">Motorista</span>')
+        AUXILIAR  = "A", mark_safe('<span data-i18n="personal.common.assistant">Auxiliar</span>')
+        TRAFEGO   = "T", mark_safe('<span data-i18n="personal.common.traffic">Tráfego</span>')
+        OFICINA   = "O", mark_safe('<span data-i18n="personal.common.mechanics">Oficina</span>')
     nome = models.CharField(max_length=50, unique=True, blank=False)
     setor = models.ForeignKey(Setor, on_delete=models.PROTECT)
     atividades = models.TextField(blank=True)
-    funcoes_fixas = models.ManyToManyField('FuncaoFixa', related_name="cargos", blank=True)
+    funcoes_fixas = models.JSONField(default=list, blank=True)
     def __str__(self):
         return self.nome
     def ativos(self):
         return Funcionario.objects.filter(cargo=self, status='A').count()
-    # def funcoes_fixas(self):
-    #     return self.ffixas.all()
-    # def funcoes_fixas_list(self):
-    #     return list(self.ffixas.values_list('nome', flat=True))
     class Meta:
         ordering = ['nome']
 auditlog.register(Cargo)
 
-class FuncaoFixa(models.Model):
-    FFIXA_CHOICES = (
-        ("M", mark_safe('<span data-i18n="personal.common.driver">Motorista</span>')),
-        ("A", mark_safe('<span data-i18n="personal.common.assistant">Auxiliar</span>')),
-        ("T", mark_safe('<span data-i18n="personal.common.traffic">Trafego</span>')),
-        ("O", mark_safe('<span data-i18n="personal.common.mechanics">Oficina</span>')),
-    )
-    nome = models.CharField(max_length=3,choices=FFIXA_CHOICES,unique=True, blank=False)
-    def __str__(self):
-        return self.get_nome_display()
-    class Meta:
-        permissions = []
-auditlog.register(FuncaoFixa)
-    
-    
 class Funcionario(Pessoa):
     STATUS_CHOICES = (
         ("A", mark_safe('<span data-i18n="common.active">Ativo</span>')),
@@ -309,13 +295,13 @@ class EventoMovimentacao(models.Model):
 ##########
 # !! deve ser tratado duplicidade de evento no mesmo escopo no form
 class EventoEmpresa(EventoMovimentacao):
-    empresas = models.ManyToManyField(Empresa, related_name="eventos_empresa")
-auditlog.register(EventoEmpresa, m2m_fields={"empresas"})
+    filiais = models.ManyToManyField(Filial, related_name="eventos_filial")
+auditlog.register(EventoEmpresa, m2m_fields={"filiais"})
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT)
-    empresas = models.ManyToManyField(Empresa, related_name="eventos_cargo")
-auditlog.register(EventoCargo)
+    filiais = models.ManyToManyField(Empresa, related_name="eventos_cargo")
+auditlog.register(EventoCargo, m2m_fields={"filiais"})
 
 class EventoFuncionario(EventoMovimentacao):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)

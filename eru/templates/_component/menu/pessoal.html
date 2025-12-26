@@ -31,11 +31,11 @@
         'data-i18n': 'personal.common.event__plural__bold:e',
         itens: [
         {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', 'data-i18n': 'personal.common.event__bold:t', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupo_evento_list' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivo_reajuste_list' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupoevento_list' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivoreajuste_list' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_eventoempresa %}
         {type: 'separator'},
-        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:evento_related_list' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:v', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
+        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventorelated_list' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:v', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
         ],
         keybind: [

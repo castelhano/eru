@@ -11,20 +11,20 @@
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_docs" data-bs-toggle="tab" data-bs-target="#documents" onclick="setTimeout(function(){document.getElementById('id_rg').focus();},220);" href="#" title="Documentos [Ctrl + 2]"><i class="bi bi-person-vcard-fill"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionarios' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventofuncionario %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventos_related' 'funcionario' funcionario.id|safe %}" data-i18n="personal.common.event__plural__bold:t">Even<u><b>t</b></u>os</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}" data-i18n="personal.common.event__plural__bold:t">Even<u><b>t</b></u>os</a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" type="button" id="exportCsvBtn">Baixar CSV</button></li>
-                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependentes' funcionario.id|safe %}" data-i18n="personal.common.dependant__plural">Dependentes</a></li>{% endif %}
+                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}" data-i18n="personal.common.dependant__plural">Dependentes</a></li>{% endif %}
                     {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{# url 'pessoa:afastamentos' funcionario.id|safe #}">Afastamentos</a></li>{% endif %}
                     {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
                     <li><a class="dropdown-item dropdown-item-danger" data-bs-toggle="modal" data-bs-target="#modal_desligamento" href="#">Desligar Funcionário</a></li>
                     {% endif %}
-                    {% if perms.app.delete_modelo %}
+                    {% if perms.pessoal.delete_funcionario %}
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
                     {% endif %}
@@ -32,13 +32,13 @@
             </li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off">
+    <form id="pessoal_form" action="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" method="POST" enctype="multipart/form-data" autocomplete="off">
         {% csrf_token %}
         {% include 'pessoal/_form_funcionario.html' %}
     </form>
 </div>
 
-{% if perms.app.delete_modelo %}
+{% if perms.pessoal.delete_funcionario %}
 <div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -50,8 +50,11 @@
                 <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="url">Excluir</a>
+                        <form action="{% url 'pessoal:funcionario_delete' funcionario|id %}" method="POST">
+                            {% csrf_token %}
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+                            <button class="btn btn-danger px-3" type="submit">Excluir</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -69,16 +72,16 @@
 <script>
     {% block add_script %}
     const [cpf, cnh] = _formRun();
-    const form = new jsForm('#app_form', {
+    const form = new jsForm('#pessoal_form', {
         imask: [cpf, cnh]
     })
 
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
-    appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
+    pessoalKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
 
     {% if perms.pessoal.view_eventofuncionario %}
-    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
+    pessoalKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
     {% endif %}
     {% endblock %}
 </script>

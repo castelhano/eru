@@ -72,12 +72,12 @@
                     <ul id="customCanvasNavMenu" class="navbar-nav justify-content-end flex-grow-1 mt-2"></ul>
                     {% block canvasNav %}{% endblock %}
                     <div class="position-sticky mt-2" style="top: 95%;">
-                        <form action="{% url 'logout' %}" method="POST">
+                        <form action="{% url 'logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-primary me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>Logout</button>
+                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span data-i18n="common.password">Senha</span></a>
+                            <a href="" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                         </form>
-                        <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span data-i18n="common.password">Senha</span></a>
-                        <a href="" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                     </div>
                 </div>
             </div>
@@ -165,8 +165,6 @@
     {% block add_script_src %}{% endblock %}
 
     <script>
-        document.getElementById('logout').onclick = ()=>{appOnLogout("{% url 'logout' %}")} // Chama funcao de validacao / limpeza ao deslogar do sistema
-
         const i18n = new I18n({
             apps: ['core'],
             url: "{% url 'i18n' %}",

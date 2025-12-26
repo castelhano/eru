@@ -8,9 +8,9 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventocargo %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventos_related' 'cargo' cargo.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
             {% endif %}
             {% if perms.pessoal.delete_cargo %}
             <li class="nav-item dropdown ms-auto">
@@ -40,8 +40,11 @@
                 <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-                        <a class="btn btn-danger px-3" href="url">Excluir</a>
+                        <form action="{% url 'pessoal:cargo_delete' cargo.id|safe %}" method="POST">
+                            {% csrf_token %}
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+                            <button class="btn btn-danger px-3" type="submit">Excluir</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -60,8 +63,7 @@
 <script>
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
-    const ffixa = new jsSelectm('#id_funcao_fixa', {
-        selected: {{cargo.funcoes_fixas_list|safe}},
+    const ffixa = new jsSelectm('#id_funcoes_fixas', {
         title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',
         icon: 'bi bi-diagram-3-fill',
     });

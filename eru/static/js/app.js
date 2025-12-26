@@ -148,7 +148,7 @@ function confirmOnClick(options){
 }
 
 // script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
-function appOnLogout(url){
+function appOnLogout(){
   i18n.clearData(false);
    return true;
 }

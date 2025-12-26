@@ -12,7 +12,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.pessoal.add_funcionario %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:funcionario_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:funcionario_create' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
       <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
       {% if perms.core.view_log %}
@@ -30,7 +30,7 @@
     <div class="row">
       <div class="col-lg">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-          <form id="app_form" action="{% url 'pessoal:funcionarios' %}" method="GET" autocomplete="off" novalidate>
+          <form id="app_form" action="{% url 'pessoal:funcionario_list' %}" method="GET" autocomplete="off" novalidate>
             <div class="row">
               <div class="col-lg-auto">
                 <div class="input-group">
@@ -106,7 +106,7 @@
                   <td class="d-none">{{funcionario.pne|yesno:'PNE,'}}</td>
                   <td class="d-none d-lg-table-cell">{{funcionario.get_status_display}}</td>
                   {% if perms.pessoal.view_funcionario %}
-                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:funcionario_id' funcionario.id|safe %}" title="Editar" data-i18n="[title]common.edit"><i class="bi bi-pen-fill"></i></a></td>
+                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" title="Editar" data-i18n="[title]common.edit"><i class="bi bi-pen-fill"></i></a></td>
                   {% endif %}
                 </tr>
                 {% endfor %}
@@ -121,7 +121,7 @@
 
 
 
-<form action="{% url 'pessoal:funcionarios' %}" method="POST" id="filterForm" style="display: none;" autocomplete="off" novalidate>
+<form action="{% url 'pessoal:funcionario_list' %}" method="POST" id="filterForm" style="display: none;" autocomplete="off" novalidate>
   {% csrf_token %}
   <div class="row">
     <div class="col-lg col-lg-3">
@@ -194,10 +194,6 @@
     {nome: 'motivo_desligamento'},
     {nome: 'regime'},
     ],
-    selectPopulate: [
-      {target: document.getElementById('id_empresa'), url: '{% url 'get_empresas' %}', emptyRow: {innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}},
-      {target: document.getElementById('id_setor'), url: '{% url 'pessoal:get_setores' %}', emptyRow: {innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}},
-    ]
   })
   
   // Ao escolher uma empresa nos filtros marca status = ativo
@@ -225,14 +221,5 @@
     
   })
   
-  let cargos = new selectPopulate({wait: true, target: filterForm.cargo, url: '{% url "pessoal:get_cargos" %}', emptyRow:{innerHTML: i18n.getEntry('common.all__plural') || 'Todos'}})
-  document.getElementById('id_setor').addEventListener('change', (ev)=>{
-    if(ev.target.value == ''){return}
-    else{
-      cargos.params = `?setor=${filterForm.cargo__setor.value}`;
-      cargos.reload();
-    }
-    
-  }) 
   {% endblock %}
 </script>

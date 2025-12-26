@@ -27,6 +27,11 @@ class CargoForm(forms.ModelForm):
     nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
     setor = forms.ModelChoiceField(queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     atividades = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'data-i18n':'[placeholder]personal.position.jobResponsibilities', 'placeholder':'Atividades do cargo', 'rows':'15'}))
+    funcoes_fixas = forms.MultipleChoiceField(
+        choices=Cargo.FuncaoTipo.choices,
+        widget=forms.SelectMultiple(),
+        required=False
+    )
     
 class AfastamentoForm(forms.ModelForm):
     class Meta:
@@ -59,7 +64,6 @@ class FuncionarioForm(forms.ModelForm):
     class Meta:
         model = Funcionario
         fields = ['filial','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne']
-    # empresa = forms.ModelChoiceField(queryset = Empresa.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     matricula = forms.CharField(max_length=6,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus', 'data-i18n': 'personal.common.employeeId'}))
     nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n':'common.name'}))
     apelido = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n': 'personal.common.nickname'}))
@@ -141,7 +145,7 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
         """
         Deve ser sobrescrito pelos formularios filhos
         Retorna um dicionario de filtros (Q objects ou kwargs) que definem o 'contexto' do conflito
-        Ex: {'empresas__id__in': [1, 2]} ou {'funcionario': obj_funcionario}
+        Ex: {'filiais__id__in': [1, 2]} ou {'funcionario': obj_funcionario}
         """
         raise NotImplementedError("Subclasses devem implementar 'get_context_filters'.")
 
@@ -205,22 +209,22 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
 class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoCargo
-        fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'empresas']
+        fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'filiais']
         widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['empresas'].queryset = user.profile.filiais.all()
+            self.fields['filiais'].queryset = user.profile.filiais.all()
     def get_model_class(self):
         return EventoCargo
     def get_context_filters(self, cleaned_data):
-        # Implementa o filtro especifico para Cargo: checa conflito APENAS nas empresas selecionadas
-        empresas_qs = cleaned_data.get('empresas')
-        if empresas_qs:
-            empresa_ids = empresas_qs.values_list('id', flat=True)
+        # Implementa o filtro especifico para Cargo: checa conflito APENAS nas filiais selecionadas
+        filiais_qs = cleaned_data.get('filiais')
+        if filiais_qs:
+            filial_ids = filiais_qs.values_list('id', flat=True)
             # Retorna um dicionario de kwargs para o filtro Q(**kwargs)
-            return {'empresas__id__in': empresa_ids}
-        return {} # Retorna vazio se nao houver empresas (embora 'empresas' deva ser obrigatorio neste contexto)
+            return {'filiais__id__in': filial_ids}
+        return {} # retorna vazio se nao houver filiais (embora 'filiais' deva ser obrigatorio neste contexto)
     
 
 class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
@@ -241,18 +245,18 @@ class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
 class EventoEmpresaForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoEmpresa
-        fields = EventoMovimentacaoBaseForm.Meta.fields + ['empresas']
+        fields = EventoMovimentacaoBaseForm.Meta.fields + ['filiais']
         widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['empresas'].queryset = user.profile.filiais.all()
+            self.fields['filiais'].queryset = user.profile.filiais.all()
     def get_model_class(self):
         return EventoEmpresa
     def get_context_filters(self, cleaned_data):
-        # Implementa o filtro especifico para Empresa: checa conflito APENAS nas empresas selecionadas
-        empresas_qs = cleaned_data.get('empresas')
-        if empresas_qs:
-            empresa_ids = empresas_qs.values_list('id', flat=True)
-            return {'empresas__id__in': empresa_ids}
+        # Implementa o filtro especifico para Filial: checa conflito APENAS nas filiais selecionadas
+        filiais_qs = cleaned_data.get('filiais')
+        if filiais_qs:
+            filial_ids = filiais_qs.values_list('id', flat=True)
+            return {'filiais__id__in': filial_ids}
         return {}

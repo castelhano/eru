@@ -10,7 +10,7 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             {% if perms.pessoal.add_evento %}
-            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_add' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:evento_create' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -43,14 +43,13 @@
                         <td class="d-none d-lg-table-cell" >{{evento.rastreio}}</td>
                         <td>{{evento.grupo|default:''}}</td>
                         {% if perms.pessoal.change_evento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_id' evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_update' evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <!-- <div class="tab-pane fade" id="foo" role="tabpanel">outra tab</div> -->
     </div>
 </div>
 

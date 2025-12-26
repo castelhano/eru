@@ -9,10 +9,10 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargos' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:cargo_add' %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:cargo_create' %}" method="POST" autocomplete="off" novalidate>
         {% csrf_token %}
         {% include 'pessoal/_form_cargo.html' %}
     </form>
@@ -28,18 +28,19 @@
 
 <script>
     {% block add_script %}
+    i18n.addVar('setorVars', [i18n.getEntry('common.sector') || 'Setor'])
     const form = new jsForm(document.getElementById('app_form'), {})
     const setor = new RelatedAddon('#id_setor', {
-        title: 'foo',
+        title: i18n.getEntry("compound.registerOf__var:$setorVars"),
         url: {
             parent: {},
             related: {
-                add: "{% url 'pessoal:add_setor' %}",
+                add: "{# url 'pessoal:add_setor' #}",
             },
         }
     })
     
-const ffixa = new jsSelectm('#id_funcao_fixa', {
+const ffixa = new jsSelectm('#id_funcoes_fixas', {
     title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',
     icon: 'bi bi-diagram-3-fill',
 });
