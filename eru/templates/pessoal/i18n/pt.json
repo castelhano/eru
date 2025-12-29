@@ -104,6 +104,7 @@
         },
         "shortcuts": {
             "selectFieldCompany": "Selecionar campo Empresa",
+            "selectFieldBranch": "Selecionar campo Filial",
             "selectFieldStatus": "Selecionar campo Status",
             "selectFieldRegime": "Selecionar campo Regime",
             "selectFieldSector": "Selecionar campo Setor"

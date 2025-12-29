@@ -12,6 +12,7 @@ from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin
 from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from core.views import asteval_run
+from core.models import Empresa, Filial
 from core.extras import get_props
 # third-party
 from rest_framework import viewsets, permissions
@@ -53,13 +54,10 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
     template_name = 'pessoal/funcionarios.html'
     context_object_name = 'funcionarios'
     permission_required = 'pessoal.view_funcionario'
-
     def dispatch(self, request, *args, **kwargs):
-        # Centralizamos a captura da pesquisa e filiais aqui para evitar repetição
         self.pesquisa = request.GET.get('pesquisa')
         self.filiais_autorizadas = request.user.profile.filiais.all()
-
-        # Lógica de redirecionamento por matrícula (exata)
+        # analisa se o valor digitado corresponde a uma matricula, se sim redireciona para pagina de update
         if self.pesquisa:
             funcionario = Funcionario.objects.filter(
                 matricula=self.pesquisa, 
@@ -67,20 +65,18 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
             ).first()
             if funcionario:
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
-        # Iniciamos com a base filtrada por permissão de filial
+        # consulta base filtra apenas filiais habilitadas para usuario 
         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
-
         if self.pesquisa:
-            # Filtro por nome (qualquer ordem) usando redução de Q objects
+            # filtro por nome (qualquer ordem) usando reducao de Q objects
             query = Q()
             for termo in self.pesquisa.split():
                 query &= Q(nome__icontains=termo)
             queryset = queryset.filter(query)
         else:
-            # Aplica filtros extras (FuncionarioFilter) apenas se não houver pesquisa global
+            # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
             data = self.request.POST if self.request.method == 'POST' else self.request.GET
             if data:
                 try:
@@ -90,61 +86,14 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
 
         if not queryset.exists() and (self.request.GET or self.request.POST):
             messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
-        
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Passagem do usuário para o Form para filtrar escolhas de filial, se necessário
+        # passa form de usuario apenas para facilitar form de filtros
         context['form'] = FuncionarioForm(user=self.request.user)
         context['setores'] = Setor.objects.all().order_by('nome')
         return context
 
-
-
-# class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-#     model = Funcionario
-#     template_name = 'pessoal/funcionarios.html'
-#     context_object_name = 'funcionarios'
-#     permission_required = 'pessoal.view_funcionario'
-#     def dispatch(self, request, *args, **kwargs):
-#         # analisa a pesquisa, se corresponder a uma matricula, redireciona para funcionario_id
-#         pesquisa = request.GET.get('pesquisa')
-#         if pesquisa:
-#             filiais_autorizadas = request.user.profile.filiais.all()
-#             funcionario = Funcionario.objects.filter(
-#                 matricula=pesquisa, 
-#                 filial__in=filiais_autorizadas
-#             ).first()
-#             if funcionario:
-#                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-#         return super().dispatch(request, *args, **kwargs)
-#     def get_queryset(self):
-#         user = self.request.user
-#         filiais_autorizadas = request.user.profile.filiais.all()       
-#         queryset = Funcionario.objects.filter(filial__in=filiais_autorizadas).order_by('matricula')
-#         pesquisa = self.request.GET.get('pesquisa')
-#         # quebra pesquisa em lista de nomes e busca nomes pesquisados em qualquer ordem e posicao no field
-#         if pesquisa:
-#             criterios = pesquisa.split(' ')
-#             query = Q()
-#             for nome in criterios:
-#                 query &= Q(nome__icontains=nome)
-#             queryset = queryset.filter(query)
-#         data = self.request.POST if self.request.method == 'POST' else self.request.GET
-#         # so aplica filtros se nao for busca por nome
-#         if data and not pesquisa:
-#             try:
-#                 func_filter = FuncionarioFilter(data, queryset=queryset)
-#                 queryset = func_filter.qs
-#             except Exception:
-#                 messages.warning(self.request, DEFAULT_MESSAGES.get('filterError'))
-#         if not queryset.exists() and (self.request.GET or self.request.POST):
-#             messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery'))
-#         return queryset
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['form'] = FuncionarioForm(user=self.request.user)
-#         return context
 
 class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Dependente

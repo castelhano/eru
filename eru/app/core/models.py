@@ -1,5 +1,6 @@
 import os
 from django.db import models
+from django.db.models import Prefetch
 from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.db.models.signals import post_save
@@ -70,6 +71,14 @@ class Profile(models.Model):
         return self.user.username
     def allow_filial(self, id): # Verifica se filial esta habilitada para usuario
         return self.filiais.filter(pk=id).exists()
+    def empresas(self):
+        filiais_qs = self.filiais.all()
+        return Empresa.objects.filter(filiais__in=filiais_qs).prefetch_related(
+            Prefetch(
+                'filiais', 
+                queryset=filiais_qs.order_by('nome'),
+                to_attr='filiais_permitidas'
+                )).distinct().order_by('nome')
     class Meta:
         permissions = [
             ("debug", "Can debug system"),

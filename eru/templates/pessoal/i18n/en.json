@@ -104,6 +104,7 @@
         },
         "shortcuts": {
             "selectFieldCompany": "Focus field Company",
+            "selectFieldBranch": "Focus field Branch",
             "selectFieldStatus": "Focus field Status",
             "selectFieldRegime": "Focus field Regime",
             "selectFieldSector": "Focus field Sector"

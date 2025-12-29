@@ -127,8 +127,28 @@
     <div class="col-lg col-lg-3">
       <div class="row g-1">
         <div class="form-floating mb-1">
-          <select class="form-select" id="id_empresa" name="empresa"></select>
+          <select class="form-select" id="id_empresa" name="empresa">
+            <option value="" data-i18n="common.all" selected>Todos</option>
+            {% for empresa in user.profile.empresas %}
+            <option value="{{empresa.id|safe}}">{{empresa.nome}}</option>
+            {% endfor %}
+          </select>
           <label for="id_empresa" data-i18n="common.company__bold:e"><b class="text-body"><u>E</u></b>mpresa</label>
+        </div>
+      </div>
+      <div class="row g-1">
+        <div class="form-floating mb-1">
+          <select class="form-select" id="id_filial" name="filial">
+            <option value="" data-i18n="common.all" selected>Todos</option>
+            {% for empresa in user.profile.empresas %}
+            <optgroup label="{{empresa.nome}}">
+              {% for filial in empresa.filiais_permitidas %}
+              <option value="{{filial.id|safe}}">{{filial.nome}}</option>
+              {% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+          <label for="id_filial" data-i18n="common.branch__bold:f"><b class="text-body"><u>F</u></b>ilial</label>
         </div>
       </div>
       <div class="row g-1">
@@ -202,33 +222,31 @@
     ],
   })
   
-  // Ao escolher uma empresa nos filtros marca status = ativo
-  filterForm.empresa.addEventListener('change', ()=>{if(filterForm.status.value == ''){filterForm.status.value = 'A'}})
-  
-  function updateCargos(setorId) {
-    const cargoSelect = document.getElementById('id_cargo');
-    cargoSelect.innerHTML = '<option value="" data-i18n="common.all">Todos</option>';
-    if (!setorId) return;
-    fetch(`{% url 'pessoal:cargo_list' %}?cargo__setor=${setorId}`, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => response.json())
-    .then(data => {
-      data.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt.pk;
-        option.textContent = opt.fields.nome;
-        cargoSelect.appendChild(option);
-      });
-    })
-    .catch(error => console.error('Erro ao buscar cargos:', error));
-  }
+  // function updateCargos(setorId) {
+  //   const cargoSelect = document.getElementById('id_cargo');
+  //   cargoSelect.innerHTML = '<option value="" data-i18n="common.all">Todos</option>';
+  //   if (!setorId) return;
+  //   fetch(`{% url 'pessoal:cargo_list' %}?cargo__setor=${setorId}`, {
+  //     headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  //   })
+  //   .then(response => response.json())
+  //   .then(data => {
+  //     data.forEach(opt => {
+  //       const option = document.createElement('option');
+  //       option.value = opt.pk;
+  //       option.textContent = opt.fields.nome;
+  //       cargoSelect.appendChild(option);
+  //     });
+  //   })
+  //   .catch(error => console.error('Erro ao buscar cargos:', error));
+  // }
   
   
   
   
   // Adiciona atalhos para modal de filtros
   appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
+  appKeyMap.bind('alt+f', ()=>{filterForm.filial.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldBranch', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Filial'})
   appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
   appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
   appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})

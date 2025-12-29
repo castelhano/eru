@@ -124,7 +124,7 @@ class EventoForm(forms.ModelForm):
     grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')
-        # Verifica se o valor corresponde a expressao regular
+        # verifica se o valor corresponde a expressao regular
         if rastreio_value and not RASTREIO_REGEX.match(rastreio_value):
             raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
         return rastreio_value
