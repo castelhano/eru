@@ -3,6 +3,12 @@
 {% block title %}Funcionario{% endblock %}
 {% block title_i18n %}common.employee{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block style_src %}
+<link href="https://releases.transloadit.com/uppy/v5.2.1/uppy.min.css" rel="stylesheet" />
+{% endblock %}
+
+
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
@@ -50,7 +56,7 @@
                 <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <form action="{% url 'pessoal:funcionario_delete' funcionario|id %}" method="POST">
+                        <form action="{% url 'pessoal:funcionario_delete' funcionario.id|safe %}" method="POST">
                             {% csrf_token %}
                             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
                             <button class="btn btn-danger px-3" type="submit">Excluir</button>
@@ -67,6 +73,64 @@
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
+
+<script type="module">
+    import { Uppy, Dashboard, Webcam, ImageEditor } from 'https://releases.transloadit.com/uppy/v5.2.1/uppy.min.mjs'
+    
+    const uppy = new Uppy({
+        debug: true,
+        autoProceed: false,
+        allowMultipleUploadBatches: false,
+        locale: {
+            strings: i18n.getEntries('uppy'),
+        },
+        restrictions: {
+            maxNumberOfFiles: 1,
+            allowedFileTypes: ['image/*']
+        }
+    })
+    .use(Dashboard, {
+        trigger: '#foto-preview',
+        target: 'body',
+        inline: false,
+        closeAfterFinish: true,
+        dismissible: true,
+        autoOpen: 'imageEditor',
+        // proudlyDisplayPoweredByUppy: false,
+        disableLocalFilesNameEdit: true, 
+    })
+    .use(Webcam, { 
+        target: Dashboard,
+        modes: ['picture'] 
+    })
+    .use(ImageEditor, { 
+        target: Dashboard,
+        quality: 0.8,
+        cropperOptions: {
+            aspectRatio: 1,
+            viewMode: 1,
+        }
+    });
+    uppy.on('complete', (result) => {
+    if (result.successful && result.successful.length > 0) {
+        const file = result.successful[0]; // pega o primeiro arquivo
+        const blob = file.data; // formato binario/Blob
+        const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
+        document.getElementById('foto-preview').src = urlPreview; // atualiza preview
+        const reader = new FileReader(); //
+        reader.onloadend = () => {
+            const base64data = reader.result;
+            document.getElementById('id_foto_data_url').value = base64data;
+        };
+        reader.readAsDataURL(blob);
+        setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
+    }
+});
+
+</script>
+
+
+
 {% endblock %}
 
 <script>
@@ -78,10 +142,10 @@
 
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
-    pessoalKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
+    appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
 
     {% if perms.pessoal.view_eventofuncionario %}
-    pessoalKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
+    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
     {% endif %}
     {% endblock %}
 </script>

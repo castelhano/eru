@@ -1,7 +1,8 @@
 /*
 * I18n      Lib para interlacionalização de codigo
 *
-* @version  2.1
+* @version  2.3
+* @release  [2.3] 02/01/26 [add getEntries method]
 * @release  [2.2] 10/11/25 [declaration refactor see**, waiting pool, add __she (gender inflection)]
 * @since    02/10/2025
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -54,17 +55,17 @@ class I18n{
     init(){
         this.startAt = Date.now();
         /** Ordem de prioridade para identificacao do idioma
-         * 1 - Verifica existencia localStorage[i18nLanguage]
-         * 2 - Se autoDetect = true, busca idioma do navegador
-         * 3 - Aguarda requisicao manual para troca de idioma
-         */
+        * 1 - Verifica existencia localStorage[i18nLanguage]
+        * 2 - Se autoDetect = true, busca idioma do navegador
+        * 3 - Aguarda requisicao manual para troca de idioma
+        */
         if(this.waiting.length > 0){return} // nao inicia se ainda existem requisicoes ajax aguardando resposta
         this.translate(this.language, false);
     }
     
     // Busca arquivo de traducao localmente em this.db, caso nao localize solicita para o servidor
     _updateSwitch(){ if(this.switcher){ this.switcher.value = this.language} }
-
+    
     translate(lng, restartCron=true){
         if(restartCron){ this.startAt = Date.now() } // se chamada fora no metodo init reinicia medicao do tempo do processo
         if(this.unsupported.includes(lng)){
@@ -94,9 +95,9 @@ class I18n{
                 if(Object.keys(resp).length == 0){ return } // se nao retornado dados, termina bloco
                 // let respLngIsGeneric = resp.i18nSelectedLanguage == this.language.split('-')[0];
                 if(resp.i18nSelectedLanguage != lng){
-                // servidor nao localizou arquivo para lng mais retornou idioma alternativo ex (pt-BR retornou pt)
-                // define idioma alternativo como ativo a adiciona commutador, sempre que lng for solicitado traducao direciona
-                // de maneira automatica para idioma alternativo 
+                    // servidor nao localizou arquivo para lng mais retornou idioma alternativo ex (pt-BR retornou pt)
+                    // define idioma alternativo como ativo a adiciona commutador, sempre que lng for solicitado traducao direciona
+                    // de maneira automatica para idioma alternativo 
                     console.log(`${timeNow({showSeconds: true})} | i18n: No suport for "${lng}" commuted language for "${resp.i18nSelectedLanguage}"`);
                     this.callback_list[lng] = resp.i18nSelectedLanguage;
                     lng = resp.i18nSelectedLanguage;
@@ -252,6 +253,38 @@ class I18n{
             return resp.result || null;
         }
         catch(e){return null}
+    }
+    getEntries(prefix){
+    // retorna objeto com todas as chaves de um subgrupo ja processadas
+    // ex i18n.getEntries('sys') retorna {'foo': 'texto de foo', 'bar': 'texto do bar', ...}
+        try{
+            let db = this.db[this.language];
+            if(!db || !db[prefix] || typeof db[prefix] !== 'object') return {};
+            
+            function processObject(obj, currentPath = '') {
+                let result = {};
+                for(let key in obj){
+                    let fullPath = currentPath ? currentPath + '.' + key : key;
+                    if(typeof obj[key] === 'object' && obj[key] !== null){
+                        result[key] = processObject.call(this, obj[key], fullPath);
+                    } else {
+                        try {
+                            let entryObj = {entry: prefix + '.' + fullPath};
+                            let processed = this._processEntry(entryObj);
+                            if(processed.result){
+                                result[key] = processed.result;
+                            }
+                        } catch(e) {
+                            // Pula chave com erro
+                        }
+                    }
+                }
+                return result;
+            }
+            
+            return processObject.call(this, db[prefix]);
+        }
+        catch(e){return {}}
     }
     // Limpa dados salvos no localStorage e recarrega pagina (se reload=true)
     // Obs.: Caso reload=false, lembrar de setar novamente i18n.addApp('seu app')

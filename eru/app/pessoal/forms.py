@@ -101,12 +101,12 @@ class FuncionarioForm(forms.ModelForm):
     detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'style':'min-height:300px'}))
     status = forms.ChoiceField(required=False, choices=Funcionario.STATUS_CHOICES, widget=forms.Select(attrs={'class':'form-select'}))
     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['filial'].queryset = user.profile.filiais.all()
-            self.fields['filial'].widget.attrs.update({ 'class': 'form-select', 'autofocus': 'autofocus', 'placeholder': ' '})
+    # def __init__(self, *args, **kwargs):
+    #     user = kwargs.pop('user', None)
+    #     super().__init__(*args, **kwargs)
+    #     if user:
+    #         self.fields['filial'].queryset = user.profile.filiais.all()
+    #         self.fields['filial'].widget.attrs.update({ 'class': 'form-select', 'autofocus': 'autofocus', 'placeholder': ' '})
 
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:

@@ -78,7 +78,7 @@
         "search": "Pesquisar",
         "sector": "Setor#Setores",
         "settings": "Configurações",
-        "single": "Único#Únicos",
+        "single": "Solteiro#Solteiros",
         "state": "Estado#Estados",
         "start": "Início#Inícios",
         "status": "Status",
@@ -251,5 +251,23 @@
     "asteval": {
         "pythonSyntaxError": "Erro de sintaxe python",
         "syntaxValid":"A sintaxe é válida"
+    },
+    "uppy": {
+        "dropPasteImportFiles": "Solte o arquivo aqui, %{browseFiles} ou importe de:",
+        "browseFiles": "selecione do disco",
+        "myDevice": "Arquivo",
+        "editing": "Editando %{file}",
+        "importFrom": "Importar de %{name}",
+        "xFilesSelected": {
+            "0": "%{smart_count} arquivo selecionado"
+        },
+        "uploadXFiles": {
+            "0": "Carregar"
+        },
+        "takePicture": "Capturar Foto",
+        "pluginNameCamera": "Webcam",
+        "save": "Confirmar",
+        "done": "Concluir",
+        "cancel": "Cancelar"
     }
 }

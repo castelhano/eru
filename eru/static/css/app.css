@@ -219,3 +219,9 @@ dialog.related  {
     margin: auto; /* Centraliza o dialog na tela em viewports maiores */
   }
 }
+
+
+.uppy-Dashboard-container[aria-hidden="false"] { z-index: 2000 !important; position: fixed; }
+.uppy-Dashboard-overlay { z-index: 2000 !important; }
+.uppy-Dashboard-inner { z-index: 2001 !important; }
+.uppy-Dashboard-isFixed { z-index: 1999 !important; }

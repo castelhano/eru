@@ -1,12 +1,12 @@
 from django.urls import path
-from utils.routing import generate_urls
+from utils.routing import generate_urls, generate_urls_related
 from . import views
 
 app_name = 'pessoal'
 
 urlpatterns = [
     *generate_urls('Funcionario', views),
-    *generate_urls('Dependente', views),
+    *generate_urls_related('Dependente', views),
     *generate_urls('Setor', views, plural_name='setores'),
     *generate_urls('Cargo', views),
     *generate_urls('Evento', views, plural_name='funcoes_fixa'),

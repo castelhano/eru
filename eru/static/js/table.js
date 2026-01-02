@@ -383,7 +383,7 @@ class jsTable{
                     data = fakeEl.innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' '); // Remove espacos multiplos e quebra de linha
                 }
                 else{data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ')}
-                if(this.csvClean){data = data.normalize("NFD").replace(/[\u0300-\u036f]/g, "");} // Remove acentuação e caracteres especiais
+                if(this.csvClean){data = data.normalize("NFD").replace(/[\u0300-\u036f]/g, "");} // Remove acentuacao e caracteres especiais
                 data = data.replace(/"/g, '""').trim(); // Escape double-quote com double-double-quote 
                 row.push('"' + data + '"'); // Carrega string
             }

@@ -90,7 +90,7 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # passa form de usuario apenas para facilitar form de filtros
-        context['form'] = FuncionarioForm(user=self.request.user)
+        context['form'] = FuncionarioForm()
         context['setores'] = Setor.objects.all().order_by('nome')
         return context
 
@@ -218,16 +218,16 @@ class FuncionarioCreateView(BaseCreateView):
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_add.html'
     permission_required = 'pessoal.add_funcionario'
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
     def form_valid(self, form):
         response = super().form_valid(form)
         foto_data = self.request.POST.get('foto_data_url')
         if foto_data:
             self.object.process_and_save_photo(foto_data)
         return response
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['setores'] = Setor.objects.all().order_by('nome')
+        return context
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
 
@@ -406,11 +406,6 @@ class FuncionarioUpdateView(BaseUpdateView):
             messages.error( request, '<span data-i18n="personal.sys.cantMoveDismissEmployee">' '<b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
             return redirect('pessoal:funcionario_update', id=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
-    def get_form_kwargs(self):
-        # inseta usuario para tratativa no form de empresa/filial
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
     def form_valid(self, form):
         self.object = form.save()
         foto_data = self.request.POST.get('foto_data_url')
@@ -628,4 +623,3 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     serializer_class = FuncionarioSerializer
     permission_classes = [permissions.DjangoModelPermissions]
     filterset_fields = ['matricula']
-

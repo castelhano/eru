@@ -5,6 +5,7 @@ from django.contrib.auth.models import User, Group
 from datetime import datetime
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from functools import cached_property
 from auditlog.registry import auditlog
 
 # EXTENDED **********************************************
@@ -71,6 +72,7 @@ class Profile(models.Model):
         return self.user.username
     def allow_filial(self, id): # Verifica se filial esta habilitada para usuario
         return self.filiais.filter(pk=id).exists()
+    @cached_property
     def empresas(self):
         filiais_qs = self.filiais.all()
         return Empresa.objects.filter(filiais__in=filiais_qs).prefetch_related(
@@ -78,7 +80,7 @@ class Profile(models.Model):
                 'filiais', 
                 queryset=filiais_qs.order_by('nome'),
                 to_attr='filiais_permitidas'
-                )).distinct().order_by('nome')
+                )).distinct().order_by('pk')
     class Meta:
         permissions = [
             ("debug", "Can debug system"),
