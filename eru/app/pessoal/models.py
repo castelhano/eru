@@ -140,6 +140,8 @@ class Funcionario(Pessoa):
     def process_and_save_photo(self, foto_data_url):
         if not foto_data_url:
             return
+        if self.foto:
+            self.foto.delete(save=False) # caso update da foto, apaga a anterior
         folder_relative = "pessoal/fotos"
         folder_path = Path(settings.MEDIA_ROOT) / folder_relative
         folder_path.mkdir(parents=True, exist_ok=True)
