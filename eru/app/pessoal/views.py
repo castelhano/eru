@@ -67,6 +67,13 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
+        data  = self.request.GET if self.request.method == 'GET' else self.request.POST
+        # self.applied_filters = dict(data)  # Armazena os filtros aplicados como dict limpo
+        self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in dict(data).items()}
+        self.applied_filters.pop("csrfmiddlewaretoken", None)
+        # caso nenhum filtro seja informado retorna lista vazia
+        if not self.pesquisa and not any(data.values()):
+            return Funcionario.objects.none()
         # consulta base filtra apenas filiais habilitadas para usuario 
         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
         if self.pesquisa:
@@ -77,7 +84,6 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
             queryset = queryset.filter(query)
         else:
             # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
-            data = self.request.POST if self.request.method == 'POST' else self.request.GET
             if data:
                 try:
                     queryset = FuncionarioFilter(data, queryset=queryset).qs
@@ -89,8 +95,8 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # passa form de usuario apenas para facilitar form de filtros
         context['form'] = FuncionarioForm()
+        context['applied_filters'] = self.applied_filters  # filtros aplicados para referencia no template
         context['setores'] = Setor.objects.all().order_by('nome')
         return context
 
