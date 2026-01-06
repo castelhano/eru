@@ -1,7 +1,7 @@
 /*
 * jsForm    Implementa operacoes com formularios (validacao, conversao, busca via ajax, etc)
 *
-* @version  1.9
+* @version  1.10
 * @since    03/06/2023
 * @release  22/08/2024 [add beforeSubmit, add data-formDefault]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com }
@@ -84,9 +84,13 @@ class jsForm{
         for(let key in data){ // Carrega demais valores do dicionario
             if(!ignore.includes(key) && !this.imaskFieldNames.includes(key)){
                 try{
-                    // se valor informado for um array, 
-                    if(Array.isArray(data[key]) && this[key] && this[key].nodeName == 'SELECT' && this[key].multiple){ [...this[key].options].forEach(o => { o.selected = data[key].includes(o.value) }) }
-                    else{ this.form.querySelector(`#id_${key}`).value = data[key] }
+                    let el = this.form.querySelector(`#id_${key}`);
+                    if(el.type == 'checkbox'){
+                        el.checked = data[key] == 'on';
+                    } else if(el.type == 'radio'){
+                        el.checked = el.value == data[key];
+                    } else if(Array.isArray(data[key]) && el && el.nodeName == 'SELECT' && el.multiple){ [...el.options].forEach(o => { o.selected = data[key].includes(o.value) }) }
+                    else{ el.value = data[key] }
                 }catch(e){console.log(e)}
             }
         }

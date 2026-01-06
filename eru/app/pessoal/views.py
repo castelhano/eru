@@ -107,7 +107,7 @@ class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListVi
     context_object_name = 'dependentes'
     permission_required = 'pessoal.view_dependente'
     def get_queryset(self):
-        funcionario_id = self.kwargs.get('id')
+        funcionario_id = self.kwargs.get('pk')
         filiais_pemitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
             Funcionario, 
@@ -244,7 +244,7 @@ class DependenteCreateView(BaseCreateView):
     template_name = 'pessoal/dependente_add.html'
     permission_required = 'pessoal.add_dependente'
     def get_success_url(self):
-        return reverse('pessoal:dependente_create', kwargs={'pk': self.kwargs.get('id')})
+        return reverse('pessoal:dependente_create', kwargs={'pk': self.kwargs.get('pk')})
     def get_initial(self):
         # preenche o campo 'funcionario' no formulario automaticamente via GET
         # tambem serve como trava de seguranca por Filial
@@ -252,7 +252,7 @@ class DependenteCreateView(BaseCreateView):
         filiais_permitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
             Funcionario, 
-            pk=self.kwargs.get('id'), 
+            pk=self.kwargs.get('pk'), 
             filial__in=filiais_permitidas
         )
         initial['funcionario'] = self.funcionario

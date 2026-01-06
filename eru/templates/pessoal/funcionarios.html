@@ -171,7 +171,7 @@
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
-          <select name="cargo__setor" id="id_setor" class="form-select" onchange="updateCargos(this.value, true)">
+          <select name="cargo__setor" id="id_cargo__setor" class="form-select" onchange="updateCargos(this.value, true)">
             <option value="" data-i18n="common.all">Todos</option>
             {% for setor in setores %}
             <option value="{{ setor.id }}">{{ setor.nome }}</option>
@@ -221,8 +221,18 @@
     {nome: 'regime'},
     ],
   })
+  
 
   {% include 'pessoal/_updateCargos.js' %}
+
+  
+  const filterData = {{applied_filters|safe}}; // armazena os filtros aplicados no request
+  console.log(filterData);
+  
+  if(filterData.cargo__setor){ // se setor foi filtrado, carrega cargos (ajax) do respectivo setor e depois chama metodo load do form para setar filtros
+    updateCargos(filterData.cargo__setor, true).then((resp)=>{ filterForm.load(filterData) })
+  }
+  else{filterForm.load(filterData)} // caso nao tenha definido setor apenas chama metodo load para demais campos
   
   
   // Adiciona atalhos para modal de filtros
@@ -247,13 +257,6 @@
     else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
     
   })
-
-
-  console.log({{applied_filters|safe}});
-  
-  
-  
-  
   
   {% endblock %}
 </script>

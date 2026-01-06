@@ -12,7 +12,7 @@
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <form id="app_form" action="{% url 'pessoal:dependente_cerate' funcionario.id|safe %}" method="POST" autocomplete="off" novalidate>
+    <form id="app_form" action="{% url 'pessoal:dependente_create' funcionario.id|safe %}" method="POST" autocomplete="off" novalidate>
     {% csrf_token %}
     {% include 'pessoal/_form_dependente.html' %}
     </form>

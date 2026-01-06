@@ -63,22 +63,18 @@ class UserForm(forms.ModelForm):
     password = forms.CharField(required=False, widget=forms.PasswordInput())
     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
     force_password_change = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
-
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['user_permissions'].choices = get_grouped_permissions()
         self.fields['filiais'].choices = get_grouped_filiais()
-        
-        # Otimização: Usa o profile já carregado pelo select_related da View
+        # usa o profile ja carregado pelo select_related da View
         if (user := self.instance) and user.pk:
-            profile = user.profile  # Sem query extra aqui!
+            profile = user.profile
             self.fields['filiais'].initial = profile.filiais.all()
             self.fields['force_password_change'].initial = profile.force_password_change
-
         for name, field in self.fields.items():
             is_check = isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect))
             field.widget.attrs.update({
