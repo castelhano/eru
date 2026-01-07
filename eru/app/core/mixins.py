@@ -1,6 +1,8 @@
 import json
+from django import forms
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core import serializers
+from core.widgets import I18nSelect
 
 class AjaxableListMixin:
     # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
@@ -49,3 +51,32 @@ class AjaxableFormMixin:
         return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
                self.request.content_type == 'application/json'
 
+
+class BootstrapI18nMixin:
+    """
+    Mixin para automatizar estilizacao de fields (Bootstrap)
+    e traducao data-i18n via I18nSelect
+    """
+    # dicionario opcional definido no form filho para mapear traducoes
+    i18n_maps = {} 
+    def setup_bootstrap_and_i18n(self):
+        for name, field in self.fields.items():
+            # 1. Aplica Widget de Traducao se estiver no mapa
+            if name in self.i18n_maps:
+                field.widget = I18nSelect(
+                    choices=getattr(field, 'choices', []),
+                    data_map=self.i18n_maps[name].i18n_map()
+                )
+            # 2. Define Classe CSS baseada no tipo de Widget
+            if isinstance(field.widget, forms.CheckboxInput):
+                css_class = 'form-check-input'
+            elif isinstance(field.widget, forms.Select):
+                css_class = 'form-select'
+            else:
+                css_class = 'form-control'
+            # 3. Preserva classes existentes e adiciona placeholder
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs.update({
+                'class': f"{css_class} {existing_classes}".strip(),
+                'placeholder': ' '
+            })

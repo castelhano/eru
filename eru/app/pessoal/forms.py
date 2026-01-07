@@ -5,6 +5,7 @@ from .models import Setor, Cargo, Funcionario, Afastamento, Dependente, Evento, 
 from django.contrib.auth.models import User
 from datetime import date
 from core.widgets import I18nSelect
+from core.mixins import BootstrapI18nMixin
 from django.conf import settings
 
 RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
@@ -57,99 +58,83 @@ class DependenteForm(forms.ModelForm):
     cpf = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     
 
-class FuncionarioForm(forms.ModelForm):
+class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'sexo': Funcionario.Sexo,
+        'regime': Funcionario.Regime,
+        'status': Funcionario.Status,
+        'estado_civil': Funcionario.EstadoCivil,
+        'motivo_desligamento': Funcionario.MotivoDesligamento,
+    }
     class Meta:
         model = Funcionario
         fields = '__all__'
+        # Widgets específicos (como datas) ainda podem ser definidos no Meta
         widgets = {
             'data_admissao': forms.DateInput(attrs={'type': 'date'}),
-            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
-            'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
-            'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
-            'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
-            'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
-            'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
-            'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
+            'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
+            'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # mapeamento de I18N para os selects
-        i18n_maps = {
-            'sexo': Funcionario.Sexo,
-            'regime': Funcionario.Regime,
-            'motivo_desligamento': Funcionario.MotivoDesligamento,
-            'estado_civil': Funcionario.EstadoCivil,
-            'status': Funcionario.Status,
-        }
-        for name, field in self.fields.items():
-            # se for um campo de escolha (Select)
-            if isinstance(field.widget, forms.Select) and not isinstance(field.widget, forms.CheckboxInput):
-                # se ele estiver no mapa de traducao, usamos o I18nSelect
-                if name in i18n_maps:
-                    field.widget = I18nSelect(
-                        choices=field.choices,
-                        data_map=i18n_maps[name].i18n_map()
-                    )
-                # se nao estiver no mapa, mas for um Select, garantimos que ele mantenha os choices
-                else:
-                    field.widget.choices = field.choices
-            # atribuicao de classes CSS (Bootstrap)
-            if isinstance(field.widget, forms.CheckboxInput):
-                css_class = 'form-check-input'
-            elif isinstance(field.widget, forms.Select):
-                css_class = 'form-select'
-            else:
-                css_class = 'form-control'
-            field.widget.attrs.update({
-                'class': f"{css_class} {field.widget.attrs.get('class', '')}".strip(),
-                'placeholder': ' '
-            })
-        # ajustes pontuais de atributos
-        self.fields['matricula'].widget.attrs.update({'class': 'form-control fw-bold', 'autofocus': True})
-        self.fields['pne'].widget.attrs.update({'role': 'switch'})
+        # Chama a lógica da Mixin
+        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
+        # configuracoes adicionais especificas de campos
+        # self.fields['matricula'].widget.attrs.update({'class': 'fw-bold', 'autofocus': True})
+
 
 
 # class FuncionarioForm(forms.ModelForm):
 #     class Meta:
 #         model = Funcionario
-#         fields = ['filial','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne']
-#     matricula = forms.CharField(max_length=6,widget=forms.TextInput(attrs={'class': 'form-control fw-bold','placeholder':' ','autofocus':'autofocus', 'data-i18n': 'personal.common.employeeId'}))
-#     nome = forms.CharField(max_length=200,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n':'common.name'}))
-#     apelido = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n': 'personal.common.nickname'}))
-#     nome_social = forms.CharField(required=False, max_length=200, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'data-i18n': 'personal.employee.form.socialName'}))
-#     sexo = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Funcionario.Sexo.i18n_map()))
-#     regime = forms.ChoiceField(required=False, choices=Funcionario.Regime.choices, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Funcionario.Regime.i18n_map()))
-#     data_admissao = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     data_nascimento = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     data_desligamento = forms.DateField(required=False,initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     motivo_desligamento = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Funcionario.MotivoDesligamento.i18n_map()))
-#     rg = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     rg_emissao = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     rg_orgao_expedidor = forms.CharField(required=False, max_length=8, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     cpf = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     titulo_eleitor = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     titulo_zona = forms.CharField(required=False, max_length=5, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     titulo_secao = forms.CharField(required=False, max_length=5, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     reservista = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     cnh = forms.CharField(required=False, max_length=15, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     cnh_categoria = forms.ChoiceField(required=False, widget=forms.Select(attrs={'class':'form-select'}))
-#     cnh_primeira_habilitacao = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     cnh_emissao = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     cnh_validade = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
-#     fone1 = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     fone2 = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     email = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     endereco = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     bairro = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     cidade = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     uf = forms.CharField(required=False, max_length=2,widget=forms.TextInput(attrs={'class': 'form-control text-center','placeholder':' '}))
-#     estado_civil = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Funcionario.EstadoCivil.i18n_map()))
-#     nome_mae = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     nome_pai = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-#     pne = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch'}))
-#     detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'style':'min-height:300px'}))
-#     status = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Funcionario.Status.i18n_map()))
-#     usuario = forms.ModelChoiceField(required=False, queryset = User.objects.filter(is_active=True).order_by('username'), widget=forms.Select(attrs={'class':'form-select'}))
+#         fields = '__all__'
+#         widgets = {
+#             'data_admissao': forms.DateInput(attrs={'type': 'date'}),
+#             'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+#             'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
+#             'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
+#             'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
+#             'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
+#             'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
+#             'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
+#         }
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         # mapeamento de I18N para os selects
+#         i18n_maps = {
+#             'sexo': Funcionario.Sexo,
+#             'regime': Funcionario.Regime,
+#             'motivo_desligamento': Funcionario.MotivoDesligamento,
+#             'estado_civil': Funcionario.EstadoCivil,
+#             'status': Funcionario.Status,
+#         }
+#         for name, field in self.fields.items():
+#             # se for um campo de escolha (Select)
+#             if isinstance(field.widget, forms.Select) and not isinstance(field.widget, forms.CheckboxInput):
+#                 # se ele estiver no mapa de traducao, usamos o I18nSelect
+#                 if name in i18n_maps:
+#                     field.widget = I18nSelect(
+#                         choices=field.choices,
+#                         data_map=i18n_maps[name].i18n_map()
+#                     )
+#                 # se nao estiver no mapa, mas for um Select, garantimos que ele mantenha os choices
+#                 else:
+#                     field.widget.choices = field.choices
+#             # atribuicao de classes CSS (Bootstrap)
+#             if isinstance(field.widget, forms.CheckboxInput):
+#                 css_class = 'form-check-input'
+#             elif isinstance(field.widget, forms.Select):
+#                 css_class = 'form-select'
+#             else:
+#                 css_class = 'form-control'
+#             field.widget.attrs.update({
+#                 'class': f"{css_class} {field.widget.attrs.get('class', '')}".strip(),
+#                 'placeholder': ' '
+#             })
+#         # ajustes pontuais de atributos
+#         self.fields['matricula'].widget.attrs.update({'class': 'form-control fw-bold', 'autofocus': True})
+#         self.fields['pne'].widget.attrs.update({'role': 'switch'})
 
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:
