@@ -14,8 +14,10 @@
 --
 * Versao 6.3 adiciona tratamento para conflito em acionamento de teclas de atalho acidental quado foco esta no input impondo a seguinte restriçao:
 * atalhos que usam teclas basicas como modificador, se o foco estiver num input nao sera acionado de maneira imediata, nestes casos espera que tecla de 
-* confirmacao (this.composedTrigger default:';') apareca logo na sequencia, ou seja o atalho 'c+o' sera acionado imediato quando foco nao estiver em input
-* e somente ap precionar ; logo apos precionar c+o
+* confirmacao (this.composedTrigger default:';') apareca logo na sequencia, ou seja o atalho 'c+o' sera acionado imediato quando foco nao estiver em input,
+* se foco estiver no input, aguarda prossima tecla, se for composedTrigger (default ;) aciona atalho
+* Versao 6.3 para desativar todos os atalhos em determinado elemento atribua data-keywatch="escape", ex: <textarea data-keywatch="escape"></textarea>,
+* neste caso desativa qualquer analise de atalhos 
 */
 class Keywatch{
     constructor(options={}){
@@ -146,7 +148,8 @@ class Keywatch{
     
     // trata os eventos e busca correspondente em this.handlers
     _eventHandler(ev){
-        if(this.locked){return false}
+    // se instancia estiver travada (this.locked) ou se elemento foco tiver "data-keywatch="escape" termina codigo sem realizar nenhuma analise de atalho
+        if(this.locked || ev.target.dataset?.keywatch?.toLowerCase() == 'escape'){return false}
         if(ev.type == 'keydown'){ // no keydown verifica se tecla esta listada em pressed, se nao faz push da tecla
             let key = this._normalize(ev.key);
             if(ev.key && !this.pressed.includes(key)){this.pressed.push(key)}
@@ -287,8 +290,7 @@ class Keywatch{
             event.method = method;
             if(index > 0){event.display = false} // evita de exibir duplicatas no modal de atalhos para atalhos multiplos
             let defaultMods = ['control','shift','alt','meta'];
-            event.composed = event.mods.length === 0 || event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
-            // event.composed = event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
+            event.composed = event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
             this._spread(event);
         })
     }
