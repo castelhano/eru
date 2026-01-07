@@ -287,7 +287,8 @@ class Keywatch{
             event.method = method;
             if(index > 0){event.display = false} // evita de exibir duplicatas no modal de atalhos para atalhos multiplos
             let defaultMods = ['control','shift','alt','meta'];
-            event.composed = event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
+            event.composed = event.mods.length === 0 || event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
+            // event.composed = event.mods.some(m => !defaultMods.includes((m || '').toLowerCase()));
             this._spread(event);
         })
     }
@@ -504,20 +505,22 @@ class Keywatch{
         }
     }
     _filterMapTable(ev){
-        const term = this.shortcutSearchInput.value.toLowerCase().replace(/\s+/g, '');
-        const htmlTagRegex = /<[^>]*>/g;
-        const noBreakRegex = /&nbsp;/g;
-        const trs = this.shortcutModalTableTbody.querySelectorAll('tr');
-        
-        trs.forEach((tr) => {
-            const tds = tr.querySelectorAll('td');
-            // usa textContent ao invés de innerHTML para melhor performance
-            let rowValue = '';
-            for(let i = 0; i < tds.length; i++){
-                rowValue += tds[i].textContent.toLowerCase().replace(/\s+/g, '');
-            }
-            tr.style.display = rowValue.includes(term) ? 'table-row' : 'none';
-        });
+        requestAnimationFrame(()=>{
+            const term = this.shortcutSearchInput.value.toLowerCase().replace(/\s+/g, '');
+            const htmlTagRegex = /<[^>]*>/g;
+            const noBreakRegex = /&nbsp;/g;
+            const trs = this.shortcutModalTableTbody.querySelectorAll('tr');
+            
+            trs.forEach((tr) => {
+                const tds = tr.querySelectorAll('td');
+                // usa textContent ao invés de innerHTML para melhor performance
+                let rowValue = '';
+                for(let i = 0; i < tds.length; i++){
+                    rowValue += tds[i].textContent.toLowerCase().replace(/\s+/g, '');
+                }
+                tr.style.display = rowValue.includes(term) ? 'table-row' : 'none';
+            });
+        })
     }
     
     _humanize(entry){ // recebe um schema de atalho e formata para exibicao na tabela de atalhos

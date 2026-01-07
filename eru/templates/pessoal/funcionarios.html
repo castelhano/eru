@@ -227,8 +227,6 @@
 
   
   const filterData = {{applied_filters|safe}}; // armazena os filtros aplicados no request
-  console.log(filterData);
-  
   if(filterData.cargo__setor){ // se setor foi filtrado, carrega cargos (ajax) do respectivo setor e depois chama metodo load do form para setar filtros
     updateCargos(filterData.cargo__setor, true).then((resp)=>{ filterForm.load(filterData) })
   }
