@@ -87,58 +87,6 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
 
 
-
-# class FuncionarioForm(forms.ModelForm):
-#     class Meta:
-#         model = Funcionario
-#         fields = '__all__'
-#         widgets = {
-#             'data_admissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
-            # 'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
-            # 'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
-            # 'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
-#         }
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         # mapeamento de I18N para os selects
-#         i18n_maps = {
-#             'sexo': Funcionario.Sexo,
-#             'regime': Funcionario.Regime,
-#             'motivo_desligamento': Funcionario.MotivoDesligamento,
-#             'estado_civil': Funcionario.EstadoCivil,
-#             'status': Funcionario.Status,
-#         }
-#         for name, field in self.fields.items():
-#             # se for um campo de escolha (Select)
-#             if isinstance(field.widget, forms.Select) and not isinstance(field.widget, forms.CheckboxInput):
-#                 # se ele estiver no mapa de traducao, usamos o I18nSelect
-#                 if name in i18n_maps:
-#                     field.widget = I18nSelect(
-#                         choices=field.choices,
-#                         data_map=i18n_maps[name].i18n_map()
-#                     )
-#                 # se nao estiver no mapa, mas for um Select, garantimos que ele mantenha os choices
-#                 else:
-#                     field.widget.choices = field.choices
-#             # atribuicao de classes CSS (Bootstrap)
-#             if isinstance(field.widget, forms.CheckboxInput):
-#                 css_class = 'form-check-input'
-#             elif isinstance(field.widget, forms.Select):
-#                 css_class = 'form-select'
-#             else:
-#                 css_class = 'form-control'
-#             field.widget.attrs.update({
-#                 'class': f"{css_class} {field.widget.attrs.get('class', '')}".strip(),
-#                 'placeholder': ' '
-#             })
-#         # ajustes pontuais de atributos
-#         self.fields['matricula'].widget.attrs.update({'class': 'form-control fw-bold', 'autofocus': True})
-#         self.fields['pne'].widget.attrs.update({'role': 'switch'})
-
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:
         model = MotivoReajuste

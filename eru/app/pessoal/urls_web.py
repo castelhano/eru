@@ -1,5 +1,5 @@
 from django.urls import path
-from utils.routing import generate_urls, generate_urls_related
+from core.routing import generate_urls, generate_urls_related
 from . import views
 
 app_name = 'pessoal'

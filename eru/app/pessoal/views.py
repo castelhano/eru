@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from django.views import View
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -54,52 +55,51 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
     template_name = 'pessoal/funcionarios.html'
     context_object_name = 'funcionarios'
     permission_required = 'pessoal.view_funcionario'
-    def dispatch(self, request, *args, **kwargs):
-        self.pesquisa = request.GET.get('pesquisa')
+    def get(self, request, *args, **kwargs):
         self.filiais_autorizadas = request.user.profile.filiais.all()
-        # analisa se o valor digitado corresponde a uma matricula, se sim redireciona para pagina de update
-        if self.pesquisa:
+        pesquisa = request.GET.get('pesquisa')
+        if pesquisa:
+            # tenta identificar se existe matricula correspondente
             funcionario = Funcionario.objects.filter(
-                matricula=self.pesquisa, 
+                matricula=pesquisa, 
                 filial__in=self.filiais_autorizadas
             ).first()
             if funcionario:
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-        return super().dispatch(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
     def get_queryset(self):
-        data  = self.request.GET if self.request.method == 'GET' else self.request.POST
-        # self.applied_filters = dict(data)  # Armazena os filtros aplicados como dict limpo
-        self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in dict(data).items()}
-        self.applied_filters.pop("csrfmiddlewaretoken", None)
-        # caso nenhum filtro seja informado retorna lista vazia
-        if not self.pesquisa and not any(data.values()):
-            return Funcionario.objects.none()
-        # consulta base filtra apenas filiais habilitadas para usuario 
+        data = self.request.GET
+        self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in data.items()}
+        self.applied_filters.pop("page", None) # remove paginacao dos filtros aplicados
+        pesquisa = data.get('pesquisa')
         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
-        if self.pesquisa:
-            # filtro por nome (qualquer ordem) usando reducao de Q objects
+        if not data:
+            return queryset.none()
+        # filtro por nome (qualquer ordem) usando reducao de Q objects
+        if pesquisa:
             query = Q()
-            for termo in self.pesquisa.split():
+            for termo in pesquisa.split():
                 query &= Q(nome__icontains=termo)
             queryset = queryset.filter(query)
         else:
-            # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
-            if data:
-                try:
-                    queryset = FuncionarioFilter(data, queryset=queryset).qs
-                except Exception:
-                    messages.warning(self.request, DEFAULT_MESSAGES.get('filterError', 'Erro ao filtrar.'))
-
-        if not queryset.exists() and (self.request.GET or self.request.POST):
-            messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
+            # delega filtragem para django-filter (FuncionarioFilter)
+            filter_set = FuncionarioFilter(data, queryset=queryset)
+            if filter_set.is_valid():
+                queryset = filter_set.qs
+            else:
+                messages.warning(self.request, 'Filtros inválidos.')
+        # Mensagem de alerta se nada for encontrado
+        if not queryset.exists():
+            messages.warning(self.request, 'Nenhum resultado encontrado.')
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = FuncionarioForm()
-        context['applied_filters'] = self.applied_filters  # filtros aplicados para referencia no template
-        context['setores'] = Setor.objects.all().order_by('nome')
+        context.update({
+            'form': FuncionarioForm(),
+            'applied_filters': self.applied_filters,
+            'setores': Setor.objects.all().order_by('nome')
+        })
         return context
-
 
 class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Dependente
@@ -212,14 +212,14 @@ class SetorCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVie
     permission_required = 'pessoal.add_setor'
 
 
-class CargoCreateView(BaseCreateView):
+class CargoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Cargo
     form_class = CargoForm
     template_name = 'pessoal/cargo_add.html'
     permission_required = 'pessoal.add_cargo'
     success_url = reverse_lazy('pessoal:cargo_create')
 
-class FuncionarioCreateView(BaseCreateView):
+class FuncionarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_add.html'
@@ -235,10 +235,12 @@ class FuncionarioCreateView(BaseCreateView):
         context['setores'] = Setor.objects.all().order_by('nome')
         return context
     def get_success_url(self):
-        return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
+        if self.request.user.has_perm('pessoal.change_funcionario'):
+            return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
+        return reverse('pessoal:funcionario_list')
 
 
-class DependenteCreateView(BaseCreateView):
+class DependenteCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Dependente
     form_class = DependenteForm
     template_name = 'pessoal/dependente_add.html'
@@ -281,7 +283,7 @@ def getEventProps(asDict=False):
     return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom
 
 
-class EventoRelatedCreateView(BaseCreateView):
+class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
     template_name = 'pessoal/evento_related_add.html'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
@@ -326,7 +328,7 @@ class EventoRelatedCreateView(BaseCreateView):
         return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'id': self.related_id})
     
 
-class GrupoEventoCreateView(BaseCreateView):
+class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = GrupoEvento
     form_class = GrupoEventoForm
     template_name = 'pessoal/grupo_evento_add.html'
@@ -334,7 +336,7 @@ class GrupoEventoCreateView(BaseCreateView):
     success_url = reverse_lazy('pessoal:grupoevento_create')
 
 
-class MotivoReajusteCreateView(AjaxableFormMixin, BaseCreateView):
+class MotivoReajusteCreateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseCreateView):
     model = MotivoReajuste
     form_class = MotivoReajusteForm
     template_name = 'pessoal/motivo_reajuste_add.html'
@@ -342,45 +344,8 @@ class MotivoReajusteCreateView(AjaxableFormMixin, BaseCreateView):
     success_url = reverse_lazy('pessoal:motivoreajuste_create')
 
 
-# Metodos GET
-# @login_required
-# @permission_required('pessoal.view_funcionario', login_url="/handler/403")
-# def funcionario_id(request,id):
-#     try:
-#         funcionario = Funcionario.objects.get(pk=id, empresa__in=request.user.profile.empresas.all())
-#     except Exception as e:
-#         messages.warning(request,'Funcionario <b>nao localizado</b>')
-#         return redirect('pessoal:funcionarios')
-#     form = FuncionarioForm(instance=funcionario, user=request.user)
-#     return render(request,'pessoal/funcionario_id.html',{'form':form,'funcionario':funcionario})
-
-
-
-# @login_required
-# def evento_related_id(request, related, id):
-#     if not request.user.has_perm(f"pessoal.view_evento{related}"):
-#         return redirect('handler', 403)
-#     options = {'related':related, 'props': getEventProps()}
-#     if related == 'empresa':
-#         options['evento'] = EventoEmpresa.objects.get(pk=id)
-#         options['model'] = {'id':0, 'pk':0}
-#         options['form'] = EventoEmpresaForm(instance=options['evento'])
-#     elif related == 'cargo':
-#         options['evento'] = EventoCargo.objects.get(pk=id)
-#         options['model'] = options['evento'].cargo
-#         options['form'] = EventoCargoForm(instance=options['evento'])
-#     elif related == 'funcionario':
-#         options['evento'] = EventoFuncionario.objects.get(pk=id)
-#         options['model'] = options['evento'].funcionario
-#         options['form'] = EventoFuncionarioForm(instance=options['evento'])
-#     else:
-#         messages.error(request, DEFAULT_MESSAGES['400'] + f' <b>evento_related_id [bad request]</b>')
-#         return redirect('pessoal:eventos_related', related, id)
-#     return render(request,'pessoal/evento_related_id.html', options)
-
-
 # Metodos UPDATE
-class SetorUpdateView(BaseUpdateView):
+class SetorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Setor
     form_class = SetorForm
     template_name = 'pessoal/setor_id.html' # Mantendo o seu template original
@@ -390,7 +355,7 @@ class SetorUpdateView(BaseUpdateView):
         return reverse('pessoal:setor_update', kwargs={'pk': self.object.id})
 
 
-class CargoUpdateView(BaseUpdateView):
+class CargoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Cargo
     form_class = CargoForm
     template_name = 'pessoal/cargo_id.html'
@@ -400,20 +365,31 @@ class CargoUpdateView(BaseUpdateView):
         return reverse('pessoal:cargo_update', kwargs={'pk': self.object.id})
 
 
-class FuncionarioUpdateView(BaseUpdateView):
+class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUpdateView):
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_id.html'
     context_object_name = 'funcionario'
-    permission_required = 'pessoal.change_funcionario'
+    permission_required = 'pessoal.view_funcionario' # exige apenas view para carregar usuario (mesmo sem perm de update)
     def dispatch(self, request, *args, **kwargs):
         funcionario = self.get_object()
+        if request.method == 'POST' and not request.user.has_perm('pessoal.change_funcionario'):
+            return redirect('handler', 403)
         if not funcionario.F_ehEditavel:
             messages.error( request, '<span data-i18n="personal.sys.cantMoveDismissEmployee">' '<b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
-            return redirect('pessoal:funcionario_update', id=funcionario.id)
+            return redirect('pessoal:funcionario_list', id=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # se o usuario nao tem permissao update, desabilita os campos
+        if not self.request.user.has_perm('pessoal.change_funcionario'):
+            for field in form.fields.values():
+                field.disabled = True
+        return form
     def form_valid(self, form):
-        self.object = form.save()
+        if not self.request.user.has_perm('pessoal.change_funcionario'):
+            raise PermissionDenied
+        response = super().form_valid(form)
         foto_data = self.request.POST.get('foto_data_url')
         if foto_data:
             try:
@@ -421,13 +397,13 @@ class FuncionarioUpdateView(BaseUpdateView):
             except Exception as e:
                 messages.warning(
                     self.request, 
-                    f"{DEFAULT_MESSAGES['saveError']} Erro ao processar imagem: {str(e)}"
+                    f"{DEFAULT_MESSAGES.get('saveError', 'Erro ao processar imagem')}{str(e)}"
                 )
-        return redirect(self.get_success_url())
+        return response
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
 
-class DependenteUpdateView(BaseUpdateView):
+class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Dependente
     form_class = DependenteForm
     template_name = 'pessoal/dependente_id.html'
@@ -447,7 +423,7 @@ class DependenteUpdateView(BaseUpdateView):
     def get_success_url(self):
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
 
-class EventoUpdateView(BaseUpdateView):
+class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Evento
     form_class = EventoForm
     template_name = 'pessoal/evento_id.html'
@@ -457,7 +433,7 @@ class EventoUpdateView(BaseUpdateView):
         return reverse('pessoal:evento_update', kwargs={'pk': self.object.id})
 
 
-class EventoRelatedUpdateView(BaseUpdateView):
+class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
     template_name = 'pessoal/evento_related_id.html'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
@@ -506,7 +482,7 @@ class EventoRelatedUpdateView(BaseUpdateView):
         return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'id': self.related_id })
 
 
-class GrupoEventoUpdateView(BaseUpdateView):
+class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = GrupoEvento
     form_class = GrupoEventoForm
     template_name = 'pessoal/grupo_evento_id.html'
@@ -516,7 +492,7 @@ class GrupoEventoUpdateView(BaseUpdateView):
         return reverse('pessoal:grupoevento_update', kwargs={'pk': self.object.id})
 
 
-class MotivoReajusteUpdateView(BaseUpdateView):
+class MotivoReajusteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = MotivoReajuste
     form_class = MotivoReajusteForm
     template_name = 'pessoal/motivo_reajuste_id.html'
@@ -526,35 +502,35 @@ class MotivoReajusteUpdateView(BaseUpdateView):
         return reverse('pessoal:motivoreajuste_update', kwargs={'pk': self.object.id})
 
 # Metodos DELETE
-class SetorDeleteView(BaseDeleteView):
+class SetorDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Setor
     permission_required = 'pessoal.delete_setor'
     success_url = reverse_lazy('pessoal:setor_list')
 
-class CargoDeleteView(BaseDeleteView):
+class CargoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Cargo
     permission_required = 'pessoal.delete_cargo'
     success_url = reverse_lazy('pessoal:cargo_list')
 
 
-class FuncionarioDeleteView(BaseDeleteView):
+class FuncionarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Funcionario
     permission_required = 'pessoal.delete_funcionario'
     success_url = reverse_lazy('pessoal:funcionario_list')
 
-class DependenteDeleteView(BaseDeleteView):
+class DependenteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Dependente
     permission_required = 'pessoal.delete_dependente'
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.funcionario.id})
 
-class EventoDeleteView(BaseDeleteView):
+class EventoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Evento
     permission_required = 'pessoal.delete_evento'
     success_url = reverse_lazy('pessoal:evento_list')
 
 
-class EventoRelatedDeleteView(BaseDeleteView):
+class EventoRelatedDeleteView(LoginRequiredMixin, BaseDeleteView):
     success_url = reverse_lazy('pessoal:evento_list')
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
@@ -575,13 +551,13 @@ class EventoRelatedDeleteView(BaseDeleteView):
             return EventoFuncionario.objects.all()
         return None
 
-class GrupoEventoDeleteView(BaseDeleteView):
+class GrupoEventoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = GrupoEvento
     permission_required = 'pessoal.delete_grupoevento'
     success_url = reverse_lazy('pessoal:grupoevento_list')
 
 
-class MotivoReajusteDeleteView(BaseDeleteView):
+class MotivoReajusteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = MotivoReajuste
     permission_required = 'pessoal.delete_motivoreajuste'
     success_url = reverse_lazy('pessoal:motivoreajuste_list')

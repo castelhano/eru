@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from utils.routing import generate_urls, generate_urls_related
+from .routing import generate_urls, generate_urls_related
 from . import views
 
 urlpatterns = [
