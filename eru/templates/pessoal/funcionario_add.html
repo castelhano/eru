@@ -71,21 +71,30 @@
         }
     });
     uppy.on('complete', (result) => {
-    if (result.successful && result.successful.length > 0) {
-        const file = result.successful[0]; // pega o primeiro arquivo
-        const blob = file.data; // formato binario/Blob
-        const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
-        document.getElementById('foto-preview').src = urlPreview; // atualiza preview
-        const reader = new FileReader(); //
-        reader.onloadend = () => {
-            const base64data = reader.result;
-            document.getElementById('id_foto_data_url').value = base64data;
-        };
-        reader.readAsDataURL(blob);
-        setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
-    }
-});
+        if (result.successful && result.successful.length > 0) {
+            const file = result.successful[0]; // pega o primeiro arquivo
+            const blob = file.data; // formato binario/Blob
+            const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
+            document.getElementById('foto-preview').src = urlPreview; // atualiza preview
+            const reader = new FileReader(); //
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                document.getElementById('id_foto_data_url').value = base64data;
+            };
+            reader.readAsDataURL(blob);
+            setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
+        }
+    });
 
+    document.addEventListener('i18n_changed', ()=>{
+    // atualiza mapa de traducao do uppy sempre que o idioma for trocado
+        uppy.setOptions({
+            locale: {
+                strings: i18n.getEntries('uppy')
+            }
+        })
+    })
+    
 </script>
 
 {% endblock %}

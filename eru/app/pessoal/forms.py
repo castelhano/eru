@@ -71,17 +71,20 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
         fields = '__all__'
         # Widgets específicos (como datas) ainda podem ser definidos no Meta
         widgets = {
-            'data_admissao': forms.DateInput(attrs={'type': 'date'}),
+            'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_desligamento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'rg_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_primeira_habilitacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_validade': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
             'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
             'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
         }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Chama a lógica da Mixin
         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
-        # configuracoes adicionais especificas de campos
-        # self.fields['matricula'].widget.attrs.update({'class': 'fw-bold', 'autofocus': True})
 
 
 
@@ -91,13 +94,13 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
 #         fields = '__all__'
 #         widgets = {
 #             'data_admissao': forms.DateInput(attrs={'type': 'date'}),
-#             'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
-#             'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
-#             'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
-#             'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
-#             'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
-#             'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
-#             'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
+            # 'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            # 'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
+            # 'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
+            # 'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
+            # 'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
+            # 'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
+            # 'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
 #         }
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)

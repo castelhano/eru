@@ -253,7 +253,7 @@
         "syntaxValid":"A sintaxe é válida"
     },
     "uppy": {
-        "dropPasteImportFiles": "Solte o arquivo aqui, %{browseFiles} ou importe de:",
+        "dropPasteImportFiles": "Arraste o arquivo aqui, %{browseFiles} ou importe de:",
         "browseFiles": "selecione do disco",
         "myDevice": "Arquivo",
         "editing": "Editando %{file}",

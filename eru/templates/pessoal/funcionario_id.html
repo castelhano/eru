@@ -112,21 +112,30 @@
         }
     });
     uppy.on('complete', (result) => {
-    if (result.successful && result.successful.length > 0) {
-        const file = result.successful[0]; // pega o primeiro arquivo
-        const blob = file.data; // formato binario/Blob
-        const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
-        document.getElementById('foto-preview').src = urlPreview; // atualiza preview
-        const reader = new FileReader(); //
-        reader.onloadend = () => {
-            const base64data = reader.result;
-            document.getElementById('id_foto_data_url').value = base64data;
-        };
-        reader.readAsDataURL(blob);
-        setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
-    }
-});
+        if (result.successful && result.successful.length > 0) {
+            const file = result.successful[0]; // pega o primeiro arquivo
+            const blob = file.data; // formato binario/Blob
+            const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
+            document.getElementById('foto-preview').src = urlPreview; // atualiza preview
+            const reader = new FileReader(); //
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                document.getElementById('id_foto_data_url').value = base64data;
+            };
+            reader.readAsDataURL(blob);
+            setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
+        }
+    });
 
+    document.addEventListener('i18n_changed', ()=>{
+    // atualiza mapa de traducao do uppy sempre que o idioma for trocado
+        uppy.setOptions({
+            locale: {
+                strings: i18n.getEntries('uppy')
+            }
+        })
+    })
+    
 </script>
 
 
@@ -139,11 +148,11 @@
     const form = new jsForm('#pessoal_form', {
         imask: [cpf, cnh]
     })
-
+    
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
     appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
-
+    
     {% if perms.pessoal.view_eventofuncionario %}
     appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
     {% endif %}

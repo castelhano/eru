@@ -83,6 +83,8 @@ class I18n{
                 localStorage.setItem('i18nLanguage', this.language); // Salva language no localstorage
                 this._updateSwitch();
                 this.refresh();
+                // dispara evento no document
+                document.dispatchEvent(new CustomEvent('i18n_changed', { detail: { language: this.language } }));
                 return;
             }
         }
@@ -128,6 +130,8 @@ class I18n{
             localStorage.setItem('i18nCallback_list', JSON.stringify(this.callback_list));  // Salva callback_list no localstorage
             this._updateSwitch();                                   // atualiza switch
             this.refresh();                                         // Chama metodo para plotar alteracoes na pagina
+            // dispara evento no document
+            document.dispatchEvent(new CustomEvent('i18n_changed', { detail: { language: this.language } }));
         })
     }
     async __getLanguage(lng, app) {
