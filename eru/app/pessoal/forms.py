@@ -10,6 +10,19 @@ from django.conf import settings
 
 RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
+
+# class SetorForm(BootstrapI18nMixin, forms.ModelForm):
+#     i18n_maps = {
+#         'nome': 'common.name',
+#     }
+#     class Meta:
+#         model = Setor
+#         fields = '__all__'
+#         # Widgets específicos (como datas) ainda podem ser definidos no Meta
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
+
 class SetorForm(forms.ModelForm):
     class Meta:
         model = Setor
@@ -21,6 +34,36 @@ class GrupoEventoForm(forms.ModelForm):
         model = GrupoEvento
         fields = ['nome']
     nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+
+
+class CargoForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'sexo': Funcionario.Sexo,
+        'regime': Funcionario.Regime,
+        'status': Funcionario.Status,
+        'estado_civil': Funcionario.EstadoCivil,
+        'motivo_desligamento': Funcionario.MotivoDesligamento,
+    }
+    class Meta:
+        model = Funcionario
+        fields = '__all__'
+        # Widgets específicos (como datas) ainda podem ser definidos no Meta
+        widgets = {
+            'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'data_desligamento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'rg_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_primeira_habilitacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'cnh_validade': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
+            'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
+            'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos  
+
 
 class CargoForm(forms.ModelForm):
     class Meta:
@@ -60,11 +103,11 @@ class DependenteForm(forms.ModelForm):
 
 class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
     i18n_maps = {
-        'sexo': Funcionario.Sexo,
-        'regime': Funcionario.Regime,
-        'status': Funcionario.Status,
-        'estado_civil': Funcionario.EstadoCivil,
-        'motivo_desligamento': Funcionario.MotivoDesligamento,
+        'sexo': Funcionario.Sexo.i18n_map(),
+        'regime': Funcionario.Regime.i18n_map(),
+        'status': Funcionario.Status.i18n_map(),
+        'estado_civil': Funcionario.EstadoCivil.i18n_map(),
+        'motivo_desligamento': Funcionario.MotivoDesligamento.i18n_map(),
     }
     class Meta:
         model = Funcionario
@@ -86,58 +129,6 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
 
-
-
-# class FuncionarioForm(forms.ModelForm):
-#     class Meta:
-#         model = Funcionario
-#         fields = '__all__'
-#         widgets = {
-#             'data_admissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
-            # 'data_desligamento': forms.DateInput(attrs={'type': 'date'}),
-            # 'rg_emissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_primeira_habilitacao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_emissao': forms.DateInput(attrs={'type': 'date'}),
-            # 'cnh_validade': forms.DateInput(attrs={'type': 'date'}),
-            # 'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
-#         }
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         # mapeamento de I18N para os selects
-#         i18n_maps = {
-#             'sexo': Funcionario.Sexo,
-#             'regime': Funcionario.Regime,
-#             'motivo_desligamento': Funcionario.MotivoDesligamento,
-#             'estado_civil': Funcionario.EstadoCivil,
-#             'status': Funcionario.Status,
-#         }
-#         for name, field in self.fields.items():
-#             # se for um campo de escolha (Select)
-#             if isinstance(field.widget, forms.Select) and not isinstance(field.widget, forms.CheckboxInput):
-#                 # se ele estiver no mapa de traducao, usamos o I18nSelect
-#                 if name in i18n_maps:
-#                     field.widget = I18nSelect(
-#                         choices=field.choices,
-#                         data_map=i18n_maps[name].i18n_map()
-#                     )
-#                 # se nao estiver no mapa, mas for um Select, garantimos que ele mantenha os choices
-#                 else:
-#                     field.widget.choices = field.choices
-#             # atribuicao de classes CSS (Bootstrap)
-#             if isinstance(field.widget, forms.CheckboxInput):
-#                 css_class = 'form-check-input'
-#             elif isinstance(field.widget, forms.Select):
-#                 css_class = 'form-select'
-#             else:
-#                 css_class = 'form-control'
-#             field.widget.attrs.update({
-#                 'class': f"{css_class} {field.widget.attrs.get('class', '')}".strip(),
-#                 'placeholder': ' '
-#             })
-#         # ajustes pontuais de atributos
-#         self.fields['matricula'].widget.attrs.update({'class': 'form-control fw-bold', 'autofocus': True})
-#         self.fields['pne'].widget.attrs.update({'role': 'switch'})
 
 class MotivoReajusteForm(forms.ModelForm):
     class Meta:

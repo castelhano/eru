@@ -1,10 +1,10 @@
 from django import forms
 from django.forms.widgets import Select
 
+
 # widget I18nSelect injeta data-i18n nos options, deve ser repassado no form, ex:
 # parentesco = forms.ChoiceField(choices=Dependente.PARENTESCO, widget=I18nSelect(attrs={ 'class': 'form-select' }, data_map=Dependente.PARENTESCO_I18N_MAP))
 # PARENTESCO_I18N_MAP deve ser um dicionario inserido no modelo
-
 class I18nSelect(Select):
     def __init__(self, attrs=None, choices=(), data_map=None):
         super().__init__(attrs, choices)

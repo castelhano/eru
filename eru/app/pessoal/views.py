@@ -49,56 +49,108 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
             queryset = queryset.filter(setor_id=setor_id)
         return queryset
 
+
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Funcionario
     template_name = 'pessoal/funcionarios.html'
     context_object_name = 'funcionarios'
     permission_required = 'pessoal.view_funcionario'
-    def dispatch(self, request, *args, **kwargs):
-        self.pesquisa = request.GET.get('pesquisa')
+    def get(self, request, *args, **kwargs):
         self.filiais_autorizadas = request.user.profile.filiais.all()
-        # analisa se o valor digitado corresponde a uma matricula, se sim redireciona para pagina de update
-        if self.pesquisa:
+        pesquisa = request.GET.get('pesquisa')
+        if pesquisa:
+            # tenta identificar se existe matricula correspondente
             funcionario = Funcionario.objects.filter(
-                matricula=self.pesquisa, 
+                matricula=pesquisa, 
                 filial__in=self.filiais_autorizadas
             ).first()
             if funcionario:
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-        return super().dispatch(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
     def get_queryset(self):
-        data  = self.request.GET if self.request.method == 'GET' else self.request.POST
-        # self.applied_filters = dict(data)  # Armazena os filtros aplicados como dict limpo
-        self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in dict(data).items()}
-        self.applied_filters.pop("csrfmiddlewaretoken", None)
-        # caso nenhum filtro seja informado retorna lista vazia
-        if not self.pesquisa and not any(data.values()):
-            return Funcionario.objects.none()
-        # consulta base filtra apenas filiais habilitadas para usuario 
+        data = self.request.GET
+        self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in data.items()}
+        self.applied_filters.pop("csrfmiddlewaretoken", None) # remove token
+        pesquisa = data.get('pesquisa')
         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
-        if self.pesquisa:
-            # filtro por nome (qualquer ordem) usando reducao de Q objects
+        if not data:
+            return queryset.none()
+        # filtro por nome (qualquer ordem) usando reducao de Q objects
+        if pesquisa:
             query = Q()
-            for termo in self.pesquisa.split():
+            for termo in pesquisa.split():
                 query &= Q(nome__icontains=termo)
             queryset = queryset.filter(query)
         else:
-            # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
-            if data:
-                try:
-                    queryset = FuncionarioFilter(data, queryset=queryset).qs
-                except Exception:
-                    messages.warning(self.request, DEFAULT_MESSAGES.get('filterError', 'Erro ao filtrar.'))
-
+            # delega filtragem para django-filter (FuncionarioFilter)
+            filter_set = FuncionarioFilter(data, queryset=queryset)
+            if filter_set.is_valid():
+                queryset = filter_set.qs
+            else:
+                messages.warning(self.request, 'Filtros inválidos.')
+        # mensagem de alerta se nada for encontrado
         if not queryset.exists() and (self.request.GET or self.request.POST):
             messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = FuncionarioForm()
-        context['applied_filters'] = self.applied_filters  # filtros aplicados para referencia no template
-        context['setores'] = Setor.objects.all().order_by('nome')
+        context.update({
+            'form': FuncionarioForm(),
+            'applied_filters': self.applied_filters,
+            'setores': Setor.objects.all().order_by('nome')
+        })
         return context
+
+
+# class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+#     model = Funcionario
+#     template_name = 'pessoal/funcionarios.html'
+#     context_object_name = 'funcionarios'
+#     permission_required = 'pessoal.view_funcionario'
+#     def dispatch(self, request, *args, **kwargs):
+#         self.pesquisa = request.GET.get('pesquisa')
+#         self.filiais_autorizadas = request.user.profile.filiais.all()
+#         # analisa se o valor digitado corresponde a uma matricula, se sim redireciona para pagina de update
+#         if self.pesquisa:
+#             funcionario = Funcionario.objects.filter(
+#                 matricula=self.pesquisa, 
+#                 filial__in=self.filiais_autorizadas
+#             ).first()
+#             if funcionario:
+#                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
+#         return super().dispatch(request, *args, **kwargs)
+#     def get_queryset(self):
+#         data  = self.request.GET if self.request.method == 'GET' else self.request.POST
+#         self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in dict(data).items()}
+#         self.applied_filters.pop("csrfmiddlewaretoken", None)
+#         # caso nenhum filtro seja informado retorna lista vazia
+#         if not self.pesquisa and not any(data.values()):
+#             return Funcionario.objects.none()
+#         # consulta base filtra apenas filiais habilitadas para usuario 
+#         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
+#         if self.pesquisa:
+#             # filtro por nome (qualquer ordem) usando reducao de Q objects
+#             query = Q()
+#             for termo in self.pesquisa.split():
+#                 query &= Q(nome__icontains=termo)
+#             queryset = queryset.filter(query)
+#         else:
+#             # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
+#             if data:
+#                 try:
+#                     queryset = FuncionarioFilter(data, queryset=queryset).qs
+#                 except Exception:
+#                     messages.warning(self.request, DEFAULT_MESSAGES.get('filterError', 'Erro ao filtrar.'))
+
+        # if not queryset.exists() and (self.request.GET or self.request.POST):
+        #     messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
+#         return queryset
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['form'] = FuncionarioForm()
+#         context['applied_filters'] = self.applied_filters  # filtros aplicados para referencia no template
+#         context['setores'] = Setor.objects.all().order_by('nome')
+#         return context
 
 
 class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
@@ -212,14 +264,14 @@ class SetorCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVie
     permission_required = 'pessoal.add_setor'
 
 
-class CargoCreateView(BaseCreateView):
+class CargoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Cargo
     form_class = CargoForm
     template_name = 'pessoal/cargo_add.html'
     permission_required = 'pessoal.add_cargo'
     success_url = reverse_lazy('pessoal:cargo_create')
 
-class FuncionarioCreateView(BaseCreateView):
+class FuncionarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_add.html'
@@ -238,7 +290,7 @@ class FuncionarioCreateView(BaseCreateView):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
 
 
-class DependenteCreateView(BaseCreateView):
+class DependenteCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Dependente
     form_class = DependenteForm
     template_name = 'pessoal/dependente_add.html'
@@ -281,7 +333,7 @@ def getEventProps(asDict=False):
     return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom
 
 
-class EventoRelatedCreateView(BaseCreateView):
+class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
     template_name = 'pessoal/evento_related_add.html'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')

@@ -258,6 +258,8 @@
         "myDevice": "Arquivo",
         "editing": "Editando %{file}",
         "importFrom": "Importar de %{name}",
+        "noCameraTitle": "Nenhuma câmera disponivel",
+        "noCameraDescription": "Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera",
         "xFilesSelected": {
             "0": "%{smart_count} arquivo selecionado"
         },

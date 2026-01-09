@@ -51,21 +51,14 @@ class AjaxableFormMixin:
         return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
                self.request.content_type == 'application/json'
 
-
 class BootstrapI18nMixin:
-    """
-    Mixin para automatizar estilizacao de fields (Bootstrap)
-    e traducao data-i18n via I18nSelect
-    """
-    # dicionario opcional definido no form filho para mapear traducoes
     i18n_maps = {} 
     def setup_bootstrap_and_i18n(self):
         for name, field in self.fields.items():
-            # 1. Aplica Widget de Traducao se estiver no mapa
             if name in self.i18n_maps:
                 field.widget = I18nSelect(
                     choices=getattr(field, 'choices', []),
-                    data_map=self.i18n_maps[name].i18n_map()
+                    data_map=self.i18n_maps[name]
                 )
             # 2. Define Classe CSS baseada no tipo de Widget
             if isinstance(field.widget, forms.CheckboxInput):
