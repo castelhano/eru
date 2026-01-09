@@ -59,6 +59,7 @@
         "name": "Name",
         "neighborhood": "Neighborhood#Neighborhoods",
         "new": "New",
+        "no": "No",
         "object": "Object",
         "only": "Only",
         "operation": "Operation",
@@ -94,7 +95,8 @@
         "value": "Value#Values",
         "wait": "Wait",
         "warning": "Warning",
-        "widower": "Widower"
+        "widower": "Widower",
+        "yes": "Yes"
     },
     "compound": {
         "checkAll": "Check all $1",
@@ -142,6 +144,7 @@
         "recordErrorOnFilter": "Error fetching requested data",
         "recordErrorOnFilterDuplicated": "Duplicated registry found ($1)",
         "recordErrorOnSaved": "Error on saving record",
+        "recordOverlap": "This record overwrites other existing entries",
         "recordUpdated": "Record updated successfully",
         "endDateLowerThanStart": "The end date cannot be earlier than the start date",
         "i18n":{

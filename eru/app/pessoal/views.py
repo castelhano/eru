@@ -103,55 +103,24 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
         return context
 
 
-# class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-#     model = Funcionario
-#     template_name = 'pessoal/funcionarios.html'
-#     context_object_name = 'funcionarios'
-#     permission_required = 'pessoal.view_funcionario'
-#     def dispatch(self, request, *args, **kwargs):
-#         self.pesquisa = request.GET.get('pesquisa')
-#         self.filiais_autorizadas = request.user.profile.filiais.all()
-#         # analisa se o valor digitado corresponde a uma matricula, se sim redireciona para pagina de update
-#         if self.pesquisa:
-#             funcionario = Funcionario.objects.filter(
-#                 matricula=self.pesquisa, 
-#                 filial__in=self.filiais_autorizadas
-#             ).first()
-#             if funcionario:
-#                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-#         return super().dispatch(request, *args, **kwargs)
-#     def get_queryset(self):
-#         data  = self.request.GET if self.request.method == 'GET' else self.request.POST
-#         self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in dict(data).items()}
-#         self.applied_filters.pop("csrfmiddlewaretoken", None)
-#         # caso nenhum filtro seja informado retorna lista vazia
-#         if not self.pesquisa and not any(data.values()):
-#             return Funcionario.objects.none()
-#         # consulta base filtra apenas filiais habilitadas para usuario 
-#         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
-#         if self.pesquisa:
-#             # filtro por nome (qualquer ordem) usando reducao de Q objects
-#             query = Q()
-#             for termo in self.pesquisa.split():
-#                 query &= Q(nome__icontains=termo)
-#             queryset = queryset.filter(query)
-#         else:
-#             # aplica filtros extras (FuncionarioFilter) apenas se nao houver pesquisa global
-#             if data:
-#                 try:
-#                     queryset = FuncionarioFilter(data, queryset=queryset).qs
-#                 except Exception:
-#                     messages.warning(self.request, DEFAULT_MESSAGES.get('filterError', 'Erro ao filtrar.'))
-
-        # if not queryset.exists() and (self.request.GET or self.request.POST):
-        #     messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
-#         return queryset
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['form'] = FuncionarioForm()
-#         context['applied_filters'] = self.applied_filters  # filtros aplicados para referencia no template
-#         context['setores'] = Setor.objects.all().order_by('nome')
-#         return context
+class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+    model = Afastamento
+    template_name = 'pessoal/afastamentos.html'
+    context_object_name = 'afastamentos'
+    permission_required = 'pessoal.view_afastamento'
+    def get_queryset(self):
+        funcionario_id = self.kwargs.get('pk')
+        filiais_pemitidas = self.request.user.profile.filiais.all()
+        self.funcionario = get_object_or_404(
+            Funcionario, 
+            pk=funcionario_id, 
+            filial__in=filiais_pemitidas
+        )        
+        return Afastamento.objects.filter(funcionario=self.funcionario).order_by('data_afastamento')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.funcionario
+        return context
 
 
 class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
@@ -292,6 +261,31 @@ class FuncionarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCre
             return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
         return reverse('pessoal:funcionario_list')
 
+
+class AfastamentoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+    model = Afastamento
+    form_class = AfastamentoForm
+    template_name = 'pessoal/afastamento_add.html'
+    permission_required = 'pessoal.add_afastamento'
+    def get_success_url(self):
+        return reverse('pessoal:afastamento_list', kwargs={'pk': self.kwargs.get('pk')})
+    def get_initial(self):
+        # preenche o campo 'funcionario' no formulario automaticamente via GET
+        # tambem serve como trava de seguranca por Filial
+        initial = super().get_initial()
+        filiais_permitidas = self.request.user.profile.filiais.all()
+        self.funcionario = get_object_or_404(
+            Funcionario, 
+            pk=self.kwargs.get('pk'), 
+            filial__in=filiais_permitidas
+        )
+        initial['funcionario'] = self.funcionario
+        return initial
+    def get_context_data(self, **kwargs):
+        # injeta o objeto 'funcionario' no contexto para exibicao no template
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.funcionario
+        return context
 
 class DependenteCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
     model = Dependente
@@ -456,6 +450,31 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
 
+class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+    model = Afastamento
+    form_class = AfastamentoForm
+    template_name = 'pessoal/afastamento_id.html'
+    context_object_name = 'afastamento'
+    permission_required = 'pessoal.change_afastamento'
+    def dispatch(self, request, *args, **kwargs):
+        # so permite edicao de afastamentos de funcionarios ativos
+        afastamento = self.get_object()
+        if not afastamento.funcionario.F_ehEditavel:
+            messages.error(
+                request,
+                '<span data-i18n="personal.sys.cantMoveDismissEmployee">'
+                '<b>Erro:</b> Nao é possivel alterar dados de funcionários desligados</span>'
+            )
+            return redirect('pessoal:afastamento_list', pk=afastamento.funcionario.id)
+        return super().dispatch(request, *args, **kwargs)
+    def get_context_data(self, **kwargs):
+        # injeta o objeto 'funcionario' no contexto para exibicao no template
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.object.funcionario
+        return context
+    def get_success_url(self):
+        return reverse('pessoal:afastamento_update', kwargs={'pk': self.object.id})
+
 class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Dependente
     form_class = DependenteForm
@@ -570,6 +589,12 @@ class FuncionarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDel
     model = Funcionario
     permission_required = 'pessoal.delete_funcionario'
     success_url = reverse_lazy('pessoal:funcionario_list')
+
+class AfastamentoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
+    model = Afastamento
+    permission_required = 'pessoal.delete_afastamento'
+    def get_success_url(self):
+        return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.funcionario.id})
 
 class DependenteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Dependente

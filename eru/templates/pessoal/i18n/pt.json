@@ -22,6 +22,7 @@
             "reference": "Referência#Referências",
             "schedule": "Escala#Escalas",
             "spouse": "Cônjuge#Cônjuges",
+            "syndicate": "Sindicato#Sindicatos",
             "onLeave": "Afastado",
             "terminated": "Desligado",
             "traffic": "Tráfego"
@@ -49,6 +50,7 @@
                 "firstLicense": "Primeira Licença",
                 "fullName": "Nome completo",
                 "legalEntity": "Pessoa jurídica",
+                "leaveOfAbsence": "Afastamento#Afastamentos",
                 "maritalStatus": "Estado civil",
                 "militaryLicense": "Licença militar",
                 "mothersName": "Nome da mãe",

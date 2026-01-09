@@ -1,0 +1,48 @@
+<div class="card-body tab-content">
+    <h5 class="card-title mb-3"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="common.position">Cargo</b></h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row g-2">
+            <div class="col-lg">
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg-6">
+                        {{ form.data_afastamento }}
+                        <label for="id_data_afastamento">Data Afastamento</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg-6">
+                        {{ form.data_retorno }}
+                        <label for="id_data_retorno">Retorno Afastamento</label>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-lg-1 col-lg-6">
+                        {{ form.origem }}
+                        <label for="id_origem">Origem Afastamento</label>
+                    </div>
+                    <div class="form-floating mb-1 col-lg-6">
+                        {{ form.motivo }}
+                        <label for="id_motivo">Motivo Afastamento</label>
+                    </div>
+                </div>
+                <div class="form-check form-switch mt-1">
+                    {{form.remunerado}}
+                    <label class="form-check-label" for="id_remunerado">Afastamento remunerado</label>
+                </div>
+                <div class="form-check form-switch mt-1">
+                    {{form.reabilitado}}
+                    <label class="form-check-label" for="id_reabilitado">Reabilitado para outra função</label>
+                </div>
+            </div>
+            <div class="col-lg">
+                <div class="row g-1">
+                    {{ form.detalhe }}
+                </div>
+            </div>
+        </div>        
+    </div>
+    <input type="hidden" name="funcionario" id="id_funcionario" value="{{funcionario.id|safe}}">
+    <div class="row mt-3">
+        <div class="col">
+            <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"><b>G</b>ravar</button>
+        </div>
+    </div>
+</div>

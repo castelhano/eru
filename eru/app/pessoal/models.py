@@ -1,12 +1,16 @@
 from django.db import models
+from django.db.models import Q
 from pathlib import Path
 from django.conf import settings
 from core.models import Empresa, Filial, ImageField as core_ImageField
+from core.constants import DEFAULT_MESSAGES
 from datetime import datetime, date
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 from core.extras import create_image
 from auditlog.registry import auditlog
+from django.core.exceptions import ValidationError
 
 class Pessoa(models.Model):
     class EstadoCivil(models.TextChoices):
@@ -274,6 +278,39 @@ class Afastamento(models.Model):
     reabilitado = models.BooleanField(default=False)
     remunerado = models.BooleanField(default=False)
     detalhe = models.TextField(blank=True)
+    def daysOff(self):
+        # retorna quantidade de dias que funcionario ficou/esta em afastamento
+        if self.data_afastamento is None:
+            return 0
+        # uda a data de retorno se existir, ou data atual
+        end_date = self.data_retorno if self.data_retorno else date.today()
+        delta = (end_date - self.data_afastamento).days
+        return max(delta, 0) # caso lancamento futuro retorno eh negativo, neste caso retorna 0
+    def clean(self):
+        # validacao para garantir que nao haja sobreposicao entre afastamentos
+        if self.data_afastamento is None:
+            return
+        # query base
+        query = Afastamento.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
+        # Sobreposicao ocorre se:
+        # a) O novo periodo comeca antes ou durante um periodo existente E termina depois ou durante um periodo existente
+        # b) O novo periodo comeca durante um periodo existente
+        if self.data_retorno:
+            overlapping_absences = query.filter(
+                Q(data_afastamento__lte=self.data_retorno) & 
+                (Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True))
+            )
+        else:
+            # caso novo afastamento nao tenha data de retorno
+            overlapping_absences = query.filter(
+                Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True)
+            )
+        if overlapping_absences.exists():
+            raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
+    def save(self, *args, **kwargs):
+        # sobrescreve save para chamar validacao antes de salvar
+        self.full_clean() 
+        super().save(*args, **kwargs)
 auditlog.register(Afastamento)
 
 class Dependente(models.Model):

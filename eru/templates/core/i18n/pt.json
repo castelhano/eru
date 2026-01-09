@@ -59,6 +59,7 @@
         "name": "Nome#Nomes",
         "neighborhood": "Bairro#Bairros",
         "new": "Novo#Novos",
+        "no": "Não",
         "object": "Objeto#Objetos",
         "only": "Apenas",
         "operation": "Operação#Operações",
@@ -72,7 +73,7 @@
         "regime": "Regime",
         "register": "Cadastro",
         "registered": "Registrado#Registrados",
-        "regulator": "Regulador#Reguladores",
+        "regulator": "Gestor#Gestores",
         "remove": "Remover",
         "save": "Salvar",
         "search": "Pesquisar",
@@ -94,7 +95,8 @@
         "value": "Valor#Valores",
         "wait": "Aguardar",
         "warning": "Aviso#Avisos",
-        "widower": "Viúvo#Viúvos"
+        "widower": "Viúvo#Viúvos",
+        "yes": "Sim"
     },
     "compound": {
         "checkAll": "Marcar todos os $1",
@@ -143,6 +145,7 @@
         "recordErrorOnFilter": "Erro ao buscar dados solicitados",
         "recordErrorOnFilterDuplicated": "Registro duplicado encontrado ($1)",
         "recordErrorOnSaved": "Erro ao salvar registro",
+        "recordOverlap": "Registro sobrepõe outras entradas existentes",
         "recordUpdated": "Registro atualizado com sucesso",
         "endDateLowerThanStart": "Data de fim não pode ser menor que data de inicio",
         "i18n":{

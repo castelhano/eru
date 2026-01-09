@@ -26,7 +26,7 @@
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" type="button" id="exportCsvBtn">Baixar CSV</button></li>
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}" data-i18n="personal.common.dependant__plural">Dependentes</a></li>{% endif %}
-                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{# url 'pessoa:afastamentos' funcionario.id|safe #}">Afastamentos</a></li>{% endif %}
+                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">Afastamentos</a></li>{% endif %}
                     {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
                     <li><a class="dropdown-item dropdown-item-danger" data-bs-toggle="modal" data-bs-target="#modal_desligamento" href="#">Desligar Funcionário</a></li>
                     {% endif %}

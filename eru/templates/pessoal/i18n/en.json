@@ -22,6 +22,7 @@
             "reference": "Reference#References",
             "schedule": "Schedule#Schedules",
             "spouse": "Spouse#Spouses",
+            "syndicate": "Syndicate",
             "onLeave": "On Leave",
             "terminated": "Terminated",
             "traffic": "Traffic"
@@ -49,6 +50,7 @@
                 "firstLicense": "First License",
                 "fullName": "Full name",
                 "legalEntity": "Legal entity",
+                "leaveOfAbsence":"Leave of Absence",
                 "maritalStatus": "Marital status",
                 "militaryLicense": "Military license",
                 "mothersName": "Mothers's name",

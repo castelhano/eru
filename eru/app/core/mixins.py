@@ -2,7 +2,7 @@ import json
 from django import forms
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core import serializers
-from core.widgets import I18nSelect
+from core.widgets import I18nSelect, I18nSelectMultiple
 
 class AjaxableListMixin:
     # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
@@ -51,23 +51,39 @@ class AjaxableFormMixin:
         return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
                self.request.content_type == 'application/json'
 
+
 class BootstrapI18nMixin:
     i18n_maps = {} 
     def setup_bootstrap_and_i18n(self):
         for name, field in self.fields.items():
+            # 1. Injeta data-i18n caso definido em i18n_maps
             if name in self.i18n_maps:
-                field.widget = I18nSelect(
-                    choices=getattr(field, 'choices', []),
-                    data_map=self.i18n_maps[name]
-                )
-            # define classe CSS baseada no tipo de widget
+                mapping = self.i18n_maps[name]
+                # Se o campo tem escolhas (Select), adiciona widget especial para options
+                if hasattr(field, 'choices') and isinstance(mapping, dict):
+                    # se for select multiple aplica I18nSelectMultiple
+                    if isinstance(field.widget, forms.SelectMultiple):
+                        field.widget = I18nSelectMultiple(
+                            choices=field.choices,
+                            data_map=mapping
+                        )
+                    # se for select simples aplica I18nSelect
+                    else:
+                         field.widget = I18nSelect(
+                            choices=field.choices,
+                            data_map=mapping
+                        )
+                else:
+                    # se for texto simples, injeta direto no atributo do widget
+                    field.widget.attrs['data-i18n'] = mapping
+            # 2. Definicao de Classe CSS
             if isinstance(field.widget, forms.CheckboxInput):
                 css_class = 'form-check-input'
             elif isinstance(field.widget, forms.Select):
                 css_class = 'form-select'
             else:
                 css_class = 'form-control'
-            # preserva classes existentes e adiciona placeholder
+            # 3. Preservar atributos
             existing_classes = field.widget.attrs.get('class', '')
             field.widget.attrs.update({
                 'class': f"{css_class} {existing_classes}".strip(),

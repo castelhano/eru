@@ -4,30 +4,26 @@ from django.db.models import Q
 from .models import Setor, Cargo, Funcionario, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 from django.contrib.auth.models import User
 from datetime import date
-from core.widgets import I18nSelect
+from core.widgets import I18nSelect, I18nSelectMultiple
 from core.mixins import BootstrapI18nMixin
 from django.conf import settings
 
 RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
 
-# class SetorForm(BootstrapI18nMixin, forms.ModelForm):
-#     i18n_maps = {
-#         'nome': 'common.name',
-#     }
-#     class Meta:
-#         model = Setor
-#         fields = '__all__'
-#         # Widgets específicos (como datas) ainda podem ser definidos no Meta
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
-
-class SetorForm(forms.ModelForm):
+class SetorForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'nome': 'common.name',
+    }
     class Meta:
         model = Setor
         fields = ['nome']
-    nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
+        widgets = {
+            'nome': forms.TextInput(attrs={'autofocus': True}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos
 
 class GrupoEventoForm(forms.ModelForm):
     class Meta:
@@ -38,54 +34,42 @@ class GrupoEventoForm(forms.ModelForm):
 
 class CargoForm(BootstrapI18nMixin, forms.ModelForm):
     i18n_maps = {
-        'sexo': Funcionario.Sexo,
-        'regime': Funcionario.Regime,
-        'status': Funcionario.Status,
-        'estado_civil': Funcionario.EstadoCivil,
-        'motivo_desligamento': Funcionario.MotivoDesligamento,
+        'atividades': '[placeholder]personal.position.jobResponsibilities',
+        'funcoes_fixas': Cargo.FuncaoTipo.i18n_map()
     }
-    class Meta:
-        model = Funcionario
-        fields = '__all__'
-        # Widgets específicos (como datas) ainda podem ser definidos no Meta
-        widgets = {
-            'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'data_desligamento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'rg_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_primeira_habilitacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_validade': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
-            'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
-            'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
-        }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos  
-
-
-class CargoForm(forms.ModelForm):
+    funcoes_fixas = forms.MultipleChoiceField(choices=Cargo.FuncaoTipo.choices, required=False)
     class Meta:
         model = Cargo
         fields = ['nome','setor','atividades', 'funcoes_fixas']
-    nome = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
-    setor = forms.ModelChoiceField(queryset = Setor.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
-    atividades = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'data-i18n':'[placeholder]personal.position.jobResponsibilities', 'placeholder':'Atividades do cargo', 'rows':'15'}))
-    funcoes_fixas = forms.MultipleChoiceField(choices=Cargo.FuncaoTipo.choices, widget=I18nSelect(data_map=Cargo.FuncaoTipo.i18n_map()), required=False)
-    
-class AfastamentoForm(forms.ModelForm):
+        widgets = {
+            'nome': forms.TextInput(attrs={'autofocus': True}),
+            'atividades': forms.Textarea(attrs={'rows': 15}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n()
+
+
+class AfastamentoForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'motivo': Afastamento.Motivo.i18n_map(),
+        'origem': Afastamento.Origem.i18n_map(),
+        'detalhe': '[placeholder]common.detail__plural',
+    }
     class Meta:
         model = Afastamento
-        fields = ['funcionario','motivo','origem','data_afastamento', 'data_retorno','remunerado','reabilitado','detalhe']
-    motivo = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Afastamento.Motivo.i18n_map()))
-    origem = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Afastamento.Origem.i18n_map()))
-    data_afastamento = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    data_retorno = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control bg-body-secondary','type':'date', 'tabindex':'-1'}))
-    remunerado = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch', 'tabindex':'-1'}))
-    reabilitado = forms.BooleanField(required=False, initial=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input','role':'switch', 'tabindex':'-1'}))
-    detalhe = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','placeholder':'Detalhes', 'style':'min-height:300px'}))
-    
+        fields = '__all__'
+        widgets = {
+            'data_afastamento': forms.DateInput(format='%Y-%m-%d', attrs={'type':'date','autofocus': True}),
+            'data_retorno': forms.DateInput(format='%Y-%m-%d', attrs={'type':'date','class': 'bg-body-tertiary'}),
+            'remunerado': forms.CheckboxInput(attrs={'role': 'switch'}),
+            'reabilitado': forms.CheckboxInput(attrs={'role': 'switch'}),
+            'detalhe': forms.Textarea(attrs={'placeholder': 'Detalhes', 'style': 'min-height:300px'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n()
+
 
 class DependenteForm(forms.ModelForm):
     class Meta:
