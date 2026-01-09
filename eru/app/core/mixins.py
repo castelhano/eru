@@ -60,14 +60,14 @@ class BootstrapI18nMixin:
                     choices=getattr(field, 'choices', []),
                     data_map=self.i18n_maps[name]
                 )
-            # 2. Define Classe CSS baseada no tipo de Widget
+            # define classe CSS baseada no tipo de widget
             if isinstance(field.widget, forms.CheckboxInput):
                 css_class = 'form-check-input'
             elif isinstance(field.widget, forms.Select):
                 css_class = 'form-select'
             else:
                 css_class = 'form-control'
-            # 3. Preserva classes existentes e adiciona placeholder
+            # preserva classes existentes e adiciona placeholder
             existing_classes = field.widget.attrs.get('class', '')
             field.widget.attrs.update({
                 'class': f"{css_class} {existing_classes}".strip(),

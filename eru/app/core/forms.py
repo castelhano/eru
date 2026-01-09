@@ -4,6 +4,7 @@ from django import forms
 from django.forms import Field
 from django.forms.models import ModelChoiceIterator, ModelMultipleChoiceField
 from .models import Empresa, Filial, Settings, Profile
+from .mixins import BootstrapI18nMixin
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password
@@ -26,26 +27,28 @@ class EmpresaForm(forms.ModelForm):
     razao_social = forms.CharField(required=False, max_length=80,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
     cnpj_base = forms.CharField(required=False, max_length=15 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
 
-class FilialForm(forms.ModelForm):
+
+
+class FilialForm(BootstrapI18nMixin, forms.ModelForm):
+    # i18n_maps = {
+    #     # 'sexo': Funcionario.Sexo,
+    #     # 'regime': Funcionario.Regime,
+    #     # 'status': Funcionario.Status,
+    #     # 'estado_civil': Funcionario.EstadoCivil,
+    #     # 'motivo_desligamento': Funcionario.MotivoDesligamento,
+    # }
     class Meta:
         model = Filial
-        fields = ['empresa','nome','nome_fantasia','cnpj','inscricao_estadual','inscricao_municipal','cnae','atividade','endereco','bairro','cidade','uf','cep','fone','fax','logo','footer']
-    nome = forms.CharField(max_length=35, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
-    nome_fantasia = forms.CharField(required=False, max_length=80,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cnpj = forms.CharField(required=False, max_length=18 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    inscricao_estadual = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    inscricao_municipal = forms.CharField(required=False, max_length=15,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cnae = forms.CharField(required=False, max_length=10,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    atividade = forms.CharField(required=False, max_length=150,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    endereco = forms.CharField(required=False, max_length=150,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    bairro = forms.CharField(required=False, max_length=50,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cidade = forms.CharField(required=False, max_length=50,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    uf = forms.CharField(required=False, max_length=2,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cep = forms.CharField(required=False, max_length=10,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    fone = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    fax = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    logo = forms.ImageField(required=False, widget=forms.ClearableFileInput(attrs={'class': 'form-control','accept':'image/*'}))
-    footer = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control','style':'min-height:200px;','placeholder':'Rodapé padrão MD Report'}))
+        fields = '__all__'
+        widgets = {
+            'nome': forms.TextInput(attrs={'autofocus': True}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nome'].widget.attrs['maxlength'] = 8
+        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
+
+
 
 
 @lru_cache(maxsize=1)
@@ -62,7 +65,7 @@ def get_grouped_filiais():
 class UserForm(forms.ModelForm):
     password = forms.CharField(required=False, widget=forms.PasswordInput())
     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
-    force_password_change = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
+    force_password_change = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
@@ -89,71 +92,13 @@ class UserForm(forms.ModelForm):
         if commit:
             user.save()
             self.save_m2m()
-            # Atualiza o profile de forma direta
+            # atualiza o profile de forma direta
             profile = user.profile
             profile.force_password_change = self.cleaned_data['force_password_change']
             profile.filiais.set(self.cleaned_data['filiais'])
             profile.save()
         return user
 
-
-
-
-
-
-
-
-
-
-
-
-
-# @lru_cache(maxsize=1)
-# def get_grouped_permissions():
-#     perms = Permission.objects.exclude(content_type__app_label__in=['admin', 'contenttypes', 'sessions']).select_related('content_type').order_by('content_type__app_label', 'content_type__model')
-#     return [(app.capitalize(), [(p.id, f"{p.content_type.model}: {p.name}") for p in g]) 
-#             for app, g in groupby(perms, lambda p: p.content_type.app_label)]
-
-
-# class UserForm(forms.ModelForm):
-#     password = forms.CharField(required=False, widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-#     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
-#     force_password_change = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}))
-#     class Meta:
-#         model = User
-#         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
-#         widgets = {
-#             'username': forms.TextInput(attrs={'class': 'form-control fw-bold', 'autofocus': True}),
-#             'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-#             'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-#             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
-#         }
-#     def __init__(self, *args, **kwargs):
-#         instance = kwargs.get('instance')
-#         super().__init__(*args, **kwargs)
-#         self.fields['user_permissions'].choices = get_grouped_permissions()
-#         self.fields['filiais'].choices = get_grouped_filiais()
-#         if instance and instance.pk:
-#             profile, _ = Profile.objects.get_or_create(user=instance)
-#             self.fields['filiais'].initial = profile.filiais.all()
-#             self.fields['force_password_change'].initial = profile.force_password_change
-#         for name, field in self.fields.items():
-#             if not isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect)):
-#                 field.widget.attrs.setdefault('class', 'form-control')
-#                 field.widget.attrs.update({'placeholder': ' '})
-#     def save(self, commit=True):
-#         user = super().save(commit=False)
-#         if self.cleaned_data.get("password"):
-#             user.set_password(self.cleaned_data["password"])
-#         if commit:
-#             user.save()
-#             self.save_m2m()
-#             profile, _ = Profile.objects.get_or_create(user=user)
-#             profile.force_password_change = self.cleaned_data['force_password_change']
-#             profile.save()
-#             profile.filiais.set(self.cleaned_data['filiais'])
-#         return user
-    
 
 class GroupForm(forms.ModelForm):
     class Meta:

@@ -102,13 +102,11 @@
           {{form.is_superuser}}
           <label class="form-check-label text-danger" for="id_is_superuser">Super Usuário</label>
         </div>
-        {% if 'update' in request.get_full_path %}
         <hr />
-        <div class="form-check form-switch">
-          <input type="checkbox" class="form-check-input" name="force_password_change" id="id_force_password_change"{% if usuario.profile.force_password_change %} checked{% endif %}>
+        <div class="form-check form-switch{% if not 'update' in request.get_full_path %} d-none{% endif %}">
+          <input type="checkbox" class="form-check-input" name="force_password_change" id="id_force_password_change"{% if not usuario or usuario.profile.force_password_change %} checked{% endif %}>
           <label class="form-check-label" for="id_force_password_change">Forçar troca de senha</label>
         </div>
-        {% endif %}
       </div>
     </div>
     
