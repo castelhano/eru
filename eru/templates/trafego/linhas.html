@@ -13,14 +13,6 @@
       {% if perms.trafego.add_linha %}
       <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'trafego:linha_add' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
-      {% if perms.core.view_log %}
-      <li class="nav-item dropdown ms-auto">
-        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item pointer" href="{% url 'logs' %}?target_model=trafego.linha&mensagem=DELETE" target="_blank" data-i18n="sys.exclusionLogs">Log de Exclusões</a></li>
-        </ul>
-      </li>
-      {% endif %}
     </ul>
   </div>
   <div class="card-body tab-content">

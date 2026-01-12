@@ -145,7 +145,7 @@ class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListVi
 
 class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Evento
-    template_name = 'core/eventos.html'
+    template_name = 'pessoal/eventos.html'
     context_object_name = 'eventos'
     permission_required = 'pessoal.view_evento'
     queryset = Evento.objects.all().order_by('nome')
@@ -375,7 +375,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
         return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'id': self.related_id})
     
 
-class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseCreateView):
     model = GrupoEvento
     form_class = GrupoEventoForm
     template_name = 'pessoal/grupo_evento_add.html'
@@ -447,6 +447,10 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
                     f"{DEFAULT_MESSAGES.get('saveError', 'Erro ao processar imagem')}{str(e)}"
                 )
         return response
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['setores'] = Setor.objects.all().order_by('nome')
+        return context
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
 

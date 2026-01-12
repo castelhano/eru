@@ -152,6 +152,15 @@
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
     appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
+
+    {% if funcionario.cargo %}
+    // ao editar funcionario, necessario carregar cargos e selecionar setor/cargo definidos para funcionario
+    document.getElementById('id_setor').value = {{funcionario.cargo.setor.id|safe}};
+    updateCargos(document.getElementById('id_setor').value).then((resp)=>{
+        document.getElementById('id_cargo').value = {{funcionario.cargo.id|safe}};
+    })
+
+    {% endif %}
     
     {% if perms.pessoal.view_eventofuncionario %}
     appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})

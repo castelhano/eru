@@ -85,11 +85,11 @@ const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
       nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
     },
     url: {
-      // parent: {
-      //   show: "{# url 'pessoal:get_grupos_evento' #}",
-      // },
+    //   parent: {
+    //     show: "{# url 'pessoal:get_grupos_evento' #}",
+    //   },
       related: {
-        add: "{% url 'pessoal:add_motivo_reajuste' %}",
+        add: "{% url 'pessoal:motivoreajuste_create' %}",
       }
     }    
   })

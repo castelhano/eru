@@ -41,11 +41,8 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
         nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
     },
     url: {
-        parent: {
-            show: "{% url 'pessoal:get_grupos_evento' %}",
-        },
         related: {
-             add: "{% url 'pessoal:add_grupo_evento' %}",
+             add: "{% url 'pessoal:grupoevento_create' %}",
         }
     }    
 })

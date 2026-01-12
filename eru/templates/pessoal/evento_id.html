@@ -9,14 +9,14 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:evento_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if perms.pessoal.delete_evento %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-                {% if perms.pessoal.delete_evento %}
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
                 </ul>
-                {% endif %}
             </li>
+            {% endif %}
         </ul>
     </div>
     <form id="app_form" action="{% url 'pessoal:evento_update' evento.id|safe %}" method="POST" autocomplete="off" novalidate>
@@ -70,11 +70,8 @@ const grupoRelated = new RelatedAddon('#id_grupo', {
         nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
     },
     url: {
-        parent: {
-            show: "{% url 'pessoal:get_grupos_evento' %}",
-        },
         related: {
-             add: "{% url 'pessoal:add_grupo_evento' %}",
+             add: "{% url 'pessoal:grupoevento_create' %}",
         }
     }    
 })

@@ -441,102 +441,170 @@ class RelatedAddon {
             xhr.send();
         });
     }
-    _add(){ // executa ajax post para criacao de novo registro
+    async _add() {
+        // Funcao assincrona que adiciona registro baseado na url fornecida
         let self = this;
         this.model.spinner.style.display = 'block';
-        let xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-            if(this.readyState == 4 && this.status == 200){
-                let resp =  JSON.parse(this.response);
-                if(self.config.url.related.show){ // se estiver listando options, adiciona linha na tabela
-                    self.model.tbody.appendChild(self._addTableRow(resp)); // adiciona linha na tabela do modal
+        try {
+            const response = await fetch(this.config.url.related.add, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': this.config.url.csrf_token
+                },
+                body: JSON.stringify(this._getData())
+            });
+            const resp = await response.json();
+            const data = resp[0]
+            if (response.ok) {
+                // sucesso (Status 200)
+                if (self.config.url.related.show) {
+                    self.model.tbody.appendChild(self._addTableRow(data));
                 }
-                if(self.config.parent){
+                if (self.config.parent) {
                     self.config.parent.reload();
-                    self.stackOnUpdate.push(()=>{self.element.value = resp.pk}); // adiciona na pilha a ser atualizada a selecao do option criado
-                } // se definido url para atualiza o parent, faz ocnsulta ajax
-                else{ // se nao apenas cria option e insere ao final do controle
+                    self.stackOnUpdate.push(() => { self.element.value = data.pk });
+                } else {
                     let opt = document.createElement('option');
-                    opt.value = resp.pk;
-                    opt.innerHTML = resp.fields[self.config.value];
+                    opt.value = data.pk;
+                    opt.innerHTML = data.fields[self.config.value];
                     self.element.appendChild(opt);
-                    self.element.value = resp.pk;
+                    self.element.value = data.pk;
                 }
                 self._clearForm();
                 self.model.dialog.close();
-                self.model.spinner.style.display = 'none';
-                appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${resp.fields.nome}</b>`) || `Registro criado com sucesso <b>${resp.fields.nome}</b>` : `Registro criado com sucesso <b>${resp.nome}</b>`)
-            }
-            else if(this.readyState == 4){
-                let resp =  JSON.parse(this.response);
-                console.log(resp);                
-                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::')}</b>` || '<b>Erro ao salvar registro:</b>';
-                if(this.status == 401){
-                    message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
-                }
-                else if(this.status == 500){
-                    message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
-                }
-                else if(this.status == 400){
-                    for(let field in resp.errors){
-                        resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+                appNotify('success', i18n ? i18n.getEntry(`sys.recordCreated__posfix: <b>${data.fields.nome}</b>`) : `Registro criado com sucesso`);
+            } else {
+                // erros tratados (400, 401, 500)
+                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::') || 'Erro ao salvar registro:'}</b>`;
+                if (response.status === 401) {
+                    message += `<br>${i18n.getEntry('sys.401') || 'Permissão negada'}`;
+                } else if (response.status === 500) {
+                    message += `<br>${i18n.getEntry('sys.500') || 'Erro de servidor'}`;
+                } else if (response.status === 400 && resp.errors) {
+                    // Itera sobre os erros de validação do Django form.errors
+                    for (let field in resp.errors) {
+                        data.errors[field].forEach(el => { message += `<br>${el}`; });
                     }
                 }
-                appAlert('danger', message, {autodismiss: false})
+                appAlert('danger', message, { autodismiss: false });
                 self._clearForm();
                 self._setContext('show');
                 self.model.dialog.close();
             }
-        };
-        xhttp.open("POST", this.config.url.related.add, true);
-        xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
-        xhttp.send(JSON.stringify(this._getData()));
+        } catch (error) {
+            // Erros de rede ou falha no parse do JSON
+            console.error("Erro na requisição:", error);
+            appAlert('danger', "Erro de conexão ou formato de dados inválido.");
+        } finally {
+            this.model.spinner.style.display = 'none';
+        }
     }
-    _update(){
+    async _update() {
         let self = this;
         this.model.spinner.style.display = 'block';
-        let xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-            if(this.readyState == 4 && this.status == 200){
-                let resp =  JSON.parse(this.response);
-                let target = self.config.rows.find(row => row.pk === parseInt(resp.pk));
-                for(let attr in resp.fields){ target.fields[attr] = resp.fields[attr] }
-                // ajusta referencia ao option em this.config.rows
-                if(self.config.parent){self.config.parent.reload()} // se definido url para atualiza o parent, faz ocnsulta ajax
-                else{ // se nao apenas cria option e insere ao final do controle
-                    self.element.querySelector(`option[value="${resp.pk}"`).innerHTML = resp.fields[self.config.value]
-                }
-                self._rebuildTableRows();                
-                self._clearForm();
-                self.model.spinner.style.display = 'none';
-                self._setContext('show');
-                appNotify('success', i18n.getEntry(`sys.recordUpdated__posfix: <b>${resp.fields[self.config.value]}</b>`) || `Registro alterado com sucesso <b>${resp.fields[self.config.value]}</b>`)
-            }
-            else if(this.readyState == 4){
-                let resp =  JSON.parse(this.response);
-                console.log(resp);
-                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::')}</b>` || '<b>Erro ao salvar registro:</b>';
-                if(this.status == 401){
-                    message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
-                }
-                else if(this.status == 500){
-                    message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
-                }
-                else if(this.status == 400){
-                    for(let field in resp.errors){
-                        resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+        try {
+            const response = await fetch(this.config.url.related.change, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': this.config.url.csrf_token
+                },
+                body: JSON.stringify(this._getData())
+            });
+            const data = (await response.json())[0];
+            if (response.ok) {
+                let target = self.config.rows.find(row => row.pk === parseInt(data.pk));
+                if (target) {
+                    for (let attr in data.fields) { 
+                        target.fields[attr] = data.fields[attr]; 
                     }
                 }
-                appAlert('danger', message, {autodismiss: false})
+                if (self.config.parent) {
+                    self.config.parent.reload();
+                } else {
+                    const option = self.element.querySelector(`option[value="${data.pk}"]`);
+                    if (option) {
+                        option.innerHTML = data.fields[self.config.value];
+                    }
+                }
+                self._rebuildTableRows();
+                self._clearForm();
+                self._setContext('show');
+                const label = data.fields[self.config.value];
+                appNotify('success', i18n ? i18n.getEntry(`sys.recordUpdated__posfix: <b>${label}</b>`) : `Registro alterado com sucesso <b>${label}</b>`);
+            } else {
+                const resp = data;
+                let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::') || 'Erro ao salvar registro:'}</b>`;
+                if (response.status === 401) {
+                    message += `<br>${i18n.getEntry('sys.401') || 'Permissão negada'}`;
+                } else if (response.status === 500) {
+                    message += `<br>${i18n.getEntry('sys.500') || 'Erro de servidor'}`;
+                } else if (response.status === 400 && resp.errors) {
+                    for (let field in resp.errors) {
+                        resp.errors[field].forEach(el => { message += `<br>${el}`; });
+                    }
+                }
+                appAlert('danger', message, { autodismiss: false });
                 self._clearForm();
                 self._setContext('show');
                 self.model.dialog.close();
             }
-        };
-        xhttp.open("POST", this.config.url.related.change, true);
-        xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
-        xhttp.send(JSON.stringify(this._getData()));
+        } catch (error) {
+            console.error("Erro na requisição de update:", error);
+            appAlert('danger', "Erro de conexão ao atualizar o registro.");
+        } finally {
+            this.model.spinner.style.display = 'none';
+        }
     }
+
+    // _update(){
+    //     let self = this;
+    //     this.model.spinner.style.display = 'block';
+    //     let xhttp = new XMLHttpRequest();
+    //     xhttp.onreadystatechange = function() {
+    //         if(this.readyState == 4 && this.status == 200){
+    //             let resp =  JSON.parse(this.response);
+    //             let target = self.config.rows.find(row => row.pk === parseInt(resp.pk));
+    //             for(let attr in resp.fields){ target.fields[attr] = resp.fields[attr] }
+    //             // ajusta referencia ao option em this.config.rows
+    //             if(self.config.parent){self.config.parent.reload()} // se definido url para atualiza o parent, faz ocnsulta ajax
+    //             else{ // se nao apenas cria option e insere ao final do controle
+    //                 self.element.querySelector(`option[value="${resp.pk}"`).innerHTML = resp.fields[self.config.value]
+    //             }
+    //             self._rebuildTableRows();                
+    //             self._clearForm();
+    //             self.model.spinner.style.display = 'none';
+    //             self._setContext('show');
+    //             appNotify('success', i18n.getEntry(`sys.recordUpdated__posfix: <b>${resp.fields[self.config.value]}</b>`) || `Registro alterado com sucesso <b>${resp.fields[self.config.value]}</b>`)
+    //         }
+    //         else if(this.readyState == 4){
+    //             let resp =  JSON.parse(this.response);
+    //             console.log(resp);
+    //             let message = `<b>${i18n.getEntry('sys.recordErrorOnSaved__posfix::')}</b>` || '<b>Erro ao salvar registro:</b>';
+    //             if(this.status == 401){
+    //                 message += `<br>${i18n.getEntry('sys.401')}` || '<br>Permissão negada, verifique com administrador do sistema';
+    //             }
+    //             else if(this.status == 500){
+    //                 message += `<br>${i18n.getEntry('sys.500')}` || '<br>Erro de servidor, se o problema persistir, contate o administrador';
+    //             }
+    //             else if(this.status == 400){
+    //                 for(let field in resp.errors){
+    //                     resp.errors[field].forEach((el)=>{ message += `<br>${el}` })
+    //                 }
+    //             }
+    //             appAlert('danger', message, {autodismiss: false})
+    //             self._clearForm();
+    //             self._setContext('show');
+    //             self.model.dialog.close();
+    //         }
+    //     };
+    //     xhttp.open("POST", this.config.url.related.change, true);
+    //     xhttp.setRequestHeader('X-CSRFToken', this.config.url.csrf_token);
+    //     xhttp.send(JSON.stringify(this._getData()));
+    // }
     _delete(){
         let self = this;
         this.model.spinner.style.display = 'block';

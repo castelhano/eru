@@ -96,7 +96,6 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
     class Meta:
         model = Funcionario
         fields = '__all__'
-        # Widgets específicos (como datas) ainda podem ser definidos no Meta
         widgets = {
             'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
@@ -120,20 +119,31 @@ class MotivoReajusteForm(forms.ModelForm):
         fields = ['nome']
     nome = forms.CharField(max_length=60, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
 
-class EventoForm(forms.ModelForm):
+
+class EventoForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'tipo': Evento.TipoMovimento.i18n_map(),
+    }
     class Meta:
         model = Evento
         fields = ['nome','rastreio','tipo','grupo']
-    nome = forms.CharField(max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
-    rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
-    tipo = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Evento.TipoMovimento.i18n_map()))
-    grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
+        widgets = {
+            'nome': forms.TextInput(attrs={'autofocus': True}),
+            'rastreio': forms.TextInput(attrs={'class': 'bg-body-tertiary'}),
+        }
+    # nome = forms.CharField(max_length=40, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ', 'autofocus':'autofocus'}))
+    # rastreio = forms.CharField(required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control bg-body-tertiary','placeholder':' '}))
+    # tipo = forms.ChoiceField(required=False, widget=I18nSelect(attrs={'class':'form-select'}, data_map=Evento.TipoMovimento.i18n_map()))
+    # grupo = forms.ModelChoiceField(required=False, queryset = GrupoEvento.objects.all().order_by('nome'), widget=forms.Select(attrs={'class':'form-select'}))
     def clean_rastreio(self):
         rastreio_value = self.cleaned_data.get('rastreio')
         # verifica se o valor corresponde a expressao regular
         if rastreio_value and not RASTREIO_REGEX.match(rastreio_value):
             raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
         return rastreio_value
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n()
 
 class EventoMovimentacaoBaseForm(forms.ModelForm):
     inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))

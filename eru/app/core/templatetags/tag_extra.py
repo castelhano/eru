@@ -200,3 +200,9 @@ def json_encode(value):
             return mark_safe(json.dumps(value, ensure_ascii=False))
     else:
         return mark_safe(json.dumps(value, ensure_ascii=False))
+
+@register.filter
+def proxy_perm(user, perm_name):
+    # Verifica se o usuario tem a permissao passada como string
+    # usado em caso de composicao de strings de forma dinamica
+    return user.has_perm(perm_name)
