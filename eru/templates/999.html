@@ -67,7 +67,7 @@
 const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf],
     selectPopulate: [
-        {target: document.getElementById('id_empresa'), url: '{% url 'get_empresas' %}'}
+        {target: document.getElementById('id_empresa'), url: '{# url 'get_empresas' #}'}
     ],
     customValidation: {
         'senha': (v)=>{
@@ -203,7 +203,7 @@ const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf, salario],
     // novalidate: true,
     selectPopulate: [
-    {target: document.getElementById('id_empresa'), url: '{% url 'get_empresas' %}'}
+    {target: document.getElementById('id_empresa'), url: '{% url 'empresa_list' %}'}
     ],
     // multipleAddon: ['cpf'],
     multipleAddon: [{
