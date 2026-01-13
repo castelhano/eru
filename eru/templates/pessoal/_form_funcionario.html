@@ -130,7 +130,8 @@
                             <label for="id_nome_mae" data-i18n="personal.employee.form.mothersName">Nome Mãe</label>
                         </div>
                     </div>
-                    <input type="hidden" name="foto_data_url" id="id_foto_data_url">
+                    <input type="file" name="foto" id="id_foto" style="display:none">
+                    <!-- <input type="hidden" name="foto_data_url" id="id_foto_data_url"> -->
                     <div class="form-check form-switch mt-2">
                         {{form.pne}}
                         <label class="form-check-label" for="id_pne" data-i18n="personal.employee.form.personWithSpecialNeeds">PNE Portador de necessidades especiais</label>
@@ -268,8 +269,8 @@
     function _formRun(){
         const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
         const cnh = IMask(document.getElementById('id_cnh'), {mask: '000.000.000-00'})
-        appKeyMap.bind('ctrl+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: 'Exibe dados básicos do funcionário', origin: 'pessoal:_form_funcionario'})
         appKeyMap.bind('ctrl+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDocs', desc: 'Exibe documentos do funcionário', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('ctrl+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: 'Exibe dados básicos do funcionário', origin: 'pessoal:_form_funcionario'})
         appKeyMap.bind('ctrl+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabAddress', desc: 'Exibe endereço e informações de contato', origin: 'pessoal:_form_funcionario'})
         appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: 'Exibe detalhes gerais do funcionário', origin: 'pessoal:_form_funcionario'})
         return [cpf, cnh]

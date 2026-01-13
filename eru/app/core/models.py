@@ -9,15 +9,15 @@ from functools import cached_property
 from auditlog.registry import auditlog
 
 # EXTENDED **********************************************
-class ImageField(models.ImageField):
-    class Meta:
-        abstract = True
-    def save_form_data(self, instance, data):
-        if data is not None: 
-            file = getattr(instance, self.attname)
-            if file and file != data:
-                file.delete(save=False)
-        super().save_form_data(instance, data)
+# class ImageField(models.ImageField):
+#     class Meta:
+#         abstract = True
+#     def save_form_data(self, instance, data):
+#         if data is not None: 
+#             file = getattr(instance, self.attname)
+#             if file and file != data:
+#                 file.delete(save=False)
+#         super().save_form_data(instance, data)
 
 class FileField(models.FileField):
     class Meta:
@@ -54,7 +54,7 @@ class Filial(models.Model):
     cep = models.CharField(max_length=10, blank=True)
     fone = models.CharField(max_length=20, blank=True)
     fax = models.CharField(max_length=20, blank=True)
-    logo = ImageField(upload_to="core/logos/", blank=True)
+    logo = models.ImageField(upload_to="core/logos/", blank=True)
     footer = models.TextField(blank=True)
     def __str__(self):
         return self.nome

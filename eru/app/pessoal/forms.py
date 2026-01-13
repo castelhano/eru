@@ -95,7 +95,8 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
     }
     class Meta:
         model = Funcionario
-        fields = '__all__'
+        fields = ['filial','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne','status','foto']
+        # fields = '__all__'
         widgets = {
             'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),

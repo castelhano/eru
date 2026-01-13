@@ -2,13 +2,14 @@ from django.db import models
 from django.db.models import Q
 from pathlib import Path
 from django.conf import settings
-from core.models import Empresa, Filial, ImageField as core_ImageField
+from core.models import Empresa, Filial
+# from core.models import Empresa, Filial, ImageField as core_ImageField
 from core.constants import DEFAULT_MESSAGES
 from datetime import datetime, date
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
-from core.extras import create_image
+# from core.extras import create_image
 from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
 
@@ -176,23 +177,27 @@ class Funcionario(Pessoa):
     data_desligamento = models.DateField(blank=True, null=True)
     motivo_desligamento = models.CharField(max_length=3,choices=MotivoDesligamento.choices, blank=True)
     pne = models.BooleanField(default=False)
-    foto = core_ImageField(upload_to='pessoal/fotos/', blank=True)
+    foto = models.ImageField(upload_to='pessoal/fotos/', blank=True)
     usuario = models.OneToOneField(User, blank=True, null=True, on_delete=models.RESTRICT)
     status = models.CharField(max_length=3, choices=Status.choices, default='A', blank=True)    
     def __str__(self):
         return self.matricula
-    def process_and_save_photo(self, foto_data_url):
-        if not foto_data_url:
-            return
-        if self.foto:
-            self.foto.delete(save=False) # caso update da foto, apaga a anterior
-        folder_relative = "pessoal/fotos"
-        folder_path = Path(settings.MEDIA_ROOT) / folder_relative
-        folder_path.mkdir(parents=True, exist_ok=True)
-        file_name = f"{self.filial.empresa.id}_{self.matricula}_{int(datetime.now().timestamp())}.png"
-        create_image(foto_data_url, str(folder_path), file_name)
-        self.foto = f"{folder_relative}/{file_name}"
-        self.save(update_fields=['foto'])
+    def upload_foto_path(instance, filename):
+        # O Django já cria as pastas automaticamente
+        ext = filename.split('.')[-1]
+        return f"pessoal/fotos/{instance.filial.empresa.id}_{instance.matricula}_{int(datetime.now().timestamp())}.{ext}"
+    # def process_and_save_photo(self, foto_data_url):
+    #     if not foto_data_url:
+    #         return
+    #     if self.foto:
+    #         self.foto.delete(save=False) # caso update da foto, apaga a anterior
+    #     folder_relative = "pessoal/fotos"
+    #     folder_path = Path(settings.MEDIA_ROOT) / folder_relative
+    #     folder_path.mkdir(parents=True, exist_ok=True)
+    #     file_name = f"{self.filial.empresa.id}_{self.matricula}_{int(datetime.now().timestamp())}.png"
+    #     create_image(foto_data_url, str(folder_path), file_name)
+    #     self.foto = f"{folder_relative}/{file_name}"
+    #     self.save(update_fields=['foto'])
     def delete(self, *args, **kwargs):
         # ao excluir funcionario, caso ele tenha foto, apaga registro fisico
         if self.foto:
@@ -235,14 +240,7 @@ class Funcionario(Pessoa):
         if self.pk and Funcionario.objects.get(pk=self.pk).status == 'D':
             raise PermissionError("Alteração bloqueada: Funcionário Desligado.")
         super().save(*args, **kwargs)
-    class Meta:
-        permissions = [
-            ("associar_usuario", "Pode associar usuario a funcionário"),
-            ("afastar_funcionario", "Pode afastar funcionário"),
-            ("desligar_funcionario", "Pode desligar funcionário"),
-            ("dashboard_funcionario", "Pode acessar dashboard pessoal"),
-        ]
-auditlog.register(Funcionario)
+auditlog.register(Funcionario, exclude_fields=['foto'])
 
 class Afastamento(models.Model):
     class Motivo(models.TextChoices):
