@@ -14,6 +14,7 @@ from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter
+from .mixins import AjaxableListMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
@@ -115,6 +116,7 @@ class HandlerView(LoginRequiredMixin, BaseTemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['error_code'] = self.kwargs.get('code')
+        context['form'] = FilialForm()
         return context
 
 class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
@@ -205,7 +207,7 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView)
         return context
 
 
-class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
     model = Empresa
     template_name = 'core/empresas.html'
     context_object_name = 'empresas'

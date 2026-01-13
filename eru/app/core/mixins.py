@@ -7,15 +7,21 @@ from core.widgets import I18nSelect, I18nSelectMultiple
 class AjaxableListMixin:
     # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
     def render_to_response(self, context, **response_kwargs):
-        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
-            self.request.content_type == 'application/json' or \
-            self.request.GET.get('format') == 'json': # Opcional: permite forçar via URL ?format=json
+        if self.is_ajax_request():
             queryset = context.get(self.context_object_name) or context.get('object_list')
             data = serializers.serialize('json', queryset)
             return HttpResponse(data, content_type="application/json")
         # se nao for AJAX, segue o fluxo normal
         return super().render_to_response(context, **response_kwargs)
-
+    def is_ajax_request(self):
+        headers = self.request.headers
+        if headers.get('Sec-Fetch-Dest') == 'empty':
+            return True
+        if headers.get('x-requested-with') == 'XMLHttpRequest':
+            return True
+        if self.request.GET.get('format') == 'json':
+            return True
+        return False
 
 
 class AjaxableFormMixin:

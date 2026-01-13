@@ -463,36 +463,41 @@ class selectPopulate{
         this.then = options?.then != undefined ? ()=>{options.then(this.data)} : ()=>{}; // Funcao a ser executada ao concluir (indiferente de sucesso ou erro)
         if(!options?.wait){this.reload()} // Preenche select ao carregar componente, para nao buscar ao carregar defina {wait: true}
     }
-    reload(){ // Consulta e carrega registros no select
-        if(!this.beforeRequest()){return false}
-        this.target.innerHTML = ''; // Limpa conteudo atual
-        let xhttp = new XMLHttpRequest();
-        let instance = this; // Cria alias para instancia para ser acessado dentro do ajax
-        xhttp.onreadystatechange = function() {
-            if(this.readyState == 4 && this.status == 200){
-                if(this.responseText == ''){instance.onError()}
-                    else if(this.responseText == '[]'){instance.onEmpty()}
-                else{
-                    instance.data = JSON.parse(this.responseText);
-                    if(instance.emptyRow){
-                        let opt = document.createElement('option');
-                        for(let key in instance.emptyRow){
-                            if(['innerHTML'].includes(key)){continue}
-                            opt.setAttribute(key, instance.emptyRow[key])
-                        }
-                        opt.innerHTML = i18n.getEntry(instance.emptyRow['data-i18n']) || instance.emptyRow['innerHTML'] || 'Todos';
-                        instance.target.appendChild(opt);
-                    }
-                    for(let i in instance.data){
-                        instance.target.innerHTML += `<option value="${instance.data[i][instance.key]}">${instance.data[i].fields[instance.value]}</option>`;
-                    }
-                    instance.onSuccess();
-                }
-                instance.then(); // Funcao a ser executada indiferente se retornado dados do servidor
+    async reload() {
+        if (!this.beforeRequest()) return false;
+        this.target.innerHTML = ''; // Limpa conteúdo atual
+        try {
+            const response = await fetch(this.url + this.params, { method: this.method });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        };
-        xhttp.open(instance.method, instance.url + instance.params, true);
-        xhttp.send();
+            const text = await response.text();
+            if (text === '') {
+                this.onError();
+            } else if (text === '[]') {
+                this.onEmpty();
+            } else {
+                this.data = JSON.parse(text);
+                if (this.emptyRow) {
+                    const opt = document.createElement('option');
+                    for (let key in this.emptyRow) {
+                        if (['innerHTML'].includes(key)) continue;
+                        opt.setAttribute(key, this.emptyRow[key]);
+                    }
+                    opt.innerHTML = i18n.getEntry(this.emptyRow['data-i18n']) || this.emptyRow['innerHTML'] || 'Todos';
+                    this.target.appendChild(opt);
+                }
+                for (const item of this.data) {
+                    this.target.innerHTML += `<option value="${item[this.key]}">${item.fields[this.value]}</option>`;
+                }
+                this.onSuccess();
+            }
+        } catch (error) {
+            console.error("Erro no fetch:", error);
+            this.onError(); // Chama onError em caso de erro de rede ou parsing
+        } finally {
+            this.then(); // Funcao a ser executada independentemente do resultado
+        }
     }
 }
 
