@@ -3,13 +3,11 @@ from django.db.models import Q
 from pathlib import Path
 from django.conf import settings
 from core.models import Empresa, Filial
-# from core.models import Empresa, Filial, ImageField as core_ImageField
 from core.constants import DEFAULT_MESSAGES
 from datetime import datetime, date
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
-# from core.extras import create_image
 from auditlog.registry import auditlog
 from django.core.exceptions import ValidationError
 
@@ -186,18 +184,6 @@ class Funcionario(Pessoa):
         # O Django já cria as pastas automaticamente
         ext = filename.split('.')[-1]
         return f"pessoal/fotos/{instance.filial.empresa.id}_{instance.matricula}_{int(datetime.now().timestamp())}.{ext}"
-    # def process_and_save_photo(self, foto_data_url):
-    #     if not foto_data_url:
-    #         return
-    #     if self.foto:
-    #         self.foto.delete(save=False) # caso update da foto, apaga a anterior
-    #     folder_relative = "pessoal/fotos"
-    #     folder_path = Path(settings.MEDIA_ROOT) / folder_relative
-    #     folder_path.mkdir(parents=True, exist_ok=True)
-    #     file_name = f"{self.filial.empresa.id}_{self.matricula}_{int(datetime.now().timestamp())}.png"
-    #     create_image(foto_data_url, str(folder_path), file_name)
-    #     self.foto = f"{folder_relative}/{file_name}"
-    #     self.save(update_fields=['foto'])
     def delete(self, *args, **kwargs):
         # ao excluir funcionario, caso ele tenha foto, apaga registro fisico
         if self.foto:

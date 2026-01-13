@@ -5,7 +5,7 @@
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
-<link href="https://releases.transloadit.com/uppy/v5.2.1/uppy.min.css" rel="stylesheet" />
+<link href="{% static 'css/vendor/uppy.min.css' %}" rel="stylesheet" />
 {% endblock %}
 
 
@@ -34,7 +34,7 @@
 <script src="{% static 'js/form.js' %}"></script>
 
 <script type="module">
-    import { Uppy, Dashboard, Webcam, ImageEditor } from 'https://releases.transloadit.com/uppy/v5.2.1/uppy.min.mjs'
+    import { Uppy, Dashboard, Webcam, ImageEditor } from "{% static 'js/vendor/uppy.min.mjs' %}"
     
     const uppy = new Uppy({
         debug: true,
@@ -55,7 +55,6 @@
         closeAfterFinish: true,
         dismissible: true,
         autoOpen: 'imageEditor',
-        // proudlyDisplayPoweredByUppy: false,
         disableLocalFilesNameEdit: true, 
     })
     .use(Webcam, { 
@@ -74,20 +73,17 @@
         if (result.successful && result.successful.length > 0) {
             const file = result.successful[0]; // pega o primeiro arquivo
             const blob = file.data; // formato binario/Blob
-            const urlPreview = URL.createObjectURL(blob); // obtem imagem carregada
-            document.getElementById('foto-preview').src = urlPreview; // atualiza preview
-            const reader = new FileReader(); //
-            reader.onloadend = () => {
-                const base64data = reader.result;
-                document.getElementById('id_foto_data_url').value = base64data;
-            };
-            reader.readAsDataURL(blob);
+            document.getElementById('foto-preview').src = URL.createObjectURL(blob); // atualiza preview
+            const dataTransfer = new DataTransfer();
+            const newFile = new File([blob], `foto_funcionario.png`, { type: "image/png" });
+            dataTransfer.items.add(newFile);
+            document.getElementById('id_foto').files = dataTransfer.files;
             setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
         }
     });
-
+    
     document.addEventListener('i18n_changed', ()=>{
-    // atualiza mapa de traducao do uppy sempre que o idioma for trocado
+        // atualiza mapa de traducao do uppy sempre que o idioma for trocado
         uppy.setOptions({
             locale: {
                 strings: i18n.getEntries('uppy')

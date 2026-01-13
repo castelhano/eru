@@ -4,9 +4,9 @@
     <div class="row g-lg-3">
         <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
             {% if funcionario.foto %}
-            <img src="{{funcionario.foto_url}}" class="widget-thumb-img pointer" style="min-width: 110px;" onclick="" id="foto-preview" alt="Foto Funcionario">
+            <img src="{{funcionario.foto_url}}" class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
             {% else %}
-            <img src="{% static 'img/default_user.png' %}" class="widget-thumb-img pointer" style="min-width: 110px;" onclick="" id="foto-preview" alt="Foto Funcionario">
+            <img src="{% static 'img/default_user.png' %}" class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
             {% endif %}
             <div class="widget-thumb-controls ms-2 ms-lg-0">
                 <div class="row g-0">
@@ -33,14 +33,18 @@
                             <label for="id_matricula" data-i18n="personal.common.employeeId">Matricula</label>
                         </div>
                         <div class="form-floating col mb-1">
-                            <select name="filial" id="id_filial" class="form-select">
+                            <select name="filial" id="id_filial" class="form-select" {% if disabled %}disabled{% endif %}>
+                                {% if disabled %}
+                                <option value="{{ funcionario.filial.id }}" selected>{{ funcionario.filial.nome }}</option>
+                                {% else %}
                                 {% for empresa in user.profile.empresas %}
-                                <optgroup label="{{empresa.nome}}">
+                                <optgroup label="{{ empresa.nome }}">
                                     {% for filial in empresa.filiais_permitidas %}
-                                    <option value="{{filial.id|safe}}">{{filial.nome}}</option>
+                                    <option value="{{ filial.id }}" {% if filial == funcionario.filial %}selected{% endif %}>{{ filial.nome }}</option>
                                     {% endfor %}
                                 </optgroup>
                                 {% endfor %}
+                                {% endif %}
                             </select>
                             <label for="id_filial" data-i18n="common.branch">Filial</label>
                         </div>
@@ -67,17 +71,21 @@
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-3">
-                            <select class="form-select" id="id_setor" name="setor" onchange="updateCargos(this.value)">
+                            <select class="form-select" id="id_setor" name="setor" {% if disabled %}disabled{% else %}onchange="updateCargos(this.value)"{% endif %}>
                                 <option value="">---------</option>
+                                {% if disabled %}
+                                <option value="{{funcionario.cargo.setor.id|safe|default:''}}">{{funcionario.cargo.setor.nome|default:'---------'}}</option>
+                                {% else %}
                                 {% for setor in setores %}
                                 <option value="{{setor.id|safe}}">{{setor.nome}}</option>
                                 {% endfor %}
+                                {% endif %}
                             </select>
                             <label for="id_setor" data-i18n="common.sector">Setor</label>
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
-                            <select class="form-select" id="id_cargo" name="cargo">
-                                <option value="">---------</option>
+                            <select class="form-select" id="id_cargo" name="cargo"{% if disabled %} disabled{% endif %}>
+                                <option value="{{funcionario.cargo.id|safe|default:''}}">{{funcionario.cargo.nome|default:'---------'}}</option>
                             </select>
                             <label for="id_cargo" data-i18n="common.position">Cargo</label>
                         </div>
@@ -131,7 +139,6 @@
                         </div>
                     </div>
                     <input type="file" name="foto" id="id_foto" style="display:none">
-                    <!-- <input type="hidden" name="foto_data_url" id="id_foto_data_url"> -->
                     <div class="form-check form-switch mt-2">
                         {{form.pne}}
                         <label class="form-check-label" for="id_pne" data-i18n="personal.employee.form.personWithSpecialNeeds">PNE Portador de necessidades especiais</label>
@@ -260,7 +267,7 @@
     </div>
     <div class="row mt-3">
         <div class="col">
-            <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save__bold:g" {% if 'funcionario_id' in request.get_full_path and not perms.pessoal.change_funcionario %} disabled{% endif %}><b>G</b>ravar</button>
+            <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save__bold:g"{% if disabled %} disabled{% endif %}><b>G</b>ravar</button>
         </div>
     </div>
 </div>

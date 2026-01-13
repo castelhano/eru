@@ -95,20 +95,23 @@ class jsForm{
             }
         }
     }
-    get(field){ // Retorna valor do campo especificado ou na omissao dicionario com todos os campos do form
-        let formData = new FormData(this.form);
-        if(field){
-            if(this[field].type == 'select-multiple'){
-                return Array.from(this[field].options).filter(function (option) { return option.selected; }).map(function (option) {return option.value});
+    get(field) {
+        if (field && !this.form[field].disabled) {
+            if (this.form[field].type === 'select-multiple') {
+                return Array.from(this.form[field].selectedOptions).map(opt => opt.value);
             }
-            return formData.get(field)
+            return new FormData(this.form).get(field);
         }
-        let resp = {};
-        for(let [key, value] of formData){resp[key] = value}
-        this.form.querySelectorAll('select[multiple]').forEach((el)=>{ // se existe select multiple no form, Formdata retorna apenas um dos valores selecionados
-            resp[el.name] = Array.from(el.options).filter(function (option) { return option.selected; }).map(function (option) {return option.value});
-        })
-        return resp;
+        const resp = {};
+        Array.from(this.form.elements).forEach(el => {
+            if (!el.name || el.tagName === 'FIELDSET') return;
+            if (el.type === 'select-multiple') {
+                resp[el.name] = Array.from(el.selectedOptions).map(opt => opt.value);
+            } 
+            else if (['checkbox', 'radio'].includes(el.type)) { if (el.checked) resp[el.name] = el.value }
+            else { resp[el.name] = el.value }
+        });
+        return field ? resp[field] : resp;
     }
     exportCSV(opt={}){ // retorna em formato csv os dados do formulario
         let csv = [];

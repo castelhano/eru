@@ -5,7 +5,9 @@
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
-<link href="https://releases.transloadit.com/uppy/v5.2.1/uppy.min.css" rel="stylesheet" />
+{% if not disabled %}
+<link href="{% static 'css/vendor/uppy.min.css' %}" rel="stylesheet" />
+{% endif %}
 {% endblock %}
 
 
@@ -18,15 +20,15 @@
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
-            {% if perms.pessoal.view_eventofuncionario %}
+            {% if not disabled and perms.pessoal.view_eventofuncionario %}
             <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}" data-i18n="personal.common.event__plural__bold:t">Even<u><b>t</b></u>os</a></li>
             {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><button class="dropdown-item" type="button" id="exportCsvBtn">Baixar CSV</button></li>
+                    <li><button class="dropdown-item" type="button" id="exportCsvBtn" data-i18n="compound.downloadCsv">Baixar CSV</button></li>
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}" data-i18n="personal.common.dependant__plural">Dependentes</a></li>{% endif %}
-                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">Afastamentos</a></li>{% endif %}
+                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}" data-i18n="personal.employee.form.leaveOfAbsence__plural">Afastamentos</a></li>{% endif %}
                     {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
                     <li><a class="dropdown-item dropdown-item-danger" data-bs-toggle="modal" data-bs-target="#modal_desligamento" href="#">Desligar Funcionário</a></li>
                     {% endif %}
@@ -74,8 +76,9 @@
 <script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 
+{% if not disabled %}
 <script type="module">
-    import { Uppy, Dashboard, Webcam, ImageEditor } from 'https://releases.transloadit.com/uppy/v5.2.1/uppy.min.mjs'
+    import { Uppy, Dashboard, Webcam, ImageEditor } from "{% static 'js/vendor/uppy.min.mjs' %}"
     
     const uppy = new Uppy({
         debug: true,
@@ -96,7 +99,6 @@
         closeAfterFinish: true,
         dismissible: true,
         autoOpen: 'imageEditor',
-        // proudlyDisplayPoweredByUppy: false,
         disableLocalFilesNameEdit: true, 
     })
     .use(Webcam, { 
@@ -123,9 +125,9 @@
             setTimeout(() => uppy.cancelAll(), 500); // limpa o Uppy para permitir trocas posteriores
         }
     });
-
+    
     document.addEventListener('i18n_changed', ()=>{
-    // atualiza mapa de traducao do uppy sempre que o idioma for trocado
+        // atualiza mapa de traducao do uppy sempre que o idioma for trocado
         uppy.setOptions({
             locale: {
                 strings: i18n.getEntries('uppy')
@@ -134,6 +136,7 @@
     })
     
 </script>
+{% endif %}
 
 
 

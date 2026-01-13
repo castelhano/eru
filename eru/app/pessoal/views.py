@@ -438,15 +438,6 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
         if not self.request.user.has_perm('pessoal.change_funcionario'):
             raise PermissionDenied
         response = super().form_valid(form)
-        # foto_data = self.request.POST.get('foto_data_url')
-        # if foto_data:
-        #     try:
-        #         self.object.process_and_save_photo(foto_data)
-        #     except Exception as e:
-        #         messages.warning(
-        #             self.request, 
-        #             f"{DEFAULT_MESSAGES.get('saveError', 'Erro ao processar imagem')}{str(e)}"
-        #         )
         return response
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

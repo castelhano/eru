@@ -45,7 +45,7 @@ class FilialForm(BootstrapI18nMixin, forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['nome'].widget.attrs['maxlength'] = 8
+        self.fields['nome'].widget.attrs['maxlength'] = 35
         self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
 
 

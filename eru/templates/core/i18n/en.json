@@ -100,6 +100,8 @@
     },
     "compound": {
         "checkAll": "Check all $1",
+        "downloadCsv": "Download CSV",
+        "downloadJson": "Download JSON",
         "includeInactiveEntries": "Include inactive entries",
         "notInformed": "Not informed",
         "registerOf": "Register of $1",
