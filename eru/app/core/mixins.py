@@ -71,7 +71,7 @@ class BootstrapI18nMixin:
         for name, field in self.fields.items():
             key = self.i18n_maps.get(name)
             widget = field.widget
-            # 1. configuracao de Widgets Especiais
+            # 1. configuracao de widgets Especiais
             if key and hasattr(field, 'choices') and isinstance(key, dict):
                 W = I18nSelectMultiple if isinstance(widget, forms.SelectMultiple) else I18nSelect
                 widget = field.widget = W(choices=field.choices, data_map=key)
@@ -79,9 +79,19 @@ class BootstrapI18nMixin:
                 widget.attrs['data-i18n'] = key
             # 2. atribuicao de CSS e atributos
             css = self._CSS_MAP.get(type(widget), 'form-control')
+            sync_attrs = {
+                'max_length': 'maxlength',
+                'min_length': 'minlength',
+                'min_value': 'min',
+                'max_value': 'max',
+            }
+            for field_attr, html_attr in sync_attrs.items():
+                val = getattr(field, field_attr, None)
+                if val is not None:
+                    widget.attrs[html_attr] = val
             widget.attrs.update({
                 'class': f"{css} {widget.attrs.get('class', '')}".strip(),
-                'placeholder': widget.attrs.get('placeholder', ' ')
+                'placeholder': widget.attrs.get('placeholder', ' '),
             })
             # 3. cache da label (acessivel via {{ form.campo.i18n_label }})
             bf = self[name]

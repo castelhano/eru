@@ -6,17 +6,17 @@
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg">
             {{ form.nome }}
-            <label for="id_nome">Nome abreviado</label>
+            {{ form.nome.i18n_label }}
           </div>
           <div class="form-floating mb-1 col-lg">
             {{ form.cnpj_base }}
-            <label for="id_cnpj_base">CNPJ base</label>
+            {{ form.cnpj_base.i18n_label }}
           </div>
         </div>
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg">
             {{ form.razao_social }}
-            <label for="id_razao_social">Razão Social</label>
+            {{ form.razao_social.i18n_label }}
           </div>
         </div>
       </div>

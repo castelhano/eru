@@ -19,24 +19,30 @@ Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Ca
 
 
 
-class EmpresaForm(forms.ModelForm):
+class EmpresaForm(BootstrapI18nMixin, forms.ModelForm):
+    i18n_maps = {
+        'nome': 'common.name',
+        'razao_social': 'company.companyName',
+    }
     class Meta:
         model = Empresa
         fields = ['nome','razao_social','cnpj_base']
-    nome = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' ','autofocus':'autofocus'}))
-    razao_social = forms.CharField(required=False, max_length=80,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
-    cnpj_base = forms.CharField(required=False, max_length=15 ,widget=forms.TextInput(attrs={'class': 'form-control','placeholder':' '}))
+        widgets = {
+            'nome': forms.TextInput(attrs={'autofocus': True}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nome'].max_length = 10
+        self.fields['razao_social'].max_length = 80
+        self.fields['cnpj_base'].max_length = 15
+        self.setup_bootstrap_and_i18n()
 
 
 
 class FilialForm(BootstrapI18nMixin, forms.ModelForm):
-    # i18n_maps = {
-    #     # 'sexo': Funcionario.Sexo,
-    #     # 'regime': Funcionario.Regime,
-    #     # 'status': Funcionario.Status,
-    #     # 'estado_civil': Funcionario.EstadoCivil,
-    #     # 'motivo_desligamento': Funcionario.MotivoDesligamento,
-    # }
+    i18n_maps = {
+        'nome': 'common.name',
+    }
     class Meta:
         model = Filial
         fields = '__all__'
@@ -45,8 +51,8 @@ class FilialForm(BootstrapI18nMixin, forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['nome'].widget.attrs['maxlength'] = 35
-        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
+        self.fields['nome'].max_length = 35
+        self.setup_bootstrap_and_i18n()
 
 
 
