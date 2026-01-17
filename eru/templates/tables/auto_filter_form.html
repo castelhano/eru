@@ -14,6 +14,11 @@
             <div class="col-md-3 text-end">
                 <button type="submit" class="btn btn-sm btn-primary px-3">Filtrar</button>
                 <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+                {% if table.can_export %}
+                <button type="submit" name="_export" value="csv" class="btn btn-sm btn-success">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
+                </button>
+                {% endif %}
             </div>
         </form>
     </div>

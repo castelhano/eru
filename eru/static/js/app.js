@@ -9,7 +9,28 @@ appModalLoading._element.addEventListener('shown.bs.modal', ()=>{ if(pageshow_pe
 
 // trata erro de modal permanecer aberto ao usar o history back do navegador
 window.addEventListener('pageshow', (event) => { pageshow_persisted = event.persisted });
-window.onbeforeunload = (ev) => { appModalLoading.show() }
+window.onbeforeunload = (ev) => { 
+  appModalLoading.show();
+  const monitorDownload = setInterval(() => {
+    // Se o cookie de download aparecer, o servidor respondeu com o arquivo
+    if (document.cookie.indexOf("fileDownload=true") !== -1) {
+      
+      // 1. Esconde o modal que o onbeforeunload abriu
+      appModalLoading.hide();
+      
+      // 2. Limpa o cookie (importante para o próximo clique)
+      document.cookie = "fileDownload=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      // 3. Para o vigia
+      clearInterval(monitorDownload);
+    }
+  }, 500);
+  
+  // Se em 10 segundos nada acontecer (download falhar ou internet lenta), 
+  // paramos o vigia para não gastar processamento
+  setTimeout(() => clearInterval(monitorDownload), 10000);
+
+}
 
 /*
 * appAlert  Gera um alerta (bootstrap alert), somente um alerta aberto a cada momento

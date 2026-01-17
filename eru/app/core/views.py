@@ -15,7 +15,7 @@ from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter, EmpresaFilter, FilialFilter
 from .tables import EmpresaTable, FilialTable
-from .mixins import AjaxableListMixin
+from .mixins import AjaxableListMixin, CSVExportMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
@@ -208,7 +208,7 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView)
         return context
 
 
-class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = Empresa
     template_name = 'core/empresas.html'
     context_object_name = 'empresas'
@@ -218,6 +218,7 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
+        table = EmpresaTable(filtro.qs).config(self.request, filter_obj=filtro)
         context['table'] = EmpresaTable(filtro.qs).config(self.request, filter_obj=filtro)
         context['filter'] = filtro
         return context
