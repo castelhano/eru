@@ -1,6 +1,8 @@
 import django_filters
 from django.contrib.auth.models import User
 from auditlog.models import LogEntry
+from .models import Empresa, Filial
+from .mixins import FilterI18nMixin
 from django.contrib.contenttypes.models import ContentType
 from django_filters import DateFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters.widgets import RangeWidget
@@ -28,7 +30,7 @@ class LogEntryFilter(django_filters.FilterSet):
     timestamp = DateFromToRangeFilter(widget=RangeWidget(attrs={'type': 'date'}), label='Interval')
     actor = django_filters.CharFilter(
         field_name='actor__username', 
-        # lookup_expr='icontains', # 'icontains' permite uma busca parcial e insensivel a maiusculas/minusculas
+        # lookup_expr='icontains',
         # label='Username'
     )
     content_type = ModelMultipleChoiceFilter(
@@ -40,3 +42,24 @@ class LogEntryFilter(django_filters.FilterSet):
         fields = ['actor', 'action', 'content_type', 'timestamp']
 
 
+class EmpresaFilter(FilterI18nMixin, django_filters.FilterSet):
+    nome = django_filters.CharFilter(lookup_expr='icontains', label='Nome')
+    razao_social = django_filters.CharFilter(lookup_expr='icontains', label='Razão Social')
+    cnpj_base = django_filters.CharFilter(lookup_expr='icontains', label='Cnpj Base')
+    class Meta:
+        model = Empresa
+        fields = ['nome', 'razao_social', 'cnpj_base']
+
+
+class FilialFilter(django_filters.FilterSet):
+    nome = django_filters.CharFilter(lookup_expr='icontains', label='Nome')
+    cnpj = django_filters.CharFilter(lookup_expr='icontains', label='CNPJ')
+    cidade = django_filters.CharFilter(lookup_expr='icontains', label='Cidade')
+    class Meta:
+        model = Filial
+        fields = ['nome', 'cnpj', 'cidade', 'uf']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Injeta classes do Bootstrap em todos os campos do form de busca
+        for field in self.form.fields:
+            self.form.fields[field].widget.attrs.update({'class': 'form-control form-control-sm'})

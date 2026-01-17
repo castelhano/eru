@@ -13,7 +13,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
-from .filters import UserFilter, LogEntryFilter
+from .filters import UserFilter, LogEntryFilter, EmpresaFilter, FilialFilter
+from .tables import EmpresaTable, FilialTable
 from .mixins import AjaxableListMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -214,6 +215,13 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     permission_required = 'core.view_empresa'
     def get_queryset(self):
         return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
+        context['table'] = EmpresaTable(filtro.qs).config(self.request, filter_obj=filtro)
+        context['filter'] = filtro
+        return context
+
 
 class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Group
@@ -320,6 +328,22 @@ class EmpresaUpdateView(BaseUpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['empresa'] = self.object 
+        # 1. Queryset base (filiais da empresa atual)
+        qs = self.object.filiais.all()
+        
+        # 2. Instancia o filtro com os dados da URL
+        filtro = FilialFilter(self.request.GET, queryset=qs)
+        
+        # 3. Instancia a tabela com o queryset FILTRADO
+        table = FilialTable(filtro.qs)
+        
+        # 4. Configura (usando seu método do Mixin)
+        table.config(self.request)
+        
+        # table = FilialTable(self.object.filiais.all())
+        # RequestConfig(self.request, paginate={"per_page": 1}).configure(table)
+        context['filter'] = filtro
+        context['table'] = table
         return context
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.id})

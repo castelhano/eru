@@ -13,6 +13,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'auditlog',
+    'django_tables2',
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',

@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Empresas{% endblock %}
 {% block title_i18n %}common.company__plural{% endblock %}
 
@@ -19,38 +20,9 @@
   <div class="card-body tab-content">
     <h5 class="card-title" data-i18n="common.company__plural">Empresas</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
-      <table id="main_table" class="table border table-striped table-hover">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th data-i18n="common.name__posfix:*">Nome</th>
-            <th class="d-none d-lg-table-cell" data-i18n="company.companyName">Razão Social</th>
-            <th class="d-none d-lg-table-cell">CNPJ base</th>
-            <th class="d-none d-lg-table-cell" data-i18n="common.branch__plural">Filiais</th>
-            {% if perms.core.change_empresa %}
-            <th>&nbsp;</th>
-            {% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for empresa in empresas %}
-          <tr>
-            <td>{{empresa.id|safe}}</td>
-            <td>{{empresa.nome}}</td>
-            <td class="d-none d-lg-table-cell">{{empresa.razao_social}}</td>
-            <td class="d-none d-lg-table-cell">{{empresa.cnpj_base}}</td>
-            <td class="d-none d-lg-table-cell">
-              {% for filial in empresa.filiais.all %}
-                <span class="badge bg-body-secondary text-body">{{filial.nome|truncatechars:18}}</span>
-              {% endfor %}
-            </td>
-            {% if perms.core.change_empresa %}
-            <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'empresa_update' empresa.id|safe %}"><i class="bi bi-pen-fill"></i></a></td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="container-fluid pt-3">
+        {{ table.filter_html|safe }}
+        {% render_table table %}
     </div>
   </div>
 </div>
@@ -63,10 +35,10 @@
 
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'),{
-  canFilter: true,
-  filterCols: ['Nome'],
-});
+// const table = new jsTable(document.getElementById('main_table'),{
+//   canFilter: true,
+//   filterCols: ['Nome'],
+// });
 
 
 {% endblock %}

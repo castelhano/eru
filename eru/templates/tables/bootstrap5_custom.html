@@ -1,0 +1,23 @@
+{% extends "django_tables2/bootstrap5.html" %}
+
+{% block pagination.previous %}
+<li class="previous page-item">
+        <a href="{% querystring page=table.page_range.previous %}" class="page-link"> <span aria-hidden="true">&laquo;</span> </a>
+    </li>
+{% endblock pagination.previous %}
+
+{% block pagination.next %}
+    <li class="next page-item">
+        <a href="{% querystring page=table.page_range.next %}" class="page-link"> <span aria-hidden="true">&raquo;</span></a>
+    </li>
+{% endblock pagination.next %}
+
+{% block pagination %}
+    {% if table.page %}
+        <nav class="d-flex justify-content-end mt-1" aria-label="Table navigation">
+            <ul class="pagination">
+                {{ block.super }}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock pagination %}

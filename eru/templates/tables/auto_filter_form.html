@@ -1,0 +1,20 @@
+<div class="card mb-3 border-0 shadow-sm bg-light">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-end">
+            {% for field in filter.form %}
+                <div class="col-md-3">
+                    <label class="small fw-bold text-muted" 
+                        for="{{ field.id_for_label }}" 
+                        {% if field.field.i18n_label_key %}data-i18n="{{ field.field.i18n_label_key }}"{% endif %}>
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <div class="col-md-3 text-end">
+                <button type="submit" class="btn btn-sm btn-primary px-3">Filtrar</button>
+                <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>

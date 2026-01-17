@@ -3,7 +3,9 @@ asteval==1.0.7
 chardet==5.2.0
 Django==5.2.7
 django-auditlog==3.3.0
+django-extensions==4.1
 django-filter==25.2
+django-tables2==2.8.0
 djangorestframework==3.16.1
 pillow==10.4.0
 python-dateutil==2.9.0.post0

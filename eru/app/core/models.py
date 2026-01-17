@@ -9,16 +9,6 @@ from functools import cached_property
 from auditlog.registry import auditlog
 
 # EXTENDED **********************************************
-# class ImageField(models.ImageField):
-#     class Meta:
-#         abstract = True
-#     def save_form_data(self, instance, data):
-#         if data is not None: 
-#             file = getattr(instance, self.attname)
-#             if file and file != data:
-#                 file.delete(save=False)
-#         super().save_form_data(instance, data)
-
 class FileField(models.FileField):
     class Meta:
         abstract = True
@@ -31,6 +21,11 @@ class FileField(models.FileField):
 
 # **********************************************
 class Empresa(models.Model):
+    i18n_config = {
+        'nome': 'common.name',
+        'razao_social': 'company.companyName',
+        'filiais': 'common.branch__plural'
+    }
     nome = models.CharField(max_length=50, unique=True, blank=False)
     razao_social = models.CharField(max_length=150, blank=True)
     cnpj_base = models.CharField(max_length=20, blank=True)
