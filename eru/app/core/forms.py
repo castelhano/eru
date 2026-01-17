@@ -20,10 +20,10 @@ Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Ca
 
 
 class EmpresaForm(BootstrapI18nMixin, forms.ModelForm):
-    i18n_maps = {
-        'nome': 'common.name',
-        'razao_social': 'company.companyName',
-    }
+    # i18n_maps = {
+    #     'nome': 'common.name',
+    #     'razao_social': 'company.companyName',
+    # }
     class Meta:
         model = Empresa
         fields = ['nome','razao_social','cnpj_base']

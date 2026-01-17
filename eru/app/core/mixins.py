@@ -102,33 +102,31 @@ class BootstrapI18nMixin:
             bf.i18n_label = mark_safe(f'<label for="{bf.id_for_label}"{attr}>{field.label}</label>')
 
 
-# mixin auxiliar para TableCustomMixin, ajusta fields e labels para filtros da tabela
+# Mixin para django-filter, implementa injecao de data-i18n nos fields e label do filtro
 class FilterI18nMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Busca a configuração no Model vinculado ao Meta do Filtro
-        i18n_config = getattr(self.Meta.model, 'i18n_config', {})
-        
+        # busca mapa de traducao no model vinculado ao Meta do Filtro
+        i18n_map = getattr(self.Meta.model, 'i18n_map', {}) 
         for name, field in self.form.fields.items():
-            key = i18n_config.get(name)
+            key = i18n_map.get(name)
             if key:
                 # Injeta no Widget (Input)
                 field.widget.attrs['data-i18n'] = key
                 # Injeta um atributo no campo para a Label no template
                 field.i18n_label_key = key
             
-            # Aplica estilização padrão do Bootstrap 5
+            # Aplica estilizacao padrao do Bootstrap 5
             field.widget.attrs.update({
                 'class': 'form-control form-control-sm',
                 'placeholder': ' ' 
             })
 
-
+# Mixin para geracao altomatica de tabela (django-table2), atribui classes de cada campo (breakponit), insere botao de edicao, 
 class TableCustomMixin:
-    filter_html = "" # Inicializa para evitar erro no template
-
+    render_filter = "" # inicializa para evitar erro no template
     def __init__(self, *args, **kwargs):
-        # 1. Coluna de ação automática
+        # 1. coluna de acao
         edit_url = getattr(self.Meta, 'edit_url', None)
         if edit_url:
             self.base_columns["actions"] = tables.TemplateColumn(
@@ -136,41 +134,36 @@ class TableCustomMixin:
                 attrs={"td": {"class": "text-end fit py-1"}}, 
                 verbose_name=""
             )
-            
         super().__init__(*args, **kwargs)
-        
-        # 2. Configurações visuais padrão
+        # 2. configuracoes visuais padrao
         self.template_name = "tables/bootstrap5_custom.html"
         self.attrs = {
             "class": "table border table-striped table-hover mb-2",
             "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
         }
-
-        # 3. Responsividade e i18n Automático
+        # 3. responsividade e data-i18n
         model = getattr(self.Meta, 'model', None)
-        i18n_config = getattr(model, 'i18n_config', {})
+        i18n_map = getattr(model, 'i18n_map', {})
         resp_cols = getattr(self.Meta, 'responsive_columns', {})
-
         for col_name, column in self.columns.items():
             col_obj = column.column
-            # Aplica Classes de Responsividade
+            # aplica classes de responsividade
             if col_name in resp_cols:
                 col_obj.attrs.update({
                     "th": {"class": resp_cols[col_name]},
                     "td": {"class": resp_cols[col_name]}
                 })
-            # Aplica data-i18n do Model
-            key = i18n_config.get(col_name)
+            # aplica data-i18n do Model
+            key = i18n_map.get(col_name)
             if key:
                 th_attrs = col_obj.attrs.get("th", {})
                 th_attrs["data-i18n"] = key
                 col_obj.attrs["th"] = th_attrs
-
     def config(self, request, filter_obj=None):
         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
         RequestConfig(request, paginate=paginate).configure(self)
         if filter_obj:
-            self.filter_html = render_to_string(
+            self.render_filter = render_to_string(
                 'tables/auto_filter_form.html', 
                 {'filter': filter_obj, 'request': request}
             )
@@ -205,7 +198,7 @@ class TableCustomMixin:
 #                     "td": {"class": classes}
 #                 }
 #     def config(self, request, filter_obj=None):
-#         # 1. Configura a Paginação e Ordenação (RequestConfig)
+#         # 1. Configura a Paginacao e Ordenacao (RequestConfig)
 #         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
 #         RequestConfig(request, paginate=paginate).configure(self)
 #         # 2. Se houver um filtro, renderiza o HTML dele automaticamente
@@ -226,7 +219,7 @@ class TableCustomMixin:
 #             "class": "table table-sm border table-striped table-hover",
 #             "id": "filiais_list"
 #         }
-#         # 1. Aplica padrões se não definidos no Meta
+#         # 1. Aplica padroes se nao definidos no Meta
 #         if not hasattr(self.Meta, 'attrs'):
 #             self.Meta.attrs = default_attrs
 #         else:
@@ -235,7 +228,7 @@ class TableCustomMixin:
 #                 self.Meta.attrs["class"] = f"{default_attrs['class']} {current_class}".strip()
 #         self.template_name = getattr(self.Meta, 'template_name', "django_tables2/bootstrap5.html")
 
-#         # 2. Injeta a coluna de ação ANTES do super() para evitar o erro de setter
+#         # 2. Injeta a coluna de acao ANTES do super() para evitar o erro de setter
 #         edit_url = getattr(self.Meta, 'edit_url', None)
 #         if edit_url:
 #             self.base_columns["actions"] = tables.TemplateColumn(
@@ -246,7 +239,7 @@ class TableCustomMixin:
 
 #         super().__init__(*args, **kwargs)
 
-#         # 3. Aplica responsividade nas colunas já vinculadas (BoundColumns)
+#         # 3. Aplica responsividade nas colunas ja vinculadas (BoundColumns)
 #         resp_cols = getattr(self.Meta, 'responsive_columns', {})
 #         for col_name, classes in resp_cols.items():
 #             if col_name in self.columns:

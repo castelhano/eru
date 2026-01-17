@@ -21,7 +21,7 @@ class FileField(models.FileField):
 
 # **********************************************
 class Empresa(models.Model):
-    i18n_config = {
+    i18n_map = {
         'nome': 'common.name',
         'razao_social': 'company.companyName',
         'filiais': 'common.branch__plural'
