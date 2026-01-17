@@ -52,7 +52,7 @@
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-9">
                             {{ form.nome }}
-                            <label for="id_nome" data-i18n="personal.employee.form.fullName">Nome completo</label>
+                            {{form.nome.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-3">
                             {{ form.regime }}

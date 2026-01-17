@@ -87,6 +87,7 @@ class DependenteForm(forms.ModelForm):
 
 class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
     i18n_maps = {
+        'nome': 'common.name',
         'sexo': Funcionario.Sexo.i18n_map(),
         'regime': Funcionario.Regime.i18n_map(),
         'status': Funcionario.Status.i18n_map(),
@@ -111,7 +112,7 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos        
+        self.setup_bootstrap_and_i18n()
 
 
 class MotivoReajusteForm(forms.ModelForm):

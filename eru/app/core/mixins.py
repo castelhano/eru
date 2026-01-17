@@ -3,6 +3,7 @@ from django import forms
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from core.widgets import I18nSelect, I18nSelectMultiple
+from django.utils.safestring import mark_safe
 
 class AjaxableListMixin:
     # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
@@ -58,40 +59,31 @@ class AjaxableFormMixin:
                self.request.content_type == 'application/json'
 
 
+# adiciona classes e integracao com i18n aos campos
+# implementa label com integracao ao i18n usando {{ form.campo.i18n_label }}
 class BootstrapI18nMixin:
-    i18n_maps = {} 
+    i18n_maps = {}
+    _CSS_MAP = {
+        forms.CheckboxInput: 'form-check-input', 
+        forms.Select: 'form-select'
+    }
     def setup_bootstrap_and_i18n(self):
         for name, field in self.fields.items():
-            # 1. Injeta data-i18n caso definido em i18n_maps
-            if name in self.i18n_maps:
-                mapping = self.i18n_maps[name]
-                # Se o campo tem escolhas (Select), adiciona widget especial para options
-                if hasattr(field, 'choices') and isinstance(mapping, dict):
-                    # se for select multiple aplica I18nSelectMultiple
-                    if isinstance(field.widget, forms.SelectMultiple):
-                        field.widget = I18nSelectMultiple(
-                            choices=field.choices,
-                            data_map=mapping
-                        )
-                    # se for select simples aplica I18nSelect
-                    else:
-                         field.widget = I18nSelect(
-                            choices=field.choices,
-                            data_map=mapping
-                        )
-                else:
-                    # se for texto simples, injeta direto no atributo do widget
-                    field.widget.attrs['data-i18n'] = mapping
-            # 2. Definicao de Classe CSS
-            if isinstance(field.widget, forms.CheckboxInput):
-                css_class = 'form-check-input'
-            elif isinstance(field.widget, forms.Select):
-                css_class = 'form-select'
-            else:
-                css_class = 'form-control'
-            # 3. Preservar atributos
-            existing_classes = field.widget.attrs.get('class', '')
-            field.widget.attrs.update({
-                'class': f"{css_class} {existing_classes}".strip(),
-                'placeholder': ' '
+            key = self.i18n_maps.get(name)
+            widget = field.widget
+            # 1. configuracao de Widgets Especiais
+            if key and hasattr(field, 'choices') and isinstance(key, dict):
+                W = I18nSelectMultiple if isinstance(widget, forms.SelectMultiple) else I18nSelect
+                widget = field.widget = W(choices=field.choices, data_map=key)
+            elif key:
+                widget.attrs['data-i18n'] = key
+            # 2. atribuicao de CSS e atributos
+            css = self._CSS_MAP.get(type(widget), 'form-control')
+            widget.attrs.update({
+                'class': f"{css} {widget.attrs.get('class', '')}".strip(),
+                'placeholder': widget.attrs.get('placeholder', ' ')
             })
+            # 3. cache da label (acessivel via {{ form.campo.i18n_label }})
+            bf = self[name]
+            attr = f' data-i18n="{key}"' if isinstance(key, str) else ''
+            bf.i18n_label = mark_safe(f'<label for="{bf.id_for_label}"{attr}>{field.label}</label>')
