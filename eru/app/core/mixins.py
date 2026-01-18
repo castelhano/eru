@@ -165,45 +165,39 @@ class FilterI18nMixin:
 
 class TableCustomMixin:
     render_filter = ""
-    
     def __init__(self, *args, **kwargs):
-        # 1. Coluna de ação (Sua lógica original que funciona)
+        # 1. coluna de acao
         edit_url = getattr(self.Meta, 'edit_url', None)
         if edit_url:
             self.base_columns["actions"] = tables.TemplateColumn(
                 template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{edit_url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>',
-                attrs={"td": {"class": "text-end fit py-1"}}, 
+                attrs={"td": {"class": "text-end fit py-1"}},
+                orderable=False,
                 verbose_name=""
-            )
-        
+            )        
         super().__init__(*args, **kwargs)
-
-        # 2. Configurações visuais (Sua ordem original que garante o template)
+        # 2. configuracoes visuais
         self.template_name = "tables/bootstrap5_custom.html"
         self.attrs = {
             "class": "table border table-striped table-hover mb-2",
             "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
         }
-
-        # 3. I18n e Responsividade
+        # 3. i18n e responsividade
         model = getattr(self.Meta, 'model', None)
         i18n_map = getattr(model, 'i18n_map', {})
         resp_cols = getattr(self.Meta, 'responsive_columns', {})
-
         for col_name, column in self.columns.items():
-            # Responsividade (Sua lógica direta no col_obj)
+            # responsividade
             col_obj = column.column
             if col_name in resp_cols:
                 col_obj.attrs.update({
                     "th": {"class": resp_cols[col_name]},
                     "td": {"class": resp_cols[col_name]}
                 })
-
-            # Injetamos a chave tanto no col_obj (pro Python) quanto na column (pro Template)
+            # injeta chave no col_obj (Python) quanto na column (Template)
             key = i18n_map.get(col_name)
             if key:
-                column.i18n_key = key  # Essencial para o Template ler
-
+                column.i18n_key = key
     def config(self, request, filter_obj=None):
         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
         RequestConfig(request, paginate=paginate).configure(self)

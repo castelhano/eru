@@ -7,6 +7,7 @@ class EmpresaTable(TableCustomMixin, tables.Table):
     can_export = True
     filiais = tables.TemplateColumn(
         template_code='{% for f in record.filiais.all %}<span class="badge bg-secondary me-1">{{f.nome}}</span>{% endfor %}',
+        orderable=False,
         verbose_name="Filiais"
     )
     class Meta:

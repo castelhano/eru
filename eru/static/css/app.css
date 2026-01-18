@@ -118,11 +118,15 @@ div.btn-light:hover{background-color: #d3d4d5;}
 .table.border tr{border-left:3px solid var(--bs-table-border-color);}
 .table.border tbody tr.bg-body-secondary{border-left:3px solid var(--bs-tertiary-color);}
 .table td.fit,.table th.fit {white-space: nowrap;width: 1%;}
-.table-sortable th:not([data-sort_role='none']) {cursor: pointer;}
+th.orderable a { text-decoration: none; color: inherit; display: inline-block; position: relative; padding-right: 20px; }
+th.orderable a::after { font-family: 'bootstrap-icons'; content: "\F145"; position: absolute; right: 0; font-size: 0.7rem; color: #bbb; }
+th.orderable.asc a::after { content: "\F128"; color: #0d6efd; }
+th.orderable.desc a::after { content: "\F148"; color: #0d6efd; }
+/* .table-sortable th:not([data-sort_role='none']) {cursor: pointer;}
 .table-sortable .th-sort-asc::after {content: "\025B4";}
 .table-sortable .th-sort-desc::after {content: "\025BE";}
 .table-sortable .th-sort-asc::after,.table-sortable .th-sort-desc::after {margin-left: 5px;}
-.table-sortable .th-sort-asc,.table-sortable .th-sort-desc {background-color: var(--bs-secondary-bg);}
+.table-sortable .th-sort-asc,.table-sortable .th-sort-desc {background-color: var(--bs-secondary-bg);} */
 
 tr.selected td{background-color: var(--bs-secondary-bg);}
 .table-emphasis td, td.table-emphasis{background-color: var(--bs-warning-bg-subtle);color: var(--bs-warning-text)!important;}
