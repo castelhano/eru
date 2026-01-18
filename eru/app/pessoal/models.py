@@ -233,11 +233,10 @@ class Funcionario(Pessoa):
         return self.foto.name.split('/')[-1]
     @classmethod
     def i18n_choices(cls):
-        # retorna dicionario de traducao das choices
         return {
-            'sexo': Funcionario.Sexo.i18n_map(),
+            'sexo': cls.Sexo.i18n_map(),
             "status": cls.Status.i18n_map(),
-            'estado_civil': Funcionario.EstadoCivil.i18n_map(),
+            'estado_civil': cls.EstadoCivil.i18n_map(),
             "motivo_desligamento": cls.MotivoDesligamento.i18n_map(),
         }
     @property
@@ -297,6 +296,12 @@ class Contrato(models.Model):
     salario = models.DecimalField(max_digits=10, decimal_places=2)
     inicio = models.DateField(default=datetime.today)
     fim = models.DateField(blank=True, null=True)
+    @classmethod
+    def i18n_choices(cls):
+        return {
+            'regime': cls.Contrato.regime.i18n_map(),
+            "tipo": cls.Tipo.i18n_map(),
+        }
 auditlog.register(Contrato)
 
 

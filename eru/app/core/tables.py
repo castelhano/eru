@@ -1,24 +1,22 @@
 from .mixins import TableCustomMixin
-import django_tables2 as tables
+from django_tables2 import Column, Table
 from .models import Empresa, Filial
+from django.utils.html import format_html
 
 
-class EmpresaTable(TableCustomMixin, tables.Table):
+
+class EmpresaTable(TableCustomMixin, Table):
     can_export = True
-    filiais = tables.TemplateColumn(
-        template_code='{% for f in record.filiais.all %}<span class="badge bg-secondary me-1">{{f.nome}}</span>{% endfor %}',
-        orderable=False,
-        verbose_name="Filiais"
-    )
+    filiais = Column(orderable=False) 
     class Meta:
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
-        edit_url = "empresa_update"
-        paginate_by = 15
+        edit_url, paginate_by = "empresa_update", 20
+    def render_filiais(self, value):
+        return format_html("".join(format_html('<span class="badge bg-secondary me-1">{}</span>', f.nome) for f in value.all()))
 
 
-
-class FilialTable(TableCustomMixin, tables.Table):
+class FilialTable(TableCustomMixin, Table):
     class Meta:
         model = Filial
         fields = ("id", "nome", "cnpj", "cidade")

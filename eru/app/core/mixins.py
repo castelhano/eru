@@ -5,13 +5,13 @@ from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from core.widgets import I18nSelect, I18nSelectMultiple
 from django.utils.safestring import mark_safe
-import django_tables2 as tables
-# from django_tables2 import RequestConfig
+from django.utils.html import format_html
 from django_tables2 import RequestConfig, TemplateColumn
 from django.template.loader import render_to_string
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.query import QuerySet
 from django.db.models.fields import DateTimeField, DateField
+
 
 class AjaxableListMixin:
     # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
@@ -176,47 +176,20 @@ class FilterI18nMixin:
 
 
 
+
 class TableCustomMixin:
-    render_filter = ""
     def __init__(self, *args, **kwargs):
-        # 1. coluna de acao
-        edit_url = getattr(self.Meta, 'edit_url', None)
-        if edit_url:
-            self.base_columns["actions"] = tables.TemplateColumn(
-                template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{edit_url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>',
-                attrs={"td": {"class": "text-end fit py-1"}},
-                orderable=False,
-                verbose_name=""
-            )        
+        url = getattr(self.Meta, 'edit_url', None)
+        if url and "actions" not in self.base_columns:
+            self.base_columns["actions"] = TemplateColumn(template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>', attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
         super().__init__(*args, **kwargs)
-        # 2. configuracoes visuais
-        self.template_name = "tables/bootstrap5_custom.html"
-        self.attrs = {
-            "class": "table border table-striped table-hover mb-2",
-            "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
-        }
-        # 3. i18n e responsividade
-        model = getattr(self.Meta, 'model', None)
-        i18n_map = getattr(model, 'i18n_map', {})
-        resp_cols = getattr(self.Meta, 'responsive_columns', {})
-        for col_name, column in self.columns.items():
-            # responsividade
-            col_obj = column.column
-            if col_name in resp_cols:
-                col_obj.attrs.update({
-                    "th": {"class": resp_cols[col_name]},
-                    "td": {"class": resp_cols[col_name]}
-                })
-            # injeta chave no col_obj (Python) quanto na column (Template)
-            key = i18n_map.get(col_name)
-            if key:
-                column.i18n_key = key
+        self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {"class": "table border table-striped table-hover mb-2", "id": "app_table"}
+        model, resp = getattr(self.Meta, 'model', None), getattr(self.Meta, 'responsive_columns', {})
+        i18n = getattr(model, 'i18n_map', {})
+        for name, col in self.columns.items():
+            if name in resp: col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
+            col.i18n_key = i18n.get(name)
     def config(self, request, filter_obj=None):
-        paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
-        RequestConfig(request, paginate=paginate).configure(self)
-        if filter_obj:
-            self.render_filter = render_to_string(
-                'tables/auto_filter_form.html', 
-                {'filter': filter_obj, 'request': request, 'table': self}
-            )
+        RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+        if filter_obj: self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self
