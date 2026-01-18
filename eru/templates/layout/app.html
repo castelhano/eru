@@ -247,14 +247,22 @@
         appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.split("?")[0].split('#')[0]}, {'data-i18n':'sys.shortcuts.reload', icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {'data-i18n':'sys.shortcuts.showSysPanel', icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.logout', icon: 'bi bi-power', desc:'Encerra sessão no sistema'})
-        
+        if(document.getElementById('auto_filter_form_container')){
+            const filterCollapse = document.getElementById('auto_filter_form_container_container');
+            const filterBtn = document.getElementById('auto_filter_form_btn');
+            appKeyMap.bind('f2', ()=>{filterBtn.click()}, {'data-i18n':'sys.shortcuts.showFilters', icon: 'bi bi-funnel-fill', desc:'Exibe filtros da página', origin: 'app.html'})
+            filterCollapse.addEventListener('shown.bs.collapse', () => {
+                const firstInput = filterCollapse.querySelector('input:not([type=hidden]), select, textarea');
+                if (firstInput) { firstInput.focus() }
+            });
+        }
         {% block add_script %}{% endblock %}
     </script>
 
     {% block canvas_menu %}{% endblock %}
 
     <script>
-        // i18n.init();
+        i18n.init();
     </script>
 </body>
 </html>

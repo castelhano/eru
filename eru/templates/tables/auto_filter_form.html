@@ -1,25 +1,40 @@
-<div class="card mb-3 border-0 shadow-sm bg-light">
-    <div class="card-body">
-        <form method="GET" class="row g-2 align-items-end">
-            {% for field in filter.form %}
-                <div class="col-md-3">
-                    <label class="small fw-bold text-muted" 
-                        for="{{ field.id_for_label }}" 
-                        {% if field.field.i18n_label_key %}data-i18n="{{ field.field.i18n_label_key }}"{% endif %}>
-                        {{ field.label }}
-                    </label>
-                    {{ field }}
-                </div>
-            {% endfor %}
-            <div class="col-md-3 text-end">
-                <button type="submit" class="btn btn-sm btn-primary px-3">Filtrar</button>
-                <a href="{{ request.path }}" class="btn btn-sm btn-outline-secondary">Limpar</a>
-                {% if table.can_export %}
-                <button type="submit" name="_export" value="csv" class="btn btn-sm btn-success">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
-                </button>
-                {% endif %}
+<div class="accordion mb-2" id="auto_filter_form_container">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button 
+                id="auto_filter_form_btn"
+                class="accordion-button {% if not filter.form.data %}collapsed {% endif %}shadow-none py-2 ps-2 bg-body-tertiary" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#auto_filter_form_container_container">
+                <i class="bi bi-funnel-fill me-2 text-body"></i>
+                <span class="text-body-secondary" data-i18n="common.filter__plural">Filtros</span>
+            </button>
+        </h2>
+        <div id="auto_filter_form_container_container" class="accordion-collapse collapse{% if filter.form.data %} show{% endif %}" data-bs-parent="#auto_filter_form_container">
+            <div class="accordion-body bg-body-tertiary pt-4 position-relative">
+                <form method="GET" autocomplete="off">
+                    {% if table.can_export %}
+                    <div class="btn-group position-absolute top-0 end-0 pt-2 pe-3">
+                        <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark fs-8"> <i class="bi bi-download me-1"></i>CSV</button>
+                        {% endif %}
+                        <button type="submit" id="submit" class="btn btn-sm btn-dark fs-8" data-i18n="common.save__bold:g">Filtrar</button>
+                        <a href="{{ request.path }}" class="btn btn-sm btn-dark"><i class="bi bi-x-lg"></i></a>
+                    </div>
+                    <div class="row g-1">
+                        {% for field in filter.form %}
+                        <div class="col-md">
+                            <label class="small fw-bold text-body-secondary" 
+                                for="{{ field.id_for_label }}" 
+                                {% if field.field.i18n_label_key %}data-i18n="{{ field.field.i18n_label_key }}"{% endif %}>
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
