@@ -1,14 +1,41 @@
 {% extends "django_tables2/bootstrap5.html" %}
+{% load django_tables2 %}
+
+{% block table.thead %}
+    <thead {{ table.attrs.thead.as_html }}>
+        <tr>
+        {% for column in table.columns %}
+            <th {{ column.attrs.th.as_html }}>
+                {% if column.orderable %}
+                    {% with key=table.prefixed_order_by_field value=column.order_by_alias.next %}
+                        <a href="{% querystring key=value %}" {% if column.i18n_key %}data-i18n="{{ column.i18n_key }}"{% endif %}>
+                            {{ column.header }}
+                        </a>
+                    {% endwith %}
+                {% else %}
+                    <span {% if column.i18n_key %}data-i18n="{{ column.i18n_key }}"{% endif %}>
+                        {{ column.header }}
+                    </span>
+                {% endif %}
+            </th>
+        {% endfor %}
+        </tr>
+    </thead>
+{% endblock table.thead %}
 
 {% block pagination.previous %}
-<li class="previous page-item">
-        <a href="{% querystring page=table.page_range.previous %}" class="page-link"> <span aria-hidden="true">&laquo;</span> </a>
+    <li class="previous page-item">
+        <a href="{% querystring table.prefixed_page_field=table.page_range.previous %}" class="page-link">
+            <span aria-hidden="true">&laquo;</span>
+        </a>
     </li>
 {% endblock pagination.previous %}
 
 {% block pagination.next %}
     <li class="next page-item">
-        <a href="{% querystring page=table.page_range.next %}" class="page-link"> <span aria-hidden="true">&raquo;</span></a>
+        <a href="{% querystring table.prefixed_page_field=table.page_range.next %}" class="page-link">
+            <span aria-hidden="true">&raquo;</span>
+        </a>
     </li>
 {% endblock pagination.next %}
 

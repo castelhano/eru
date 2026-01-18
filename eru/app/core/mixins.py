@@ -6,9 +6,11 @@ from django.core import serializers
 from core.widgets import I18nSelect, I18nSelectMultiple
 from django.utils.safestring import mark_safe
 import django_tables2 as tables
-from django_tables2 import RequestConfig
+# from django_tables2 import RequestConfig
+from django_tables2 import RequestConfig, TemplateColumn
 from django.template.loader import render_to_string
 from django.db.models.fields.related import ManyToManyField
+from django.db.models.query import QuerySet
 from django.db.models.fields import DateTimeField, DateField
 
 class AjaxableListMixin:
@@ -64,35 +66,39 @@ class AjaxableFormMixin:
         return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
                self.request.content_type == 'application/json'
 
+
 class CSVExportMixin:
-# Mixin para views que permite exportar o queryset atual como CSV. Adicione ?_export=csv na URL para ativar
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('_export') == 'csv':
-            # usa o queryset da view (ja filtrado)
             table = context.get('table')
-            if table and hasattr(table, 'data'):
-                queryset = table.data
-            else:
-                queryset = context.get(self.context_object_name) or context.get('object_list')
-            # queryset = context.get(self.context_object_name) or context.get('object_list')
+            if not table:
+                return super().render_to_response(context, **response_kwargs)
             response = HttpResponse(content_type='text/csv; charset=utf-8')
             filename = f"{self.model._meta.model_name}_export.csv"
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            response.write('\ufeff'.encode('utf8')) # adiciona BOM para acentuacao no excel
-            writer = csv.writer(response, delimiter=';') # delimitador
-            # cabecalhos: usa os nomes dos campos do modelo
-            header_row = [field.verbose_name or field.name for field in self.model._meta.fields]
-            writer.writerow(header_row)
-            # preenche dados
-            for obj in queryset:
-                row = [getattr(obj, field.name) for field in self.model._meta.fields]
-                writer.writerow(row)
-            response.set_cookie("fileDownload", "true", max_age=60) # adiciona cookie na resposta para tratativa no cliente
+            response.write('\ufeff'.encode('utf8'))  # BOM para o Excel identificar UTF-8 corretamente
+            writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)            
+            exportable_columns = [
+                col for col in table.columns 
+                if col.name not in ['actions', 'acoes'] and col.header
+            ]
+            writer.writerow([str(column.header) for column in exportable_columns])
+            for row in table.rows:
+                row_data = []
+                for column in exportable_columns:
+                    value = row.get_cell_value(column.name)
+                    if isinstance(value, QuerySet):
+                        value = ", ".join([str(getattr(obj, 'nome', obj)) for obj in value.all()])
+                    elif hasattr(value, 'strftime'):
+                        value = value.strftime('%d/%m/%Y')
+                    if value is None:
+                        value = ""
+                    value = str(value).replace('\r', '').replace('\n', ' ') # limpeza de quebras de linha
+                    row_data.append(value)
+                writer.writerow(row_data)
+            response.set_cookie("fileDownload", "true", max_age=60)
             return response
-        
-        # Se nao for CSV, segue o fluxo normal (AjaxableListMixin ou render_to_response padrao)
         return super().render_to_response(context, **response_kwargs)
-
 
 
 # adiciona classes e integracao com i18n aos campos
@@ -155,11 +161,13 @@ class FilterI18nMixin:
                 'placeholder': ' ' 
             })
 
-# Mixin para geracao altomatica de tabela (django-table2), atribui classes de cada campo (breakponit), insere botao de edicao, 
+
+
 class TableCustomMixin:
-    render_filter = "" # inicializa para evitar erro no template
+    render_filter = ""
+    
     def __init__(self, *args, **kwargs):
-        # 1. coluna de acao
+        # 1. Coluna de ação (Sua lógica original que funciona)
         edit_url = getattr(self.Meta, 'edit_url', None)
         if edit_url:
             self.base_columns["actions"] = tables.TemplateColumn(
@@ -167,48 +175,92 @@ class TableCustomMixin:
                 attrs={"td": {"class": "text-end fit py-1"}}, 
                 verbose_name=""
             )
+        
         super().__init__(*args, **kwargs)
-        # 2. configuracoes visuais padrao
+
+        # 2. Configurações visuais (Sua ordem original que garante o template)
         self.template_name = "tables/bootstrap5_custom.html"
         self.attrs = {
             "class": "table border table-striped table-hover mb-2",
             "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
         }
-        # 3. responsividade e data-i18n
+
+        # 3. I18n e Responsividade
         model = getattr(self.Meta, 'model', None)
         i18n_map = getattr(model, 'i18n_map', {})
         resp_cols = getattr(self.Meta, 'responsive_columns', {})
+
         for col_name, column in self.columns.items():
+            # Responsividade (Sua lógica direta no col_obj)
             col_obj = column.column
-            # aplica classes de responsividade
             if col_name in resp_cols:
                 col_obj.attrs.update({
                     "th": {"class": resp_cols[col_name]},
                     "td": {"class": resp_cols[col_name]}
                 })
-            # aplica data-i18n do Model
+
+            # Injetamos a chave tanto no col_obj (pro Python) quanto na column (pro Template)
             key = i18n_map.get(col_name)
             if key:
-                th_attrs = col_obj.attrs.get("th", {})
-                th_attrs["data-i18n"] = key
-                col_obj.attrs["th"] = th_attrs
+                column.i18n_key = key  # Essencial para o Template ler
+
     def config(self, request, filter_obj=None):
         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
         RequestConfig(request, paginate=paginate).configure(self)
         if filter_obj:
             self.render_filter = render_to_string(
                 'tables/auto_filter_form.html', 
-                {'filter': filter_obj, 'request': request, 'table':self}
+                {'filter': filter_obj, 'request': request, 'table': self}
             )
         return self
-    # def export_as_csv(self):
-    #     response = HttpResponse(content_type='text/csv')
-    #     filename = f"{self.Meta.model._meta.model_name}_export.csv"
-    #     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    #     writer = csv.writer(response)
-    #     # 1. Cabecalhos (usando os verbose_names dos campos)
-    #     writer.writerow([self.columns[c].header for c in self.Meta.fields])
-    #     # 2. Dados (itera sobre o queryset filtrado)
-    #     for row in self.data:
-    #         writer.writerow([getattr(row, c) for c in self.Meta.fields if hasattr(row, c)])
-    #     return response
+
+
+
+
+
+# Mixin para geracao altomatica de tabela (django-table2), atribui classes de cada campo (breakponit), insere botao de edicao, 
+# class TableCustomMixin:
+#     render_filter = "" # inicializa para evitar erro no template
+#     def __init__(self, *args, **kwargs):
+#         # 1. coluna de acao
+#         edit_url = getattr(self.Meta, 'edit_url', None)
+#         if edit_url:
+#             self.base_columns["actions"] = tables.TemplateColumn(
+#                 template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{edit_url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>',
+#                 attrs={"td": {"class": "text-end fit py-1"}}, 
+#                 verbose_name=""
+#             )
+#         super().__init__(*args, **kwargs)
+#         # 2. configuracoes visuais padrao
+#         self.template_name = "tables/bootstrap5_custom.html"
+#         self.attrs = {
+#             "class": "table border table-striped table-hover mb-2",
+#             "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
+#         }
+#         # 3. responsividade e data-i18n
+#         model = getattr(self.Meta, 'model', None)
+#         i18n_map = getattr(model, 'i18n_map', {})
+#         resp_cols = getattr(self.Meta, 'responsive_columns', {})
+#         for col_name, column in self.columns.items():
+#             col_obj = column.column
+#             # aplica classes de responsividade
+#             if col_name in resp_cols:
+#                 col_obj.attrs.update({
+#                     "th": {"class": resp_cols[col_name]},
+#                     "td": {"class": resp_cols[col_name]}
+#                 })
+#             # aplica data-i18n do Model
+#             key = i18n_map.get(col_name)
+#             if key:
+#                 th_attrs = col_obj.attrs.get("th", {})
+#                 th_attrs["data-i18n"] = key
+#                 col_obj.attrs["th"] = th_attrs
+#     def config(self, request, filter_obj=None):
+#         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
+#         RequestConfig(request, paginate=paginate).configure(self)
+#         if filter_obj:
+#             self.render_filter = render_to_string(
+#                 'tables/auto_filter_form.html', 
+#                 {'filter': filter_obj, 'request': request, 'table':self}
+#             )
+#         return self
