@@ -89,23 +89,21 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
     i18n_maps = {
         'nome': 'common.name',
         'sexo': Funcionario.Sexo.i18n_map(),
-        'regime': Funcionario.Regime.i18n_map(),
         'status': Funcionario.Status.i18n_map(),
         'estado_civil': Funcionario.EstadoCivil.i18n_map(),
         'motivo_desligamento': Funcionario.MotivoDesligamento.i18n_map(),
     }
     class Meta:
         model = Funcionario
-        fields = ['filial','matricula','nome','apelido','nome_social','sexo','cargo','regime','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne','status','foto']
-        # fields = '__all__'
+        fields = ['filial','matricula','nome','apelido','nome_social','sexo','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne','status','foto']
         widgets = {
-            'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'data_desligamento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'rg_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_primeira_habilitacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'cnh_validade': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'data_admissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'data_nascimento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'data_desligamento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'rg_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'cnh_primeira_habilitacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'cnh_emissao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            # 'cnh_validade': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
             'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
             'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),

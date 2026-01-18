@@ -5,67 +5,72 @@
         <div class="row g-1">
             <div class="form-floating mb-lg-1 col-lg">
                 {{ form.nome }}
-                <label for="id_nome">Nome abreviado</label>
+                {{ form.nome.i18n_label }}
             </div>
             <div class="form-floating mb-lg-1 col-lg-2">
                 {{ form.fone }}
-                <label for="id_fone">Fone</label>
+                {{ form.fone.i18n_label }}
             </div>
             <div class="form-floating mb-lg-1 col-lg-2">
                 {{ form.fax }}
-                <label for="id_fax">Fax</label>
+                {{ form.fax.i18n_label }}
+            </div>
+            <div class="form-floating mb-lg-1 col-lg-2">
+            <!-- <div class="form-floating mb-lg-1 col-lg-2 custom-tom-select"> -->
+                {{ form.fuso_horario }}
+                {{ form.fuso_horario.i18n_label }}
             </div>
             <div class="form-floating mb-1 col-lg-3">
                 {{ form.cnpj }}
-                <label for="id_cnpj">CNPJ filial</label>
+                {{ form.cnpj.i18n_label }}
             </div>
         </div>
         <div class="row g-1">
             <div class="form-floating mb-lg-1 col-lg-6">
                 {{ form.nome_fantasia }}
-                <label for="id_nome_fantasia" data-i18n="company.tradeName">Nome Fantasia</label>
+                {{ form.nome_fantasia.i18n_label }}
             </div>
             <div class="form-floating mb-lg-1 col-lg-3">
                 {{ form.inscricao_estadual }}
-                <label for="id_inscricao_estadual">Inscrição Estadual</label>
+                {{ form.inscricao_estadual.i18n_label }}
             </div>
             <div class="form-floating mb-1 col-lg-3">
                 {{ form.inscricao_municipal }}
-                <label for="id_inscricao_municipal">Inscrição Municipal</label>
+                {{ form.inscricao_municipal.i18n_label }}
             </div>
         </div>
         <div class="row g-1">
             <div class="form-floating mb-lg-1 col-lg-9">
                 {{ form.endereco }}
-                <label for="id_endereco">Endereço</label>
+                {{ form.endereco.i18n_label }}
             </div>
             <div class="form-floating mb-1 col-lg-3">
                 {{ form.cep }}
-                <label for="id_cep">CEP</label>
+                {{ form.cep.i18n_label }}
             </div>
         </div>
         <div class="row g-1">
             <div class="form-floating mb-lg-1 col" style="max-width: 100px;">
                 {{ form.uf }}
-                <label for="id_uf">UF</label>
+                {{ form.uf.i18n_label }}
             </div>
             <div class="form-floating mb-lg-1 col">
                 {{ form.cidade }}
-                <label for="id_cidade">Cidade</label>
+                {{ form.cidade.i18n_label }}
             </div>
             <div class="form-floating mb-1 col-lg">
                 {{ form.bairro }}
-                <label for="id_bairro">Bairro</label>
+                {{ form.bairro.i18n_label }}
             </div>
         </div>
         <div class="row g-1">
             <div class="form-floating mb-lg-1 col-lg-2">
                 {{ form.cnae }}
-                <label for="id_cnae">Cnae principal</label>
+                {{ form.cnae.i18n_label }}
             </div>
             <div class="form-floating mb-1 col-lg-10">
                 {{ form.atividade }}
-                <label for="id_atividade">Descrição da atividade</label>
+                {{ form.atividade.i18n_label }}
             </div>
         </div>
         <div class="row g-1">
@@ -89,7 +94,7 @@
     
     <div class="row mt-3">
         <div class="col">
-            <button type="submit" id="submit" class="btn btn-primary" title="ALT + G"><b>G</b>ravar</button>
+            <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save__bold:g"><b>G</b>ravar</button>
         </div>
     </div>
     <input type="hidden" name="empresa" id="id_empresa" value="{{empresa.id|safe}}">

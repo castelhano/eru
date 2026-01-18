@@ -11,7 +11,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.core.add_filial %}
-      <li class="nav-item ms-1"><a class="nav-link active" id="add" href="{% url 'filial_create' empresa.id|safe %}"><i class="bi bi-plus-square-fill text-success me-2"></i> <span class="text-success-emphasis">Filial</span></a></li>
+      <li class="nav-item ms-1"><a class="nav-link active" id="add" href="{% url 'filial_create' empresa.id|safe %}"><i class="bi bi-plus-square-fill text-success me-2"></i> <span class="text-success-emphasis fs-7">Filial</span></a></li>
       {% endif %}
       <li class="nav-item"><a class="nav-link" id="back" href="{% url 'empresa_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.core.delete_empresa %}

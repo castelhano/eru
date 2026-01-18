@@ -101,17 +101,20 @@ class CSVExportMixin:
         return super().render_to_response(context, **response_kwargs)
 
 
-# adiciona classes e integracao com i18n aos campos
-# implementa label com integracao ao i18n usando {{ form.campo.i18n_label }}
 class BootstrapI18nMixin:
-    i18n_maps = {}
+# 1) adiciona classes e integracao com i18n aos campos (i18n_map deve ser definido no model)
+# 2) implementa label com integracao ao i18n usando {{ form.campo.i18n_label }}
+# 3) normaliza DateInputs para formato format='%Y-%m-%d', attrs={'type': 'date'}
     _CSS_MAP = {
         forms.CheckboxInput: 'form-check-input', 
         forms.Select: 'form-select'
     }
     def setup_bootstrap_and_i18n(self):
+        model_map = getattr(self._meta.model, 'i18n_map', {}) # dicionario definido no modelo
+        form_map = getattr(self, 'i18n_map', {})              # dicionario definido no form
+        i18n_map = {**model_map, **form_map}                  # combina dicionarios, prevalecendo o do form
         for name, field in self.fields.items():
-            key = self.i18n_maps.get(name)
+            key = i18n_map.get(name, '')
             widget = field.widget
             # 1. configuracao de widgets Especiais
             if key and hasattr(field, 'choices') and isinstance(key, dict):
@@ -119,7 +122,11 @@ class BootstrapI18nMixin:
                 widget = field.widget = W(choices=field.choices, data_map=key)
             elif key:
                 widget.attrs['data-i18n'] = key
-            # 2. atribuicao de CSS e atributos
+            # 2. normaliza DateInputs
+            if isinstance(field, forms.DateField):
+                widget.input_type = 'date'
+                widget.format = '%Y-%m-%d'
+            # 3. atribuicao de CSS e atributos
             css = self._CSS_MAP.get(type(widget), 'form-control')
             sync_attrs = {
                 'max_length': 'maxlength',
@@ -135,9 +142,9 @@ class BootstrapI18nMixin:
                 'class': f"{css} {widget.attrs.get('class', '')}".strip(),
                 'placeholder': widget.attrs.get('placeholder', ' '),
             })
-            # 3. cache da label (acessivel via {{ form.campo.i18n_label }})
+            # 4. cache da label (acessivel via {{ form.campo.i18n_label }})
             bf = self[name]
-            attr = f' data-i18n="{key}"' if isinstance(key, str) else ''
+            attr = f' data-i18n="{key}"'
             bf.i18n_label = mark_safe(f'<label for="{bf.id_for_label}"{attr}>{field.label}</label>')
 
 
@@ -207,54 +214,3 @@ class TableCustomMixin:
                 {'filter': filter_obj, 'request': request, 'table': self}
             )
         return self
-
-
-
-
-
-# Mixin para geracao altomatica de tabela (django-table2), atribui classes de cada campo (breakponit), insere botao de edicao, 
-# class TableCustomMixin:
-#     render_filter = "" # inicializa para evitar erro no template
-#     def __init__(self, *args, **kwargs):
-#         # 1. coluna de acao
-#         edit_url = getattr(self.Meta, 'edit_url', None)
-#         if edit_url:
-#             self.base_columns["actions"] = tables.TemplateColumn(
-#                 template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{edit_url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>',
-#                 attrs={"td": {"class": "text-end fit py-1"}}, 
-#                 verbose_name=""
-#             )
-#         super().__init__(*args, **kwargs)
-#         # 2. configuracoes visuais padrao
-#         self.template_name = "tables/bootstrap5_custom.html"
-#         self.attrs = {
-#             "class": "table border table-striped table-hover mb-2",
-#             "id": getattr(self.Meta, 'attrs', {}).get("id", "app_table")
-#         }
-#         # 3. responsividade e data-i18n
-#         model = getattr(self.Meta, 'model', None)
-#         i18n_map = getattr(model, 'i18n_map', {})
-#         resp_cols = getattr(self.Meta, 'responsive_columns', {})
-#         for col_name, column in self.columns.items():
-#             col_obj = column.column
-#             # aplica classes de responsividade
-#             if col_name in resp_cols:
-#                 col_obj.attrs.update({
-#                     "th": {"class": resp_cols[col_name]},
-#                     "td": {"class": resp_cols[col_name]}
-#                 })
-#             # aplica data-i18n do Model
-#             key = i18n_map.get(col_name)
-#             if key:
-#                 th_attrs = col_obj.attrs.get("th", {})
-#                 th_attrs["data-i18n"] = key
-#                 col_obj.attrs["th"] = th_attrs
-#     def config(self, request, filter_obj=None):
-#         paginate = {"per_page": getattr(self.Meta, 'paginate_by', 10)}
-#         RequestConfig(request, paginate=paginate).configure(self)
-#         if filter_obj:
-#             self.render_filter = render_to_string(
-#                 'tables/auto_filter_form.html', 
-#                 {'filter': filter_obj, 'request': request, 'table':self}
-#             )
-#         return self

@@ -14,7 +14,7 @@ class EmpresaTable(TableCustomMixin, tables.Table):
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
         edit_url = "empresa_update"
-        paginate_by = 10
+        paginate_by = 15
 
 
 

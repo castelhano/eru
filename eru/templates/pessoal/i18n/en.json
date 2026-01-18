@@ -28,8 +28,16 @@
             "terminated": "Terminated",
             "traffic": "Traffic"
         },
+        "compound": {
+            "legalEntity": "Legal entity"
+        },
         "employee": {
             "lookupCriteria": "Look up $1 or $2",
+            "regime": {
+                "daily": "Daily",
+                "weekly": "Flexible weekly",
+                "monthly": "Monthly"
+            },
             "form": {
                 "abandonment": "Abandonment",
                 "birthDate": "Date of Birth",
@@ -50,7 +58,6 @@
                 "fathersName": "Father's name",
                 "firstLicense": "First License",
                 "fullName": "Full name",
-                "legalEntity": "Legal entity",
                 "leaveOfAbsence":"Leave of Absence",
                 "maritalStatus": "Marital status",
                 "militaryLicense": "Military license",

@@ -157,20 +157,8 @@ class Funcionario(Pessoa):
                 cls.ABANDONO:          "personal.employee.form.abandonment",
                 cls.DECISAO_JUDICIAL:  "personal.employee.form.judicialTermination",
             }
-    class Regime(models.TextChoices):
-        CLT        = "CLT", "CLT"
-        PJ         = "PJ", "Pessoa Juridica"
-        APRENDIZ   = "AP", "Aprendiz"
-        @classmethod
-        def i18n_map(cls):
-            return {
-                cls.PJ:       "personal.employee.form.legalEntity",
-                cls.APRENDIZ: "personal.common.apprentice",
-            }
     filial = models.ForeignKey(Filial, blank=True, null=True, on_delete=models.RESTRICT)
     matricula = models.CharField(max_length=15, unique=True, blank=False)
-    cargo = models.ForeignKey(Cargo, blank=True, null=True, on_delete=models.RESTRICT)
-    regime = models.CharField(max_length=5, choices=Regime.choices, default='CLT', blank=True)
     data_admissao = models.DateField(blank=True, null=True, default=datetime.today)
     data_desligamento = models.DateField(blank=True, null=True)
     motivo_desligamento = models.CharField(max_length=3,choices=MotivoDesligamento.choices, blank=True)
@@ -181,7 +169,6 @@ class Funcionario(Pessoa):
     def __str__(self):
         return self.matricula
     def upload_foto_path(instance, filename):
-        # O Django já cria as pastas automaticamente
         ext = filename.split('.')[-1]
         return f"pessoal/fotos/{instance.filial.empresa.id}_{instance.matricula}_{int(datetime.now().timestamp())}.{ext}"
     def delete(self, *args, **kwargs):
@@ -228,6 +215,74 @@ class Funcionario(Pessoa):
         super().save(*args, **kwargs)
 auditlog.register(Funcionario, exclude_fields=['foto'])
 
+
+# Modelos para contrato / frequencia / escala
+
+class Contrato(models.Model):
+    class Regime(models.TextChoices):
+        CLT        = "CLT", "CLT"
+        PJ         = "PJ", "Pessoa Juridica"
+        ESTAGIO   = "EST", "Estagio"
+        APRENDIZ   = "AP", "Aprendiz"
+        @classmethod
+        def i18n_map(cls):
+            return {
+                cls.PJ:       "personal.compound.legalEntity",
+                cls.ESTAGIO:  "personal.common.internship",
+                cls.APRENDIZ: "personal.common.apprentice",
+            }
+    class Tipo(models.TextChoices):
+        DIARIO  = "D", "Diario"
+        SEMANAL = "S", "Semanal flexivel"
+        MENSAL  = "M", "Mensal"
+        @classmethod
+        def i18n_map(cls):
+            return {
+                cls.DIARIO:  "personal.employee.regime.daily",
+                cls.SEMANAL: "personal.employee.regime.weekly",
+                cls.MENSAL:  "personal.employee.regime.monthly",
+            }
+    funcionario = models.ForeignKey(Funcionario , on_delete=models.CASCADE, related_name='contratos')
+    cargo = models.ForeignKey(Cargo, blank=True, null=True, on_delete=models.RESTRICT)
+    regime = models.CharField(max_length=5, choices=Regime.choices, default='CLT', blank=True)
+    salario = models.DecimalField(max_digits=10, decimal_places=2)
+    inicio = models.DateField(default=datetime.today)
+    fim = models.DateField(blank=True, null=True)
+auditlog.register(Contrato)
+
+
+class Turno(models.Model):
+    nome = models.CharField(max_length=30, unique=True, blank=False)
+    dias_ciclo = models.PositiveIntegerField(default=7)
+    inicio = models.DateField(default=datetime.today)    
+auditlog.register(Turno)
+
+
+class TurnoDia(models.Model):
+    turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='dias')
+    posicao_ciclo = models.IntegerField()
+    entrada = models.TimeField()
+    saida = models.TimeField()
+    carga_horaria = models.DurationField()
+    tolerancia = models.PositiveIntegerField(default=10)
+    eh_folga = models.BooleanField(default=False)
+    class Meta:
+        constraints = [ models.UniqueConstraint( fields=['turno', 'posicao_ciclo'], name='unique_posicao_por_turno' )]
+        ordering = ['posicao_ciclo']
+    def clean(self):
+        if self.posicao_ciclo > self.turno.dias_no_ciclo:
+            raise ValidationError( f"A posição {self.posicao_ciclo} excede o limite de " f"{self.turno.dias_no_ciclo} dias definido para este turno" )
+auditlog.register(Turno)
+
+
+class TurnoHistorico(models.Model):
+    contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='historico_turnos')
+    turno = turno = models.ForeignKey(Turno, on_delete=models.PROTECT)
+    inicio_vigencia = models.DateField(default=datetime.today)
+auditlog.register(TurnoHistorico)
+
+
+
 class Afastamento(models.Model):
     class Motivo(models.TextChoices):
         DOENCA           = "D", "Doenca"
@@ -266,7 +321,7 @@ class Afastamento(models.Model):
         # retorna quantidade de dias que funcionario ficou/esta em afastamento
         if self.data_afastamento is None:
             return 0
-        # uda a data de retorno se existir, ou data atual
+        # usa a data de retorno se existir, ou data atual
         end_date = self.data_retorno if self.data_retorno else date.today()
         delta = (end_date - self.data_afastamento).days
         return max(delta, 0) # caso lancamento futuro retorno eh negativo, neste caso retorna 0

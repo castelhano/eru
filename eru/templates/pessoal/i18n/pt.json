@@ -14,6 +14,7 @@
             "event": "Evento#Eventos",
             "illness": "Doença",
             "incapable": "Incapaz#Incapazes",
+            "internship": "Internship#Internships",
             "kinship": "Parentesco",
             "mechanics": "Mecânica",
             "nickname": "Apelido",
@@ -28,8 +29,16 @@
             "terminated": "Desligado",
             "traffic": "Tráfego"
         },
+        "compound": {
+            "legalEntity": "Pessoa jurídica"
+        },
         "employee": {
             "lookupCriteria": "Pesquisa por $1 ou $2",
+            "regime": {
+                "daily": "Diário",
+                "weekly": "Semanal flexivel",
+                "monthly": "Mensal"
+            },
             "form": {
                 "abandonment": "Abandono",
                 "birthDate": "Data de Nascimento",
@@ -50,7 +59,6 @@
                 "fathersName": "Nome do pai",
                 "firstLicense": "Primeira Licença",
                 "fullName": "Nome completo",
-                "legalEntity": "Pessoa jurídica",
                 "leaveOfAbsence": "Afastamento#Afastamentos",
                 "maritalStatus": "Estado civil",
                 "militaryLicense": "Licença militar",

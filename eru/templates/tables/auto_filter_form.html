@@ -3,7 +3,7 @@
         <h2 class="accordion-header">
             <button 
                 id="auto_filter_form_btn"
-                class="accordion-button {% if not filter.form.data %}collapsed {% endif %}shadow-none py-2 ps-2 bg-body-tertiary" 
+                class="accordion-button collapsed shadow-none py-2 ps-2 bg-body-tertiary" 
                 type="button" 
                 data-bs-toggle="collapse" 
                 data-bs-target="#auto_filter_form_container_container">
@@ -11,11 +11,11 @@
                 <span class="text-body-secondary" data-i18n="common.filter__plural">Filtros</span>
             </button>
         </h2>
-        <div id="auto_filter_form_container_container" class="accordion-collapse collapse{% if filter.form.data %} show{% endif %}" data-bs-parent="#auto_filter_form_container">
+        <div id="auto_filter_form_container_container" class="accordion-collapse collapse" data-bs-parent="#auto_filter_form_container">
             <div class="accordion-body bg-body-tertiary pt-4 position-relative">
                 <form method="GET" autocomplete="off">
-                    {% if table.can_export %}
                     <div class="btn-group position-absolute top-0 end-0 pt-2 pe-3">
+                        {% if table.can_export %}
                         <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark fs-8"> <i class="bi bi-download me-1"></i>CSV</button>
                         {% endif %}
                         <button type="submit" id="submit" class="btn btn-sm btn-dark fs-8" data-i18n="common.save__bold:g">Filtrar</button>

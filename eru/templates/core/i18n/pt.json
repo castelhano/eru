@@ -38,6 +38,7 @@
         "expired": "Expirado#Expirados",
         "export": "Exportar#Exportações",
         "female": "Feminino#Femininos",
+        "footer": "Rodapé",
         "garage": "Garagem#Garagens",
         "gender": "Gênero#Gêneros",
         "field": "Campo#Campos",
@@ -96,7 +97,8 @@
         "wait": "Aguardar",
         "warning": "Aviso#Avisos",
         "widower": "Viúvo#Viúvos",
-        "yes": "Sim"
+        "yes": "Sim",
+        "zipCode": "CEP"
     },
     "compound": {
         "checkAll": "Marcar todos os $1",
@@ -105,15 +107,15 @@
         "includeInactiveEntries": "Incluir registros inativos",
         "notInformed": "Não informado",
         "registerOf": "Cadastro de $1",
-        "startDate": "Data inicio"
+        "startDate": "Data inicio",
+        "timezone": "Fuso Horário"
     },
     "company": {
         "companyName": "Razão Social",
-        "tradeName": "Nome Fantasia",
+        "field": "Atividade",
         "municipalReg": "Inscrição municipal",
         "stateReg": "Inscrição estadual",
-        "zipCode": "CEP"
-        
+        "tradeName": "Nome Fantasia"        
     },
     "sys": {
         "400": "[400] Requisição inválida, verifique com o administrador do sistema",

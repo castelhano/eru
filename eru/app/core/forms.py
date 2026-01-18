@@ -45,7 +45,7 @@ class FilialForm(BootstrapI18nMixin, forms.ModelForm):
     }
     class Meta:
         model = Filial
-        fields = '__all__'
+        fields = [ 'empresa', 'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'inscricao_municipal', 'cnae', 'atividade', 'endereco', 'bairro', 'cidade', 'uf', 'cep', 'fone', 'fax', 'fuso_horario', 'logo', 'footer' ]
         widgets = {
             'nome': forms.TextInput(attrs={'autofocus': True}),
         }

@@ -38,6 +38,7 @@
         "expired": "Expired",
         "export": "Export#Exports",
         "female": "Female",
+        "footer": "Footer",
         "garage": "Garage#Garages",
         "gender": "Gender",
         "field": "Field#Fields",
@@ -96,7 +97,8 @@
         "wait": "Wait",
         "warning": "Warning",
         "widower": "Widower",
-        "yes": "Yes"
+        "yes": "Yes",
+        "zipCode": "Zip code"  
     },
     "compound": {
         "checkAll": "Check all $1",
@@ -105,14 +107,15 @@
         "includeInactiveEntries": "Include inactive entries",
         "notInformed": "Not informed",
         "registerOf": "Register of $1",
-        "startDate": "Start Date"
+        "startDate": "Start Date",
+        "timezone": "Timezone"
     },
     "company": {
         "companyName": "Company name",
-        "tradeName": "Trade name",
+        "field": "Field",
         "municipalReg": "Municipal Reg",
         "stateReg": "State Reg",
-        "zipCode": "Zip code"  
+        "tradeName": "Trade name"
     },
     "sys": {
         "400": "[400] Bad request, please check with your system administrator",

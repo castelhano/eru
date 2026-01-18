@@ -3,6 +3,12 @@
 {% block title %}Filial{% endblock %}
 {% block title_i18n %}common.branch{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/core.html" %}{% endblock%}
+
+
+{% block style_src %}
+<link rel="stylesheet" href="{% static 'css/vendor/tomselect.css' %}">
+{% endblock %}
+
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
@@ -55,6 +61,7 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/vendor/imask.js' %}"></script>
+<script src="{% static 'js/vendor/tomselect.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
 {% endblock %}
 
@@ -65,6 +72,10 @@
     const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})
     const fax = IMask(document.getElementById('id_fax'),{mask: '(00) 0000-0000'})
     
-    const form = new jsForm(document.getElementById('core_form'), {imask: [cnpj, cep, fone, fax]});
+    // const form = new jsForm(document.getElementById('core_form'), {imask: [cnpj, cep, fone, fax]});
+
+    // const fuso_horario = new TomSelect("#id_fuso_horario",{
+    //     create: false,
+    // });
 {% endblock %}
 </script>

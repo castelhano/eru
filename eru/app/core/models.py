@@ -1,4 +1,5 @@
 import os
+import zoneinfo
 from django.db import models
 from django.db.models import Prefetch
 from django.contrib.auth.models import User, Group
@@ -19,6 +20,16 @@ class FileField(models.FileField):
                 file.delete(save=False)
         super(FileField, self).save_form_data(instance, data)
 
+def get_timezone_choices():
+    # retorna lista de tuplas (valor, rotulo) ordenada
+    # return [(tz, tz) for tz in sorted(zoneinfo.available_timezones())]
+    tzs = [
+        (tz, tz.replace('_', ' ')) 
+        for tz in sorted(zoneinfo.available_timezones()) 
+        if '/' in tz and not tz.startswith('Etc/')
+    ]
+    return tzs
+
 # **********************************************
 class Empresa(models.Model):
     i18n_map = {
@@ -34,6 +45,20 @@ class Empresa(models.Model):
 auditlog.register(Empresa)
 
 class Filial(models.Model):
+    i18n_map = {
+        'empresa': 'common.company',
+        'nome': 'common.name',
+        'nome_fantasia': 'company.tradeName',
+        'inscricao_estadual': 'company.stateReg',
+        'inscricao_municipal': 'company.municipalReg',
+        'atividade': 'company.field',
+        'endereco': 'common.address',
+        'bairro': 'common.neighborhood',
+        'cidade': 'common.city',
+        'cep': 'common.zipCode',
+        'fuso_horario': 'compound.timezone',
+        'footer': 'common.footer',
+    }
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name='filiais')
     nome = models.CharField(max_length=50, unique=True, blank=False)
     nome_fantasia = models.CharField(max_length=150, blank=True)
@@ -49,6 +74,7 @@ class Filial(models.Model):
     cep = models.CharField(max_length=10, blank=True)
     fone = models.CharField(max_length=20, blank=True)
     fax = models.CharField(max_length=20, blank=True)
+    fuso_horario = models.CharField(blank=True, max_length=50, choices=get_timezone_choices())
     logo = models.ImageField(upload_to="core/logos/", blank=True)
     footer = models.TextField(blank=True)
     def __str__(self):
