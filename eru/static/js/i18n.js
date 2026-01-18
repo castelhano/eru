@@ -325,7 +325,7 @@ class I18n{
                     return;
                 }
                 if(e.target){ el[e.target] = resp.result }
-                else{ el.innerHTML = resp.result }
+                else if(!['SELECT', 'INPUT', 'TEXTAREA', 'PROGRESS', 'METER'].includes(el.tagName)){ el.innerHTML = resp.result }
             })
         })
         this.endAt = Date.now();

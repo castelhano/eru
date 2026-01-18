@@ -72,10 +72,8 @@
     const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})
     const fax = IMask(document.getElementById('id_fax'),{mask: '(00) 0000-0000'})
     
-    // const form = new jsForm(document.getElementById('core_form'), {imask: [cnpj, cep, fone, fax]});
+    const form = new jsForm(document.getElementById('core_form'), {imask: [cnpj, cep, fone, fax]});
 
-    // const fuso_horario = new TomSelect("#id_fuso_horario",{
-    //     create: false,
-    // });
+    const fuso_horario = new TomSelect("#id_fuso_horario",{ create: false, allowEmptyOption: true });
 {% endblock %}
 </script>

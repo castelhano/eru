@@ -74,7 +74,7 @@ class Filial(models.Model):
     cep = models.CharField(max_length=10, blank=True)
     fone = models.CharField(max_length=20, blank=True)
     fax = models.CharField(max_length=20, blank=True)
-    fuso_horario = models.CharField(blank=True, max_length=50, choices=get_timezone_choices())
+    fuso_horario = models.CharField(blank=True, max_length=50, choices=get_timezone_choices)
     logo = models.ImageField(upload_to="core/logos/", blank=True)
     footer = models.TextField(blank=True)
     def __str__(self):
