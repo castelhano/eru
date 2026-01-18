@@ -35,7 +35,7 @@ class EmpresaForm(BootstrapI18nMixin, forms.ModelForm):
         self.fields['nome'].max_length = 15
         self.fields['razao_social'].max_length = 80
         self.fields['cnpj_base'].max_length = 15
-        self.setup_bootstrap_and_i18n()
+        # self.setup_bootstrap_and_i18n()
 
 
 
@@ -52,7 +52,7 @@ class FilialForm(BootstrapI18nMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['nome'].max_length = 35
-        self.setup_bootstrap_and_i18n()
+        # self.setup_bootstrap_and_i18n()
 
 
 

@@ -21,9 +21,9 @@ class SetorForm(BootstrapI18nMixin, forms.ModelForm):
         widgets = {
             'nome': forms.TextInput(attrs={'autofocus': True}),
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.setup_bootstrap_and_i18n() # aplica classes de estilo, e atribui data-i18n aos campos
 
 class GrupoEventoForm(forms.ModelForm):
     class Meta:
@@ -45,9 +45,9 @@ class CargoForm(BootstrapI18nMixin, forms.ModelForm):
             'nome': forms.TextInput(attrs={'autofocus': True}),
             'atividades': forms.Textarea(attrs={'rows': 15}),
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.setup_bootstrap_and_i18n()
 
 
 class AfastamentoForm(BootstrapI18nMixin, forms.ModelForm):
@@ -66,9 +66,9 @@ class AfastamentoForm(BootstrapI18nMixin, forms.ModelForm):
             'reabilitado': forms.CheckboxInput(attrs={'role': 'switch'}),
             'detalhe': forms.Textarea(attrs={'placeholder': 'Detalhes', 'style': 'min-height:300px'}),
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.setup_bootstrap_and_i18n()
 
 
 class DependenteForm(forms.ModelForm):
@@ -101,9 +101,9 @@ class FuncionarioForm(BootstrapI18nMixin, forms.ModelForm):
             'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
             'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.setup_bootstrap_and_i18n()
 
 
 class MotivoReajusteForm(forms.ModelForm):
@@ -134,9 +134,9 @@ class EventoForm(BootstrapI18nMixin, forms.ModelForm):
         if rastreio_value and not RASTREIO_REGEX.match(rastreio_value):
             raise forms.ValidationError(settings.DEFAULT_MESSAGES['notMatchCriteria'])
         return rastreio_value
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.setup_bootstrap_and_i18n()
 
 class EventoMovimentacaoBaseForm(forms.ModelForm):
     inicio = forms.DateField(required=False, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))

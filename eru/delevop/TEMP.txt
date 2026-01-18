@@ -1,0 +1,3 @@
+<label for="id_(\w+)" data-i18n="[^"]+">[^<]+<\/label>
+
+{{ form.$1.i18n_label }}

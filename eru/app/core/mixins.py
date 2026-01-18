@@ -109,18 +109,24 @@ class BootstrapI18nMixin:
         forms.CheckboxInput: 'form-check-input', 
         forms.Select: 'form-select'
     }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_bootstrap_and_i18n()
     def setup_bootstrap_and_i18n(self):
         model_map = getattr(self._meta.model, 'i18n_map', {}) # dicionario definido no modelo
         form_map = getattr(self, 'i18n_map', {})              # dicionario definido no form
         i18n_map = {**model_map, **form_map}                  # combina dicionarios, prevalecendo o do form
+        choices_map = getattr(self._meta.model, 'i18n_choices', lambda: {})() # dicionario de choices (definido no modelo)
         for name, field in self.fields.items():
             key = i18n_map.get(name, '')
+            opt_map = choices_map.get(name)
             widget = field.widget
             # 1. configuracao de widgets Especiais
-            if key and hasattr(field, 'choices') and isinstance(key, dict):
+            # if key and hasattr(field, 'choices') and isinstance(key, dict):
+            if opt_map:
                 W = I18nSelectMultiple if isinstance(widget, forms.SelectMultiple) else I18nSelect
-                widget = field.widget = W(choices=field.choices, data_map=key)
-            elif key:
+                widget = field.widget = W(choices=field.choices, data_map=opt_map)
+            if key:
                 widget.attrs['data-i18n'] = key
             # 2. normaliza DateInputs
             if isinstance(field, forms.DateField):

@@ -128,6 +128,7 @@ class Cargo(models.Model):
         ordering = ['nome']
 auditlog.register(Cargo)
 
+    # "sexo": Sexo.i18n_map(),
 class Funcionario(Pessoa):
     i18n_map = {
         "matricula": "personal.common.employeeId",
@@ -136,16 +137,12 @@ class Funcionario(Pessoa):
         "apelido": "personal.common.nickname",
         "nome_social": "personal.employee.form.socialName",
         "sexo": "common.gender",
-        "sexo__choices": Funcionario.Sexo.i18n_map(),
-        'status__choices': Funcionario.Status.i18n_map(),
         "data_nascimento": "personal.employee.form.birthDate",
         "data_admissao": "personal.employee.form.hireDate",
         "estado_civil": "personal.employee.form.maritalStatus",
-        'estado_civil__choices': Funcionario.EstadoCivil.i18n_map(),
         "usuario": "common.user",
         "data_desligamento": "personal.employee.form.terminationDate",
         "motivo_desligamento": "personal.employee.form.terminationReason",
-        'motivo_desligamento__choices': Funcionario.MotivoDesligamento.i18n_map(),
         "nome_pai": "personal.employee.form.fathersName",
         "nome_mae": "personal.employee.form.mothersName",
         "pne": "personal.employee.form.personWithSpecialNeeds",
@@ -234,6 +231,15 @@ class Funcionario(Pessoa):
         return self.foto.url if self.foto else None
     def foto_name(self):
         return self.foto.name.split('/')[-1]
+    @classmethod
+    def i18n_choices(cls):
+        # retorna dicionario de traducao das choices
+        return {
+            'sexo': Funcionario.Sexo.i18n_map(),
+            "status": cls.Status.i18n_map(),
+            'estado_civil': Funcionario.EstadoCivil.i18n_map(),
+            "motivo_desligamento": cls.MotivoDesligamento.i18n_map(),
+        }
     @property
     def F_ehEditavel(self):
         return self.status != 'D'
