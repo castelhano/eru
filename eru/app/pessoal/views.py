@@ -230,7 +230,7 @@ class SetorCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVie
     model = Setor
     form_class = SetorForm
     template_name = 'pessoal/setor_add.html'
-    success_url = reverse_lazy('pessoal:setor_list')
+    success_url = reverse_lazy('pessoal:setor_create')
     permission_required = 'pessoal.add_setor'
 
 

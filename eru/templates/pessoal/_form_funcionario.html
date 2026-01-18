@@ -30,7 +30,7 @@
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.matricula }}
-                            <label for="id_matricula" data-i18n="personal.common.employeeId">Matricula</label>
+                            {{ form.matricula.i18n_label }}
                         </div>
                         <div class="form-floating col mb-1">
                             <select name="filial" id="id_filial" class="form-select" {% if disabled %}disabled{% endif %}>
@@ -46,71 +46,46 @@
                                 {% endfor %}
                                 {% endif %}
                             </select>
-                            <label for="id_filial" data-i18n="common.branch">Filial</label>
+                            {{ form.filial.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
-                        <div class="form-floating mb-lg-1 col-lg-9">
+                        <div class="form-floating mb-lg-1 col-lg">
                             {{ form.nome }}
                             {{form.nome.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-3">
-                            {{ form.regime }}
-                            <label for="id_regime" data-i18n="common.regime">Regime</label>
-                        </div>
-                    </div>
-                    <div class="row g-1">
-                        <div class="form-floating mb-lg-1 col-lg-9">
-                            {{ form.nome_social }}
-                            <label for="id_nome_social" data-i18n="personal.employee.form.socialName">Nome Social</label>
-                        </div>
-                        <div class="form-floating mb-1 col-lg-3">
                             {{ form.apelido }}
-                            <label for="id_apelido" data-i18n="personal.common.nickname">Apelido</label>
+                            {{ form.apelido.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
-                        <div class="form-floating mb-lg-1 col-lg-3">
-                            <select class="form-select" id="id_setor" name="setor" {% if disabled %}disabled{% else %}onchange="updateCargos(this.value)"{% endif %}>
-                                <option value="">---------</option>
-                                {% if disabled %}
-                                <option value="{{funcionario.cargo.setor.id|safe|default:''}}">{{funcionario.cargo.setor.nome|default:'---------'}}</option>
-                                {% else %}
-                                {% for setor in setores %}
-                                <option value="{{setor.id|safe}}">{{setor.nome}}</option>
-                                {% endfor %}
-                                {% endif %}
-                            </select>
-                            <label for="id_setor" data-i18n="common.sector">Setor</label>
-                        </div>
-                        <div class="form-floating mb-lg-1 col-lg-3">
-                            <select class="form-select" id="id_cargo" name="cargo"{% if disabled %} disabled{% endif %}>
-                                <option value="{{funcionario.cargo.id|safe|default:''}}">{{funcionario.cargo.nome|default:'---------'}}</option>
-                            </select>
-                            <label for="id_cargo" data-i18n="common.position">Cargo</label>
+                        <div class="form-floating mb-lg-1 col-lg">
+                            {{ form.nome_social }}
+                            {{ form.nome_social.i18n_label }}
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.sexo }}
-                            <label for="id_sexo" data-i18n="common.gender">Sexo</label>
-                        </div>
-                        <div class="form-floating mb-1 col-lg-3">
-                            {{ form.data_nascimento }}
-                            <label for="id_data_nascimento" data-i18n="personal.employee.form.birthDate">Data de Nascimento</label>
-                        </div>
+                            {{ form.sexo.i18n_label }}
+                        </div>                        
                     </div>
                     <div class="row g-1">
-                        <div class="form-floating mb-lg-1 col-lg-4">
+                        <div class="form-floating mb-1 col-lg">
+                            {{ form.data_nascimento }}
+                            {{ form.data_nascimento.i18n_label }}
+                        </div>
+                        <div class="form-floating mb-lg-1 col-lg">
                             {{ form.data_admissao }}
-                            <label for="id_data_admissao" data-i18n="personal.employee.form.hireDate">Data Admissão</label>
+                            {{ form.data_admissao.i18n_label }}
                         </div>
-                        <div class="form-floating mb-lg-1 col-lg-4">
+                        <div class="form-floating mb-lg-1 col-lg">
                             {{ form.estado_civil }}
-                            <label for="id_estado_civil" data-i18n="personal.employee.form.maritalStatus">Estado Civil</label>
+                            {{ form.estado_civil.i18n_label }}
                         </div>
-                        {% if perms.pessoal.associar_usuario %}
-                        <div class="form-floating mb-1 col-lg-4">
+                        {% if perms.auth.view_user %}
+                        <div class="form-floating mb-1 col-lg">
                             {{ form.usuario }}
-                            <label for="id_usuario" data-i18n="common.user">Usuário</label>
+                            {{ form.usuario.i18n_label }}
                         </div>
                         {% endif %}
                     </div>
@@ -118,24 +93,24 @@
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-4">
                             <input type="date" class="form-control fw-bold" id="id_data_desligamento" value="{{funcionario.data_desligamento|date:'Y-m-d'}}" disabled>
-                            <label for="id_data_desligamento" data-i18n="personal.employee.form.terminationDate">Data Desligamento</label>
+                            {{ form.data_desligamento.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg">
                             <input type="text" class="form-control fw-bold" id="id_motivo_desligamento" value=" {{funcionario.get_motivo_desligamento_display }}" disabled>
-                            <label for="id_motivo_desligamento" data-i18n="personal.employee.form.terminationReason">Motivo Desligamento</label>
+                            {{ form.motivo_desligamento.i18n_label }}
                         </div>
                     </div>
                     {% endif %}
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.nome_pai }}
-                            <label for="id_nome_pai" data-i18n="personal.employee.form.fathersName">Nome Pai</label>
+                            {{ form.nome_pai.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.nome_mae }}
-                            <label for="id_nome_mae" data-i18n="personal.employee.form.mothersName">Nome Mãe</label>
+                            {{ form.nome_mae.i18n_label }}
                         </div>
                     </div>
                     <input type="file" name="foto" id="id_foto" style="display:none">
@@ -152,11 +127,11 @@
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.rg_orgao_expedidor }}
-                            <label for="id_rg_orgao_expedidor" data-i18n="personal.employee.form.issuingAuthority__prefix:RG ">RG Orgão Expedidor</label>
+                            {{ form.rg_orgao_expedidor.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-4">
                             {{ form.rg_emissao }}
-                            <label for="id_rg_emissao" data-i18n="personal.employee.form.issueDate__prefix:RG ">RG Data de emissão</label>
+                            {{ form.rg_emissao.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
@@ -166,45 +141,45 @@
                         </div>
                         <div class="form-floating mb-1 col-lg-7">
                             {{ form.reservista }}
-                            <label for="id_reservista" data-i18n="personal.employee.form.militaryLicense">Reservista</label>
+                            {{ form.reservista.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.titulo_eleitor }}
-                            <label for="id_titulo_eleitor" data-i18n="personal.employee.form.voterRegistration">Titulo eleitor</label>
+                            {{ form.titulo_eleitor.i18n_label }}
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.titulo_zona }}
-                            <label for="id_titulo_zona" data-i18n="personal.employee.form.electoralZone">Zona</label>
+                            {{ form.titulo_zona.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-4">
                             {{ form.titulo_secao }}
-                            <label for="id_titulo_secao" data-i18n="personal.employee.form.pollingStation">Seção</label>
+                            {{ form.titulo_secao.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.cnh }}
-                            <label for="id_cnh" data-i18n="personal.employee.form.driversLicense">CNH</label>
+                            {{ form.cnh.i18n_label }}
                         </div>
                         <div class="form-floating mb-lg-1 col-lg">
                             {{ form.cnh_primeira_habilitacao }}
-                            <label for="id_cnh_primeira_habilitacao" data-i18n="personal.employee.form.firstLicense">Primeira Habilitação</label>
+                            {{ form.cnh_primeira_habilitacao.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-auto" style="min-width: 130px;">
                             {{ form.cnh_categoria }}
-                            <label for="id_cnh_categoria" data-i18n="common.category">Categoria</label>
+                            {{ form.cnh_categoria.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-5">
                             {{ form.cnh_emissao }}
-                            <label for="id_cnh_emissao" data-i18n="personal.employee.form.driversLicenseIssuance">CNH Emissão</label>
+                            {{ form.cnh_emissao.i18n_label }}
                         </div>
                         <div class="form-floating col-lg">
                             {{ form.cnh_validade }}
-                            <label for="id_cnh_validade" data-i18n="personal.employee.form.driversLicenseValidity">CNH Validade</label>
+                            {{ form.cnh_validade.i18n_label }}
                         </div>
                         <div class="form-floating col-lg">
                             {% if funcionario.cnh_validade == None %}
@@ -214,7 +189,7 @@
                             {% else %}
                             <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" data-i18n="common.expired" value="Vencida" disabled>
                             {% endif %}
-                            <label for="id_situacao_cnh" data-i18n="common.status">Status</label>
+                            {{ form.situacao_cnh.i18n_label }}
                         </div>
                     </div>
                 </div>
@@ -222,35 +197,35 @@
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-lg-12">
                             {{ form.endereco }}
-                            <label for="id_endereco" data-i18n="common.address">Endereço</label>
+                            {{ form.endereco.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col" style="max-width: 100px;">
                             {{ form.uf }}
-                            <label for="id_uf" data-i18n="common.state">UF</label>
+                            {{ form.uf.i18n_label }}
                         </div>
                         <div class="form-floating mb-lg-1 col">
                             {{ form.cidade }}
-                            <label for="id_cidade" data-i18n="common.city">Cidade</label>
+                            {{ form.cidade.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg">
                             {{ form.bairro }}
-                            <label for="id_bairro" data-i18n="common.district">Bairro</label>
+                            {{ form.bairro.i18n_label }}
                         </div>
                     </div>
                     <div class="row g-1">
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.fone1 }}
-                            <label for="id_fone1" data-i18n="common.fone__posfix: 01">Fone 01</label>
+                            {{ form.fone1.i18n_label }}
                         </div>
                         <div class="form-floating mb-lg-1 col-lg-3">
                             {{ form.fone2 }}
-                            <label for="id_fone2" data-i18n="common.fone__posfix: 02">Fone 02</label>
+                            {{ form.fone2.i18n_label }}
                         </div>
                         <div class="form-floating mb-1 col-lg-6">
                             {{ form.email }}
-                            <label for="id_email" data-i18n="common.email">Email</label>
+                            {{ form.email.i18n_label }}
                         </div>
                     </div>
                 </div>
@@ -258,7 +233,7 @@
                     <div class="row g-1">
                         <div class="form-floating mb-1 col-12">
                             {{ form.detalhe }}
-                            <label for="id_nome" data-i18n="common.detail__plural">Detalhes</label>
+                            {{ form.nome.i18n_label }}
                         </div>
                     </div>
                 </div>    
@@ -282,5 +257,4 @@
         appKeyMap.bind('ctrl+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: 'Exibe detalhes gerais do funcionário', origin: 'pessoal:_form_funcionario'})
         return [cpf, cnh]
     }
-    {% include 'pessoal/_updateCargos.js' %}
 </script>

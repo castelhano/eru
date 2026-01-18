@@ -99,7 +99,7 @@ class Setor(models.Model):
     def __str__(self):
         return self.nome
     def ativos(self):
-        return Funcionario.objects.filter(cargo__setor=self, status='A').count()
+        return 0
 auditlog.register(Setor)
 
 class Cargo(models.Model):
@@ -123,12 +123,55 @@ class Cargo(models.Model):
     def __str__(self):
         return self.nome
     def ativos(self):
-        return Funcionario.objects.filter(cargo=self, status='A').count()
+        return 0
     class Meta:
         ordering = ['nome']
 auditlog.register(Cargo)
 
 class Funcionario(Pessoa):
+    i18n_map = {
+        "matricula": "personal.common.employeeId",
+        "nome": "common.name",
+        "filial": "common.branch",
+        "apelido": "personal.common.nickname",
+        "nome_social": "personal.employee.form.socialName",
+        "sexo": "common.gender",
+        "sexo__choices": Funcionario.Sexo.i18n_map(),
+        'status__choices': Funcionario.Status.i18n_map(),
+        "data_nascimento": "personal.employee.form.birthDate",
+        "data_admissao": "personal.employee.form.hireDate",
+        "estado_civil": "personal.employee.form.maritalStatus",
+        'estado_civil__choices': Funcionario.EstadoCivil.i18n_map(),
+        "usuario": "common.user",
+        "data_desligamento": "personal.employee.form.terminationDate",
+        "motivo_desligamento": "personal.employee.form.terminationReason",
+        'motivo_desligamento__choices': Funcionario.MotivoDesligamento.i18n_map(),
+        "nome_pai": "personal.employee.form.fathersName",
+        "nome_mae": "personal.employee.form.mothersName",
+        "pne": "personal.employee.form.personWithSpecialNeeds",
+        "rg_orgao_expedidor": "personal.employee.form.issuingAuthority__prefix:RG ",
+        "rg_emissao": "personal.employee.form.issueDate__prefix:RG ",
+        "reservista": "personal.employee.form.militaryLicense",
+        "titulo_eleitor": "personal.employee.form.voterRegistration",
+        "titulo_zona": "personal.employee.form.electoralZone",
+        "titulo_secao": "personal.employee.form.pollingStation",
+        "cnh": "personal.employee.form.driversLicense",
+        "cnh_primeira_habilitacao": "personal.employee.form.firstLicense",
+        "cnh_categoria": "common.category",
+        "cnh_emissao": "personal.employee.form.driversLicenseIssuance",
+        "cnh_validade": "personal.employee.form.driversLicenseValidity",
+        "situacao_cnh": "common.status",
+        "situacao_cnh_valida": "common.valid",
+        "situacao_cnh_vencida": "common.expired",
+        "endereco": "common.address",
+        "uf": "common.state",
+        "cidade": "common.city",
+        "bairro": "common.district",
+        "fone1": "common.fone__posfix: 01",
+        "fone2": "common.fone__posfix: 02",
+        "email": "common.email",
+        "detalhe": "common.detail__plural"
+    }
     class Status(models.TextChoices):
         ATIVO     = "A", "Ativo"
         AFASTADO  = "F", "Afastado"
