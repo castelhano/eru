@@ -178,12 +178,25 @@ class FilterI18nMixin:
 
 
 class TableCustomMixin:
+# define padrao visual para tabela, injeta data-i18n nas colunas, insere botao action para acesso ao registro
+# para mudar configuracoes de attr, use o metodo __init__ na definicao da tabela ex:
+# def __init__(self, *args, **kwargs):
+#     super().__init__(*args, **kwargs)
+#     self.attrs.update({
+#         "data-navigate": "false",
+#         "data-action-selector": ".btn-dark"
+#     })
     def __init__(self, *args, **kwargs):
         url = getattr(self.Meta, 'edit_url', None)
         if url and "actions" not in self.base_columns:
             self.base_columns["actions"] = TemplateColumn(template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>', attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
         super().__init__(*args, **kwargs)
-        self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {"class": "table border table-striped table-hover mb-2", "id": "app_table"}
+        self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {
+            "class": "table border table-striped table-hover mb-2", 
+            "data-navigate": "true", 
+            "data-action-selector": ".btn", 
+            "id": self.__class__.__name__.lower()
+        }
         model, resp = getattr(self.Meta, 'model', None), getattr(self.Meta, 'responsive_columns', {})
         i18n = getattr(model, 'i18n_map', {})
         for name, col in self.columns.items():

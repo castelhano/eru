@@ -25,7 +25,7 @@
 
 {% block pagination.previous %}
     <li class="previous page-item">
-        <a href="{% querystring table.prefixed_page_field=table.page_range.previous %}" class="page-link">
+        <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}" class="page-link">
             <span aria-hidden="true">&laquo;</span>
         </a>
     </li>
@@ -33,7 +33,7 @@
 
 {% block pagination.next %}
     <li class="next page-item">
-        <a href="{% querystring table.prefixed_page_field=table.page_range.next %}" class="page-link">
+        <a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}" class="page-link">
             <span aria-hidden="true">&raquo;</span>
         </a>
     </li>
@@ -41,7 +41,7 @@
 
 {% block pagination %}
     {% if table.page %}
-        <nav class="d-flex justify-content-end mt-1" aria-label="Table navigation">
+        <nav class="d-flex justify-content-end mt-1" data-target="{{ table.attrs.id }}" aria-label="Table navigation">
             <ul class="pagination">
                 {{ block.super }}
             </ul>

@@ -216,6 +216,66 @@ function deepMerge(target, ...sources) {
   }
   return deepMerge(target, ...sources);
 }
+function appNavigateTable(el, options){
+  // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
+  // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito
+  let rowIndex = -1;
+  let rows = [];
+  const table = el.tagName == 'TABLE' ? el : null;
+  const actionSelector = options?.actionSelector || '.btn';
+  const nav = document.querySelector(`nav[data-target="${table.id}"]`);
+  if(!table){return}
+  const nextRow = ()=>{
+    document.activeElement.blur();
+    if (rowIndex < rows.length - 1) {
+      rowIndex++;
+      highlightRow();
+    }
+  }
+  const previousRow = ()=>{
+    document.activeElement.blur();
+    if (rowIndex > 0) {
+      rowIndex--;
+      highlightRow();
+    }
+  }
+  const nextPage = ()=>{
+    document.activeElement.blur();
+    const nextBtn = nav?.querySelector('.next a');
+    if (nextBtn) nextBtn.click();
+  }
+  const previousPage = ()=>{
+    const prevBtn = nav?.querySelector('.previous a');
+    if (prevBtn) prevBtn.click();
+  }
+  const runAction = ()=>{
+    let row = rows[rowIndex];
+    if (row) { row.querySelector(actionSelector)?.click() }
+  }
+  const highlightRow = ()=>{
+    rows.forEach(r => r.classList.remove('selected'));
+    if (rows[rowIndex]) {
+      rows[rowIndex].classList.add('selected');
+      rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel
+    }
+  }
+  const bindListeners = ()=>{
+    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {})
+    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {})
+    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {})
+    if(nav){
+      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {})
+      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {})
+
+    }
+  }
+  const init = ()=>{
+    rows = Array.from(table.querySelectorAll('tbody tr')); // pre carrega as linhas
+    bindListeners();
+  }
+  init();
+}
+
 
 
 // Codigo a ser executado apos carregamento completo da pagina
@@ -226,6 +286,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
   if(document.querySelector('[data-appConfirm="true"]')){
     appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação', 'data-i18n':'sys.confirmOperation'})
   }
+
+  // implementa navegacao em tabela com data-navigate="true"  
+  document.querySelectorAll('table[data-navigate="true"]').forEach(t => appNavigateTable(t, t.dataset));
+
   
   // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
   document.querySelectorAll('[data-appConfirm="true"]').forEach((el)=>{
