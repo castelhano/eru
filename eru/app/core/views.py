@@ -1,5 +1,6 @@
 import os, json, math
 from asteval import Interpreter
+from itertools import groupby
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views import View
@@ -14,8 +15,9 @@ from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
 from .filters import UserFilter, LogEntryFilter, EmpresaFilter, FilialFilter
-from .tables import EmpresaTable, FilialTable
+from .tables import EmpresaTable, FilialTable, LogsTable
 from .mixins import AjaxableListMixin, CSVExportMixin
+from django_tables2 import SingleTableView
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
@@ -120,41 +122,152 @@ class HandlerView(LoginRequiredMixin, BaseTemplateView):
         context['form'] = FilialForm()
         return context
 
-class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
+
+class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
+    model = LogEntry
     template_name = 'core/logs.html'
     permission_required = 'auditlog.view_logentry'
-    def get_grouped_models(self):
-        # agrupa permissions por app_label
-        target_apps = ['auth', 'core', 'trafego', 'pessoal']
-        models = ContentType.objects.filter(app_label__in=target_apps ).order_by('app_label', 'model')
-        grouped_models = {}
-        for model in models:
-            app = model.app_label
-            if app not in grouped_models:
-                grouped_models[app] = []
-            grouped_models[app].append(model)
-        return grouped_models
+
+    def get_queryset(self):
+        # 1. Base otimizada
+        qs = super().get_queryset().select_related('actor', 'content_type').order_by('-timestamp')
+        
+        # 2. Se não houver filtros (ignora 'page'), retorna vazio
+        if not any(k for k in self.request.GET if k != 'page'):
+            return qs.none()
+            
+        # 3. O django-filter via GET lida nativamente com listas se o LogEntryFilter estiver correto
+        return LogEntryFilter(self.request.GET, queryset=qs).qs
+
     def get_context_data(self, **kwargs):
-        # prepara contexto incial (GET)
         context = super().get_context_data(**kwargs)
-        context['grouped_models'] = self.get_grouped_models()
-        return context
-    def post(self, request, *args, **kwargs):
-        # manipula POST aplicando filtros com django-filter
-        context = self.get_context_data()
-        data = request.POST.copy()
-        data['content_type'] = request.POST.getlist('content_type')
-        data.pop('csrfmiddlewaretoken', None)
+        qs = self.get_queryset()
+        
+        # 4. Instancia o filtro para persistir os dados nos campos do form
+        filtro = LogEntryFilter(self.request.GET, queryset=self.model.objects.all())
+        
+        # 5. O .config() do seu Mixin aplica a paginação automaticamente via RequestConfig
+        context['table'] = LogsTable(qs).config(self.request, filter_obj=filtro)
+        
+        # 6. Agrupamento performático
+        cts = ContentType.objects.filter(app_label__in=['auth', 'core', 'trafego', 'pessoal']).order_by('app_label', 'model')
+        context['grouped_models'] = {k: list(v) for k, v in groupby(cts, lambda x: x.app_label)}
+        
+        # 7. Persistência JSON (opcional no GET, mas útil para seu JS)
+        data = {k: (v if len(v) == 1 else v) for k, v in self.request.GET.lists()}
         context['data'] = json.dumps(data)
-        queryset = LogEntry.objects.all().order_by('-timestamp')
-        log_filter = LogEntryFilter(request.POST, queryset=queryset)
-        logs_qs = log_filter.qs
-        max_entries = 100
-        entries_input = request.POST.get('entries')
-        if entries_input and entries_input.isdigit():
-            max_entries = int(entries_input)
-        context['logs'] = logs_qs[:max_entries]
-        return self.render_to_response(context)
+        
+        return context
+
+
+# v2 funcional, trabalhando com POST porem sem paginacao
+# class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+#     model = LogEntry
+#     template_name = 'core/logs.html'
+#     permission_required = 'auditlog.view_logentry'
+#     def get(self, request, *args, **kwargs):
+#         self.object_list = self.get_queryset().none()
+#         return super().get(request, *args, **kwargs)
+#     def post(self, request, *args, **kwargs):
+#         data = request.POST.copy()
+#         qs = self.get_queryset().select_related('actor', 'content_type').order_by('-timestamp')
+#         log_filter = LogEntryFilter(data, queryset=qs)
+#         final_qs = log_filter.qs
+#         if 'content_type' in data:
+#             final_qs = final_qs.filter(content_type__id__in=data.getlist('content_type'))
+#         limit = int(data.get('entries', 100)) if data.get('entries', '').isdigit() else 100
+#         self.object_list = list(final_qs[:limit])
+#         table = LogsTable(self.object_list).config(request, log_filter)
+#         context = self.get_context_data(filter=log_filter, table=table)
+#         data_to_dump = {k: (v[0] if len(v) == 1 else v) for k, v in data.lists()}
+#         data_to_dump.pop('csrfmiddlewaretoken', None)
+#         context['data'] = json.dumps(data_to_dump)
+#         return self.render_to_response(context)
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         cts = ContentType.objects.filter(app_label__in=['auth', 'core', 'trafego', 'pessoal']).order_by('app_label', 'model')
+#         context.update({
+#             'grouped_models': {k: list(v) for k, v in groupby(cts, lambda x: x.app_label)},
+#             'table': kwargs.get('table') or LogsTable(self.model.objects.none()).config(self.request)
+#         })
+#         context.update(kwargs)
+#         return context
+
+
+# V1
+# class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+#     model = LogEntry
+#     template_name = 'core/logs.html'
+#     permission_required = 'auditlog.view_logentry'
+#     def get(self, request, *args, **kwargs):
+#         self.object_list = self.model.objects.none()
+#         return super().get(request, *args, **kwargs)
+#     def post(self, request, *args, **kwargs):
+#         data = request.POST.copy()
+#         ct_list = data.getlist('content_type')
+#         qs = self.model.objects.select_related('actor', 'content_type').order_by('-timestamp')
+#         log_filter = LogEntryFilter(data, queryset=qs)
+#         final_qs = log_filter.qs
+#         if ct_list:
+#             final_qs = final_qs.filter(content_type__id__in=ct_list)
+#         limit = int(data.get('entries', 100)) if data.get('entries', '').isdigit() else 100
+#         self.object_list = list(final_qs[:limit])
+#         context = self.get_context_data(filter=log_filter, table=LogsTable(self.object_list).config(request, log_filter))
+        # data_to_dump = {k: (v[0] if len(v) == 1 else v) for k, v in data.lists()}
+
+#         data_to_dump = data.dict() # Converte para dict simples
+#         data_to_dump['content_type'] = ct_list # Garante a lista
+#         data_to_dump.pop('csrfmiddlewaretoken', None)
+#         context['data'] = json.dumps(data_to_dump)
+#         return self.render_to_response(context)
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         cts = ContentType.objects.filter(app_label__in=['auth', 'core', 'trafego', 'pessoal']).order_by('app_label', 'model')
+#         if 'table' not in context:
+#             context['table'] = LogsTable(self.model.objects.none()).config(self.request)
+#         context['grouped_models'] = {k: list(v) for k, v in groupby(cts, lambda x: x.app_label)}
+#         context.update(kwargs)
+#         return context
+
+
+
+
+
+# class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
+#     template_name = 'core/logs.html'
+#     permission_required = 'auditlog.view_logentry'
+#     def get_grouped_models(self):
+#         # agrupa permissions por app_label
+#         target_apps = ['auth', 'core', 'trafego', 'pessoal']
+#         models = ContentType.objects.filter(app_label__in=target_apps ).order_by('app_label', 'model')
+#         grouped_models = {}
+#         for model in models:
+#             app = model.app_label
+#             if app not in grouped_models:
+#                 grouped_models[app] = []
+#             grouped_models[app].append(model)
+#         return grouped_models
+#     def get_context_data(self, **kwargs):
+#         # prepara contexto incial (GET)
+#         context = super().get_context_data(**kwargs)
+#         context['grouped_models'] = self.get_grouped_models()
+#         return context
+#     def post(self, request, *args, **kwargs):
+#         # manipula POST aplicando filtros com django-filter
+        # context = self.get_context_data()
+        # data = request.POST.copy()
+        # data['content_type'] = request.POST.getlist('content_type')
+        # data.pop('csrfmiddlewaretoken', None)
+        # context['data'] = json.dumps(data)
+#         queryset = LogEntry.objects.all().order_by('-timestamp')
+#         log_filter = LogEntryFilter(request.POST, queryset=queryset)
+#         logs_qs = log_filter.qs
+#         max_entries = 100
+#         entries_input = request.POST.get('entries')
+#         if entries_input and entries_input.isdigit():
+#             max_entries = int(entries_input)
+#         context['logs'] = logs_qs[:max_entries]
+#         return self.render_to_response(context)
 
 # i18n: Retorna dicionario de dados (json) com linguagem solicitada (se existir)
 # --

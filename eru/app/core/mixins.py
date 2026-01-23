@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from core.widgets import I18nSelect, I18nSelectMultiple
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html
+from django.utils.html import format_html, strip_tags
 from django_tables2 import RequestConfig, TemplateColumn
 from django.template.loader import render_to_string
 from django.db.models.fields.related import ManyToManyField
@@ -66,39 +66,91 @@ class AjaxableFormMixin:
         return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
                self.request.content_type == 'application/json'
 
-
 class CSVExportMixin:
     def render_to_response(self, context, **response_kwargs):
-        if self.request.GET.get('_export') == 'csv':
-            table = context.get('table')
-            if not table:
-                return super().render_to_response(context, **response_kwargs)
-            response = HttpResponse(content_type='text/csv; charset=utf-8')
-            filename = f"{self.model._meta.model_name}_export.csv"
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
-            response.write('\ufeff'.encode('utf8'))  # BOM para o Excel identificar UTF-8 corretamente
-            writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)            
-            exportable_columns = [
-                col for col in table.columns 
-                if col.name not in ['actions', 'acoes'] and col.header
-            ]
-            writer.writerow([str(column.header) for column in exportable_columns])
-            for row in table.rows:
-                row_data = []
-                for column in exportable_columns:
-                    value = row.get_cell_value(column.name)
-                    if isinstance(value, QuerySet):
-                        value = ", ".join([str(getattr(obj, 'nome', obj)) for obj in value.all()])
-                    elif hasattr(value, 'strftime'):
-                        value = value.strftime('%d/%m/%Y')
-                    if value is None:
-                        value = ""
-                    value = str(value).replace('\r', '').replace('\n', ' ') # limpeza de quebras de linha
-                    row_data.append(value)
-                writer.writerow(row_data)
-            response.set_cookie("fileDownload", "true", max_age=60)
-            return response
-        return super().render_to_response(context, **response_kwargs)
+        if self.request.GET.get('_export') != 'csv':
+            return super().render_to_response(context, **response_kwargs)
+        table = context.get('table')
+        if not table: return super().render_to_response(context, **response_kwargs)
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        filename = f"{self.model._meta.model_name}_export.csv"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write('\ufeff'.encode('utf8'))
+        writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)
+        exclude = getattr(table.Meta, 'exclude_from_export', [])
+        cols = [
+            c for c in table.columns 
+            if c.name not in ['actions', 'acoes'] 
+            and c.name not in exclude 
+            and c.header
+        ]
+        # cols = [c for c in table.columns if c.name not in ['actions', 'acoes'] and c.header]
+        writer.writerow([str(c.header) for c in cols])
+        queryset = getattr(table.data, 'data', table.data)
+        if hasattr(queryset, '_prefetch_related_lookups') and queryset._prefetch_related_lookups:
+            iterator = queryset.iterator(chunk_size=2000)
+        else:
+            iterator = queryset.iterator()
+        for obj in iterator:
+            row_data = []
+            for col in cols:
+                value = row_data.append(self._get_csv_value(obj, col, table))
+            writer.writerow(row_data)
+        response.set_cookie("fileDownload", "true", max_age=60)
+        return response
+    def _get_csv_value(self, obj, col, table):
+        render_method = getattr(table, f"render_{col.name}", None)
+        display_method = getattr(obj, f"get_{col.name}_display", None)
+        val = render_method(getattr(obj, col.name)) if render_method else (display_method() if display_method else getattr(obj, col.name, ""))
+        if hasattr(val, 'all'): return ", ".join([str(i) for i in val.all()])
+        if hasattr(val, 'strftime'): 
+            return val.strftime('%d/%m/%Y %H:%M') if 'timestamp' in col.name else val.strftime('%d/%m/%Y')
+        return strip_tags(str(val or "")).replace('\n', ' ').strip()
+
+    # def _get_csv_value(self, obj, col, table):
+    #     # tenta pegar o valor renderizado pela tabela para manter formatacao mas remove tags HTML
+    #     render_method = getattr(table, f"render_{col.name}", None)
+    #     value = render_method(getattr(obj, col.name)) if render_method else getattr(obj, col.name, "")
+    #     if hasattr(value, 'all'): # QuerySets/RelatedManagers
+    #         return ", ".join([str(i) for i in value.all()])
+    #     if hasattr(value, 'strftime'): # ajuste para datas
+    #         return value.strftime('%d/%m/%Y %H:%M') if 'timestamp' in col.name else value.strftime('%d/%m/%Y')
+    #     # remove tags HTML caso o render_ metodo tenha retornado format_html
+    #     return strip_tags(str(value or "")).replace('\n', ' ').strip()
+
+# versao original
+# class CSVExportMixin:
+#     def render_to_response(self, context, **response_kwargs):
+#         if self.request.GET.get('_export') == 'csv':
+#             table = context.get('table')
+#             if not table:
+#                 return super().render_to_response(context, **response_kwargs)
+#             response = HttpResponse(content_type='text/csv; charset=utf-8')
+#             filename = f"{self.model._meta.model_name}_export.csv"
+#             response['Content-Disposition'] = f'attachment; filename="{filename}"'
+#             response.write('\ufeff'.encode('utf8'))  # BOM para o Excel identificar UTF-8 corretamente
+#             writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)            
+#             exportable_columns = [
+#                 col for col in table.columns 
+#                 if col.name not in ['actions', 'acoes'] and col.header
+#             ]
+#             writer.writerow([str(column.header) for column in exportable_columns])
+#             for row in table.rows:
+#                 row_data = []
+#                 for column in exportable_columns:
+#                     value = row.get_cell_value(column.name)
+#                     if isinstance(value, QuerySet):
+#                         value = ", ".join([str(getattr(obj, 'nome', obj)) for obj in value.all()])
+#                     elif hasattr(value, 'strftime'):
+#                         value = value.strftime('%d/%m/%Y')
+#                     if value is None:
+#                         value = ""
+#                     value = str(value).replace('\r', '').replace('\n', ' ') # limpeza de quebras de linha
+#                     row_data.append(value)
+#                 writer.writerow(row_data)
+#             response.set_cookie("fileDownload", "true", max_age=60)
+#             return response
+#         return super().render_to_response(context, **response_kwargs)
 
 
 class BootstrapI18nMixin:
@@ -178,8 +230,9 @@ class FilterI18nMixin:
 
 
 class TableCustomMixin:
-# define padrao visual para tabela, injeta data-i18n nas colunas, insere botao action para acesso ao registro
-# para mudar configuracoes de attr, use o metodo __init__ na definicao da tabela ex:
+# define padrao visual para tabela, injeta data-i18n nas colunas, insere botao action para acesso ao registro (ou execucao de script)
+# no Meta da tabela altere edit_url, action_script, action_classlist, action_innerhtml, para alterar configuracoes base do botao action
+# para mudar configuracoes de attr da tabela, use o metodo __init__ na definicao da tabela ex:
 # def __init__(self, *args, **kwargs):
 #     super().__init__(*args, **kwargs)
 #     self.attrs.update({
@@ -187,22 +240,74 @@ class TableCustomMixin:
 #         "data-action-selector": ".btn-dark"
 #     })
     def __init__(self, *args, **kwargs):
-        url = getattr(self.Meta, 'edit_url', None)
-        if url and "actions" not in self.base_columns:
-            self.base_columns["actions"] = TemplateColumn(template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>', attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
+        meta = getattr(self, 'Meta', object())
+        url = getattr(meta, 'edit_url', None)
+        script = getattr(meta, 'action_script', None)
+        if (url or script) and "actions" not in self.base_columns:
+            tag = 'a' if url else 'button type="button"'
+            attr = f'href="{{% url "{url}" record.id %}}"' if url else f'onclick="{script}"'
+            extra_attrs = getattr(meta, 'action_data_attrs', {})
+            data_attrs = " ".join([f"data-{k}='{{{{ {v}|safe }}}}'" for k, v in extra_attrs.items()])
+            class_list = getattr(meta, 'action_classlist', "btn btn-sm btn-dark")
+            inner_html = getattr(meta, 'action_innerhtml', '<i class="bi bi-pen-fill"></i>')
+            self.base_columns["actions"] = TemplateColumn(
+                template_code=f'<{tag} class="{class_list}" {attr} {data_attrs}>{inner_html}</{tag.split()[0]}>',
+                attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
+            )
+        # if (url or script) and "actions" not in self.base_columns:
+        #     tag = 'a' if url else 'button type="button"'
+        #     attr = f'href="{{% url "{url}" record.id %}}"' if url else f'onclick="{script}"'
+        #     class_list = getattr(meta, 'action_classlist', "btn btn-sm btn-dark")
+        #     inner_html = getattr(meta, 'action_innerhtml', '<i class="bi bi-pen-fill"></i>')
+        #     self.base_columns["actions"] = TemplateColumn(
+        #         template_code=f'<{tag} class="{class_list}" {attr}>{inner_html}</{tag.split()[0]}>',
+        #         attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
+        #     )
         super().__init__(*args, **kwargs)
-        self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {
-            "class": "table border table-striped table-hover mb-2", 
-            "data-navigate": "true", 
-            "data-action-selector": ".btn", 
+        self.template_name = "_tables/bootstrap5_custom.html"
+        self.attrs = {
+            "class": "table border table-striped table-hover mb-2",
+            "data-navigate": "true",
+            "data-action-selector": ".btn",
             "id": self.__class__.__name__.lower()
         }
-        model, resp = getattr(self.Meta, 'model', None), getattr(self.Meta, 'responsive_columns', {})
-        i18n = getattr(model, 'i18n_map', {})
+        # responsividade e I18n
+        resp = getattr(meta, 'responsive_columns', {})
+        i18n = getattr(getattr(meta, 'model', None), 'i18n_map', {})
         for name, col in self.columns.items():
-            if name in resp: col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
+            if name in resp:
+                col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
             col.i18n_key = i18n.get(name)
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-        if filter_obj: self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
+        if filter_obj:
+            self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self
+
+
+
+
+
+
+
+
+    # def __init__(self, *args, **kwargs):
+    #     url = getattr(self.Meta, 'edit_url', None)
+    #     if url and "actions" not in self.base_columns:
+    #         self.base_columns["actions"] = TemplateColumn(template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>', attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
+    #     super().__init__(*args, **kwargs)
+    #     self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {
+    #         "class": "table border table-striped table-hover mb-2", 
+    #         "data-navigate": "true", 
+    #         "data-action-selector": ".btn", 
+    #         "id": self.__class__.__name__.lower()
+    #     }
+    #     model, resp = getattr(self.Meta, 'model', None), getattr(self.Meta, 'responsive_columns', {})
+    #     i18n = getattr(model, 'i18n_map', {})
+    #     for name, col in self.columns.items():
+    #         if name in resp: col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
+    #         col.i18n_key = i18n.get(name)
+    # def config(self, request, filter_obj=None):
+    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+    #     if filter_obj: self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
+    #     return self

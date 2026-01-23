@@ -35,7 +35,7 @@ class LogEntryFilter(django_filters.FilterSet):
     )
     content_type = ModelMultipleChoiceFilter(
         queryset=ContentType.objects.all(),
-        label='Content Type',
+        label='Content Type'
     )
     class Meta:
         model = LogEntry

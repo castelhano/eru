@@ -1,6 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load tag_extra %}
+{% load django_tables2 %}
 {% block title %}Logs{% endblock %}
 
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
@@ -16,7 +17,7 @@
     <h5 class="card-title">Logs</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
       
-      <form id="filterForm" action="{% url 'logs' %}" method="POST" autocomplete="off">
+      <form id="filterForm" action="{% url 'logs' %}" method="GET" autocomplete="off">
         {% csrf_token %}
         <div class="row">
           <div class="col bg-body-secondary py-2">
@@ -49,6 +50,7 @@
                 <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" data-i18n="[title]sys.shortcuts.cleanFilters" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
                 <button type="submit" id="submit" class="btn btn-sm btn-dark border">Filtrar</button>
               </div>
+              <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark border"> <i class="bi bi-download me-1"></i>CSV</button>
             </div>
           </div>
         </div>
@@ -66,41 +68,8 @@
           </div>
           <div class="col-lg border-start mt-3 mt-lg-0 pt-0">
             <div class="table-responsive-lg">
-              <table id="table_logs" class="table table-sm border table-striped table-hover fs-7">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th class="d-none d-lg-table-cell">App</th>
-                    <th>Model</th>
-                    <th>Ref</th>
-                    <th class="d-none d-lg-table-cell">IP</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for log in logs %}
-                  <tr id="log-row-{{ log.id }}">
-                    <td>{{log.timestamp|date:'d/m/y H:i'}}</td>
-                    <td>{{log.actor|capfirst}}</td>
-                    <td>{{log.action|auditlog_action}}</td>
-                    <td class="d-none d-lg-table-cell">{{log.content_type.app_label|capfirst}}</td>
-                    <td>{{log.content_type.model|capfirst}}</td>
-                    <td>{{log.object_repr|truncatechars:15}}</td>
-                    <td class="d-none d-lg-table-cell">{{log.remote_addr|default:'<i>unknown</td>i>'}}</td>
-                      <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-dark" title="Detalhes" 
-                        onclick="showDetails(this)" 
-                        data-detail="log-detail-{{ log.id|safe }}"
-                        ><i class="bi bi-shuffle"></i></button>
-                      </td>
-                      <script type="application/json" id="log-detail-{{ log.id|safe }}">{{ log.changes|json_encode }}</script>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
+              {% render_table table %}
+            </div>
           </div>
         </div>
       </form>
@@ -153,20 +122,15 @@
 
   const modelos = new jsSelectm('#id_content_type', { sort: true })
   
-  const table = new jsTable('#table_logs', {
-    canFilter: true,
-    filterCols: ['User','Action'],
-    enablePaginate: true,
-  })
-
-
   const logs_tbody = document.getElementById('log_detail_tbody');
   const logs_counter = document.getElementById('log_detail_counter');
   const detailModal = new bootstrap.Modal('#detail_modal', {})
   detailModal._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
   
   function showDetails(el){
-    let data = JSON.parse(document.getElementById(el.dataset.detail).textContent);
+    const row = el.closest('tr');
+    const rawJson = row.querySelector('.col-changes').textContent;
+    let data = JSON.parse(rawJson)
     logs_tbody.innerHTML = '';
     for(let key in data){
       if(Array.isArray(data[key])){  

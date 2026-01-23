@@ -1,6 +1,8 @@
+import json
 from .mixins import TableCustomMixin
 from django_tables2 import Column, Table
 from .models import Empresa, Filial
+from auditlog.models import LogEntry
 from django.utils.html import format_html
 
 
@@ -12,7 +14,7 @@ class EmpresaTable(TableCustomMixin, Table):
     class Meta:
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
-        edit_url, paginate_by = "empresa_update", 20
+        edit_url, paginate_by = "empresa_update", 1
         responsive_columns = {
             "id": "fit pe-5",
             "razao_social": "d-none d-lg-table-cell",
@@ -33,3 +35,18 @@ class FilialTable(TableCustomMixin, Table):
             "cnpj": "d-none d-lg-table-cell",
             "cidade": "d-none d-lg-table-cell",
         }
+
+class LogsTable(TableCustomMixin, Table):
+    class Meta:
+        model = LogEntry
+        fields = ("timestamp", "actor", "action", "content_type", "object_repr", "changes")
+        action_script = "showDetails(this)"
+        action_innerhtml = '<i class="bi bi-search"></i>'
+        exclude_from_export = ["changes"]
+        paginate_by = 20
+        responsive_columns = {
+            "changes": "d-none col-changes",
+        }
+    def render_changes(self, value):
+        # forca exibicao de json com aspas duplas
+        return json.dumps(value) 
