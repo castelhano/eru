@@ -46,9 +46,9 @@ class jsSelectm{
             groupCounter: true,                                        // Se true adiciona contador de opcoes somente nas opcoes de grupo
             canFilter: false,                                          // Se true adiciona input para filtrar opcoes
             // emptyMessage sera exibido se nenhum option estiver disponivel
-            emptyMessage: (typeof i18n !== 'undefined' && i18n.getEntry) ? i18n.getEntry('sys.nothingToShow') || 'Nada a exibir' : 'Nada a exibir',
+            emptyMessage: 'Nada a exibir',
             filterOptions: {                                           // Opcoes para o input#search
-                placeholder: (typeof i18n !== 'undefined' && i18n.getEntry) ? i18n.getEntry('common.search') || 'Pesquisa' : 'Pesquisa'
+                placeholder: 'Pesquisa'
             },
             sort: false,                                                // Se true reordena opcoes baseado no innerText
         }
@@ -82,7 +82,7 @@ class jsSelectm{
                 for(let opt in this.options){
                     let el = document.createElement('option');
                     el.value = this.options[opt].value;
-                    el.innerHTML = this.options[opt]['data-i18n'] ? (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry(this.options[opt]['data-i18n']) || this.options[opt].text || '' : this.options[opt].text || '') : this.options[opt].text || '';
+                    el.innerHTML = this.options[opt].text || '';
                     el.selected = this.options[opt].selected === true;
                     if(this.options[opt].selected && !this.selected.includes(opt)){ this.selected.push(opt) }
                     this.select.appendChild(el);
@@ -134,7 +134,7 @@ class jsSelectm{
                 let opts = el.querySelectorAll('option');
                 if (opts.length > 0) {
                     let groupName = el.label || el.getAttribute('label') || 'Grupo';
-                    groups[groupName] = { options: [], dataI18n: el.getAttribute('data-i18n') };
+                    groups[groupName] = { options: []};
                     opts.forEach((opt) => {
                         let optConfig = this._parseOption(opt);
                         options[opt.value] = { ...optConfig, 'data-group': groupName };
@@ -226,7 +226,7 @@ class jsSelectm{
      * @returns {HTMLElement} - Elemento div contendo o título.
      */
     _addTitle(){ // cria elemento de titulo para componente
-        // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', 'data-i18n': 'foo', etc: 2}
+        // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', etc: 2}
         let container = document.createElement('div');
         container.style = this.config.styles.titleContainer;
         container.classList = this.config.classlist.titleContainer;
@@ -262,7 +262,7 @@ class jsSelectm{
         text.classList = this.config.classlist.checkAllText;
         let state = options?.state || 'uncheck';
         icon.classList = state == 'unckeck' ? this.config.classlist.uncheck : state == 'check' ? this.config.classlist.check : this.config.classlist.partial;
-        text.innerHTML = state == 'uncheck' ? (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry('selectm.checkAll') || 'Marcar todos' : 'Marcar todos') : (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry('selectm.uncheckAll') || 'Desmarcar todos' : 'Desmarcar todos');
+        text.innerHTML = state == 'uncheck' ? 'Marcar todos' : 'Desmarcar todos';
         container.appendChild(icon);
         container.appendChild(text);
         return {
@@ -282,7 +282,7 @@ class jsSelectm{
     _addSearchInput(options={}, groupContainer=false){
         let input = document.createElement('input');
         input.type = 'search';
-        ['data-i18n', 'placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
+        ['placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
         input.style = groupContainer ? this.config.styles.groupInput : this.config.styles.input;
         input.classList = groupContainer ? this.config.classlist.groupInput : this.config.classlist.input;
         input.oninput = (ev)=>{
@@ -424,7 +424,7 @@ class jsSelectm{
      */
     _checkAllUpdateStatus(state, checkAll){ // atualiza informacoes (icone, descricao e status) do controle de marcar todos
         if(state == 'none'){
-            checkAll.text.innerHTML = i18n.getEntry('selectm.checkAll') || 'Marcar todos';
+            checkAll.text.innerHTML = 'Marcar todos';
             checkAll.container.removeAttribute('data-checked');
             checkAll.icon.classList = this.config.classlist.uncheck;
             checkAll.state = 'uncheck';
@@ -438,7 +438,7 @@ class jsSelectm{
                 checkAll.icon.classList = this.config.classlist.partial;
                 checkAll.state = 'partial';
              }
-            checkAll.text.innerHTML = i18n.getEntry('selectm.uncheckAll') || 'Desmarcar todos';
+            checkAll.text.innerHTML = 'Desmarcar todos';
             checkAll.container.setAttribute('data-checked', '');   
         }
     }
@@ -609,19 +609,12 @@ class jsSelectm{
         };
         // adiciona data-group no elemento para identificacao do evento click
         if(config['data-group']){ container.setAttribute('data-group', config['data-group']) }
-        
-        ['data-i18n'].forEach((el)=>{
-            if(config?.[el]){
-                result[el] = config[el];
-                text.setAttribute(el, config[el]);
-            }
-        })
         if(config?.selected){
             container.setAttribute('data-selected', '');
             icon.classList = this.config.classlist.check;
         }
         else{ icon.classList = this.config.classlist.uncheck }
-        text.innerHTML = config?.['data-i18n'] ? i18n.getEntry(config['data-i18n']) || config.text : config.text;
+        text.innerHTML = config.text;
         container.appendChild(icon);
         container.appendChild(text);
         return result;
@@ -661,7 +654,7 @@ class jsSelectm{
             let opt = this._addOption(option);      // cria extrutura do option para this.model
             let el = document.createElement('option');
             el.value = option.value;
-            el.innerHTML = option?.['data-i18n'] ? (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry(option['data-i18n']) || option?.text || '' : option?.text || '') : option?.text || '';
+            el.innerHTML = option?.text || '';
             el.selected = option.selected === true;
             this.select.appendChild(el);
             //--
@@ -728,8 +721,7 @@ class jsSelectm{
         acc_button_text.style = this.config.styles.groupLabel;
         acc_button_text.classList = this.config.classlist.groupLabel;
         let dataI18n = this.groups[name]?.dataI18n;
-        acc_button_text.innerHTML = dataI18n ? (typeof i18n !== 'undefined' && i18n.getEntry ? i18n.getEntry(dataI18n) || name : name) : name;
-        if(dataI18n) acc_button_text.setAttribute('data-i18n', dataI18n);
+        acc_button_text.innerHTML = name
         acc_button.appendChild(acc_button_text);
         if(this.config.groupCounter){
             model.groups[name].groupCounter = document.createElement('span');

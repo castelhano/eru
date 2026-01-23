@@ -54,7 +54,7 @@ class Filial(models.Model):
     endereco = models.CharField(_('Endereço'), max_length=255, blank=True)
     bairro = models.CharField(_('Bairro'), max_length=100, blank=True)
     cidade = models.CharField(_('Cidade'), max_length=60, blank=True)
-    uf = models.CharField(_('UF'), max_length=5, blank=True)
+    uf = models.CharField(_('Uf'), max_length=5, blank=True)
     cep = models.CharField(_('Cep'), max_length=10, blank=True)
     fone = models.CharField(_('Fone'), max_length=20, blank=True)
     fax = models.CharField(_('Fax'), max_length=20, blank=True)

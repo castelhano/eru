@@ -29,25 +29,25 @@
                 <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
               </div>            
               <div class="input-group me-2" role="group">
-                <span class="input-group-text fs-7" data-i18n="common.action">Ação</span>
+                <span class="input-group-text fs-7">Ação</span>
                 <select name="action" id="id_action" class="form-select form-select-sm">
-                  <option value="" data-i18n="common.all" selected>Todas</option>
-                  <option value="0" data-i18n="common.create">Criar</option>
-                  <option value="1" data-i18n="common.update">Atualizar</option>
-                  <option value="2" data-i18n="common.delete">Excluir</option>
+                  <option value="" selected>Todas</option>
+                  <option value="0">Criar</option>
+                  <option value="1">Atualizar</option>
+                  <option value="2">Excluir</option>
                 </select>
               </div>            
               <div class="btn-group me-2" role="group">
                 <div class="input-group">
                   <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
-                  <span class="input-group-text fs-7" data-i18n="common.entry__plural__toLowerCase">entradas</span>
+                  <span class="input-group-text fs-7" >entradas</span>
                 </div>
               </div>
               <div class="btn-group me-2" role="group">
-                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" data-i18n="[placeholder]common.user" placeholder="Usuario">
+                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="Usuario">
               </div>
               <div class="btn-group me-2" role="group">
-                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" data-i18n="[title]sys.shortcuts.cleanFilters" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
+                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
                 <button type="submit" id="submit" class="btn btn-sm btn-dark border">Filtrar</button>
               </div>
               <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark border"> <i class="bi bi-download me-1"></i>CSV</button>
@@ -82,22 +82,22 @@
     <div class="modal-content">
       <div class="modal-body">
         <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
-        <h6 data-i18n="index.logDetail">Detalhes do Log</h6>
+        <h6 >Detalhes do Log</h6>
         <hr>
-        <p><span id="log_detail_badge"></span><span data-i18n="index.totalOf">Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span data-i18n="index.fieldsAffected">campos afetados</span>.</p>
+        <p><span id="log_detail_badge"></span><span >Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span >campos afetados</span>.</p>
         <table class="table table-sm border table-striped">
           <thead>
             <tr>
-              <th data-i18n="common.field">Campo</th>
-              <th data-i18n="common.before">Antes</th>
-              <th data-i18n="common.after">Depois</th>
+              <th >Campo</th>
+              <th >Antes</th>
+              <th >Depois</th>
             </tr>
           </thead>
           <tbody id="log_detail_tbody"></tbody>
         </table>
       </div>
       <div class="modal-footer py-1">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" data-i18n="common.close">Fechar</button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" >Fechar</button>
       </div>
     </div>
   </div>

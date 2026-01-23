@@ -15,12 +15,12 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.event.groupEvent">Grupo Evento</span></h5>
+        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Grupo Evento</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
-                        <th data-i18n="common.name__posfix:*">Nome</th>
+                        <th >Nome</th>
                         {% if perms.pessoal.change_grupoevento %}
                         <th>&nbsp;</th>
                         {% endif %}
@@ -31,7 +31,7 @@
                     <tr>
                         <td>{{grupo_evento.nome}}</td>
                         {% if perms.pessoal.change_grupoevento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:grupoevento_update' grupo_evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:grupoevento_update' grupo_evento.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

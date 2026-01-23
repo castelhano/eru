@@ -15,14 +15,14 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.event">Evento</span></h5>
+        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Evento</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
-                        <th data-i18n="common.name">Nome</th>
-                        <th class="d-none d-lg-table-cell" data-i18n="common.key">Chave</th>
-                        <th data-i18n="common.group">Grupo</th>
+                        <th >Nome</th>
+                        <th class="d-none d-lg-table-cell" >Chave</th>
+                        <th >Grupo</th>
                         {% if perms.pessoal.change_evento %}
                         <th>&nbsp;</th>
                         {% endif %}
@@ -35,7 +35,7 @@
                         <td class="d-none d-lg-table-cell" >{{evento.rastreio}}</td>
                         <td>{{evento.grupo|default:''}}</td>
                         {% if perms.pessoal.change_evento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_update' evento.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_update' evento.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

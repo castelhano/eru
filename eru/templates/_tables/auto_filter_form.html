@@ -8,7 +8,7 @@
                 data-bs-toggle="collapse" 
                 data-bs-target="#auto_filter_form_container_container">
                 <i class="bi bi-funnel-fill me-2 text-body"></i>
-                <span class="text-body-secondary" data-i18n="common.filter__plural">Filtros</span>
+                <span class="text-body-secondary" >Filtros</span>
             </button>
         </h2>
         <div id="auto_filter_form_container_container" class="accordion-collapse collapse" data-bs-parent="#auto_filter_form_container">
@@ -18,7 +18,7 @@
                         {% if table.can_export %}
                         <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark fs-8"> <i class="bi bi-download me-1"></i>CSV</button>
                         {% endif %}
-                        <button type="submit" id="submit" class="btn btn-sm btn-dark fs-8" data-i18n="common.search__bold:g">Pesquisar</button>
+                        <button type="submit" id="submit" class="btn btn-sm btn-dark fs-8" >Pesquisar</button>
                         <a href="{{ request.path }}" class="btn btn-sm btn-dark"><i class="bi bi-x-lg"></i></a>
                     </div>
                     <div class="row g-1">
@@ -26,7 +26,7 @@
                         <div class="col-md">
                             <label class="small fw-bold text-body-secondary" 
                                 for="{{ field.id_for_label }}" 
-                                {% if field.field.i18n_label_key %}data-i18n="{{ field.field.i18n_label_key }}"{% endif %}>
+                                {% if field.field.i18n_label_key %}{% endif %}>
                                 {{ field.label }}
                             </label>
                             {{ field }}

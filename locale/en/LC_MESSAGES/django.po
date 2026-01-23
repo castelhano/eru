@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-23 09:12-0400\n"
+"POT-Creation-Date: 2026-01-23 15:59-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,34 +18,622 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: eru/app/core/forms.py:17
-msgid "Campo obrigatório"
-msgstr ""
+#: eru/app/core/constants.py:4
+msgid ""
+"[400] Erro de requisição, por favor verifique com o administrador do sistema"
+msgstr "[400] Request error, please check with your system administrator"
 
-#: eru/app/core/forms.py:18
+#: eru/app/core/constants.py:5
+msgid ""
+"[401] Permissão negada, por favor verifique com o administrador do sistema"
+msgstr "[401] Permission denied, please check with your system administrator"
+
+#: eru/app/core/constants.py:6
+msgid ""
+"[500] Erro de servidor, se o problema persistir, contate o administrador"
+msgstr "[500] Server error, if the problem persists, contact the administrator"
+
+#: eru/app/core/constants.py:7
+msgid "Registro criado com sucesso"
+msgstr "Record created successfully"
+
+#: eru/app/core/constants.py:8
+msgid "Registro excluido, essa operação não pode ser desfeita"
+msgstr "Record deleted, this operation cannot be undone"
+
+#: eru/app/core/constants.py:9
+msgid "Erro ao tentar apagar registro"
+msgstr "Error while trying to delete registry entry"
+
+#: eru/app/core/constants.py:10
+msgid "Nenhum resultado encontrado com os critérios informados"
+msgstr "No results were found using the specified criteria"
+
+#: eru/app/core/constants.py:11
+msgid "Erro ao buscar dados solicitados"
+msgstr "Error retrieving requested data"
+
+#: eru/app/core/constants.py:12
+msgid "Os críterios de pelo menos um campo não foram atendidos, verifique os valores lançados"
+msgstr "The criteria for at least one field were not met; please check the values ​​released"
+
+#: eru/app/core/constants.py:13
+msgid "Registro sobrepõe outras entradas existentes"
+msgstr "This record overwrites other existing entries"
+
+#: eru/app/core/constants.py:14
+msgid "Erro ao salvar registro"
+msgstr "Error saving record"
+
+#: eru/app/core/constants.py:15
+msgid "Registro atualizado com sucesso"
+msgstr "Record updated successfully"
+
+#: eru/app/core/forms.py:16
+msgid "Campo obrigatório"
+msgstr "Required field"
+
+#: eru/app/core/forms.py:17
 msgid "Campo duplicado, precisa ser único"
 msgstr "Duplicated field, need be unique"
 
-#: eru/app/core/models.py:36
-msgid "nome"
-msgstr "name"
+#: eru/app/core/models.py:36 eru/app/core/models.py:47
+#: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:97
+#: eru/app/pessoal/models.py:202 eru/app/pessoal/models.py:303
+#: eru/app/pessoal/models.py:320 eru/app/pessoal/models.py:339
+msgid "Nome"
+msgstr "Name"
 
 #: eru/app/core/models.py:37
-msgid "razão social"
-msgstr "company name"
+msgid "Razão Social"
+msgstr "Company Name"
 
 #: eru/app/core/models.py:38
-msgid "cnpj base"
-msgstr "base cnpj"
+msgid "Cnpj Base"
+msgstr "Base Cnpj"
 
-#: eru/app/core/models.py:40
-msgid "empresa"
-msgstr "company"
+#: eru/app/core/models.py:40 eru/app/core/models.py:46
+msgid "Empresa"
+msgstr "Company"
 
-#: eru/app/core/tables.py:14
-msgid "filiais_empresa"
+#: eru/app/core/models.py:48
+msgid "Nome Fantasia"
+msgstr "Company Name"
+
+#: eru/app/core/models.py:49
+msgid "Cnpj"
 msgstr ""
 
-#: eru/templates/core/empresas.html:21
-msgid "empresas"
-msgstr "companies"
+#: eru/app/core/models.py:50
+msgid "Inscrição Estadual"
+msgstr "State register"
+
+#: eru/app/core/models.py:51
+msgid "Inscrição Municipal"
+msgstr "Municipal register"
+
+#: eru/app/core/models.py:52
+msgid "Cnae"
+msgstr ""
+
+#: eru/app/core/models.py:53
+msgid "Atividade"
+msgstr "Field"
+
+#: eru/app/core/models.py:54 eru/app/pessoal/models.py:58
+msgid "Endereço"
+msgstr "Address"
+
+#: eru/app/core/models.py:55 eru/app/pessoal/models.py:59
+msgid "Bairro"
+msgstr "Neighborhood"
+
+#: eru/app/core/models.py:56 eru/app/pessoal/models.py:60
+msgid "Cidade"
+msgstr "City"
+
+#: eru/app/core/models.py:57 eru/app/pessoal/models.py:61
+msgid "Uf"
+msgstr ""
+
+#: eru/app/core/models.py:58
+msgid "Cep"
+msgstr ""
+
+#: eru/app/core/models.py:59
+msgid "Fone"
+msgstr ""
+
+#: eru/app/core/models.py:60
+msgid "Fax"
+msgstr ""
+
+#: eru/app/core/models.py:61
+msgid "Fuso Horário"
+msgstr "Timezone"
+
+#: eru/app/core/models.py:62
+msgid "Logo"
+msgstr ""
+
+#: eru/app/core/models.py:63
+msgid "Rodapé"
+msgstr "Footer"
+
+#: eru/app/core/models.py:72 eru/app/pessoal/models.py:128
+msgid "Usuário"
+msgstr "User"
+
+#: eru/app/core/models.py:73 eru/app/core/tables.py:14
+#: eru/app/pessoal/models.py:364 eru/app/pessoal/models.py:369
+msgid "Filiais"
+msgstr "Branches"
+
+#: eru/app/core/models.py:74
+msgid "Forçar troca de senha"
+msgstr "Force password change"
+
+#: eru/app/core/models.py:75
+msgid "Configurações"
+msgstr "Settings"
+
+#: eru/app/pessoal/forms.py:132
+msgid "Data de fim não pode ser menor que data de inicio"
+msgstr "The end date cannot be earlier than the start date"
+
+#: eru/app/pessoal/forms.py:156
+msgid "Existe registro ativo no periodo informado"
+msgstr "There is an active record in the specified period."
+
+#: eru/app/pessoal/models.py:17
+msgid "Solteiro"
+msgstr "Single"
+
+#: eru/app/pessoal/models.py:18
+msgid "Casado"
+msgstr "Married"
+
+#: eru/app/pessoal/models.py:19
+msgid "Divorciado"
+msgstr "Divorced"
+
+#: eru/app/pessoal/models.py:20
+msgid "Viuvo"
+msgstr "Widower"
+
+#: eru/app/pessoal/models.py:22
+msgid "Não informado"
+msgstr "Not informed"
+
+#: eru/app/pessoal/models.py:23
+msgid "Masculino"
+msgstr "Male"
+
+#: eru/app/pessoal/models.py:24
+msgid "Feminino"
+msgstr "Female"
+
+#: eru/app/pessoal/models.py:38
+msgid "Apelido"
+msgstr "Nickname"
+
+#: eru/app/pessoal/models.py:39
+msgid "Nome Social"
+msgstr "Social Name"
+
+#: eru/app/pessoal/models.py:40 eru/app/pessoal/models.py:305
+msgid "Gênero"
+msgstr "Gender"
+
+#: eru/app/pessoal/models.py:41 eru/app/pessoal/models.py:306
+msgid "Data Nascimento"
+msgstr "Birth Date"
+
+#: eru/app/pessoal/models.py:42 eru/app/pessoal/models.py:307
+msgid "Rg"
+msgstr ""
+
+#: eru/app/pessoal/models.py:43 eru/app/pessoal/models.py:308
+msgid "Rg Emissão"
+msgstr "Rg Issuance"
+
+#: eru/app/pessoal/models.py:44 eru/app/pessoal/models.py:309
+msgid "Rg Org Expedidor"
+msgstr "Rg Issuing Auth"
+
+#: eru/app/pessoal/models.py:45 eru/app/pessoal/models.py:310
+msgid "Cpf"
+msgstr ""
+
+#: eru/app/pessoal/models.py:46
+msgid "Titulo Eleitor"
+msgstr "Voter Registration"
+
+#: eru/app/pessoal/models.py:47
+msgid "Zona"
+msgstr "Zone"
+
+#: eru/app/pessoal/models.py:48
+msgid "Seção"
+msgstr "Section"
+
+#: eru/app/pessoal/models.py:49
+msgid "Reservista"
+msgstr "Reservist"
+
+#: eru/app/pessoal/models.py:50
+msgid "Cnh"
+msgstr ""
+
+#: eru/app/pessoal/models.py:51
+msgid "Categoria"
+msgstr "Category"
+
+#: eru/app/pessoal/models.py:52
+msgid "Primeira Habilitação"
+msgstr "First License"
+
+#: eru/app/pessoal/models.py:53
+msgid "Emissão"
+msgstr "Issuance"
+
+#: eru/app/pessoal/models.py:54
+msgid "Validade"
+msgstr "Validity"
+
+#: eru/app/pessoal/models.py:55
+msgid "Fone 1"
+msgstr ""
+
+#: eru/app/pessoal/models.py:56
+msgid "Fone 2"
+msgstr ""
+
+#: eru/app/pessoal/models.py:57
+msgid "Email"
+msgstr ""
+
+#: eru/app/pessoal/models.py:62
+msgid "Estado Civil"
+msgstr "Marital Status"
+
+#: eru/app/pessoal/models.py:63
+msgid "Nome da Mãe"
+msgstr "Mother's Name"
+
+#: eru/app/pessoal/models.py:64
+msgid "Nome do Pai"
+msgstr "Father's Name"
+
+#: eru/app/pessoal/models.py:65 eru/app/pessoal/models.py:255
+msgid "Detalhe"
+msgstr "Detail"
+
+#: eru/app/pessoal/models.py:93
+msgid "Motorista"
+msgstr "Driver"
+
+#: eru/app/pessoal/models.py:94
+msgid "Auxiliar"
+msgstr "Assistant"
+
+#: eru/app/pessoal/models.py:95
+msgid "Tráfego"
+msgstr "Traffic"
+
+#: eru/app/pessoal/models.py:96
+msgid "Oficina"
+msgstr "Repair shop"
+
+#: eru/app/pessoal/models.py:98
+msgid "Setor"
+msgstr "Sector"
+
+#: eru/app/pessoal/models.py:99
+msgid "Atividades"
+msgstr "Activities"
+
+#: eru/app/pessoal/models.py:100
+msgid "Funções Fixas"
+msgstr "Fixed Functions"
+
+#: eru/app/pessoal/models.py:111
+msgid "Ativo"
+msgstr "Active"
+
+#: eru/app/pessoal/models.py:112
+msgid "Afastado"
+msgstr "On leave"
+
+#: eru/app/pessoal/models.py:113
+msgid "Desligado"
+msgstr "Terminated"
+
+#: eru/app/pessoal/models.py:115
+msgid "Pelo Empregador"
+msgstr "By employer"
+
+#: eru/app/pessoal/models.py:116
+msgid "Por Justa Causa"
+msgstr "For just cause"
+
+#: eru/app/pessoal/models.py:117
+msgid "Pedido de Desligamento"
+msgstr "Request Termination"
+
+#: eru/app/pessoal/models.py:118
+msgid "Rescisão Indireta"
+msgstr "Indirect Termination"
+
+#: eru/app/pessoal/models.py:119
+msgid "Abandono de Emprego"
+msgstr "Job abandonment"
+
+#: eru/app/pessoal/models.py:120
+msgid "Descisão Judicial"
+msgstr "Court Decision"
+
+#: eru/app/pessoal/models.py:121
+msgid "Filial"
+msgstr "Branch"
+
+#: eru/app/pessoal/models.py:122
+msgid "Matricula"
+msgstr "Employee Id"
+
+#: eru/app/pessoal/models.py:123
+msgid "Data Admissão"
+msgstr "Date of Admission"
+
+#: eru/app/pessoal/models.py:124
+msgid "Data Desligamento"
+msgstr "Termination Date"
+
+#: eru/app/pessoal/models.py:125
+msgid "Motivo Desligamento"
+msgstr "Reason for Termination"
+
+#: eru/app/pessoal/models.py:126
+msgid "Pne"
+msgstr ""
+
+#: eru/app/pessoal/models.py:127
+msgid "Foto"
+msgstr ""
+
+#: eru/app/pessoal/models.py:129
+msgid "Status"
+msgstr ""
+
+#: eru/app/pessoal/models.py:171 eru/app/pessoal/models.py:175
+#: eru/app/pessoal/views.py:427 eru/app/pessoal/views.py:463
+#: eru/app/pessoal/views.py:487
+msgid "Não é possível alterar dados de funcionários desligados"
+msgstr "Its not possible to change data for terminated employees"
+
+#: eru/app/pessoal/models.py:184
+msgid "CLT"
+msgstr ""
+
+#: eru/app/pessoal/models.py:185
+msgid "Pessoa Jurídica"
+msgstr "Legal Entity"
+
+#: eru/app/pessoal/models.py:186
+msgid "Estágio"
+msgstr "Internship"
+
+#: eru/app/pessoal/models.py:187
+msgid "Aprendiz"
+msgstr "Apprentice"
+
+#: eru/app/pessoal/models.py:189
+msgid "Diario"
+msgstr "Daily"
+
+#: eru/app/pessoal/models.py:190
+msgid "Semanal flexivel"
+msgstr "Flexible weekly"
+
+#: eru/app/pessoal/models.py:191
+msgid "Mensal"
+msgstr "Monthly"
+
+#: eru/app/pessoal/models.py:192 eru/app/pessoal/models.py:248
+#: eru/app/pessoal/models.py:373
+msgid "Funcionário"
+msgstr "Employee"
+
+#: eru/app/pessoal/models.py:193 eru/app/pessoal/models.py:368
+msgid "Cargo"
+msgstr "Position"
+
+#: eru/app/pessoal/models.py:194
+msgid "Regime"
+msgstr ""
+
+#: eru/app/pessoal/models.py:195
+msgid "Salário"
+msgstr "Salary"
+
+#: eru/app/pessoal/models.py:196 eru/app/pessoal/models.py:204
+#: eru/app/pessoal/models.py:349
+msgid "Inicio"
+msgstr "Start"
+
+#: eru/app/pessoal/models.py:197 eru/app/pessoal/models.py:350
+msgid "Fim"
+msgstr "End"
+
+#: eru/app/pessoal/models.py:203
+msgid "Dias Ciclo"
+msgstr "Days Cycle"
+
+#: eru/app/pessoal/models.py:209 eru/app/pessoal/models.py:232
+msgid "Turno"
+msgstr "Shift"
+
+#: eru/app/pessoal/models.py:210
+msgid "Posição Ciclo"
+msgstr "Cycle Position"
+
+#: eru/app/pessoal/models.py:211
+msgid "Entrada"
+msgstr "Clock-in"
+
+#: eru/app/pessoal/models.py:212
+msgid "Saída"
+msgstr "Clock-out"
+
+#: eru/app/pessoal/models.py:213
+msgid "Carga Horária"
+msgstr "Workload"
+
+#: eru/app/pessoal/models.py:214
+msgid "Tolerância"
+msgstr "Tolerance"
+
+#: eru/app/pessoal/models.py:215
+msgid "É Folga"
+msgstr "It's a day off"
+
+#: eru/app/pessoal/models.py:222
+#, python-format
+msgid "A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno"
+msgstr "The position %(posicao)s exceeds the limit of %(limite)s days defined for this shift"
+
+#: eru/app/pessoal/models.py:231
+msgid "Contrato"
+msgstr "Contract"
+
+#: eru/app/pessoal/models.py:233
+msgid "Inicio Vigência"
+msgstr "Start Date"
+
+#: eru/app/pessoal/models.py:239
+msgid "Doenca"
+msgstr "Illness"
+
+#: eru/app/pessoal/models.py:240
+msgid "Acidente Trabalho"
+msgstr "Workplace Accident"
+
+#: eru/app/pessoal/models.py:241 eru/app/pessoal/models.py:247
+#: eru/app/pessoal/models.py:301
+msgid "Outro"
+msgstr "Other"
+
+#: eru/app/pessoal/models.py:243
+msgid "INSS"
+msgstr ""
+
+#: eru/app/pessoal/models.py:244
+msgid "Escala"
+msgstr "Schedule"
+
+#: eru/app/pessoal/models.py:245
+msgid "Sindicato"
+msgstr "Syndicate"
+
+#: eru/app/pessoal/models.py:246
+msgid "Gestora"
+msgstr "Regulatory Agency"
+
+#: eru/app/pessoal/models.py:249 eru/app/pessoal/models.py:353
+msgid "Motivo"
+msgstr "Reason"
+
+#: eru/app/pessoal/models.py:250
+msgid "Origem"
+msgstr "Origin"
+
+#: eru/app/pessoal/models.py:251
+msgid "Data Afastamento"
+msgstr "Leave Date"
+
+#: eru/app/pessoal/models.py:252
+msgid "Data Retorno"
+msgstr "Return Date"
+
+#: eru/app/pessoal/models.py:253
+msgid "Reabilitado"
+msgstr "Rehabilitated"
+
+#: eru/app/pessoal/models.py:254
+msgid "Remunerado"
+msgstr "Paid leave"
+
+#: eru/app/pessoal/models.py:293
+msgid "Cônjuge"
+msgstr "Spouse"
+
+#: eru/app/pessoal/models.py:294
+msgid "Filho / Enteado"
+msgstr "Son / Stepson"
+
+#: eru/app/pessoal/models.py:295
+msgid "Irmão"
+msgstr "Brother"
+
+#: eru/app/pessoal/models.py:296
+msgid "Pai / Mãe"
+msgstr "Father / Mother"
+
+#: eru/app/pessoal/models.py:297
+msgid "Sogro / Sogra"
+msgstr "Father-in-law / Mother-in-law"
+
+#: eru/app/pessoal/models.py:298
+msgid "Ascendente"
+msgstr "Ascendant"
+
+#: eru/app/pessoal/models.py:299
+msgid "Descendente"
+msgstr "Descendant"
+
+#: eru/app/pessoal/models.py:300
+msgid "Incapaz"
+msgstr "Unable"
+
+#: eru/app/pessoal/models.py:304
+msgid "Parentesco"
+msgstr "Kinship"
+
+#: eru/app/pessoal/models.py:327
+msgid "Provento"
+msgstr "Profit"
+
+#: eru/app/pessoal/models.py:328
+msgid "Desconto"
+msgstr "Deduction"
+
+#: eru/app/pessoal/models.py:329
+msgid "Referência"
+msgstr "Reference"
+
+#: eru/app/pessoal/models.py:346 eru/app/pessoal/models.py:352
+msgid "Valor"
+msgstr "Value"
+
+#: eru/app/pessoal/models.py:347
+msgid "Fórmula"
+msgstr "Formula"
+
+#: eru/app/pessoal/models.py:348
+msgid "Evento"
+msgstr "Event"
+
+#: eru/app/pessoal/models.py:351
+msgid "Tipo"
+msgstr "Type"
+
+#: eru/templates/_component/menu/pessoal.html:5
+msgid "Cadastro"
+msgstr "Register"
+
+#: eru/templates/core/empresas.html:5 eru/templates/core/empresas.html:21
+msgid "Empresas"
+msgstr "Companies"
+
+#~ msgid "nome"
+#~ msgstr "name"

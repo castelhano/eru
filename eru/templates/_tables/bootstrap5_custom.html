@@ -8,12 +8,12 @@
             <th {{ column.attrs.th.as_html }}>
                 {% if column.orderable %}
                     {% with key=table.prefixed_order_by_field value=column.order_by_alias.next %}
-                        <a href="{% querystring key=value %}" {% if column.i18n_key %}data-i18n="{{ column.i18n_key }}"{% endif %}>
+                        <a href="{% querystring key=value %}" {% if column.i18n_key %}{% endif %}>
                             {{ column.header }}
                         </a>
                     {% endwith %}
                 {% else %}
-                    <span {% if column.i18n_key %}data-i18n="{{ column.i18n_key }}"{% endif %}>
+                    <span {% if column.i18n_key %}{% endif %}>
                         {{ column.header }}
                     </span>
                 {% endif %}

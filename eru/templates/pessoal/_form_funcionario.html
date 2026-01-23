@@ -1,6 +1,6 @@
 {% load static %}
 <div class="card-body">
-    <h5 class="card-title mb-3" data-i18n="personal.employee.form.employeeRegistration">Cadastro de Funcionário</h5>
+    <h5 class="card-title mb-3" >Cadastro de Funcionário</h5>
     <div class="row g-lg-3">
         <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
             {% if funcionario.foto %}
@@ -13,9 +13,9 @@
                     <div class="col">
                         <div class="d-grid">
                             {% if not funcionario %}
-                            <a class="btn btn-sm btn-light px-4 px-lg-0 disabled" data-i18n="common.new__toUpperCase">NOVO</a>
+                            <a class="btn btn-sm btn-light px-4 px-lg-0 disabled" >NOVO</a>
                             {% elif funcionario.status == 'A' %}
-                            <a class="btn btn-sm btn-success px-4 px-lg-0 disabled" data-i18n="common.active__toUpperCase">ATIVO</a>
+                            <a class="btn btn-sm btn-success px-4 px-lg-0 disabled" >ATIVO</a>
                             {% else %}
                             <a class="btn btn-sm btn-warning px-4 px-lg-0 disabled text-uppercase">{{funcionario.get_status_display}}</a>
                             {% endif %}
@@ -116,7 +116,7 @@
                     <input type="file" name="foto" id="id_foto" style="display:none">
                     <div class="form-check form-switch mt-2">
                         {{form.pne}}
-                        <label class="form-check-label" for="id_pne" data-i18n="personal.employee.form.personWithSpecialNeeds">PNE Portador de necessidades especiais</label>
+                        <label class="form-check-label" for="id_pne" >PNE Portador de necessidades especiais</label>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="documents" role="tabpanel">
@@ -185,9 +185,9 @@
                             {% if funcionario.cnh_validade == None %}
                             <input type="text" class="form-control" id="id_situacao_cnh" value="" disabled>
                             {% elif funcionario.cnh_eh_valida %}
-                            <input type="text" class="form-control" id="id_situacao_cnh" data-i18n="common.valid" value="Valida" disabled>
+                            <input type="text" class="form-control" id="id_situacao_cnh" value="Valida" disabled>
                             {% else %}
-                            <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" data-i18n="common.expired" value="Vencida" disabled>
+                            <input type="text" class="form-control bg-warning-subtle" id="id_situacao_cnh" value="Vencida" disabled>
                             {% endif %}
                             {{ form.situacao_cnh.i18n_label }}
                         </div>
@@ -242,7 +242,7 @@
     </div>
     <div class="row mt-3">
         <div class="col">
-            <button type="submit" id="submit" class="btn btn-primary" data-i18n="common.save__bold:g"{% if disabled %} disabled{% endif %}><b>G</b>ravar</button>
+            <button type="submit" id="submit" class="btn btn-primary" {% if disabled %} disabled{% endif %}><b>G</b>ravar</button>
         </div>
     </div>
 </div>

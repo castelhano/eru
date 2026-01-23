@@ -122,11 +122,10 @@ class jsGrid{
             el.setAttribute('data-jsGrid-clickable', true);
             el.classList.add('pointer');
         }
-        if(options?.desc || options?.['data-i18n']){
+        if(options?.desc){
             let desc = document.createElement('span');
-            if(options['data-i18n']){ desc.setAttribute('data-i18n', options['data-i18n']) }
             desc.classList = 'jsGrid-label user-select-none';
-            desc.innerHTML = options?.desc || i18n.getEntry(options['data-i18n']) || '';
+            desc.innerHTML = options?.desc || '';
             el.appendChild(desc);
         }
         if(options?.menu){
@@ -183,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {'data-i18n':'index.shortcuts.grid.previousItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc:'Seleciona item anterior do grid'})
-        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {'data-i18n':'index.shortcuts.grid.nextItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona próximo item do grid'})
-        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {'data-i18n':'index.shortcuts.grid.bottomItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item abaixo do grid'})
-        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {'data-i18n':'index.shortcuts.grid.upItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item acima do grid'})
-        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {'data-i18n':'index.shortcuts.grid.accessItem', icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Tenta acessar o item selecionado do grid'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc:'Seleciona item anterior do grid'})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona próximo item do grid'})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item abaixo do grid'})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item acima do grid'})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Tenta acessar o item selecionado do grid'})
     }
 }
 

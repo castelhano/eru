@@ -24,8 +24,8 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th data-i18n="common.name__posfix:*">Nome</th>
-                <th data-i18n="common.user__plural">Usuários</th>
+                <th >Nome</th>
+                <th >Usuários</th>
                 {% if perms.auth.change_group %}
                 <th>&nbsp;</th>
                 {% endif %}
@@ -51,10 +51,10 @@
       </div>
       <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2" style="min-width: 200px;">
         <div class="filter-container">
-          <h6 class="text-body-secondary d-flex justify-content-between"><span data-i18n="common.filter__plural__posfix::">Filtros</span><a class="text-body-secondary text-decoration-none fs-8" data-i18n="common.clean" href="{% url 'grupo_list' %}">Limpar</a></h6>
+          <h6 class="text-body-secondary d-flex justify-content-between"><span >Filtros</span><a class="text-body-secondary text-decoration-none fs-8" href="{% url 'grupo_list' %}">Limpar</a></h6>
           <ul class="list-unstyled">
             <li><hr class="my-1"></li>
-            <li><span id="id_sem_associacoes" data-i18n="auth.noUsers" class="link pointer" onclick="urlFilter('users','false')">Sem Usuários</span></li>
+            <li><span id="id_sem_associacoes" class="link pointer" onclick="urlFilter('users','false')">Sem Usuários</span></li>
           </ul>
         </div>
       </div>

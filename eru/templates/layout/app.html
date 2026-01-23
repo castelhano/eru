@@ -1,11 +1,12 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="pt-br" dir="ltr" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="castelhano.rafael@gmail.com">
-    <title data-i18n="{% block title_i18n %}{% endblock %}">{% block title %}Solaris{% endblock %}</title>
+    <title >{% block title %}Solaris{% endblock %}</title>
     
     <link rel="shortcut icon" href="{% static 'img/favicon.ico'%}">
     <link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
@@ -42,7 +43,7 @@
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" data-i18n="common.settings">Configurações</h5>
+                    <h5 class="offcanvas-title" >Configurações</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
                 <div class="row">
@@ -58,13 +59,14 @@
                         <div class="col">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
-                                <label class="form-check-label" for="themeSwitch" data-i18n="index.darkTheme">Tema escuro</label>
+                                <label class="form-check-label" for="themeSwitch" >Tema escuro</label>
                             </div>
                         </div>
                         <div class="col-auto">
                             <select class="form-select-sm border-0 btn-phantom pe-1" name="language" id="id_language">
-                                <option value="pt" selected>Português</option>
-                                <option value="en">English</option>
+                                {% get_current_language as CURRENT_LANG %} 
+                                <option value="pt-BR"{% if not CURRENT_LANG or CURRENT_LANG == 'pt-BR' %}selected{% endif %}>Português</option>
+                                <option value="en"{% if CURRENT_LANG == 'en' %}selected{% endif %}>English</option>
                             </select>
                         </div>
                         <div class="col-auto d-none d-lg-block"><button type="button" class="btn btn-sm btn-secondary" title="Atalhos de teclado" onclick="appKeyMap.showKeymap()"><i class="bi bi-keyboard"></i></button></div>
@@ -75,7 +77,7 @@
                         <form action="{% url 'logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-primary me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>Logout</button>
-                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span data-i18n="common.password">Senha</span></a>
+                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span >Senha</span></a>
                             <a href="" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
                         </form>
                     </div>
@@ -127,7 +129,7 @@
                             <span class="visually-hidden">Loading...</span>
                         </span>
                     </span>
-                    <span id="appModalLoadingMessage" style="position: relative;top:-6px; left:5px;"><b data-i18n="common.wait">Aguarde</b>! <span data-i18n="sys.processingRequest">Processando requisição</span>...</span>
+                    <span id="appModalLoadingMessage" style="position: relative;top:-6px; left:5px;"><b >Aguarde</b>! <span >Processando requisição</span>...</span>
                 </div>
             </div>
         </div>
@@ -138,14 +140,14 @@
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span data-i18n="sys.confirmOperation">Confirma Operação</span></h1>
+                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span >Confirma Operação</span></h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="appModalConfirm_message"><span data-i18n="sys.confirmOperation">Confirma operação</span>?</p>
+                    <p id="appModalConfirm_message"><span >Confirma operação</span>?</p>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal" data-i18n="common.cancel">Cancelar</button>
-                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary" data-i18n="common.confirm__bold:c"><b>C</b>onfirmar</button>
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal" >Cancelar</button>
+                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary" ><b>C</b>onfirmar</button>
                     </div>
                 </div>
             </div>
@@ -232,7 +234,7 @@
         if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'Novo registro'})}
         if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})}
         if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'Retorna origem'})}
-        appKeyMap.bind('alt+l', ()=>{window.location.href = {{ request.path }}}, {icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
+        appKeyMap.bind('alt+l', ()=>{window.location.href = "{{ request.path }}"}, {icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {icon: 'bi bi-power', desc:'Encerra sessão no sistema'})
         if(document.getElementById('auto_filter_form_container')){

@@ -18,7 +18,7 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="common.employee__plural">Funcionários</span></h5>
+    <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Funcionários</span></h5>
     <div class="row">
       <div class="col-lg">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -37,14 +37,14 @@
                     autocomplete="off" 
                     minlength="3" 
                     data-keywatch="default" 
-                    data-i18n="common.search"
+                    
                     required 
                     autofocus>
-                    <label for="id_pesquisa"><span data-i18n="common.criterion">Critério</span>*</label>
+                    <label for="id_pesquisa"><span >Critério</span>*</label>
                   </div>
                   <button type="submit" id="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
                 </div>
-                <small id="employeeSearchHelp" data-i18n="personal.employee.lookupCriteria__var:$funcSearchCriteria"></small>
+                <small id="employeeSearchHelp" ></small>
               </div>
               <div class="col-lg">
                 <span>Consultas Rápidas:</span>
@@ -99,7 +99,7 @@
                   <td class="d-none">{{funcionario.pne|yesno:'PNE,'}}</td>
                   <td class="d-none d-lg-table-cell">{{funcionario.get_status_display}}</td>
                   {% if perms.pessoal.view_funcionario %}
-                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" title="Editar" data-i18n="[title]common.edit"><i class="bi bi-pen-fill"></i></a></td>
+                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" title="Editar" ><i class="bi bi-pen-fill"></i></a></td>
                   {% endif %}
                 </tr>
                 {% endfor %}
@@ -121,18 +121,18 @@
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select class="form-select" id="id_empresa" name="empresa">
-            <option value="" data-i18n="common.all" selected>Todos</option>
+            <option value="" selected>Todos</option>
             {% for empresa in user.profile.empresas %}
             <option value="{{empresa.id|safe}}">{{empresa.nome}}</option>
             {% endfor %}
           </select>
-          <label for="id_empresa" data-i18n="common.company__bold:e"><b class="text-body"><u>E</u></b>mpresa</label>
+          <label for="id_empresa" ><b class="text-body"><u>E</u></b>mpresa</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select class="form-select" id="id_filial" name="filial">
-            <option value="" data-i18n="common.all" selected>Todos</option>
+            <option value="" selected>Todos</option>
             {% for empresa in user.profile.empresas %}
             <optgroup label="{{empresa.nome}}">
               {% for filial in empresa.filiais_permitidas %}
@@ -141,51 +141,51 @@
             </optgroup>
             {% endfor %}
           </select>
-          <label for="id_filial" data-i18n="common.branch__bold:f"><b class="text-body"><u>F</u></b>ilial</label>
+          <label for="id_filial" ><b class="text-body"><u>F</u></b>ilial</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           {{ form.status }}
-          <label for="id_status" data-i18n="common.status__bold:s"><b class="text-body"><u>S</u></b>tatus</label>
+          <label for="id_status" ><b class="text-body"><u>S</u></b>tatus</label>
         </div>
       </div>
       <div class="row g-1 d-none" id="motivoDesligamentoContainer">
         <div class="form-floating mb-1">
           {{ form.motivo_desligamento }}
-          <label for="id_motivo_desligamento" data-i18n="personal.employee.form.terminationReason">Motivo Desligamento</label>
+          <label for="id_motivo_desligamento" >Motivo Desligamento</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           {{ form.regime }}
-          <label for="id_regime" data-i18n="common.regime__bold:r"><b class="text-body"><u>R</u></b>egime</label>
+          <label for="id_regime" ><b class="text-body"><u>R</u></b>egime</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select name="cargo__setor" id="id_cargo__setor" class="form-select" onchange="updateCargos(this.value, true)">
-            <option value="" data-i18n="common.all">Todos</option>
+            <option value="" >Todos</option>
             {% for setor in setores %}
             <option value="{{ setor.id }}">{{ setor.nome }}</option>
             {% endfor %}
           </select>
-          <label for="id_setor" data-i18n="common.sector__bold:t">Se<b class="text-body"><u>t</u></b>or</label>
+          <label for="id_setor" >Se<b class="text-body"><u>t</u></b>or</label>
         </div>
       </div>
       <div class="row g-1">
         <div class="form-floating mb-1">
           <select class="form-select" id="id_cargo" name="cargo">
-            <option value="" data-i18n="common.all">Todos</option>
+            <option value="" >Todos</option>
           </select>
-          <label for="id_cargo" data-i18n="common.position__bold:g">Car<b class="text-body"><u>g</u></b>o</label>
+          <label for="id_cargo" >Car<b class="text-body"><u>g</u></b>o</label>
         </div>
       </div>
     </div>
     <div class="col-lg border-start mt-3 mt-lg-0">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" role="switch" name="pne" id="id_pne">
-        <label class="form-check-label" for="id_pne"><span data-i18n="common.only">Somente</span> PNE</label>
+        <label class="form-check-label" for="id_pne"><span >Somente</span> PNE</label>
       </div>
     </div>
   </div>

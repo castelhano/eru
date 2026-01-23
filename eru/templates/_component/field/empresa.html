@@ -1,6 +1,6 @@
 <div class="{{container_classlist|default:'form-floating col-lg mb-1'}}">
-	<select class="{{input_classlist|default:'form-select'}}" id="id_empresa" data-i18n="[placeholder]common.company" name="empresa" {{attrs}}></select>
-	{% if label != False %}<label for="id_empresa" data-i18n="common.company">Empresa</label>{% endif %}
+	<select class="{{input_classlist|default:'form-select'}}" id="id_empresa" name="empresa" {{attrs}}></select>
+	{% if label != False %}<label for="id_empresa" >Empresa</label>{% endif %}
 </div>
 
 <script>
@@ -20,7 +20,7 @@
 
         if (blankRowEnabled) {
           const blankMessage = i18n ? i18n.getEntry('common.all') || '{{blank_row_message|default:"--"}}' : '{{blank_row_message|default:"--"}}';
-          optionsHtml += `<option value="" data-i18n="common.all">${blankMessage}</option>`;
+          optionsHtml += `<option value="" >${blankMessage}</option>`;
         }
         
         data.forEach(empresa => {

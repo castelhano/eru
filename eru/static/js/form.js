@@ -18,7 +18,7 @@ class jsForm{
         this.defaultOptions = {
             selectPopulate: [],                         // Lista com selects para preenchimento via ajax
             multipleAddon: [],                          // Adiciona controle para entrada multipla (cria um select)
-            selectAddAllOption: [],                     // Adiciona opcao 'Todos' nos selects informados [{nome: 'empresa', value: '', desc: 'Todas', i18n: 'foo.bar'}] apenas opcao 'nome' obrigatoria
+            selectAddAllOption: [],                     // Adiciona opcao 'Todos' nos selects informados [{nome: 'empresa', value: '', desc: 'Todas'}] apenas opcao 'nome' obrigatoria
             beforeSubmit: () => { return true },        // Funcao a ser chamada antes de submeter form, deve retornar true ou false
             customValidation: {},                       // [**] detalhes abaixo
             novalidate: false,                          // Setar {novalidate: true} para desativar validacao do formulario
@@ -26,8 +26,8 @@ class jsForm{
             modalBody: null,                            // Usar (modalBody: container) para criacao de modal (bootstrap modal) de filtros
             modalTrigger: null,                         // Elemento acionador do modal
             triggerShortcut: 'f2',                      // Teclas de atalho (integracao com keywatch) para acionamento do modal
-            submitSchema: {type: 'submit', innerHTML: '<b>C</b>onfirmar', classList: 'btn btn-sm btn-primary', 'data-i18n': 'common.confirm__bold:c'},
-            cancelSchema: {type: 'button', innerHTML: 'Cancelar', classList: 'btn btn-sm btn-secondary', 'data-i18n': 'common.cancel', 'data-bs-dismiss': 'modal', 'tabIndex': '-1'},
+            submitSchema: {type: 'submit', innerHTML: '<b>C</b>onfirmar', classList: 'btn btn-sm btn-primary'},
+            cancelSchema: {type: 'button', innerHTML: 'Cancelar', classList: 'btn btn-sm btn-secondary', 'data-bs-dismiss': 'modal', 'tabIndex': '-1'},
             modalFocus: null,                           // Elemento html a receber foco ao abrir modal
         }
         // ** customValidation deve ser um dicionario com a chave = nome do campo e o valor funcao que fara validacao
@@ -122,10 +122,10 @@ class jsForm{
             // nao exporta itens no array ignore nem elementos textarea
             if(ignore.includes(el) || (this[el].tagName == 'TEXTAREA' && !options.textarea)){continue}
             if(this[el].tagName == 'SELECT' && this[el].multiple == false){ // em caso de selects, insere no arquivo tando o value quanto o innerHTML
-                csv.push([i18n.getEntry(this[el].dataset?.i18n + '__posfix:_id') || el.captalize() + '_id', this[el].value].join(this.csvSeparator)) 
-                csv.push([i18n.getEntry(this[el].dataset?.i18n) || el.captalize().replace('_', ' '), this[el].selectedOptions[0].innerText.trim()].join(this.csvSeparator)) 
+                csv.push([el.captalize() + '_id', this[el].value].join(this.csvSeparator)) 
+                csv.push([el.captalize().replace('_', ' '), this[el].selectedOptions[0].innerText.trim()].join(this.csvSeparator)) 
             }
-            else{ csv.push([i18n.getEntry(this[el].dataset?.i18n) || el.captalize().replace('_', ' '), data[el]].join(this.csvSeparator)) }
+            else{ csv.push([el.captalize().replace('_', ' '), data[el]].join(this.csvSeparator)) }
         }
         let csv_string = csv.join('\n');
         let BOM = '\ufeff'; // adicionado no Blob para evitar problemas de compatibildiade com excel
@@ -213,26 +213,24 @@ class jsForm{
     __validateRequired(el, notify=true){
         let max = el.getAttribute('maxlength');
         let min = el.getAttribute('minlength');
-        let fieldI18nName = el.dataset.i18n ? i18n.getEntry(el.dataset.i18n) || el.name : el.name; 
         if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', i18n.getEntry(`sys.fieldRequiresMaxMinLength__varb:${[fieldI18nName.captalize(),min,max]}`) || `<b>${fieldI18nName.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', max ? i18n.getEntry(`sys.fieldExceededMaxLength__varb:${[fieldI18nName.captalize(), max]}`) || `<b>${fieldI18nName.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : i18n.getEntry(`sys.fieldRequiresMinLength__varb:${[fieldI18nName, min]}`) || `<b>${fieldI18nName.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
+            if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', max ? `<b>${el.name.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : `<b>${el.name.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
         }
         else if(el.required && el.value == ''){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', `${i18n.getEntry('sys.fieldRequired__posfix::') || 'Campo obrigatorio:'} <b>${fieldI18nName.captalize()}</b>`, {autodismiss: false})}
+            if(notify){appNotify('warning', `Campo obrigatorio: <b>${el.name.captalize()}</b>`, {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
     __validateNumber(el, notify=true){
         let max = parseFloat(el.getAttribute('max')) || null;
         let min = parseFloat(el.getAttribute('min')) || null;
-        let fieldI18nName = el.dataset.i18n ? i18n.getEntry(el.dataset.i18n) || el.name : el.name; 
         if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
             el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', i18n.getEntry(`sys.fieldRequiresMaxMinValue__varb:${[fieldI18nName.captalize(),min,max]}`) || `<b>${fieldI18nName.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', max ? i18n.getEntry(`sys.fieldExceededMaxValue__varb:${[fieldI18nName.captalize(), max]}`) || `Campo <b>${fieldI18nName.captalize()}</b> aceita valor máximo de <b>${max}</b>` : i18n.getEntry(`sys.fieldRequiresMinValue__varb:${[fieldI18nName, min]}`) || `<b>${fieldI18nName.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
+            if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
+            else if(notify && max || notify && min){appNotify('warning', max ? `Campo <b>${el.name.captalize()}</b> aceita valor máximo de <b>${max}</b>` : `<b>${el.name.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
             
         }
         else if(el.required && el.value == ''){el.classList.add('is-invalid');}
@@ -241,7 +239,7 @@ class jsForm{
     __validateEmail(el, notify=true){
         if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
             el.classList.add('is-invalid');
-            if(notify){appNotify('warning', i18n.getEntry('sys.emailIsNotValid') || '<b>Email</b> tem formato inválido', {autodismiss: false})}
+            if(notify){appNotify('warning', '<b>Email</b> tem formato inválido', {autodismiss: false})}
         }
         else{el.classList.remove('is-invalid')}
     }
@@ -253,9 +251,7 @@ class jsForm{
             try{
                 let opt = document.createElement('option');
                 opt.value = el?.value || '';
-                el['data-i18n'] = el?.['data-i18n'] || 'common.all'
-                opt.innerHTML = i18n.getEntry(el['data-i18n']) || el?.desc || 'Todos';
-                opt.setAttribute('data-i18n', el['data-i18n']);
+                opt.innerHTML = el?.desc || 'Todos';
                 this[el.nome].insertBefore(opt, this[el.nome].firstChild);
                 this[el.nome].value = opt.value;
             }catch(err){
@@ -268,7 +264,7 @@ class jsForm{
         let modalDialog = document.createElement('div'); modalDialog.classList = 'modal-dialog modal-fullscreen';
         let modalContent = document.createElement('div'); modalContent.classList = 'modal-content';
         let modalBody = document.createElement('div'); modalBody.classList = 'modal-body';
-        let modalTitle = document.createElement('h6'); modalTitle.setAttribute('data-i18n', 'sys.filterQuery');modalTitle.innerHTML = 'Filtrar Consulta';
+        let modalTitle = document.createElement('h6'); modalTitle.innerHTML = 'Filtrar Consulta';
         let separator = document.createElement('hr');
         let modalFooter = document.createElement('div'); modalFooter.classList = 'modal-footer';
         this.cancel = document.createElement('button');
@@ -323,7 +319,7 @@ class jsForm{
         
         if(this.modalTrigger){
             this.modalTrigger.addEventListener('click', () => {this.modal.show()})
-            appKeyMap.bind(this.triggerShortcut, ()=>{this.modalTrigger.click()}, {desc: 'Exibe filtros da página', icon: 'bi bi-funnel-fill', origin: 'jsForm', 'data-i18n':'sys.shortcuts.showFilters'})
+            appKeyMap.bind(this.triggerShortcut, ()=>{this.modalTrigger.click()}, {desc: 'Exibe filtros da página', icon: 'bi bi-funnel-fill', origin: 'jsForm'})
         }
         this.modalBody.style.display = 'block'; // Recomendado setar o body na pagina como display = none, aqui voltamos a exibir elemento
         appKeyMap.bind('alt+c', ()=>{this.submit.click()}, 
@@ -332,7 +328,6 @@ class jsForm{
             desc: 'Realiza busca com filtros informados', 
             origin: 'jsForm', 
             icon: 'bi bi-funnel-fill text-primary', 
-            'data-i18n': 'sys.shortcuts.submitFilters'
         })
     }
     validate(){ // Metodo faz validacao para os campos do form
@@ -441,7 +436,7 @@ class selectPopulate{
         this.value = options?.value || 'nome';
         this.method = options?.method || 'GET';
         this.beforeRequest = options?.beforeRequest != undefined ? options.beforeRequest : ()=>{return true}; // Funcao a ser chamada antes de executar a consulta
-        this.emptyRow = options.hasOwnProperty('emptyRow') ? options.emptyRow : false; // Insere option generica (todos), ex emptyRow: {} ou emptyRow: {innerHTML: '', 'data-i18n': ''}
+        this.emptyRow = options.hasOwnProperty('emptyRow') ? options.emptyRow : false; // Insere option generica (todos), ex emptyRow: {} ou emptyRow: {innerHTML: ''}
         if(this.emptyRow && !this.emptyRow['value']){this.emptyRow['value'] = ''}
         if(options?.onChange){this.target.onchange = options.onChange} // Funcao a ser atribuida no evento onchange (caso informado ao instanciar)
         this.onEmpty = options?.onEmpty != undefined ? options.onEmpty : ()=>{ // Funcao a ser executada caso retorno seja array vazio '[]'
@@ -451,7 +446,7 @@ class selectPopulate{
                     if(['innerHTML'].includes(key)){continue}
                     opt.setAttribute(key, this.emptyRow[key])
                 }
-                opt.innerHTML = this.emptyRow?.['data-i18n'] ? i18n.getEntry(this.emptyRow['data-i18n']) || this.emptyRow['innerHTML'] || 'Todos' : this.emptyRow['innerHTML'] || 'Todos';
+                opt.innerHTML = this.emptyRow['innerHTML'] || 'Todos';
                 this.target.appendChild(opt);
             }
         };
@@ -484,7 +479,7 @@ class selectPopulate{
                         if (['innerHTML'].includes(key)) continue;
                         opt.setAttribute(key, this.emptyRow[key]);
                     }
-                    opt.innerHTML = i18n.getEntry(this.emptyRow['data-i18n']) || this.emptyRow['innerHTML'] || 'Todos';
+                    opt.innerHTML = this.emptyRow['innerHTML'] || 'Todos';
                     this.target.appendChild(opt);
                 }
                 for (const item of this.data) {
@@ -570,9 +565,9 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
         // **
         if(this.shortcut){ // adiciona shortcut quando foco estiver no input
             appKeyMap.bind(this.shortcut, (ev)=>{this.btn.click(); this.oldValue = this.textarea.value;}, {element: this.el, display: false})
-            appKeyMap.bind(this.shortcut, (ev)=>{this.confirmButton.click()}, {context: 'multipleAddonModal', element: this.textarea, 'data-i18n': 'sys.shortcuts.submitForm', icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})
+            appKeyMap.bind(this.shortcut, (ev)=>{this.confirmButton.click()}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})
             appKeyMap.bind('esc', (ev)=>{this.textarea.value = this.oldValue;this.el.focus(); this.dialog.close();}, {context: 'multipleAddonModal', display: false})
-            appKeyMap.bind(this.cleanSelectionShortcut, (ev)=>{this.textarea.value = ''}, {context: 'multipleAddonModal', element: this.textarea, 'data-i18n': 'sys.shortcuts.clearSelection', icon: 'bi bi-input-cursor-text text-warning', desc:'Limpa seleção'})
+            appKeyMap.bind(this.cleanSelectionShortcut, (ev)=>{this.textarea.value = ''}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-input-cursor-text text-warning', desc:'Limpa seleção'})
         }
         this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
         this.btn.onclick = ()=>{

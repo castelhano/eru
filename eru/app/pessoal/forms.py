@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from datetime import date
 from core.mixins import BootstrapMixin
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
 
@@ -128,7 +129,7 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
             return cleaned_data
         # garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
         if fim and inicio > fim:
-            raise forms.ValidationError('<span data-i18n="sys.endDateLowerThanStart"></span>')
+            raise forms.ValidationError(_('Data de fim não pode ser menor que data de inicio'))
         # 1. Obter os filtros de contexto especificos do formulario filho (Cargo, Funcionario, Empresa)
         context_filters = self.get_context_filters(cleaned_data)
         # 2. Obter o modelo correto para consultar (EventoCargo, EventoFuncionario, etc.)
@@ -152,7 +153,7 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
             q_aberto | q_fechado # Aplica a logica de sobreposicao combinada
         )
         if conflitos_possiveis.exists():
-            raise forms.ValidationError('<span data-i18n="personal.event.form.eventErroDuplicatedPeriod"></span>') 
+            raise forms.ValidationError(_('Existe registro ativo no periodo informado')) 
         return cleaned_data
 
 class EventoCargoForm(EventoMovimentacaoBaseForm):

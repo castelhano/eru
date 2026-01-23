@@ -1,12 +1,12 @@
 <div class="card-body tab-content">
-    <h5 class="card-title"><span data-i18n="common.register">Cadastro</span>: <b class="text-purple" data-i18n="personal.common.event">Event</b></h5>
+    <h5 class="card-title"><span >Cadastro</span>: <b class="text-purple" >Event</b></h5>
     <h6 class="mb-3 text-orange">
         {% if related == 'empresa' %}
-            <span data-i18n="personal.event.globalEvents">Eventos Globais</span>
+            <span >Eventos Globais</span>
         {% elif related == 'cargo' %}
-            <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{model.nome}}
+            <span class="text-body" >Cargo:</span> {{model.nome}}
         {% elif related == 'funcionario' %}
-            <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{model.matricula}} - {{model.nome}}
+            <span class="text-body" >Funcionário:</span> {{model.matricula}} - {{model.nome}}
         {% endif %}</h6>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-2">
@@ -14,21 +14,21 @@
                 <div class="row g-1">
                     <div class="form-floating mb-1 col-lg">
                         {{ form.inicio }}
-                        <label for="id_inicio" data-i18n="common.start">Inicio</label>
+                        <label for="id_inicio" >Inicio</label>
                     </div>
                     <div class="form-floating mb-1 col-lg">
                         {{ form.fim }}
-                        <label for="id_fim" data-i18n="common.end">Fim</label>
+                        <label for="id_fim" >Fim</label>
                     </div>
                 </div>
                 <div class="row g-1">
                     <div class="form-floating mb-1 col-lg">
                         {{ form.evento }}
-                        <label for="id_evento" data-i18n="personal.common.event">Evento</label>
+                        <label for="id_evento" >Evento</label>
                     </div>
                     <div class="form-floating mb-1 col-lg">
                         {{ form.motivo }}
-                        <label for="id_motivo" data-i18n="common.reason">Motivo</label>
+                        <label for="id_motivo" >Motivo</label>
                     </div>
                 </div>
                 <div class="row">
@@ -40,7 +40,7 @@
                 <div class="row g-1">
                     <div class="form-floating mb-1 col-lg">
                         {{ form.tipo }}
-                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
+                        <label for="id_tipo" >Tipo</label>
                     </div>
                 </div>
                 <div class="row">
@@ -51,8 +51,8 @@
                 <div class="row mt-2">
                     <div class="col"><span id="responseValidate"></span></div>
                     <div class="col-auto text-end">
-                        <button type="button" id="id_validate" class="btn btn-sm btn-warning" data-i18n="common.validate">Validar</button>
-                        <button type="submit" id="submit" class="btn btn-sm btn-primary" title="ALT + G" data-i18n="common.save__bold:g"><b>G</b>ravar</button>
+                        <button type="button" id="id_validate" class="btn btn-sm btn-warning" >Validar</button>
+                        <button type="submit" id="submit" class="btn btn-sm btn-primary" title="ALT + G" ><b>G</b>ravar</button>
                     </div>
                 </div>
             </div>

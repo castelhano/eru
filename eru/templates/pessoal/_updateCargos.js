@@ -3,7 +3,7 @@
 async function updateCargos(setorId, include_all=false) {
     const cargoSelect = document.getElementById('id_cargo');
     if (!cargoSelect) return Promise.resolve(); 
-    if (include_all) cargoSelect.innerHTML = '<option value="" data-i18n="common.all">Todos</option>';
+    if (include_all) cargoSelect.innerHTML = '<option value="" >Todos</option>';
     else cargoSelect.innerHTML = '';
     if (!setorId) return Promise.resolve();
     return fetch(`{% url 'pessoal:cargo_list' %}?cargo__setor=${setorId}`, {

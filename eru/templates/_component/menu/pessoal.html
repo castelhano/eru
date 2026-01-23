@@ -1,13 +1,13 @@
+{% load i18n %}
 <script>
 
     const menuCadastro = new canvasNavDropdown({
-        name: '<b><u>C</u></b>adastro',
+        name: '{% translate "Cadastro" %}',
         icon: 'bi bi-list',
-        'data-i18n': 'common.register__bold:c',
         itens: [
         {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionario_list' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setor_list' %}', 'data-i18n': 'common.sector__bold:s', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargo_list' %}', 'data-i18n': 'common.position__bold:o', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setor_list' %}', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargo_list' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',
@@ -16,7 +16,7 @@
                 menuCadastro.click();
                 setTimeout(()=>{menuCadastro.focus()}, 340);
             },
-            {'data-i18n': 'sys.shortcuts.registerMenu', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -28,14 +28,13 @@
     const menuEvento = new canvasNavDropdown({
         name: '<b><u>E</u></b>ventos',
         icon: 'bi bi-braces-asterisk',
-        'data-i18n': 'personal.common.event__plural__bold:e',
         itens: [
-        {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', 'data-i18n': 'personal.common.event__bold:t', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupoevento_list' %}', 'data-i18n': 'personal.event.groupEvent__bold:g', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivoreajuste_list' %}', 'data-i18n': 'personal.event.changeReason__bold:m', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupoevento_list' %}', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivoreajuste_list' %}', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_eventoempresa %}
         {type: 'separator'},
-        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventorelated_list' 'empresa' 0 %}', 'data-i18n': 'personal.event.globalEvents__bold:v', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
+        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventorelated_list' 'empresa' 0 %}', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
         ],
         keybind: [
@@ -45,7 +44,7 @@
                 menuEvento.click();
                 setTimeout(()=>{menuEvento.focus()}, 340);
             },
-            {'data-i18n': 'sys.shortcuts.toolsMenu', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de Ferramentas'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de Ferramentas'}
         ]
         })
     {% if perms.pessoal.view_evento %}appKeyMap.bind('e+t', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
@@ -54,27 +53,5 @@
     {% if perms.pessoal.view_eventoempresa %}appKeyMap.bind('e+v', ()=>{document.getElementById('menu_eventos_globais').click()}, {display: false}){% endif %}
     {% if perms.pessoal.change_evento %}appKeyMap.bind('e+r', ()=>{document.getElementById('menu_evento_copy').click()}, {keydown: false, keyup: true, display: false}){% endif %}
     
-    // const menuFerramentas = new canvasNavDropdown({
-    //     name: 'Ferramen<b><u>t</u></b>as',
-    //     icon: 'bi bi-tools',
-    //     'data-i18n': 'common.tool__plural__bold:t',
-    //     itens: [
-        
-    //     ],
-    //     keybind: [
-    //         'alt+t',
-    //         (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
-    //             canvasNavActive(true); // Exibe o canvasNav (caso oculto)
-    //             menuFerramentas.click();
-    //             setTimeout(()=>{menuFerramentas.focus()}, 340);
-    //         },
-    //         {'data-i18n': 'sys.shortcuts.toolsMenu', icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de Ferramentas'}
-    //     ]
-    // })
-    // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
     
-
-    
-    
-    i18n.addApp('pessoal');
 </script>

@@ -1,6 +1,6 @@
 {% if related == 'cargo' or related == 'empresa' %}
 const empresas = new jsSelectm('#id_empresas', {
-    title: i18n.getEntry('common.company__plural') || '<span data-i18n="common.company__plural">Empresas</span>'
+    title: i18n.getEntry('common.company__plural') || '<span >Empresas</span>'
 })
 appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
     icon: 'bi bi-check-square-fill', 
@@ -82,7 +82,7 @@ const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
   const motivoRelated = new RelatedAddon('#id_motivo', {
     title: i18n.getEntry('compound.registerOf__varb:$motivoReajuste') || 'Cadastro de Motivo Reajuste',
     labels: {
-      nome: i18n.getEntry('personal.event.form.groupName') || '<span data-i18n="personal.event.form.groupName">Nome do grupo</span>'
+      nome: i18n.getEntry('personal.event.form.groupName') || '<span >Nome do grupo</span>'
     },
     url: {
     //   parent: {

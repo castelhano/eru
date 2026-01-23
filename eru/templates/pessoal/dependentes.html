@@ -16,23 +16,23 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.dependant__plural">Dependentes</span></h5>
+        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Dependentes</span></h5>
         <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <table id="main_table" class="table border table-striped table-hover">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th class="d-nonee" data-i18n="personal.common.employeeId">Matricula</th>
-                        <th class="d-nonee" data-i18n="common.employee">Funcionário</th>
-                        <th data-i18n="common.name">Nome</th>
-                        <th data-i18n="personal.common.kinship">Parentesco</th>
-                        <th class="d-none" data-i18n="common.gender">Sexo</th>
-                        <th class="d-none" data-i18n="personal.employee.form.birthDate">Dta Nascimento</th>
-                        <th data-i18n="common.age">Idade</th>
+                        <th class="d-nonee" >Matricula</th>
+                        <th class="d-nonee" >Funcionário</th>
+                        <th >Nome</th>
+                        <th >Parentesco</th>
+                        <th class="d-none" >Sexo</th>
+                        <th class="d-none" >Dta Nascimento</th>
+                        <th >Idade</th>
                         <th class="d-none">RG</th>
-                        <th class="d-none" data-i18n="personal.employee.form.issueDate__prefix:RG ">RG Emissão</th>
-                        <th class="d-none" data-i18n="personal.employee.form.issuingAuthority__prefix:RG ">RG Orgão expedidor</th>
+                        <th class="d-none" >RG Emissão</th>
+                        <th class="d-none" >RG Orgão expedidor</th>
                         <th class="d-none">CPF</th>
                         {% if perms.pessoal.change_dependente %}
                         <th>&nbsp;</th>
@@ -55,7 +55,7 @@
                         <td class="d-none">{{dependente.rg_orgao_expedidor}}</td>
                         <td class="d-none">{{dependente.cpf}}</td>
                         {% if perms.pessoal.change_dependente %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:dependente_update' dependente.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:dependente_update' dependente.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

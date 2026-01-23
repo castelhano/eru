@@ -13,7 +13,7 @@
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 {% if perms.pessoal.delete_motivoreajuste %}
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" >Excluir Registro</a></li>
                 </ul>
                 {% endif %}
             </li>
@@ -30,17 +30,17 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> <span data-i18n="sys.deleteRecord">Excluir Registro</span></h5></div>
+                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> <span >Excluir Registro</span></h5></div>
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger" data-i18n="common.warning">Atenção!!</b> <span data-i18n="sys.deleteRecordMsg">Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
+                <p><b class="text-danger" >Atenção!!</b> <span >Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'pessoal:motivoreajuste_delete' motivo_reajuste.id|safe %}" method="POST">
                             {% csrf_token %}
-                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" data-i18n="common.cancel">Cancelar</a>
-                            <button class="btn btn-danger px-3" type="submit" data-i18n="common.delete">Excluir</button>
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" >Cancelar</a>
+                            <button class="btn btn-danger px-3" type="submit" >Excluir</button>
                         </form>
                     </div>
                 </div>

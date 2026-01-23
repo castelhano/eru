@@ -1,7 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Cargo{% endblock %}
-{% block title_i18n %}common.position{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
 <div class="card mt-2">
@@ -10,13 +9,13 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventocargo %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}" data-i18n="personal.common.event__plural__bold:e"><u><b>E</b></u>ventos</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}" ><u><b>E</b></u>ventos</a></li>
             {% endif %}
             {% if perms.pessoal.delete_cargo %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" data-i18n="sys.deleteRecord">Excluir Registro</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" >Excluir Registro</a></li>
                 </ul>
             </li>
             {% endif %}
@@ -64,11 +63,11 @@
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
     const ffixa = new jsSelectm('#id_funcoes_fixas', {
-        title: i18n.getEntry('personal.fixedPosition.form.fixedPosition') || '<span data-i18n="personal.fixedPosition.form.fixedPosition">Função Fixa</span>',
+        title: '<span >Função Fixa</span>',
         icon: 'bi bi-diagram-3-fill',
     });
     {% if perms.pessoal.view_eventocargo %}
-    appKeyMap.bind('alt+e', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.position.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do cargo', origin: 'pessoal:cargo_id'})
+    appKeyMap.bind('alt+e', ()=>{document.getElementById('eventos').click()}, {icon: 'bi bi-percent', desc:'Exibe eventos do cargo', origin: 'pessoal:cargo_id'})
     {% endif %}
 
     {% endblock %}

@@ -30,14 +30,14 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span data-i18n="personal.common.personal">Pessoal</span>: <span class="text-purple" data-i18n="personal.common.event__plural">Eventos</span></h5>
+        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Eventos</span></h5>
         <h6 class="text-orange">
             {% if related == 'empresa' %}
-                <span data-i18n="personal.event.globalEvents">Eventos Globais</span>
+                <span >Eventos Globais</span>
             {% elif related == 'cargo' %}
-                <span class="text-body" data-i18n="common.position__posfix::">Cargo:</span> {{model.nome}}
+                <span class="text-body" >Cargo:</span> {{model.nome}}
             {% elif related == 'funcionario' %}
-                <span class="text-body" data-i18n="common.employee__posfix::">Funcionário:</span> {{model.matricula}} - {{model.nome}}
+                <span class="text-body" >Funcionário:</span> {{model.matricula}} - {{model.nome}}
             {% endif %}</h6>
         </h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -45,15 +45,15 @@
                 <thead>
                     <tr>
                         {% if related == 'cargo' or related == 'empresa' %}
-                        <th class="d-none d-md-table-cell" data-i18n="common.company__plural__posfix:*">Empresas</th>
+                        <th class="d-none d-md-table-cell" >Empresas</th>
                         {% endif %}
                         {% if related == 'cargo' %}
-                        <th class="d-none" data-i18n="common.position">Cargo</th>
+                        <th class="d-none" >Cargo</th>
                         {% elif related == 'funcionario' %}
-                        <th class="d-none" data-i18n="common.employeeId">Matricula</th>
-                        <th class="d-none" data-i18n="common.name">Nome</th>
+                        <th class="d-none" >Matricula</th>
+                        <th class="d-none" >Nome</th>
                         {% endif %}
-                        <th data-i18n="common.name__posfix:*">Nome</th>
+                        <th >Nome</th>
                         <th class="d-none d-lg-table-cell">Inicio</th>
                         <th class="d-none d-lg-table-cell">Fim</th>
                         <th>Tipo</th>
@@ -85,7 +85,7 @@
                         <td class="d-none">{{model.valor}}</td>
                         <td class="d-none d-md-table-cell">{{model.motivo}}</td>
                         {% if related == 'empresa' and perms.pessoal.change_eventoempresa or related == 'cargo' and perms.pessoal.change_eventocargo or related == 'funcionario' and perms.pessoal.change_eventofuncionario %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_related_id' related model.id|safe %}" data-i18n="[title]common.edit" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
+                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_related_id' related model.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}
@@ -105,27 +105,27 @@
                     {% endif %}
                     <div class="form-floating mb-1 col-lg">
                         {{ form.evento }}
-                        <label for="id_evento" data-i18n="personal.common.event">Evento</label>
+                        <label for="id_evento" >Evento</label>
                     </div>
                 </div>
                 <div class="row g-1">
                     <div class="form-floating mb-lg-1 col-lg">
                         {{ form.tipo }}
-                        <label for="id_tipo" data-i18n="common.type">Tipo</label>
+                        <label for="id_tipo" >Tipo</label>
                     </div>
                     <div class="form-floating mb-1 col-lg">
                         {{ form.motivo }}
-                        <label for="id_motivo" data-i18n="common.reason">Motivo</label>
+                        <label for="id_motivo" >Motivo</label>
                     </div>
                 </div>
                 <div class="row g-1">
                     <div class="form-floating mb-lg-1 col-lg">
                         <input type="date" class="form-control" name="inicio" id="id_inicio">
-                        <label for="id_inicio" data-i18n="common.start">Inicio</label>
+                        <label for="id_inicio" >Inicio</label>
                     </div>
                     <div class="form-floating mb-1 col-lg">
                         {{ form.fim }}
-                        <label for="id_fim" data-i18n="common.end">Fim</label>
+                        <label for="id_fim" >Fim</label>
                     </div>
                 </div>
             </div>

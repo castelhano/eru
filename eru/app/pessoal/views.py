@@ -460,8 +460,7 @@ class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpd
         if not afastamento.funcionario.F_ehEditavel:
             messages.error(
                 request,
-                '<span data-i18n="personal.sys.cantMoveDismissEmployee">'
-                '<b>Erro:</b> Nao é possivel alterar dados de funcionários desligados</span>'
+                _('Não é possível alterar dados de funcionários desligados')
             )
             return redirect('pessoal:afastamento_list', pk=afastamento.funcionario.id)
         return super().dispatch(request, *args, **kwargs)
@@ -485,8 +484,7 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
         if not dependente.funcionario.F_ehEditavel:
             messages.error(
                 request,
-                '<span data-i18n="personal.sys.cantMoveDismissEmployee">'
-                '<b>Erro:</b> Nao é possivel alterar dados de dependentes de funcionários desligados</span>'
+                _('Não é possível alterar dados de funcionários desligados')
             )
             return redirect('pessoal:dependente_id', id=dependente.id)
         return super().dispatch(request, *args, **kwargs)
