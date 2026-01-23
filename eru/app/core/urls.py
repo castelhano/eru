@@ -11,7 +11,6 @@ urlpatterns = [
     path('change_password',views.CustomPasswordChangeView.as_view(),name='change_password'),
     path('handler/<int:code>',views.HandlerView.as_view(),name='handler'),
     path('logs',views.LogAuditListView.as_view(),name='logs'),
-    path('i18n',views.I18nView.as_view(),name='i18n'),
     *generate_urls('Usuario', views),
     *generate_urls('Grupo', views),
     *generate_urls('Empresa', views),

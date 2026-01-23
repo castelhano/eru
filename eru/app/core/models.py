@@ -1,5 +1,6 @@
 import os
 import zoneinfo
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.db.models import Prefetch
 from django.contrib.auth.models import User, Group
@@ -32,51 +33,34 @@ def get_timezone_choices():
 
 # **********************************************
 class Empresa(models.Model):
-    i18n_map = {
-        'nome': 'common.name',
-        'razao_social': 'company.companyName',
-        'filiais': 'common.branch__plural'
-    }
-    nome = models.CharField(max_length=50, unique=True, blank=False)
-    razao_social = models.CharField(max_length=150, blank=True)
-    cnpj_base = models.CharField(max_length=20, blank=True)
+    nome = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
+    razao_social = models.CharField(_('Razão Social'), max_length=150, blank=True)
+    cnpj_base = models.CharField(_('Cnpj Base'), max_length=20, blank=True)
+    class Meta:
+        verbose_name = _('Empresa')
     def __str__(self):
         return self.nome
 auditlog.register(Empresa)
 
 class Filial(models.Model):
-    i18n_map = {
-        'empresa': 'common.company',
-        'nome': 'common.name',
-        'nome_fantasia': 'company.tradeName',
-        'inscricao_estadual': 'company.stateReg',
-        'inscricao_municipal': 'company.municipalReg',
-        'atividade': 'company.field',
-        'endereco': 'common.address',
-        'bairro': 'common.neighborhood',
-        'cidade': 'common.city',
-        'cep': 'common.zipCode',
-        'fuso_horario': 'compound.timezone',
-        'footer': 'common.footer',
-    }
-    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name='filiais')
-    nome = models.CharField(max_length=50, unique=True, blank=False)
-    nome_fantasia = models.CharField(max_length=150, blank=True)
-    cnpj = models.CharField(max_length=20, blank=True)
-    inscricao_estadual = models.CharField(max_length=25, blank=True)
-    inscricao_municipal = models.CharField(max_length=25, blank=True)
-    cnae = models.CharField(max_length=20, blank=True)
-    atividade = models.CharField(max_length=255, blank=True)
-    endereco = models.CharField(max_length=255, blank=True)
-    bairro = models.CharField(max_length=100, blank=True)
-    cidade = models.CharField(max_length=60, blank=True)
-    uf = models.CharField(max_length=5, blank=True)
-    cep = models.CharField(max_length=10, blank=True)
-    fone = models.CharField(max_length=20, blank=True)
-    fax = models.CharField(max_length=20, blank=True)
-    fuso_horario = models.CharField(blank=True, max_length=50, choices=get_timezone_choices)
-    logo = models.ImageField(upload_to="core/logos/", blank=True)
-    footer = models.TextField(blank=True)
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name='filiais', verbose_name=_('Empresa'))
+    nome = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
+    nome_fantasia = models.CharField(_('Nome Fantasia'), max_length=150, blank=True)
+    cnpj = models.CharField(_('Cnpj'), max_length=20, blank=True)
+    inscricao_estadual = models.CharField(_('Inscrição Estadual'), max_length=25, blank=True)
+    inscricao_municipal = models.CharField(_('Inscrição Municipal'), max_length=25, blank=True)
+    cnae = models.CharField(_('Cnae'), max_length=20, blank=True)
+    atividade = models.CharField(_('Atividade'), max_length=255, blank=True)
+    endereco = models.CharField(_('Endereço'), max_length=255, blank=True)
+    bairro = models.CharField(_('Bairro'), max_length=100, blank=True)
+    cidade = models.CharField(_('Cidade'), max_length=60, blank=True)
+    uf = models.CharField(_('UF'), max_length=5, blank=True)
+    cep = models.CharField(_('Cep'), max_length=10, blank=True)
+    fone = models.CharField(_('Fone'), max_length=20, blank=True)
+    fax = models.CharField(_('Fax'), max_length=20, blank=True)
+    fuso_horario = models.CharField(_('Fuso Horário'), blank=True, max_length=50, choices=get_timezone_choices)
+    logo = models.ImageField(_('Logo'), upload_to="core/logos/", blank=True)
+    footer = models.TextField(_('Rodapé'), blank=True)
     def __str__(self):
         return self.nome
     def logo_filename(self):
@@ -85,10 +69,10 @@ auditlog.register(Filial)
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    filiais = models.ManyToManyField(Filial, blank=True)
-    force_password_change = models.BooleanField(default=True)
-    config = models.JSONField(default=dict, blank=True, null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name=_('Usuário'))
+    filiais = models.ManyToManyField(Filial, blank=True, verbose_name=_('Filiais'))
+    force_password_change = models.BooleanField(_('Forçar troca de senha'), default=True)
+    config = models.JSONField(_('Configurações'), default=dict, blank=True, null=True)
     def __str__(self):
         return self.user.username
     def allow_filial(self, id): # Verifica se filial esta habilitada para usuario

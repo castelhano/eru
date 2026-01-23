@@ -55,7 +55,7 @@ function appAlert(tipo, mensagem, options={}){
   b.classList.add('btn-close');
   b.setAttribute('data-bs-dismiss','alert');
   e.classList.add('alert','slideIn','appAlert',`alert-${tipo}`,'alert-dismissible','fade','show','mb-0');
-  e.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) : mensagem; 
+  e.innerHTML = mensagem; 
   e.appendChild(b);
   document.body.appendChild(e);
   if(options.autodismiss){setTimeout(function() {e.remove()}, 5000)}}
@@ -67,7 +67,7 @@ function appNotify(tipo, mensagem, options={}){
   let b = document.createElement('button'); 
   b.classList = 'btn-close'; 
   b.setAttribute('data-bs-dismiss','alert'); 
-  e.innerHTML = options?.i18n ? i18n.getEntry(options.i18n) : mensagem; 
+  e.innerHTML = mensagem; 
   e.appendChild(b);
   document.getElementById('notify_container').appendChild(e); 
   if(options.autodismiss){setTimeout(function() {e.remove()}, 4500);} 
@@ -166,12 +166,6 @@ function getCookie(name) {
 function confirmOnClick(options){
   if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
   appModalConfirm.show()
-}
-
-// script executado logo antes de fazer logout no sistema (rotinas de limpeza, dentre outros)
-function appOnLogout(){
-  i18n.clearData(false);
-   return true;
 }
 
 function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item))}
@@ -284,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   // retorna context para anterior a abertura do modal de confirmacao
   appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
   if(document.querySelector('[data-appConfirm="true"]')){
-    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação', 'data-i18n':'sys.confirmOperation'})
+    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação'})
   }
 
   // implementa navegacao em tabela com data-navigate="true"  

@@ -8,8 +8,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
-from core.constants import DEFAULT_MESSAGES
+from django.utils.translation import gettext_lazy as _
 # core
+from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin
 from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from core.views import asteval_run
@@ -91,7 +92,7 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListV
                 messages.warning(self.request, 'Filtros inválidos.')
         # mensagem de alerta se nada for encontrado
         if not queryset.exists() and (self.request.GET or self.request.POST):
-            messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery', 'Nenhum resultado encontrado.'))
+            messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery'))
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -423,7 +424,7 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
         if request.method == 'POST' and not request.user.has_perm('pessoal.change_funcionario'):
             return redirect('handler', 403)
         if not funcionario.F_ehEditavel:
-            messages.error( request, '<span data-i18n="personal.sys.cantMoveDismissEmployee">' '<b>Erro:</b> Nao é possivel movimentar funcionarios desligados</span>')
+            messages.error( request, _("Não é possível alterar dados de funcionários desligados"))
             return redirect('pessoal:funcionario_list', id=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
     def get_form(self, form_class=None):

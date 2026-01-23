@@ -2,7 +2,6 @@ import django_filters
 from django.contrib.auth.models import User
 from auditlog.models import LogEntry
 from .models import Empresa, Filial
-from .mixins import FilterI18nMixin
 from django.contrib.contenttypes.models import ContentType
 from django_filters import DateFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters.widgets import RangeWidget
@@ -42,13 +41,14 @@ class LogEntryFilter(django_filters.FilterSet):
         fields = ['actor', 'action', 'content_type', 'timestamp']
 
 
-class EmpresaFilter(FilterI18nMixin, django_filters.FilterSet):
+class EmpresaFilter(django_filters.FilterSet):
+    id = django_filters.NumberFilter(label='ID')
     nome = django_filters.CharFilter(lookup_expr='icontains', label='Nome')
     razao_social = django_filters.CharFilter(lookup_expr='icontains', label='Razão Social')
     cnpj_base = django_filters.CharFilter(lookup_expr='icontains', label='Cnpj Base')
     class Meta:
         model = Empresa
-        fields = ['nome', 'razao_social', 'cnpj_base']
+        fields = ['id', 'nome', 'razao_social', 'cnpj_base']
 
 
 class FilialFilter(django_filters.FilterSet):

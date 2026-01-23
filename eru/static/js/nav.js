@@ -17,8 +17,7 @@ class canvasNavLink{
         if(options?.href){this.link.href = options.href}
         this.link.classList = `${options?.class || 'nav-link'}`;
         this.desc = document.createElement('span');
-        this.desc.innerHTML = options['data-i18n'] ? i18n.getEntry(options['data-i18n']) || options?.name || 'name_not_defined' : options?.name || 'name_not_defined';
-        ['data-i18n'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
+        this.desc.innerHTML = options?.name || 'name_not_defined'
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
@@ -28,7 +27,7 @@ class canvasNavLink{
         
         let attrs = {...options};
         // Remove atributos utilizados apenas para o link
-        ['data-i18n', 'name'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
+        ['name'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options?.keybind){this.addKeyBind(options.keybind)}
         this.el.appendChild(this.link);
         customCanvasNavMenu.appendChild(this.el);
@@ -53,7 +52,6 @@ class canvasNavDropdown{
         this.link.href = '#';this.link.setAttribute('role', 'button');this.link.setAttribute('data-bs-toggle', 'dropdown');
         this.desc = document.createElement('span');
         this.desc.innerHTML = options?.name || 'name_not_defined';
-        ['data-i18n'].forEach((el)=>{if(options[el]){this.desc.setAttribute(el, options[el])}})
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';
             this.link.appendChild(icon)
@@ -78,7 +76,6 @@ class canvasNavDropdown{
         let item = document.createElement('li');item.classList = options?.liClass || '';
         let link = document.createElement(options?.tagName || 'a');link.classList = options?.linkClass || 'dropdown-item pointer';
         let desc = document.createElement('span');
-        ['data-i18n'].forEach((el)=>{if(options[el]){desc.setAttribute(el, options[el])}})
         desc.innerHTML = options?.name || 'name_not_defined';
         if(options.icon){
             let icon = document.createElement('i'); icon.classList = options.icon + ' me-2';

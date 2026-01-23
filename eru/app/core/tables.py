@@ -1,4 +1,5 @@
 import json
+from django.utils.translation import gettext_lazy as _
 from .mixins import TableCustomMixin
 from django_tables2 import Column, Table
 from .models import Empresa, Filial
@@ -10,11 +11,11 @@ from django.utils.html import format_html
 class EmpresaTable(TableCustomMixin, Table):
     can_export = True
     max_filiais = 2
-    filiais = Column(orderable=False)
+    filiais = Column(verbose_name=_('Filiais'), orderable=False)
     class Meta:
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
-        edit_url, paginate_by = "empresa_update", 1
+        edit_url, paginate_by = "empresa_update", 20
         responsive_columns = {
             "id": "fit pe-5",
             "razao_social": "d-none d-lg-table-cell",

@@ -4,7 +4,7 @@ from django import forms
 from django.forms import Field
 from django.forms.models import ModelChoiceIterator, ModelMultipleChoiceField
 from .models import Empresa, Filial, Settings, Profile
-from .mixins import BootstrapI18nMixin
+from .mixins import BootstrapMixin
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password
@@ -12,18 +12,13 @@ from django.contrib.auth.models import User, Group, Permission
 from django.utils.translation import gettext_lazy as _
 from itertools import groupby
 from functools import lru_cache
-from django.utils.safestring import mark_safe
 
-Field.default_error_messages['required'] = _('<span data-i18n="sys.fieldRequired">Campo obrigatório</span>')
-Field.default_error_messages['unique'] = _('<span data-i18n="sys.fieldUnique">Campo duplicado, precisa ser unico</span>')
-
+Field.default_error_messages['required'] = _('Campo obrigatório')
+Field.default_error_messages['unique'] = _('Campo duplicado, precisa ser único')
 
 
-class EmpresaForm(BootstrapI18nMixin, forms.ModelForm):
-    # i18n_maps = {
-    #     'nome': 'common.name',
-    #     'razao_social': 'company.companyName',
-    # }
+
+class EmpresaForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Empresa
         fields = ['nome','razao_social','cnpj_base']
@@ -35,14 +30,10 @@ class EmpresaForm(BootstrapI18nMixin, forms.ModelForm):
         self.fields['nome'].max_length = 15
         self.fields['razao_social'].max_length = 80
         self.fields['cnpj_base'].max_length = 15
-        # self.setup_bootstrap_and_i18n()
 
 
 
-class FilialForm(BootstrapI18nMixin, forms.ModelForm):
-    i18n_maps = {
-        'nome': 'common.name',
-    }
+class FilialForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Filial
         fields = [ 'empresa', 'nome', 'nome_fantasia', 'cnpj', 'inscricao_estadual', 'inscricao_municipal', 'cnae', 'atividade', 'endereco', 'bairro', 'cidade', 'uf', 'cep', 'fone', 'fax', 'fuso_horario', 'logo', 'footer' ]
@@ -52,9 +43,6 @@ class FilialForm(BootstrapI18nMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['nome'].max_length = 35
-        # self.setup_bootstrap_and_i18n()
-
-
 
 
 @lru_cache(maxsize=1)

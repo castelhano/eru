@@ -1,26 +1,27 @@
 import json
 import csv
 from django import forms
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.utils.translation import gettext_lazy as _
+from django.http import JsonResponse, HttpResponse, QueryDict
 from django.core import serializers
-from core.widgets import I18nSelect, I18nSelectMultiple
 from django.utils.safestring import mark_safe
-from django.utils.html import format_html, strip_tags
+from django.utils.html import strip_tags
 from django_tables2 import RequestConfig, TemplateColumn
 from django.template.loader import render_to_string
-from django.db.models.fields.related import ManyToManyField
-from django.db.models.query import QuerySet
-from django.db.models.fields import DateTimeField, DateField
+from django.forms.models import model_to_dict
+from django.db.models.fields import DateField
 
 
 class AjaxableListMixin:
-    # permite a view retornar resultado em formado JSON (requisicao ajax) ou para um template
+# mixin para consulta de registros via ajax, adicione na view, e no template:
+# fetch('{% url "empresa_list" %}?id=1', {})
+# .then(res => res.json())
+# .then(data => console.log(data));
     def render_to_response(self, context, **response_kwargs):
         if self.is_ajax_request():
-            queryset = context.get(self.context_object_name) or context.get('object_list')
-            data = serializers.serialize('json', queryset)
-            return HttpResponse(data, content_type="application/json")
-        # se nao for AJAX, segue o fluxo normal
+            # ordem: filtro do contexto > filtro da classe > queryset bruta
+            qs = context['filter'].qs if 'filter' in context else (self.filterset_class(self.request.GET, queryset=self.get_queryset()).qs if hasattr(self, 'filterset_class') else self.get_queryset())
+            return JsonResponse(list(qs.values()), safe=False)
         return super().render_to_response(context, **response_kwargs)
     def is_ajax_request(self):
         headers = self.request.headers
@@ -34,203 +35,129 @@ class AjaxableListMixin:
 
 
 class AjaxableFormMixin:
-    # permite salvar registro por uma requisicao ajax ou de um form
+# mixin para create / update de registros via ajax, adicione o mixin na view e no template:
+# fetch('{% url "empresa_create" %}', {
+#     method: 'POST',
+#     headers: {
+#         'Content-Type': 'application/json',
+#         'X-CSRFToken': getCookie('csrftoken'),
+#     },
+#     body: JSON.stringify({
+#         "nome": "Uma nova 3",
+#       })
+# })
+# .then(res => { return res.json() })
+# .then(data => console.log(data))
+# .catch(err => console.error(err));
     def form_invalid(self, form):
-        response = super().form_invalid(form)
         if self.is_ajax_request():
-            # retorna JSON com os erros de validacao
-            return JsonResponse( {'errors': form.errors, 'status': 'error'}, status=400)
-        return response
+            return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
+        return super().form_invalid(form)
     def form_valid(self, form):
-        # retorna json com dados do objeto
-        response = super().form_valid(form) 
+        response = super().form_valid(form) # Executa o save() e define self.object
         if self.is_ajax_request():
-            # self.object eh o objeto alvo
-            data = serializers.serialize('json', [self.object])
-            return HttpResponse(data, content_type="application/json", status=200)
-        # se nao for AJAX, retorna a resposta padrao da base view
+            return JsonResponse(model_to_dict(self.object), status=200)
         return response
     def dispatch(self, request, *args, **kwargs):
-        # prepara os dados para serem lidos pelo POST do django
-        # se Content-Type for JSON, carrega o request.body para o request.POST
-        if request.content_type == 'application/json':
+        if request.method == 'POST' and 'application/json' in request.content_type:
             try:
-                request.POST = json.loads(request.body)
+                data = json.loads(request.body)
+                q_dict = QueryDict('', mutable=True) # transforma o dict em QueryDict para o form
+                for key, value in data.items():
+                    if isinstance(value, list):
+                        for item in value: q_dict.appendlist(key, item)
+                    else:
+                        q_dict[key] = value
+                # 3. Sobrescreve o POST. Agora o Form vai "mágicamente" achar os dados
+                request.POST = q_dict # sobrescreve o POST
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'invalid json'}, status=400)
         return super().dispatch(request, *args, **kwargs)
     def is_ajax_request(self):
-        # metodo auxiliar para verificar se requisicao eh AJAX ou JSON
-        # consiste tanto requisicoes ajax usando X-Requested-With (antigos)
-        # quanto application/json (padrao Fecth moderno)
-        return self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or \
-               self.request.content_type == 'application/json'
+        h = self.request.headers
+        return any([
+            h.get('x-requested-with') == 'XMLHttpRequest',
+            self.request.content_type == 'application/json'
+        ])
 
 class CSVExportMixin:
+# mixin exporta dados como CSV, adicione o mixin na view para habilitar
     def render_to_response(self, context, **response_kwargs):
-        if self.request.GET.get('_export') != 'csv':
+        if self.request.GET.get('_export') != 'csv' or not context.get('table'):
             return super().render_to_response(context, **response_kwargs)
-        table = context.get('table')
-        if not table: return super().render_to_response(context, **response_kwargs)
-        response = HttpResponse(content_type='text/csv; charset=utf-8')
-        filename = f"{self.model._meta.model_name}_export.csv"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        table, response = context['table'], HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{self.model._meta.verbose_name}_export.csv"'
         response.write('\ufeff'.encode('utf8'))
         writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)
-        exclude = getattr(table.Meta, 'exclude_from_export', [])
-        cols = [
-            c for c in table.columns 
-            if c.name not in ['actions', 'acoes'] 
-            and c.name not in exclude 
-            and c.header
-        ]
-        # cols = [c for c in table.columns if c.name not in ['actions', 'acoes'] and c.header]
-        writer.writerow([str(c.header) for c in cols])
-        queryset = getattr(table.data, 'data', table.data)
-        if hasattr(queryset, '_prefetch_related_lookups') and queryset._prefetch_related_lookups:
-            iterator = queryset.iterator(chunk_size=2000)
-        else:
-            iterator = queryset.iterator()
+        excl = getattr(table.Meta, 'exclude_from_export', [])
+        cols = [c for c in table.columns if c.name not in ['actions', 'acoes'] + excl and c.header]
+        writer.writerow([str(c.header).title() for c in cols])
+        qs = getattr(table.data, 'data', table.data)
+        iterator = qs.iterator(chunk_size=2000) if getattr(qs, '_prefetch_related_lookups', None) else qs.iterator()
         for obj in iterator:
-            row_data = []
-            for col in cols:
-                value = row_data.append(self._get_csv_value(obj, col, table))
-            writer.writerow(row_data)
+            writer.writerow([self._get_csv_value(obj, col, table) for col in cols])
         response.set_cookie("fileDownload", "true", max_age=60)
         return response
     def _get_csv_value(self, obj, col, table):
-        render_method = getattr(table, f"render_{col.name}", None)
-        display_method = getattr(obj, f"get_{col.name}_display", None)
-        val = render_method(getattr(obj, col.name)) if render_method else (display_method() if display_method else getattr(obj, col.name, ""))
-        if hasattr(val, 'all'): return ", ".join([str(i) for i in val.all()])
-        if hasattr(val, 'strftime'): 
+        """
+        Processa o valor da celula para exportacao: prioriza renderizadores da tabela,
+        converte choices para labels amigaveis, formata datas/listas e limpa tags HTML
+        """
+        raw_val = getattr(obj, col.name, "")
+        # 2. se for uma lista/M2M, processa antes de qualquer renderizacao HTML
+        if hasattr(raw_val, 'all'):
+            return ";".join([str(i) for i in raw_val.all()])
+        render, display = getattr(table, f"render_{col.name}", None), getattr(obj, f"get_{col.name}_display", None)
+        val = render(raw_val) if render else (display() if display else raw_val)
+        if hasattr(val, 'strftime'):
             return val.strftime('%d/%m/%Y %H:%M') if 'timestamp' in col.name else val.strftime('%d/%m/%Y')
         return strip_tags(str(val or "")).replace('\n', ' ').strip()
 
-    # def _get_csv_value(self, obj, col, table):
-    #     # tenta pegar o valor renderizado pela tabela para manter formatacao mas remove tags HTML
-    #     render_method = getattr(table, f"render_{col.name}", None)
-    #     value = render_method(getattr(obj, col.name)) if render_method else getattr(obj, col.name, "")
-    #     if hasattr(value, 'all'): # QuerySets/RelatedManagers
-    #         return ", ".join([str(i) for i in value.all()])
-    #     if hasattr(value, 'strftime'): # ajuste para datas
-    #         return value.strftime('%d/%m/%Y %H:%M') if 'timestamp' in col.name else value.strftime('%d/%m/%Y')
-    #     # remove tags HTML caso o render_ metodo tenha retornado format_html
-    #     return strip_tags(str(value or "")).replace('\n', ' ').strip()
 
-# versao original
-# class CSVExportMixin:
-#     def render_to_response(self, context, **response_kwargs):
-#         if self.request.GET.get('_export') == 'csv':
-#             table = context.get('table')
-#             if not table:
-#                 return super().render_to_response(context, **response_kwargs)
-#             response = HttpResponse(content_type='text/csv; charset=utf-8')
-#             filename = f"{self.model._meta.model_name}_export.csv"
-#             response['Content-Disposition'] = f'attachment; filename="{filename}"'
-#             response.write('\ufeff'.encode('utf8'))  # BOM para o Excel identificar UTF-8 corretamente
-#             writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)            
-#             exportable_columns = [
-#                 col for col in table.columns 
-#                 if col.name not in ['actions', 'acoes'] and col.header
-#             ]
-#             writer.writerow([str(column.header) for column in exportable_columns])
-#             for row in table.rows:
-#                 row_data = []
-#                 for column in exportable_columns:
-#                     value = row.get_cell_value(column.name)
-#                     if isinstance(value, QuerySet):
-#                         value = ", ".join([str(getattr(obj, 'nome', obj)) for obj in value.all()])
-#                     elif hasattr(value, 'strftime'):
-#                         value = value.strftime('%d/%m/%Y')
-#                     if value is None:
-#                         value = ""
-#                     value = str(value).replace('\r', '').replace('\n', ' ') # limpeza de quebras de linha
-#                     row_data.append(value)
-#                 writer.writerow(row_data)
-#             response.set_cookie("fileDownload", "true", max_age=60)
-#             return response
-#         return super().render_to_response(context, **response_kwargs)
-
-
-class BootstrapI18nMixin:
-# 1) adiciona classes e integracao com i18n aos campos (i18n_map deve ser definido no model)
-# 2) implementa label com integracao ao i18n usando {{ form.campo.i18n_label }}
-# 3) normaliza DateInputs para formato format='%Y-%m-%d', attrs={'type': 'date'}
+class BootstrapMixin:
+# mixin injeta classes CSS e normaliza campos (data), alem de implementar metodo i18n_label para injetar label
+# no template faca {{ form.nome }} {{ form.nome.i18n_label }}
     _CSS_MAP = {
-        forms.CheckboxInput: 'form-check-input', 
-        forms.Select: 'form-select'
+        forms.CheckboxInput: 'form-check-input',
+        forms.Select: 'form-select',
+        forms.SelectMultiple: 'form-select',
+        forms.RadioSelect: 'form-check-input',
     }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setup_bootstrap_and_i18n()
-    def setup_bootstrap_and_i18n(self):
-        model_map = getattr(self._meta.model, 'i18n_map', {}) # dicionario definido no modelo
-        form_map = getattr(self, 'i18n_map', {})              # dicionario definido no form
-        i18n_map = {**model_map, **form_map}                  # combina dicionarios, prevalecendo o do form
-        choices_map = getattr(self._meta.model, 'i18n_choices', lambda: {})() # dicionario de choices (definido no modelo)
         for name, field in self.fields.items():
-            key = i18n_map.get(name, '')
-            opt_map = choices_map.get(name)
             widget = field.widget
-            # 1. configuracao de widgets Especiais
-            # if key and hasattr(field, 'choices') and isinstance(key, dict):
-            if opt_map:
-                W = I18nSelectMultiple if isinstance(widget, forms.SelectMultiple) else I18nSelect
-                widget = field.widget = W(choices=field.choices, data_map=opt_map)
-            if key:
-                widget.attrs['data-i18n'] = key
-            # 2. normaliza DateInputs
+            # 1. normalizacao de datas
             if isinstance(field, forms.DateField):
                 widget.input_type = 'date'
                 widget.format = '%Y-%m-%d'
-            # 3. atribuicao de CSS e atributos
-            css = self._CSS_MAP.get(type(widget), 'form-control')
-            sync_attrs = {
-                'max_length': 'maxlength',
-                'min_length': 'minlength',
-                'min_value': 'min',
-                'max_value': 'max',
-            }
-            for field_attr, html_attr in sync_attrs.items():
-                val = getattr(field, field_attr, None)
-                if val is not None:
-                    widget.attrs[html_attr] = val
-            widget.attrs.update({
-                'class': f"{css} {widget.attrs.get('class', '')}".strip(),
-                'placeholder': widget.attrs.get('placeholder', ' '),
-            })
-            # 4. cache da label (acessivel via {{ form.campo.i18n_label }})
+            # 2. atribuicao de classes CSS
+            css_class = self._CSS_MAP.get(type(widget), 'form-control')
+            current_class = widget.attrs.get('class', '')
+            widget.attrs['class'] = f"{css_class} {current_class}".strip()            
+            # 3. define placeholder (Bootstrap Floating Labels)
+            if not widget.attrs.get('placeholder'):
+                widget.attrs['placeholder'] = field.label or ' '
+            # 4. sincronizacao de atributos de validacao
+            self._sync_validator_attrs(field, widget)
+            # 5. label traduzivel (acessivel via {{ form.campo.i18n_label }})
             bf = self[name]
-            attr = f' data-i18n="{key}"'
-            bf.i18n_label = mark_safe(f'<label for="{bf.id_for_label}"{attr}>{field.label}</label>')
-
-
-# Mixin para django-filter, implementa injecao de data-i18n nos fields e label do filtro
-class FilterI18nMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # busca mapa de traducao no model vinculado ao Meta do Filtro
-        i18n_map = getattr(self.Meta.model, 'i18n_map', {}) 
-        for name, field in self.form.fields.items():
-            key = i18n_map.get(name)
-            if key:
-                # Injeta no Widget (Input)
-                field.widget.attrs['data-i18n'] = key
-                # Injeta um atributo no campo para a Label no template
-                field.i18n_label_key = key
-            
-            # Aplica estilizacao padrao do Bootstrap 5
-            field.widget.attrs.update({
-                'class': 'form-control form-control-sm',
-                'placeholder': ' ' 
-            })
-
-
+            bf.i18n_label = mark_safe(f'<label for="{bf.id_for_label}">{field.label}</label>')
+    def _sync_validator_attrs(self, field, widget):
+        attrs_to_sync = {
+            'max_length': 'maxlength',
+            'min_length': 'minlength',
+            'max_value': 'max',
+            'min_value': 'min'
+        }
+        for f_attr, h_attr in attrs_to_sync.items():
+            val = getattr(field, f_attr, None)
+            if val is not None:
+                widget.attrs[h_attr] = val
 
 
 class TableCustomMixin:
-# define padrao visual para tabela, injeta data-i18n nas colunas, insere botao action para acesso ao registro (ou execucao de script)
+# define padrao visual para tabela, insere botao action para acesso ao registro (ou execucao de script)
 # no Meta da tabela altere edit_url, action_script, action_classlist, action_innerhtml, para alterar configuracoes base do botao action
 # para mudar configuracoes de attr da tabela, use o metodo __init__ na definicao da tabela ex:
 # def __init__(self, *args, **kwargs):
@@ -254,15 +181,6 @@ class TableCustomMixin:
                 template_code=f'<{tag} class="{class_list}" {attr} {data_attrs}>{inner_html}</{tag.split()[0]}>',
                 attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
             )
-        # if (url or script) and "actions" not in self.base_columns:
-        #     tag = 'a' if url else 'button type="button"'
-        #     attr = f'href="{{% url "{url}" record.id %}}"' if url else f'onclick="{script}"'
-        #     class_list = getattr(meta, 'action_classlist', "btn btn-sm btn-dark")
-        #     inner_html = getattr(meta, 'action_innerhtml', '<i class="bi bi-pen-fill"></i>')
-        #     self.base_columns["actions"] = TemplateColumn(
-        #         template_code=f'<{tag} class="{class_list}" {attr}>{inner_html}</{tag.split()[0]}>',
-        #         attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
-        #     )
         super().__init__(*args, **kwargs)
         self.template_name = "_tables/bootstrap5_custom.html"
         self.attrs = {
@@ -271,43 +189,16 @@ class TableCustomMixin:
             "data-action-selector": ".btn",
             "id": self.__class__.__name__.lower()
         }
-        # responsividade e I18n
+        # responsividade das colunas (breakpoint)
         resp = getattr(meta, 'responsive_columns', {})
-        i18n = getattr(getattr(meta, 'model', None), 'i18n_map', {})
         for name, col in self.columns.items():
             if name in resp:
-                col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
-            col.i18n_key = i18n.get(name)
+                col.column.attrs.update({
+                    "th": {"class": resp[name]}, 
+                    "td": {"class": resp[name]}
+                })
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
             self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self
-
-
-
-
-
-
-
-
-    # def __init__(self, *args, **kwargs):
-    #     url = getattr(self.Meta, 'edit_url', None)
-    #     if url and "actions" not in self.base_columns:
-    #         self.base_columns["actions"] = TemplateColumn(template_code=f'<a class="btn btn-sm btn-dark" href="{{% url "{url}" record.id %}}"><i class="bi bi-pen-fill"></i></a>', attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
-    #     super().__init__(*args, **kwargs)
-    #     self.template_name, self.attrs = "_tables/bootstrap5_custom.html", {
-    #         "class": "table border table-striped table-hover mb-2", 
-    #         "data-navigate": "true", 
-    #         "data-action-selector": ".btn", 
-    #         "id": self.__class__.__name__.lower()
-    #     }
-    #     model, resp = getattr(self.Meta, 'model', None), getattr(self.Meta, 'responsive_columns', {})
-    #     i18n = getattr(model, 'i18n_map', {})
-    #     for name, col in self.columns.items():
-    #         if name in resp: col.column.attrs.update({"th": {"class": resp[name]}, "td": {"class": resp[name]}})
-    #         col.i18n_key = i18n.get(name)
-    # def config(self, request, filter_obj=None):
-    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-    #     if filter_obj: self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
-    #     return self

@@ -325,6 +325,10 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     model = Empresa
     template_name = 'core/empresas.html'
     permission_required = 'core.view_empresa'
+    def get(self, request, *args, **kwargs):
+        from django.utils import translation
+        print(f"ID-DEBUG: {translation.get_language()}") # Veja no console se sai 'en' ou 'pt-br'
+        return super().get(request, *args, **kwargs)
     def get_queryset(self):
         return Empresa.objects.prefetch_related('filiais').all().order_by('nome').distinct()
     def get_context_data(self, **kwargs):

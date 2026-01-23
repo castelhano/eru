@@ -9,6 +9,7 @@ admin.site.site_title = "Admin"             # Título da aba do navegador
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
     path('',include('core.urls')),
     path('pessoal/',include('pessoal.urls_web')),
     path('api/', include('pessoal.urls_api')),

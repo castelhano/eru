@@ -30,7 +30,7 @@
         const __sw = screen?.width || null;
         const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
         {% block script_preload %}{% endblock %}
-        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
+        // window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
     </script>
 </head>
 
@@ -160,21 +160,19 @@
     <script src="{% static 'js/vendor/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/app.js' %}"></script>
     <script src="{% static 'js/keywatch.js' %}"></script>
-    <script src="{% static 'js/i18n.js' %}"></script>
     <script src="{% static 'js/nav.js' %}"></script>
     {% block add_script_src %}{% endblock %}
 
     <script>
-        const i18n = new I18n({
-            apps: ['core'],
-            url: "{% url 'i18n' %}",
-            autoDetect: true, 
-            switcher: document.getElementById('id_language'), 
-        })
-
+        document.getElementById('id_language').onchange = (ev)=>{
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 1);
+            // persiste por 1 ano o cookie de language
+            document.cookie = "django_language=" + ev.target.value + "; path=/; expires=" + date.toUTCString() + "; SameSite=Lax";
+            window.location.reload();
+        }
         const keywatchComposedUIAlert = document.getElementById('keywatchComposedUIAlert');
         const appKeyMap = new Keywatch({ // Inicia lib para captura de shortcuts
-            i18nHandler: i18n,
             composedListener: (status, scope)=>{
                 if(status){ keywatchComposedUIAlert.style.display = 'block' }
                 else{ keywatchComposedUIAlert.style.display = 'none' }
@@ -199,16 +197,6 @@
             },
         });
         keywatchComposedUIAlert.innerHTML = appKeyMap.composedTrigger;
-        {% if perms.core.debug %}
-        appKeyMap.bind('s+backspace', ()=>{
-            let lng = i18n.language;
-            let apps = i18n.apps;
-            i18n.clearAll(false);
-            i18n.apps = apps;
-            i18n.translate(lng);
-            appNotify('warning', 'i18n storage clear');
-        }, {desc:'<i class="bi bi-shield-lock-fill me-2 text-orange"></i>Clear localStorage for i18n'})
-        {% endif %}
         
         if(localStorage.theme){
             document.documentElement.dataset.bsTheme = localStorage.theme;
@@ -239,18 +227,18 @@
                 case false: canvasNav.hide();break;
             }
         }
-        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.goIndexPage', icon: 'bi bi-house-fill', desc:'Retorna à página inicial'})
-        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.moduleRoot', desc:'Retorno inicio do módulo'})}
-        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.addRegistry', icon: 'bi bi-plus-square-fill text-success', desc:'Novo registro'})}
-        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.submitForm', icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})}
-        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.goPreviousNode', icon: 'bi bi-arrow-up', desc:'Retorna origem'})}
-        appKeyMap.bind('alt+l', ()=>{window.location.href = typeof appClearUrl == 'string' ? appClearUrl : window.location.href.split("?")[0].split('#')[0]}, {'data-i18n':'sys.shortcuts.reload', icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
-        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {'data-i18n':'sys.shortcuts.showSysPanel', icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
-        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {'data-i18n':'sys.shortcuts.logout', icon: 'bi bi-power', desc:'Encerra sessão no sistema'})
+        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {icon: 'bi bi-house-fill', desc:'Retorna à página inicial'})
+        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {desc:'Retorno inicio do módulo'})}
+        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'Novo registro'})}
+        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})}
+        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'Retorna origem'})}
+        appKeyMap.bind('alt+l', ()=>{window.location.href = {{ request.path }}}, {icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
+        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
+        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {icon: 'bi bi-power', desc:'Encerra sessão no sistema'})
         if(document.getElementById('auto_filter_form_container')){
             const filterCollapse = document.getElementById('auto_filter_form_container_container');
             const filterBtn = document.getElementById('auto_filter_form_btn');
-            appKeyMap.bind('f2', ()=>{filterBtn.click()}, {'data-i18n':'sys.shortcuts.showFilters', icon: 'bi bi-funnel-fill', desc:'Exibe filtros da página', origin: 'app.html'})
+            appKeyMap.bind('f2', ()=>{filterBtn.click()}, {icon: 'bi bi-funnel-fill', desc:'Exibe filtros da página', origin: 'app.html'})
             filterCollapse.addEventListener('shown.bs.collapse', () => {
                 const firstInput = filterCollapse.querySelector('input:not([type=hidden]), select, textarea');
                 if (firstInput) { firstInput.focus() }
@@ -260,9 +248,5 @@
     </script>
 
     {% block canvas_menu %}{% endblock %}
-
-    <script>
-        i18n.init();
-    </script>
 </body>
 </html>

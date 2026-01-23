@@ -1,10 +1,10 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 **
-* @version  6.3
+* @version  6.4
 * @since    05/08/2024
+* @release  23/01/2026 [removido suporte para i18n.js]
 * @release  31/10/2025 [removido suporte para teclas de acento ex ~ ´]
-* @ver 6.1  Adicionado suporte para i18n lib appKeyMap.bind(...{'data-i18n'='my.key'})
 * @ver < 6  [add keyup, multiple shortcuts at same trigger, priority as useCapture]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @example  appKeyMap = new Keywatch();
@@ -44,8 +44,6 @@ class Keywatch{
             display: true,
             preventDefault: true,
             useCapture: false,
-            'data-i18n': undefined,
-            'i18n-dynamicKey': false,
             composed: false                         // composed sera true caso usado modificadores nao convencionais, definido automaticamente na lib
         }
         this.defaultOptions = { // configuracoes padrao para classe
@@ -56,7 +54,6 @@ class Keywatch{
             shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na pagina",
             shortcutMaplistIcon: "bi bi-alt",
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
-            i18nHandler: null, // integracao com lib i18n, se ativa deve informar objeto instanciado
             composedTrigger: ';', // caractere que confirma atalhos 'composed' (atalhos com modificadores nao convencionais)
             composedListener: ()=>{}, // funcao eh acionada sempre que um atalho composed eh iniciado ou finalizado
             reserve: {},    // lista de atalhos reservados, sera usada apenas para notificacao pelo metodo avail
@@ -94,7 +91,7 @@ class Keywatch{
         this._addEvent(document, 'change', (ev)=>{this.pressed = []}, false);
         this._addEvent(window, 'focus', (ev)=>{this.pressed = []}, false); // previne teclas travadas ao receber foco, evita conflito ao mudar de tela
         //--
-        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', 'data-i18n': 'shortcuts.keywatch.shortcutMaplist', 'i18n-dynamicKey': true, icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
+        if(this.shortcutMaplist){this.bind(this.shortcutMaplist, ()=>{this.showKeymap()}, {origin: 'Keywatch JS', context: 'all', icon: this.shortcutMaplistIcon, desc: this.shortcutMaplistDesc})}
         this._createModal();
     }
     
@@ -475,7 +472,7 @@ class Keywatch{
                             title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
                         }
                         let desc = el?.icon ? `<i class="${el.icon} me-2"></i>` : '';
-                        desc += this.i18nHandler && el['data-i18n'] ? this.i18nHandler.getEntry(el['data-i18n']) || el?.desc || '' : el?.desc || '';
+                        desc += el?.desc || '';
 
                         const tr = document.createElement('tr');
 
@@ -484,8 +481,6 @@ class Keywatch{
                         tr.appendChild(tdShortcut);
 
                         const tdDesc = document.createElement('td');
-                        if(el['data-i18n']){ tdDesc.setAttribute('data-i18n', el['data-i18n']); }
-                        if(el['data-i18n-dynamicKey']){ tdDesc.setAttribute('data-i18n-dynamicKey', 'true'); }
                         tdDesc.innerHTML = desc;
                         tr.appendChild(tdDesc);
 
@@ -501,10 +496,6 @@ class Keywatch{
         }
         this.shortcutModalTableTbody.innerHTML = ''; // Limpa lista atual de atalhos
         this.shortcutModalTableTbody.appendChild(fragment);
-        // Se utilizando integracao com i18n ajusta demais campos (inpit fields, etc)
-        if(this.i18nHandler){
-            this.shortcutSearchInput.placeholder = this.i18nHandler.getEntry('shortcuts.keywatch.searchInputPlaceholder') || this.defaultOptions.searchInputPlaceholder;
-        }
     }
     _filterMapTable(ev){
         requestAnimationFrame(()=>{

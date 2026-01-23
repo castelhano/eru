@@ -1,9 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Empresas{% endblock %}
-{% block title_i18n %}common.company{% endblock %}
 
-{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
 <div class="card mt-2">
@@ -27,6 +25,7 @@
 
 <script>
   {% block add_script %}
+
   
   const cnpj = IMask(document.getElementById('id_cnpj_base'),{mask: '00.000.000/0000'})
   const form = new jsForm(document.getElementById('app_form'), {imask: [cnpj]});

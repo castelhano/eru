@@ -1,6 +1,7 @@
 import os, sys
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 APP_DIR = os.path.join(BASE_DIR,'eru/app/')
@@ -26,6 +27,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -70,6 +72,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'pt-br'
+LANGUAGES = [
+    ('pt-br', 'Português'),
+    ('en', 'English'),
+]
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
+
 TIME_ZONE = 'America/Cuiaba'
 USE_I18N = True
 USE_L10N = True
@@ -96,6 +107,7 @@ LOGIN_REDIRECT_URL = 'index'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
