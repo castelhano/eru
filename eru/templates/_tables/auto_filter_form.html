@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="accordion mb-2" id="auto_filter_form_container">
     <div class="accordion-item">
         <h2 class="accordion-header">
@@ -8,7 +9,7 @@
                 data-bs-toggle="collapse" 
                 data-bs-target="#auto_filter_form_container_container">
                 <i class="bi bi-funnel-fill me-2 text-body"></i>
-                <span class="text-body-secondary" >Filtros</span>
+                <span class="text-body-secondary" >{% translate 'Filtros' %}</span>
             </button>
         </h2>
         <div id="auto_filter_form_container_container" class="accordion-collapse collapse" data-bs-parent="#auto_filter_form_container">
@@ -24,9 +25,7 @@
                     <div class="row g-1">
                         {% for field in filter.form %}
                         <div class="col-md">
-                            <label class="small fw-bold text-body-secondary" 
-                                for="{{ field.id_for_label }}" 
-                                {% if field.field.i18n_label_key %}{% endif %}>
+                            <label class="small text-body-secondary" for="{{ field.id_for_label }}">
                                 {{ field.label }}
                             </label>
                             {{ field }}

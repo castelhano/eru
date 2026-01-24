@@ -108,6 +108,15 @@ LOGIN_REDIRECT_URL = 'index'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+def FILTERS_VERBOSE_LOOKUPS():
+    from django_filters.conf import DEFAULTS
+    verbose_lookups = DEFAULTS['VERBOSE_LOOKUPS'].copy()
+    verbose_lookups.update({
+        'contains': '',
+        'icontains': ''
+    })
+    return verbose_lookups
+
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',

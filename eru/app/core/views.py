@@ -325,10 +325,6 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     model = Empresa
     template_name = 'core/empresas.html'
     permission_required = 'core.view_empresa'
-    def get(self, request, *args, **kwargs):
-        from django.utils import translation
-        print(f"ID-DEBUG: {translation.get_language()}") # Veja no console se sai 'en' ou 'pt-br'
-        return super().get(request, *args, **kwargs)
     def get_queryset(self):
         return Empresa.objects.prefetch_related('filiais').all().order_by('nome').distinct()
     def get_context_data(self, **kwargs):
@@ -336,23 +332,6 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
         filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
         context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs).config(self.request, filtro)})
         return context
-
-
-
-# class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
-#     model = Empresa
-#     template_name = 'core/empresas.html'
-#     context_object_name = 'empresas'
-#     permission_required = 'core.view_empresa'
-#     def get_queryset(self):
-#         return Empresa.objects.prefetch_related('filiais').all().order_by('nome')
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
-#         table = EmpresaTable(filtro.qs).config(self.request, filter_obj=filtro)
-#         context['filter'] = filtro
-#         context['table'] = table
-#         return context
 
 class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Group

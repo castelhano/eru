@@ -164,8 +164,6 @@ class Planejamento(models.Model):
         if self.patamares == '':
             return 'false'
         params = {}
-        print('PASSEI')
-        print(self.patamares)
         patamares = json.loads(self.patamares)
         for p in patamares:
             for i in range(p['inicial'], p['final'] + 1, 1):

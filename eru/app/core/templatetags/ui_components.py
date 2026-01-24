@@ -1,0 +1,48 @@
+from django import template
+from django.urls import reverse, NoReverseMatch
+from django.utils.html import format_html
+from django.utils.translation import gettext as _
+from django.utils.safestring import mark_safe, SafeData
+from .tag_extra import hl_str
+
+register = template.Library()
+
+@register.simple_tag
+def btn_tag(action, url_name=None, **kwargs):
+# {% load ui_components %}
+# {% btn_tag 'add' 'pessoal:funcionario_create' hl=False %} hl = highlight
+# {% btn_tag 'add' 'pessoal:funcionario_update' pk=funcionario.id|safe %}
+# {% btn_tag 'add' class="btn btn-sm btn-purple" data_bs_toggle="modal" %} se nao informar url_name cria button ao inves de link
+    config = {
+        'add':    {'label': mark_safe('<i class="bi bi-plus-lg"></i>'), 'key': 'n', 'id': 'add', 'class': 'btn btn-sm btn-success'},
+        'update': {'label': mark_safe('<i class="bi bi-pen-fill"></i>'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-dark'},
+        'submit': {'label': _('Gravar'), 'key': 'g', 'id': 'submit', 'class': 'btn btn-sm btn-primary'},
+        'back':   {'label': _('Voltar'), 'key': 'v', 'id': 'back', 'class': 'btn btn-sm btn-secondary'},
+        'delete': {'label': _('Excluir'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-danger'},
+    }
+    btn = config.get(action, {'label': action, 'key': '', 'id': '', 'class': 'btn btn-sm btn-secondary'})
+    shortcut_key = kwargs.pop('key', btn['key'])
+    label = str(kwargs.pop('label', btn['label']))
+    hl = kwargs.pop('hl', True)     # atalho para desativar o destaque do texto (mesmo definido key)
+    kwargs.setdefault('class', btn['class'])
+    if btn['id']: kwargs.setdefault('id', btn['id'])
+    href = kwargs.get('href')
+    if url_name:
+        url_kwargs = {'pk': kwargs.pop('pk')} if 'pk' in kwargs else {}
+        try:
+            href = reverse(url_name, kwargs=url_kwargs)
+        except NoReverseMatch:
+            href = "#"
+    if href: 
+        kwargs['href'] = href
+        tag_name = 'a'
+    else:
+        tag_name = 'button'
+        kwargs['type'] = 'submit' if action == 'submit' else 'button'
+    if shortcut_key and hl and '<' not in label:
+        label = hl_str(label, shortcut_key)
+    attrs_list = []
+    for k, v in kwargs.items():
+        attrs_list.append(format_html(' {}="{}"', mark_safe(k.replace("_", "-")), v))
+    attrs_html = mark_safe("".join(attrs_list))
+    return format_html('<{0}{1}>{2}</{0}>', mark_safe(tag_name), attrs_html, mark_safe(label))

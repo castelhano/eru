@@ -42,10 +42,10 @@ class LogEntryFilter(django_filters.FilterSet):
 
 
 class EmpresaFilter(django_filters.FilterSet):
-    id = django_filters.NumberFilter(label='ID')
-    nome = django_filters.CharFilter(lookup_expr='icontains', label='Nome')
-    razao_social = django_filters.CharFilter(lookup_expr='icontains', label='Razão Social')
-    cnpj_base = django_filters.CharFilter(lookup_expr='icontains', label='Cnpj Base')
+    id = django_filters.NumberFilter(label='Id')
+    nome = django_filters.CharFilter(lookup_expr='icontains')
+    razao_social = django_filters.CharFilter(lookup_expr='icontains')
+    cnpj_base = django_filters.CharFilter(lookup_expr='icontains')
     class Meta:
         model = Empresa
         fields = ['id', 'nome', 'razao_social', 'cnpj_base']

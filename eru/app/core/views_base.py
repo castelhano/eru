@@ -32,6 +32,5 @@ class BaseUpdateView(SuccessMessageMixin, UpdateView):
 class BaseDeleteView(SuccessMessageMixin, DeleteView):
     login_url = '/handler/403'
     raise_exception = False
-    error_url = None        # caso em alguma view queira alterar pagina de destino no erro, especificar error_url
-    # caso view queira uma mensagem customizada basta sobregravar success_message
+    error_url = None    # caso em alguma view queira alterar pagina de destino no erro, especificar error_url
     success_message = DEFAULT_MESSAGES.get('deleted')

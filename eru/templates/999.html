@@ -1,8 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load ui_components %}
 {% block title %}Handler: 999{% endblock %}
-
-
 
 {% block style_src %}
 <link rel="stylesheet" href="{% static 'css/docs.css' %}">
@@ -13,7 +12,15 @@
 {% block content_fluid %}
 <h5 class="mt-3">Handler: <b class="text-purple">999</b></h5>
 <hr>
-<input type="month" class="form-control">
+<div class="row">
+    <div class="col">
+        {% btn_tag 'submit' %}
+        {% btn_tag 'back' 'pessoal:funcionario_list' %}
+        {% btn_tag 'delete' 'pessoal:funcionario_update' pk=1 %}
+        {% btn_tag 'add' 'pessoal:funcionario_create' %}
+        {% btn_tag 'update' 'pessoal:funcionario_create' %}
+    </div>
+</div>
 <h5>jsForm:</h5>
 <div class="row">
     <div class="col">
@@ -24,7 +31,7 @@
                     <label for="id_nome" >Nome</label>
                 </div>
                 <div class="form-floating mb-lg-1 col-lg-3">
-                    <input type="text" name="cpf" id="id_cpf" class="form-control" placeholder=" ">
+                    <input type="text" name="cpf" id="id_cpf" accesskey="u" class="form-control" placeholder=" ">
                     <label for="id_cpf">CPF</label>
                 </div>
                 <div class="form-floating mb-1 col-lg">
@@ -202,9 +209,9 @@ const salario = IMask(document.getElementById('id_salario'), {
 const form = new jsForm(document.getElementById('my_form'), {
     imask: [cpf, salario],
     // novalidate: true,
-    selectPopulate: [
-    {target: document.getElementById('id_empresa'), url: '{% url 'empresa_list' %}'}
-    ],
+    // selectPopulate: [
+    // // {target: document.getElementById('id_empresa'), url: '{% url 'empresa_list' %}'}
+    // ],
     // multipleAddon: ['cpf'],
     multipleAddon: [{
         field: 'cpf', 

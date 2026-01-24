@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-23 15:59-0400\n"
+"POT-Creation-Date: 2026-01-24 12:44-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -54,8 +54,12 @@ msgid "Erro ao buscar dados solicitados"
 msgstr "Error retrieving requested data"
 
 #: eru/app/core/constants.py:12
-msgid "Os críterios de pelo menos um campo não foram atendidos, verifique os valores lançados"
-msgstr "The criteria for at least one field were not met; please check the values ​​released"
+msgid ""
+"Os críterios de pelo menos um campo não foram atendidos, verifique os "
+"valores lançados"
+msgstr ""
+"The criteria for at least one field were not met; please check the values ​​"
+"released"
 
 #: eru/app/core/constants.py:13
 msgid "Registro sobrepõe outras entradas existentes"
@@ -76,6 +80,10 @@ msgstr "Required field"
 #: eru/app/core/forms.py:17
 msgid "Campo duplicado, precisa ser único"
 msgstr "Duplicated field, need be unique"
+
+#: eru/app/core/mixins.py:186
+msgid "Nenhum registro a exibir"
+msgstr "No records to display"
 
 #: eru/app/core/models.py:36 eru/app/core/models.py:47
 #: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:97
@@ -176,6 +184,18 @@ msgstr "Force password change"
 #: eru/app/core/models.py:75
 msgid "Configurações"
 msgstr "Settings"
+
+#: eru/app/core/templatetags/ui_components.py:19
+msgid "Gravar"
+msgstr "Save"
+
+#: eru/app/core/templatetags/ui_components.py:20
+msgid "Voltar"
+msgstr "Back"
+
+#: eru/app/core/templatetags/ui_components.py:21
+msgid "Excluir"
+msgstr "Delete"
 
 #: eru/app/pessoal/forms.py:132
 msgid "Data de fim não pode ser menor que data de inicio"
@@ -499,8 +519,12 @@ msgstr "It's a day off"
 
 #: eru/app/pessoal/models.py:222
 #, python-format
-msgid "A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno"
-msgstr "The position %(posicao)s exceeds the limit of %(limite)s days defined for this shift"
+msgid ""
+"A posição %(posicao)s excede o limite de %(limite)s dias definido para este "
+"turno"
+msgstr ""
+"The position %(posicao)s exceeds the limit of %(limite)s days defined for "
+"this shift"
 
 #: eru/app/pessoal/models.py:231
 msgid "Contrato"
@@ -630,6 +654,10 @@ msgstr "Type"
 #: eru/templates/_component/menu/pessoal.html:5
 msgid "Cadastro"
 msgstr "Register"
+
+#: eru/templates/_tables/auto_filter_form.html:12
+msgid "Filtros"
+msgstr "Filters"
 
 #: eru/templates/core/empresas.html:5 eru/templates/core/empresas.html:21
 msgid "Empresas"

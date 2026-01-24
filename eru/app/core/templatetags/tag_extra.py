@@ -1,9 +1,11 @@
-from datetime import date
-from django import template
-from urllib.parse import urlparse, parse_qs
-from django.utils.safestring import mark_safe
-import datetime
 import json
+import re
+from datetime import date, timedelta
+from django import template
+from django.utils.translation import gettext as _
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
+from urllib.parse import urlparse, parse_qs
 
 
 register = template.Library()
@@ -31,7 +33,7 @@ def call_method(obj, method_name, *args):
 # @example  {{data|add_days:5}} ou {{data|add_days:-5}}
 @register.filter
 def add_days(value, days):
-    return value + datetime.timedelta(days=days)
+    return value + timedelta(days=days)
 
 # now_until_date Calcula a diferenca em dias de hoje ate uma data informada
 # --
@@ -206,3 +208,41 @@ def proxy_perm(user, perm_name):
     # Verifica se o usuario tem a permissao passada como string
     # usado em caso de composicao de strings de forma dinamica
     return user.has_perm(perm_name)
+
+
+
+@register.filter(needs_autoescape=True)
+def hl_str(text, key):
+# espera um texto e uma substring, se substring estiver no texto
+# retorna texto com subtring destacada (bold e underscore) se
+# nao retorna o texto com a substring em um SUP ao final do texto
+    if not key: return text
+    text = conditional_escape(text)
+    match = re.search(re.escape(key), text, re.IGNORECASE)
+    if match:
+        start, end = match.span()
+        return mark_safe(f'{text[:start]}<b><u>{text[start:end]}</u></b>{text[end:]}')
+    return mark_safe(f'{text} <sup><b>{key.upper()}</b></sup>')
+
+
+
+@register.simple_tag
+def i18n_app(text, key=None):
+# chama traducao do texto e permite informar caractere(s) para bold
+# se caractere informado nao identificado no text, adiciona SUP com caractere
+# ATENCAO: o django makemessages nao ira identificar a palavra automaticamente
+# pois eh dinamica, certifique se de usar essa tag somente nos casos que tem
+# certeza que ja existe traducao. Para os demais casos continue usando:
+    translated_text = _(text)
+    if not key:
+        # se nao houver tecla de atalho, retorna apenas a traducao (escapada)
+        return conditional_escape(translated_text)
+    # logica de destaque de substring
+    return hl_str(translated_text, key)
+
+
+
+
+
+
+

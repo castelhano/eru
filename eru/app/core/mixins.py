@@ -182,6 +182,8 @@ class TableCustomMixin:
                 attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
             )
         super().__init__(*args, **kwargs)
+        if not self.empty_text:
+            self.empty_text = _("Nenhum registro a exibir")
         self.template_name = "_tables/bootstrap5_custom.html"
         self.attrs = {
             "class": "table border table-striped table-hover mb-2",
@@ -200,5 +202,7 @@ class TableCustomMixin:
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
+            for name, field in filter_obj.form.fields.items():
+                field.widget.attrs.update({'class': 'form-control form-control-sm'})
             self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self

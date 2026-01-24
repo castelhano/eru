@@ -23,6 +23,15 @@
     </thead>
 {% endblock table.thead %}
 
+{% block table.tbody.empty_text %}
+    <tr>
+        <td colspan="{{ table.columns|length }}" class="text-body-secondary">
+            {{ table.empty_text }}
+        </td>
+    </tr>
+{% endblock table.tbody.empty_text %}
+
+
 {% block pagination.previous %}
     <li class="previous page-item">
         <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}" class="page-link">
