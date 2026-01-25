@@ -8,6 +8,7 @@ APP_DIR = os.path.join(BASE_DIR,'eru/app/')
 TEMPLATES_DIR = os.path.join(BASE_DIR,'eru/templates/')
 
 from .settings_local import *
+
 INSTALLED_APPS = [
     'core',
     'pessoal',
@@ -71,7 +72,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'pt-br'
+LANGUAGE_CODE = 'pt-BR'
 LANGUAGES = [
     ('pt-br', 'Português'),
     ('en', 'English'),
@@ -79,7 +80,6 @@ LANGUAGES = [
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
-
 
 TIME_ZONE = 'America/Cuiaba'
 USE_I18N = True

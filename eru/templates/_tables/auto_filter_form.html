@@ -1,3 +1,4 @@
+{% load tag_extra %}
 {% load i18n %}
 <div class="accordion mb-2" id="auto_filter_form_container">
     <div class="accordion-item">
@@ -12,16 +13,9 @@
                 <span class="text-body-secondary" >{% translate 'Filtros' %}</span>
             </button>
         </h2>
-        <div id="auto_filter_form_container_container" class="accordion-collapse collapse" data-bs-parent="#auto_filter_form_container">
-            <div class="accordion-body bg-body-tertiary pt-4 position-relative">
+        <div id="auto_filter_form_container_container" class="accordion-collapse{% if not request.GET %} collapse{% endif %}" data-bs-parent="#auto_filter_form_container">
+            <div class="accordion-body bg-body-tertiary pt-0 pb-2">
                 <form method="GET" autocomplete="off">
-                    <div class="btn-group position-absolute top-0 end-0 pt-2 pe-3">
-                        {% if table.can_export %}
-                        <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark fs-8"> <i class="bi bi-download me-1"></i>CSV</button>
-                        {% endif %}
-                        <button type="submit" id="submit" class="btn btn-sm btn-dark fs-8" >Pesquisar</button>
-                        <a href="{{ request.path }}" class="btn btn-sm btn-dark"><i class="bi bi-x-lg"></i></a>
-                    </div>
                     <div class="row g-1">
                         {% for field in filter.form %}
                         <div class="col-md">
@@ -31,6 +25,19 @@
                             {{ field }}
                         </div>
                         {% endfor %}
+                    </div>
+                    <div class="row g-1">
+                        <div class="col mt-3 text-end">
+                            <div class="btn-group">
+                                <button type="submit" id="submit" class="btn btn-sm btn-success-matte active fs-8">{% translate 'Pesquisar'|hl_str:'g' %}</button>
+                                <a href="{{ request.path }}" class="btn btn-sm btn-success-matte"><i class="bi bi-x-lg"></i></a>
+                            </div>
+                            <div class="btn-group">
+                                {% if table.export_csv %}
+                                <button type="submit" name="_export" id="download" value="csv" class="btn btn-sm btn-dark fs-8"> <i class="bi bi-download me-1"></i>CSV</button>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

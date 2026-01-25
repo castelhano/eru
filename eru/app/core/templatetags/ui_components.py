@@ -2,7 +2,7 @@ from django import template
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
-from django.utils.safestring import mark_safe, SafeData
+from django.utils.safestring import mark_safe
 from .tag_extra import hl_str
 
 register = template.Library()
@@ -27,8 +27,9 @@ def btn_tag(action, url_name=None, **kwargs):
     kwargs.setdefault('class', btn['class'])
     if btn['id']: kwargs.setdefault('id', btn['id'])
     href = kwargs.get('href')
+    pk_val = kwargs.pop('pk', None)
     if url_name:
-        url_kwargs = {'pk': kwargs.pop('pk')} if 'pk' in kwargs else {}
+        url_kwargs = {'pk': pk_val} if pk_val else {}
         try:
             href = reverse(url_name, kwargs=url_kwargs)
         except NoReverseMatch:

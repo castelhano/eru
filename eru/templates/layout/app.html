@@ -65,8 +65,8 @@
                         <div class="col-auto">
                             <select class="form-select-sm border-0 btn-phantom pe-1" name="language" id="id_language">
                                 {% get_current_language as CURRENT_LANG %} 
-                                <option value="pt-BR"{% if not CURRENT_LANG or CURRENT_LANG == 'pt-BR' %}selected{% endif %}>Português</option>
-                                <option value="en"{% if CURRENT_LANG == 'en' %}selected{% endif %}>English</option>
+                                <option value="pt-BR"{% if not CURRENT_LANG or CURRENT_LANG == 'pt-BR' %} selected{% endif %}>Português</option>
+                                <option value="en"{% if CURRENT_LANG == 'en' %} selected{% endif %}>English</option>
                             </select>
                         </div>
                         <div class="col-auto d-none d-lg-block"><button type="button" class="btn btn-sm btn-secondary" title="Atalhos de teclado" onclick="appKeyMap.showKeymap()"><i class="bi bi-keyboard"></i></button></div>
@@ -194,7 +194,6 @@
                 'ctrl+arrowleft': '{*} Previous page',
                 'ctrl+arrowright': '{*} Next page',
                 'ctrl+arrowup': '{*} Previous row',
-                'ctrl+f': '{*} Local search',
                 'f2': '{*} Filter page',
             },
         });
@@ -234,6 +233,13 @@
         if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'Novo registro'})}
         if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})}
         if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'Retorna origem'})}
+        if(document.getElementById('download')){
+            let descBase = '{% translate 'Baixa registro no formato {format}'|escapejs %}';
+            appKeyMap.bind('alt+d', ()=>{try{document.getElementById('download').click()}catch(e){}}, {
+                icon: 'bi bi-download', 
+                desc: descBase.replace('{format}', document.getElementById('download').dataset.format)
+            })
+        }
         appKeyMap.bind('alt+l', ()=>{window.location.href = "{{ request.path }}"}, {icon: 'bi bi-arrow-clockwise me-2', desc:'Recarregar página (limpa filtros)'})
         appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'Abre painel lateral'})
         appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {icon: 'bi bi-power', desc:'Encerra sessão no sistema'})

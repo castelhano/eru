@@ -13,16 +13,24 @@ class UserFilter(django_filters.FilterSet):
         lookup_expr='lte',
         label='Last login before'
     )
-
     never_login = django_filters.BooleanFilter(
         field_name='last_login',
         lookup_expr='isnull',
         label='Never login before',
     )
-
     class Meta:
         model = User
-        fields = ['username', 'email', 'is_superuser', 'is_staff', 'is_active', 'last_login', 'last_login__lte', 'never_login']
+        # fields = ['username', 'email', 'is_superuser', 'is_staff', 'is_active', 'last_login', 'last_login__lte', 'never_login']
+        fields = {
+            'username': ['icontains'],
+            'email': ['icontains'],
+            # 'is_superuser': ['exact'],
+            # 'is_staff': ['exact'],
+            # 'is_active': ['exact'],
+            # 'last_login': ['exact', 'lte', 'gte'], 
+        }
+
+        
 
 
 class LogEntryFilter(django_filters.FilterSet):
@@ -49,17 +57,3 @@ class EmpresaFilter(django_filters.FilterSet):
     class Meta:
         model = Empresa
         fields = ['id', 'nome', 'razao_social', 'cnpj_base']
-
-
-class FilialFilter(django_filters.FilterSet):
-    nome = django_filters.CharFilter(lookup_expr='icontains', label='Nome')
-    cnpj = django_filters.CharFilter(lookup_expr='icontains', label='CNPJ')
-    cidade = django_filters.CharFilter(lookup_expr='icontains', label='Cidade')
-    class Meta:
-        model = Filial
-        fields = ['nome', 'cnpj', 'cidade', 'uf']
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Injeta classes do Bootstrap em todos os campos do form de busca
-        for field in self.form.fields:
-            self.form.fields[field].widget.attrs.update({'class': 'form-control form-control-sm'})

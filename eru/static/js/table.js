@@ -436,14 +436,14 @@ class jsTable{
         if(trs_count == 0){this.addEmptyRow();} // Caso nao exista nenhum registro, adiciona linha vazia
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.nextRow", 'data-i18n-dynamicKey':true, icon: 'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para próxima linha', context: this.keyBindContext, origin: 'jsTable'})
-        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.previousRow", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para linha anterior', context: this.keyBindContext, origin: 'jsTable'})
-        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.accessRow", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Acessa registro em foco', context: this.keyBindContext, origin: 'jsTable'})}
-        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();}, {'data-i18n':"jsTable.filterInputFocus", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Foca caixa de pesquisa', context: this.keyBindContext, origin: 'jsTable'})}
+        appKeyMap.bind('ctrl+arrowdown', () => {this.nextRow();if(this.canFilter){this.filterInput.blur()}}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para próxima linha', context: this.keyBindContext, origin: 'jsTable'})
+        appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para linha anterior', context: this.keyBindContext, origin: 'jsTable'})
+        if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Acessa registro em foco', context: this.keyBindContext, origin: 'jsTable'})}
+        if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Foca caixa de pesquisa', context: this.keyBindContext, origin: 'jsTable'})}
         if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.downloadCSV", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Baixa registros em formato CSV', context: this.keyBindContext, origin: 'jsTable'})}
         if(this.enablePaginate){
-            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.nextPage", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe próxima página da tabela', context: this.keyBindContext, origin: 'jsTable'})
-            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.previousPage", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe página anterior da tabela', context: this.keyBindContext, origin: 'jsTable'})
+            appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe próxima página da tabela', context: this.keyBindContext, origin: 'jsTable'})
+            appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe página anterior da tabela', context: this.keyBindContext, origin: 'jsTable'})
         }
     }
     dispose(){ // destroi referencias, listeners, timers

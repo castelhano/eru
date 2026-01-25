@@ -211,8 +211,8 @@ function deepMerge(target, ...sources) {
   return deepMerge(target, ...sources);
 }
 function appNavigateTable(el, options){
-  // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
-  // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito
+// implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
+// Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
   let rowIndex = -1;
   let rows = [];
   const table = el.tagName == 'TABLE' ? el : null;
@@ -250,16 +250,17 @@ function appNavigateTable(el, options){
     rows.forEach(r => r.classList.remove('selected'));
     if (rows[rowIndex]) {
       rows[rowIndex].classList.add('selected');
-      rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel
+      rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel no caso de scroll da tela
     }
   }
   const bindListeners = ()=>{
-    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {})
-    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {})
-    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {})
+    let context = table.dataset?.context || 'default';
+    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para próxima linha', context: context})
+    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para linha anterior', context: context})
+    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Acessa registro em foco', context: context})
     if(nav){
-      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {})
-      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {})
+      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe próxima página da tabela', context: context})
+      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe página anterior da tabela', context: context})
 
     }
   }

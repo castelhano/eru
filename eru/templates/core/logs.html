@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
 {% load tag_extra %}
 {% load django_tables2 %}
 {% block title %}Logs{% endblock %}
@@ -21,7 +22,7 @@
         {% csrf_token %}
         <div class="row">
           <div class="col bg-body-secondary py-2">
-            <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-toolbar" role="toolbar">
                 <div class="btn-group" role="group">
                   <input type="date" id="id_timestamp_min" name="timestamp_min" class="form-control" autofocus>
                 </div>            
@@ -50,7 +51,15 @@
                 <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
                 <button type="submit" id="submit" class="btn btn-sm btn-dark border">Filtrar</button>
               </div>
-              <button type="submit" name="_export" value="csv" class="btn btn-sm btn-dark border"> <i class="bi bi-download me-1"></i>CSV</button>
+              {% if table.rows|length > 0 %}
+              <div class="btn-group ms-auto" role="group">
+                <button type="button" class="btn btn-sm btn-dark border" disabled>{{ table.rows|length }}</button>
+                <button  class="btn btn-sm btn-dark border dropdown-toggle" data-bs-toggle="dropdown"></button>
+                <ul class="dropdown-menu">
+                  <li><button class="dropdown-item fs-7" id="download" type="submit" name="_export" value="csv" data-format="CSV"><i class="bi bi-download me-2"></i>{% translate 'Baixar' %} CSV</button></li>
+                </ul>
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -77,7 +86,7 @@
   </div>
 </div>
 
-<div class="modal fade" id="detail_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="detail_modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-body">
@@ -115,7 +124,6 @@
   {% block add_script %}  
   
   const form = new jsForm('#filterForm', {})
-  
   form.load({{data|safe}});
   if(!form.timestamp_min.value){ form.timestamp_min.value = dateToday({native: true, days:-1}) }
   if(!form.timestamp_max.value){ form.timestamp_max.value = dateToday({native: true}) }

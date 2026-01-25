@@ -1,8 +1,9 @@
+{% load i18n %}
 {% load tag_extra %}
 <script>
 
     const cadastro = new canvasNavDropdown({
-        name: '{% i18n_app 'Cadastro' 'g' %}',
+        name: '{% translate 'Cadastro'|hl_str:'c' %}',
         icon: 'bi bi-list',
         itens: [
         {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'empresa_list' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}

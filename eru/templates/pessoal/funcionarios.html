@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Funcionarios{% endblock %}
 {% block title_i18n %}common.employee__plural{% endblock %}
 
@@ -14,7 +15,6 @@
       {% if perms.pessoal.add_funcionario %}
       <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:funcionario_create' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
     </ul>
   </div>
   <div class="card-body tab-content">
@@ -36,8 +36,7 @@
                     placeholder=" " 
                     autocomplete="off" 
                     minlength="3" 
-                    data-keywatch="default" 
-                    
+                    data-keywatch="default"                    
                     required 
                     autofocus>
                     <label for="id_pesquisa"><span >Critério</span>*</label>
@@ -56,198 +55,69 @@
               </div>
             </div>
           </form>
-          <div class="{% if not funcionarios %}d-none{% endif %}">
-            <table id="main_table" class="table border table-striped table-hover{% if not funcionarios %} d-none{% endif %}">
-              <thead>
-                <tr>
-                  <th class="d-none d-sm-table-cell">Empresa</th>
-                  <th>Matric</th>
-                  <th class="d-none d-lg-table-cell">Nome</th>
-                  <th class="d-table-cell d-lg-none">Apelido</th>
-                  <th class="d-none">Sexo</th>
-                  <th class="d-none">Nascimento</th>
-                  <th class="d-none">Admissão</th>
-                  <th class="d-none">CPF</th>
-                  <th class="d-none">CNH</th>
-                  <th class="d-none">Validade</th>
-                  <th class="d-none d-lg-table-cell">Setor</th>
-                  <th class="d-none d-sm-table-cell">Cargo</th>
-                  <th class="d-none">Regime</th>
-                  <th class="d-none">PNE</th>
-                  <th class="d-none d-lg-table-cell">Status</th>
-                  {% if perms.pessoal.view_funcionario %}
-                  <th>&nbsp;</th>
-                  {% endif %}
-                </tr>
-              </thead>
-              <tbody>
-                {% for funcionario in funcionarios %}
-                <tr class="{% if funcionario.status != 'A' %} table-emphasis{% endif %}">
-                  <td class="d-none d-sm-table-cell"><span>{{funcionario.filial.empresa.nome|default:''}}</span> <span class="border-start border-2" style="height: 1.5em; margin: 0 10px;"></span> <span>{{funcionario.filial.nome|default:''}}</span></td>
-                  <td>{{funcionario.matricula}}</td>
-                  <td class="d-none d-lg-table-cell">{{funcionario.nome}}</td>
-                  <td class="d-table-cell d-lg-none">{{funcionario.apelido}}</td>
-                  <td class="d-none">{{funcionario.sexo}}</td>
-                  <td class="d-none">{{funcionario.data_nascimento|date:'d/m/Y'|default:''}}</td>
-                  <td class="d-none">{{funcionario.data_admissao|date:'d/m/Y'|default:''}}</td>
-                  <td class="d-none">{{funcionario.cpf}}</td>
-                  <td class="d-none">{{funcionario.cnh}}</td>
-                  <td class="d-none">{{funcionario.cnh_validade|date:'d/m/Y'}}</td>
-                  <td class="d-none d-lg-table-cell">{{funcionario.cargo.setor.nome|default:'---'}}</td>
-                  <td class="d-none d-sm-table-cell">{{funcionario.cargo.nome|default:'---'}}</td>
-                  <td class="d-none">{{funcionario.get_regime_display|default:'---'}}</td>
-                  <td class="d-none">{{funcionario.pne|yesno:'PNE,'}}</td>
-                  <td class="d-none d-lg-table-cell">{{funcionario.get_status_display}}</td>
-                  {% if perms.pessoal.view_funcionario %}
-                  <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}" title="Editar" ><i class="bi bi-pen-fill"></i></a></td>
-                  {% endif %}
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <div>
+            {{ table.render_filter|safe }}
+          </div>          
+          <div class="{% if not funcionario_list %}d-none{% endif %}">
+            {% render_table table %}
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-
-
-<form action="{% url 'pessoal:funcionario_list' %}" method="POST" id="filterForm" style="display: none;" autocomplete="off" novalidate>
-  {% csrf_token %}
-  <div class="row">
-    <div class="col-lg col-lg-3">
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          <select class="form-select" id="id_empresa" name="empresa">
-            <option value="" selected>Todos</option>
-            {% for empresa in user.profile.empresas %}
-            <option value="{{empresa.id|safe}}">{{empresa.nome}}</option>
-            {% endfor %}
-          </select>
-          <label for="id_empresa" ><b class="text-body"><u>E</u></b>mpresa</label>
-        </div>
-      </div>
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          <select class="form-select" id="id_filial" name="filial">
-            <option value="" selected>Todos</option>
-            {% for empresa in user.profile.empresas %}
-            <optgroup label="{{empresa.nome}}">
-              {% for filial in empresa.filiais_permitidas %}
-              <option value="{{filial.id|safe}}">{{filial.nome}}</option>
-              {% endfor %}
-            </optgroup>
-            {% endfor %}
-          </select>
-          <label for="id_filial" ><b class="text-body"><u>F</u></b>ilial</label>
-        </div>
-      </div>
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          {{ form.status }}
-          <label for="id_status" ><b class="text-body"><u>S</u></b>tatus</label>
-        </div>
-      </div>
-      <div class="row g-1 d-none" id="motivoDesligamentoContainer">
-        <div class="form-floating mb-1">
-          {{ form.motivo_desligamento }}
-          <label for="id_motivo_desligamento" >Motivo Desligamento</label>
-        </div>
-      </div>
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          {{ form.regime }}
-          <label for="id_regime" ><b class="text-body"><u>R</u></b>egime</label>
-        </div>
-      </div>
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          <select name="cargo__setor" id="id_cargo__setor" class="form-select" onchange="updateCargos(this.value, true)">
-            <option value="" >Todos</option>
-            {% for setor in setores %}
-            <option value="{{ setor.id }}">{{ setor.nome }}</option>
-            {% endfor %}
-          </select>
-          <label for="id_setor" >Se<b class="text-body"><u>t</u></b>or</label>
-        </div>
-      </div>
-      <div class="row g-1">
-        <div class="form-floating mb-1">
-          <select class="form-select" id="id_cargo" name="cargo">
-            <option value="" >Todos</option>
-          </select>
-          <label for="id_cargo" >Car<b class="text-body"><u>g</u></b>o</label>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg border-start mt-3 mt-lg-0">
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" role="switch" name="pne" id="id_pne">
-        <label class="form-check-label" for="id_pne"><span >Somente</span> PNE</label>
-      </div>
-    </div>
-  </div>
-</form>
-
 {% endblock%}
 
-{% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
-<script src="{% static 'js/form.js' %}"></script>
-<script src="{% static 'js/url.js' %}"></script>
-{% endblock %}
+{% block add_script_src %}{% endblock %}
 
 <script>
   {% block add_script %}
-  i18n.addVar('funcSearchCriteria', [i18n.getEntry('common.name'), i18n.getEntry('common.employeeId')])
-  const form = new jsForm(document.getElementById('app_form'), {})
+  // const form = new jsForm(document.getElementById('app_form'), {})
   
-  const filterForm = new jsForm(document.getElementById('filterForm'), {
-    modalBody: document.getElementById('filterForm'),
-    modalFocus: document.getElementById('id_empresa'),
-    modalTrigger: document.getElementById('search'),
-    selectAddAllOption: [
-    {nome: 'status'},
-    {nome: 'motivo_desligamento'},
-    {nome: 'regime'},
-    ],
-  })
+  // const filterForm = new jsForm(document.getElementById('filterForm'), {
+  //   modalBody: document.getElementById('filterForm'),
+  //   modalFocus: document.getElementById('id_empresa'),
+  //   modalTrigger: document.getElementById('search'),
+  //   selectAddAllOption: [
+  //   {nome: 'status'},
+  //   {nome: 'motivo_desligamento'},
+  //   {nome: 'regime'},
+  //   ],
+  // })
   
 
-  {% include 'pessoal/_updateCargos.js' %}
+  // {% include 'pessoal/_updateCargos.js' %}
 
   
-  const filterData = {{applied_filters|safe}}; // armazena os filtros aplicados no request
-  if(filterData.cargo__setor){ // se setor foi filtrado, carrega cargos (ajax) do respectivo setor e depois chama metodo load do form para setar filtros
-    updateCargos(filterData.cargo__setor, true).then((resp)=>{ filterForm.load(filterData) })
-  }
-  else{filterForm.load(filterData)} // caso nao tenha definido setor apenas chama metodo load para demais campos
+  // const filterData = {{applied_filters|safe}}; // armazena os filtros aplicados no request
+  // if(filterData.cargo__setor){ // se setor foi filtrado, carrega cargos (ajax) do respectivo setor e depois chama metodo load do form para setar filtros
+  //   updateCargos(filterData.cargo__setor, true).then((resp)=>{ filterForm.load(filterData) })
+  // }
+  // else{filterForm.load(filterData)} // caso nao tenha definido setor apenas chama metodo load para demais campos
   
   
   // Adiciona atalhos para modal de filtros
-  appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
-  appKeyMap.bind('alt+f', ()=>{filterForm.filial.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldBranch', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Filial'})
-  appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
-  appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
-  appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
-  appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
+  // appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
+  // appKeyMap.bind('alt+f', ()=>{filterForm.filial.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldBranch', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Filial'})
+  // appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
+  // appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
+  // appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
+  // appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
   
   
-  const table = new jsTable(document.getElementById('main_table'), {
-    enablePaginate: true,
-    canFilter: true,
-    filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
-  });
+  // const table = new jsTable(document.getElementById('main_table'), {
+  //   enablePaginate: true,
+  //   canFilter: true,
+  //   filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
+  // });
   
-  document.getElementById('id_status').addEventListener('change', (ev)=>{
-    if(ev.target.value == 'D'){
-      document.getElementById('motivoDesligamentoContainer').classList.remove('d-none');
-    }
-    else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
+  // document.getElementById('id_status').addEventListener('change', (ev)=>{
+  //   if(ev.target.value == 'D'){
+  //     document.getElementById('motivoDesligamentoContainer').classList.remove('d-none');
+  //   }
+  //   else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
     
-  })
+  // })
 
   {% endblock %}
 </script>

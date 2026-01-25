@@ -23,6 +23,7 @@
       </div>
       {% if 'update' in request.get_full_path %}
       <div class="col-lg mt-2 mt-lg-0">
+        {{ table.render_filter|safe }}
         {% render_table table %}
       </div>
       {% endif %}

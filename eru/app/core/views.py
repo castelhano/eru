@@ -14,8 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
-from .filters import UserFilter, LogEntryFilter, EmpresaFilter, FilialFilter
-from .tables import EmpresaTable, FilialTable, LogsTable
+from .filters import UserFilter, LogEntryFilter, EmpresaFilter
+from .tables import EmpresaTable, FilialTable, LogsTable, UsuarioTable
 from .mixins import AjaxableListMixin, CSVExportMixin
 from django_tables2 import SingleTableView
 from django.contrib.auth.models import User, Group, Permission
@@ -127,34 +127,20 @@ class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMix
     model = LogEntry
     template_name = 'core/logs.html'
     permission_required = 'auditlog.view_logentry'
-
     def get_queryset(self):
-        # 1. Base otimizada
         qs = super().get_queryset().select_related('actor', 'content_type').order_by('-timestamp')
-        
-        # 2. Se não houver filtros (ignora 'page'), retorna vazio
         if not any(k for k in self.request.GET if k != 'page'):
             return qs.none()
-            
-        # 3. O django-filter via GET lida nativamente com listas se o LogEntryFilter estiver correto
         return LogEntryFilter(self.request.GET, queryset=qs).qs
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         qs = self.get_queryset()
-        
-        # 4. Instancia o filtro para persistir os dados nos campos do form
         filtro = LogEntryFilter(self.request.GET, queryset=self.model.objects.all())
-        
-        # 5. O .config() do seu Mixin aplica a paginação automaticamente via RequestConfig
         context['table'] = LogsTable(qs).config(self.request, filter_obj=filtro)
-        
-        # 6. Agrupamento performático
         cts = ContentType.objects.filter(app_label__in=['auth', 'core', 'trafego', 'pessoal']).order_by('app_label', 'model')
         context['grouped_models'] = {k: list(v) for k, v in groupby(cts, lambda x: x.app_label)}
-        
-        # 7. Persistência JSON (opcional no GET, mas útil para seu JS)
-        data = {k: (v if len(v) == 1 else v) for k, v in self.request.GET.lists()}
+        # data = {k: (v if len(v) == 1 else v) for k, v in self.request.GET.lists()}
+        data = {k: (v[0] if len(v) == 1 else v) for k, v in self.request.GET.lists() if k != 'csrfmiddlewaretoken'}
         context['data'] = json.dumps(data)
         
         return context
@@ -301,25 +287,22 @@ class I18nView(LoginRequiredMixin, View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
-class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = User
     template_name = 'core/usuarios.html'
-    context_object_name = 'usuarios'
+    table_class = UsuarioTable
+    filterset_class = UserFilter
     permission_required = 'auth.view_user'
     def get_queryset(self):
         return User.objects.all().order_by('username')
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.GET:
-            try:
-                user_filter = UserFilter(self.request.GET, queryset=self.get_queryset())
-                context['usuarios'] = user_filter.qs
-                context['filter'] = user_filter
-            except Exception:
-                messages.warning(self.request, '<b>Erro</b> ao filtrar usuário. Exibindo lista completa.')
-                context['usuarios'] = self.get_queryset()
+        filtro = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context = super().get_context_data(object_list=filtro.qs, **kwargs)
+        context.update({
+            'filter': filtro, 
+            'table': self.table_class(filtro.qs).config(self.request, filtro)
+        })
         return context
-
 
 class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = Empresa
@@ -328,8 +311,8 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     def get_queryset(self):
         return Empresa.objects.prefetch_related('filiais').all().order_by('nome').distinct()
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
         filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
+        context = super().get_context_data(object_list=filtro.qs, **kwargs)
         context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs).config(self.request, filtro)})
         return context
 
@@ -437,23 +420,7 @@ class EmpresaUpdateView(BaseUpdateView):
     permission_required = 'core.change_empresa'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['empresa'] = self.object 
-        # 1. Queryset base (filiais da empresa atual)
-        qs = self.object.filiais.all()
-        
-        # 2. Instancia o filtro com os dados da URL
-        filtro = FilialFilter(self.request.GET, queryset=qs)
-        
-        # 3. Instancia a tabela com o queryset FILTRADO
-        table = FilialTable(filtro.qs)
-        
-        # 4. Configura (usando seu método do Mixin)
-        table.config(self.request)
-        
-        # table = FilialTable(self.object.filiais.all())
-        # RequestConfig(self.request, paginate={"per_page": 1}).configure(table)
-        context['filter'] = filtro
-        context['table'] = table
+        context['table'] = FilialTable(self.object.filiais.all()).config(self.request)
         return context
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.id})

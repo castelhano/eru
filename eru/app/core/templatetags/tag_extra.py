@@ -211,7 +211,7 @@ def proxy_perm(user, perm_name):
 
 
 
-@register.filter(needs_autoescape=True)
+@register.filter()
 def hl_str(text, key):
 # espera um texto e uma substring, se substring estiver no texto
 # retorna texto com subtring destacada (bold e underscore) se
@@ -223,26 +223,3 @@ def hl_str(text, key):
         start, end = match.span()
         return mark_safe(f'{text[:start]}<b><u>{text[start:end]}</u></b>{text[end:]}')
     return mark_safe(f'{text} <sup><b>{key.upper()}</b></sup>')
-
-
-
-@register.simple_tag
-def i18n_app(text, key=None):
-# chama traducao do texto e permite informar caractere(s) para bold
-# se caractere informado nao identificado no text, adiciona SUP com caractere
-# ATENCAO: o django makemessages nao ira identificar a palavra automaticamente
-# pois eh dinamica, certifique se de usar essa tag somente nos casos que tem
-# certeza que ja existe traducao. Para os demais casos continue usando:
-    translated_text = _(text)
-    if not key:
-        # se nao houver tecla de atalho, retorna apenas a traducao (escapada)
-        return conditional_escape(translated_text)
-    # logica de destaque de substring
-    return hl_str(translated_text, key)
-
-
-
-
-
-
-

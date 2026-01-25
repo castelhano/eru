@@ -1,4 +1,5 @@
 import django_filters
+from django.utils.translation import gettext_lazy as _
 from core.models import Empresa
 from .models import Funcionario, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
@@ -7,7 +8,7 @@ class FuncionarioFilter(django_filters.FilterSet):
     cnh_validade__lte = django_filters.DateFilter(
         field_name='cnh_validade',
         lookup_expr='lte',
-        label='Expired drivers license validity'
+        label=_('Vencimento CNH')
     )
     class Meta:
         model = Funcionario

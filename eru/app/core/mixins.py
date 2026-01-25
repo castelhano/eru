@@ -1,15 +1,17 @@
 import json
 import csv
+from datetime import datetime
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse, HttpResponse, QueryDict
 from django.core import serializers
 from django.utils.safestring import mark_safe
 from django.utils.html import strip_tags
-from django_tables2 import RequestConfig, TemplateColumn
+from django_tables2 import RequestConfig, Column
 from django.template.loader import render_to_string
 from django.forms.models import model_to_dict
 from django.db.models.fields import DateField
+from .templatetags.ui_components import btn_tag
 
 
 class AjaxableListMixin:
@@ -99,19 +101,21 @@ class CSVExportMixin:
         response.set_cookie("fileDownload", "true", max_age=60)
         return response
     def _get_csv_value(self, obj, col, table):
-        """
-        Processa o valor da celula para exportacao: prioriza renderizadores da tabela,
-        converte choices para labels amigaveis, formata datas/listas e limpa tags HTML
-        """
-        raw_val = getattr(obj, col.name, "")
-        # 2. se for uma lista/M2M, processa antes de qualquer renderizacao HTML
+        raw_val = getattr(obj, col.name, None)
+        if raw_val is None: # se nao achar coluna busca por coluna 'virtual' (coluna relacionada)
+            try: raw_val = col.accessor.resolve(obj)
+            except: raw_val = ""
         if hasattr(raw_val, 'all'):
             return ";".join([str(i) for i in raw_val.all()])
-        render, display = getattr(table, f"render_{col.name}", None), getattr(obj, f"get_{col.name}_display", None)
-        val = render(raw_val) if render else (display() if display else raw_val)
+        render = getattr(table, f"render_{col.name}", None)
+        display = getattr(obj, f"get_{col.name}_display", None)
+        val = render(value=raw_val, record=obj) if render else (display() if display else raw_val)
         if hasattr(val, 'strftime'):
-            return val.strftime('%d/%m/%Y %H:%M') if 'timestamp' in col.name else val.strftime('%d/%m/%Y')
-        return strip_tags(str(val or "")).replace('\n', ' ').strip()
+            return val.strftime('%d/%m/%Y %H:%M') if isinstance(val, datetime) else val.strftime('%d/%m/%Y')
+        return strip_tags(str(val if val is not None else "")).replace('\n', ' ').strip()
+
+
+
 
 
 class BootstrapMixin:
@@ -171,16 +175,18 @@ class TableCustomMixin:
         url = getattr(meta, 'edit_url', None)
         script = getattr(meta, 'action_script', None)
         if (url or script) and "actions" not in self.base_columns:
-            tag = 'a' if url else 'button type="button"'
-            attr = f'href="{{% url "{url}" record.id %}}"' if url else f'onclick="{script}"'
-            extra_attrs = getattr(meta, 'action_data_attrs', {})
-            data_attrs = " ".join([f"data-{k}='{{{{ {v}|safe }}}}'" for k, v in extra_attrs.items()])
-            class_list = getattr(meta, 'action_classlist', "btn btn-sm btn-dark")
-            inner_html = getattr(meta, 'action_innerhtml', '<i class="bi bi-pen-fill"></i>')
-            self.base_columns["actions"] = TemplateColumn(
-                template_code=f'<{tag} class="{class_list}" {attr} {data_attrs}>{inner_html}</{tag.split()[0]}>',
-                attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name=""
-            )
+            def render_actions(record):
+                params = {k: getattr(meta, v) for k, v in [
+                    ('label', 'action_innerhtml'),
+                    ('class', 'action_classlist'),
+                    ('onclick', 'action_script')
+                    ] if hasattr(meta, v)}
+                for k, v in getattr(meta, 'action_data_attrs', {}).items():
+                    params[k] = getattr(record, v, v)
+                return btn_tag('update', url_name=url, pk=record.id, **params)
+            col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
+            col.render = render_actions 
+            self.base_columns["actions"] = col
         super().__init__(*args, **kwargs)
         if not self.empty_text:
             self.empty_text = _("Nenhum registro a exibir")
@@ -199,10 +205,48 @@ class TableCustomMixin:
                     "th": {"class": resp[name]}, 
                     "td": {"class": resp[name]}
                 })
+    # def config(self, request, filter_obj=None):
+    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+    #     if filter_obj:
+    #         for name, field in filter_obj.form.fields.items():
+    #             field.widget.attrs.update({'class': 'form-control form-control-sm'})
+    #         self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
+    #     return self
+    # def config(self, request, filter_obj=None):
+    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+    #     if filter_obj:
+    #         _CSS_MAP = {
+    #             forms.CheckboxInput: 'form-check-input',
+    #             forms.Select: 'form-select form-select-sm',
+    #             forms.SelectMultiple: 'form-select form-select-sm',
+    #             forms.RadioSelect: 'form-check-input',
+    #         }
+    #         for field in filter_obj.form.fields.values():
+    #             css_class = _CSS_MAP.get(type(field.widget), 'form-control form-control-sm')
+    #             field.widget.attrs.update({'class': css_class})
+    #             if isinstance(field, forms.DateField):
+    #                 field.widget.input_type = 'date'
+    #         self.render_filter = render_to_string('_tables/auto_filter_form.html',{'filter': filter_obj, 'request': request, 'table': self})
+    #     return self
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
-            for name, field in filter_obj.form.fields.items():
-                field.widget.attrs.update({'class': 'form-control form-control-sm'})
-            self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
+            _CSS_MAP = {
+                forms.Select: 'form-select form-select-sm',
+                forms.SelectMultiple: 'form-select form-select-sm',
+                forms.CheckboxInput: 'form-check-input',
+                forms.RadioSelect: 'form-check-input',
+            }
+            for field in filter_obj.form.fields.values():
+                # Verifica se o widget é um Select ou herda dele (cobre BooleanFilter)
+                if isinstance(field.widget, forms.Select): css_class = _CSS_MAP[forms.Select]
+                else: css_class = _CSS_MAP.get(type(field.widget), 'form-control form-control-sm')
+                field.widget.attrs.update({'class': css_class})
+                if isinstance(field, forms.DateField):
+                    field.widget.input_type = 'date'
+            self.render_filter = render_to_string('_tables/auto_filter_form.html', 
+                {'filter': filter_obj, 'request': request, 'table': self})
         return self
+
+
+

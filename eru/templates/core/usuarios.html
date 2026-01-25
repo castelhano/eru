@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Usuarios{% endblock %}
 {% block title_i18n %}common.user__plural{% endblock %}
 
@@ -21,7 +22,9 @@
     <div class="row">
       <div class="col-lg order-2 order-lg-1">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-          <table id="main_table" class="table border table-striped table-hover">
+          {{ table.render_filter|safe }}
+          {% render_table table %}
+          <!-- <table id="main_table" class="table border table-striped table-hover">
             <caption class="fs-7">
               <div class="d-flex flex-column pe-1">
                 <span class="me-1"><small class="badge bg-secondary-subtle text-secondary-emphasis me-2" style="width: 35px;">SU</small>Super usuário</span>
@@ -43,24 +46,24 @@
               </tr>
             </thead>
             <tbody>
-              {% for usuario in usuarios %}
+              {# for usuario in usuarios #}
               <tr>
                 <td class="d-none d-sm-table-cell">{{usuario.id|safe}}</td>
                 <td class="d-none d-md-table-cell">{{usuario.profile.force_password_change|yesno:'<i class="bi bi-arrow-repeat" title="Trocar senha proximo login"></i>,'|safe}}</td>
-                <td>{{usuario.username}}{% if usuario.is_superuser %} <sup class="badge bg-secondary-subtle text-secondary-emphasis fs-9" style="width: 35px;" title="Super Usuário">SU</sup>{% endif %}{% if usuario.is_staff %} <sup class="badge bg-primary-subtle text-secondary-emphasis fs-9" title="Membro de equipe">ME</sup>{% endif %}</td>
+                <td>{{usuario.username}}{# if usuario.is_superuser #} <sup class="badge bg-secondary-subtle text-secondary-emphasis fs-9" style="width: 35px;" title="Super Usuário">SU</sup>{# endif #}{# if usuario.is_staff #} <sup class="badge bg-primary-subtle text-secondary-emphasis fs-9" title="Membro de equipe">ME</sup>{# endif #}</td>
                 <td class="d-none d-md-table-cell">{{usuario.first_name}}</td>
                 <td class="d-none d-md-table-cell">{{usuario.last_name}}</td>
                 <td>{{usuario.is_active|yesno:"<b class='text-success'>Ativo</b>,<b class='text-danger'>Inativo</b>"|safe}}</td>
                 <td class="d-none d-xl-table-cell">{{usuario.last_login|date:'d/m/y H:i'}}</td>
-                {% if perms.auth.change_user %}
+                {# if perms.auth.change_user #}
                 <td class="text-end fit py-1">
-                  <a class="btn btn-sm btn-dark" href="{% url 'usuario_update' usuario.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a>
+                  <a class="btn btn-sm btn-dark" href="{# url 'usuario_update' usuario.id|safe #}" title="Editar"><i class="bi bi-pen-fill"></i></a>
                 </td>
-                {% endif %}
+                {# endif #}
               </tr>
-              {% endfor %}
+              {# endfor #}
             </tbody>
-          </table>
+          </table> -->
         </div>
         <!-- <div class="tab-pane fade" id="param" role="tabpanel">param</div> -->
       </div>

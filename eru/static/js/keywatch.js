@@ -469,7 +469,7 @@ class Keywatch{
                         let title = '';
                         for(let attr in el){
                             if(!['origin','context','keydown','keyup','preventDefault','useCapture'].includes(attr)){continue}
-                            title += `${attr}: ${el[attr]}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n`
+                            title += `${attr}: ${el[attr]}\n`
                         }
                         let desc = el?.icon ? `<i class="${el.icon} me-2"></i>` : '';
                         desc += el?.desc || '';

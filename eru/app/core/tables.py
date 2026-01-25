@@ -3,13 +3,14 @@ from django.utils.translation import gettext_lazy as _
 from .mixins import TableCustomMixin
 from django_tables2 import Column, Table
 from .models import Empresa, Filial
+from django.contrib.auth.models import User
 from auditlog.models import LogEntry
 from django.utils.html import format_html
 
 
 
 class EmpresaTable(TableCustomMixin, Table):
-    can_export = True
+    export_csv = True
     max_filiais = 2
     filiais = Column(verbose_name=_('Filiais'), orderable=False)
     class Meta:
@@ -37,6 +38,15 @@ class FilialTable(TableCustomMixin, Table):
             "cidade": "d-none d-lg-table-cell",
         }
 
+class UsuarioTable(TableCustomMixin, Table):
+    export_csv = True
+    class Meta:
+        model = User
+        fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
+        edit_url = "usuario_update"
+        responsive_columns = {
+        }
+
 class LogsTable(TableCustomMixin, Table):
     class Meta:
         model = LogEntry
@@ -49,5 +59,4 @@ class LogsTable(TableCustomMixin, Table):
             "changes": "d-none col-changes",
         }
     def render_changes(self, value):
-        # forca exibicao de json com aspas duplas
-        return json.dumps(value) 
+        return json.dumps(value) # forca exibicao de json com aspas duplas

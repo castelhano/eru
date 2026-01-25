@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-24 12:44-0400\n"
+"POT-Creation-Date: 2026-01-24 20:49-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -81,7 +81,7 @@ msgstr "Required field"
 msgid "Campo duplicado, precisa ser único"
 msgstr "Duplicated field, need be unique"
 
-#: eru/app/core/mixins.py:186
+#: eru/app/core/mixins.py:192
 msgid "Nenhum registro a exibir"
 msgstr "No records to display"
 
@@ -101,6 +101,7 @@ msgid "Cnpj Base"
 msgstr "Base Cnpj"
 
 #: eru/app/core/models.py:40 eru/app/core/models.py:46
+#: eru/app/pessoal/tables.py:10
 msgid "Empresa"
 msgstr "Company"
 
@@ -172,7 +173,7 @@ msgstr "Footer"
 msgid "Usuário"
 msgstr "User"
 
-#: eru/app/core/models.py:73 eru/app/core/tables.py:14
+#: eru/app/core/models.py:73 eru/app/core/tables.py:15
 #: eru/app/pessoal/models.py:364 eru/app/pessoal/models.py:369
 msgid "Filiais"
 msgstr "Branches"
@@ -196,6 +197,10 @@ msgstr "Back"
 #: eru/app/core/templatetags/ui_components.py:21
 msgid "Excluir"
 msgstr "Delete"
+
+#: eru/app/pessoal/filters.py:11
+msgid "Vencimento CNH"
+msgstr "Driver's License Expiration"
 
 #: eru/app/pessoal/forms.py:132
 msgid "Data de fim não pode ser menor que data de inicio"
@@ -426,8 +431,8 @@ msgid "Status"
 msgstr ""
 
 #: eru/app/pessoal/models.py:171 eru/app/pessoal/models.py:175
-#: eru/app/pessoal/views.py:427 eru/app/pessoal/views.py:463
-#: eru/app/pessoal/views.py:487
+#: eru/app/pessoal/views.py:476 eru/app/pessoal/views.py:512
+#: eru/app/pessoal/views.py:536
 msgid "Não é possível alterar dados de funcionários desligados"
 msgstr "Its not possible to change data for terminated employees"
 
@@ -651,17 +656,31 @@ msgstr "Event"
 msgid "Tipo"
 msgstr "Type"
 
+#: eru/templates/_component/menu/core.html:6
 #: eru/templates/_component/menu/pessoal.html:5
 msgid "Cadastro"
 msgstr "Register"
 
-#: eru/templates/_tables/auto_filter_form.html:12
+#: eru/templates/_tables/auto_filter_form.html:13
 msgid "Filtros"
 msgstr "Filters"
+
+#: eru/templates/_tables/auto_filter_form.html:32
+msgid "Pesquisar"
+msgstr ""
 
 #: eru/templates/core/empresas.html:5 eru/templates/core/empresas.html:21
 msgid "Empresas"
 msgstr "Companies"
+
+#: eru/templates/core/logs.html:59
+msgid "Baixar"
+msgstr ""
+
+#: eru/templates/layout/app.html:238
+#, python-brace-format
+msgid "Baixa registro no formato {format}"
+msgstr "Download records as {format}"
 
 #~ msgid "nome"
 #~ msgstr "name"
