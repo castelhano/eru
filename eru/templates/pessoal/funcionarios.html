@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
 {% load django_tables2 %}
 {% block title %}Funcionarios{% endblock %}
 {% block title_i18n %}common.employee__plural{% endblock %}
@@ -18,47 +19,46 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Funcionários</span></h5>
+    <h5 class="card-title"><span>{% translate 'Pessoal' %}</span>: <span class="text-purple" >{% translate 'Funcionários' %}</span></h5>
     <div class="row">
       <div class="col-lg">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-          <form id="app_form" action="{% url 'pessoal:funcionario_list' %}" method="GET" autocomplete="off" novalidate>
-            <div class="row">
-              <div class="col-lg-auto">
-                <div class="input-group">
-                  <div class="form-floating">
-                    <input 
-                    type="text" 
-                    class="form-control" 
-                    id="id_pesquisa" 
-                    name="pesquisa" 
-                    style="min-width: 250px;" 
-                    placeholder=" " 
-                    autocomplete="off" 
-                    minlength="3" 
-                    data-keywatch="default"                    
-                    required 
-                    autofocus>
-                    <label for="id_pesquisa"><span >Critério</span>*</label>
-                  </div>
-                  <button type="submit" id="submit" class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+          <div class="row">
+            <div class="col-lg-auto">
+              <div class="input-group">
+                <div class="form-floating">
+                  <input 
+                  type="text" 
+                  class="form-control" 
+                  id="id_pesquisa" 
+                  name="pesquisa" 
+                  style="min-width: 250px;" 
+                  placeholder=" " 
+                  autocomplete="off" 
+                  minlength="3"
+                  form="funcionario_form"
+                  value="{{request.GET.pesquisa|default:''}}"
+                  data-keywatch="default"                    
+                  autofocus>
+                  <label for="id_pesquisa"><span >{% translate 'Critério' %}</span>*</label>
                 </div>
-                <small id="employeeSearchHelp" ></small>
+                <button type="submit" class="btn btn-outline-secondary" form="funcionario_form"><i class="bi bi-search"></i></button>
               </div>
-              <div class="col-lg">
-                <span>Consultas Rápidas:</span>
-                <ul class="list-unstyled">
-                  <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte'], [dateToday({days: 30, native: true})])">Condutores CNH vencendo</a></li>
-                  <li><a href="#" onclick="urlCleanNFilter(['status'], ['F'])">Funcionários Afastados</a></li>
-                  <li><hr class="my-1"></li>
-                </ul>
-              </div>
+              <small id="employeeSearchHelp" ></small>
             </div>
-          </form>
+            <div class="col-lg">
+              <span>{% translate 'Consultas Rápidas' %}:</span>
+              <ul class="list-unstyled">
+                <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte', 'status'], [dateToday({days: 30, native: true}), 'A'])">{% translate 'Condutores CNH vencendo' %}</a></li>
+                <li><a href="#" onclick="urlCleanNFilter(['status'], ['F'])">{% translate 'Funcionários Afastados' %}</a></li>
+                <li><hr class="my-1"></li>
+              </ul>
+            </div>
+          </div>
           <div>
             {{ table.render_filter|safe }}
           </div>          
-          <div class="{% if not funcionario_list %}d-none{% endif %}">
+          <div class="{% if not table.rows %}d-none{% endif %}">
             {% render_table table %}
           </div>
         </div>
@@ -68,33 +68,14 @@
 </div>
 {% endblock%}
 
-{% block add_script_src %}{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/url.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
 
 <script>
   {% block add_script %}
-  // const form = new jsForm(document.getElementById('app_form'), {})
-  
-  // const filterForm = new jsForm(document.getElementById('filterForm'), {
-  //   modalBody: document.getElementById('filterForm'),
-  //   modalFocus: document.getElementById('id_empresa'),
-  //   modalTrigger: document.getElementById('search'),
-  //   selectAddAllOption: [
-  //   {nome: 'status'},
-  //   {nome: 'motivo_desligamento'},
-  //   {nome: 'regime'},
-  //   ],
-  // })
-  
-
-  // {% include 'pessoal/_updateCargos.js' %}
-
-  
-  // const filterData = {{applied_filters|safe}}; // armazena os filtros aplicados no request
-  // if(filterData.cargo__setor){ // se setor foi filtrado, carrega cargos (ajax) do respectivo setor e depois chama metodo load do form para setar filtros
-  //   updateCargos(filterData.cargo__setor, true).then((resp)=>{ filterForm.load(filterData) })
-  // }
-  // else{filterForm.load(filterData)} // caso nao tenha definido setor apenas chama metodo load para demais campos
-  
+  const form = new jsForm('#funcionario_form', {})
   
   // Adiciona atalhos para modal de filtros
   // appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
@@ -104,20 +85,5 @@
   // appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
   // appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
   
-  
-  // const table = new jsTable(document.getElementById('main_table'), {
-  //   enablePaginate: true,
-  //   canFilter: true,
-  //   filterCols: ['Empresa','Matric', 'Nome', 'Cargo']
-  // });
-  
-  // document.getElementById('id_status').addEventListener('change', (ev)=>{
-  //   if(ev.target.value == 'D'){
-  //     document.getElementById('motivoDesligamentoContainer').classList.remove('d-none');
-  //   }
-  //   else{document.getElementById('motivoDesligamentoContainer').classList.add('d-none')}
-    
-  // })
-
   {% endblock %}
 </script>

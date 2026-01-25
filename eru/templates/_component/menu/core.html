@@ -6,9 +6,9 @@
         name: '{% translate 'Cadastro'|hl_str:'c' %}',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.core.view_empresa %}{name: '<b><u>E</u></b>mpresa', id:'menu_empresa', href: '{% url 'empresa_list' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.auth.view_user %}{name: '<b><u>U</u></b>suário', id:'menu_usuario', href: '{% url 'usuario_list' %}', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.auth.view_group %}{name: '<b><u>G</u></b>rupo', id:'menu_grupo', href: '{% url 'grupo_list' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.core.view_empresa %}{name: '{% translate 'Empresa'|hl_str:'e' %}', id:'menu_empresa', href: '{% url 'empresa_list' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.auth.view_user %}{name: '{% translate 'Usuário'|hl_str:'u' %}', id:'menu_usuario', href: '{% url 'usuario_list' %}', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.auth.view_group %}{name: '{% translate 'Grupo'|hl_str:'g' %}', id:'menu_grupo', href: '{% url 'grupo_list' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         ],
         keybind: [
             'alt+c',
@@ -17,7 +17,7 @@
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc: '{% translate 'Abre menu de cadastro' %}'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -27,7 +27,7 @@
     
     {% if perms.core.view_settings %}
     const menuSettings = new canvasNavLink({
-        name: 'Config<b><u>u</u></b>rações',
+        name: '{% translate 'Configurações'|hl_str:'u' %}',
         id: 'menu_menuSettings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
@@ -35,14 +35,14 @@
         keybind: [
             'alt+u',
             ()=>{menuSettings.click()},
-            {icon: 'bi bi-gear-fill text-purple', desc: 'Configurações gerais do sistema'}
+            {icon: 'bi bi-gear-fill text-purple', desc: '{% translate 'Configurações gerais do sistema' %}'}
         ]
     })
     {% endif %}
     
     {% if perms.auditlog.view_logentry %}
     const menuLogs = new canvasNavLink({
-        name: 'L<b><u>o</u></b>gs',
+        name: '{% translate 'Logs'|hl_str:'o' %}',
         id: 'menu_menuLogs',
         class: 'text-warning',
         icon: 'bi bi-database-fill-lock',
@@ -50,7 +50,7 @@
         keybind: [
             'alt+o',
             ()=>{menuLogs.click()},
-            {icon: 'bi bi-database-fill-lock text-warning', desc: 'Exibir logs'}
+            {icon: 'bi bi-database-fill-lock text-warning', desc: '{% translate 'Exibir logs' %}'}
         ]
     })
     {% endif %}

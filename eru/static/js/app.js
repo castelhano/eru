@@ -323,4 +323,31 @@ document.addEventListener("DOMContentLoaded", function(event) {
       appModalConfirm.show();
     }
   })
+
+  // implementa consulta ajax automatica para campos data-chained-field="id_campo_origem",
+  // sempre que o select de origem for alterado roda url informada em data-url
+  // attrs devem ser carregados no campo de destino (select que sera preenchido)
+  document.addEventListener('change', async e => {
+    const child = document.querySelector(`[data-chained-field="${e.target.id}"]`);
+    if (!child) return;
+    const { url, chainedId = 'id', chainedText = 'nome' } = child.dataset;
+    if (!e.target.value) {child.innerHTML = '<option value="">---------</option>'}
+    else {
+        try {
+            const response = await fetch(`${url}?${e.target.name}=${e.target.value}`, { headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            const data = await response.json();
+            const items = data.object_list || data;
+            child.innerHTML = '<option value="">---------</option>' + 
+                items.map(item => `<option value="${item[chainedId]}">${item[chainedText]}</option>`).join('');
+        } catch (err) { console.error('ChainedSelect Error:', err); }
+    }
+    child.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  // funcao auxiliar, precarrega dados ja preenchidos no carregamento da pagina
+  document.querySelectorAll('[data-chained-field]').forEach(el => {
+    const parent = document.getElementById(el.getAttribute('data- -field'));
+    if (parent && parent.value) parent.dispatchEvent(new Event('change', {bubbles: true}));
+  });
+
 });

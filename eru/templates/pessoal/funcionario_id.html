@@ -1,7 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Funcionario{% endblock %}
-{% block title_i18n %}common.employee{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
@@ -84,9 +83,9 @@
         debug: true,
         autoProceed: false,
         allowMultipleUploadBatches: false,
-        locale: {
-            strings: i18n.getEntries('uppy'),
-        },
+        // locale: {
+        //     strings: i18n.getEntries('uppy'),
+        // },
         restrictions: {
             maxNumberOfFiles: 1,
             allowedFileTypes: ['image/*']
@@ -151,7 +150,7 @@
 
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
-    appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', 'data-i18n':'personal.employee.form.downloadAsCsv', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
+    appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', desc: 'Baixar dados do funcionário em formato CSV', origin: 'pessoal:funcionario_id'})
 
     {% if funcionario.cargo %}
     // ao editar funcionario, necessario carregar cargos e selecionar setor/cargo definidos para funcionario
@@ -163,7 +162,7 @@
     {% endif %}
     
     {% if perms.pessoal.view_eventofuncionario %}
-    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {'data-i18n':'personal.employee.form.tabEvents', icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
+    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {icon: 'bi bi-percent', desc:'Exibe eventos do funcionário', origin: 'pessoal:funcionario_id'})
     {% endif %}
     {% endblock %}
 </script>

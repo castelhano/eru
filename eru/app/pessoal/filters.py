@@ -1,10 +1,15 @@
 import django_filters
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from core.models import Empresa
-from .models import Funcionario, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from core.models import Empresa, Filial
+from .models import Funcionario, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
 
 class FuncionarioFilter(django_filters.FilterSet):
+    empresa = django_filters.ModelChoiceFilter(field_name='filial__empresa', queryset=Empresa.objects.none(), label=_('Empresa'))
+    filial = django_filters.ModelChoiceFilter(queryset=Filial.objects.none(), label=_('Filial'))
+    setor = django_filters.ModelChoiceFilter(field_name='contratos__cargo__setor', queryset=Setor.objects.all(), label=_('Setor'))
+    cargo = django_filters.ModelChoiceFilter(field_name='contratos__cargo', queryset=Cargo.objects.none(), label=_('Cargo'))
     cnh_validade__lte = django_filters.DateFilter(
         field_name='cnh_validade',
         lookup_expr='lte',
@@ -12,7 +17,28 @@ class FuncionarioFilter(django_filters.FilterSet):
     )
     class Meta:
         model = Funcionario
-        fields = ['filial', 'status', 'motivo_desligamento', 'pne', 'cnh_validade__lte']
+        fields = ['empresa','filial','setor','cargo','status','motivo_desligamento','pne','cnh_validade__lte']
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.filters['filial'].field.widget.attrs.update({
+            'data-chained-field': 'id_empresa',
+            'data-url': reverse_lazy('filial_list'),
+            'class': 'form-select form-select-sm select-chained'
+        })
+        cargo_field = self.filters['cargo'].field
+        cargo_field.widget.attrs.update({
+            'data-chained-field': 'id_setor',
+            'data-url': reverse_lazy('pessoal:cargo_list'),
+            'class': 'form-select form-select-sm select-chained'
+        })
+        setor_id = self.data.get('setor')
+        self.filters['cargo'].field.queryset = Cargo.objects.filter(setor_id=setor_id) if setor_id else Cargo.objects.none()
+        if user:
+            filiais_qs = user.profile.filiais.all()
+            self.filters['empresa'].queryset = Empresa.objects.filter(filiais__in=filiais_qs).distinct()
+            empresa_id = self.data.get('empresa')
+            self.filters['filial'].field.queryset = filiais_qs.filter(empresa_id=empresa_id) if empresa_id else Filial.objects.none()
 
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):

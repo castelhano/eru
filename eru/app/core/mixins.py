@@ -205,29 +205,6 @@ class TableCustomMixin:
                     "th": {"class": resp[name]}, 
                     "td": {"class": resp[name]}
                 })
-    # def config(self, request, filter_obj=None):
-    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-    #     if filter_obj:
-    #         for name, field in filter_obj.form.fields.items():
-    #             field.widget.attrs.update({'class': 'form-control form-control-sm'})
-    #         self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
-    #     return self
-    # def config(self, request, filter_obj=None):
-    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-    #     if filter_obj:
-    #         _CSS_MAP = {
-    #             forms.CheckboxInput: 'form-check-input',
-    #             forms.Select: 'form-select form-select-sm',
-    #             forms.SelectMultiple: 'form-select form-select-sm',
-    #             forms.RadioSelect: 'form-check-input',
-    #         }
-    #         for field in filter_obj.form.fields.values():
-    #             css_class = _CSS_MAP.get(type(field.widget), 'form-control form-control-sm')
-    #             field.widget.attrs.update({'class': css_class})
-    #             if isinstance(field, forms.DateField):
-    #                 field.widget.input_type = 'date'
-    #         self.render_filter = render_to_string('_tables/auto_filter_form.html',{'filter': filter_obj, 'request': request, 'table': self})
-    #     return self
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
@@ -247,6 +224,3 @@ class TableCustomMixin:
             self.render_filter = render_to_string('_tables/auto_filter_form.html', 
                 {'filter': filter_obj, 'request': request, 'table': self})
         return self
-
-
-

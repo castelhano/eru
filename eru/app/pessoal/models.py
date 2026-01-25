@@ -156,6 +156,10 @@ class Funcionario(Pessoa):
     def F_ehEditavel(self):
         return self.status != 'D'
     @property
+    def F_cargo(self):
+        contrato = self.contratos.order_by('-inicio').first()
+        return contrato.cargo if contrato else None
+    @property
     def F_pne(self):
         return self.pne
     @property

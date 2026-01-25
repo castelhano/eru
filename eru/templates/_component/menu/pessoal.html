@@ -1,13 +1,13 @@
 {% load i18n %}
+{% load tag_extra %}
 <script>
-
     const menuCadastro = new canvasNavDropdown({
-        name: '{% translate "Cadastro" %}',
+        name: '{% translate "Cadastro"|hl_str:'c' %}',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.pessoal.view_funcionario %}{name: '<b><u>F</u></b>uncionário', id:'menu_funcionario', href: '{% url 'pessoal:funcionario_list' %}', 'data-i18n': 'common.employee__bold:f', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_setor %}{name: '<b><u>S</u></b>etor', id:'menu_setor', href: '{% url 'pessoal:setor_list' %}', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_cargo %}{name: 'Carg<b><u>o</u></b>', id:'menu_cargo', href: '{% url 'pessoal:cargo_list' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_funcionario %}{name: '{% translate "Funcionário"|hl_str:'f' %}', id:'menu_funcionario', href: '{% url 'pessoal:funcionario_list' %}', keybind: ['f', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_funcionario').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_setor %}{name: '{% translate "Setor"|hl_str:'s' %}', id:'menu_setor', href: '{% url 'pessoal:setor_list' %}', keybind: ['s', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_setor').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_cargo %}{name: '{% translate "Cargo"|hl_str:'o' %}', id:'menu_cargo', href: '{% url 'pessoal:cargo_list' %}', keybind: ['o', ()=>{if(menuCadastro.isOpen()){document.getElementById('menu_cargo').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
             'alt+c',
@@ -16,7 +16,7 @@
                 menuCadastro.click();
                 setTimeout(()=>{menuCadastro.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de cadastro'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de cadastro" %}'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -26,15 +26,15 @@
 
 
     const menuEvento = new canvasNavDropdown({
-        name: '<b><u>E</u></b>ventos',
+        name: '{% translate "Eventos"|hl_str:'e' %}',
         icon: 'bi bi-braces-asterisk',
         itens: [
-        {% if perms.pessoal.view_evento %} {name: 'Even<b><u>t</u></b>o', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.pessoal.view_grupoevento %}{name: '<b><u>G</u></b>rupo evento', id:'menu_grupo_evento', href: '{% url 'pessoal:grupoevento_list' %}', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.pessoal.view_motivoreajuste %}{name: '<b><u>M</u></b>otivo reajuste', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivoreajuste_list' %}', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_evento %} {name: '{% translate "Evento"|hl_str:'t' %}', id:'menu_evento', href: '{% url 'pessoal:evento_list' %}', keybind: ['t', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_evento').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.pessoal.view_grupoevento %}{name: '{% translate "Grupo Evento"|hl_str:'g' %}', id:'menu_grupo_evento', href: '{% url 'pessoal:grupoevento_list' %}', keybind: ['g', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.pessoal.view_motivoreajuste %}{name: '{% translate "Motivo reajuste"|hl_str:'m' %}', id:'menu_motivo_reajuste', href: '{% url 'pessoal:motivoreajuste_list' %}', keybind: ['m', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_motivo_reajuste').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_eventoempresa %}
         {type: 'separator'},
-        {name: 'E<b><u>v</u></b>entos Globais', id:'menu_eventos_globais', href: '{% url 'pessoal:eventorelated_list' 'empresa' 0 %}', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
+        {name: '{% translate "Eventos Globais"|hl_str:'v' %}', id:'menu_eventos_globais', href: '{% url 'pessoal:eventorelated_list' 'empresa' 0 %}', keybind: ['v', ()=>{if(menuEvento.isOpen()){document.getElementById('menu_eventos_globais').click()}}, {display: false, preventDefault: false}]},
         {% endif %}
         ],
         keybind: [
@@ -44,7 +44,7 @@
                 menuEvento.click();
                 setTimeout(()=>{menuEvento.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc:'Abre menu de Ferramentas'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Ferramentas" %}'}
         ]
         })
     {% if perms.pessoal.view_evento %}appKeyMap.bind('e+t', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}

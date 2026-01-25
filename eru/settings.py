@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'auditlog',
+    'rosetta',
     'django_tables2',
     'django_extensions',
     'django.contrib.admin',

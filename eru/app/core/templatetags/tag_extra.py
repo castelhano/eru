@@ -203,6 +203,12 @@ def json_encode(value):
     else:
         return mark_safe(json.dumps(value, ensure_ascii=False))
 
+
+@register.filter(name='has_group')
+def has_group(user, group_name):
+# chega se usuario pertence a um grupo
+    return user.groups.filter(name=group_name).exists()
+
 @register.filter
 def proxy_perm(user, perm_name):
     # Verifica se o usuario tem a permissao passada como string

@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
+from django_tables2 import SingleTableView
 # core
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
@@ -31,10 +32,12 @@ from .forms import (
 from .filters import (
     FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 )
-from .tables import FuncionarioTable
+from .tables import FuncionarioTable, SetorTable
 # ....................
-class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
+    login_url = '/handler/403'
+    table_class = SetorTable
     template_name = 'pessoal/setores.html'
     permission_required = 'pessoal.view_setor'
     queryset = Setor.objects.all().order_by('nome')
@@ -51,8 +54,6 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
             queryset = queryset.filter(setor_id=setor_id)
         return queryset
 
-
-
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
     model = Funcionario
     template_name = 'pessoal/funcionarios.html'
@@ -60,97 +61,37 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
     table_class = FuncionarioTable
     filterset_class = FuncionarioFilter
     def get(self, request, *args, **kwargs):
-        self.filiais_autorizadas = request.user.profile.filiais.all()
+        # atalho: redireciona se a pesquisa for uma matricula exata
         pesquisa = request.GET.get('pesquisa')
-        if pesquisa:
+        if pesquisa and pesquisa.isdigit():
             funcionario = Funcionario.objects.filter(
                 matricula=pesquisa, 
-                filial__in=self.filiais_autorizadas
+                filial__in=request.user.profile.filiais.all()
             ).first()
             if funcionario:
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
         return super().get(request, *args, **kwargs)
     def get_queryset(self):
-        return Funcionario.objects.filter(filial__in=self.filiais_autorizadas).select_related('filial__empresa').order_by('matricula')
-    def get_context_data(self, **kwargs):
-        data = self.request.GET
-        queryset = self.get_queryset()
-        pesquisa = data.get('pesquisa')
-        if not data:
-            filtro_qs = queryset.none()
-            filtro_obj = self.filterset_class(data, queryset=queryset) # Para renderizar o form vazio
-        elif pesquisa:
+        qs = Funcionario.objects.filter(filial__in=self.request.user.profile.filiais.all()).select_related('filial__empresa').prefetch_related('contratos__cargo').order_by('matricula')
+        pesquisa = self.request.GET.get('pesquisa')
+        if pesquisa:
             query = Q()
             for termo in pesquisa.split():
                 query &= Q(nome__icontains=termo)
-            filtro_qs = queryset.filter(query)
-            filtro_obj = self.filterset_class(data, queryset=filtro_qs)
-        else:
-            filtro_obj = self.filterset_class(data, queryset=queryset)
-            filtro_qs = filtro_obj.qs if filtro_obj.is_valid() else queryset.none()
-        if not filtro_qs.exists() and data:
-            messages.warning(self.request, "Nenhum registro encontrado.")
-        context = super().get_context_data(object_list=filtro_qs, **kwargs)
-        table = self.table_class(filtro_qs).config(self.request, filtro_obj)
+            qs = qs.filter(query)
+        return qs.distinct()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        queryset_base = self.get_queryset()
+        filter_obj = self.filterset_class(self.request.GET, queryset=queryset_base, user=self.request.user)
+        table_data = filter_obj.qs if self.request.GET else queryset_base.none() # dados em branco se nao tem filtros
+        if self.request.GET and not table_data.exists():
+            messages.warning(self.request, _("Nenhum resultado encontrado com os critérios informados"))
         context.update({
-            'table': table,
-            'filter': filtro_obj,
-            'form': FuncionarioForm(),
-            'setores': Setor.objects.all().order_by('nome'),
-            'applied_filters': {k: v for k, v in data.items() if k != 'csrfmiddlewaretoken'}
+            'filter': filter_obj,
+            'table': self.table_class(table_data).config(self.request, filter_obj)
         })
         return context
-
-# class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-#     model = Funcionario
-#     template_name = 'pessoal/funcionarios.html'
-#     context_object_name = 'funcionarios'
-#     permission_required = 'pessoal.view_funcionario'
-#     def get(self, request, *args, **kwargs):
-#         self.filiais_autorizadas = request.user.profile.filiais.all()
-#         pesquisa = request.GET.get('pesquisa')
-#         if pesquisa:
-#             # tenta identificar se existe matricula correspondente
-#             funcionario = Funcionario.objects.filter(
-#                 matricula=pesquisa, 
-#                 filial__in=self.filiais_autorizadas
-#             ).first()
-#             if funcionario:
-#                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
-#         return super().get(request, *args, **kwargs)
-#     def get_queryset(self):
-#         data = self.request.GET
-#         self.applied_filters = {k: v[0] if isinstance(v, list) and len(v) == 1 else v for k, v in data.items()}
-#         self.applied_filters.pop("csrfmiddlewaretoken", None) # remove token
-#         pesquisa = data.get('pesquisa')
-#         queryset = Funcionario.objects.filter(filial__in=self.filiais_autorizadas).order_by('matricula')
-#         if not data:
-#             return queryset.none()
-#         # filtro por nome (qualquer ordem) usando reducao de Q objects
-#         if pesquisa:
-#             query = Q()
-#             for termo in pesquisa.split():
-#                 query &= Q(nome__icontains=termo)
-#             queryset = queryset.filter(query)
-#         else:
-#             # delega filtragem para django-filter (FuncionarioFilter)
-#             filter_set = FuncionarioFilter(data, queryset=queryset)
-#             if filter_set.is_valid():
-#                 queryset = filter_set.qs
-#             else:
-#                 messages.warning(self.request, 'Filtros inválidos.')
-#         # mensagem de alerta se nada for encontrado
-#         if not queryset.exists() and (self.request.GET or self.request.POST):
-#             messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery'))
-#         return queryset
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context.update({
-#             'form': FuncionarioForm(),
-#             'applied_filters': self.applied_filters,
-#             'setores': Setor.objects.all().order_by('nome')
-#         })
-#         return context
 
 
 class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):

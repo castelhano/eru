@@ -36,16 +36,20 @@ class jsForm{
             if(options.hasOwnProperty(k)){this[k] = options[k]}
             else{this[k] = this.defaultOptions[k]}
         }
-
+        
         this.imask.forEach((el)=>{ // Carrega list com nomes dos imaskFields
             this.imaskFieldNames.push(el.el.input.name); // Popula list com names dos campos imask
         })
-        for(let i = 0; i < this.form.elements.length; i++){
-        // Carrega list dos elementos do form comuns (sem mascara) alem de liberar acesso dos elementos como instance.field_name (ex. form.cpf)
-            if(this.form.elements[i]?.name){this[this.form.elements[i].name] = this.form.elements[i];}
-            if(this.imaskFieldNames.includes(this.form.elements[i].name)){continue}
-            this.common.push(this.form.elements[i]);
-        }
+        const allRelatedFields = [
+            ...this.form.elements,
+            ...document.querySelectorAll(`[form="${this.form.id}"]`)
+        ];
+        allRelatedFields.forEach(el => {
+            if (!el || !el.name) return;
+            this[el.name] = el; // libera acesso como instance.field (ex: form.pesquisa)
+            if (this.imaskFieldNames.includes(el.name)) return;
+            this.common.push(el);
+        });
         this.multipleAddon.forEach((el)=>{ // multipleAddon pode ser array com campos ['matricula','cpf'] ou json [{field: 'matricula', shortcut: 'f5', ...}]
             if(typeof el == 'string'){ // se for string, cria componente com configuracoes padrao
                 if(!this.hasOwnProperty(el)){return}
@@ -210,42 +214,80 @@ class jsForm{
             }
         }
     }
-    __validateRequired(el, notify=true){
-        let max = el.getAttribute('maxlength');
-        let min = el.getAttribute('minlength');
-        if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
-            el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', max ? `<b>${el.name.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : `<b>${el.name.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
+    __validateRequired(el, notify = true) {
+        const val = el.value.trim();
+        const min = parseInt(el.getAttribute('minlength')), max = parseInt(el.getAttribute('maxlength'));
+        let error = '';
+        
+        // Valida tamanho APENAS se houver texto digitado
+        if (val.length > 0 && ((min && val.length < min) || (max && val.length > max))) {
+            error = (min && max) ? `entre ${min} e ${max} caracteres` : min ? `mínimo ${min} caracteres` : `máximo ${max} caracteres`;
+        } 
+        // Valida obrigatoriedade apenas se tiver o atributo required
+        else if (el.required && !val) {
+            error = 'Campo obrigatório';
         }
-        else if(el.required && el.value == ''){
-            el.classList.add('is-invalid');
-            if(notify){appNotify('warning', `Campo obrigatorio: <b>${el.name.captalize()}</b>`, {autodismiss: false})}
-        }
-        else{el.classList.remove('is-invalid')}
+        
+        el.classList.toggle('is-invalid', !!error);
+        if (error && notify) appNotify('warning', `<b>${el.name.toUpperCase()}</b>: ${error}`, {autodismiss: false});
     }
-    __validateNumber(el, notify=true){
-        let max = parseFloat(el.getAttribute('max')) || null;
-        let min = parseFloat(el.getAttribute('min')) || null;
-        if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
-            el.classList.add('is-invalid');
-            if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
-            else if(notify && max || notify && min){appNotify('warning', max ? `Campo <b>${el.name.captalize()}</b> aceita valor máximo de <b>${max}</b>` : `<b>${el.name.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
-            
-        }
-        else if(el.required && el.value == ''){el.classList.add('is-invalid');}
-        else{el.classList.remove('is-invalid')}
+    
+    __validateNumber(el, notify = true) {
+        const val = parseFloat(el.value), min = parseFloat(el.min), max = parseFloat(el.max);
+        let error = (el.required && isNaN(val)) ? 'Campo obrigatório' : 
+        (!isNaN(val) && ((!isNaN(min) && val < min) || (!isNaN(max) && val > max))) ? `valor entre ${min} e ${max}` : '';
+        
+        el.classList.toggle('is-invalid', !!error);
+        if (error && notify) appNotify('warning', `<b>${el.name.toUpperCase()}</b>: ${error}`, {autodismiss: false});
     }
-    __validateEmail(el, notify=true){
-        if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
-            el.classList.add('is-invalid');
-            if(notify){appNotify('warning', '<b>Email</b> tem formato inválido', {autodismiss: false})}
-        }
-        else{el.classList.remove('is-invalid')}
+    
+    __validateEmail(el, notify = true) {
+        // Usa o método da classe this.__emailIsValid
+        const valid = !el.value ? !el.required : this.__emailIsValid(el.value);
+        el.classList.toggle('is-invalid', !valid);
+        if (!valid && notify) appNotify('warning', '<b>Email</b> inválido', {autodismiss: false});
     }
-    __emailIsValid(email){
-        return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
+    
+    __emailIsValid(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
+    
+    // __validateRequired(el, notify=true){
+    //     let max = el.getAttribute('maxlength');
+    //     let min = el.getAttribute('minlength');
+    //     if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
+    //         el.classList.add('is-invalid');
+    //         if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
+    //         else if(notify && max || notify && min){appNotify('warning', max ? `<b>${el.name.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : `<b>${el.name.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
+    //     }
+    //     else if(el.required && el.value == ''){
+    //         el.classList.add('is-invalid');
+    //         if(notify){appNotify('warning', `Campo obrigatorio: <b>${el.name.captalize()}</b>`, {autodismiss: false})}
+    //     }
+    //     else{el.classList.remove('is-invalid')}
+    // }
+    // __validateNumber(el, notify=true){
+    //     let max = parseFloat(el.getAttribute('max')) || null;
+    //     let min = parseFloat(el.getAttribute('min')) || null;
+    //     if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
+    //         el.classList.add('is-invalid');
+    //         if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
+    //         else if(notify && max || notify && min){appNotify('warning', max ? `Campo <b>${el.name.captalize()}</b> aceita valor máximo de <b>${max}</b>` : `<b>${el.name.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
+    
+    //     }
+    //     else if(el.required && el.value == ''){el.classList.add('is-invalid');}
+    //     else{el.classList.remove('is-invalid')}
+    // }
+    // __validateEmail(el, notify=true){
+    //     if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
+    //         el.classList.add('is-invalid');
+    //         if(notify){appNotify('warning', '<b>Email</b> tem formato inválido', {autodismiss: false})}
+    //     }
+    //     else{el.classList.remove('is-invalid')}
+    // }
+    // __emailIsValid(email){
+    //     return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
+    // }
     __selectAddAllOption(){
         this.selectAddAllOption.forEach((el)=>{
             try{
@@ -283,7 +325,7 @@ class jsForm{
                 const actionUrl = this.modalBody.getAttribute('action') || window.location.pathname;
                 window.location.href = actionUrl + '?' + params.toString();
                 // this.modalBody.submit()
-            
+                
             }
             else{
                 const form = this.modalBody.querySelector('form');
@@ -297,7 +339,7 @@ class jsForm{
                 // if(form){form.submit()}
             }
         })
-
+        
         // *******
         modalFooter.appendChild(this.cancel);
         modalFooter.appendChild(this.submit);
@@ -330,55 +372,91 @@ class jsForm{
             icon: 'bi bi-funnel-fill text-primary', 
         })
     }
-    validate(){ // Metodo faz validacao para os campos do form
-        cleanNotify(); // Limpa area de notificacao
-        // Valida status required, maxlength e minlength
-        this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
-            if(this.customValidation.hasOwnProperty(el.name)){return}; this.__validateRequired(el);})
-
-        // Valida inputs NUMBER quanto ao MIN e MAX e required
-        this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateNumber(el)})
-
-        // Valida email fields
-        this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateEmail(el);})
-
-        // Verifica se existe validacao adicional na pagina de origem
-        for(let i in this.customValidation){
-            try {
-                let el = this.form.querySelector(`[name='${i}']`);
-                let resp = this.customValidation[i](el.value);
-                if(!resp[0]){
-                    el.classList.add('is-invalid');
-                    if(resp[1]){
-                        appNotify('warning', resp[1] || '', {autodismiss: false});
-                    }
-                }
-                else{el.classList.remove('is-invalid')}
-            } catch (e){
-                console.log(`jsform: ERRO customValidation para ${i} inválido, verifique dados informados`);
-                console.log(e);
-            }
+    // metodo auxiliar para capturar elementos internos e externos (com atributo form)
+    __getFields(selector) {
+        const internal = this.form.querySelectorAll(selector);
+        const external = this.form.id ? document.querySelectorAll(`${selector}[form="${this.form.id}"]`) : [];
+        return [...internal, ...external];
+    }
+    validate() {
+        cleanNotify();
+        // 1. Valida Required, Min e Max Length
+        this.__getFields('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])')
+        .forEach(el => { if(!this.customValidation[el.name]) this.__validateRequired(el); });
+        // 2. Valida Number e Email
+        this.__getFields('input[type=number]:not([data-form=novalidate])')
+        .forEach(el => { if(!this.customValidation[el.name]) this.__validateNumber(el); });
+        this.__getFields('input[type=email]:not([data-form=novalidate])')
+        .forEach(el => { if(!this.customValidation[el.name]) this.__validateEmail(el); });
+        // 3. Validacoes Customizadas
+        for(let i in this.customValidation) {
+            let el = this.__getFields(`[name='${i}']`)[0];
+            if (!el) continue;
+            let [isValid, msg] = this.customValidation[i](el.value);
+            el.classList.toggle('is-invalid', !isValid);
+            if(!isValid && msg) appNotify('warning', msg, {autodismiss: false});
         }
-
-        // Verifica se foi apontado erro em algum field, se nao faz tratamento e submete form
-        if(this.form.querySelectorAll('.is-invalid').length == 0){ // Caso nao tenha erros
-            // Ajusta formatacao de campos currency (data-jsform_unmask=cur) para o padrao americano (de 0.000,00 para 0000.00)
-            this.form.querySelectorAll('[data-jsform_unmask=cur]').forEach((el)=>{el.value = el.value.replace('.','').replace(',','.');})
-            
-            // Remove alpha e espacos do texto mantendo apenas numeros (data-jsform_unmask=num)
-            this.form.querySelectorAll('[data-jsform_unmask=num]').forEach((el)=>{el.value = el.value.replace(/\D/g,'');})
-            
-            // Faz toUpperCase no valor de elementos com classe text-uppercase
-            this.form.querySelectorAll('input.text-uppercase, select.text-uppercase, textarea.text-uppercase').forEach((el)=>{
-                el.value = el.value.toUpperCase();
-            })
-            
-            // Faz toLowerCase no valor de elementos com classe text-lowercase
-            this.form.querySelectorAll('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
+        // 4. Finalizacao e Formatacao
+        if (this.__getFields('.is-invalid').length === 0) {
+            // Unmask Currency e Number
+            this.__getFields('[data-jsform_unmask=cur]').forEach(el => el.value = el.value.replace(/\./g,'').replace(',','.'));
+            this.__getFields('[data-jsform_unmask=num]').forEach(el => el.value = el.value.replace(/\D/g,''));
+            // Case Transformation
+            this.__getFields('.text-uppercase').forEach(el => el.value = el.value.toUpperCase());
+            this.__getFields('.text-lowercase').forEach(el => el.value = el.value.toLowerCase());
             return true;
         }
         return false;
     }
+    // validate(){ // Metodo faz validacao para os campos do form
+    //     cleanNotify(); // Limpa area de notificacao
+    //     // Valida status required, maxlength e minlength
+    //     this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
+        //         if(this.customValidation.hasOwnProperty(el.name)){return}; this.__validateRequired(el);})
+    
+    //     // Valida inputs NUMBER quanto ao MIN e MAX e required
+    //     this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateNumber(el)})
+    
+    //     // Valida email fields
+    //     this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateEmail(el);})
+    
+    //     // Verifica se existe validacao adicional na pagina de origem
+    //     for(let i in this.customValidation){
+    //         try {
+    //             let el = this.form.querySelector(`[name='${i}']`);
+    //             let resp = this.customValidation[i](el.value);
+    //             if(!resp[0]){
+    //                 el.classList.add('is-invalid');
+    //                 if(resp[1]){
+    //                     appNotify('warning', resp[1] || '', {autodismiss: false});
+    //                 }
+    //             }
+    //             else{el.classList.remove('is-invalid')}
+    //         } catch (e){
+    //             console.log(`jsform: ERRO customValidation para ${i} inválido, verifique dados informados`);
+    //             console.log(e);
+    //         }
+    //     }
+    
+    //     // Verifica se foi apontado erro em algum field, se nao faz tratamento e submete form
+    //     if(this.form.querySelectorAll('.is-invalid').length == 0){ // Caso nao tenha erros
+    //         // Ajusta formatacao de campos currency (data-jsform_unmask=cur) para o padrao americano (de 0.000,00 para 0000.00)
+    //         this.form.querySelectorAll('[data-jsform_unmask=cur]').forEach((el)=>{el.value = el.value.replace('.','').replace(',','.');})
+    
+    //         // Remove alpha e espacos do texto mantendo apenas numeros (data-jsform_unmask=num)
+    //         this.form.querySelectorAll('[data-jsform_unmask=num]').forEach((el)=>{el.value = el.value.replace(/\D/g,'');})
+    
+    //         // Faz toUpperCase no valor de elementos com classe text-uppercase
+    //         this.form.querySelectorAll('input.text-uppercase, select.text-uppercase, textarea.text-uppercase').forEach((el)=>{
+        //             el.value = el.value.toUpperCase();
+    //         })
+    
+    //         // Faz toLowerCase no valor de elementos com classe text-lowercase
+    //         this.form.querySelectorAll('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
+    //         return true;
+    //     }
+    //     return false;
+    // }
     __imaskValidate(){
         for(let i in this.imask){
             if(this.imask[i].el.input.required){ // Adiciona validacao para required
@@ -557,7 +635,7 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
                 this.el.focus();
             }
             this.dialog.close();
-
+            
         }
         this.dialog.appendChild(this.textarea);
         this.dialog.appendChild(this.confirmButton);
@@ -565,9 +643,9 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
         // **
         if(this.shortcut){ // adiciona shortcut quando foco estiver no input
             appKeyMap.bind(this.shortcut, (ev)=>{this.btn.click(); this.oldValue = this.textarea.value;}, {element: this.el, display: false})
-            appKeyMap.bind(this.shortcut, (ev)=>{this.confirmButton.click()}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-floppy-fill text-primary', desc:'Grava alterações'})
+            appKeyMap.bind(this.shortcut, (ev)=>{this.confirmButton.click()}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-floppy-fill text-primary', desc:'Grava alteracoes'})
             appKeyMap.bind('esc', (ev)=>{this.textarea.value = this.oldValue;this.el.focus(); this.dialog.close();}, {context: 'multipleAddonModal', display: false})
-            appKeyMap.bind(this.cleanSelectionShortcut, (ev)=>{this.textarea.value = ''}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-input-cursor-text text-warning', desc:'Limpa seleção'})
+            appKeyMap.bind(this.cleanSelectionShortcut, (ev)=>{this.textarea.value = ''}, {context: 'multipleAddonModal', element: this.textarea, icon: 'bi bi-input-cursor-text text-warning', desc:'Limpa selecao'})
         }
         this.btn = document.createElement('button');this.btn.type = 'button';this.btn.classList = this.btnClasslist;this.btn.title = `${this.btnTitle} ${this.shortcut ? ' [ ' + this.shortcut.toUpperCase() + ' ]' : ''}`;this.btn.tabIndex = '-1';this.btn.innerHTML = this.text;
         this.btn.onclick = ()=>{
@@ -577,10 +655,10 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
         let groupContainer = document.createElement('div'); groupContainer.classList = this.groupContainerClasslist;
         // carrega componente junto ao controle original, usa classes de input-group do bootstrap
         if(this.container.classList.contains('form-floating') && this.container.parentNode.classList.contains('row')){
-        /** row
-         *  ** form-floating col
-         *  **** input
-         */
+            /** row
+            *  ** form-floating col
+            *  **** input
+            */
             let col = document.createElement('div');
             let addClass = this.container.classList.value.replace('form-floating', '').trim().split(' ');
             addClass.forEach((e)=>{

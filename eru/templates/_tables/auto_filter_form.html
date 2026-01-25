@@ -15,7 +15,7 @@
         </h2>
         <div id="auto_filter_form_container_container" class="accordion-collapse{% if not request.GET %} collapse{% endif %}" data-bs-parent="#auto_filter_form_container">
             <div class="accordion-body bg-body-tertiary pt-0 pb-2">
-                <form method="GET" autocomplete="off">
+                <form method="GET" id="{{table.data.verbose_name}}_form" autocomplete="off">
                     <div class="row g-1">
                         {% for field in filter.form %}
                         <div class="col-md">

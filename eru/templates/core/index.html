@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
 {% block title %}Eru{% endblock %}
-
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -21,7 +21,7 @@
 const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   items: [
-    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', desc: 'Pessoal', href: '{% url 'pessoal:funcionario_list' %}'}, {% endif %}
+    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', desc: '{% translate 'Pessoal' %}', href: '{% url 'pessoal:funcionario_list' %}'}, {% endif %}
   ]
 })
 

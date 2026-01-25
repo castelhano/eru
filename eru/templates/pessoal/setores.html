@@ -1,7 +1,8 @@
 {% extends "layout/app.html" %}
 {% load static %}
-{% block title %}Setores{% endblock %}
-{% block title_i18n %}common.sector__plural{% endblock %}
+{% load i18n %}
+{% load django_tables2 %}
+{% block title %}{% translate 'Setores' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -15,32 +16,11 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Setor</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Setor' %}</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nome</th>
-                        <th>Ativos</th>
-                        {% if perms.pessoal.change_setor %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for setor in setor_list %}
-                    <tr>
-                        <td>{{setor.id|safe}}</td>
-                        <td>{{setor.nome}}</td>
-                        <td>{{setor.ativos}}</td>
-                        {% if perms.pessoal.change_setor %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:setor_update' setor.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive mt-3">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -48,14 +28,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
     {% block add_script %}
-    const table = new jsTable(document.getElementById('main_table'),{
-        enablePaginate: true,
-        canFilter: true,
-        filterCols: ['Nome'],
-    });
     {% endblock %}
 </script>
