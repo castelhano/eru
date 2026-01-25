@@ -1,5 +1,5 @@
 import django_filters
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from auditlog.models import LogEntry
 from .models import Empresa, Filial
 from django.contrib.contenttypes.models import ContentType
@@ -20,17 +20,20 @@ class UserFilter(django_filters.FilterSet):
     )
     class Meta:
         model = User
-        # fields = ['username', 'email', 'is_superuser', 'is_staff', 'is_active', 'last_login', 'last_login__lte', 'never_login']
         fields = {
             'username': ['icontains'],
             'email': ['icontains'],
-            # 'is_superuser': ['exact'],
-            # 'is_staff': ['exact'],
-            # 'is_active': ['exact'],
-            # 'last_login': ['exact', 'lte', 'gte'], 
+            'is_superuser': ['exact'],
+            'is_staff': ['exact'],
+            'is_active': ['exact'],
         }
 
-        
+class GroupFilter(django_filters.FilterSet):
+    users = django_filters.BooleanFilter(field_name='user', lookup_expr='isnull')
+    class Meta:
+        model = Group
+        fields = ['users']
+
 
 
 class LogEntryFilter(django_filters.FilterSet):

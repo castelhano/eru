@@ -1,5 +1,6 @@
 import os, json, math
 from asteval import Interpreter
+from django.db.models import Count
 from itertools import groupby
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -10,12 +11,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib import auth, messages
 from django.db import transaction
 from auditlog.models import LogEntry
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from .models import Empresa, Filial, Settings, Profile
 from .constants import DEFAULT_MESSAGES
 from .forms import EmpresaForm, FilialForm, UserForm, GroupForm, SettingsForm, CustomPasswordChangeForm
-from .filters import UserFilter, LogEntryFilter, EmpresaFilter
-from .tables import EmpresaTable, FilialTable, LogsTable, UsuarioTable
+from .filters import UserFilter, GroupFilter, LogEntryFilter, EmpresaFilter
+from .tables import EmpresaTable, FilialTable, LogsTable, UsuarioTable, GrupoTable
 from .mixins import AjaxableListMixin, CSVExportMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -196,33 +197,38 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
         })
         return context
 
-class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
-    model = Empresa
-    template_name = 'core/empresas.html'
-    permission_required = 'core.view_empresa'
-    def get_queryset(self):
-        return Empresa.objects.prefetch_related('filiais').all().order_by('nome').distinct()
-    def get_context_data(self, **kwargs):
-        filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
-        context = super().get_context_data(object_list=filtro.qs, **kwargs)
-        context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs).config(self.request, filtro)})
-        return context
-
-class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = Group
     template_name = 'core/grupos.html'
-    context_object_name = 'grupos'
+    table_class = GrupoTable
+    filterset_class = GroupFilter
     permission_required = 'auth.view_group'
     def get_queryset(self):
-        queryset = Group.objects.all().order_by('name')
-        users_filter = self.request.GET.get('users')
-        if users_filter == 'false':
-            queryset = queryset.filter(user__isnull=True)
-        return queryset
+        return Group.objects.annotate(user_count=Count('user')).order_by('name')
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['users_filter'] = self.request.GET.get('users')
+        filtro = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context = super().get_context_data(object_list=filtro.qs, **kwargs)
+        context.update({
+            'filter': filtro,
+            'table': self.table_class(filtro.qs).config(self.request, filtro)
+        })
         return context
+
+# class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
+#     model = Group
+#     template_name = 'core/grupos.html'
+#     table_class = GrupoTable
+#     permission_required = 'auth.view_group'
+#     def get_queryset(self):
+#         queryset = Group.objects.all().order_by('name')
+#         users_filter = self.request.GET.get('users')
+#         if users_filter == 'false':
+#             queryset = queryset.filter(user__isnull=True)
+#         return queryset
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['users_filter'] = self.request.GET.get('users')
+#         return context
 
 class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = User
@@ -237,23 +243,16 @@ class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, Base
         context['grupo'] = self.grupo
         return context
 
-class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
-    model = Settings
-    form_class = SettingsForm
-    template_name = 'core/settings.html'
-    permission_required = 'core.view_settings'
-    success_message = "Configurações atualizadas com sucesso!"
-    success_url = reverse_lazy('settings')  # redireciona para mesma pagina ao salvar
-    def get_object(self, queryset=None):
-        try:
-            obj, created = Settings.objects.get_or_create(pk=1)
-            return obj
-        except Settings.MultipleObjectsReturned:
-            messages.error( self.request, '<b>Erro:</b> Identificado duplicatas nas configurações. Contate o administrador.')
-            return None
+class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
+    model = Empresa
+    template_name = 'core/empresas.html'
+    permission_required = 'core.view_empresa'
+    def get_queryset(self):
+        return Empresa.objects.prefetch_related('filiais').all().order_by('nome').distinct()
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['settings'] = self.object
+        filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
+        context = super().get_context_data(object_list=filtro.qs, **kwargs)
+        context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs).config(self.request, filtro)})
         return context
 
 # METODOS ADD
@@ -302,6 +301,28 @@ class GrupoCreateView(BaseCreateView):
 
 
 # METODOS UPDATE
+
+class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+# classe Settings do core opera como singleton
+    model = Settings
+    form_class = SettingsForm
+    template_name = 'core/settings.html'
+    permission_required = 'core.view_settings'
+    context_object_name = 'settings'
+    success_message = "Configurações atualizadas com sucesso!"
+    success_url = reverse_lazy('settings')
+    def get_object(self, queryset=None):
+        # recuperar instancia ou cria (no primeiro uso) com valores default
+        obj, created = Settings.objects.get_or_create(pk=1)
+        return obj
+    def post(self, request, *args, **kwargs):
+        # se o usuario nao tiver permissao de alteracao, redireciona
+        if not request.user.has_perm('core.change_settings'):
+            raise PermissionDenied
+        return super().post(request, *args, **kwargs)
+
+
+
 class EmpresaUpdateView(BaseUpdateView):
     model = Empresa
     form_class = EmpresaForm
@@ -355,23 +376,6 @@ class GrupoUpdateView(BaseUpdateView):
             content_type__app_label__in=exclude_itens
         ).select_related('content_type').order_by('content_type__app_label', 'codename')
         return context
-
-# classe Settings opera como singleton
-class SettingsUpdateView(BaseUpdateView):
-    model = Settings
-    form_class = SettingsForm
-    template_name = 'core/settings.html'
-    permission_required = 'core.change_settings'
-    context_object_name = 'settings'
-    success_url = reverse_lazy('settings')
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['settings'] = self.object
-        return context
-    def get_object(self, queryset=None):
-        # recuperar instancia ou cria (no primeiro uso) com valores default
-        obj, created = Settings.objects.get_or_create(pk=1)
-        return obj
 
 
 # METODOS DELETE

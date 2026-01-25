@@ -24,8 +24,7 @@ class BaseCreateView(SuccessMessageMixin, CreateView):
 class BaseUpdateView(SuccessMessageMixin, UpdateView):
     login_url = '/handler/403'
     raise_exception = False
-    def get_success_message(self, cleaned_data):
-        return self.success_message or DEFAULT_MESSAGES.get('updated')
+    success_message = DEFAULT_MESSAGES.get('updated')
     def form_invalid(self, form):
         messages.error(self.request, DEFAULT_MESSAGES.get('saveError'))
         return super().form_invalid(form)

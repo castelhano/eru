@@ -1,11 +1,12 @@
 import json
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.utils.safestring import mark_safe
 from .mixins import TableCustomMixin
 from django_tables2 import Column, Table
 from .models import Empresa, Filial
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from auditlog.models import LogEntry
-from django.utils.html import format_html
 
 
 
@@ -45,7 +46,29 @@ class UsuarioTable(TableCustomMixin, Table):
         fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
         edit_url = "usuario_update"
         responsive_columns = {
+            "id": "d-none d-md-table-cell",
+            "first_name": "d-none d-lg-table-cell",
+            "last_name": "d-none d-lg-table-cell",
+            "last_login": "d-none d-md-table-cell",
         }
+
+class GrupoTable(TableCustomMixin, Table):
+    export_csv = True
+    user_count = Column(verbose_name= _("Usuários"))
+    class Meta:
+        model = Group
+        fields = ("id", "name", "user_count")
+        edit_url = "grupo_update"
+        responsive_columns = {
+        }
+        extra_actions = [
+            {
+                'action': 'users',
+                'url_name': 'usuario_grupo',
+                'label': mark_safe('<i class="bi bi-people-fill"></i>'),
+                'class': 'btn btn-sm btn-info-matte',
+            },
+        ]
 
 class LogsTable(TableCustomMixin, Table):
     class Meta:

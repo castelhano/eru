@@ -108,7 +108,7 @@ class Settings(models.Model):
     def save(self, *args, **kwargs):
         # forca edicao / adicao sempre do ID 1 (impedindo duplicidade de registro)
         self.pk = 1
-        super(Settings, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
     class Meta:
         default_permissions = ('view','change',)
 auditlog.register(Settings)
