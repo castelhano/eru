@@ -48,7 +48,7 @@ def get_props(model_class):
     """
     prop_list = []
     for name, value in model_class.__dict__.items():
-        # Verifica se o valor do atributo e do tipo 'property'
+        # verifica se o valor do atributo e do tipo 'property'
         if isinstance(value, property):
             prop_list.append(name)
     return prop_list

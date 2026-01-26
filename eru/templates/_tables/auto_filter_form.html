@@ -5,7 +5,7 @@
         <h2 class="accordion-header">
             <button 
                 id="auto_filter_form_btn"
-                class="accordion-button collapsed shadow-none py-2 ps-2 bg-body-tertiary" 
+                class="accordion-button{% if not request.GET %} collapsed{% endif %} shadow-none py-2 ps-2 bg-body-tertiary" 
                 type="button" 
                 data-bs-toggle="collapse" 
                 data-bs-target="#auto_filter_form_container_container">
@@ -13,17 +13,19 @@
                 <span class="text-body-secondary" >{% translate 'Filtros' %}</span>
             </button>
         </h2>
-        <div id="auto_filter_form_container_container" class="accordion-collapse{% if not request.GET %} collapse{% endif %}" data-bs-parent="#auto_filter_form_container">
+        <div id="auto_filter_form_container_container" class="accordion-collapse collapse{% if request.GET %} show{% endif %}" data-bs-parent="#auto_filter_form_container">
             <div class="accordion-body bg-body-tertiary pt-0 pb-2">
                 <form method="GET" id="{{table.data.verbose_name}}_form" autocomplete="off">
-                    <div class="row g-1">
+                    <div class="row g-2" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
                         {% for field in filter.form %}
-                        <div class="col-md">
-                            <label class="small text-body-secondary" for="{{ field.id_for_label }}">
+                        {% with cols=field.field.widget.attrs.class_cols|default:"1" %}
+                        <div class="grid-filter-item" style="grid-column: span {{ cols }}; max-width: {% if cols == '1' %}450px{% else %}none{% endif %};">
+                            <label class="small text-body-secondary d-block text-truncate" for="{{ field.id_for_label }}">
                                 {{ field.label }}
                             </label>
                             {{ field }}
                         </div>
+                        {% endwith %}
                         {% endfor %}
                     </div>
                     <div class="row g-1">

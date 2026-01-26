@@ -1,8 +1,9 @@
 import django_filters
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes.models import ContentType
 from auditlog.models import LogEntry
 from .models import Empresa, Filial
-from django.contrib.contenttypes.models import ContentType
 from django_filters import DateFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters.widgets import RangeWidget
 
@@ -29,10 +30,10 @@ class UserFilter(django_filters.FilterSet):
         }
 
 class GroupFilter(django_filters.FilterSet):
-    users = django_filters.BooleanFilter(field_name='user', lookup_expr='isnull')
+    users_isnull = django_filters.BooleanFilter(field_name='user', lookup_expr='isnull', label=_('Sem usuários'))
     class Meta:
         model = Group
-        fields = ['users']
+        fields = ['users_isnull']
 
 
 

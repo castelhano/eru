@@ -1,4 +1,5 @@
 import django_filters
+from django import forms
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
@@ -15,6 +16,11 @@ class FuncionarioFilter(django_filters.FilterSet):
         lookup_expr='lte',
         label=_('Vencimento CNH')
     )
+    status = django_filters.MultipleChoiceFilter(
+        choices=Funcionario.Status.choices,
+        label=_('Status'),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control form-control-sm ts-compact'})
+    )
     class Meta:
         model = Funcionario
         fields = ['empresa','filial','setor','cargo','status','motivo_desligamento','pne','cnh_validade__lte']
@@ -26,6 +32,7 @@ class FuncionarioFilter(django_filters.FilterSet):
             'data-url': reverse_lazy('filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
+        self.filters['status'].field.widget.attrs.update({'class_cols': '2'})
         cargo_field = self.filters['cargo'].field
         cargo_field.widget.attrs.update({
             'data-chained-field': 'id_setor',

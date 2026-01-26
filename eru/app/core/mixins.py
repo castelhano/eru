@@ -160,107 +160,53 @@ class BootstrapMixin:
                 widget.attrs[h_attr] = val
 
 
+
 class TableCustomMixin:
-# define padrao visual para tabela, insere botao action para acesso ao registro (ou execucao de script)
-# no Meta da tabela altere edit_url, action_script, action_classlist, action_innerhtml, para alterar configuracoes base do botao action
-# para mudar configuracoes de attr da tabela, use o metodo __init__ na definicao da tabela ex:
-# def __init__(self, *args, **kwargs):
-#     super().__init__(*args, **kwargs)
-#     self.attrs.update({
-#         "data-navigate": "false",
-#         "data-action-selector": ".btn-dark"
-#     })
     def __init__(self, *args, **kwargs):
         meta = getattr(self, 'Meta', object())
-        edit_url = getattr(meta, 'edit_url', None)
-        extra_actions = getattr(meta, 'extra_actions', [])
+        edit_url, extra_actions = getattr(meta, 'edit_url', None), getattr(meta, 'extra_actions', [])
         if (edit_url or extra_actions) and "actions" not in self.base_columns:
             def render_actions(record):
-                btns = []
-                if edit_url:
-                    p = {k: getattr(meta, v) for k, v in [('label', 'action_innerhtml'), ('class', 'action_classlist')] if hasattr(meta, v)}
-                    btns.append(btn_tag('update', edit_url, pk=record.id, **p))
+                # botao de edicao padrao
+                btns = [btn_tag('update', edit_url, pk=record.id, **{k: getattr(meta, v) for k, v in [('label', 'action_innerhtml'), ('class', 'action_classlist')] if hasattr(meta, v)})] if edit_url else []
+                # botoes extras
                 for b in extra_actions:
-                    conf = b.copy()
-                    act, url = conf.pop('action'), conf.pop('url_name', None)
-                    pk = record.id if conf.pop('use_pk', True) else None
-                    btns.append(btn_tag(act, url, pk=pk, **conf))
+                    c = b.copy()
+                    btns.append(btn_tag(c.pop('action'), c.pop('url_name', None), pk=(record.id if c.pop('use_pk', True) else None), **c))
                 return mark_safe(f'<div class="d-flex justify-content-end gap-1">{"".join(btns)}</div>')
             col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
             col.render = render_actions 
             self.base_columns["actions"] = col
         super().__init__(*args, **kwargs)
+        self.empty_text = self.empty_text or _("Nenhum registro a exibir")
         self.template_name = "_tables/bootstrap5_custom.html"
-        self.attrs = {"class": "table border table-striped table-hover mb-2", "data-navigate": "true", "id": self.__class__.__name__.lower()}
+        self.attrs = {
+            "class": "table border table-striped table-hover mb-2", 
+            "data-navigate": "true", 
+            "data-action-selector": ".btn", 
+            "id": self.__class__.__name__.lower()
+        }
         for name, css in getattr(meta, 'responsive_columns', {}).items():
             if name in self.columns:
                 self.columns[name].column.attrs.update({"th": {"class": css}, "td": {"class": css}})
+    # def config(self, request, filter_obj=None):
+    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+    #     if filter_obj:
+    #         for field in filter_obj.form.fields.values():
+    #             base_css = 'form-select form-select-sm' if isinstance(field.widget, (forms.Select, forms.SelectMultiple)) else 'form-control form-control-sm'
+    #             existing_classes = field.widget.attrs.get('class', '')
+    #             all_classes = f"{base_css} {existing_classes} ts-compact".strip()
+    #             field.widget.attrs['class'] = " ".join(set(all_classes.split()))
+    #             if isinstance(field, forms.DateField): field.widget.input_type = 'date'
+    #         self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
+    #     return self
     def config(self, request, filter_obj=None):
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
             for field in filter_obj.form.fields.values():
-                css = 'form-select form-select-sm' if isinstance(field.widget, (forms.Select, forms.SelectMultiple)) else 'form-control form-control-sm'
-                field.widget.attrs.update({'class': css})
+                if isinstance(field, forms.DateField): field.widget.input_type = 'date'
+                if not field.widget.attrs.get('class'):
+                    base = 'form-select form-select-sm' if isinstance(field.widget, (forms.Select, forms.SelectMultiple)) else 'form-control form-control-sm'
+                    field.widget.attrs['class'] = f"{base}"
             self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self
-
-
-
-
-# versao consolidada, necessita apenas implementar adicao de botoes no action
-# class TableCustomMixin:
-
-#     def __init__(self, *args, **kwargs):
-#         meta = getattr(self, 'Meta', object())
-#         url = getattr(meta, 'edit_url', None)
-#         script = getattr(meta, 'action_script', None)
-#         if (url or script) and "actions" not in self.base_columns:
-#             def render_actions(record):
-#                 params = {k: getattr(meta, v) for k, v in [
-#                     ('label', 'action_innerhtml'),
-#                     ('class', 'action_classlist'),
-#                     ('onclick', 'action_script')
-#                     ] if hasattr(meta, v)}
-#                 for k, v in getattr(meta, 'action_data_attrs', {}).items():
-#                     params[k] = getattr(record, v, v)
-#                 return btn_tag('update', url_name=url, pk=record.id, **params)
-#             col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False, verbose_name="")
-#             col.render = render_actions 
-#             self.base_columns["actions"] = col
-#         super().__init__(*args, **kwargs)
-#         if not self.empty_text:
-#             self.empty_text = _("Nenhum registro a exibir")
-#         self.template_name = "_tables/bootstrap5_custom.html"
-#         self.attrs = {
-#             "class": "table border table-striped table-hover mb-2",
-#             "data-navigate": "true",
-#             "data-action-selector": ".btn",
-#             "id": self.__class__.__name__.lower()
-#         }
-#         # responsividade das colunas (breakpoint)
-#         resp = getattr(meta, 'responsive_columns', {})
-#         for name, col in self.columns.items():
-#             if name in resp:
-#                 col.column.attrs.update({
-#                     "th": {"class": resp[name]}, 
-#                     "td": {"class": resp[name]}
-#                 })
-    # def config(self, request, filter_obj=None):
-    #     RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-    #     if filter_obj:
-    #         _CSS_MAP = {
-    #             forms.Select: 'form-select form-select-sm',
-    #             forms.SelectMultiple: 'form-select form-select-sm',
-    #             forms.CheckboxInput: 'form-check-input',
-    #             forms.RadioSelect: 'form-check-input',
-    #         }
-    #         for field in filter_obj.form.fields.values():
-    #             # Verifica se o widget é um Select ou herda dele (cobre BooleanFilter)
-    #             if isinstance(field.widget, forms.Select): css_class = _CSS_MAP[forms.Select]
-    #             else: css_class = _CSS_MAP.get(type(field.widget), 'form-control form-control-sm')
-    #             field.widget.attrs.update({'class': css_class})
-    #             if isinstance(field, forms.DateField):
-    #                 field.widget.input_type = 'date'
-    #         self.render_filter = render_to_string('_tables/auto_filter_form.html', 
-    #             {'filter': filter_obj, 'request': request, 'table': self})
-    #     return self

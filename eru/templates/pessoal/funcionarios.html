@@ -3,9 +3,12 @@
 {% load i18n %}
 {% load django_tables2 %}
 {% block title %}Funcionarios{% endblock %}
-{% block title_i18n %}common.employee__plural{% endblock %}
 
 {% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
+
+{% block style_src %}
+<link rel="stylesheet" href="{% static 'css/vendor/tomselect.css' %}">
+{% endblock %}
 
 
 {% block content_fluid %}
@@ -71,11 +74,25 @@
 {% block add_script_src %}
 <script src="{% static 'js/url.js' %}"></script>
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/vendor/tomselect.js' %}"></script>
 {% endblock %}
 
 <script>
   {% block add_script %}
   const form = new jsForm('#funcionario_form', {})
+  // const status = new TomSelect('#id_status', {
+  //       plugins: ['remove_button'],
+  //       onInitialize: function() {
+  //           this.wrapper.classList.add('form-select-sm');
+  //       }
+  //   });
+  const status = new TomSelect("#id_status", {
+    plugins: ['remove_button'],
+    allowEmptyOption: true,
+});
+
+
+
   
   // Adiciona atalhos para modal de filtros
   // appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})

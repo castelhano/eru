@@ -81,7 +81,7 @@ class Pessoa(models.Model):
         abstract = True
 
 class Setor(models.Model):
-    nome = models.CharField(max_length=50, unique=True, blank=False)
+    nome = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
     def __str__(self):
         return self.nome
     def ativos(self):
