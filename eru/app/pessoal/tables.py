@@ -1,7 +1,7 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Table, Column
-from .models import Funcionario, Contrato, Setor
+from .models import Funcionario, Contrato, Setor, Afastamento
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -47,14 +47,18 @@ class ContratoTable(TableCustomMixin, Table):
         responsive_columns = {
             "funcionario": "d-none",
         }
-        extra_actions = [
-            {
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.get('request') 
+        actions = []
+        if self.request and self.request.user.has_perm('pessoal.change_contrato'):
+            actions.append({
                 'action': 'update', 
                 'url_name': 'pessoal:contrato_list',
                 'url_params': {'edit': 'id'},
                 'use_pk': 'funcionario_id'
-            }
-        ]
+            })
+        self.Meta.extra_actions = actions        
+        super().__init__(*args, **kwargs)
 
 
 class SetorTable(TableCustomMixin, Table):
@@ -63,3 +67,10 @@ class SetorTable(TableCustomMixin, Table):
         model = Setor        
         fields = ('nome',)
         edit_url, paginate_by = "pessoal:setor_update", 20
+
+class AfastamentoTable(TableCustomMixin, Table):
+    export_csv = True
+    class Meta:
+        model = Afastamento        
+        fields = ('funcionario','motivo','origem','data_afastamento','data_retorno','reabilitado','remunerado',)
+        edit_url, paginate_by = "pessoal:afastamento_update", 10

@@ -106,6 +106,7 @@ class Cargo(models.Model):
         ordering = ['nome']
 auditlog.register(Cargo)
 
+
 class Funcionario(Pessoa):
     class Status(models.TextChoices):
         ATIVO     = "A", _("Ativo")
@@ -137,13 +138,18 @@ class Funcionario(Pessoa):
         if self.foto:
             self.foto.delete(save=False)
         super().delete(*args, **kwargs)
-    def admissao_anos(self):
-        if self.data_admissao != None:
-            diferenca = date.today() - self.data_admissao
-            tempo_servico = (diferenca.days + diferenca.seconds/86400)/365.2425
-            return math.floor(tempo_servico)
-        else:
-            return ''
+    def validar_afastamento(self):
+        if self.status == self.Status.DESLIGADO:
+            raise ValidationError(_("Não é possível alterar dados de funcionários desligados"))
+        if self.status == self.Status.AFASTADO:
+            raise ValidationError(_("Funcionário já possui um afastamento ativo"))
+        return True
+    def afastar(self):
+        self.status = self.Status.AFASTADO
+        self.save(update_fields=['status'])
+    def retornar(self):
+        self.status = self.Status.ATIVO
+        self.save(update_fields=['status'])
     def dependentes(self):
         return Dependente.objects.filter(funcionario=self).order_by('nome')
     def afastamentos(self):
@@ -160,7 +166,7 @@ class Funcionario(Pessoa):
         return self._cached_contrato
     @property
     def F_ehEditavel(self):
-        return self.status != 'D'
+        return self.status != self.Status.DESLIGADO
     @property
     def F_cargo(self):
         return self._contrato_atual.cargo if self._contrato_atual else None
@@ -212,6 +218,8 @@ class Contrato(models.Model):
     salario = models.DecimalField(_('Salário'), max_digits=10, decimal_places=2)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
+    def __str__(self):
+        return f'{self.funcionario.matricula} | id: {self.id}'
     def clean(self):
         if not self.inicio or not hasattr(self, 'funcionario') or not self.funcionario:
             return
@@ -221,9 +229,9 @@ class Contrato(models.Model):
             Q(inicio__lte=self.fim) if self.fim else Q()
         )
         if overlap.exists():
-            raise ValidationError({_('inicio'): DEFAULT_MESSAGES.get('recordOverlap')})
+            raise ValidationError({'inicio': DEFAULT_MESSAGES.get('recordOverlap')})
     @property
-    def F_diasContrato(self):
+    def C_diasContrato(self):
         return max(((self.fim or date.today()) - self.inicio).days, 0)
 auditlog.register(Contrato)
 
@@ -283,7 +291,8 @@ class Afastamento(models.Model):
     reabilitado = models.BooleanField(_('Reabilitado'), default=False)
     remunerado = models.BooleanField(_('Remunerado'), default=False)
     detalhe = models.TextField(_('Detalhe'), blank=True)
-    def daysOff(self):
+    @property
+    def T_diasAfastado(self):
         # retorna quantidade de dias que funcionario ficou/esta em afastamento
         if self.data_afastamento is None:
             return 0
@@ -292,10 +301,15 @@ class Afastamento(models.Model):
         delta = (end_date - self.data_afastamento).days
         return max(delta, 0) # caso lancamento futuro retorno eh negativo, neste caso retorna 0
     def clean(self):
+        if not self.pk:
+            self.funcionario.validar_afastamento() # sera gerado excessao caso nao seja possivel
         # validacao para garantir que nao haja sobreposicao entre afastamentos
         if self.data_afastamento is None:
             return
-        # query base
+        if self.data_retorno and self.data_retorno < self.data_afastamento:
+            raise ValidationError({
+                'data_retorno': _("A data de retorno não pode ser anterior à data de afastamento")
+            })
         query = Afastamento.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
         # Sobreposicao ocorre se:
         # a) O novo periodo comeca antes ou durante um periodo existente E termina depois ou durante um periodo existente
@@ -313,9 +327,13 @@ class Afastamento(models.Model):
         if overlapping_absences.exists():
             raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
     def save(self, *args, **kwargs):
-        # sobrescreve save para chamar validacao antes de salvar
-        self.full_clean() 
+        is_new = self.pk is None
+        self.full_clean()
         super().save(*args, **kwargs)
+        if is_new:
+            self.funcionario.afastar()
+        elif self.data_retorno and self.data_retorno <= date.today():
+            self.funcionario.retornar()
 auditlog.register(Afastamento)
 
 class Dependente(models.Model):

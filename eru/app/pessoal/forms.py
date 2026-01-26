@@ -49,7 +49,7 @@ class AfastamentoForm(BootstrapMixin, forms.ModelForm):
             'data_retorno': forms.DateInput(attrs={'class': 'bg-body-tertiary'}),
             'remunerado': forms.CheckboxInput(attrs={'role': 'switch'}),
             'reabilitado': forms.CheckboxInput(attrs={'role': 'switch'}),
-            'detalhe': forms.Textarea(attrs={'placeholder': 'Detalhes', 'style': 'min-height:300px'}),
+            'detalhe': forms.Textarea(attrs={'placeholder': _('Detalhes'), 'style': 'min-height:300px'}),
         }
 
 class ContratoForm(BootstrapMixin, forms.ModelForm):

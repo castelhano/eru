@@ -21,20 +21,17 @@
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_contato" data-bs-toggle="tab" data-bs-target="#contato" onclick="setTimeout(function(){document.getElementById('id_endereco').focus();},220);" href="#" title="Endereço [Ctrl + 3]"><i class="bi bi-pin-map-fill"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="menu_funcionario_detalhe" data-bs-toggle="tab" data-bs-target="#detalhe" onclick="setTimeout(function(){document.getElementById('id_detalhe').focus();},220);" href="#" title="Detalhes [Ctrl + 4]"><i class="bi bi-list-columns"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:funcionario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
-            {% if perms.pessoal.view_eventofuncionario %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}" >{% translate 'Eventos'|hl_str:'t' %}</a></li>
-            {% endif %}
-            {% if perms.pessoal.view_contrato %}
-            <li class="nav-item"><a class="nav-link text-orange" id="contratos" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}" >{% translate 'Contratos'|hl_str:'o' %}</a></li>
-            {% endif %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" type="button" id="exportCsvBtn" >Baixar CSV</button></li>
-                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}" >Dependentes</a></li>{% endif %}
-                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}" >Afastamentos</a></li>{% endif %}
-                    {% if perms.pessoal.funcionario_desligar and funcionario.status == 'A' %}
-                    <li><a class="dropdown-item dropdown-item-danger" data-bs-toggle="modal" data-bs-target="#modal_desligamento" href="#">Desligar Funcionário</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos' %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos' %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">Dependentes</a></li>{% endif %}
+                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">Afastamentos</a></li>{% endif %}
+                    {% if funcionario.status == 'A' %}
+                    <li><a class="dropdown-item disabled" href="#">Desligar Funcionário</a></li>
                     {% endif %}
                     {% if perms.pessoal.delete_funcionario %}
                     <li><hr class="dropdown-divider"></li>
@@ -168,12 +165,5 @@
     let exportCsvBtn = document.getElementById('exportCsvBtn');
     exportCsvBtn.onclick = ()=>{form.exportCSV({ignore: ['foto_data_url']})};
     appKeyMap.bind('alt+d', ()=>{exportCsvBtn.click()}, {icon: 'bi bi-download', desc: '{% translate "Baixar dados em formato CSV" %}', origin: 'pessoal:funcionario_id'})
-
-    {% if perms.pessoal.view_eventofuncionario %}
-    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {icon: 'bi bi-percent', desc:'{% translate 'Eventos funcionário' %}', origin: 'pessoal:funcionario_id'})
-    {% endif %}
-    {% if perms.pessoal.view_contrato %}
-    appKeyMap.bind('alt+o', ()=>{document.getElementById('contratos').click()}, {icon: 'bi bi-percent', desc:'{% translate 'Contratos funcionário' %}', origin: 'pessoal:funcionario_id'})
-    {% endif %}
     {% endblock %}
 </script>

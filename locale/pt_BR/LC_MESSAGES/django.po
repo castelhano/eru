@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-26 10:22-0400\n"
+"POT-Creation-Date: 2026-01-26 19:27-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,15 +83,15 @@ msgstr ""
 msgid "Campo duplicado, precisa ser único"
 msgstr ""
 
-#: eru/app/core/mixins.py:181
+#: eru/app/core/mixins.py:224
 msgid "Nenhum registro a exibir"
 msgstr ""
 
 #: eru/app/core/models.py:36 eru/app/core/models.py:47
 #: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:84
-#: eru/app/pessoal/models.py:97 eru/app/pessoal/models.py:235
-#: eru/app/pessoal/models.py:336 eru/app/pessoal/models.py:353
-#: eru/app/pessoal/models.py:372 eru/templates/core/_form_grupo.html:9
+#: eru/app/pessoal/models.py:97 eru/app/pessoal/models.py:240
+#: eru/app/pessoal/models.py:351 eru/app/pessoal/models.py:368
+#: eru/app/pessoal/models.py:387 eru/templates/core/_form_grupo.html:9
 msgid "Nome"
 msgstr ""
 
@@ -174,13 +174,13 @@ msgstr ""
 msgid "Rodapé"
 msgstr ""
 
-#: eru/app/core/models.py:72 eru/app/pessoal/models.py:128
+#: eru/app/core/models.py:72 eru/app/pessoal/models.py:129
 #: eru/templates/_component/menu/core.html:10
 msgid "Usuário"
 msgstr ""
 
 #: eru/app/core/models.py:73 eru/app/core/tables.py:16
-#: eru/app/pessoal/models.py:397 eru/app/pessoal/models.py:402
+#: eru/app/pessoal/models.py:412 eru/app/pessoal/models.py:417
 msgid "Filiais"
 msgstr ""
 
@@ -202,23 +202,26 @@ msgid "Voltar"
 msgstr ""
 
 #: eru/app/core/templatetags/ui_components.py:21
+#: eru/templates/pessoal/afastamento_id.html:43
+#: eru/templates/pessoal/contratos.html:91
 msgid "Excluir"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:121
+#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:122
 msgid "Filial"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:13 eru/app/pessoal/models.py:98
-#: eru/templates/_component/menu/pessoal.html:9
+#: eru/app/pessoal/filters.py:13 eru/app/pessoal/forms.py:58
+#: eru/app/pessoal/models.py:98 eru/templates/_component/menu/pessoal.html:9
 #: eru/templates/pessoal/_form_setor.html:4
 #: eru/templates/pessoal/setores.html:19
 msgid "Setor"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:14 eru/app/pessoal/models.py:210
-#: eru/app/pessoal/models.py:401 eru/app/pessoal/tables.py:10
+#: eru/app/pessoal/filters.py:14 eru/app/pessoal/models.py:216
+#: eru/app/pessoal/models.py:416 eru/app/pessoal/tables.py:10
 #: eru/templates/_component/menu/pessoal.html:10
+#: eru/templates/pessoal/_form_afastamento.html:4
 msgid "Cargo"
 msgstr ""
 
@@ -226,7 +229,7 @@ msgstr ""
 msgid "Vencimento CNH"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:22 eru/app/pessoal/models.py:129
+#: eru/app/pessoal/filters.py:22 eru/app/pessoal/models.py:130
 msgid "Status"
 msgstr ""
 
@@ -234,11 +237,35 @@ msgstr ""
 msgid "Funções Fixa"
 msgstr ""
 
-#: eru/app/pessoal/forms.py:132
+#: eru/app/pessoal/filters.py:73
+msgid "Afastado após"
+msgstr ""
+
+#: eru/app/pessoal/filters.py:74
+msgid "Afastado até"
+msgstr ""
+
+#: eru/app/pessoal/filters.py:75
+msgid "Retorna após"
+msgstr ""
+
+#: eru/app/pessoal/filters.py:76
+msgid "Retorna até"
+msgstr ""
+
+#: eru/app/pessoal/forms.py:52
+msgid "Detalhes"
+msgstr ""
+
+#: eru/app/pessoal/forms.py:62 eru/app/pessoal/models.py:218
+msgid "Salário"
+msgstr ""
+
+#: eru/app/pessoal/forms.py:167
 msgid "Data de fim não pode ser menor que data de inicio"
 msgstr ""
 
-#: eru/app/pessoal/forms.py:156
+#: eru/app/pessoal/forms.py:191
 msgid "Existe registro ativo no periodo informado"
 msgstr ""
 
@@ -278,27 +305,27 @@ msgstr ""
 msgid "Nome Social"
 msgstr ""
 
-#: eru/app/pessoal/models.py:40 eru/app/pessoal/models.py:338
+#: eru/app/pessoal/models.py:40 eru/app/pessoal/models.py:353
 msgid "Gênero"
 msgstr ""
 
-#: eru/app/pessoal/models.py:41 eru/app/pessoal/models.py:339
+#: eru/app/pessoal/models.py:41 eru/app/pessoal/models.py:354
 msgid "Data Nascimento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:42 eru/app/pessoal/models.py:340
+#: eru/app/pessoal/models.py:42 eru/app/pessoal/models.py:355
 msgid "Rg"
 msgstr ""
 
-#: eru/app/pessoal/models.py:43 eru/app/pessoal/models.py:341
+#: eru/app/pessoal/models.py:43 eru/app/pessoal/models.py:356
 msgid "Rg Emissão"
 msgstr ""
 
-#: eru/app/pessoal/models.py:44 eru/app/pessoal/models.py:342
+#: eru/app/pessoal/models.py:44 eru/app/pessoal/models.py:357
 msgid "Rg Org Expedidor"
 msgstr ""
 
-#: eru/app/pessoal/models.py:45 eru/app/pessoal/models.py:343
+#: eru/app/pessoal/models.py:45 eru/app/pessoal/models.py:358
 msgid "Cpf"
 msgstr ""
 
@@ -363,7 +390,7 @@ msgstr ""
 msgid "Nome do Pai"
 msgstr ""
 
-#: eru/app/pessoal/models.py:65 eru/app/pessoal/models.py:288
+#: eru/app/pessoal/models.py:65 eru/app/pessoal/models.py:293
 msgid "Detalhe"
 msgstr ""
 
@@ -391,290 +418,295 @@ msgstr ""
 msgid "Funções Fixas"
 msgstr ""
 
-#: eru/app/pessoal/models.py:111 eru/templates/core/_form_usuario.html:97
+#: eru/app/pessoal/models.py:112 eru/templates/core/_form_usuario.html:97
 #: eru/templates/pessoal/_form_funcionario.html:20
 msgid "Ativo"
 msgstr ""
 
-#: eru/app/pessoal/models.py:112
+#: eru/app/pessoal/models.py:113
 msgid "Afastado"
 msgstr ""
 
-#: eru/app/pessoal/models.py:113
+#: eru/app/pessoal/models.py:114
 msgid "Desligado"
 msgstr ""
 
-#: eru/app/pessoal/models.py:115
+#: eru/app/pessoal/models.py:116
 msgid "Pelo Empregador"
 msgstr ""
 
-#: eru/app/pessoal/models.py:116
+#: eru/app/pessoal/models.py:117
 msgid "Por Justa Causa"
 msgstr ""
 
-#: eru/app/pessoal/models.py:117
+#: eru/app/pessoal/models.py:118
 msgid "Pedido de Desligamento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:118
+#: eru/app/pessoal/models.py:119
 msgid "Rescisão Indireta"
 msgstr ""
 
-#: eru/app/pessoal/models.py:119
+#: eru/app/pessoal/models.py:120
 msgid "Abandono de Emprego"
 msgstr ""
 
-#: eru/app/pessoal/models.py:120
+#: eru/app/pessoal/models.py:121
 msgid "Descisão Judicial"
 msgstr ""
 
-#: eru/app/pessoal/models.py:122
+#: eru/app/pessoal/models.py:123
 msgid "Matricula"
 msgstr ""
 
-#: eru/app/pessoal/models.py:123
+#: eru/app/pessoal/models.py:124
 msgid "Data Admissão"
 msgstr ""
 
-#: eru/app/pessoal/models.py:124
+#: eru/app/pessoal/models.py:125
 msgid "Data Desligamento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:125
+#: eru/app/pessoal/models.py:126
 msgid "Motivo Desligamento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:126
+#: eru/app/pessoal/models.py:127
 msgid "Pne"
 msgstr ""
 
-#: eru/app/pessoal/models.py:127
+#: eru/app/pessoal/models.py:128
 msgid "Foto"
 msgstr ""
 
-#: eru/app/pessoal/models.py:188 eru/app/pessoal/models.py:192
-#: eru/app/pessoal/views.py:417 eru/app/pessoal/views.py:453
-#: eru/app/pessoal/views.py:477
+#: eru/app/pessoal/models.py:143 eru/app/pessoal/models.py:194
+#: eru/app/pessoal/models.py:198 eru/app/pessoal/views.py:446
+#: eru/app/pessoal/views.py:482 eru/app/pessoal/views.py:506
 msgid "Não é possível alterar dados de funcionários desligados"
 msgstr ""
 
-#: eru/app/pessoal/models.py:201
-msgid "CLT"
-msgstr ""
-
-#: eru/app/pessoal/models.py:202
-msgid "Pessoa Jurídica"
-msgstr ""
-
-#: eru/app/pessoal/models.py:203
-msgid "Estágio"
-msgstr ""
-
-#: eru/app/pessoal/models.py:204
-msgid "Aprendiz"
-msgstr ""
-
-#: eru/app/pessoal/models.py:206
-msgid "Diario"
+#: eru/app/pessoal/models.py:145
+msgid "Funcionário já possui um afastamento ativo"
 msgstr ""
 
 #: eru/app/pessoal/models.py:207
-msgid "Semanal flexivel"
+msgid "CLT"
 msgstr ""
 
 #: eru/app/pessoal/models.py:208
-msgid "Mensal"
+msgid "Pessoa Jurídica"
 msgstr ""
 
-#: eru/app/pessoal/models.py:209 eru/app/pessoal/models.py:281
-#: eru/app/pessoal/models.py:406 eru/templates/_component/menu/pessoal.html:8
-msgid "Funcionário"
+#: eru/app/pessoal/models.py:209
+msgid "Estágio"
 msgstr ""
 
-#: eru/app/pessoal/models.py:211
-msgid "Regime"
+#: eru/app/pessoal/models.py:210
+msgid "Aprendiz"
 msgstr ""
 
 #: eru/app/pessoal/models.py:212
-msgid "Salário"
+msgid "Diario"
 msgstr ""
 
-#: eru/app/pessoal/models.py:213 eru/app/pessoal/models.py:237
-#: eru/app/pessoal/models.py:382
+#: eru/app/pessoal/models.py:213
+msgid "Semanal flexivel"
+msgstr ""
+
+#: eru/app/pessoal/models.py:214
+msgid "Mensal"
+msgstr ""
+
+#: eru/app/pessoal/models.py:215 eru/app/pessoal/models.py:286
+#: eru/app/pessoal/models.py:421 eru/templates/_component/menu/pessoal.html:8
+msgid "Funcionário"
+msgstr ""
+
+#: eru/app/pessoal/models.py:217
+msgid "Regime"
+msgstr ""
+
+#: eru/app/pessoal/models.py:219 eru/app/pessoal/models.py:242
+#: eru/app/pessoal/models.py:397
 msgid "Inicio"
 msgstr ""
 
-#: eru/app/pessoal/models.py:214 eru/app/pessoal/models.py:383
+#: eru/app/pessoal/models.py:220 eru/app/pessoal/models.py:398
 msgid "Fim"
 msgstr ""
 
-#: eru/app/pessoal/models.py:236
+#: eru/app/pessoal/models.py:241
 msgid "Dias Ciclo"
 msgstr ""
 
-#: eru/app/pessoal/models.py:242 eru/app/pessoal/models.py:265
+#: eru/app/pessoal/models.py:247 eru/app/pessoal/models.py:270
 msgid "Turno"
 msgstr ""
 
-#: eru/app/pessoal/models.py:243
+#: eru/app/pessoal/models.py:248
 msgid "Posição Ciclo"
 msgstr ""
 
-#: eru/app/pessoal/models.py:244
+#: eru/app/pessoal/models.py:249
 msgid "Entrada"
 msgstr ""
 
-#: eru/app/pessoal/models.py:245
+#: eru/app/pessoal/models.py:250
 msgid "Saída"
 msgstr ""
 
-#: eru/app/pessoal/models.py:246
+#: eru/app/pessoal/models.py:251
 msgid "Carga Horária"
 msgstr ""
 
-#: eru/app/pessoal/models.py:247
+#: eru/app/pessoal/models.py:252
 msgid "Tolerância"
 msgstr ""
 
-#: eru/app/pessoal/models.py:248
+#: eru/app/pessoal/models.py:253
 msgid "É Folga"
 msgstr ""
 
-#: eru/app/pessoal/models.py:255
+#: eru/app/pessoal/models.py:260
 #, python-format
 msgid ""
 "A posição %(posicao)s excede o limite de %(limite)s dias definido para este "
 "turno"
 msgstr ""
 
-#: eru/app/pessoal/models.py:264
+#: eru/app/pessoal/models.py:269 eru/templates/pessoal/contratos.html:19
 msgid "Contrato"
 msgstr ""
 
-#: eru/app/pessoal/models.py:266
+#: eru/app/pessoal/models.py:271
 msgid "Inicio Vigência"
 msgstr ""
 
-#: eru/app/pessoal/models.py:272
+#: eru/app/pessoal/models.py:277
 msgid "Doenca"
 msgstr ""
 
-#: eru/app/pessoal/models.py:273
+#: eru/app/pessoal/models.py:278
 msgid "Acidente Trabalho"
 msgstr ""
 
-#: eru/app/pessoal/models.py:274 eru/app/pessoal/models.py:280
-#: eru/app/pessoal/models.py:334
+#: eru/app/pessoal/models.py:279 eru/app/pessoal/models.py:285
+#: eru/app/pessoal/models.py:349
 msgid "Outro"
 msgstr ""
 
-#: eru/app/pessoal/models.py:276
+#: eru/app/pessoal/models.py:281
 msgid "INSS"
 msgstr ""
 
-#: eru/app/pessoal/models.py:277
+#: eru/app/pessoal/models.py:282
 msgid "Escala"
 msgstr ""
 
-#: eru/app/pessoal/models.py:278
+#: eru/app/pessoal/models.py:283
 msgid "Sindicato"
 msgstr ""
 
-#: eru/app/pessoal/models.py:279
+#: eru/app/pessoal/models.py:284
 msgid "Gestora"
 msgstr ""
 
-#: eru/app/pessoal/models.py:282 eru/app/pessoal/models.py:386
+#: eru/app/pessoal/models.py:287 eru/app/pessoal/models.py:401
 msgid "Motivo"
 msgstr ""
 
-#: eru/app/pessoal/models.py:283
+#: eru/app/pessoal/models.py:288
 msgid "Origem"
 msgstr ""
 
-#: eru/app/pessoal/models.py:284
+#: eru/app/pessoal/models.py:289
 msgid "Data Afastamento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:285
+#: eru/app/pessoal/models.py:290
 msgid "Data Retorno"
 msgstr ""
 
-#: eru/app/pessoal/models.py:286
+#: eru/app/pessoal/models.py:291
 msgid "Reabilitado"
 msgstr ""
 
-#: eru/app/pessoal/models.py:287
+#: eru/app/pessoal/models.py:292
 msgid "Remunerado"
 msgstr ""
 
-#: eru/app/pessoal/models.py:326
+#: eru/app/pessoal/models.py:311
+msgid "A data de retorno não pode ser anterior à data de afastamento"
+msgstr ""
+
+#: eru/app/pessoal/models.py:341
 msgid "Cônjuge"
 msgstr ""
 
-#: eru/app/pessoal/models.py:327
+#: eru/app/pessoal/models.py:342
 msgid "Filho / Enteado"
 msgstr ""
 
-#: eru/app/pessoal/models.py:328
+#: eru/app/pessoal/models.py:343
 msgid "Irmão"
 msgstr ""
 
-#: eru/app/pessoal/models.py:329
+#: eru/app/pessoal/models.py:344
 msgid "Pai / Mãe"
 msgstr ""
 
-#: eru/app/pessoal/models.py:330
+#: eru/app/pessoal/models.py:345
 msgid "Sogro / Sogra"
 msgstr ""
 
-#: eru/app/pessoal/models.py:331
+#: eru/app/pessoal/models.py:346
 msgid "Ascendente"
 msgstr ""
 
-#: eru/app/pessoal/models.py:332
+#: eru/app/pessoal/models.py:347
 msgid "Descendente"
 msgstr ""
 
-#: eru/app/pessoal/models.py:333
+#: eru/app/pessoal/models.py:348
 msgid "Incapaz"
 msgstr ""
 
-#: eru/app/pessoal/models.py:337
+#: eru/app/pessoal/models.py:352
 msgid "Parentesco"
 msgstr ""
 
-#: eru/app/pessoal/models.py:360
+#: eru/app/pessoal/models.py:375
 msgid "Provento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:361
+#: eru/app/pessoal/models.py:376
 msgid "Desconto"
 msgstr ""
 
-#: eru/app/pessoal/models.py:362
+#: eru/app/pessoal/models.py:377
 msgid "Referência"
 msgstr ""
 
-#: eru/app/pessoal/models.py:379 eru/app/pessoal/models.py:385
+#: eru/app/pessoal/models.py:394 eru/app/pessoal/models.py:400
 msgid "Valor"
 msgstr ""
 
-#: eru/app/pessoal/models.py:380
+#: eru/app/pessoal/models.py:395
 msgid "Fórmula"
 msgstr ""
 
-#: eru/app/pessoal/models.py:381 eru/templates/_component/menu/pessoal.html:32
+#: eru/app/pessoal/models.py:396 eru/templates/_component/menu/pessoal.html:32
 msgid "Evento"
 msgstr ""
 
-#: eru/app/pessoal/models.py:384
+#: eru/app/pessoal/models.py:399
 msgid "Tipo"
 msgstr ""
 
 #: eru/templates/_component/menu/core.html:6
 #: eru/templates/_component/menu/pessoal.html:5
 #: eru/templates/core/_form_empresa.html:5
+#: eru/templates/pessoal/_form_afastamento.html:4
 #: eru/templates/pessoal/_form_setor.html:4
 msgid "Cadastro"
 msgstr ""
@@ -701,6 +733,7 @@ msgid "Exibir logs"
 msgstr ""
 
 #: eru/templates/_component/menu/pessoal.html:29
+#: eru/templates/pessoal/funcionario_id.html:29
 msgid "Eventos"
 msgstr ""
 
@@ -770,7 +803,8 @@ msgstr ""
 msgid "Super Usuário"
 msgstr ""
 
-#: eru/templates/core/index.html:24 eru/templates/pessoal/funcionarios.html:25
+#: eru/templates/core/index.html:24 eru/templates/pessoal/contratos.html:19
+#: eru/templates/pessoal/funcionarios.html:25
 #: eru/templates/pessoal/setores.html:19
 msgid "Pessoal"
 msgstr ""
@@ -824,14 +858,21 @@ msgid "Altere para 0 (zero) para desativar bloqueio"
 msgstr ""
 
 #: eru/templates/core/usuario_id.html:17
-msgid "Excluir registro"
+#: eru/templates/pessoal/afastamento_id.html:16
+#: eru/templates/pessoal/afastamento_id.html:33
+#: eru/templates/pessoal/contratos.html:81
+msgid "Excluir Registro"
 msgstr ""
 
 #: eru/templates/core/usuario_id.html:38
+#: eru/templates/pessoal/afastamento_id.html:37
+#: eru/templates/pessoal/contratos.html:85
 msgid "Atenção"
 msgstr ""
 
 #: eru/templates/core/usuario_id.html:38
+#: eru/templates/pessoal/afastamento_id.html:37
+#: eru/templates/pessoal/contratos.html:85
 msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
 msgstr ""
 
@@ -856,15 +897,38 @@ msgid "Confirma Operação"
 msgstr ""
 
 #: eru/templates/layout/app.html:150
+#: eru/templates/pessoal/afastamento_id.html:42
+#: eru/templates/pessoal/contratos.html:56
+#: eru/templates/pessoal/contratos.html:90
 #: eru/templates/pessoal/funcionario_add.html:62
-#: eru/templates/pessoal/funcionario_id.html:105
+#: eru/templates/pessoal/funcionario_id.html:107
 msgid "Cancelar"
 msgstr ""
 
 #: eru/templates/layout/app.html:151
 #: eru/templates/pessoal/funcionario_add.html:60
-#: eru/templates/pessoal/funcionario_id.html:103
+#: eru/templates/pessoal/funcionario_id.html:105
 msgid "Confirmar"
+msgstr ""
+
+#: eru/templates/layout/app.html:232
+msgid "Retorna à página inicial"
+msgstr ""
+
+#: eru/templates/layout/app.html:233
+msgid "Retorna inicio do módulo"
+msgstr ""
+
+#: eru/templates/layout/app.html:234
+msgid "Novo registro"
+msgstr ""
+
+#: eru/templates/layout/app.html:235
+msgid "Grava alterações"
+msgstr ""
+
+#: eru/templates/layout/app.html:236
+msgid "Retorna origem"
 msgstr ""
 
 #: eru/templates/layout/app.html:238
@@ -872,11 +936,28 @@ msgstr ""
 msgid "Baixa registro no formato {format}"
 msgstr ""
 
+#: eru/templates/layout/app.html:244
+msgid "Recarregar página (limpa filtros)"
+msgstr ""
+
+#: eru/templates/layout/app.html:245
+msgid "Abre painel lateral"
+msgstr ""
+
+#: eru/templates/layout/app.html:246
+msgid "Encerra sessão no sistema"
+msgstr ""
+
+#: eru/templates/layout/app.html:250
+msgid "Exibe filtros da página"
+msgstr ""
+
 #: eru/templates/pessoal/_form_funcionario.html:5
 msgid "Cadastro de Funcionário"
 msgstr ""
 
 #: eru/templates/pessoal/_form_funcionario.html:18
+#: eru/templates/pessoal/contratos.html:58
 msgid "Novo"
 msgstr ""
 
@@ -889,68 +970,81 @@ msgstr ""
 msgid " Status %(var)s "
 msgstr ""
 
+#: eru/templates/pessoal/contratos.html:7
+#: eru/templates/pessoal/funcionario_id.html:30
+msgid "Contratos"
+msgstr ""
+
+#: eru/templates/pessoal/contratos.html:52
+msgid "Atualizar"
+msgstr ""
+
 #: eru/templates/pessoal/funcionario_add.html:45
-#: eru/templates/pessoal/funcionario_id.html:88
+#: eru/templates/pessoal/funcionario_id.html:90
 #, python-format, python-brace-format
 msgid "Arraste o arquivo aqui, %%{browseFiles} ou importe de:"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:46
-#: eru/templates/pessoal/funcionario_id.html:89
+#: eru/templates/pessoal/funcionario_id.html:91
 msgid "selecione do disco"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:47
-#: eru/templates/pessoal/funcionario_id.html:90
+#: eru/templates/pessoal/funcionario_id.html:92
 msgid "Arquivo"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:48
-#: eru/templates/pessoal/funcionario_id.html:91
+#: eru/templates/pessoal/funcionario_id.html:93
 #, python-format, python-brace-format
 msgid "Editando %%{file}"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:49
-#: eru/templates/pessoal/funcionario_id.html:92
+#: eru/templates/pessoal/funcionario_id.html:94
 #, python-format, python-brace-format
 msgid "Importar de %%{name}"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:50
-#: eru/templates/pessoal/funcionario_id.html:93
+#: eru/templates/pessoal/funcionario_id.html:95
 msgid "Nenhuma câmera disponivel"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:51
-#: eru/templates/pessoal/funcionario_id.html:94
+#: eru/templates/pessoal/funcionario_id.html:96
 msgid "Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:53
-#: eru/templates/pessoal/funcionario_id.html:96
+#: eru/templates/pessoal/funcionario_id.html:98
 #, python-format, python-brace-format
 msgid "%%{smart_count} arquivo selecionado"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:56
-#: eru/templates/pessoal/funcionario_id.html:99
+#: eru/templates/pessoal/funcionario_id.html:101
 msgid "Carregar"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:58
-#: eru/templates/pessoal/funcionario_id.html:101
+#: eru/templates/pessoal/funcionario_id.html:103
 msgid "Capturar Foto"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:59
-#: eru/templates/pessoal/funcionario_id.html:102
+#: eru/templates/pessoal/funcionario_id.html:104
 msgid "Webcam"
 msgstr ""
 
 #: eru/templates/pessoal/funcionario_add.html:61
-#: eru/templates/pessoal/funcionario_id.html:104
+#: eru/templates/pessoal/funcionario_id.html:106
 msgid "Concluir"
+msgstr ""
+
+#: eru/templates/pessoal/funcionario_id.html:167
+msgid "Baixar dados em formato CSV"
 msgstr ""
 
 #: eru/templates/pessoal/funcionarios.html:25

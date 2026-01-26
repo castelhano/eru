@@ -196,15 +196,18 @@ class TableCustomMixin:
         meta = getattr(self, 'Meta', object())
         edit_url = getattr(meta, 'edit_url', None)
         extra = getattr(meta, 'extra_actions', [])
-        if (edit_url or extra) and "actions" not in self.base_columns:
+        a_script = getattr(meta, 'action_script', None)
+        if (edit_url or extra or a_script) and "actions" not in self.base_columns:
             # cache de estilos da Meta para performance
             b_kw = {k: getattr(meta, v) for k, v in [('label', 'action_innerhtml'), ('class', 'action_classlist')] if hasattr(meta, v)}
             def render_actions(record):
-                btns = [btn_tag('update', edit_url, pk=record.id, **b_kw)] if edit_url else []
+                if a_script:
+                    btns = [btn_tag('update', href='#', onclick=a_script, **b_kw)]
+                else:
+                    btns = [btn_tag('update', edit_url, pk=record.id, **b_kw)] if edit_url else []
                 for a in extra:
                     c = a.copy()
                     act, url, use_pk, params = c.pop('action'), c.pop('url_name', None), c.pop('use_pk', True), c.pop('url_params', {})
-                    # pk = record.id if use_pk else None
                     pk = getattr(record, use_pk) if isinstance(use_pk, str) else (record.id if use_pk else None)
                     if params and url:
                         q = "?" + "&".join(f"{k}={getattr(record, v, v)}" for k, v in params.items())

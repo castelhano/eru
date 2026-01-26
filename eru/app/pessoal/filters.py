@@ -4,7 +4,7 @@ from django import forms
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
-from .models import Funcionario, Contrato, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
 
 class FuncionarioFilter(django_filters.FilterSet):
@@ -63,9 +63,26 @@ class FuncionarioFilter(django_filters.FilterSet):
             self.filters['filial'].field.queryset = filiais_qs.filter(empresa_id=empresa_id) if empresa_id else Filial.objects.none()
 
 
-class ContratoFilterSet(django_filters.FilterSet):
+class ContratoFilter(django_filters.FilterSet):
     class Meta:
-        fields = ['cargo', 'regime', 'salario', 'inicio', 'fim']
+        model = Contrato
+        fields = ['cargo', 'regime', 'inicio', 'fim']
+
+
+class AfastamentoFilter(django_filters.FilterSet):
+    data_afastamento__gte = django_filters.DateFilter(field_name='data_afastamento', lookup_expr='gte', label=_('Afastado após'))
+    data_afastamento__lte = django_filters.DateFilter(field_name='data_afastamento', lookup_expr='lte', label=_('Afastado até'))
+    data_retorno__gte = django_filters.DateFilter(field_name='data_retorno', lookup_expr='gte', label=_('Retorna após'))
+    data_retorno__lte = django_filters.DateFilter(field_name='data_retorno', lookup_expr='lte', label=_('Retorna até'))
+    class Meta:
+        model = Afastamento
+        fields = {
+            'motivo': ['exact'],
+            'origem': ['exact'],
+            'reabilitado': ['exact'],
+            'remunerado': ['exact'],
+        }
+
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
     inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')

@@ -30,9 +30,9 @@ from .forms import (
     EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
 )
 from .filters import (
-    FuncionarioFilter, ContratoFilterSet, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
+    FuncionarioFilter, ContratoFilter, AfastamentoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 )
-from .tables import FuncionarioTable, ContratoTable, SetorTable
+from .tables import FuncionarioTable, ContratoTable, SetorTable, AfastamentoTable
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
@@ -112,9 +112,9 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         ctx = super().get_context_data(**kwargs)
         func = ctx['form'].instance.funcionario 
         qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
-        f = ContratoFilterSet(self.request.GET, queryset=qs)
+        f = ContratoFilter(self.request.GET, queryset=qs)
         ctx.update({
-            'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
+            'table': ContratoTable(f.qs, request=self.request).config(self.request, filter_obj=f),
             'funcionario': func,
             'is_update': ctx['form'].instance.pk is not None
         })
@@ -123,50 +123,22 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         return self.request.path
 
 
-# class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
-# # Single Page CRUD, list, add, update and delete
-#     model = Contrato
-#     form_class = ContratoForm
-#     permission_required = 'pessoal.view_contrato'
-#     template_name = 'pessoal/contratos.html'
-#     def get_form_kwargs(self):
-#         kwargs = super().get_form_kwargs()
-#         eid = self.request.GET.get('edit')
-#         if eid: kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=self.kwargs['pk'])
-#         return kwargs
-#     def get_context_data(self, **kwargs):
-#         ctx = super().get_context_data(**kwargs)
-#         func = ctx['form'].instance.funcionario 
-#         qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
-#         f = ContratoFilterSet(self.request.GET, queryset=qs)
-#         instance = self.get_form_kwargs().get('instance')
-#         ctx.update({
-#             'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
-#             'funcionario': func,
-#             'is_update': ctx['form'].instance.pk is not None
-#         })
-#         return ctx
-#     def get_success_url(self):
-#         return self.request.path
-
-
-
-class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
     model = Afastamento
     template_name = 'pessoal/afastamentos.html'
-    context_object_name = 'afastamentos'
     permission_required = 'pessoal.view_afastamento'
+    filterset_class = AfastamentoFilter
     def get_queryset(self):
-        funcionario_id = self.kwargs.get('pk')
-        filiais_pemitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
             Funcionario, 
-            pk=funcionario_id, 
-            filial__in=filiais_pemitidas
-        )        
-        return Afastamento.objects.filter(funcionario=self.funcionario).order_by('data_afastamento')
+            pk=self.kwargs.get('pk'), 
+            filial__in=self.request.user.profile.filiais.all()
+        )
+        return Afastamento.objects.filter(funcionario=self.funcionario).order_by('-data_afastamento')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context['table'] = AfastamentoTable(f.qs).config(self.request, filter_obj=f)
         context['funcionario'] = self.funcionario
         return context
 
