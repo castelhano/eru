@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-25 14:04-0400\n"
-"PO-Revision-Date: 2026-01-25 14:07-0400\n"
+"POT-Creation-Date: 2026-01-25 22:41-0400\n"
+"PO-Revision-Date: 2026-01-25 22:37-0400\n"
 "Last-Translator:   <>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -32,8 +32,7 @@ msgstr "[401] Permission denied, please check with your system administrator"
 #: eru/app/core/constants.py:6
 msgid ""
 "[500] Erro de servidor, se o problema persistir, contate o administrador"
-msgstr ""
-"[500] Server error, if the problem persists, contact the administrator"
+msgstr "[500] Server error, if the problem persists, contact the administrator"
 
 #: eru/app/core/constants.py:7
 msgid "Registro criado com sucesso"
@@ -60,8 +59,8 @@ msgid ""
 "Os críterios de pelo menos um campo não foram atendidos, verifique os "
 "valores lançados"
 msgstr ""
-"The criteria for at least one field were not met; please check the values "
-"​​released"
+"The criteria for at least one field were not met; please check the values ​​"
+"released"
 
 #: eru/app/core/constants.py:13
 msgid "Registro sobrepõe outras entradas existentes"
@@ -75,6 +74,10 @@ msgstr "Error saving record"
 msgid "Registro atualizado com sucesso"
 msgstr "Record updated successfully"
 
+#: eru/app/core/filters.py:33
+msgid "Sem usuários"
+msgstr "No users"
+
 #: eru/app/core/forms.py:16
 msgid "Campo obrigatório"
 msgstr "Required field"
@@ -83,14 +86,15 @@ msgstr "Required field"
 msgid "Campo duplicado, precisa ser único"
 msgstr "Duplicated field, need be unique"
 
-#: eru/app/core/mixins.py:192
+#: eru/app/core/mixins.py:181
 msgid "Nenhum registro a exibir"
 msgstr "No records to display"
 
 #: eru/app/core/models.py:36 eru/app/core/models.py:47
-#: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:97
-#: eru/app/pessoal/models.py:206 eru/app/pessoal/models.py:307
-#: eru/app/pessoal/models.py:324 eru/app/pessoal/models.py:343
+#: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:84
+#: eru/app/pessoal/models.py:97 eru/app/pessoal/models.py:206
+#: eru/app/pessoal/models.py:307 eru/app/pessoal/models.py:324
+#: eru/app/pessoal/models.py:343
 msgid "Nome"
 msgstr "Name"
 
@@ -103,7 +107,9 @@ msgid "Cnpj Base"
 msgstr "Base Cnpj"
 
 #: eru/app/core/models.py:40 eru/app/core/models.py:46
-#: eru/app/pessoal/filters.py:9 eru/app/pessoal/tables.py:9
+#: eru/app/pessoal/filters.py:10 eru/app/pessoal/tables.py:9
+#: eru/templates/_component/menu/core.html:9
+#: eru/templates/core/_form_empresa.html:5
 msgid "Empresa"
 msgstr "Company"
 
@@ -172,21 +178,27 @@ msgid "Rodapé"
 msgstr "Footer"
 
 #: eru/app/core/models.py:72 eru/app/pessoal/models.py:128
+#: eru/templates/_component/menu/core.html:10
 msgid "Usuário"
 msgstr "User"
 
-#: eru/app/core/models.py:73 eru/app/core/tables.py:15
+#: eru/app/core/models.py:73 eru/app/core/tables.py:16
 #: eru/app/pessoal/models.py:368 eru/app/pessoal/models.py:373
 msgid "Filiais"
 msgstr "Branches"
 
-#: eru/app/core/models.py:74
+#: eru/app/core/models.py:74 eru/templates/core/_form_usuario.html:110
 msgid "Forçar troca de senha"
 msgstr "Force password change"
 
-#: eru/app/core/models.py:75
+#: eru/app/core/models.py:75 eru/templates/_component/menu/core.html:30
+#: eru/templates/core/settings.html:20
 msgid "Configurações"
 msgstr "Settings"
+
+#: eru/app/core/tables.py:57
+msgid "Usuários"
+msgstr "Users"
 
 #: eru/app/core/templatetags/ui_components.py:19
 msgid "Gravar"
@@ -200,23 +212,30 @@ msgstr "Back"
 msgid "Excluir"
 msgstr "Delete"
 
-#: eru/app/pessoal/filters.py:10 eru/app/pessoal/models.py:121
+#: eru/app/pessoal/filters.py:11 eru/app/pessoal/models.py:121
 msgid "Filial"
 msgstr "Branch"
 
-#: eru/app/pessoal/filters.py:11 eru/app/pessoal/models.py:98
+#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:98
+#: eru/templates/_component/menu/pessoal.html:9
+#: eru/templates/pessoal/_form_setor.html:4
 #: eru/templates/pessoal/setores.html:19
 msgid "Setor"
 msgstr "Sector"
 
-#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:197
+#: eru/app/pessoal/filters.py:13 eru/app/pessoal/models.py:197
 #: eru/app/pessoal/models.py:372 eru/app/pessoal/tables.py:10
+#: eru/templates/_component/menu/pessoal.html:10
 msgid "Cargo"
 msgstr "Position"
 
-#: eru/app/pessoal/filters.py:16
+#: eru/app/pessoal/filters.py:17
 msgid "Vencimento CNH"
 msgstr "Driver's License Expiration"
+
+#: eru/app/pessoal/filters.py:21 eru/app/pessoal/models.py:129
+msgid "Status"
+msgstr "Status"
 
 #: eru/app/pessoal/forms.py:132
 msgid "Data de fim não pode ser menor que data de inicio"
@@ -374,7 +393,7 @@ msgstr "Activities"
 msgid "Funções Fixas"
 msgstr "Fixed Functions"
 
-#: eru/app/pessoal/models.py:111
+#: eru/app/pessoal/models.py:111 eru/templates/core/_form_usuario.html:97
 msgid "Ativo"
 msgstr "Active"
 
@@ -434,10 +453,6 @@ msgstr "Pne"
 msgid "Foto"
 msgstr "Foto"
 
-#: eru/app/pessoal/models.py:129
-msgid "Status"
-msgstr "Status"
-
 #: eru/app/pessoal/models.py:175 eru/app/pessoal/models.py:179
 #: eru/app/pessoal/views.py:417 eru/app/pessoal/views.py:453
 #: eru/app/pessoal/views.py:477
@@ -473,7 +488,7 @@ msgid "Mensal"
 msgstr "Monthly"
 
 #: eru/app/pessoal/models.py:196 eru/app/pessoal/models.py:252
-#: eru/app/pessoal/models.py:377
+#: eru/app/pessoal/models.py:377 eru/templates/_component/menu/pessoal.html:8
 msgid "Funcionário"
 msgstr "Employee"
 
@@ -652,7 +667,7 @@ msgstr "Value"
 msgid "Fórmula"
 msgstr "Formula"
 
-#: eru/app/pessoal/models.py:352
+#: eru/app/pessoal/models.py:352 eru/templates/_component/menu/pessoal.html:32
 msgid "Evento"
 msgstr "Event"
 
@@ -662,50 +677,185 @@ msgstr "Type"
 
 #: eru/templates/_component/menu/core.html:6
 #: eru/templates/_component/menu/pessoal.html:5
+#: eru/templates/core/_form_empresa.html:5
+#: eru/templates/pessoal/_form_setor.html:4
 msgid "Cadastro"
 msgstr "Register"
+
+#: eru/templates/_component/menu/core.html:11
+msgid "Grupo"
+msgstr "Group"
+
+#: eru/templates/_component/menu/core.html:20
+#: eru/templates/_component/menu/pessoal.html:19
+msgid "Abre menu de cadastro"
+msgstr "Open register menu"
+
+#: eru/templates/_component/menu/core.html:38
+msgid "Configurações gerais do sistema"
+msgstr "General system settings"
+
+#: eru/templates/_component/menu/core.html:45
+msgid "Logs"
+msgstr "Logs"
+
+#: eru/templates/_component/menu/core.html:53
+msgid "Exibir logs"
+msgstr "Show Logs"
+
+#: eru/templates/_component/menu/pessoal.html:29
+msgid "Eventos"
+msgstr "Events"
+
+#: eru/templates/_component/menu/pessoal.html:33
+msgid "Grupo Evento"
+msgstr "Event Group"
+
+#: eru/templates/_component/menu/pessoal.html:34
+msgid "Motivo reajuste"
+msgstr "Reason for readjustment"
+
+#: eru/templates/_component/menu/pessoal.html:37
+msgid "Eventos Globais"
+msgstr "Global Events"
+
+#: eru/templates/_component/menu/pessoal.html:47
+msgid "Abre menu de Ferramentas"
+msgstr "Open tools menu"
 
 #: eru/templates/_tables/auto_filter_form.html:13
 msgid "Filtros"
 msgstr "Filters"
 
-#: eru/templates/_tables/auto_filter_form.html:32
+#: eru/templates/_tables/auto_filter_form.html:34
 msgid "Pesquisar"
 msgstr "Search"
 
-#: eru/templates/core/empresas.html:5 eru/templates/core/empresas.html:21
+#: eru/templates/core/_form_usuario.html:4
+msgid "Cadastro de Usuário"
+msgstr "User Register"
+
+#: eru/templates/core/_form_usuario.html:16
+msgid "Senha"
+msgstr "Password"
+
+#: eru/templates/core/_form_usuario.html:19
+#: eru/templates/core/_form_usuario.html:92
+msgid "Reiniciar senha"
+msgstr "Password reset"
+
+#: eru/templates/core/_form_usuario.html:42 eru/templates/core/empresas.html:5
+#: eru/templates/core/empresas.html:21
 msgid "Empresas"
 msgstr "Companies"
+
+#: eru/templates/core/_form_usuario.html:55
+msgid "Grupos"
+msgstr "Groups"
+
+#: eru/templates/core/_form_usuario.html:69
+msgid "Permissões"
+msgstr "Permittions"
+
+#: eru/templates/core/_form_usuario.html:87
+msgid "Mostra Senha"
+msgstr "Show Password"
+
+#: eru/templates/core/_form_usuario.html:101
+msgid "Membro de Equipe"
+msgstr "Team Member"
+
+#: eru/templates/core/_form_usuario.html:105
+msgid "Super Usuário"
+msgstr "Super User"
+
+#: eru/templates/core/index.html:24 eru/templates/pessoal/funcionarios.html:25
+#: eru/templates/pessoal/setores.html:19
+msgid "Pessoal"
+msgstr "Personal"
 
 #: eru/templates/core/logs.html:59
 msgid "Baixar"
 msgstr "Download"
+
+#: eru/templates/core/settings.html:22
+msgid "Autentição e Senhas"
+msgstr "Authentication and Passwords"
+
+#: eru/templates/core/settings.html:27
+msgid "Quantidade mínima de caracteres"
+msgstr "Minimum number of characters"
+
+#: eru/templates/core/settings.html:35
+msgid "Manter histórico últimas senhas"
+msgstr "Keep history of recent passwords"
+
+#: eru/templates/core/settings.html:37
+msgid "Usuário não poderá repetir senhas do histórico"
+msgstr "Users will not be able to reuse passwords from history"
+
+#: eru/templates/core/settings.html:38
+msgid "Digite 0 (zero) para desativar verificação"
+msgstr "Enter 0 (zero) to disable verification"
+
+#: eru/templates/core/settings.html:43
+msgid "Exigir alpha na senha"
+msgstr "Require alphanumeric password"
+
+#: eru/templates/core/settings.html:47
+msgid "Exigir caracteres maiusculos e minusculos"
+msgstr "Require uppercase and lowercase characters"
+
+#: eru/templates/core/settings.html:51
+msgid "Exigir número na senha"
+msgstr "Require a number in the password"
+
+#: eru/templates/core/settings.html:55
+msgid "Exigir caracteres especiais na senha"
+msgstr "Require special characters in the password"
+
+#: eru/templates/core/settings.html:61
+msgid "bloquear em tentativas erradas"
+msgstr "block on incorrect attempts"
+
+#: eru/templates/core/settings.html:63
+msgid "Altere para 0 (zero) para desativar bloqueio"
+msgstr "Change to 0 (zero) to disable locking"
+
+#: eru/templates/core/usuario_id.html:17
+msgid "Excluir registro"
+msgstr "Delete record"
+
+#: eru/templates/core/usuario_id.html:38
+msgid "Atenção"
+msgstr "Warning"
+
+#: eru/templates/core/usuario_id.html:38
+msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
+msgstr "This operation cannot be undone, confirm the deletion of the record?"
 
 #: eru/templates/layout/app.html:237
 #, python-brace-format
 msgid "Baixa registro no formato {format}"
 msgstr "Download records as {format}"
 
-#: eru/templates/pessoal/funcionarios.html:22
-#: eru/templates/pessoal/setores.html:19
-msgid "Pessoal"
-msgstr "Personal"
-
-#: eru/templates/pessoal/funcionarios.html:22
-#| msgid "Funcionário"
+#: eru/templates/pessoal/funcionarios.html:25
 msgid "Funcionários"
 msgstr "Employees"
 
-#: eru/templates/pessoal/funcionarios.html:43
+#: eru/templates/pessoal/funcionarios.html:46
 msgid "Critério"
 msgstr "Criterion"
 
-#: eru/templates/pessoal/funcionarios.html:52
+#: eru/templates/pessoal/funcionarios.html:53
+msgid "Consultas Rápidas"
+msgstr "Quick Search"
+
+#: eru/templates/pessoal/funcionarios.html:55
 msgid "Condutores CNH vencendo"
 msgstr "Drivers with expiring driver's licenses"
 
-#: eru/templates/pessoal/funcionarios.html:53
-#| msgid "Funcionário"
+#: eru/templates/pessoal/funcionarios.html:56
 msgid "Funcionários Afastados"
 msgstr "Employees on leave"
 

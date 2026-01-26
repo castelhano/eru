@@ -137,6 +137,42 @@ dialog:focus-visible{outline: none!important;}
 .btn-pink-matte:active, .btn-pink-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
 .btn-pink-matte:focus { box-shadow: 0 0 0 0.10rem rgba(179, 118, 145, 0.25); }
 
+/* Estilo Base e Light Mode */
+.btn-secondary-matte, .btn-secondary-matte:focus { 
+    --matte-bg: #6c757d; 
+    --matte-color: #ffffff; 
+    --matte-border: #5a6268; 
+    background-color: var(--matte-bg); 
+    border-color: var(--matte-border); 
+    color: var(--matte-color); 
+    transition: filter 0.2s ease, background-color 0.2s ease; 
+}
+
+/* Ajuste para Dark Mode */
+[data-bs-theme="dark"] .btn-secondary-matte { 
+    --matte-bg: #495057; 
+    --matte-border: #3d4348; 
+}
+
+/* Estados de Interação */
+.btn-secondary-matte:hover { 
+    color: var(--matte-color); 
+    background-color: var(--matte-bg); 
+    filter: brightness(1.08) saturate(1.1); 
+    border-color: var(--matte-border); 
+}
+
+.btn-secondary-matte:active, .btn-secondary-matte.active { 
+    background-color: var(--matte-border) !important; 
+    border-color: var(--matte-border) !important; 
+    filter: brightness(0.95); 
+}
+
+.btn-secondary-matte:focus { 
+    box-shadow: 0 0 0 0.10rem rgba(108, 117, 125, 0.25); 
+}
+
+
 .btn-dark-matte, .btn-dark-matte:focus { --matte-bg: #444444; --matte-color: #ffffff; --matte-border: #333333; background-color: var(--matte-bg); border-color: var(--matte-border); color: var(--matte-color); transition: filter 0.2s ease, background-color 0.2s ease; }
 [data-bs-theme="dark"] .btn-dark-matte { --matte-bg: #2d2d2d; --matte-border: #333333; }
 .btn-dark-matte:hover { color: var(--matte-color); background-color: var(--matte-bg); filter: brightness(1.1); border-color: var(--matte-border); }

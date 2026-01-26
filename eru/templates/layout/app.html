@@ -1,5 +1,6 @@
 {% load static %}
 {% load i18n %}
+{% load tag_extra %}
 <!DOCTYPE html>
 <html lang="pt-br" dir="ltr" data-bs-theme="dark">
 <head>
@@ -31,7 +32,7 @@
         const __sw = screen?.width || null;
         const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
         {% block script_preload %}{% endblock %}
-        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> Essa página contém um erro, pedimos informar ao administrador<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
+        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> {% translate 'Essa página contém um erro, pedimos informar ao administrador' %}<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
     </script>
 </head>
 
@@ -43,7 +44,7 @@
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" >Configurações</h5>
+                    <h5 class="offcanvas-title">{% translate 'Configurações' %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
                 <div class="row">
@@ -59,7 +60,7 @@
                         <div class="col">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
-                                <label class="form-check-label" for="themeSwitch" >Tema escuro</label>
+                                <label class="form-check-label" for="themeSwitch">{% translate 'Tema escuro ' %}</label>
                             </div>
                         </div>
                         <div class="col-auto">
@@ -76,9 +77,9 @@
                     <div class="position-sticky mt-2" style="top: 95%;">
                         <form action="{% url 'logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
-                            <button class="btn btn-sm btn-primary me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>Logout</button>
-                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary" id="change_password_btn"><i class="bi-shield-fill me-2"></i><span >Senha</span></a>
-                            <a href="" class="btn btn-sm btn-secondary float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>Jobs</a>
+                            <button class="btn btn-sm btn-primary-matte me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>{% translate 'Sair'|hl_str:'q' %}</button>
+                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha' %}</a>
+                            <a href="" class="btn btn-sm btn-secondary-matte float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>{% translate 'Tarefas' %}</a>
                         </form>
                     </div>
                 </div>
@@ -140,14 +141,14 @@
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span >Confirma Operação</span></h1>
+                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span>{% translate 'Confirma Operação' %}</span></h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="appModalConfirm_message"><span >Confirma operação</span>?</p>
+                    <p id="appModalConfirm_message">{% translate 'Confirma Operação' %}?</p>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal" >Cancelar</button>
-                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary" ><b>C</b>onfirmar</button>
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% translate 'Cancelar' %}</button>
+                        <button id="appModalConfirm_button" class="btn btn-sm btn-primary">{% translate 'Confirmar'|hl_str:'c' %}</button>
                     </div>
                 </div>
             </div>

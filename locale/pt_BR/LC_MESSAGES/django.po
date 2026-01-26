@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-25 14:04-0400\n"
+"POT-Creation-Date: 2026-01-25 22:41-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,6 +71,10 @@ msgstr ""
 msgid "Registro atualizado com sucesso"
 msgstr ""
 
+#: eru/app/core/filters.py:33
+msgid "Sem usuários"
+msgstr ""
+
 #: eru/app/core/forms.py:16
 msgid "Campo obrigatório"
 msgstr ""
@@ -79,14 +83,15 @@ msgstr ""
 msgid "Campo duplicado, precisa ser único"
 msgstr ""
 
-#: eru/app/core/mixins.py:192
+#: eru/app/core/mixins.py:181
 msgid "Nenhum registro a exibir"
 msgstr ""
 
 #: eru/app/core/models.py:36 eru/app/core/models.py:47
-#: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:97
-#: eru/app/pessoal/models.py:206 eru/app/pessoal/models.py:307
-#: eru/app/pessoal/models.py:324 eru/app/pessoal/models.py:343
+#: eru/app/pessoal/models.py:37 eru/app/pessoal/models.py:84
+#: eru/app/pessoal/models.py:97 eru/app/pessoal/models.py:206
+#: eru/app/pessoal/models.py:307 eru/app/pessoal/models.py:324
+#: eru/app/pessoal/models.py:343
 msgid "Nome"
 msgstr ""
 
@@ -99,7 +104,9 @@ msgid "Cnpj Base"
 msgstr ""
 
 #: eru/app/core/models.py:40 eru/app/core/models.py:46
-#: eru/app/pessoal/filters.py:9 eru/app/pessoal/tables.py:9
+#: eru/app/pessoal/filters.py:10 eru/app/pessoal/tables.py:9
+#: eru/templates/_component/menu/core.html:9
+#: eru/templates/core/_form_empresa.html:5
 msgid "Empresa"
 msgstr ""
 
@@ -168,20 +175,26 @@ msgid "Rodapé"
 msgstr ""
 
 #: eru/app/core/models.py:72 eru/app/pessoal/models.py:128
+#: eru/templates/_component/menu/core.html:10
 msgid "Usuário"
 msgstr ""
 
-#: eru/app/core/models.py:73 eru/app/core/tables.py:15
+#: eru/app/core/models.py:73 eru/app/core/tables.py:16
 #: eru/app/pessoal/models.py:368 eru/app/pessoal/models.py:373
 msgid "Filiais"
 msgstr ""
 
-#: eru/app/core/models.py:74
+#: eru/app/core/models.py:74 eru/templates/core/_form_usuario.html:110
 msgid "Forçar troca de senha"
 msgstr ""
 
-#: eru/app/core/models.py:75
+#: eru/app/core/models.py:75 eru/templates/_component/menu/core.html:30
+#: eru/templates/core/settings.html:20
 msgid "Configurações"
+msgstr ""
+
+#: eru/app/core/tables.py:57
+msgid "Usuários"
 msgstr ""
 
 #: eru/app/core/templatetags/ui_components.py:19
@@ -196,22 +209,29 @@ msgstr ""
 msgid "Excluir"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:10 eru/app/pessoal/models.py:121
+#: eru/app/pessoal/filters.py:11 eru/app/pessoal/models.py:121
 msgid "Filial"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:11 eru/app/pessoal/models.py:98
+#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:98
+#: eru/templates/_component/menu/pessoal.html:9
+#: eru/templates/pessoal/_form_setor.html:4
 #: eru/templates/pessoal/setores.html:19
 msgid "Setor"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:12 eru/app/pessoal/models.py:197
+#: eru/app/pessoal/filters.py:13 eru/app/pessoal/models.py:197
 #: eru/app/pessoal/models.py:372 eru/app/pessoal/tables.py:10
+#: eru/templates/_component/menu/pessoal.html:10
 msgid "Cargo"
 msgstr ""
 
-#: eru/app/pessoal/filters.py:16
+#: eru/app/pessoal/filters.py:17
 msgid "Vencimento CNH"
+msgstr ""
+
+#: eru/app/pessoal/filters.py:21 eru/app/pessoal/models.py:129
+msgid "Status"
 msgstr ""
 
 #: eru/app/pessoal/forms.py:132
@@ -370,7 +390,7 @@ msgstr ""
 msgid "Funções Fixas"
 msgstr ""
 
-#: eru/app/pessoal/models.py:111
+#: eru/app/pessoal/models.py:111 eru/templates/core/_form_usuario.html:97
 msgid "Ativo"
 msgstr ""
 
@@ -430,10 +450,6 @@ msgstr ""
 msgid "Foto"
 msgstr ""
 
-#: eru/app/pessoal/models.py:129
-msgid "Status"
-msgstr ""
-
 #: eru/app/pessoal/models.py:175 eru/app/pessoal/models.py:179
 #: eru/app/pessoal/views.py:417 eru/app/pessoal/views.py:453
 #: eru/app/pessoal/views.py:477
@@ -469,7 +485,7 @@ msgid "Mensal"
 msgstr ""
 
 #: eru/app/pessoal/models.py:196 eru/app/pessoal/models.py:252
-#: eru/app/pessoal/models.py:377
+#: eru/app/pessoal/models.py:377 eru/templates/_component/menu/pessoal.html:8
 msgid "Funcionário"
 msgstr ""
 
@@ -646,7 +662,7 @@ msgstr ""
 msgid "Fórmula"
 msgstr ""
 
-#: eru/app/pessoal/models.py:352
+#: eru/app/pessoal/models.py:352 eru/templates/_component/menu/pessoal.html:32
 msgid "Evento"
 msgstr ""
 
@@ -656,23 +672,161 @@ msgstr ""
 
 #: eru/templates/_component/menu/core.html:6
 #: eru/templates/_component/menu/pessoal.html:5
+#: eru/templates/core/_form_empresa.html:5
+#: eru/templates/pessoal/_form_setor.html:4
 msgid "Cadastro"
+msgstr ""
+
+#: eru/templates/_component/menu/core.html:11
+msgid "Grupo"
+msgstr ""
+
+#: eru/templates/_component/menu/core.html:20
+#: eru/templates/_component/menu/pessoal.html:19
+msgid "Abre menu de cadastro"
+msgstr ""
+
+#: eru/templates/_component/menu/core.html:38
+msgid "Configurações gerais do sistema"
+msgstr ""
+
+#: eru/templates/_component/menu/core.html:45
+msgid "Logs"
+msgstr ""
+
+#: eru/templates/_component/menu/core.html:53
+msgid "Exibir logs"
+msgstr ""
+
+#: eru/templates/_component/menu/pessoal.html:29
+msgid "Eventos"
+msgstr ""
+
+#: eru/templates/_component/menu/pessoal.html:33
+msgid "Grupo Evento"
+msgstr ""
+
+#: eru/templates/_component/menu/pessoal.html:34
+msgid "Motivo reajuste"
+msgstr ""
+
+#: eru/templates/_component/menu/pessoal.html:37
+msgid "Eventos Globais"
+msgstr ""
+
+#: eru/templates/_component/menu/pessoal.html:47
+msgid "Abre menu de Ferramentas"
 msgstr ""
 
 #: eru/templates/_tables/auto_filter_form.html:13
 msgid "Filtros"
 msgstr ""
 
-#: eru/templates/_tables/auto_filter_form.html:32
+#: eru/templates/_tables/auto_filter_form.html:34
 msgid "Pesquisar"
 msgstr ""
 
-#: eru/templates/core/empresas.html:5 eru/templates/core/empresas.html:21
+#: eru/templates/core/_form_usuario.html:4
+msgid "Cadastro de Usuário"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:16
+msgid "Senha"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:19
+#: eru/templates/core/_form_usuario.html:92
+msgid "Reiniciar senha"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:42 eru/templates/core/empresas.html:5
+#: eru/templates/core/empresas.html:21
 msgid "Empresas"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:55
+msgid "Grupos"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:69
+msgid "Permissões"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:87
+msgid "Mostra Senha"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:101
+msgid "Membro de Equipe"
+msgstr ""
+
+#: eru/templates/core/_form_usuario.html:105
+msgid "Super Usuário"
+msgstr ""
+
+#: eru/templates/core/index.html:24 eru/templates/pessoal/funcionarios.html:25
+#: eru/templates/pessoal/setores.html:19
+msgid "Pessoal"
 msgstr ""
 
 #: eru/templates/core/logs.html:59
 msgid "Baixar"
+msgstr ""
+
+#: eru/templates/core/settings.html:22
+msgid "Autentição e Senhas"
+msgstr ""
+
+#: eru/templates/core/settings.html:27
+msgid "Quantidade mínima de caracteres"
+msgstr ""
+
+#: eru/templates/core/settings.html:35
+msgid "Manter histórico últimas senhas"
+msgstr ""
+
+#: eru/templates/core/settings.html:37
+msgid "Usuário não poderá repetir senhas do histórico"
+msgstr ""
+
+#: eru/templates/core/settings.html:38
+msgid "Digite 0 (zero) para desativar verificação"
+msgstr ""
+
+#: eru/templates/core/settings.html:43
+msgid "Exigir alpha na senha"
+msgstr ""
+
+#: eru/templates/core/settings.html:47
+msgid "Exigir caracteres maiusculos e minusculos"
+msgstr ""
+
+#: eru/templates/core/settings.html:51
+msgid "Exigir número na senha"
+msgstr ""
+
+#: eru/templates/core/settings.html:55
+msgid "Exigir caracteres especiais na senha"
+msgstr ""
+
+#: eru/templates/core/settings.html:61
+msgid "bloquear em tentativas erradas"
+msgstr ""
+
+#: eru/templates/core/settings.html:63
+msgid "Altere para 0 (zero) para desativar bloqueio"
+msgstr ""
+
+#: eru/templates/core/usuario_id.html:17
+msgid "Excluir registro"
+msgstr ""
+
+#: eru/templates/core/usuario_id.html:38
+msgid "Atenção"
+msgstr ""
+
+#: eru/templates/core/usuario_id.html:38
+msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
 msgstr ""
 
 #: eru/templates/layout/app.html:237
@@ -680,24 +834,23 @@ msgstr ""
 msgid "Baixa registro no formato {format}"
 msgstr ""
 
-#: eru/templates/pessoal/funcionarios.html:22
-#: eru/templates/pessoal/setores.html:19
-msgid "Pessoal"
-msgstr ""
-
-#: eru/templates/pessoal/funcionarios.html:22
+#: eru/templates/pessoal/funcionarios.html:25
 msgid "Funcionários"
 msgstr ""
 
-#: eru/templates/pessoal/funcionarios.html:43
+#: eru/templates/pessoal/funcionarios.html:46
 msgid "Critério"
 msgstr ""
 
-#: eru/templates/pessoal/funcionarios.html:52
+#: eru/templates/pessoal/funcionarios.html:53
+msgid "Consultas Rápidas"
+msgstr ""
+
+#: eru/templates/pessoal/funcionarios.html:55
 msgid "Condutores CNH vencendo"
 msgstr ""
 
-#: eru/templates/pessoal/funcionarios.html:53
+#: eru/templates/pessoal/funcionarios.html:56
 msgid "Funcionários Afastados"
 msgstr ""
 
