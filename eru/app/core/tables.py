@@ -54,10 +54,9 @@ class UsuarioTable(TableCustomMixin, Table):
 
 class GrupoTable(TableCustomMixin, Table):
     export_csv = True
-    user_count = Column(verbose_name= _("Usuários"))
     class Meta:
         model = Group
-        fields = ("id", "name", "user_count")
+        fields = ("id", "name")
         edit_url = "grupo_update"
         responsive_columns = {
         }
