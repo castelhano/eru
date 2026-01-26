@@ -118,7 +118,7 @@ class Funcionario(Pessoa):
         RESCISAO_INDIRETA= "RI", _("Rescisão Indireta")
         ABANDONO         = "AB", _("Abandono de Emprego")
         DECISAO_JUDICIAL = "DJ", _("Descisão Judicial")
-    filial = models.ForeignKey(Filial, blank=True, null=True, on_delete=models.RESTRICT, verbose_name=_('Filial'))
+    filial = models.ForeignKey(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'))
     matricula = models.CharField(_('Matricula'), max_length=15, unique=True, blank=False)
     data_admissao = models.DateField(_('Data Admissão'), blank=True, null=True, default=datetime.today)
     data_desligamento = models.DateField(_('Data Desligamento'), blank=True, null=True)
@@ -153,21 +153,34 @@ class Funcionario(Pessoa):
     def foto_name(self):
         return self.foto.name.split('/')[-1]
     @property
+    def F_contrato(self):
+        # retorna contrato atual
+        if not hasattr(self, '_cached_contrato'):
+            self._cached_contrato = self.contratos.order_by('-inicio').first()
+        return self._cached_contrato
+    @property
     def F_ehEditavel(self):
         return self.status != 'D'
     @property
     def F_cargo(self):
-        contrato = self.contratos.order_by('-inicio').first()
-        return contrato.cargo if contrato else None
+        return self._contrato_atual.cargo if self._contrato_atual else None
+    @property
+    def F_salario(self):
+        return self._contrato_atual.salario if self._contrato_atual else 0
+    @property
+    def F_regime(self):
+        return self._contrato_atual.get_regime_display() if self._contrato_atual else ""
     @property
     def F_pne(self):
         return self.pne
     @property
     def F_anosEmpresa(self):
-        return 0
+        return self.F_diasEmpresa // 365
     @property
     def F_diasEmpresa(self):
-        return 0
+        if not self.data_admissao: return 0
+        fim = self.data_desligamento or now().date()
+        return max((fim - self.data_admissao).days, 0)
     def clean(self):
         if self.pk: # eh um update
             original = Funcionario.objects.get(pk=self.pk)
@@ -199,6 +212,19 @@ class Contrato(models.Model):
     salario = models.DecimalField(_('Salário'), max_digits=10, decimal_places=2)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
+    def clean(self):
+        if not self.inicio or not hasattr(self, 'funcionario') or not self.funcionario:
+            return
+        qs = Contrato.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
+        overlap = qs.filter(
+            Q(fim__gte=self.inicio) | Q(fim__isnull=True),
+            Q(inicio__lte=self.fim) if self.fim else Q()
+        )
+        if overlap.exists():
+            raise ValidationError({_('inicio'): DEFAULT_MESSAGES.get('recordOverlap')})
+    @property
+    def F_diasContrato(self):
+        return max(((self.fim or date.today()) - self.inicio).days, 0)
 auditlog.register(Contrato)
 
 

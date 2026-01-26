@@ -2,6 +2,7 @@ import json
 import re
 from datetime import date, timedelta
 from django import template
+from django.utils import formats
 from django.utils.translation import gettext as _
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -215,6 +216,10 @@ def proxy_perm(user, perm_name):
     # usado em caso de composicao de strings de forma dinamica
     return user.has_perm(perm_name)
 
+@register.simple_tag
+def i18n_format(format_name):
+    """Retorna a definição de formato (ex: DECIMAL_SEPARATOR) para o locale atual."""
+    return formats.get_format(format_name)
 
 
 @register.filter()

@@ -24,16 +24,23 @@ class GrupoTable(TableCustomMixin, Table):
     class Meta:
         model = Group
         fields = ("id", "name")
-        edit_url = "grupo_update"
-        extra_actions = [
+        edit_url = "grupo_update"               # Botão padrão de ação
+        extra_actions = [                       # Insere botões adicionais
             {
-                'action': 'users',           # Chave do componente btn_tag
-                'url_name': 'usuario_grupo', # Nome da URL de destino
+                'action': 'users',              # Chave do componente btn_tag
+                'url_name': 'usuario_grupo',    # Nome da URL de destino
+                'url_params': {'edit': 'id'},   # Injeta parametros na url
                 'label': mark_safe('<i class="bi bi-people"></i>'),
                 'class': 'btn btn-sm btn-info',
-                'use_pk': True               # Envia o ID do registro para a URL (default: True)
+                'use_pk': True,                  # Envia o ID do registro para a URL (default: True)
+                # 'use_pk': 'funcionario_id'     # Ou especifique campo diferente do id do registro
             }
         ]
+        attrs = {
+            "class": "table table-sm",          # Classes da tabela
+            "data-navigate": "false",           # Habilita navegação
+            'data-action-selector': '.btn-info' # Altera seletor para acesso a linha
+        }
 ```
 <br><br>
 ---

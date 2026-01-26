@@ -1,7 +1,7 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Table, Column
-from .models import Funcionario, Setor
+from .models import Funcionario, Contrato, Setor
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -37,6 +37,25 @@ class FuncionarioTable(TableCustomMixin, Table):
             "regime": "d-none",
             "pne": "d-none",
         }
+
+class ContratoTable(TableCustomMixin, Table):
+    export_csv = True
+    class Meta:
+        model = Contrato        
+        fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim',)
+        paginate_by = 10
+        responsive_columns = {
+            "funcionario": "d-none",
+        }
+        extra_actions = [
+            {
+                'action': 'update', 
+                'url_name': 'pessoal:contrato_list',
+                'url_params': {'edit': 'id'},
+                'use_pk': 'funcionario_id'
+            }
+        ]
+
 
 class SetorTable(TableCustomMixin, Table):
     export_csv = True

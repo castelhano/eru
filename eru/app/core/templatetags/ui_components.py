@@ -42,6 +42,7 @@ def btn_tag(action, url_name=None, **kwargs):
         kwargs['type'] = 'submit' if action == 'submit' else 'button'
     if shortcut_key and hl and '<' not in label:
         label = hl_str(label, shortcut_key)
+    if kwargs.pop('disabled', False): kwargs['disabled'] = 'disabled'
     attrs_list = []
     for k, v in kwargs.items():
         attrs_list.append(format_html(' {}="{}"', mark_safe(k.replace("_", "-")), v))

@@ -22,17 +22,17 @@ from rest_framework import viewsets, permissions
 from .serializers import FuncionarioSerializer
 # local app
 from .models import (
-    Setor, Cargo, Funcionario, Afastamento, Dependente,
-    Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
+    Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
+    EventoCargo, EventoFuncionario
 )
 from .forms import (
-    SetorForm, CargoForm, FuncionarioForm, AfastamentoForm, DependenteForm,
+    SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm,
     EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
 )
 from .filters import (
-    FuncionarioFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
+    FuncionarioFilter, ContratoFilterSet, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 )
-from .tables import FuncionarioTable, SetorTable
+from .tables import FuncionarioTable, ContratoTable, SetorTable
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
@@ -94,6 +94,63 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
         return context
 
 
+class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseCreateView):
+    model = Contrato
+    form_class = ContratoForm
+    permission_required = 'pessoal.view_contrato'
+    template_name = 'pessoal/contratos.html'
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        eid = self.request.GET.get('edit')
+        func_id = self.kwargs['pk']
+        if eid: 
+            kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=func_id)
+        else:
+            kwargs['instance'] = Contrato(funcionario_id=func_id)
+        return kwargs
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        func = ctx['form'].instance.funcionario 
+        qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
+        f = ContratoFilterSet(self.request.GET, queryset=qs)
+        ctx.update({
+            'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
+            'funcionario': func,
+            'is_update': ctx['form'].instance.pk is not None
+        })
+        return ctx
+    def get_success_url(self):
+        return self.request.path
+
+
+# class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+# # Single Page CRUD, list, add, update and delete
+#     model = Contrato
+#     form_class = ContratoForm
+#     permission_required = 'pessoal.view_contrato'
+#     template_name = 'pessoal/contratos.html'
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         eid = self.request.GET.get('edit')
+#         if eid: kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=self.kwargs['pk'])
+#         return kwargs
+#     def get_context_data(self, **kwargs):
+#         ctx = super().get_context_data(**kwargs)
+#         func = ctx['form'].instance.funcionario 
+#         qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
+#         f = ContratoFilterSet(self.request.GET, queryset=qs)
+#         instance = self.get_form_kwargs().get('instance')
+#         ctx.update({
+#             'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
+#             'funcionario': func,
+#             'is_update': ctx['form'].instance.pk is not None
+#         })
+#         return ctx
+#     def get_success_url(self):
+#         return self.request.path
+
+
+
 class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Afastamento
     template_name = 'pessoal/afastamentos.html'
@@ -148,7 +205,7 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
     context_object_name = 'eventos'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
-        self.related_id = kwargs.get('id')
+        self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.view_evento{self.related}"
         if not request.user.has_perm(perm_name):
             return redirect('handler', code=403)
@@ -325,7 +382,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
     template_name = 'pessoal/evento_related_add.html'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
-        self.related_id = kwargs.get('id')
+        self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.view_evento{self.related}"
         if not request.user.has_perm(perm_name):
             return redirect('handler', code=403)
@@ -363,7 +420,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
             context['model'] = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
         return context
     def get_success_url(self):
-        return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'id': self.related_id})
+        return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'pk': self.related_id})
     
 
 class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseCreateView):
@@ -495,7 +552,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
     template_name = 'pessoal/evento_related_id.html'
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
-        self.related_id = kwargs.get('id')
+        self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.change_evento{self.related}"
         if not request.user.has_perm(perm_name):
             return redirect('handler', 403)
@@ -537,7 +594,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
             context['model'] = evento_obj.funcionario
         return context
     def get_success_url(self):
-        return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'id': self.related_id })
+        return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'pk': self.related_id })
 
 
 class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
@@ -575,6 +632,15 @@ class FuncionarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDel
     model = Funcionario
     permission_required = 'pessoal.delete_funcionario'
     success_url = reverse_lazy('pessoal:funcionario_list')
+
+
+class ContratoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
+    model = Contrato
+    permission_required = 'pessoal.delete_contrato'
+    def get_queryset(self):
+        return self.model.objects.filter(funcionario_id=self.kwargs['pk_func'])
+    def get_success_url(self):
+        return reverse('pessoal:contrato_list', kwargs={'pk': self.kwargs['pk_func']})
 
 class AfastamentoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Afastamento

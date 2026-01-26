@@ -1,8 +1,9 @@
 import re
 from django import forms
 from django.db.models import Q
-from .models import Setor, Cargo, Funcionario, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from django.urls import reverse_lazy
 from django.contrib.auth.models import User
+from .models import Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 from datetime import date
 from core.mixins import BootstrapMixin
 from django.conf import settings
@@ -42,7 +43,7 @@ class CargoForm(BootstrapMixin, forms.ModelForm):
 class AfastamentoForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Afastamento
-        fields = '__all__'
+        fields = ['funcionario', 'motivo', 'origem', 'data_afastamento', 'data_retorno', 'reabilitado', 'remunerado', 'detalhe']
         widgets = {
             'data_afastamento': forms.DateInput(attrs={'autofocus': True}),
             'data_retorno': forms.DateInput(attrs={'class': 'bg-body-tertiary'}),
@@ -50,6 +51,40 @@ class AfastamentoForm(BootstrapMixin, forms.ModelForm):
             'reabilitado': forms.CheckboxInput(attrs={'role': 'switch'}),
             'detalhe': forms.Textarea(attrs={'placeholder': 'Detalhes', 'style': 'min-height:300px'}),
         }
+
+class ContratoForm(BootstrapMixin, forms.ModelForm):
+    setor = forms.ModelChoiceField(
+        queryset=Setor.objects.all().order_by('nome'),
+        label=_('Setor'),
+        required=False,
+        widget=forms.Select(attrs={'autofocus': 'autofocus'})
+    )
+    salario = forms.DecimalField(label=_('Salário'), widget=forms.TextInput(), localize=True)
+    class Meta:
+        model = Contrato
+        fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        setor_id = self.data.get('setor') or self.initial.get('setor')
+        if self.instance.pk and not setor_id and self.instance.cargo:
+            setor_id = self.instance.cargo.setor_id
+            self.initial['setor'] = setor_id
+        if setor_id:
+            self.fields['cargo'].queryset = Cargo.objects.filter(setor_id=setor_id).order_by('nome')
+        else:
+            self.fields['cargo'].queryset = Cargo.objects.none()
+        self.fields['cargo'].widget.attrs.update({
+            'data-chained-field': 'id_setor',
+            'data-url': reverse_lazy('pessoal:cargo_list'),
+            'class': 'form-select select-chained'
+        })
+    # def clean_salario(self):
+    #     salario = self.cleaned_data.get('salario')
+    #     if isinstance(salario, str):
+    #         salario = salario.replace('.', '').replace(',', '.')
+    #     return salario
+
+
 
 class DependenteForm(BootstrapMixin, forms.ModelForm):
     class Meta:

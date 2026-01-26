@@ -52,7 +52,7 @@
             <div class="col-lg">
               <span>{% translate 'Consultas Rápidas' %}:</span>
               <ul class="list-unstyled">
-                <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte', 'status'], [dateToday({days: 30, native: true}), 'A'])">{% translate 'Condutores CNH vencendo' %}</a></li>
+                <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte', 'status', 'funcao_fixa'], [dateToday({days: 30, native: true}), 'A', 'M'])">{% translate 'Condutores CNH vencendo' %}</a></li>
                 <li><a href="#" onclick="urlCleanNFilter(['status'], ['F'])">{% translate 'Funcionários Afastados' %}</a></li>
                 <li><hr class="my-1"></li>
               </ul>

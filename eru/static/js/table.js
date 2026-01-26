@@ -59,7 +59,7 @@ class jsTable{
         this.pgFirstButtonLabel = options?.pgFirstButtonLabel || '<i class="bi bi-arrow-bar-left"></i>';
         this.pgPreviousButtonLabel = options?.pgPreviousButtonLabel || '<i class="bi bi-arrow-left"></i>';
         this.pgNextButtonLabel = options?.pgNextButtonLabel || '<i class="bi bi-arrow-right"></i>';
-        this.emptyTableMessage = options?.emptyTableMessage || i18n.getEntry('sys.nothingToShow') || 'Nada a exibir';
+        this.emptyTableMessage = options?.emptyTableMessage || 'Nada a exibir';
 
         this.onclickObjs = []; // lista armazena todos os elementos com evento no onclick (buttons em geral) para remocao no dispose()
         
@@ -114,8 +114,7 @@ class jsTable{
             this.filterInput.type = 'text';
             this.filterInput.disabled = this.filterCols.length ? false : true; // Disabled elemento se nao informado colunas para filtrar (filterCols)
             this.filterInput.classList = 'form-control form-control-sm';
-            this.filterInput.placeholder = i18n ? i18n.getEntry('common.filter__posfix:*') || 'Filtrar*' : 'Filtrar*';
-            this.filterInput.setAttribute('data-i18n', '[placeholder]common.filter__posfix:*');
+            this.filterInput.placeholder = 'Filtrar*';
             this.filterInput.autocomplete = 'off';
             this.filterInput.oninput = (e) => this.filter(e);
             capFilter.appendChild(this.filterInput);
@@ -440,7 +439,7 @@ class jsTable{
         appKeyMap.bind('ctrl+arrowup', () => {this.previousRow();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para linha anterior', context: this.keyBindContext, origin: 'jsTable'})
         if(!this.keyBindEscape.includes('enterRow')){appKeyMap.bind('ctrl+enter', () => {this.enterRow();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Acessa registro em foco', context: this.keyBindContext, origin: 'jsTable'})}
         if(this.canFilter){appKeyMap.bind('ctrl+f', () => {this.filterInput.select();}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Foca caixa de pesquisa', context: this.keyBindContext, origin: 'jsTable'})}
-        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();if(this.canFilter){this.filterInput.blur()}}, {'data-i18n':"jsTable.downloadCSV", 'data-i18n-dynamicKey':true, icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Baixa registros em formato CSV', context: this.keyBindContext, origin: 'jsTable'})}
+        if(this.canExportCsv){appKeyMap.bind('alt+d', () => {this.exportButtonCSV.click();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Baixa registros em formato CSV', context: this.keyBindContext, origin: 'jsTable'})}
         if(this.enablePaginate){
             appKeyMap.bind('ctrl+arrowright', () => {this.nextPage();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe próxima página da tabela', context: this.keyBindContext, origin: 'jsTable'})
             appKeyMap.bind('ctrl+arrowleft', () => {this.previousPage();if(this.canFilter){this.filterInput.blur()}}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe página anterior da tabela', context: this.keyBindContext, origin: 'jsTable'})

@@ -1,9 +1,10 @@
+from django.db import connection
 import django_filters
 from django import forms
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
-from .models import Funcionario, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import Funcionario, Contrato, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
 
 class FuncionarioFilter(django_filters.FilterSet):
@@ -21,9 +22,23 @@ class FuncionarioFilter(django_filters.FilterSet):
         label=_('Status'),
         widget=forms.SelectMultiple(attrs={'class': 'form-control form-control-sm ts-compact'})
     )
+    funcao_fixa = django_filters.ChoiceFilter(
+        choices=Cargo.FuncaoTipo.choices,
+        label=_('Funções Fixa'),
+        method='filter_funcao_fixa'
+    )
     class Meta:
         model = Funcionario
-        fields = ['empresa','filial','setor','cargo','status','motivo_desligamento','pne','cnh_validade__lte']
+        fields = ['empresa','filial','setor','cargo','status','motivo_desligamento','pne','cnh_validade__lte','funcao_fixa']
+    def filter_funcao_fixa(self, queryset, name, value):
+        if not value:
+            return queryset
+        # define o lookup conforme o banco: __contains para os robustos, __icontains para SQLite
+        is_native = connection.vendor in ['postgresql', 'mysql', 'mariadb']
+        lookup = 'contratos__cargo__funcoes_fixas__contains' if is_native else 'contratos__cargo__funcoes_fixas__icontains'
+        # Se for SQLite, envolve o valor em aspas para simular a busca no JSON
+        val = value if is_native else f'"{value}"'        
+        return queryset.filter(**{lookup: val}).distinct()
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
@@ -47,6 +62,10 @@ class FuncionarioFilter(django_filters.FilterSet):
             empresa_id = self.data.get('empresa')
             self.filters['filial'].field.queryset = filiais_qs.filter(empresa_id=empresa_id) if empresa_id else Filial.objects.none()
 
+
+class ContratoFilterSet(django_filters.FilterSet):
+    class Meta:
+        fields = ['cargo', 'regime', 'salario', 'inicio', 'fim']
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
     inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')

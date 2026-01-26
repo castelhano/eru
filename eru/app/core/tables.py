@@ -58,8 +58,6 @@ class GrupoTable(TableCustomMixin, Table):
         model = Group
         fields = ("id", "name")
         edit_url = "grupo_update"
-        responsive_columns = {
-        }
         extra_actions = [
             {
                 'action': 'users',
