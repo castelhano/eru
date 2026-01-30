@@ -93,7 +93,7 @@ class Profile(models.Model):
         ]
         default_permissions = []
 auditlog.register(User, exclude_fields=['last_login'])
-auditlog.register(Profile, m2m_fields={"filiais"}, exclude_fields=['config'])
+auditlog.register(Profile, m2m_fields={"filiais"}, exclude_fields=['force_password_change','config'])
 
 class Settings(models.Model):
     quantidade_caracteres_senha = models.PositiveIntegerField(default=8)

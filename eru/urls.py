@@ -10,10 +10,15 @@ admin.site.site_title = "Admin"             # Título da aba do navegador
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('rosetta/', include('rosetta.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
     path('',include('core.urls')),
     path('pessoal/',include('pessoal.urls_web')),
     path('api/', include('pessoal.urls_api')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+if settings.DEBUG:
+    urlpatterns += [
+        path('rosetta/', include('rosetta.urls'))
+    ]

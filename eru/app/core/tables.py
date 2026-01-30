@@ -25,8 +25,10 @@ class EmpresaTable(TableCustomMixin, Table):
             "filiais": "d-none d-md-table-cell"
         }
     def render_filiais(self, value):
-        return format_html("".join(format_html('<span class="badge bg-secondary me-1">{}</span>', f.nome) for f in value.all()[:self.max_filiais]) + ('<i class="bi bi-plus-square-fill align-middle text-body-secondary" style="font-size: 1.2em; line-height: 1;"></i>' if value.count() > self.max_filiais else ""))
-
+        items = [format_html('<span class="badge bg-secondary me-1">{}</span>', f.nome) for f in value.all()[:self.max_filiais]]
+        if value.count() > self.max_filiais:
+            items.append(mark_safe('<i class="bi bi-plus-square-fill align-middle text-body-secondary" style="font-size: 1.2em; line-height: 1;"></i>'))
+        return mark_safe("".join(items))
 
 class FilialTable(TableCustomMixin, Table):
     class Meta:

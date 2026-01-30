@@ -1,0 +1,3 @@
+-r base.txt
+django-rosetta==0.10.3
+polib==1.2.0

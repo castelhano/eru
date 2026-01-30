@@ -12,7 +12,7 @@ class FuncionarioTable(TableCustomMixin, Table):
         verbose_name="Status",
         attrs={
             "td": {
-                "class": lambda value: f"d-none d-lg-table-cell { 'hl-orange' if value != 'A' else '' }"
+                "class": lambda record: f"d-none d-lg-table-cell { 'hl-orange' if record.status != 'A' else '' }"
             },
             "th": {"class": "d-none d-lg-table-cell"}
         }

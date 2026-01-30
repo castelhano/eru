@@ -2,12 +2,11 @@ import os, sys
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
+from .settings_local import *
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 APP_DIR = os.path.join(BASE_DIR,'eru/app/')
 TEMPLATES_DIR = os.path.join(BASE_DIR,'eru/templates/')
 
-from .settings_local import *
 
 INSTALLED_APPS = [
     'core',
@@ -15,7 +14,6 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'auditlog',
-    'rosetta',
     'django_tables2',
     'django_extensions',
     'django.contrib.admin',
@@ -25,6 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ['rosetta']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

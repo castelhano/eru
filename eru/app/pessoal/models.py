@@ -6,7 +6,7 @@ from core.models import Empresa, Filial
 from django.utils.translation import gettext_lazy as _
 from core.constants import DEFAULT_MESSAGES
 from datetime import datetime, date
-from django.utils import timezone
+from django.utils.timezone import now
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 from auditlog.registry import auditlog
@@ -160,22 +160,24 @@ class Funcionario(Pessoa):
         return self.foto.name.split('/')[-1]
     @property
     def F_contrato(self):
-        # retorna contrato atual
         if not hasattr(self, '_cached_contrato'):
-            self._cached_contrato = self.contratos.order_by('-inicio').first()
+            hoje = now().date()
+            self._cached_contrato = self.contratos.filter(inicio__lte=hoje
+            ).filter(Q(fim__gte=hoje) | Q(fim__isnull=True)
+            ).order_by('-inicio').first()
         return self._cached_contrato
     @property
     def F_ehEditavel(self):
         return self.status != self.Status.DESLIGADO
     @property
     def F_cargo(self):
-        return self._contrato_atual.cargo if self._contrato_atual else None
+        return self.F_contrato.cargo if self.F_contrato else None
     @property
     def F_salario(self):
-        return self._contrato_atual.salario if self._contrato_atual else 0
+        return self.F_contrato.salario if self.F_contrato else 0
     @property
     def F_regime(self):
-        return self._contrato_atual.get_regime_display() if self._contrato_atual else ""
+        return self.F_contrato.get_regime_display() if self.F_contrato else ""
     @property
     def F_pne(self):
         return self.pne

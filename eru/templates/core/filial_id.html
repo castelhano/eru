@@ -15,16 +15,14 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'empresa_update' filial.empresa.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if perms.core.delete_filial %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pointer" data-bs-toggle="modal" data-bs-target="#history_modal" >Historico</a></li>
-                    {% if perms.core.delete_filial %}
-                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" >Excluir Registro</a></li>
-                    {% endif %}
                 </ul>
             </li>
+            {% endif %}
         </ul>
     </div>
     <form id="core_form" action="{% url 'filial_update' filial.id|safe %}" method="POST" autocomplete="off" enctype="multipart/form-data" novalidate>
