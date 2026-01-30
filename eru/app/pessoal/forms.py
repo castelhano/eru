@@ -174,7 +174,8 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
         # Combina os filtros base com os filtros de contexto fornecidos pelo filho
         full_filters = base_filters & Q(**context_filters) if isinstance(context_filters, dict) else base_filters & context_filters
         # Logica de sobreposicao
-        q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
+        # q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
+        q_aberto = Q(fim__isnull=True) & (Q(inicio__lte=fim) if fim else Q())
         q_fechado = Q(
             fim__isnull=False,
             inicio__lte=fim if fim else date.max,

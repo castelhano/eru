@@ -403,6 +403,22 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT, verbose_name=_('Motivo'))
     class Meta:
         abstract = True
+    def clean(self):
+        if self.fim and self.inicio > self.fim:
+            raise ValidationError({'fim': _('Data de fim não pode ser menor que data de inicio')})
+        campos_validos = [f for f in self._meta.get_fields() 
+                        if f.name not in ['id', 'evento', 'inicio', 'fim', 'tipo', 'valor', 'motivo'] 
+                        and not f.auto_created and f.concrete and not f.many_to_many]
+        if campos_validos:
+            campo = campos_validos[0].name
+            valor = getattr(self, campo)
+            qs = self.__class__.objects.filter(evento=self.evento, **{campo: valor}).exclude(pk=self.pk)
+            conflito = qs.filter(
+                Q(fim__isnull=True, inicio__lte=self.fim if self.fim else datetime.max.date()) |
+                Q(fim__isnull=False, inicio__lte=self.fim if self.fim else datetime.max.date(), fim__gte=self.inicio)
+            )
+            if conflito.exists():
+                raise ValidationError(_('Existe registro ativo no periodo informado'))
 # Eventos podem ser inseridos para empresas / cargos / funcionarios
 # mesmo evento em escopos diferentes sao aplicados seguindo ordem de prioridade:
 # 1) Funcionario (mais especifico)
@@ -416,7 +432,7 @@ auditlog.register(EventoEmpresa, m2m_fields={"filiais"})
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT, verbose_name=_('Cargo'))
-    filiais = models.ManyToManyField(Empresa, related_name="eventos_cargo", verbose_name=_('Filiais'))
+    filiais = models.ManyToManyField(Filial, related_name="eventos_cargo", verbose_name=_('Filiais'))
 auditlog.register(EventoCargo, m2m_fields={"filiais"})
 
 class EventoFuncionario(EventoMovimentacao):
