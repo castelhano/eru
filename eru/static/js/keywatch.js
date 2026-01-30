@@ -51,7 +51,7 @@ class Keywatch{
             separator: ';',
             tabOnEnter: true,
             shortcutMaplist: "alt+k", // atalho para exibir mapa com atalhos disposiveis para pagina, altere para null para desabilitar
-            shortcutMaplistDesc: "Exibe lista de atalhos disponiveis na pagina",
+            shortcutMaplistDesc: gettext("Exibe lista de atalhos disponíveis na página"),
             shortcutMaplistIcon: "bi bi-alt",
             shortcutMaplistOnlyContextActive: true, // se true so mostra atalhados do contexto ativo (alem do all)
             composedTrigger: ';', // caractere que confirma atalhos 'composed' (atalhos com modificadores nao convencionais)
@@ -60,7 +60,7 @@ class Keywatch{
             //Definicoes de estilizacao
             shortcutModalClasslist: 'w-100 h-100 border-2 border-secondary bg-dark-subtle mt-3',
             searchInputClasslist: 'form-control form-control-sm',
-            searchInputPlaceholder: 'Criterio pesquisa',
+            searchInputPlaceholder: gettext('Critério pesquisa'),
             contextLabelClasslist: 'fs-8 text-body-tertiary position-absolute',
             contextLabelStyle: 'top: 22px; right: 25px;',
             modalTableClasslist: 'table table-sm table-bordered table-striped mt-2 fs-7',

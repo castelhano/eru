@@ -12,19 +12,22 @@ class UserFilter(django_filters.FilterSet):
     last_login__lte = django_filters.DateFilter(
         field_name='last_login',
         lookup_expr='lte',
-        label='Last login before'
+        label=_('Último login')
     )
     never_login = django_filters.BooleanFilter(
         field_name='last_login',
         lookup_expr='isnull',
-        label='Never login before',
+        label=_('Nunca logado'),
+    )
+    is_superuser = django_filters.BooleanFilter(
+        lookup_expr='exact',
+        label=_('Superusuario'),
     )
     class Meta:
         model = User
         fields = {
             'username': ['icontains'],
             'email': ['icontains'],
-            'is_superuser': ['exact'],
             'is_staff': ['exact'],
             'is_active': ['exact'],
         }

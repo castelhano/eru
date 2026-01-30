@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/vendor/bs_icons/font/bootstrap-icons.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
-    
+
     {% block style_src %}{% endblock %}
     
     <style media="screen">
@@ -27,6 +27,7 @@
         {% block style %}{% endblock %}
     </style>
     
+    <script src="{% url 'javascript-catalog' %}"></script>
     {% block script_preload_src %}{% endblock %}
     <script>
         const __sw = screen?.width || null;

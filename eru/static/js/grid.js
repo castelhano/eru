@@ -3,7 +3,7 @@ class jsGrid{
     constructor(options){
         this.container = options?.container || document.body;
         this.containerClasslist = options?.containerClasslist || '';
-        this.emptyMessage = options?.emptyMessage || '<p class="mt-2 text-secondary">Nenhum item a exibir</p>';
+        this.emptyMessage = options?.emptyMessage || `<p class="mt-2 text-secondary">${gettext('Nenhum item a exibir')}</p>`;
         this.items = options?.items || []; // Array de objetos com dados dos elementos do grid
         this.gridItems = []; // Armazena os elementos html do grid
         this.defaultItemClasslist = options?.defaultItemClasslist || 'jsGrid-item';
@@ -182,11 +182,11 @@ class jsGrid{
         catch(e){}
     }
     __appKeyMapIntegration(){
-        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc:'Seleciona item anterior do grid'})
-        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona próximo item do grid'})
-        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item abaixo do grid'})
-        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Seleciona item acima do grid'})
-        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem();return false;}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: 'Tenta acessar o item selecionado do grid'})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{this.previousItem()}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: gettext('Seleciona item anterior do grid')})
+        appKeyMap.bind('ctrl+arrowright', ()=>{this.nextItem()}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: gettext('Seleciona próximo item do grid')})
+        appKeyMap.bind('ctrl+arrowdown', ()=>{this.itemBelow()}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: gettext('Seleciona item abaixo do grid')})
+        appKeyMap.bind('ctrl+arrowup', ()=>{this.itemAbove()}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: gettext('Seleciona item acima do grid')})
+        appKeyMap.bind('ctrl+enter', ()=>{this.enterItem()}, {icon: 'bi bi-grid-3x3-gap-fill text-purple-light', desc: gettext('Tenta acessar o item selecionado do grid')})
     }
 }
 

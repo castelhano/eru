@@ -76,6 +76,9 @@ function appNotify(tipo, mensagem, options={}){
 // Limpa area de notificacao
 function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
 
+// funca eh chama ao realiazar logout, procedimentos de limpeza ou outros scripts do lado do cleinte
+// poder ser adicionados aqui, retorne true ou false (para cancelar logout do usuario)
+function appOnLogout(){return true}
 
 // Busca dados no servidor (espera um json como resposta), retorna promise
 // Ex: appGetData({url: '...'}).then((resp)=>{...do something})
@@ -255,12 +258,12 @@ function appNavigateTable(el, options){
   }
   const bindListeners = ()=>{
     let context = table.dataset?.context || 'default';
-    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para próxima linha', context: context})
-    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Navega para linha anterior', context: context})
-    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Acessa registro em foco', context: context})
+    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
+    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
+    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
     if(nav){
-      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe próxima página da tabela', context: context})
-      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:'Tabela: Exibe página anterior da tabela', context: context})
+      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
+      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
 
     }
   }
@@ -279,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
   // retorna context para anterior a abertura do modal de confirmacao
   appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
   if(document.querySelector('[data-appConfirm="true"]')){
-    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: 'Confirma operação'})
+    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: gettext('Confirma operação')})
   }
 
   // implementa navegacao em tabela com data-navigate="true"  

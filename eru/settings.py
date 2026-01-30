@@ -84,7 +84,6 @@ LOCALE_PATHS = [
 
 TIME_ZONE = 'America/Cuiaba'
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 USE_THOUSAND_SEPARATOR = True
 
@@ -100,7 +99,6 @@ FIXTURE_DIRS = [
 PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'app'))
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login' 
 LOGOUT_REDIRECT_URL = 'login'
