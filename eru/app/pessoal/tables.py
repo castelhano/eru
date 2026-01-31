@@ -1,7 +1,7 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import Table, Column
-from .models import Funcionario, Contrato, Setor, Afastamento
+from .models import Funcionario, Contrato, Setor, Afastamento, Dependente
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -74,3 +74,23 @@ class AfastamentoTable(TableCustomMixin, Table):
         model = Afastamento        
         fields = ('funcionario','motivo','origem','data_afastamento','data_retorno','reabilitado','remunerado',)
         edit_url, paginate_by = "pessoal:afastamento_update", 10
+
+
+class DependenteTable(TableCustomMixin, Table):
+    export_csv = True
+    idade = Column(accessor='idade', verbose_name=_('Idade'))
+    class Meta:
+        model = Dependente        
+        fields = ('funcionario','nome','parentesco','genero','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf',)
+        edit_url, paginate_by = "pessoal:dependente_update", 10
+        responsive_columns = {
+            "funcionario": "d-none",
+            "parentesco": "d-none d-md-table-cell",
+            "genero": "d-none d-lg-table-cell",
+            "data_nascimento": "d-none d-lg-table-cell",
+            "idade": "d-none d-sm-table-cell",
+            "rg": "d-none",
+            "rg_emissao": "d-none",
+            "rg_orgao_expedidor": "d-none",
+            "cpf": "d-none",
+        }

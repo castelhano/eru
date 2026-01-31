@@ -1,7 +1,9 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
+{% load django_tables2 %}
+{% load ui_components %}
 {% block title %}Dependente{% endblock %}
-{% block title_i18n %}personal.common.dependant__plural{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -16,51 +18,19 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Dependentes</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Dependentes' %}</span></h5>
         <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th class="d-nonee" >Matricula</th>
-                        <th class="d-nonee" >Funcionário</th>
-                        <th >Nome</th>
-                        <th >Parentesco</th>
-                        <th class="d-none" >Sexo</th>
-                        <th class="d-none" >Dta Nascimento</th>
-                        <th >Idade</th>
-                        <th class="d-none">RG</th>
-                        <th class="d-none" >RG Emissão</th>
-                        <th class="d-none" >RG Orgão expedidor</th>
-                        <th class="d-none">CPF</th>
-                        {% if perms.pessoal.change_dependente %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for dependente in dependentes %}
-                    <tr>
-                        <td class="d-none">{{dependente.id|safe}}</td>
-                        <td class="d-none">{{dependente.funcionario.matricula}}</td>
-                        <td>{{dependente.funcionario.nome}}</td>
-                        <td>{{dependente.nome}}</td>
-                        <td>{{dependente.get_parentesco_display|default:''}}</td>
-                        <td class="d-none">{{dependente.get_sexo_display|default:''}}</td>
-                        <td class="d-none">{{dependente.data_nascimento|date:'d/m/Y'|default:''}}</td>
-                        <td>{{dependente.idade}}</td>
-                        <td class="d-none">{{dependente.rg}}</td>
-                        <td class="d-none">{{dependente.rg_emissao}}</td>
-                        <td class="d-none">{{dependente.rg_orgao_expedidor}}</td>
-                        <td class="d-none">{{dependente.cpf}}</td>
-                        {% if perms.pessoal.change_dependente %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:dependente_update' dependente.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            {% if table.rows %}
+            <div class="row">
+                <div class="col text-end mb-2">
+                    {% btn_tag 'csv' name='_export' id='download' value='csv' class='btn btn-sm btn-warning-matte' href=request.path|add:"?_export=csv" label='<i class="bi bi-download me-1"></i>CSV' %}
+                </div>
+            </div>
+            {% endif %}
+            <div class="table-responsive">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -68,13 +38,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'),{
-    canFilter: true,
-    filterCols: ['nome']
-});
 {% endblock %}
 </script>

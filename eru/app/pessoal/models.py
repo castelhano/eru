@@ -221,7 +221,7 @@ class Contrato(models.Model):
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
     def __str__(self):
-        return f'{self.funcionario.matricula} | id: {self.id}'
+        return f'{self.funcionario.matricula} | start: {self.inicio}'
     def clean(self):
         if not self.inicio or not hasattr(self, 'funcionario') or not self.funcionario:
             return
@@ -241,7 +241,9 @@ auditlog.register(Contrato)
 class Turno(models.Model):
     nome = models.CharField(_('Nome'), max_length=30, unique=True, blank=False)
     dias_ciclo = models.PositiveIntegerField(_('Dias Ciclo'), default=7)
-    inicio = models.DateField(_('Inicio'), default=datetime.today)    
+    inicio = models.DateField(_('Inicio'), default=datetime.today)
+    def __str__(self):
+        return self.nome
 auditlog.register(Turno)
 
 
@@ -256,6 +258,8 @@ class TurnoDia(models.Model):
     class Meta:
         constraints = [ models.UniqueConstraint( fields=['turno', 'posicao_ciclo'], name='unique_posicao_por_turno' )]
         ordering = ['posicao_ciclo']
+    def __str__(self):
+        return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
     def clean(self):
         if self.posicao_ciclo > self.turno.dias_no_ciclo:
             raise ValidationError(
@@ -271,6 +275,8 @@ class TurnoHistorico(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='historico_turnos', verbose_name=_('Contrato'))
     turno = turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name=_('Turno'))
     inicio_vigencia = models.DateField(_('Inicio Vigência'), default=datetime.today)
+    def __str__(self):
+        return f'{self.contrato.funcionario.matricula} | {self.turno.nome}'
 auditlog.register(TurnoHistorico)
 
 
@@ -293,6 +299,8 @@ class Afastamento(models.Model):
     reabilitado = models.BooleanField(_('Reabilitado'), default=False)
     remunerado = models.BooleanField(_('Remunerado'), default=False)
     detalhe = models.TextField(_('Detalhe'), blank=True)
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.data_afastamento}'
     @property
     def T_diasAfastado(self):
         # retorna quantidade de dias que funcionario ficou/esta em afastamento
@@ -358,6 +366,8 @@ class Dependente(models.Model):
     rg_emissao = models.DateField(_('Rg Emissão'), blank=True, null=True)
     rg_orgao_expedidor = models.CharField(_('Rg Org Expedidor'), max_length=15, blank=True)
     cpf = models.CharField(_('Cpf'), max_length=20,blank=True)
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.nome[:10]}'
     def idade(self):
         if self.data_nascimento:
             hoje = date.today()
@@ -428,13 +438,19 @@ class EventoMovimentacao(models.Model):
 # !! deve ser tratado duplicidade de evento no mesmo escopo no form
 class EventoEmpresa(EventoMovimentacao):
     filiais = models.ManyToManyField(Filial, related_name="eventos_filial", verbose_name=_('Filiais'))
+    def __str__(self):
+        return f'event:company | {self.evento.nome}'
 auditlog.register(EventoEmpresa, m2m_fields={"filiais"})
 
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT, verbose_name=_('Cargo'))
     filiais = models.ManyToManyField(Filial, related_name="eventos_cargo", verbose_name=_('Filiais'))
+    def __str__(self):
+        return f'event:position | {self.evento.nome}'
 auditlog.register(EventoCargo, m2m_fields={"filiais"})
 
 class EventoFuncionario(EventoMovimentacao):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionário'))
+    def __str__(self):
+        return f'event:company | {self.evento.nome}'
 auditlog.register(EventoFuncionario)

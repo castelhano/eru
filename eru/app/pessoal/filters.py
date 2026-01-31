@@ -4,7 +4,7 @@ from django import forms
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
-from .models import Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, Dependente, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 
 
 class FuncionarioFilter(django_filters.FilterSet):
@@ -82,7 +82,6 @@ class AfastamentoFilter(django_filters.FilterSet):
             'reabilitado': ['exact'],
             'remunerado': ['exact'],
         }
-
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
     inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')

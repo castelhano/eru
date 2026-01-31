@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-30 12:15-0400\n"
+"POT-Creation-Date: 2026-01-30 19:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,10 +17,59 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-#: .\eru\static\js\keywatch.js:54
+
+#: eru/static/js/app.js:261
+msgid "Tabela: Navega para próxima linha"
+msgstr ""
+
+#: eru/static/js/app.js:262
+msgid "Tabela: Navega para linha anterior"
+msgstr ""
+
+#: eru/static/js/app.js:263
+msgid "Tabela: Acessa registro em foco"
+msgstr ""
+
+#: eru/static/js/app.js:265
+msgid "Tabela: Exibe próxima página da tabela"
+msgstr ""
+
+#: eru/static/js/app.js:266
+msgid "Tabela: Exibe página anterior da tabela"
+msgstr ""
+
+#: eru/static/js/app.js:285
+msgid "Confirma operação"
+msgstr ""
+
+#: eru/static/js/grid.js:6
+msgid "Nenhum item a exibir"
+msgstr ""
+
+#: eru/static/js/grid.js:185
+msgid "Seleciona item anterior do grid"
+msgstr ""
+
+#: eru/static/js/grid.js:186
+msgid "Seleciona próximo item do grid"
+msgstr ""
+
+#: eru/static/js/grid.js:187
+msgid "Seleciona item abaixo do grid"
+msgstr ""
+
+#: eru/static/js/grid.js:188
+msgid "Seleciona item acima do grid"
+msgstr ""
+
+#: eru/static/js/grid.js:189
+msgid "Tenta acessar o item selecionado do grid"
+msgstr ""
+
+#: eru/static/js/keywatch.js:54
 msgid "Exibe lista de atalhos disponíveis na página"
 msgstr ""
 
-#: .\eru\static\js\keywatch.js:63
+#: eru/static/js/keywatch.js:63
 msgid "Critério pesquisa"
 msgstr ""

@@ -32,7 +32,7 @@ from .forms import (
 from .filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 )
-from .tables import FuncionarioTable, ContratoTable, SetorTable, AfastamentoTable
+from .tables import FuncionarioTable, ContratoTable, SetorTable, AfastamentoTable, DependenteTable
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
@@ -143,20 +143,21 @@ class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
         return context
 
 
-class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, SingleTableView):
     model = Dependente
     template_name = 'pessoal/dependentes.html'
     context_object_name = 'dependentes'
     permission_required = 'pessoal.view_dependente'
+    table_class = DependenteTable
     def get_queryset(self):
         funcionario_id = self.kwargs.get('pk')
         filiais_pemitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
-            Funcionario, 
+            Funcionario,
             pk=funcionario_id, 
             filial__in=filiais_pemitidas
         )        
-        return Dependente.objects.filter(funcionario=self.funcionario).order_by('nome')
+        return Dependente.objects.select_related('funcionario').filter(funcionario=self.funcionario).order_by('nome')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['funcionario'] = self.funcionario
@@ -497,18 +498,41 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
     template_name = 'pessoal/dependente_id.html'
     context_object_name = 'dependente'
     permission_required = 'pessoal.change_dependente'
+
     def dispatch(self, request, *args, **kwargs):
-        # so permite edicao de dependentes de funcionarios ativos
-        dependente = self.get_object()
-        if not dependente.funcionario.F_ehEditavel:
-            messages.error(
-                request,
-                _('Não é possível alterar dados de funcionários desligados')
-            )
-            return redirect('pessoal:dependente_id', id=dependente.id)
+        self.object = self.get_object()
+        if not self.object.funcionario.F_ehEditavel:
+            messages.error(request, _('Não é possível alterar dados de funcionários desligados'))
+            return redirect('pessoal:dependente_update', pk=self.object.id)
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['funcionario'] = self.object.funcionario
+        return context
+
     def get_success_url(self):
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
+
+
+# class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+#     model = Dependente
+#     form_class = DependenteForm
+#     template_name = 'pessoal/dependente_id.html'
+#     context_object_name = 'dependente'
+#     permission_required = 'pessoal.change_dependente'
+#     def dispatch(self, request, *args, **kwargs):
+#         # so permite edicao de dependentes de funcionarios ativos
+#         dependente = self.get_object()
+#         if not dependente.funcionario.F_ehEditavel:
+#             messages.error(
+#                 request,
+#                 _('Não é possível alterar dados de funcionários desligados')
+#             )
+#             return redirect('pessoal:dependente_list', pk=dependente.funcionario.id)
+#         return super().dispatch(request, *args, **kwargs)
+#     def get_success_url(self):
+#         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
 
 class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Evento

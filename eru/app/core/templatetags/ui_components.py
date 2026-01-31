@@ -7,7 +7,7 @@ from .tag_extra import hl_str
 
 register = template.Library()
 
-@register.simple_tag
+@register.simple_tag()
 def btn_tag(action, url_name=None, **kwargs):
 # {% load ui_components %}
 # {% btn_tag 'add' 'pessoal:funcionario_create' hl=False %} hl = highlight

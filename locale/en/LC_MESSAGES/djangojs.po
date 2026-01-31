@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-30 12:32-0400\n"
+"POT-Creation-Date: 2026-01-30 19:34-0400\n"
 "PO-Revision-Date: 2026-01-30 12:37-0400\n"
 "Last-Translator: Rafael Alves <castelhano.rafael@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,58 +19,58 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Translated-Using: django-rosetta 0.10.3\n"
 
-#: .\eru\static\js\app.js:261
+#: eru/static/js/app.js:261
 msgid "Tabela: Navega para próxima linha"
 msgstr "Table: Navigate to next row"
 
-#: .\eru\static\js\app.js:262
+#: eru/static/js/app.js:262
 msgid "Tabela: Navega para linha anterior"
 msgstr "Table: Navigate to previous row"
 
-#: .\eru\static\js\app.js:263
+#: eru/static/js/app.js:263
 msgid "Tabela: Acessa registro em foco"
 msgstr "Table: Access the record in focus"
 
-#: .\eru\static\js\app.js:265
+#: eru/static/js/app.js:265
 msgid "Tabela: Exibe próxima página da tabela"
 msgstr "Table: Show next page"
 
-#: .\eru\static\js\app.js:266
+#: eru/static/js/app.js:266
 msgid "Tabela: Exibe página anterior da tabela"
 msgstr "Table: Show previous page"
 
-#: .\eru\static\js\app.js:285
+#: eru/static/js/app.js:285
 msgid "Confirma operação"
 msgstr "Confirm operation"
 
-#: .\eru\static\js\grid.js:6
+#: eru/static/js/grid.js:6
 msgid "Nenhum item a exibir"
 msgstr "No items to display"
 
-#: .\eru\static\js\grid.js:185
+#: eru/static/js/grid.js:185
 msgid "Seleciona item anterior do grid"
 msgstr "Select previous item in the grid"
 
-#: .\eru\static\js\grid.js:186
+#: eru/static/js/grid.js:186
 msgid "Seleciona próximo item do grid"
 msgstr "Select next item in the grid"
 
-#: .\eru\static\js\grid.js:187
+#: eru/static/js/grid.js:187
 msgid "Seleciona item abaixo do grid"
 msgstr "Select item below the grid"
 
-#: .\eru\static\js\grid.js:188
+#: eru/static/js/grid.js:188
 msgid "Seleciona item acima do grid"
 msgstr "Select item above the grid"
 
-#: .\eru\static\js\grid.js:189
+#: eru/static/js/grid.js:189
 msgid "Tenta acessar o item selecionado do grid"
 msgstr "Try to access the selected item in the grid"
 
-#: .\eru\static\js\keywatch.js:54
+#: eru/static/js/keywatch.js:54
 msgid "Exibe lista de atalhos disponíveis na página"
 msgstr "Displays a list of available shortcuts on the page"
 
-#: .\eru\static\js\keywatch.js:63
+#: eru/static/js/keywatch.js:63
 msgid "Critério pesquisa"
 msgstr "Search criteria"
