@@ -1,7 +1,8 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
+from django.utils.encoding import force_str
 from django_tables2 import Table, Column
-from .models import Funcionario, Contrato, Setor, Afastamento, Dependente
+from .models import Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -63,10 +64,40 @@ class ContratoTable(TableCustomMixin, Table):
 
 class SetorTable(TableCustomMixin, Table):
     export_csv = True
+    ativos = Column(accessor='total_ativos', verbose_name=_('Ativos'))
     class Meta:
         model = Setor        
-        fields = ('nome',)
+        fields = ('nome','ativos')
         edit_url, paginate_by = "pessoal:setor_update", 20
+
+
+class GrupoEventoTable(TableCustomMixin, Table):
+    class Meta:
+        model = GrupoEvento
+        fields = ('nome',)
+        edit_url, paginate_by = "pessoal:grupoevento_update", 20
+
+class EventoTable(TableCustomMixin, Table):
+    tipo = Column(accessor='get_tipo_display', verbose_name=_('Tipo'))    
+    class Meta:
+        model = Evento
+        fields = ('nome', 'tipo', 'grupo', 'rastreio')
+        edit_url, paginate_by = "pessoal:evento_update", 20
+
+
+class CargoTable(TableCustomMixin, Table):
+    funcoes_fixas = Column(verbose_name=_('Funções Fixas'))
+    def render_funcoes_fixas(self, value):
+        if not value: return ""
+        choices = dict(Cargo.FuncaoTipo.choices)
+        return ", ".join(force_str(choices.get(v, v)) for v in value)
+    class Meta:
+        model = Cargo
+        fields = ('nome', 'setor', 'funcoes_fixas')
+        edit_url, paginate_by = "pessoal:cargo_update", 20
+        responsive_columns = {'funcoes_fixas': 'd-none d-md-table-cell'}
+
+
 
 class AfastamentoTable(TableCustomMixin, Table):
     export_csv = True

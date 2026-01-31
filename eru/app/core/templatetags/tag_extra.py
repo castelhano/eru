@@ -149,6 +149,18 @@ def replace(value, criterio):
     c = criterio.split(',')
     return str(value).replace(c[0],c[1])
 
+# label_suffix Adiciona um sufixo dentro de uma label (usado em conjunto com )
+# @version  1.0
+# @since    31/01/2026
+# @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+# @example  {{ form.nome.i18n_label|label_suffix:'**' }}
+@register.filter
+def label_suffix(value, suffix):
+    value = str(value)
+    if "</label>" in value:
+        return mark_safe(value.replace("</label>", f"{suffix}</label>"))
+    return mark_safe(f"{value}{suffix}")
+
 # split
 # @version  1.0
 # @since    08/07/2022
@@ -178,6 +190,8 @@ def minimo(value, limit):
 
 @register.filter
 def badge_list(value, style):
+# retorna lista de badges a partir de string separada por comma (;), espera stilo
+# ex: "foo;bar;non"|badge_list:'bg-info'
     badges = ''
     for k in value.split(';'):
         badges += f'<span class="badge me-1 {style}">{k}</span>'
@@ -192,9 +206,9 @@ def auditlog_action(value):
     }
     return tags.get(value, value)
 
-#Retorna json valido
 @register.filter
 def json_encode(value):
+# retorna json valido
     if isinstance(value, str):
         try:
             obj = json.loads(value)
@@ -218,7 +232,7 @@ def proxy_perm(user, perm_name):
 
 @register.simple_tag
 def i18n_format(format_name):
-    """Retorna a definição de formato (ex: DECIMAL_SEPARATOR) para o locale atual."""
+    """Retorna a definição de formato (ex: DECIMAL_SEPARATOR) para o locale atual"""
     return formats.get_format(format_name)
 
 

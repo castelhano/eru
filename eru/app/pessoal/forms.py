@@ -28,7 +28,7 @@ class GrupoEventoForm(BootstrapMixin, forms.ModelForm):
             'nome': forms.TextInput(attrs={'autofocus': True}),
         }
 
-## RECISAR SE PRECISA funcoes_fixas AQUI !!!!!!!!!!!!!!!
+## REVISAR SE PRECISA funcoes_fixas AQUI !!!!!!!!!!!!!!!
 class CargoForm(BootstrapMixin, forms.ModelForm):
     funcoes_fixas = forms.MultipleChoiceField(choices=Cargo.FuncaoTipo.choices, required=False)
     class Meta:
@@ -65,25 +65,17 @@ class ContratoForm(BootstrapMixin, forms.ModelForm):
         fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        setor_id = self.data.get('setor') or self.initial.get('setor')
-        if self.instance.pk and not setor_id and self.instance.cargo:
-            setor_id = self.instance.cargo.setor_id
-            self.initial['setor'] = setor_id
-        if setor_id:
-            self.fields['cargo'].queryset = Cargo.objects.filter(setor_id=setor_id).order_by('nome')
+        sid = self.data.get('setor') or (self.instance.cargo.setor_id if self.instance.pk and self.instance.cargo else None)
+        if sid:
+            self.fields['cargo'].queryset = Cargo.objects.filter(setor_id=sid).order_by('nome')
+            self.initial['setor'] = sid
         else:
             self.fields['cargo'].queryset = Cargo.objects.none()
         self.fields['cargo'].widget.attrs.update({
+            'class': 'form-select select-chained',
             'data-chained-field': 'id_setor',
-            'data-url': reverse_lazy('pessoal:cargo_list'),
-            'class': 'form-select select-chained'
+            'data-url': reverse_lazy('pessoal:cargo_list')
         })
-    # def clean_salario(self):
-    #     salario = self.cleaned_data.get('salario')
-    #     if isinstance(salario, str):
-    #         salario = salario.replace('.', '').replace(',', '.')
-    #     return salario
-
 
 
 class DependenteForm(BootstrapMixin, forms.ModelForm):

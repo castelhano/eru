@@ -11,6 +11,7 @@ DEFAULT_MESSAGES = {
     'filterError': _('Erro ao buscar dados solicitados'),
     'notMatchCriteria': _('Os críterios de pelo menos um campo não foram atendidos, verifique os valores lançados'),
     'recordOverlap': _('Registro sobrepõe outras entradas existentes'),
+    'endShorterThanStart': _('Data de fim não pode ser menor que inicio'),
     'saveError': _('Erro ao salvar registro'),
     'updated': _('Registro atualizado com sucesso'),
 }

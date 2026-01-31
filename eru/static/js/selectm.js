@@ -262,7 +262,7 @@ class jsSelectm{
         text.classList = this.config.classlist.checkAllText;
         let state = options?.state || 'uncheck';
         icon.classList = state == 'unckeck' ? this.config.classlist.uncheck : state == 'check' ? this.config.classlist.check : this.config.classlist.partial;
-        text.innerHTML = state == 'uncheck' ? 'Marcar todos' : 'Desmarcar todos';
+        text.innerHTML = state == 'uncheck' ? gettext('Marcar todos') : gettext('Desmarcar todos');
         container.appendChild(icon);
         container.appendChild(text);
         return {
@@ -424,7 +424,7 @@ class jsSelectm{
      */
     _checkAllUpdateStatus(state, checkAll){ // atualiza informacoes (icone, descricao e status) do controle de marcar todos
         if(state == 'none'){
-            checkAll.text.innerHTML = 'Marcar todos';
+            checkAll.text.innerHTML = gettext('Marcar todos');
             checkAll.container.removeAttribute('data-checked');
             checkAll.icon.classList = this.config.classlist.uncheck;
             checkAll.state = 'uncheck';
@@ -438,7 +438,7 @@ class jsSelectm{
                 checkAll.icon.classList = this.config.classlist.partial;
                 checkAll.state = 'partial';
              }
-            checkAll.text.innerHTML = 'Desmarcar todos';
+            checkAll.text.innerHTML = gettext('Desmarcar todos');
             checkAll.container.setAttribute('data-checked', '');   
         }
     }

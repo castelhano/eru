@@ -1,7 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Dependente{% endblock %}
-{% block title_i18n %}personal.common.dependant{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -21,10 +20,14 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-const form = new jsForm(document.getElementById('app_form'), {})
+const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
+const form = new jsForm(document.getElementById('app_form'), {
+    imask: [cpf]
+})
 {% endblock %}
 </script>

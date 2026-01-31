@@ -256,10 +256,10 @@
     function _formRun(){
         const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
         const cnh = IMask(document.getElementById('id_cnh'), {mask: '000.000.000-00'})
-        appKeyMap.bind('alt+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: 'Exibe dados básicos do funcionário', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDocs', desc: 'Exibe documentos do funcionário', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabAddress', desc: 'Exibe endereço e informações de contato', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: 'Exibe detalhes gerais do funcionário', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: '{% translate 'Exibe aba de campos básicos' %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDocs', desc: '{% translate 'Exibe aba de documentos' %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabAddress', desc: '{% translate 'Exibe aba de endereço e contato' %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: '{% translate 'Exibe aba de detalhes' %}', origin: 'pessoal:_form_funcionario'})
         return [cpf, cnh]
     }
 </script>

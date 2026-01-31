@@ -85,7 +85,7 @@ class Setor(models.Model):
     def __str__(self):
         return self.nome
     def ativos(self):
-        return 0
+        return Funcionario.objects.filter(contrato__cargo__setor=self, is_active=True).distinct().count()
 auditlog.register(Setor)
 
 class Cargo(models.Model):
@@ -127,7 +127,7 @@ class Funcionario(Pessoa):
     pne = models.BooleanField(_('Pne'), default=False)
     foto = models.ImageField(_('Foto'), upload_to='pessoal/fotos/', blank=True)
     usuario = models.OneToOneField(User, blank=True, null=True, on_delete=models.RESTRICT, verbose_name=_('Usuário'))
-    status = models.CharField(_('Status'), max_length=3, choices=Status.choices, default='A', blank=True)    
+    status = models.CharField(_('Status'), max_length=3, choices=Status.choices, default='A', blank=True, db_index=True)
     def __str__(self):
         return self.matricula
     def upload_foto_path(instance, filename):
@@ -223,15 +223,16 @@ class Contrato(models.Model):
     def __str__(self):
         return f'{self.funcionario.matricula} | start: {self.inicio}'
     def clean(self):
-        if not self.inicio or not hasattr(self, 'funcionario') or not self.funcionario:
-            return
-        qs = Contrato.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
-        overlap = qs.filter(
-            Q(fim__gte=self.inicio) | Q(fim__isnull=True),
-            Q(inicio__lte=self.fim) if self.fim else Q()
-        )
-        if overlap.exists():
-            raise ValidationError({'inicio': DEFAULT_MESSAGES.get('recordOverlap')})
+        super().clean()
+        if self.inicio and self.fim and self.fim <= self.inicio:
+            raise ValidationError({'fim': DEFAULT_MESSAGES.get('endShorterThanStart')})
+        if self.funcionario_id:
+            overlap = Contrato.objects.filter(funcionario_id=self.funcionario_id).exclude(pk=self.pk).filter(
+                Q(fim__gte=self.inicio) | Q(fim__isnull=True),
+                Q(inicio__lte=self.fim) if self.fim else Q()
+            )
+            if overlap.exists():
+                raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'))
     @property
     def C_diasContrato(self):
         return max(((self.fim or date.today()) - self.inicio).days, 0)
@@ -357,7 +358,7 @@ class Dependente(models.Model):
         DESCENDENTE  = "N",  _("Descendente")
         INCAPAZ      = "In", _("Incapaz")
         OUTRO        = "M",  _("Outro")
-    funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT)
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionário'))
     nome = models.CharField(_('Nome'), max_length=230, blank=False)
     parentesco = models.CharField(_('Parentesco'), max_length=3, choices=Parentesco.choices, default='F', blank=True)
     genero = models.CharField(_('Gênero'), max_length=3,choices=Pessoa.Genero.choices, blank=True)
@@ -387,10 +388,10 @@ class Evento(models.Model):
         PROVENTO   = "P", _("Provento")
         DESCONTO   = "D", _("Desconto")
         REFERENCIA = "R", _("Referência")
-    nome = models.CharField(max_length=100, blank=False)
+    nome = models.CharField(_('Nome'), max_length=100, blank=False)
     rastreio = models.SlugField(unique=True)
-    tipo = models.CharField(max_length=3, choices=TipoMovimento.choices, default='P', blank=False)
-    grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True)
+    tipo = models.CharField(_('Tipo'), max_length=3, choices=TipoMovimento.choices, default='P', blank=False)
+    grupo = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True, verbose_name=_('Grupo'))
     def __str__(self):
         return self.nome
 auditlog.register(Evento)

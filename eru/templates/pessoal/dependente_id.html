@@ -50,10 +50,14 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-const form = new jsForm(document.getElementById('app_form'), {})
+const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
+const form = new jsForm(document.getElementById('app_form'), {
+    imask: [cpf]
+})
 {% endblock %}
 </script>

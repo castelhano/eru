@@ -251,43 +251,6 @@ class jsForm{
     __emailIsValid(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-    
-    // __validateRequired(el, notify=true){
-    //     let max = el.getAttribute('maxlength');
-    //     let min = el.getAttribute('minlength');
-    //     if(max && el.value.length > el.maxLength || min && el.value.length < el.minLength){
-    //         el.classList.add('is-invalid');
-    //         if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ter entre <b>${min}</b> e <b>${max}</b> caracteres`, {autodismiss: false})}
-    //         else if(notify && max || notify && min){appNotify('warning', max ? `<b>${el.name.captalize()}</b> excedeu tamanho máximo de <b>${max}</b> caracteres` : `<b>${el.name.captalize()}</b> requer tamanho minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
-    //     }
-    //     else if(el.required && el.value == ''){
-    //         el.classList.add('is-invalid');
-    //         if(notify){appNotify('warning', `Campo obrigatorio: <b>${el.name.captalize()}</b>`, {autodismiss: false})}
-    //     }
-    //     else{el.classList.remove('is-invalid')}
-    // }
-    // __validateNumber(el, notify=true){
-    //     let max = parseFloat(el.getAttribute('max')) || null;
-    //     let min = parseFloat(el.getAttribute('min')) || null;
-    //     if(max && parseFloat(el.value) > max || min && parseFloat(el.value) < min){
-    //         el.classList.add('is-invalid');
-    //         if(notify && max && min){appNotify('warning', `<b>${el.name.captalize()}</b> precisa ser entre <b>${min}</b> e <b>${max}</b>`, {autodismiss: false})}
-    //         else if(notify && max || notify && min){appNotify('warning', max ? `Campo <b>${el.name.captalize()}</b> aceita valor máximo de <b>${max}</b>` : `<b>${el.name.captalize()}</b> aceita valor minimo de <b>${min}</b> caracteres`, {autodismiss: false})}
-    
-    //     }
-    //     else if(el.required && el.value == ''){el.classList.add('is-invalid');}
-    //     else{el.classList.remove('is-invalid')}
-    // }
-    // __validateEmail(el, notify=true){
-    //     if(el.value != '' && !this.__emailIsValid(el.value) || el.value == '' && el.required){
-    //         el.classList.add('is-invalid');
-    //         if(notify){appNotify('warning', '<b>Email</b> tem formato inválido', {autodismiss: false})}
-    //     }
-    //     else{el.classList.remove('is-invalid')}
-    // }
-    // __emailIsValid(email){
-    //     return /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
-    // }
     __selectAddAllOption(){
         this.selectAddAllOption.forEach((el)=>{
             try{
@@ -372,91 +335,61 @@ class jsForm{
             icon: 'bi bi-funnel-fill text-primary', 
         })
     }
-    // metodo auxiliar para capturar elementos internos e externos (com atributo form)
-    __getFields(selector) {
-        const internal = this.form.querySelectorAll(selector);
-        const external = this.form.id ? document.querySelectorAll(`${selector}[form="${this.form.id}"]`) : [];
-        return [...internal, ...external];
-    }
+    __getFields(selector) { return Array.from(document.querySelectorAll(selector)) .filter(el => el.form === this.form)}
     validate() {
         cleanNotify();
-        // 1. Valida Required, Min e Max Length
+        // 1. Valida Required, MaxLength e MinLength
         this.__getFields('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])')
-        .forEach(el => { if(!this.customValidation[el.name]) this.__validateRequired(el); });
-        // 2. Valida Number e Email
+        .forEach((el) => {
+            if (this.customValidation.hasOwnProperty(el.name)) return;
+            this.__validateRequired(el);
+        });
+        // 2. Valida NUMBER
         this.__getFields('input[type=number]:not([data-form=novalidate])')
-        .forEach(el => { if(!this.customValidation[el.name]) this.__validateNumber(el); });
+        .forEach((el) => {
+            if (this.customValidation.hasOwnProperty(el.name)) return;
+            this.__validateNumber(el);
+        });
+        // 3. Valida EMAIL
         this.__getFields('input[type=email]:not([data-form=novalidate])')
-        .forEach(el => { if(!this.customValidation[el.name]) this.__validateEmail(el); });
-        // 3. Validacoes Customizadas
-        for(let i in this.customValidation) {
-            let el = this.__getFields(`[name='${i}']`)[0];
-            if (!el) continue;
-            let [isValid, msg] = this.customValidation[i](el.value);
-            el.classList.toggle('is-invalid', !isValid);
-            if(!isValid && msg) appNotify('warning', msg, {autodismiss: false});
+        .forEach((el) => {
+            if (this.customValidation.hasOwnProperty(el.name)) return;
+            this.__validateEmail(el);
+        });
+        // 4. Validações Customizadas
+        for (let i in this.customValidation) {
+            try {
+                // Buscamos o campo garantindo que ele pertence a este form
+                let fields = this.__getFields(`[name='${i}']`);
+                if (fields.length === 0) continue;
+                let el = fields[0]; 
+                
+                let resp = this.customValidation[i](el.value);
+                if (!resp[0]) {
+                    el.classList.add('is-invalid');
+                    if (resp[1]) appNotify('warning', resp[1], { autodismiss: false });
+                } else {
+                    el.classList.remove('is-invalid');
+                }
+            } catch (e) {
+                console.error(`jsform: Erro na customValidation para ${i}`, e);
+            }
         }
-        // 4. Finalizacao e Formatacao
-        if (this.__getFields('.is-invalid').length === 0) {
-            // Unmask Currency e Number
-            this.__getFields('[data-jsform_unmask=cur]').forEach(el => el.value = el.value.replace(/\./g,'').replace(',','.'));
-            this.__getFields('[data-jsform_unmask=num]').forEach(el => el.value = el.value.replace(/\D/g,''));
-            // Case Transformation
-            this.__getFields('.text-uppercase').forEach(el => el.value = el.value.toUpperCase());
-            this.__getFields('.text-lowercase').forEach(el => el.value = el.value.toLowerCase());
+        // 5. Finalização e Formatação
+        if (this.__getFields('.is-invalid').length == 0) {
+            // Unmask Currency
+            this.__getFields('[data-jsform_unmask=cur]').forEach(el => el.value = el.value.replace('.', '').replace(',', '.'));
+            // Unmask Numbers
+            this.__getFields('[data-jsform_unmask=num]').forEach(el => el.value = el.value.replace(/\D/g, ''));
+            // UpperCase
+            this.__getFields('input.text-uppercase, select.text-uppercase, textarea.text-uppercase').forEach(el => el.value = el.value.toUpperCase());
+            // LowerCase
+            this.__getFields('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach(el => el.value = el.value.toLowerCase());
+            
             return true;
         }
         return false;
     }
-    // validate(){ // Metodo faz validacao para os campos do form
-    //     cleanNotify(); // Limpa area de notificacao
-    //     // Valida status required, maxlength e minlength
-    //     this.form.querySelectorAll('[required]:not([data-form=novalidate]):not([type=number]):not([type=email]),[minlength]:not([data-form=novalidate]):not([type=email]),[maxlength]:not([data-form=novalidate]):not([type=email])').forEach((el)=>{
-        //         if(this.customValidation.hasOwnProperty(el.name)){return}; this.__validateRequired(el);})
-    
-    //     // Valida inputs NUMBER quanto ao MIN e MAX e required
-    //     this.form.querySelectorAll('input[type=number]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateNumber(el)})
-    
-    //     // Valida email fields
-    //     this.form.querySelectorAll('input[type=email]:not([data-form=novalidate])').forEach((el)=>{if(this.customValidation.hasOwnProperty(el.name)){return};this.__validateEmail(el);})
-    
-    //     // Verifica se existe validacao adicional na pagina de origem
-    //     for(let i in this.customValidation){
-    //         try {
-    //             let el = this.form.querySelector(`[name='${i}']`);
-    //             let resp = this.customValidation[i](el.value);
-    //             if(!resp[0]){
-    //                 el.classList.add('is-invalid');
-    //                 if(resp[1]){
-    //                     appNotify('warning', resp[1] || '', {autodismiss: false});
-    //                 }
-    //             }
-    //             else{el.classList.remove('is-invalid')}
-    //         } catch (e){
-    //             console.log(`jsform: ERRO customValidation para ${i} inválido, verifique dados informados`);
-    //             console.log(e);
-    //         }
-    //     }
-    
-    //     // Verifica se foi apontado erro em algum field, se nao faz tratamento e submete form
-    //     if(this.form.querySelectorAll('.is-invalid').length == 0){ // Caso nao tenha erros
-    //         // Ajusta formatacao de campos currency (data-jsform_unmask=cur) para o padrao americano (de 0.000,00 para 0000.00)
-    //         this.form.querySelectorAll('[data-jsform_unmask=cur]').forEach((el)=>{el.value = el.value.replace('.','').replace(',','.');})
-    
-    //         // Remove alpha e espacos do texto mantendo apenas numeros (data-jsform_unmask=num)
-    //         this.form.querySelectorAll('[data-jsform_unmask=num]').forEach((el)=>{el.value = el.value.replace(/\D/g,'');})
-    
-    //         // Faz toUpperCase no valor de elementos com classe text-uppercase
-    //         this.form.querySelectorAll('input.text-uppercase, select.text-uppercase, textarea.text-uppercase').forEach((el)=>{
-        //             el.value = el.value.toUpperCase();
-    //         })
-    
-    //         // Faz toLowerCase no valor de elementos com classe text-lowercase
-    //         this.form.querySelectorAll('input.text-lowercase, select.text-lowercase, textarea.text-lowercase').forEach((el)=>{el.value = el.value.toLowerCase()})
-    //         return true;
-    //     }
-    //     return false;
-    // }
     __imaskValidate(){
         for(let i in this.imask){
             if(this.imask[i].el.input.required){ // Adiciona validacao para required

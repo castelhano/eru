@@ -30,17 +30,17 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> <span >Excluir Registro</span></h5></div>
+                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>{% translate 'Excluir Registro' %}</h5></div>
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger" >Atenção!!</b> <span >Esta operação não pode ser desfeita, confirma a exclusão do registro?</span></p>
+                <p><b class="text-danger">{% translate 'Atenção' %}!!</b>{% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'pessoal:motivoreajuste_delete' motivo_reajuste.id|safe %}" method="POST">
                             {% csrf_token %}
-                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" >Cancelar</a>
-                            <button class="btn btn-danger px-3" type="submit" >Excluir</button>
+                            {% btn_tag 'Cancelar' data_bs_dismiss="modal" %}
+                            {% btn_tag 'submit' %}
                         </form>
                     </div>
                 </div>

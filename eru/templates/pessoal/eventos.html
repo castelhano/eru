@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Eventos{% endblock %}
-{% block title_i18n %}personal.common.event__plural__{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -17,30 +17,10 @@
     <div class="card-body tab-content">
         <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Evento</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th >Nome</th>
-                        <th class="d-none d-lg-table-cell" >Chave</th>
-                        <th >Grupo</th>
-                        {% if perms.pessoal.change_evento %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for evento in eventos %}
-                    <tr>
-                        <td>{{evento.nome}}</td>
-                        <td class="d-none d-lg-table-cell" >{{evento.rastreio}}</td>
-                        <td>{{evento.grupo|default:''}}</td>
-                        {% if perms.pessoal.change_evento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_update' evento.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive mt-3">
+                {{ table.render_filter|safe }}
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -48,14 +28,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'), {
-    enablePaginate: true,
-    canFilter: true,
-    filterCols: ['Nome', 'Empresas']
-});
 {% endblock %}
 </script>

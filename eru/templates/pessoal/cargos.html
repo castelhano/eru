@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Cargo{% endblock %}
-{% block title_i18n %}common.position__plural{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -17,32 +17,9 @@
     <div class="card-body tab-content">
         <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Cargo</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nome</th>
-                        <th>Setor</th>
-                        <th>Ativos</th>
-                        {% if perms.pessoal.change_cargo %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for cargo in cargos %}
-                    <tr>
-                        <td>{{cargo.id|safe}}</td>
-                        <td>{{cargo.nome}}</td>
-                        <td>{{cargo.setor.nome}}</td>
-                        <td>{{cargo.ativos}}</td>
-                        {% if perms.pessoal.change_cargo %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:cargo_update' cargo.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -50,14 +27,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
     {% block add_script %}
-    const table = new jsTable(document.getElementById('main_table'),{
-        enablePaginate: true,
-        canFilter: true,
-        filterCols: ['Nome'],
-    });
     {% endblock %}
 </script>

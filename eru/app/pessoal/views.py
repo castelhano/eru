@@ -6,8 +6,9 @@ from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import JsonResponse
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_tables2 import SingleTableView
 # core
@@ -30,9 +31,9 @@ from .forms import (
     EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
 )
 from .filters import (
-    FuncionarioFilter, ContratoFilter, AfastamentoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
+    FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
 )
-from .tables import FuncionarioTable, ContratoTable, SetorTable, AfastamentoTable, DependenteTable
+from .tables import FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
@@ -40,19 +41,39 @@ class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
     table_class = SetorTable
     template_name = 'pessoal/setores.html'
     permission_required = 'pessoal.view_setor'
-    queryset = Setor.objects.all().order_by('nome')
+    def get_queryset(self):
+        hoje = now().date()
+        return Setor.objects.annotate(
+            total_ativos=Count(
+                'cargo__contrato__funcionario', 
+                filter=Q(
+                    cargo__contrato__funcionario__status="A",
+                    cargo__contrato__inicio__lte=hoje
+                ) & (Q(cargo__contrato__fim__gte=hoje) | Q(cargo__contrato__fim__isnull=True)),
+                distinct=True
+            )
+        ).order_by('nome')
 
-class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
+class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Cargo
     template_name = 'pessoal/cargos.html'
-    context_object_name = 'cargos'
     permission_required = 'pessoal.view_cargo'
+    filterset_class = CargoFilter
     def get_queryset(self):
-        queryset = Cargo.objects.all().order_by('nome')
-        setor_id = self.request.GET.get('cargo__setor') or self.request.GET.get('setor')
-        if setor_id:
-            queryset = queryset.filter(setor_id=setor_id)
-        return queryset
+        return Cargo.objects.all().select_related('setor').order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context['table'] = CargoTable(f.qs).config(self.request, filter_obj=f)
+        return context
+
+
+    # def get_queryset(self):
+    #     queryset = Cargo.objects.all().order_by('nome')
+    #     setor_id = self.request.GET.get('cargo__setor') or self.request.GET.get('setor')
+    #     if setor_id:
+    #         queryset = queryset.filter(setor_id=setor_id)
+    #     return queryset
 
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
     model = Funcionario
@@ -167,9 +188,15 @@ class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportM
 class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = Evento
     template_name = 'pessoal/eventos.html'
-    context_object_name = 'eventos'
     permission_required = 'pessoal.view_evento'
-    queryset = Evento.objects.all().order_by('nome')
+    filterset_class = EventoFilter
+    def get_queryset(self):
+        return Evento.objects.all().select_related('grupo').order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context['table'] = EventoTable(f.qs).config(self.request, filter_obj=f)
+        return context
 
 class EventoRelatedListView(LoginRequiredMixin, BaseListView):
     # view polimorfica que opera com modelos EventoEmpresa, EventoCargo, EventoFuncionario
@@ -233,9 +260,12 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
 class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
     model = GrupoEvento
     template_name = 'pessoal/grupos_evento.html'
-    context_object_name = 'grupos_evento'
     permission_required = 'pessoal.view_grupoevento'
-    queryset = GrupoEvento.objects.all().order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        qs = GrupoEvento.objects.all().order_by('nome')
+        context['table'] = GrupoEventoTable(qs).config(self.request)
+        return context
 
 
 class MotivoReajusteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
@@ -593,7 +623,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
         return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'pk': self.related_id })
 
 
-class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseUpdateView):
     model = GrupoEvento
     form_class = GrupoEventoForm
     template_name = 'pessoal/grupo_evento_id.html'

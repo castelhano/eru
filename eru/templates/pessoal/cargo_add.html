@@ -28,7 +28,7 @@
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
     const ffixa = new jsSelectm('#id_funcoes_fixas', {
-        title: '<span >Função Fixa</span>',
+        title: '{% translate 'Função Fixa' %}',
         icon: 'bi bi-diagram-3-fill',
     }); 
     {% endblock %}

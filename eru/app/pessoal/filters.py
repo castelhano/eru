@@ -68,6 +68,11 @@ class ContratoFilter(django_filters.FilterSet):
         model = Contrato
         fields = ['cargo', 'regime', 'inicio', 'fim']
 
+class CargoFilter(django_filters.FilterSet):
+    nome = django_filters.CharFilter(lookup_expr='icontains', label=_('Cargo'))
+    class Meta:
+        model = Cargo
+        fields = ['nome', 'setor']
 
 class AfastamentoFilter(django_filters.FilterSet):
     data_afastamento__gte = django_filters.DateFilter(field_name='data_afastamento', lookup_expr='gte', label=_('Afastado após'))
@@ -82,6 +87,13 @@ class AfastamentoFilter(django_filters.FilterSet):
             'reabilitado': ['exact'],
             'remunerado': ['exact'],
         }
+
+class EventoFilter(django_filters.FilterSet):
+    nome = django_filters.CharFilter(lookup_expr='icontains', label=_('Evento'))
+    class Meta:
+        model = Evento
+        fields = ['nome', 'tipo', 'grupo']
+
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
     inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')
