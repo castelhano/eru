@@ -2,7 +2,7 @@ from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
 from django_tables2 import Table, Column
-from .models import Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento
+from .models import Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -78,6 +78,7 @@ class GrupoEventoTable(TableCustomMixin, Table):
         edit_url, paginate_by = "pessoal:grupoevento_update", 20
 
 class EventoTable(TableCustomMixin, Table):
+    export_csv = True
     tipo = Column(accessor='get_tipo_display', verbose_name=_('Tipo'))    
     class Meta:
         model = Evento
@@ -105,6 +106,14 @@ class AfastamentoTable(TableCustomMixin, Table):
         model = Afastamento        
         fields = ('funcionario','motivo','origem','data_afastamento','data_retorno','reabilitado','remunerado',)
         edit_url, paginate_by = "pessoal:afastamento_update", 10
+
+
+class MotivoReajusteTable(TableCustomMixin, Table):
+    export_csv = True
+    class Meta:
+        model = MotivoReajuste        
+        fields = ('nome',)
+        edit_url, paginate_by = "pessoal:motivoreajuste_update", 10
 
 
 class DependenteTable(TableCustomMixin, Table):

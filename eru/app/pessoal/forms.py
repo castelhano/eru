@@ -28,7 +28,6 @@ class GrupoEventoForm(BootstrapMixin, forms.ModelForm):
             'nome': forms.TextInput(attrs={'autofocus': True}),
         }
 
-## REVISAR SE PRECISA funcoes_fixas AQUI !!!!!!!!!!!!!!!
 class CargoForm(BootstrapMixin, forms.ModelForm):
     funcoes_fixas = forms.MultipleChoiceField(choices=Cargo.FuncaoTipo.choices, required=False)
     class Meta:

@@ -1,7 +1,8 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
+{% load ui_components %}
 {% block title %}Grupo Evento{% endblock %}
-{% block title_i18n %}personal.event.groupEvent{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
 <div class="card mt-2">
@@ -9,14 +10,14 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:grupoevento_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if perms.pessoal.delete_grupoevento %}
             <li class="nav-item dropdown ms-auto">
-                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-                {% if perms.pessoal.delete_grupoevento %}
+                <a class="nav-link dropdown-toggle border text-body" id="extra" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" >Excluir Registro</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
                 </ul>
-                {% endif %}
             </li>
+            {% endif %}
         </ul>
     </div>
     <form id="pessoal_form" action="{% url 'pessoal:grupoevento_update' grupo_evento.id|safe %}" method="POST" autocomplete="off" novalidate>
@@ -34,13 +35,13 @@
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger">{% translate 'Atenção' %}!!</b>{% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
+                <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'pessoal:grupoevento_delete' grupo_evento.id|safe %}" method="POST">
                             {% csrf_token %}
                             {% btn_tag 'Cancelar' data_bs_dismiss="modal" %}
-                            {% btn_tag 'submit' %}
+                            {% btn_tag 'delete' %}
                         </form>
                     </div>
                 </div>

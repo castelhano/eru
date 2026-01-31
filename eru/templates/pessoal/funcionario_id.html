@@ -32,11 +32,11 @@
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">Dependentes</a></li>{% endif %}
                     {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">Afastamentos</a></li>{% endif %}
                     {% if funcionario.status == 'A' %}
-                    <li><a class="dropdown-item disabled" href="#">Desligar Funcionário</a></li>
+                    <li><a class="dropdown-item disabled" href="#">{% translate 'Desligar Funcionário' %}</a></li>
                     {% endif %}
                     {% if perms.pessoal.delete_funcionario %}
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
                     {% endif %}
                 </ul>
             </li>
@@ -62,8 +62,7 @@
                     <div class="col text-end">
                         <form action="{% url 'pessoal:funcionario_delete' funcionario.id|safe %}" method="POST">
                             {% csrf_token %}
-                            {% btn_tag _('Cancelar') %}
-                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
+                            {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
                             {% btn_tag 'delete' %}
                         </form>
                     </div>

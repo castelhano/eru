@@ -1,7 +1,8 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
+{% load django_tables2 %}
 {% block title %}Motivo reajuste{% endblock %}
-{% block title_i18n %}personal.event.changeReason{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -15,30 +16,12 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Motivo reajuste</span></h5>
-        <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th class="pe-5">#</th>
-                        <th >Nome</th>
-                        {% if perms.pessoal.change_motivoreajuste %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for motivo_reajuste in motivos_reajuste %}
-                    <tr>
-                        <td class="fit">{{motivo_reajuste.id}}</td>
-                        <td>{{motivo_reajuste.nome}}</td>
-                        {% if perms.pessoal.change_motivoreajuste %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:motivoreajuste_update' motivo_reajuste.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Motivo reajuste' %}</span></h5>
+        <div class="tab-pane fade show active mt-3" id="base" role="tabpanel">
+            {{ table.render_filter|safe }}
+            <div class="table-responsive">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -46,14 +29,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'),{
-    canFilter: true,
-    filterCols: ['Nome'],
-    enablePaginate: true
-});
 {% endblock %}
 </script>

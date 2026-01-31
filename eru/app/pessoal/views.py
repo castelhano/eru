@@ -31,9 +31,13 @@ from .forms import (
     EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
 )
 from .filters import (
-    FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter
+    FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter,
+    MotivoReajusteFilter
 )
-from .tables import FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable
+from .tables import (
+    FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable,
+    MotivoReajusteTable
+)
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
@@ -185,16 +189,15 @@ class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportM
         return context
 
 
-class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
     model = Evento
     template_name = 'pessoal/eventos.html'
     permission_required = 'pessoal.view_evento'
-    filterset_class = EventoFilter
     def get_queryset(self):
         return Evento.objects.all().select_related('grupo').order_by('nome')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        f = EventoFilter(self.request.GET, queryset=self.get_queryset())
         context['table'] = EventoTable(f.qs).config(self.request, filter_obj=f)
         return context
 
@@ -270,10 +273,15 @@ class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableL
 
 class MotivoReajusteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
     model = MotivoReajuste
-    template_name = 'pessoal/grupos_evento.html'
-    context_object_name = 'motivos_reajuste'
+    template_name = 'pessoal/motivos_reajuste.html'
     permission_required = 'pessoal.view_motivoreajuste'
-    queryset = MotivoReajuste.objects.all().order_by('nome')
+    def get_queryset(self):
+        return MotivoReajuste.objects.all().order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        f = MotivoReajusteFilter(self.request.GET, queryset=self.get_queryset())
+        context['table'] = MotivoReajusteTable(f.qs).config(self.request, filter_obj=f)
+        return context
 
 
 # Metodos ADD
@@ -623,7 +631,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
         return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'pk': self.related_id })
 
 
-class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseUpdateView):
+class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = GrupoEvento
     form_class = GrupoEventoForm
     template_name = 'pessoal/grupo_evento_id.html'

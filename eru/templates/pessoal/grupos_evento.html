@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load django_tables2 %}
 {% block title %}Eventos{% endblock %}
-{% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -15,28 +15,11 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title"><span >Pessoal</span>: <span class="text-purple" >Grupo Evento</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">Grupo Evento</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th >Nome</th>
-                        {% if perms.pessoal.change_grupoevento %}
-                        <th>&nbsp;</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for grupo_evento in grupos_evento %}
-                    <tr>
-                        <td>{{grupo_evento.nome}}</td>
-                        {% if perms.pessoal.change_grupoevento %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:grupoevento_update' grupo_evento.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive mt-3">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
@@ -44,14 +27,8 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
-const table = new jsTable(document.getElementById('main_table'),{
-    enablePaginate: true,
-    canFilter: true,
-    filterCols: ['Nome']
-});
 {% endblock %}
 </script>

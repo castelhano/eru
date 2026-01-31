@@ -152,7 +152,7 @@ class RelatedAddon {
         if(this.config.url.related.delete){ this.model.dialog.appendChild(this._addDeleteContainer()); }
         this.model.dialog.appendChild(this._addFooter());
         document.body.appendChild(this.model.dialog)
-        // if(jsForm){ this.model.form = new jsForm(this.model.fieldsContainer, {}) }
+        if(jsForm){ this.model.form = new jsForm(this.model.fieldsContainer, {}) }
         this.model.addOn = document.createElement('button');
         this.model.addOn.type = 'button';
         this.model.addOn.classList = this.config.classlist.addOn;

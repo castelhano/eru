@@ -19,7 +19,7 @@
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal" >Excluir Registro</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
                 </ul>
             </li>
             {% endif %}
@@ -40,13 +40,13 @@
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger">{% translate 'Atenção' %}!!</b>{% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
+                <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'filial_delete' filial.id|safe %}" method="POST">
                             {% csrf_token %}
                             {% btn_tag 'Cancelar' data_bs_dismiss="modal" %}
-                            {% btn_tag 'submit' %}
+                            {% btn_tag 'delete' %}
                         </form>
                     </div>
                 </div>

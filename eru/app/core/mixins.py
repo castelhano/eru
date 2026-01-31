@@ -4,6 +4,7 @@ from datetime import datetime
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse, HttpResponse, QueryDict
+from django.contrib import messages
 from django.urls import reverse
 from django.core import serializers
 from django.utils.safestring import mark_safe
@@ -53,12 +54,14 @@ class AjaxableFormMixin:
 # .then(data => console.log(data))
 # .catch(err => console.error(err));
     def form_invalid(self, form):
+        response = super().form_invalid(form) 
         if self.is_ajax_request():
             return JsonResponse({'errors': form.errors, 'status': 'error'}, status=400)
-        return super().form_invalid(form)
+        return response
     def form_valid(self, form):
         response = super().form_valid(form) # Executa o save() e define self.object
         if self.is_ajax_request():
+            list(messages.get_messages(self.request)) # Limpa a mensagem default de sucesso para evitar duplicidade
             return JsonResponse(model_to_dict(self.object), status=200)
         return response
     def dispatch(self, request, *args, **kwargs):

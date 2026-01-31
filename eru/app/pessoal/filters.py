@@ -90,9 +90,16 @@ class AfastamentoFilter(django_filters.FilterSet):
 
 class EventoFilter(django_filters.FilterSet):
     nome = django_filters.CharFilter(lookup_expr='icontains', label=_('Evento'))
+    rastreio = django_filters.CharFilter(lookup_expr='icontains', label=_('Rastreio'))
     class Meta:
         model = Evento
-        fields = ['nome', 'tipo', 'grupo']
+        fields = ['nome', 'tipo', 'grupo', 'rastreio']
+
+class MotivoReajusteFilter(django_filters.FilterSet):
+    nome = django_filters.CharFilter(lookup_expr='icontains', label=_('Nome'))
+    class Meta:
+        model = MotivoReajuste
+        fields = ['nome']
 
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
