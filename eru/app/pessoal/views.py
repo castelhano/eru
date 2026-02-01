@@ -17,7 +17,7 @@ from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
 from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from core.views import asteval_run
 from core.models import Empresa, Filial
-from core.extras import get_props
+from .extras import getEventProps
 # third-party
 from rest_framework import viewsets, permissions
 from .serializers import FuncionarioSerializer
@@ -210,10 +210,13 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
         'funcionario': (EventoFuncionario, EventoFuncionarioFilter, EventoFuncionarioTable, _('Funcionário')),
     }
     def dispatch(self, request, *args, **kwargs):
-        self.related = kwargs.get('related')
+        self.related = kwargs.get('related', '').lower()
         self.related_id = kwargs.get('pk')
         if self.related not in self.CONFIG_MAP:
             return redirect('index')
+        perm = f'pessoal.view_evento{self.related}'
+        if not request.user.has_perm(perm):
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
         model, _, _, _ = self.CONFIG_MAP[self.related]
@@ -234,7 +237,7 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
         context = super().get_context_data(**kwargs)
         model_class, filter_class, table_class, related_label = self.CONFIG_MAP[self.related]
         f = filter_class(self.request.GET, queryset=self.get_queryset(), user=self.request.user)
-        table = table_class(f.qs, request=self.request, related=self.related)
+        table = table_class(f.qs, related=self.related, request=self.request)
         context.update({
             'table': table.config(self.request, filter_obj=f),
             'related': self.related,
@@ -363,26 +366,18 @@ class EventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVi
     permission_required = 'pessoal.add_evento'
 
 
-# Retorna lista com todas as variaveis utilizadas para composicao de formula em eventos
-# busca tanto eventos criados pelo usuario quanto props definidas nos modelos alvo
-# adicione True como primeira variavel posicional para retornar um dicionario (1 para valores)
-def getEventProps(asDict=False):
-    prop_func = get_props(Funcionario)
-    props_custom = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
-    return dict.fromkeys(prop_func + props_custom, 1) if asDict else prop_func + props_custom
-
 
 class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
     template_name = 'pessoal/evento_related_add.html'
     def dispatch(self, request, *args, **kwargs):
-        self.related = kwargs.get('related')
+        self.related = kwargs.get('related', '').lower()
         self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.view_evento{self.related}"
-        if not request.user.has_perm(perm_name):
-            return redirect('handler', code=403)
         if self.related not in ['empresa', 'cargo', 'funcionario']:
             messages.error(request, f"{DEFAULT_MESSAGES['400']} <b>pessoal:evento_related_add, invalid related</b>")
             return redirect('index')
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', code=403)
         return super().dispatch(request, *args, **kwargs)
     def get_form_class(self):
         forms_map = {
@@ -410,7 +405,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
             context['model'] = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
         return context
     def get_success_url(self):
-        return reverse('pessoal:eventorelated_list', kwargs={'related': self.related, 'pk': self.related_id})
+        return reverse('pessoal:eventorelated_list', kwargs={'related': self.related.upper(), 'pk': self.related_id})
     
 
 class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseCreateView):
@@ -532,25 +527,6 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
 
 
-# class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
-#     model = Dependente
-#     form_class = DependenteForm
-#     template_name = 'pessoal/dependente_id.html'
-#     context_object_name = 'dependente'
-#     permission_required = 'pessoal.change_dependente'
-#     def dispatch(self, request, *args, **kwargs):
-#         # so permite edicao de dependentes de funcionarios ativos
-#         dependente = self.get_object()
-#         if not dependente.funcionario.F_ehEditavel:
-#             messages.error(
-#                 request,
-#                 _('Não é possível alterar dados de funcionários desligados')
-#             )
-#             return redirect('pessoal:dependente_list', pk=dependente.funcionario.id)
-#         return super().dispatch(request, *args, **kwargs)
-#     def get_success_url(self):
-#         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
-
 class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Evento
     form_class = EventoForm
@@ -564,17 +540,18 @@ class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVi
 class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
     template_name = 'pessoal/evento_related_id.html'
     def dispatch(self, request, *args, **kwargs):
-        self.related = kwargs.get('related')
+        self.related = kwargs.get('related').lower()
         self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.change_evento{self.related}"
-        if not request.user.has_perm(perm_name):
-            return redirect('handler', 403)
+        print('UPDATE:perm_name: ', perm_name)
         if self.related not in ['empresa', 'cargo', 'funcionario']:
             messages.error(
                 request, 
                 f"{DEFAULT_MESSAGES['400']} <b>evento_related_update [bad request]</b>"
             )
             return redirect('index') # Ou para uma página de erro apropriada
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', 403)
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
         # define o modelo alvo
@@ -607,7 +584,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
             context['model'] = evento_obj.funcionario
         return context
     def get_success_url(self):
-        return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related, 'pk': self.related_id })
+        return reverse('pessoal:eventorelated_update', kwargs={ 'related': self.related.upper(), 'pk': self.related_id })
 
 
 class GrupoEventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
@@ -676,13 +653,13 @@ class EventoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteVi
 class EventoRelatedDeleteView(LoginRequiredMixin, BaseDeleteView):
     success_url = reverse_lazy('pessoal:evento_list')
     def dispatch(self, request, *args, **kwargs):
-        self.related = kwargs.get('related')
+        self.related = kwargs.get('related', '').lower()
         perm_name = f"pessoal.delete_evento{self.related}"
-        if not request.user.has_perm(perm_name):
-            return redirect('handler', 403)
         if self.related not in ['empresa', 'cargo', 'funcionario']:
             messages.error(request, f"{DEFAULT_MESSAGES['400']} <b>evento_related_delete [bad request: invalid related]</b>")
             return redirect('pessoal:eventos')
+        if not request.user.has_perm(perm_name):
+            return redirect('handler', 403)
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
         # retorna modelos alvo
@@ -707,12 +684,11 @@ class MotivoReajusteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Base
 
 
 # Metodos Ajax
-class FormulaValidateView(LoginRequiredMixin, PermissionRequiredMixin, View):
+class FormulaValidateView(LoginRequiredMixin, View):
     """
     View para validacao de sintaxe Python/Asteval em formulas
     Processa requisicoes JSON e retorna o resultado da avaliacao segura
     """
-    permission_required = "pessoal.view_evento"
     raise_exception = True
     def post(self, request, *args, **kwargs):
         try:

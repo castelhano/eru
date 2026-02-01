@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from .models import Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
 from datetime import date
 from core.mixins import BootstrapMixin
+from core.views import asteval_run
+from .extras import getEventProps
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
@@ -120,6 +122,7 @@ class EventoForm(BootstrapMixin, forms.ModelForm):
         return rastreio_value
 
 
+
 class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         fields = ['evento', 'inicio', 'fim', 'valor', 'motivo']
@@ -144,42 +147,91 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
         """
         raise NotImplementedError("Subclasses devem implementar 'get_model_class'")
     def clean(self):
-        cleaned_data = super().clean()
-        inicio = cleaned_data.get('inicio')
-        fim = cleaned_data.get('fim')
-        evento_pai = cleaned_data.get('evento')
-        # se campos criticos estiverem faltando, paramos aqui (validacao basica falhou)
-        if not all([inicio, evento_pai]):
-            return cleaned_data
-        # garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
+        cd = super().clean()
+        inicio, fim, ev = cd.get('inicio'), cd.get('fim'), cd.get('evento')
+        val = cd.get('valor')
+        if not all([inicio, ev]): return cd
+        # 1. Validacao Asteval (Sintaxe)
+        if val:
+            check = asteval_run(val, getEventProps(True))
+            if not check['status']:
+                self.add_error('valor', f"{_('Erro de sintaxe')}:<br>{check['message']}")
+        # 2. Validacao de Datas
         if fim and inicio > fim:
-            raise forms.ValidationError(_('Data de fim não pode ser menor que data de inicio'))
-        # 1. Obter os filtros de contexto especificos do formulario filho (Cargo, Funcionario, Empresa)
-        context_filters = self.get_context_filters(cleaned_data)
-        # 2. Obter o modelo correto para consultar (EventoCargo, EventoFuncionario, etc.)
-        ModelClass = self.get_model_class()
-        # Adiciona o filtro base comum a todos: mesmo tipo de evento pai
-        base_filters = Q(evento=evento_pai)
-        # Combina os filtros base com os filtros de contexto fornecidos pelo filho
-        full_filters = base_filters & Q(**context_filters) if isinstance(context_filters, dict) else base_filters & context_filters
-        # Logica de sobreposicao
-        # q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
-        q_aberto = Q(fim__isnull=True) & (Q(inicio__lte=fim) if fim else Q())
-        q_fechado = Q(
-            fim__isnull=False,
-            inicio__lte=fim if fim else date.max,
-            fim__gte=inicio
-        )
-        conflitos_possiveis = ModelClass.objects.filter(
-            full_filters # Aplica todos os filtros de contexto e evento
-        ).exclude(
-            pk=self.instance.pk # Exclui o objeto atual se for uma edicao
-        ).filter(
-            q_aberto | q_fechado # Aplica a logica de sobreposicao combinada
-        )
-        if conflitos_possiveis.exists():
-            raise forms.ValidationError(_('Existe registro ativo no periodo informado')) 
-        return cleaned_data
+            self.add_error('fim', _('Data de fim não pode ser menor que data de inicio'))
+            return cd
+        # 3. Validacao de Conflito
+        model = self.get_model_class()
+        ctx = self.get_context_filters(cd)        
+        # Filtro de sobreposicao: (Inicio <= Fim Existente) AND (Fim >= Inicio Existente)
+        q_overlap = Q(inicio__lte=fim or date.max) & (Q(fim__gte=inicio) | Q(fim__isnull=True))        
+        filters = Q(evento=ev) & (Q(**ctx) if isinstance(ctx, dict) else ctx)
+        if model.objects.filter(filters).exclude(pk=self.instance.pk).filter(q_overlap).exists():
+            raise forms.ValidationError(_('Registro sobrepõe outras entradas existentes'))            
+        return cd
+
+
+
+# class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
+    # class Meta:
+    #     fields = ['evento', 'inicio', 'fim', 'valor', 'motivo']
+    #     widgets = {
+    #         'inicio': forms.DateInput(attrs={'autofocus': True}),
+    #         'evento': forms.Select(attrs={'class': 'form-select'}),
+    #         'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': _('Valor / Formula')}),
+    #         'motivo': forms.Select(attrs={'class': 'form-select'}),
+    #     }
+    # def get_context_filters(self, cleaned_data):
+    #     """
+    #     Deve ser sobrescrito pelos formularios filhos
+    #     Retorna um dicionario de filtros (Q objects ou kwargs) que definem o 'contexto' do conflito
+    #     Ex: {'filiais__id__in': [1, 2]} ou {'funcionario': obj_funcionario}
+    #     """
+    #     raise NotImplementedError("Subclasses devem implementar 'get_context_filters'")
+    # def get_model_class(self):
+    #     """
+    #     Deve ser sobrescrito pelos formularios filhos.
+    #     Retorna a classe do modelo Django associada ao formulario.
+    #     Ex: return EventoCargo
+    #     """
+    #     raise NotImplementedError("Subclasses devem implementar 'get_model_class'")
+#     def clean(self):
+#         cleaned_data = super().clean()
+#         inicio = cleaned_data.get('inicio')
+#         fim = cleaned_data.get('fim')
+#         evento_pai = cleaned_data.get('evento')
+#         # se campos criticos estiverem faltando, paramos aqui (validacao basica falhou)
+#         if not all([inicio, evento_pai]):
+#             return cleaned_data
+#         # garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
+#         if fim and inicio > fim:
+#             raise forms.ValidationError(_('Data de fim nao pode ser menor que data de inicio'))
+#         # 1. Obter os filtros de contexto especificos do formulario filho (Cargo, Funcionario, Empresa)
+#         context_filters = self.get_context_filters(cleaned_data)
+#         # 2. Obter o modelo correto para consultar (EventoCargo, EventoFuncionario, etc.)
+#         ModelClass = self.get_model_class()
+#         # Adiciona o filtro base comum a todos: mesmo tipo de evento pai
+#         base_filters = Q(evento=evento_pai)
+#         # Combina os filtros base com os filtros de contexto fornecidos pelo filho
+#         full_filters = base_filters & Q(**context_filters) if isinstance(context_filters, dict) else base_filters & context_filters
+#         # Logica de sobreposicao
+#         # q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
+#         q_aberto = Q(fim__isnull=True) & (Q(inicio__lte=fim) if fim else Q())
+#         q_fechado = Q(
+#             fim__isnull=False,
+#             inicio__lte=fim if fim else date.max,
+#             fim__gte=inicio
+#         )
+#         conflitos_possiveis = ModelClass.objects.filter(
+#             full_filters # Aplica todos os filtros de contexto e evento
+#         ).exclude(
+#             pk=self.instance.pk # Exclui o objeto atual se for uma edicao
+#         ).filter(
+#             q_aberto | q_fechado # Aplica a logica de sobreposicao combinada
+#         )
+#         if conflitos_possiveis.exists():
+#             raise forms.ValidationError(_('Existe registro ativo no periodo informado')) 
+#         return cleaned_data
 
 
 class EventoCargoForm(EventoMovimentacaoBaseForm):
@@ -190,7 +242,7 @@ class EventoCargoForm(EventoMovimentacaoBaseForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
-            # Filtra e agrupa em uma única operação lógica
+            # Filtra e agrupa em uma única operacao lógica
             qs = user.profile.filiais.select_related('empresa').order_by('empresa__nome', 'nome')
             self.fields['filiais'].queryset = qs
             self.fields['filiais'].choices = [

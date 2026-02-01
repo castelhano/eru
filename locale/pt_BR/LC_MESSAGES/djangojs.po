@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-30 19:34-0400\n"
+"POT-Creation-Date: 2026-02-01 17:20-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -72,4 +72,97 @@ msgstr ""
 
 #: eru/static/js/keywatch.js:63
 msgid "Critério pesquisa"
+msgstr ""
+
+#: eru/static/js/related.js:12 eru/static/js/related.js:15
+msgid "Nome"
+msgstr ""
+
+#: eru/static/js/related.js:87
+msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
+msgstr ""
+
+#: eru/static/js/related.js:88
+msgid "Gravar"
+msgstr ""
+
+#: eru/static/js/related.js:89
+msgid "Excluir"
+msgstr ""
+
+#: eru/static/js/related.js:294
+msgid "Voltar"
+msgstr ""
+
+#: eru/static/js/related.js:347
+msgid "Salva alterações"
+msgstr ""
+
+#: eru/static/js/related.js:361
+msgid "Exibe form para adicionar registro"
+msgstr ""
+
+#: eru/static/js/related.js:386
+msgid "Exibe lista de registros"
+msgstr ""
+
+#: eru/static/js/related.js:445
+msgid "Erro ao salvar registro:"
+msgstr ""
+
+#: eru/static/js/related.js:447
+msgid "Permissão negada"
+msgstr ""
+
+#: eru/static/js/related.js:449
+msgid "Erro de servidor"
+msgstr ""
+
+#: eru/static/js/related.js:497
+msgid "Registro criado com sucesso"
+msgstr ""
+
+#: eru/static/js/related.js:541
+msgid "Registro alterado com sucesso"
+msgstr ""
+
+#: eru/static/js/related.js:579
+msgid "Registro excluído com sucesso"
+msgstr ""
+
+#: eru/static/js/selectm.js:265 eru/static/js/selectm.js:427
+msgid "Marcar todos"
+msgstr ""
+
+#: eru/static/js/selectm.js:265 eru/static/js/selectm.js:441
+msgid "Desmarcar todos"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:3
+msgid "Filiais"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:7
+msgid "Marca todas as empresas"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:17
+msgid "Salvar ou Validar formula"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:38
+msgid "Nome do grupo"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:51
+msgid "Validando fórmula..."
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:63
+msgid "Sintaxe é valida"
+msgstr ""
+
+#: eru/templates/pessoal/_form_evento_related.js:70
+msgid ""
+"[500] Erro no servidor, se o problema persistir, contate o administrador"
 msgstr ""

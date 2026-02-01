@@ -8,7 +8,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            {% with add_perm="pessoal.add_evento"|add:related %}
+            {% with add_perm="pessoal.add_evento"|add:related|lower %}
             {% if user|proxy_perm:add_perm %}
             <li class="nav-item ms-1">
                 <a class="nav-link border text-success" id="add" href="{% url 'pessoal:eventorelated_create' related related_id|default:0 %}">

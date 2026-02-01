@@ -22,10 +22,12 @@ submitShortcut.method = ()=>{
 validateBtn.onclick = ()=>{syntaxCheck()};
 // valor deve ser tratado em formato americano pois sera tratado no servidor desta forma
 const valor = document.getElementById('id_valor');
+valor.oninput = ()=>{ submitBtn.disabled = true }
 const formulaMask = IMask(valor, { mask: /[\s\S]*/ })
 
 const form = new jsForm(document.getElementById('app_form'), {
     imask: [formulaMask],
+    beforeSubmit: ()=>{return true}
 })
 const autocomplete = new Autocomplete(valor, {{props|safe|default:'[]'}}, {
     enable: true,

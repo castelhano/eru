@@ -74,7 +74,7 @@ class AjaxableFormMixin:
                         for item in value: q_dict.appendlist(key, item)
                     else:
                         q_dict[key] = value
-                # 3. Sobrescreve o POST. Agora o Form vai "mágicamente" achar os dados
+                # 3. Sobrescreve o POST. Agora o Form vai "magicamente" achar os dados
                 request.POST = q_dict # sobrescreve o POST
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'invalid json'}, status=400)
@@ -148,9 +148,10 @@ class BootstrapMixin:
             css_class = self._CSS_MAP.get(type(widget), 'form-control')
             current_class = widget.attrs.get('class', '')
             widget.attrs['class'] = f"{css_class} {current_class}".strip()            
-            # 3. define placeholder (Bootstrap Floating Labels)
-            if not widget.attrs.get('placeholder'):
-                widget.attrs['placeholder'] = field.label or ' '
+            # 3. define placeholder (Bootstrap Floating Labels) para os campos que suportam esse attr
+            valid_types = ('email', 'number', 'password', 'search', 'tel', 'text', 'url')
+            if not widget.attrs.get('placeholder') and getattr(widget, 'input_type', None) in valid_types:
+                widget.attrs['placeholder'] = ' '
             # 4. sincronizacao de atributos de validacao
             self._sync_validator_attrs(field, widget)
             # 5. label traduzivel (acessivel via {{ form.campo.i18n_label }})
@@ -169,74 +170,87 @@ class BootstrapMixin:
                 widget.attrs[h_attr] = val
 
 
+
 class TableCustomMixin:
+    """
+    Mixin para django-tables2 que padroniza o layout Bootstrap 5 e automatiza acoes CRUD.
+    
+    Funcionalidades:
+    - Injecao automatica da coluna actions (via extra_columns) para evitar cache entre usuarios
+    - Suporte unificado a links (url_name) e scripts (onclick) com checagem de permissao (perm)
+    - Configuracao de colunas responsivas e estilizacao automatica de filtros (django-filter)
+    - Suporte a 'Single Page CRUD' via path_params e query_params.
+    - Definicao de metodo para criacao automatica de filtros (django-filter)
+
+    Configuracoes na Meta (ou instância):
+        actions (list): Lista de dicts [{'url_name': str, 'onclick': str, 'perm': str, ...}].
+        action_innerhtml (str/html): Ícone/Texto padrao para os botoes.
+        action_classlist (str): Classes CSS padrao (ex: 'btn btn-sm btn-primary').
+        responsive_columns (dict): Mapeamento {'coluna': 'classe_css'}.
+        attrs (dict): Customizacao da tag <table> (data-navigate, data-action-selector, class).
+    
+    Observacao: Sempre instancie a tabela com 'request' para habilitar a validacao de permissoes
+    Mais detalhes em README_CORE.md.
+    """
     def __init__(self, *args, **kwargs):
         self.request = kwargs.get('request')
         meta = getattr(self, 'Meta', object())
         actions = getattr(self, 'actions', getattr(meta, 'actions', []))
-        a_script = getattr(meta, 'action_script', None)
-        if (actions or a_script) and "actions" not in self.base_columns:
+        if actions:
+            # estilos globais da Meta (fallback)
             b_kw = {k: getattr(meta, v) for k, v in [('label', 'action_innerhtml'), ('class', 'action_classlist')] if hasattr(meta, v)}
             def render_actions(record):
                 if not self.request: return ""
-                btns = [btn_tag('update', href='#', onclick=a_script, **b_kw)] if a_script else []
+                btns = []
                 for a in actions:
                     cfg = a.copy()
+                    # 1. Filtro de Seguranca (perm)
                     perm = cfg.pop('perm', None)
-                    if perm and self.request and not self.request.user.has_perm(perm):
+                    if perm and not self.request.user.has_perm(perm):
                         continue
-                    
-                    act, url = cfg.pop('action', ''), cfg.pop('url_name', None)
+                    # 2. Extracao de configuracoes
+                    act, url, onclick = cfg.pop('action', ''), cfg.pop('url_name', None), cfg.pop('onclick', None)
                     p_params, q_params = cfg.pop('path_params', {}), cfg.pop('query_params', {})
-                    
-                    # Merge de estilos: action individual (cfg) sobrescreve o padrão da Meta (b_kw)
                     btn_styles = {**b_kw, **cfg}
-
+                    href = '#'
                     if url:
                         try:
+                            # 2.1. Resolve os argumentos do PATH
                             k_args = {k: getattr(record, v, v) for k, v in p_params.items()}
                             href = reverse(url, kwargs=k_args)
+                            # 2.2. Resolve a QueryString
                             if q_params:
                                 q = "&".join(f"{k}={getattr(record, v, v)}" for k, v in q_params.items())
                                 href += f"?{q}"
-                            
-                            # Adiciona o botão com o link gerado
                             btns.append(btn_tag(act, href=href, **btn_styles))
-                        except Exception:
-                            # Se a URL falhar (NoReverseMatch), NÃO adicionamos o botão
-                            # Isso evita botões "mortos" e sem ícone na interface
-                            pass 
-                    elif a_script: # Caso seja um botão de script sem URL
-                         btns.append(btn_tag(act, href='#', onclick=a_script, **btn_styles))
-
-                
+                        except Exception as e:
+                            # Se o reverse falhar, o botao nao eh adicionado
+                            continue 
+                    elif onclick:
+                        btns.append(btn_tag(act, href='#', onclick=onclick, **btn_styles))
                 return mark_safe(f'<div class="d-flex justify-content-end gap-1">{"".join(btns)}</div>')
-
-            # SOLUÇÃO: Criar a coluna e passar via extra_columns (evita vazamento de cache)
+            # Injecao segura via extra_columns
             col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False)
             col.render = render_actions 
-            
-            # Adiciona nos kwargs que o super() do django-tables2 vai processar
             extra = list(kwargs.get('extra_columns', []))
             extra.append(('actions', col))
             kwargs['extra_columns'] = extra
-
         super().__init__(*args, **kwargs)
-        
+        # Configuracoes de layout e atributos da tabela
         self.template_name = getattr(self, 'template_name', "_tables/bootstrap5_custom.html")
         self.empty_text = self.empty_text or _("Nenhum registro a exibir")
         self.attrs = {
             "class": "table border table-striped table-hover mb-2", 
             "data-navigate": "true", "id": self.__class__.__name__.lower(),
             **getattr(meta, 'attrs', {})
-        }
-        
+        }        
+        # Responsividade
         for name, css in getattr(meta, 'responsive_columns', {}).items():
             if name in self.columns:
                 for target in ["th", "td"]:
                     self.columns[name].column.attrs.setdefault(target, {})["class"] = css
-
     def config(self, request, filter_obj=None):
+        """Aplica paginacao e estiliza o form do django-filter"""
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
             for f in filter_obj.form.fields.values():
@@ -245,85 +259,3 @@ class TableCustomMixin:
                 f.widget.attrs['class'] = f.widget.attrs.get('class', cls)
             self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
         return self
-
-
-
-
-
-
-
-
-# class TableCustomMixin:
-#     """
-#     Mixin para django-tables2 que padroniza o layout Bootstrap 5 e gerencia ações CRUD.
-#     Funcionalidades:
-#     - Injeção automática de coluna 'actions' com botões dinâmicos.
-#     - Suporte a 'Single Page CRUD' via parâmetros GET (url_params).
-#     - Configuração de colunas responsivas via Meta.
-#     - Estilização automática de formulários de filtro.
-#     - Geração automatica de filtros se usado django-filter
-
-#     Configurações na Meta da Table:
-#         edit_url (str): Nome da URL para o botão de edição padrão.
-#         extra_actions (list): Lista de dicts com botões extra [{'action': str, 'url_name': str, ...}].
-#         responsive_columns (dict): Mapeamento {'coluna': 'classe_css'}.
-#         action_classlist (str): Classes CSS para o botão de edição padrão.
-#         action_innerhtml (str): HTML/Ícone para o botão de edição padrão.
-    
-#     Configurações via 'attrs' na Meta (atributos HTML):
-#         O dicionário 'attrs' permite customizar a tag <table>. O Mixin define padrões 
-#         que podem ser sobrescritos:
-#         - data-navigate: "true" habilita a navegação por setas (JS).
-#         - data-action-selector: Define qual botão o 'Ctrl+Enter' deve acionar (padrão: ".btn").
-#           Ex: {'data-action-selector': '.btn-info-matte'} para focar em botões específicos.
-#         - class: Adiciona classes CSS à tabela além das padrões (table-striped, etc).
-#     mais detalhes ver README_CORE.md
-#     """
-#     def __init__(self, *args, **kwargs):
-#         meta = getattr(self, 'Meta', object())
-#         edit_url = getattr(meta, 'edit_url', None)
-#         extra = getattr(meta, 'extra_actions', [])
-#         a_script = getattr(meta, 'action_script', None)
-#         if (edit_url or extra or a_script) and "actions" not in self.base_columns:
-#             # cache de estilos da Meta para performance
-#             b_kw = {k: getattr(meta, v) for k, v in [('label', 'action_innerhtml'), ('class', 'action_classlist')] if hasattr(meta, v)}
-#             def render_actions(record):
-#                 if a_script:
-#                     btns = [btn_tag('update', href='#', onclick=a_script, **b_kw)]
-#                 else:
-#                     btns = [btn_tag('update', edit_url, pk=record.id, **b_kw)] if edit_url else []
-#                 for a in extra:
-#                     c = a.copy()
-#                     act, url, use_pk, params = c.pop('action'), c.pop('url_name', None), c.pop('use_pk', True), c.pop('url_params', {})
-#                     pk = getattr(record, use_pk) if isinstance(use_pk, str) else (record.id if use_pk else None)
-#                     if params and url:
-#                         q = "?" + "&".join(f"{k}={getattr(record, v, v)}" for k, v in params.items())
-#                         try: btns.append(btn_tag(act, href=reverse(url, kwargs={'pk': pk} if pk else {}) + q, **c))
-#                         except: btns.append(btn_tag(act, **c))
-#                     else:
-#                         btns.append(btn_tag(act, url, pk=pk, **c))
-#                 return mark_safe(f'<div class="d-flex justify-content-end gap-1">{"".join(btns)}</div>')
-#             col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False)
-#             col.render = render_actions 
-#             self.base_columns["actions"] = col
-#         super().__init__(*args, **kwargs)
-#         self.template_name = "_tables/bootstrap5_custom.html"
-#         self.empty_text = self.empty_text or _("Nenhum registro a exibir")
-#         self.attrs = {
-#             "class": "table border table-striped table-hover mb-2", 
-#             "data-navigate": "true", "data-action-selector": ".btn", 
-#             "id": self.__class__.__name__.lower(),
-#             **getattr(meta, 'attrs', {})
-#         }
-#         for name, css in getattr(meta, 'responsive_columns', {}).items():
-#             if name in self.columns:
-#                 for target in ["th", "td"]: self.columns[name].column.attrs.setdefault(target, {})["class"] = css
-#     def config(self, request, filter_obj=None):
-#         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
-#         if filter_obj:
-#             for f in filter_obj.form.fields.values():
-#                 if isinstance(f, forms.DateField): f.widget.input_type = 'date'
-#                 cls = 'form-select form-select-sm' if isinstance(f.widget, (forms.Select, forms.SelectMultiple)) else 'form-control form-control-sm'
-#                 f.widget.attrs['class'] = f.widget.attrs.get('class', cls)
-#             self.render_filter = render_to_string('_tables/auto_filter_form.html', {'filter': filter_obj, 'request': request, 'table': self})
-#         return self

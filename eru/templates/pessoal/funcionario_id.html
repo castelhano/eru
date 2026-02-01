@@ -25,10 +25,10 @@
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" id="extra" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><button class="dropdown-item" type="button" id="exportCsvBtn" >Baixar CSV</button></li>
+                    <li><button class="dropdown-item" type="button" id="exportCsvBtn">{% translate 'Baixar' %} CSV</button></li>
                     <li><hr class="dropdown-divider"></li>
-                    {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos' %}</a></li>{% endif %}
-                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos' %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos' %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos' %}</a></li>{% endif %}
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">Dependentes</a></li>{% endif %}
                     {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">Afastamentos</a></li>{% endif %}
                     {% if funcionario.status == 'A' %}

@@ -80,6 +80,12 @@ class LogsTable(TableCustomMixin, Table):
     class Meta:
         model = LogEntry
         fields = ("timestamp", "actor", "action", "content_type", "object_repr", "changes")
+        actions = [
+            {
+                'action': 'search',
+                'onclick': 'showDetails(this)', 
+            }
+        ]
         action_script = "showDetails(this)"
         action_innerhtml = '<i class="bi bi-search"></i>'
         exclude_from_export = ["changes"]

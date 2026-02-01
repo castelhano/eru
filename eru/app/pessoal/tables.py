@@ -135,40 +135,38 @@ class DependenteTable(TableCustomMixin, Table):
             "cpf": "d-none",
         }
 
-class EventoBaseTable(TableCustomMixin, Table):
-    # Customização de colunas comuns
-    tipo = Column(verbose_name=_('Tipo'))
-    inicio = Column(verbose_name=_('Início'))
+class EventoMovimentacaoBaseTable(TableCustomMixin, Table):
+    # tipo = Column(verbose_name=_('Tipo'))
+    # inicio = Column(verbose_name=_('Início'))
+    # fim = Column(verbose_name=_('Fim'))
     class Meta:
-        # Atributos padrão do seu Mixin
-        # edit_url = "pessoal:evento_related_id" # URL genérica que você usa na View
         paginate_by = 10
     def __init__(self, *args, **kwargs):
         related_type = kwargs.pop('related', 'empresa')
         self.actions = [{
             'action': 'update', 
-            'url_name': 'eventorelated_update',
-            'path_params': {'related': related_type, 'pk': 'id'}
+            'url_name': 'pessoal:eventorelated_update',
+            'path_params': {'related': related_type.upper(), 'pk': 'id'},
+            'perm': f'pessoal.change_evento{related_type.lower()}'
         }]
         super().__init__(*args, **kwargs)
 
 
-
-
 # Subclasses com campos específicos
-class EventoEmpresaTable(EventoBaseTable):
+class EventoEmpresaTable(EventoMovimentacaoBaseTable):
     filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
-    class Meta(EventoBaseTable.Meta):
+    class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoEmpresa
         fields = ('evento', 'inicio', 'fim', 'filiais', 'motivo')
 
-class EventoCargoTable(EventoBaseTable):
+
+class EventoCargoTable(EventoMovimentacaoBaseTable):
     filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
-    class Meta(EventoBaseTable.Meta):
+    class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoCargo
         fields = ('evento', 'cargo', 'inicio', 'fim', 'filiais', 'motivo')
-
-class EventoFuncionarioTable(EventoBaseTable):
-    class Meta(EventoBaseTable.Meta):
+class EventoFuncionarioTable(EventoMovimentacaoBaseTable):
+    class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoFuncionario
         fields = ('evento', 'inicio', 'fim', 'motivo', 'valor')
+

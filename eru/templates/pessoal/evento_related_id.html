@@ -1,7 +1,9 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
+{% load tag_extra %}
+{% load ui_components %}
 {% block title %}Evento{% endblock %}
-{% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -10,14 +12,16 @@
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:eventorelated_list' related model.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% with add_perm="pessoal.delete_evento"|add:related|lower %}
+            {% if user|proxy_perm:add_perm %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-                {% if related == 'empresa' and perms.pessoal.delete_eventoempresa or related == 'cargo' and perms.pessoal.delete_eventocargo or related == 'funcionario' and perms.pessoal.delete_eventofuncionario %}
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
                 </ul>
-                {% endif %}
             </li>
+            {% endif %}
+            
         </ul>
     </div>
     <form id="app_form" action="{% url 'pessoal:eventorelated_update' related evento.id|safe %}" method="POST" autocomplete="off" novalidate>
@@ -26,7 +30,7 @@
     </form>
 </div>
 
-{% if related == 'empresa' and perms.pessoal.delete_eventoempresa or related == 'cargo' and perms.pessoal.delete_eventocargo or related == 'funcionario' and perms.pessoal.delete_eventofuncionario %}
+{% if user|proxy_perm:add_perm %}
 <div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -50,6 +54,7 @@
     </div>
 </div>
 {% endif %}
+{% endwith %}
 
 {% endblock%}
 

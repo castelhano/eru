@@ -6,9 +6,9 @@
     <div class="row g-lg-3">
         <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
             {% if funcionario.foto %}
-            <img src="{{funcionario.foto_url}}" class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
+            <img src="{{funcionario.foto_url}}" alt="Foto funcionario matricula {{funcionario.matricula}}"  class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
             {% else %}
-            <img src="{% static 'img/default_user.png' %}" class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
+            <img src="{% static 'img/default_user.png' %}" alt="Foto funcionario matricula {{funcionario.matricula}}" class="widget-thumb-img{% if not disabled %} pointer{% endif %}" style="min-width: 110px;" id="foto-preview">
             {% endif %}
             <div class="widget-thumb-controls ms-2 ms-lg-0">
                 <div class="row g-0">
