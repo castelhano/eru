@@ -403,13 +403,9 @@ class MotivoReajuste(models.Model):
 auditlog.register(MotivoReajuste)
 
 class EventoMovimentacao(models.Model):
-    class TipoValorFormula(models.TextChoices):
-        VALOR   = "V", _("Valor")
-        FORMULA = "F", _("Fórmula")
     evento = models.ForeignKey(Evento, on_delete=models.RESTRICT, verbose_name=_('Evento'))
     inicio = models.DateField(_('Inicio'), blank=False, null=False, default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
-    tipo = models.CharField(_('Tipo'), max_length=3, choices=TipoValorFormula.choices, default='V', blank=False)
     valor = models.TextField(_('Valor'), blank=True)
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT, verbose_name=_('Motivo'))
     class Meta:
@@ -418,8 +414,8 @@ class EventoMovimentacao(models.Model):
         if self.fim and self.inicio > self.fim:
             raise ValidationError({'fim': _('Data de fim não pode ser menor que data de inicio')})
         campos_validos = [f for f in self._meta.get_fields() 
-                        if f.name not in ['id', 'evento', 'inicio', 'fim', 'tipo', 'valor', 'motivo'] 
-                        and not f.auto_created and f.concrete and not f.many_to_many]
+            if f.name not in ['id', 'evento', 'inicio', 'fim', 'valor', 'motivo'] 
+            and not f.auto_created and f.concrete and not f.many_to_many]
         if campos_validos:
             campo = campos_validos[0].name
             valor = getattr(self, campo)

@@ -1,7 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% block title %}Evento{% endblock %}
-{% block title_i18n %}personal.common.event{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -22,16 +21,14 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
-<script src="{% static 'js/related.js' %}"></script>
 <script src="{% static 'js/selectm.js' %}"></script>
 <script src="{% static 'js/autocomplete.js' %}"></script>
+<script src="{% static 'js/related.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-
 {% include 'pessoal/_form_evento_related.js' %}
-
 {% endblock %}
 </script>

@@ -410,7 +410,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
             context['model'] = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
         return context
     def get_success_url(self):
-        return reverse('pessoal:eventos_related', kwargs={'related': self.related, 'pk': self.related_id})
+        return reverse('pessoal:eventorelated_list', kwargs={'related': self.related, 'pk': self.related_id})
     
 
 class GrupoEventoCreateView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableFormMixin, BaseCreateView):

@@ -158,7 +158,6 @@ class EventoBaseTable(TableCustomMixin, Table):
                 # A URL de destino para edição (conforme suas Views)
                 'url_name': 'pessoal:evento_related_id', 
                 # O 'related' vai como primeiro argumento da URL
-                'use_pk': self.related, 
                 # O ID do registro vai via QueryString ou como segundo param
                 # Se o seu Mixin monta: reverse(url_name, args=[use_pk]) + url_params
                 'url_params': {'pk': 'id'}, 
@@ -174,15 +173,15 @@ class EventoEmpresaTable(EventoBaseTable):
     filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
     class Meta(EventoBaseTable.Meta):
         model = EventoEmpresa
-        fields = ('evento', 'inicio', 'fim', 'tipo', 'filiais', 'motivo')
+        fields = ('evento', 'inicio', 'fim', 'filiais', 'motivo')
 
 class EventoCargoTable(EventoBaseTable):
     filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
     class Meta(EventoBaseTable.Meta):
         model = EventoCargo
-        fields = ('evento', 'cargo', 'inicio', 'fim', 'tipo', 'filiais', 'motivo')
+        fields = ('evento', 'cargo', 'inicio', 'fim', 'filiais', 'motivo')
 
 class EventoFuncionarioTable(EventoBaseTable):
     class Meta(EventoBaseTable.Meta):
         model = EventoFuncionario
-        fields = ('evento', 'inicio', 'fim', 'tipo', 'motivo', 'valor')
+        fields = ('evento', 'inicio', 'fim', 'motivo', 'valor')

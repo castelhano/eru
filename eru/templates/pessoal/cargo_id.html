@@ -12,7 +12,7 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
             <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventocargo %}
-            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}">{% translate 'Eventos'|hl_str:'e' %}</a></li>
+            <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}">{% translate 'Eventos'|hl_str:'t' %}</a></li>
             {% endif %}
             {% if perms.pessoal.delete_cargo %}
             <li class="nav-item dropdown ms-auto">
@@ -70,7 +70,7 @@
         icon: 'bi bi-diagram-3-fill',
     });
     {% if perms.pessoal.view_eventocargo %}
-    appKeyMap.bind('alt+e', ()=>{document.getElementById('eventos').click()}, {icon: 'bi bi-percent', desc:'Exibe eventos do cargo', origin: 'pessoal:cargo_id'})
+    appKeyMap.bind('alt+t', ()=>{document.getElementById('eventos').click()}, {icon: 'bi bi-percent', desc:'{% translate 'Exibe eventos do cargo' %}', origin: 'pessoal:cargo_id'})
     {% endif %}
 
     {% endblock %}

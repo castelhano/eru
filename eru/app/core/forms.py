@@ -51,14 +51,19 @@ def get_grouped_permissions():
     return [(app.capitalize(), [(p.id, f"{p.content_type.model}: {p.name}") for p in g]) 
             for app, g in groupby(perms, lambda p: p.content_type.app_label)]
 
-def get_grouped_filiais():
-    filiais = Filial.objects.select_related('empresa').order_by('empresa__nome', 'nome')
-    return [(emp, [(f.id, str(f)) for f in g]) for emp, g in groupby(filiais, lambda f: f.empresa.nome)]
+# def get_grouped_filiais():
+#     filiais = Filial.objects.select_related('empresa').order_by('empresa__nome', 'nome')
+#     return [(emp, [(f.id, str(f)) for f in g]) for emp, g in groupby(filiais, lambda f: f.empresa.nome)]
+
+def get_grouped_filiais(queryset=None):
+    qs = queryset if queryset is not None else Filial.objects.all()
+    qs = qs.select_related('empresa').order_by('empresa__nome', 'nome')
+    return [(emp, [(f.id, str(f)) for f in g]) for emp, g in groupby(qs, lambda f: f.empresa.nome)]
 
 
 class UserForm(BootstrapMixin, forms.ModelForm):
     password = forms.CharField(required=False, widget=forms.PasswordInput())
-    filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
+    filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.none(), required=False)
     force_password_change = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
     class Meta:
         model = User

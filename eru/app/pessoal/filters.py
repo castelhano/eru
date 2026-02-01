@@ -112,7 +112,7 @@ class EventoMovimentacaoFilterSet(django_filters.FilterSet):
         widget=forms.DateInput(attrs={'type': 'date'})
     )
     class Meta:
-        fields = ['tipo', 'motivo', 'evento']
+        fields = ['motivo', 'evento']
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)

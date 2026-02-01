@@ -1,60 +1,53 @@
+{% load i18n %}
+{% load ui_components %}
+{% load tag_extra %}
 <div class="card-body tab-content">
-    <h5 class="card-title">{% translate 'Cadastro' %}: <b class="text-purple" >Event</b></h5>
+    <h5 class="card-title">{% translate 'Cadastro' %}: <b class="text-purple">{% translate 'Evento' %}</b></h5>
     <h6 class="mb-3 text-orange">
         {% if related == 'empresa' %}
-            <span >Eventos Globais</span>
+            <span>Eventos Globais</span>
         {% elif related == 'cargo' %}
-            <span class="text-body" >Cargo:</span> {{model.nome}}
+            <span class="text-body">Cargo:</span> {{model.nome}}
         {% elif related == 'funcionario' %}
-            <span class="text-body" >Funcionário:</span> {{model.matricula}} - {{model.nome}}
+            <span class="text-body">Funcionário:</span> {{model.matricula}} - {{model.nome}}
         {% endif %}</h6>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-2">
-            <div class="col col-lg-4">
+            <div class="col-md-4">
                 <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg">
+                    <div class="form-floating mb-lg-1 col-lg-6">
                         {{ form.inicio }}
-                        <label for="id_inicio" >Inicio</label>
+                        {{ form.inicio.i18n_label }}
                     </div>
-                    <div class="form-floating mb-1 col-lg">
+                    <div class="form-floating mb-lg-1 col-lg-6">
                         {{ form.fim }}
-                        <label for="id_fim" >Fim</label>
+                        {{ form.fim.i18n_label }}
                     </div>
-                </div>
-                <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg">
+                    <div class="form-floating mb-lg-1 col-lg-6">
                         {{ form.evento }}
-                        <label for="id_evento" >Evento</label>
+                        {{ form.evento.i18n_label }}
                     </div>
-                    <div class="form-floating mb-1 col-lg">
+                    <div class="form-floating mb-1 col-lg-6">
                         {{ form.motivo }}
-                        <label for="id_motivo" >Motivo</label>
+                        {{ form.motivo.i18n_label }}
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col">{{form.empresas}}</div>
                 </div>
                 <input type="hidden" name="{{related}}" value="{{model.id|safe|default:0}}">
             </div>
-            <div class="col col-lg">
-                <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg">
-                        {{ form.tipo }}
-                        <label for="id_tipo" >Tipo</label>
-                    </div>
-                </div>
+            <div class="col-md">
                 <div class="row">
                     <div class="col">
                         {{ form.valor }}
+                        <div class="mt-1"><span id="responseValidate"></span></div>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col"><span id="responseValidate"></span></div>
-                    <div class="col-auto text-end">
-                        <button type="button" id="id_validate" class="btn btn-sm btn-warning" >Validar</button>
-                        <button type="submit" id="submit" class="btn btn-sm btn-primary" title="ALT + G" ><b>G</b>ravar</button>
-                    </div>
-                </div>
+            </div>
+            <div class="col-md-auto">
+                {{ form.filiais }}
+            </div>
+            <div class="col-12">
+                {% btn_tag _('Validar') id='id_validate' class='btn btn-sm btn-success-matte' onclick='syntaxCheck()' %}
+                {% btn_tag 'submit' disabled='true' %}
             </div>
         </div>
     </div>

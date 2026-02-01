@@ -11,7 +11,7 @@
             {% with add_perm="pessoal.add_evento"|add:related %}
             {% if user|proxy_perm:add_perm %}
             <li class="nav-item ms-1">
-                <a class="nav-link border text-success" href="{% url 'pessoal:eventorelated_create' related related_id|default:0 %}">
+                <a class="nav-link border text-success" id="add" href="{% url 'pessoal:eventorelated_create' related related_id|default:0 %}">
                     <i class="bi bi-plus-lg"></i>
                 </a>
             </li>

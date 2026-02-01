@@ -120,15 +120,13 @@ class EventoForm(BootstrapMixin, forms.ModelForm):
         return rastreio_value
 
 
-class EventoMovimentacaoBaseForm(forms.ModelForm):
-    inicio = forms.DateField(required=True, initial=date.today(), widget=forms.TextInput(attrs={'class':'form-control','type':'date', 'autofocus':'autofocus'}))
-    fim = forms.DateField(required=False, widget=forms.TextInput(attrs={'class':'form-control','type':'date'}))
+class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
     class Meta:
-        fields = ['evento', 'inicio', 'fim', 'tipo', 'valor', 'motivo']
+        fields = ['evento', 'inicio', 'fim', 'valor', 'motivo']
         widgets = {
+            'inicio': forms.DateInput(attrs={'autofocus': True}),
             'evento': forms.Select(attrs={'class': 'form-select'}),
-            'tipo': forms.Select(attrs={'class': 'form-select'}),
-            'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': 'Valor', 'data-i18n': '[placeholder]common.value'}),
+            'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': _('Valor / Formula')}),
             'motivo': forms.Select(attrs={'class': 'form-select'}),
         }
     def get_context_filters(self, cleaned_data):
@@ -183,25 +181,49 @@ class EventoMovimentacaoBaseForm(forms.ModelForm):
             raise forms.ValidationError(_('Existe registro ativo no periodo informado')) 
         return cleaned_data
 
+
 class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoCargo
         fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'filiais']
-        widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
+
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['filiais'].queryset = user.profile.filiais.all()
-    def get_model_class(self):
+            # Filtra e agrupa em uma única operação lógica
+            qs = user.profile.filiais.select_related('empresa').order_by('empresa__nome', 'nome')
+            self.fields['filiais'].queryset = qs
+            self.fields['filiais'].choices = [
+                (emp, [(f.id, str(f)) for f in g]) 
+                for emp, g in groupby(qs, lambda f: f.empresa.nome)
+            ]
+    def get_model_class(self): 
         return EventoCargo
+
     def get_context_filters(self, cleaned_data):
-        # Implementa o filtro especifico para Cargo: checa conflito APENAS nas filiais selecionadas
-        filiais_qs = cleaned_data.get('filiais')
-        if filiais_qs:
-            filial_ids = filiais_qs.values_list('id', flat=True)
-            # Retorna um dicionario de kwargs para o filtro Q(**kwargs)
-            return {'filiais__id__in': filial_ids}
-        return {} # retorna vazio se nao houver filiais (embora 'filiais' deva ser obrigatorio neste contexto)
+        filiais = cleaned_data.get('filiais')
+        return {'filiais__id__in': filiais.values_list('id', flat=True)} if filiais else {}
+
+
+# class EventoCargoForm(EventoMovimentacaoBaseForm):
+#     class Meta(EventoMovimentacaoBaseForm.Meta):
+#         model = EventoCargo
+#         fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'filiais']
+#         widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
+#     def __init__(self, *args, user=None, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         if user:
+#             self.fields['filiais'].queryset = user.profile.filiais.all()
+#     def get_model_class(self):
+#         return EventoCargo
+#     def get_context_filters(self, cleaned_data):
+#         # Implementa o filtro especifico para Cargo: checa conflito APENAS nas filiais selecionadas
+#         filiais_qs = cleaned_data.get('filiais')
+#         if filiais_qs:
+#             filial_ids = filiais_qs.values_list('id', flat=True)
+#             # Retorna um dicionario de kwargs para o filtro Q(**kwargs)
+#             return {'filiais__id__in': filial_ids}
+#         return {} # retorna vazio se nao houver filiais (embora 'filiais' deva ser obrigatorio neste contexto)
     
 
 class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
