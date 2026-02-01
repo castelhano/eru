@@ -11,12 +11,87 @@ Mixin integrado ao `django-table2`, automatiza o visual Bootstrap 5, responsivid
 
 | Atributo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `edit_url` | `str` | Nome da rota (URL) para o botão de edição padrão. |
-| `action_innerhtml` | `str/html` | (Opcional) Ícone ou texto para o botão de edição. |
-| `action_classlist` | `str` | (Opcional) Classes CSS para o botão de edição (ex: `btn-primary`). |
-| `extra_actions` | `list` | Lista de dicionários para botões extras. |
-| `responsive_columns` | `dict` | Mapeamento de colunas e classes de breakpoint (ex: `{"id": "d-none"}`). |
-| `export_csv` | `bool` | Se `True`, exibe o botão de exportação no formulário de filtro. |
+| `actions` | `list` | Lista de dicionários definindo os botões de ação **(detalhes abaixo)**|
+| `action_script` | `str` | JavaScript a ser executado no clique (ex: `showDetails(this)`). |
+| `action_innerhtml`| `str/html` | Ícone ou texto padrão para botões (usado se a ação não definir `label`). |
+| `action_classlist`| `str` | Classes CSS padrão para os botões (ex: `btn btn-sm btn-primary`). |
+| `responsive_columns`| `dict` | Mapeamento de colunas e classes de breakpoint (ex: `{"id": "d-none"}`). |
+| `export_csv` | `bool` | Se `True`, habilita funcionalidades de exportação vinculadas ao filtro. |
+
+### 🛠 Estrutura do Dicionário de `actions`
+Cada item na lista `actions` suporta as seguintes chaves:
+- **`url_name`**: Nome da rota Django (`path name`).
+- **`perm`**: (Opcional) String de permissão. O botão só é renderizado se o usuário possuir o acesso.
+- **`path_params`**: Dicionário `{nome_na_url: campo_no_model}` para parâmetros de rota (ex: `/id/`).
+- **`query_params`**: Dicionário `{chave: campo_no_model}` para QueryStrings (ex: `?user=user_id`).
+- **`action`**: Chave para o componente `btn_tag` (define cores e ícones padrão).
+- **`label` / `class`**: (Opcional) Sobrescreve o visual padrão do botão.
+
+# 📝 Exemplos de Uso
+
+#### A. Configuração Estática (Padrão)
+Ideal para a maioria das tabelas. A checagem de permissão é feita automaticamente pelo Mixin.
+```python
+class EmpresaTable(TableCustomMixin, Table):
+    class Meta:
+        model = Empresa
+        actions = [
+            {
+                'action': 'update',             # Chave de estilo do componente btn_tag
+                'url_name': 'empresa_update',   # Nome da URL de destino
+                'path_params': {'pk': 'id'},    # Dicionario de parametros da rota
+                'data-foo': 'foo-bar',          # Qualquer attr sera injetado no botao
+                'perm': 'core.change_empresa'   # Permissao Django
+            }
+        ]
+        responsive_columns = {
+            "razao_social": "d-none d-lg-table-cell",
+            "cnpj_base": "d-none d-md-table-cell"
+        }
+```
+
+#### B. Configuração Dinâmica (Parâmetros de View)
+Utilizada quando os parâmetros da URL ou as permissões dependem do contexto da View (Polimorfismo). O `__init__` da tabela deve capturar essas variáveis e injetá-las na instância.
+
+```python
+class EventoMovimentacaoBaseTable(TableCustomMixin, Table):
+    def __init__(self, *args, **kwargs):
+        # 1. Captura parâmetros extras passados pela View
+        related_type = kwargs.pop('related', 'empresa')
+        
+        # 2. Define ações dinamicamente na instância (self)
+        self.actions = [{
+            'action': 'update', 
+            'url_name': 'eventorelated_update',
+            'perm': f'pessoal.change_evento{related_type}',
+            'path_params': {
+                'related': related_type, # Valor fixo (ex: 'cargo')
+                'pk': 'id'               # Atributo do banco (ID do evento)
+            }
+        }]
+        super().__init__(*args, **kwargs)
+```
+
+#### C. Suporte a Scripts e Alterações nos atributos da Tabela
+Utilizada quando a ação não exige um redirecionamento de página (URL), mas sim a execução de uma função JavaScript local. Ideal para abrir modais de detalhes ou disparar ações via AJAX.
+
+```python
+class LogsTable(TableCustomMixin, Table):
+    class Meta:
+        model = LogEntry
+        fields = ("timestamp", "actor", "action", "object_repr")
+        action_script = "showDetails(this)"                   # Injeta o script no evento 'onclick' do botão
+        action_innerhtml = '<i class="bi bi-search"></i>'     # Define o ícone de visualização (Bootstrap Icons)
+        action_classlist = "btn btn-sm btn-outline-secondary" # Personaliza a cor do botão de script
+        attrs = {                                             # Sobregrava atributos padrao
+            "id": "novo-id-tabela"                            # Customiza o ID da tabela
+            "class": "table table-sm",                        # Classes da tabela
+            "data-navigate": "false",                         # Habilita / desabilita navegação
+            'data-action-selector': '.btn-info'               # Altera seletor para acesso a linha
+        }
+```
+
+
 
 ### Exemplo de Uso:
 ```python

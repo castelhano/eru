@@ -82,16 +82,16 @@
         </div>
       </div>
       <div class="col-lg">
-        <div class="form-check form-switch mt-1">
-          <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
-          <label class="form-check-label" for="mostrar_senha">{% translate 'Mostra Senha' %}</label>
-        </div>
         {% if 'update' in request.get_full_path %}
         <div class="form-check form-switch mt-2 mt-lg-1">
           <input type="checkbox" class="form-check-input" id="resetar_senha" name="" value="" onclick="resetPassword();">
           <label class="form-check-label" for="resetar_senha">{% translate 'Reiniciar senha' %}</label>
         </div>
         {% endif %}
+        <div class="form-check form-switch mt-1">
+          <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
+          <label class="form-check-label" for="mostrar_senha">{% translate 'Mostra Senha' %}</label>
+        </div>
         <div class="form-check form-switch mt-1">
           {{form.is_active}}
           <label class="form-check-label" for="id_is_active">{% translate 'Ativo' %}</label>

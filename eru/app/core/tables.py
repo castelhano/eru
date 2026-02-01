@@ -17,7 +17,10 @@ class EmpresaTable(TableCustomMixin, Table):
     class Meta:
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
-        edit_url, paginate_by = "empresa_update", 20
+        paginate_by = 20
+        actions = [
+            {'action': 'update', 'url_name': 'empresa_update', 'path_params': {'pk': 'id'}, 'perm': 'core.change_empresa'}
+        ]
         responsive_columns = {
             "id": "fit pe-5",
             "razao_social": "d-none d-lg-table-cell",
@@ -34,7 +37,9 @@ class FilialTable(TableCustomMixin, Table):
     class Meta:
         model = Filial
         fields = ("id", "nome", "cnpj", "cidade")
-        edit_url = "filial_update"
+        actions = [
+            {'action': 'update', 'url_name': 'filial_update', 'path_params': {'pk': 'id'}, 'perm':'core.change_filial'}
+        ]
         responsive_columns = {
             "id": "d-none d-sm-table-cell",
             "cnpj": "d-none d-lg-table-cell",
@@ -46,7 +51,9 @@ class UsuarioTable(TableCustomMixin, Table):
     class Meta:
         model = User
         fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
-        edit_url = "usuario_update"
+        actions = [
+            {'action': 'update', 'url_name': 'usuario_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_user'}
+        ]
         responsive_columns = {
             "id": "d-none d-md-table-cell",
             "first_name": "d-none d-lg-table-cell",
@@ -59,14 +66,14 @@ class GrupoTable(TableCustomMixin, Table):
     class Meta:
         model = Group
         fields = ("id", "name")
-        edit_url = "grupo_update"
-        extra_actions = [
+        actions = [
+            {'action': 'update', 'url_name': 'grupo_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_group'},
             {
-                'action': 'users',
                 'url_name': 'usuario_grupo',
+                'path_params': {'pk': 'id'},
                 'label': mark_safe('<i class="bi bi-people-fill"></i>'),
-                'class': 'btn btn-sm btn-info-matte',
-            },
+                'class': 'btn btn-sm btn-info-matte'
+            }
         ]
 
 class LogsTable(TableCustomMixin, Table):
@@ -81,4 +88,4 @@ class LogsTable(TableCustomMixin, Table):
             "changes": "d-none col-changes",
         }
     def render_changes(self, value):
-        return json.dumps(value) # forca exibicao de json com aspas duplas
+        return json.dumps(value)

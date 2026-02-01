@@ -21,7 +21,10 @@ class FuncionarioTable(TableCustomMixin, Table):
     class Meta:
         model = Funcionario        
         fields = ('empresa','filial','matricula','nome','apelido','nome_social','genero','data_admissao','data_nascimento','cpf','cnh','cnh_validade','cargo','fone1','fone2','regime','pne','status',)
-        edit_url, paginate_by = "pessoal:funcionario_update", 20
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:funcionario_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.view_funcionario'}
+        ]
+        paginate_by = 20
         responsive_columns = {
             "filial": "d-none d-sm-table-cell",
             "nome": "d-none d-lg-table-cell",
@@ -45,21 +48,18 @@ class ContratoTable(TableCustomMixin, Table):
         model = Contrato        
         fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim',)
         paginate_by = 10
+        actions = [
+            {
+                'action': 'update',
+                'url_name': 'pessoal:contrato_list',
+                'perm': 'pessoal.change_contrato', # Checagem automática no Mixin
+                'path_params': {'pk': 'funcionario_id'}, # Vira /contratos/ID_FUNC/
+                'query_params': {'edit': 'id'}           # Vira ?edit=ID_CONTRATO
+            }
+        ]
         responsive_columns = {
             "funcionario": "d-none",
         }
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.get('request') 
-        actions = []
-        if self.request and self.request.user.has_perm('pessoal.change_contrato'):
-            actions.append({
-                'action': 'update', 
-                'url_name': 'pessoal:contrato_list',
-                'url_params': {'edit': 'id'},
-                'use_pk': 'funcionario_id'
-            })
-        self.Meta.extra_actions = actions
-        super().__init__(*args, **kwargs)
 
 
 class SetorTable(TableCustomMixin, Table):
@@ -144,27 +144,14 @@ class EventoBaseTable(TableCustomMixin, Table):
         # edit_url = "pessoal:evento_related_id" # URL genérica que você usa na View
         paginate_by = 10
     def __init__(self, *args, **kwargs):
-        # 1. Recupera parâmetros
-        self.request = kwargs.get('request')
-        self.related = kwargs.pop('related', 'empresa')
-        
-        actions = []
-        perm = f'pessoal.change_evento{self.related}'
-        
-        # 2. Segue a lógica da sua ContratoTable
-        if self.request and self.request.user.has_perm(perm):
-            actions.append({
-                'action': 'update', 
-                # A URL de destino para edição (conforme suas Views)
-                'url_name': 'pessoal:evento_related_id', 
-                # O 'related' vai como primeiro argumento da URL
-                # O ID do registro vai via QueryString ou como segundo param
-                # Se o seu Mixin monta: reverse(url_name, args=[use_pk]) + url_params
-                'url_params': {'pk': 'id'}, 
-            })
-            
-        self.Meta.extra_actions = actions
+        related_type = kwargs.pop('related', 'empresa')
+        self.actions = [{
+            'action': 'update', 
+            'url_name': 'eventorelated_update',
+            'path_params': {'related': related_type, 'pk': 'id'}
+        }]
         super().__init__(*args, **kwargs)
+
 
 
 

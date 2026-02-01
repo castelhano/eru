@@ -252,7 +252,7 @@ class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
     def get_context_data(self, **kwargs):
         filtro = EmpresaFilter(self.request.GET, queryset=self.get_queryset())
         context = super().get_context_data(object_list=filtro.qs, **kwargs)
-        context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs).config(self.request, filtro)})
+        context.update({'filter': filtro, 'table': EmpresaTable(filtro.qs, request=self.request).config(self.request, filtro)})
         return context
 
 # METODOS ADD
@@ -323,19 +323,19 @@ class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdate
 
 
 
-class EmpresaUpdateView(BaseUpdateView):
+class EmpresaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Empresa
     form_class = EmpresaForm
     template_name = 'core/empresa_id.html'
     permission_required = 'core.change_empresa'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['table'] = FilialTable(self.object.filiais.all()).config(self.request)
+        context['table'] = FilialTable(self.object.filiais.all(), request=self.request).config(self.request)
         return context
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.id})
 
-class FilialUpdateView(BaseUpdateView):
+class FilialUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Filial
     form_class = FilialForm
     template_name = 'core/filial_id.html'
@@ -349,9 +349,10 @@ class FilialUpdateView(BaseUpdateView):
         return reverse('filial_update', kwargs={'pk': self.object.id})
 
 
-class UsuarioUpdateView(BaseUpdateView):
+class UsuarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = User
     form_class = UserForm
+    permission_required = 'auth.change_user'
     template_name = 'core/usuario_id.html'
     success_url = reverse_lazy('usuario_list')
     context_object_name = 'usuario'
@@ -361,7 +362,7 @@ class UsuarioUpdateView(BaseUpdateView):
         return reverse('usuario_update', kwargs={'pk': self.object.pk})
 
 
-class GrupoUpdateView(BaseUpdateView):
+class GrupoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Group
     form_class = GroupForm
     template_name = 'core/grupo_id.html'
@@ -379,23 +380,23 @@ class GrupoUpdateView(BaseUpdateView):
 
 
 # METODOS DELETE
-class EmpresaDeleteView(BaseDeleteView):
+class EmpresaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Empresa
     permission_required = 'core.delete_empresa'
     success_url = reverse_lazy('empresa_list')
 
-class FilialDeleteView(BaseDeleteView):
+class FilialDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Filial
     permission_required = 'core.delete_filial'
     def get_success_url(self):
         return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
 
-class UsuarioDeleteView(BaseDeleteView):
+class UsuarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = User
     permission_required = 'auth.delete_user'
     success_url = reverse_lazy('usuario_list')
 
-class GrupoDeleteView(BaseDeleteView):
+class GrupoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Group
     permission_required = 'auth.delete_group'
     success_url = reverse_lazy('grupo_list')

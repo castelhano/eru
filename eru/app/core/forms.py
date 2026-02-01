@@ -51,10 +51,6 @@ def get_grouped_permissions():
     return [(app.capitalize(), [(p.id, f"{p.content_type.model}: {p.name}") for p in g]) 
             for app, g in groupby(perms, lambda p: p.content_type.app_label)]
 
-# def get_grouped_filiais():
-#     filiais = Filial.objects.select_related('empresa').order_by('empresa__nome', 'nome')
-#     return [(emp, [(f.id, str(f)) for f in g]) for emp, g in groupby(filiais, lambda f: f.empresa.nome)]
-
 def get_grouped_filiais(queryset=None):
     qs = queryset if queryset is not None else Filial.objects.all()
     qs = qs.select_related('empresa').order_by('empresa__nome', 'nome')
@@ -62,7 +58,7 @@ def get_grouped_filiais(queryset=None):
 
 
 class UserForm(BootstrapMixin, forms.ModelForm):
-    password = forms.CharField(required=False, widget=forms.PasswordInput())
+    password = forms.CharField(required=False, widget=forms.PasswordInput(attrs={'placeholder': ' '}))
     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.none(), required=False)
     force_password_change = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
     class Meta:
@@ -70,69 +66,29 @@ class UserForm(BootstrapMixin, forms.ModelForm):
         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        qs_f = Filial.objects.all()
+        self.fields['filiais'].queryset = qs_f
+        self.fields['filiais'].choices = get_grouped_filiais(qs_f)
         self.fields['user_permissions'].choices = get_grouped_permissions()
-        self.fields['filiais'].choices = get_grouped_filiais()
-        self.fields['username'].widget.attrs.update({'autofocus': True})
         if self.instance.pk:
-            profile = self.instance.profile
+            prof = self.instance.profile
             self.initial.update({
-                'filiais': profile.filiais.all(),
-                'force_password_change': profile.force_password_change
+                'filiais': prof.filiais.all(),
+                'force_password_change': prof.force_password_change
             })
+        self.fields['username'].widget.attrs.update({'autofocus': True})
     def save(self, commit=True):
         user = super().save(commit=False)
-        if password := self.cleaned_data.get("password"):
-            user.set_password(password)
+        if pwd := self.cleaned_data.get("password"):
+            user.set_password(pwd)
         if commit:
             user.save()
             self.save_m2m()
-            # atualizacao direta do profile vinculado
-            profile = user.profile
-            profile.force_password_change = self.cleaned_data['force_password_change']
-            profile.filiais.set(self.cleaned_data['filiais'])
-            profile.save()
+            prof = user.profile
+            prof.force_password_change = self.cleaned_data['force_password_change']
+            prof.filiais.set(self.cleaned_data['filiais'])
+            prof.save()
         return user
-
-
-
-
-# class UserForm(forms.ModelForm):
-#     password = forms.CharField(required=False, widget=forms.PasswordInput())
-#     filiais = forms.ModelMultipleChoiceField(queryset=Filial.objects.all(), required=False)
-#     force_password_change = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'role': 'switch'}))
-#     class Meta:
-#         model = User
-#         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['user_permissions'].choices = get_grouped_permissions()
-#         self.fields['filiais'].choices = get_grouped_filiais()
-#         # usa o profile ja carregado pelo select_related da View
-#         if (user := self.instance) and user.pk:
-#             profile = user.profile
-#             self.fields['filiais'].initial = profile.filiais.all()
-#             self.fields['force_password_change'].initial = profile.force_password_change
-#         for name, field in self.fields.items():
-#             is_check = isinstance(field.widget, (forms.CheckboxInput, forms.RadioSelect))
-#             field.widget.attrs.update({
-#                 'class': 'form-check-input' if is_check else 'form-control',
-#                 'placeholder': ' '
-#             })
-#             self.fields['username'].widget.attrs.update({'autofocus': True})
-#     def save(self, commit=True):
-#         user = super().save(commit=False)
-#         if password := self.cleaned_data.get("password"):
-#             user.set_password(password)
-#         if commit:
-#             user.save()
-#             self.save_m2m()
-#             # atualiza o profile de forma direta
-#             profile = user.profile
-#             profile.force_password_change = self.cleaned_data['force_password_change']
-#             profile.filiais.set(self.cleaned_data['filiais'])
-#             profile.save()
-#         return user
-
 
 class GroupForm(forms.ModelForm):
     class Meta:
