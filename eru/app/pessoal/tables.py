@@ -2,7 +2,7 @@ from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
 from django_tables2 import Table, Column
-from .models import Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste
+from .models import Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, EventoCargo, EventoFuncionario
 
 
 class FuncionarioTable(TableCustomMixin, Table):
@@ -58,7 +58,7 @@ class ContratoTable(TableCustomMixin, Table):
                 'url_params': {'edit': 'id'},
                 'use_pk': 'funcionario_id'
             })
-        self.Meta.extra_actions = actions        
+        self.Meta.extra_actions = actions
         super().__init__(*args, **kwargs)
 
 
@@ -134,3 +134,55 @@ class DependenteTable(TableCustomMixin, Table):
             "rg_orgao_expedidor": "d-none",
             "cpf": "d-none",
         }
+
+class EventoBaseTable(TableCustomMixin, Table):
+    # Customização de colunas comuns
+    tipo = Column(verbose_name=_('Tipo'))
+    inicio = Column(verbose_name=_('Início'))
+    class Meta:
+        # Atributos padrão do seu Mixin
+        # edit_url = "pessoal:evento_related_id" # URL genérica que você usa na View
+        paginate_by = 10
+    def __init__(self, *args, **kwargs):
+        # 1. Recupera parâmetros
+        self.request = kwargs.get('request')
+        self.related = kwargs.pop('related', 'empresa')
+        
+        actions = []
+        perm = f'pessoal.change_evento{self.related}'
+        
+        # 2. Segue a lógica da sua ContratoTable
+        if self.request and self.request.user.has_perm(perm):
+            actions.append({
+                'action': 'update', 
+                # A URL de destino para edição (conforme suas Views)
+                'url_name': 'pessoal:evento_related_id', 
+                # O 'related' vai como primeiro argumento da URL
+                'use_pk': self.related, 
+                # O ID do registro vai via QueryString ou como segundo param
+                # Se o seu Mixin monta: reverse(url_name, args=[use_pk]) + url_params
+                'url_params': {'pk': 'id'}, 
+            })
+            
+        self.Meta.extra_actions = actions
+        super().__init__(*args, **kwargs)
+
+
+
+# Subclasses com campos específicos
+class EventoEmpresaTable(EventoBaseTable):
+    filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
+    class Meta(EventoBaseTable.Meta):
+        model = EventoEmpresa
+        fields = ('evento', 'inicio', 'fim', 'tipo', 'filiais', 'motivo')
+
+class EventoCargoTable(EventoBaseTable):
+    filiais = Column(accessor='filiais', verbose_name=_('Filiais'))
+    class Meta(EventoBaseTable.Meta):
+        model = EventoCargo
+        fields = ('evento', 'cargo', 'inicio', 'fim', 'tipo', 'filiais', 'motivo')
+
+class EventoFuncionarioTable(EventoBaseTable):
+    class Meta(EventoBaseTable.Meta):
+        model = EventoFuncionario
+        fields = ('evento', 'inicio', 'fim', 'tipo', 'motivo', 'valor')

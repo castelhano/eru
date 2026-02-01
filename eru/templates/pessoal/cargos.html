@@ -1,5 +1,6 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
 {% load django_tables2 %}
 {% block title %}Cargo{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
@@ -15,7 +16,7 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple" >Cargo</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Cargo' %}</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             <div class="table-responsive">
                 {% render_table table %}

@@ -1,13 +1,13 @@
 {% if related == 'cargo' or related == 'empresa' %}
-const empresas = new jsSelectm('#id_empresas', {
-    title: i18n.getEntry('common.company__plural') || '<span >Empresas</span>'
-})
-appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
-    icon: 'bi bi-check-square-fill', 
-    'data-i18n': `compound.checkAll__var:${[i18n.getEntry('common.company__plural__toLowerCase') || 'empresas']}`, 
-    desc: 'Marca todas as empresas', 
-    origin: 'pessoal:evento_related_add'
-})
+// const empresas = new jsSelectm('#id_empresas', {
+//     title: i18n.getEntry('common.company__plural') || '<span >Empresas</span>'
+// })
+// appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
+//     icon: 'bi bi-check-square-fill', 
+//     'data-i18n': `compound.checkAll__var:${[i18n.getEntry('common.company__plural__toLowerCase') || 'empresas']}`, 
+//     desc: 'Marca todas as empresas', 
+//     origin: 'pessoal:evento_related_add'
+// })
 {% endif %}
 
 const numberMaks = {

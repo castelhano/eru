@@ -1,8 +1,6 @@
 {% extends "layout/app.html" %}
-{% load static %}
-{% load tag_extra %}
-{% block title %}Eventos{% endblock %}
-{% block title_i18n %}personal.common.event__plural{% endblock %}
+{% load i18n django_tables2 tag_extra %}
+{% block title %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -13,159 +11,40 @@
             {% with add_perm="pessoal.add_evento"|add:related %}
             {% if user|proxy_perm:add_perm %}
             <li class="nav-item ms-1">
-                <a class="nav-link border" id="add" href="{% url 'pessoal:eventorelated_create' related model.id|default:0|safe %}">
-                    <i class="bi bi-plus-lg text-success"></i>
+                <a class="nav-link border text-success" href="{% url 'pessoal:eventorelated_create' related related_id|default:0 %}">
+                    <i class="bi bi-plus-lg"></i>
                 </a>
             </li>
             {% endif %}
             {% endwith %}
-            <li class="nav-item"><button type="button" class="nav-link" id="filterBtn"><i class="bi bi-funnel-fill"></i></button></li>
             {% if related != 'empresa' %}
-            <li class="nav-item">
-                <a class="nav-link" id="back" href="{% url 'pessoal:'|add:related|add:'_update' model.id|safe %}">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                </a>
-            </li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:'|add:related|add:'_update' related_id %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% endif %}
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple" >Eventos</span></h5>
-        <h6 class="text-orange">
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Eventos' %}</span></h5>
+        <h6 class="text-orange mb-4">
             {% if related == 'empresa' %}
-                <span >Eventos Globais</span>
-            {% elif related == 'cargo' %}
-                <span class="text-body" >Cargo:</span> {{model.nome}}
+                {% trans "Eventos Globais" %}
             {% elif related == 'funcionario' %}
-                <span class="text-body" >Funcionário:</span> {{model.matricula}} - {{model.nome}}
-            {% endif %}</h6>
+                {{ model_obj.matricula }} - {{ model_obj.nome }}
+            {% elif related == 'cargo' %}
+                <span class="text-body">{% trans "Cargo" %}:</span> {{ model_obj.nome }}
+            {% endif %}
         </h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
-            <table id="main_table" class="table border table-striped table-hover">
-                <thead>
-                    <tr>
-                        {% if related == 'cargo' or related == 'empresa' %}
-                        <th class="d-none d-md-table-cell" >Empresas</th>
-                        {% endif %}
-                        {% if related == 'cargo' %}
-                        <th class="d-none" >Cargo</th>
-                        {% elif related == 'funcionario' %}
-                        <th class="d-none" >Matricula</th>
-                        <th class="d-none" >Nome</th>
-                        {% endif %}
-                        <th >Nome</th>
-                        <th class="d-none d-lg-table-cell">Inicio</th>
-                        <th class="d-none d-lg-table-cell">Fim</th>
-                        <th>Tipo</th>
-                        <th class="d-none">Valor</th>
-                        <th class="d-none d-md-table-cell">Motivo</th>
-                        {% with change_perm="pessoal.change_evento"|add:related %}
-                            {% if user|proxy_perm:change_perm %}
-                            <th>&nbsp;</th>
-                            {% endif %}
-                        {% endwith %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for model in eventos %}
-                    <tr>
-                        {% if related == 'cargo' or related == 'empresa' %}
-                        <td class="fit d-none d-md-table-cell">{{model.empresas.all|join:';'|badge_list:'bg-body-secondary text-body-secondary'}}</td>
-                        {% endif %}
-                        {% if related == 'cargo' %}
-                        <td class="d-none">{{model.cargo.nome}}</td>
-                        {% elif related == 'funcionario' %}
-                        <td class="d-none">{{model.funcionario.matricula}}</td>
-                        <td class="d-none">{{model.funcionario.nome}}</td>
-                        {% endif %}
-                        <td>{{model.evento.nome}}</td>
-                        <td class="d-none d-lg-table-cell">{{model.inicio|date:'d/m/Y'}}</td>
-                        <td class="d-none d-lg-table-cell">{{model.fim|date:'d/m/Y'|default:''}}</td>
-                        <td>{{model.get_tipo_display}}</td>
-                        <td class="d-none">{{model.valor}}</td>
-                        <td class="d-none d-md-table-cell">{{model.motivo}}</td>
-                        {% if related == 'empresa' and perms.pessoal.change_eventoempresa or related == 'cargo' and perms.pessoal.change_eventocargo or related == 'funcionario' and perms.pessoal.change_eventofuncionario %}
-                        <td class="text-end fit py-1"><a class="btn btn-sm btn-dark" href="{% url 'pessoal:evento_related_id' related model.id|safe %}" title="Editar"><i class="bi bi-pen-fill"></i></a></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            {{ table.render_filter|safe }}
+            <div class="table-responsive">
+                {% render_table table %}
+            </div>
         </div>
     </div>
 </div>
 
-<div id="filterModal" style="display: none;">
-    <form action="" id="filterForm">
-        <div class="row">
-            <div class="col-md-6 col-lg-5">
-                <div class="row g-1">
-                    {% if related != 'funcionario' %}
-                    {% include "_component/field/empresa.html" with blank_row='true' container_classlist='form-floating col-lg mb-lg-1' %}
-                    {% endif %}
-                    <div class="form-floating mb-1 col-lg">
-                        {{ form.evento }}
-                        <label for="id_evento" >Evento</label>
-                    </div>
-                </div>
-                <div class="row g-1">
-                    <div class="form-floating mb-lg-1 col-lg">
-                        {{ form.tipo }}
-                        <label for="id_tipo" >Tipo</label>
-                    </div>
-                    <div class="form-floating mb-1 col-lg">
-                        {{ form.motivo }}
-                        <label for="id_motivo" >Motivo</label>
-                    </div>
-                </div>
-                <div class="row g-1">
-                    <div class="form-floating mb-lg-1 col-lg">
-                        <input type="date" class="form-control" name="inicio" id="id_inicio">
-                        <label for="id_inicio" >Inicio</label>
-                    </div>
-                    <div class="form-floating mb-1 col-lg">
-                        {{ form.fim }}
-                        <label for="id_fim" >Fim</label>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 border-start"></div>
-        </div>
-    </form>
-</div>
-
 {% endblock%}
 
-{% block add_script_src %}
-<script src="{% static 'js/table.js' %}"></script>
-<script src="{% static 'js/form.js' %}"></script>
-<script src="{% static 'js/url.js' %}"></script>
-{% endblock %}
+{% block add_script_src %}{% endblock %}
 <script>
-{% block add_script %}
-
-const form = new jsForm('#filterForm', {
-    novalidate: true,
-    modalBody: document.getElementById('filterModal'),
-    modalTrigger: document.getElementById('filterBtn'),
-    modalFocus: document.getElementById('id_empresa'),
-
-})
-
-{% if related != 'funcionario' %}
-// executa o carregamento do form apos o retorno de todos os ajax
-// Promise.all(window.componentPromises || []).then(()=>{ form.load(urlMap()) })
-// executa o carregamento do form apos conclusao do componente empresa
-form.empresa.addEventListener('componentLoaded', ()=>{ form.load(urlMap()) })
-{% else %}
-form.load(urlMap())
-{% endif %}
-
-const table = new jsTable(document.getElementById('main_table'),{
-    canFilter: true,
-    filterCols: ['Nome', 'Empresas'],
-    enablePaginate: true
-});
-
-{% endblock %}
+{% block add_script %}{% endblock %}
 </script>

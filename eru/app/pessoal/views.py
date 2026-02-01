@@ -36,7 +36,7 @@ from .filters import (
 )
 from .tables import (
     FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable,
-    MotivoReajusteTable
+    MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, EventoFuncionarioTable
 )
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
@@ -201,64 +201,53 @@ class EventoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin
         context['table'] = EventoTable(f.qs).config(self.request, filter_obj=f)
         return context
 
+
 class EventoRelatedListView(LoginRequiredMixin, BaseListView):
-    # view polimorfica que opera com modelos EventoEmpresa, EventoCargo, EventoFuncionario
-    # espera receber related com modelo a ser utilizado
     template_name = 'pessoal/eventos_related.html'
-    context_object_name = 'eventos'
+    CONFIG_MAP = {
+        'empresa': (EventoEmpresa, EventoEmpresaFilter, EventoEmpresaTable, _('Empresa')),
+        'cargo': (EventoCargo, EventoCargoFilter, EventoCargoTable, _('Cargo')),
+        'funcionario': (EventoFuncionario, EventoFuncionarioFilter, EventoFuncionarioTable, _('Funcionário')),
+    }
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related')
         self.related_id = kwargs.get('pk')
-        perm_name = f"pessoal.view_evento{self.related}"
-        if not request.user.has_perm(perm_name):
-            return redirect('handler', code=403)
-        if self.related not in ['empresa', 'cargo', 'funcionario']:
-            messages.error(request, f"{DEFAULT_MESSAGES['400']} <b>pessoal:eventos_related, invalid related</b>")
+        if self.related not in self.CONFIG_MAP:
             return redirect('index')
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
-        user = self.request.user
-        filiais_autorizadas = user.profile.filiais.all()
-        queryset = None
-        if self.related == 'empresa':
-            queryset = EventoEmpresa.objects.filter(
-                filiais__in=filiais_autorizadas
-            ).order_by('evento__nome').distinct()
-            self.filter_class = EventoEmpresaFilter
-        elif self.related == 'cargo':
-            self.related_model_obj = get_object_or_404(Cargo, pk=self.related_id)
-            queryset = EventoCargo.objects.filter(
-                cargo=self.related_model_obj, 
-                filiais__in=filiais_autorizadas
-            ).order_by('evento__nome').distinct()
-            self.filter_class = EventoCargoFilter
-        elif self.related == 'funcionario':
-            self.related_model_obj = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
-            queryset = EventoFuncionario.objects.filter(
-                funcionario=self.related_model_obj
-            ).order_by('evento__nome')
-            self.filter_class = EventoFuncionarioFilter
-        # filtro padrao: excluir eventos vencidos (fim < hoje) se nao houver filtro de data
+        model, _, _, _ = self.CONFIG_MAP[self.related]
+        filiais = self.request.user.profile.filiais.all()
+        # lookup dinamico: mapeia o filtro de ID e o caminho da filial
+        filtros = {
+            'empresa':     {'filiais__in': filiais},
+            'cargo':       {'cargo_id': self.related_id, 'filiais__in': filiais},
+            'funcionario': {'funcionario_id': self.related_id, 'funcionario__filial__in': filiais}
+        }
+        qs = model.objects.filter(**filtros[self.related]).select_related('evento', 'motivo')
+        if hasattr(model, 'filiais'):
+            qs = qs.prefetch_related('filiais')
         if not self.request.GET.get('fim'):
-            queryset = queryset.exclude(fim__lt=date.today())
-        if self.request.GET:
-            rel_filter = self.filter_class(self.request.GET, queryset=queryset)
-            queryset = rel_filter.qs
-            if not queryset.exists():
-                messages.warning(self.request, DEFAULT_MESSAGES['emptyQuery'])
-        return queryset
+            qs = qs.exclude(fim__lt=date.today())
+        return qs.distinct().order_by('evento__nome', '-inicio')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['related'] = self.related
-        if hasattr(self, 'related_model_obj'):
-            context['model'] = self.related_model_obj
-        form = EventoCargoForm()
-        form.fields['tipo'].required = False
-        choices = [('', "---------")] + list(form.fields['tipo'].choices)
-        form.fields['tipo'].choices = [c for c in choices if c[0] != ''] # Evita duplicar o vazio se ja existir
-        form.fields['tipo'].choices = [('', "---------")] + [c for c in form.fields['tipo'].choices if c[0] != '']
-        context['form'] = form
+        model_class, filter_class, table_class, related_label = self.CONFIG_MAP[self.related]
+        f = filter_class(self.request.GET, queryset=self.get_queryset(), user=self.request.user)
+        table = table_class(f.qs, request=self.request, related=self.related)
+        context.update({
+            'table': table.config(self.request, filter_obj=f),
+            'related': self.related,
+            'related_id': self.related_id,
+            'related_label': related_label,
+            'model_obj': self.get_related_object()
+        })
         return context
+    def get_related_object(self):
+        if self.related == 'empresa': return None
+        model = Cargo if self.related == 'cargo' else Funcionario
+        return get_object_or_404(model, pk=self.related_id)
+
 
 class GrupoEventoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
     model = GrupoEvento
@@ -329,8 +318,6 @@ class AfastamentoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCre
     def get_success_url(self):
         return reverse('pessoal:afastamento_list', kwargs={'pk': self.kwargs.get('pk')})
     def get_initial(self):
-        # preenche o campo 'funcionario' no formulario automaticamente via GET
-        # tambem serve como trava de seguranca por Filial
         initial = super().get_initial()
         filiais_permitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
@@ -341,7 +328,6 @@ class AfastamentoCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCre
         initial['funcionario'] = self.funcionario
         return initial
     def get_context_data(self, **kwargs):
-        # injeta o objeto 'funcionario' no contexto para exibicao no template
         context = super().get_context_data(**kwargs)
         context['funcionario'] = self.funcionario
         return context
@@ -354,8 +340,6 @@ class DependenteCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCrea
     def get_success_url(self):
         return reverse('pessoal:dependente_create', kwargs={'pk': self.kwargs.get('pk')})
     def get_initial(self):
-        # preenche o campo 'funcionario' no formulario automaticamente via GET
-        # tambem serve como trava de seguranca por Filial
         initial = super().get_initial()
         filiais_permitidas = self.request.user.profile.filiais.all()
         self.funcionario = get_object_or_404(
@@ -366,7 +350,6 @@ class DependenteCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCrea
         initial['funcionario'] = self.funcionario
         return initial
     def get_context_data(self, **kwargs):
-        # injeta o objeto 'funcionario' no contexto para exibicao no template
         context = super().get_context_data(**kwargs)
         context['funcionario'] = self.funcionario
         return context
@@ -410,24 +393,20 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
         return forms_map.get(self.related)
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # empresa e cargo recebem o parametro user
         if self.related in ['empresa', 'cargo']:
             kwargs['user'] = self.request.user
         return kwargs
     def get_context_data(self, **kwargs):
-        # prepara contexto para o template
         context = super().get_context_data(**kwargs)
         user = self.request.user
         filiais_autorizadas = user.profile.filiais.all()
         context['related'] = self.related
         context['props'] = getEventProps()
-        # busca o objeto relacionado para exibicao no template (funcionario, cargo, empresa (id p empresa eh desconsiderado, sempre usar 0))
         if self.related == 'empresa':
             context['model'] = {'id': 0, 'pk': 0}
         elif self.related == 'cargo':
             context['model'] = get_object_or_404(Cargo, pk=self.related_id)
         elif self.related == 'funcionario':
-            # funcionario so sera listado para filiais autorizadas para o utilizador
             context['model'] = get_object_or_404(Funcionario, pk=self.related_id, filial__in=filiais_autorizadas)
         return context
     def get_success_url(self):

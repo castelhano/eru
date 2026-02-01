@@ -103,27 +103,63 @@ class MotivoReajusteFilter(django_filters.FilterSet):
 
 
 class EventoMovimentacaoFilterSet(django_filters.FilterSet):
-    inicio = django_filters.DateFilter(field_name="inicio", lookup_expr='gte')
-    fim = django_filters.DateFilter(field_name="fim", lookup_expr='lte')
-    motivo = django_filters.ModelChoiceFilter(queryset=MotivoReajuste.objects.all())
-    evento = django_filters.ModelChoiceFilter(queryset=Evento.objects.all())
+    inicio = django_filters.DateFilter(
+        field_name="inicio", lookup_expr='gte', label=_("Inicio"),
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    fim = django_filters.DateFilter(
+        field_name="fim", lookup_expr='lte', label=_("Fim"),
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
     class Meta:
-        fields = ['inicio', 'fim', 'tipo', 'motivo', 'evento']
+        fields = ['tipo', 'motivo', 'evento']
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
 
 
-class EventoCargoFilter(EventoMovimentacaoFilterSet):
-    empresa = django_filters.ModelChoiceFilter(queryset=Empresa.objects.all(), field_name='empresas', label="Empresa")
+class FilialFilterMixin(django_filters.FilterSet):
+# mixin para reaproveitar o filtro de filiais em Empresa e Cargo
+    empresa = django_filters.ModelChoiceFilter(
+        field_name='filiais__empresa', 
+        queryset=Empresa.objects.none(), 
+        label=_('Empresa')
+    )
+    filiais = django_filters.ModelChoiceFilter(
+        queryset=Filial.objects.none(), 
+        label=_('Filial'),
+        field_name='filiais'
+    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filters['filiais'].field.widget.attrs.update({
+            'data-chained-field': 'id_empresa',
+            'data-url': reverse_lazy('filial_list'),
+            'class': 'form-select form-select-sm select-chained'
+        })
+        if self.user:
+            filiais_permitidas = self.user.profile.filiais.all()
+            self.filters['empresa'].queryset = Empresa.objects.filter(
+                filiais__in=filiais_permitidas
+            ).distinct().order_by('nome')
+            empresa_id = self.data.get('empresa')
+            if empresa_id:
+                self.filters['filiais'].field.queryset = filiais_permitidas.filter(
+                    empresa_id=empresa_id
+                )
+
+class EventoEmpresaFilter(FilialFilterMixin, EventoMovimentacaoFilterSet):
+    class Meta(EventoMovimentacaoFilterSet.Meta):
+        model = EventoEmpresa
+        fields = ['empresa', 'filiais'] + EventoMovimentacaoFilterSet.Meta.fields
+
+class EventoCargoFilter(FilialFilterMixin, EventoMovimentacaoFilterSet):
     class Meta(EventoMovimentacaoFilterSet.Meta):
         model = EventoCargo
-        fields = EventoMovimentacaoFilterSet.Meta.fields + ['cargo', 'empresa'] # Adiciona o campo 'cargo'
+        fields = ['empresa', 'filiais', 'cargo'] + EventoMovimentacaoFilterSet.Meta.fields
+
 
 class EventoFuncionarioFilter(EventoMovimentacaoFilterSet):
     class Meta(EventoMovimentacaoFilterSet.Meta):
         model = EventoFuncionario
-        fields = EventoMovimentacaoFilterSet.Meta.fields + ['funcionario'] # Adiciona o campo 'funcionario'
-
-class EventoEmpresaFilter(EventoMovimentacaoFilterSet):
-    empresa = django_filters.ModelChoiceFilter(queryset=Empresa.objects.all(), field_name='empresas', label="Empresa")
-    class Meta(EventoMovimentacaoFilterSet.Meta):
-        model = EventoEmpresa
-        fields = EventoMovimentacaoFilterSet.Meta.fields + ['empresa'] # Adiciona o campo 'empresa'
+        fields = EventoMovimentacaoFilterSet.Meta.fields + ['funcionario']
