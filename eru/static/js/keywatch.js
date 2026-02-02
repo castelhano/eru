@@ -154,6 +154,7 @@ class Keywatch{
             let find = this._eventsMatch(scope, ev); // Busca (e executa) match de composicao
             if(!find && ev.key != this.composedTrigger && this.composedMatch.length > 0){ this.composedMatch = []; this.composedListener(false, scope);}
             if(!find && this.tabOnEnter && ev.key == 'Enter' && ev.target.form && (ev.target.nodeName === 'INPUT' || ev.target.nodeName === 'SELECT')){
+                console.log(this.tabOnEnter);                
                 // caso nao localizado atalho, verifica se ev.key eh Enter e se originou de input / select
                 // neste caso, implementa tabulacao pela tecla enter, ao instanciar opbeto (ou em qualquer momento) defina tabOnEnter = false para desativar tabulacao
                 // para desativar tabulacao em um input especifico atribua data-keywatch='none' para nao tabular (nao submete form) ou data-keywatch='default' para submit

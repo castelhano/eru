@@ -193,7 +193,7 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListM
         context = super().get_context_data(object_list=filtro.qs, **kwargs)
         context.update({
             'filter': filtro, 
-            'table': self.table_class(filtro.qs).config(self.request, filtro)
+            'table': self.table_class(filtro.qs, request=self.request).config(self.request, filtro)
         })
         return context
 

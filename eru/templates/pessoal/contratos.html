@@ -48,16 +48,19 @@
                         {{ form.fim.i18n_label }}
                     </div>
                     <div class="col-12 my-2 text-end">
-                        {% if is_update %}
-                        {% btn_tag 'submit' label=_('Atualizar') class="btn btn-sm btn-primary-matte" %}
+                    {% if is_update %}
+                        {% if perms.pessoal.change_contrato %}
+                            {% btn_tag 'submit' label=_('Atualizar') class="btn btn-sm btn-primary-matte" %}
+                        {% endif %}
                         {% if perms.pessoal.delete_contrato %}
-                        {% btn_tag 'delete' data_bs_toggle="modal" data_bs_target="#delete_modal" %}
+                            {% btn_tag 'delete' data_bs_toggle="modal" data_bs_target="#delete_modal" %}
                         {% endif %}
                         <a href="{{ request.path }}" class="btn btn-sm btn-secondary-matte">{% translate "Cancelar" %}</a>
-                        {% else %}
-                        {% btn_tag 'submit' label=_('Novo') class="btn btn-sm btn-success-matte" %}
-                        {% btn_tag 'csv' name='_export' id='download' value='csv' class='btn btn-sm btn-warning-matte' href=request.path|add:"?_export=csv" label='<i class="bi bi-download me-1"></i>CSV' %}
+                    {% else %}
+                        {% if perms.pessoal.add_contrato %}
+                            {% btn_tag 'submit' label=_('Gravar') class="btn btn-sm btn-success-matte" %}
                         {% endif %}
+                    {% endif %}
                     </div>
                 </div>
                 <input type="hidden" name="funcionario" id="id_funcionario" value="{{funcionario.id|safe}}">
@@ -100,23 +103,18 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/form.js' %}"></script>
 <script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 <script>
 {% block add_script %}
 
 
-console.log('is_update: ', '{{is_update}}');
-
-{# if is_update and form.instance.id #}
-{# endif #}
-const form = new jsForm('#contrato_form', {})
+{% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
 
 const radix = "{% i18n_format "DECIMAL_SEPARATOR" %}";
 const separator = "{% i18n_format "THOUSAND_SEPARATOR" %}";
 
-IMask(form.salario, {
+IMask(document.getElementById('id_salario'), {
     mask: Number,
     scale: 2,
     thousandsSeparator: separator,
@@ -124,6 +122,6 @@ IMask(form.salario, {
     radix: radix,
     mapToRadix: [separator]
 });
-
+{% endif %}
 {% endblock %}
 </script>

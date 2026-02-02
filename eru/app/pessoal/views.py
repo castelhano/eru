@@ -58,7 +58,7 @@ class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
             )
         ).order_by('nome')
 
-class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
+class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
     model = Cargo
     template_name = 'pessoal/cargos.html'
     permission_required = 'pessoal.view_cargo'
@@ -122,7 +122,6 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
 class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseCreateView):
     model = Contrato
     form_class = ContratoForm
-    permission_required = 'pessoal.view_contrato'
     template_name = 'pessoal/contratos.html'
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -133,13 +132,17 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         else:
             kwargs['instance'] = Contrato(funcionario_id=func_id)
         return kwargs
+    def get_permission_required(self):
+        if self.request.method == 'POST':
+            return ('pessoal.change_contrato',) if self.request.GET.get('edit') else ('pessoal.add_contrato',)
+        return ('pessoal.view_contrato',)
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         func = ctx['form'].instance.funcionario 
         qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
         f = ContratoFilter(self.request.GET, queryset=qs)
         ctx.update({
-            'table': ContratoTable(f.qs, request=self.request).config(self.request, filter_obj=f),
+            'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
             'funcionario': func,
             'is_update': ctx['form'].instance.pk is not None
         })

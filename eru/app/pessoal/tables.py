@@ -68,14 +68,20 @@ class SetorTable(TableCustomMixin, Table):
     class Meta:
         model = Setor        
         fields = ('nome','ativos')
-        edit_url, paginate_by = "pessoal:setor_update", 20
+        paginate_by = 20
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:setor_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_setor'}
+        ]
 
 
 class GrupoEventoTable(TableCustomMixin, Table):
     class Meta:
         model = GrupoEvento
         fields = ('nome',)
-        edit_url, paginate_by = "pessoal:grupoevento_update", 20
+        paginate_by = 20
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:grupoevento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_grupoevento'}
+        ]
 
 class EventoTable(TableCustomMixin, Table):
     export_csv = True
@@ -83,7 +89,10 @@ class EventoTable(TableCustomMixin, Table):
     class Meta:
         model = Evento
         fields = ('nome', 'tipo', 'grupo', 'rastreio')
-        edit_url, paginate_by = "pessoal:evento_update", 20
+        paginate_by = 20
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:evento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_evento'}
+        ]
 
 
 class CargoTable(TableCustomMixin, Table):
@@ -95,7 +104,10 @@ class CargoTable(TableCustomMixin, Table):
     class Meta:
         model = Cargo
         fields = ('nome', 'setor', 'funcoes_fixas')
-        edit_url, paginate_by = "pessoal:cargo_update", 20
+        paginate_by =  20
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:cargo_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_cargo'}
+        ]
         responsive_columns = {'funcoes_fixas': 'd-none d-md-table-cell'}
 
 
@@ -105,7 +117,10 @@ class AfastamentoTable(TableCustomMixin, Table):
     class Meta:
         model = Afastamento        
         fields = ('funcionario','motivo','origem','data_afastamento','data_retorno','reabilitado','remunerado',)
-        edit_url, paginate_by = "pessoal:afastamento_update", 10
+        paginate_by = 10
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:afastamento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_afastamento'}
+        ]
 
 
 class MotivoReajusteTable(TableCustomMixin, Table):
@@ -113,7 +128,10 @@ class MotivoReajusteTable(TableCustomMixin, Table):
     class Meta:
         model = MotivoReajuste        
         fields = ('nome',)
-        edit_url, paginate_by = "pessoal:motivoreajuste_update", 10
+        paginate_by = 10
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:motivoreajuste_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_motivoreajuste'}
+        ]
 
 
 class DependenteTable(TableCustomMixin, Table):
@@ -122,7 +140,10 @@ class DependenteTable(TableCustomMixin, Table):
     class Meta:
         model = Dependente        
         fields = ('funcionario','nome','parentesco','genero','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf',)
-        edit_url, paginate_by = "pessoal:dependente_update", 10
+        paginate_by = 10
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:dependente_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_dependente'}
+        ]
         responsive_columns = {
             "funcionario": "d-none",
             "parentesco": "d-none d-md-table-cell",
@@ -136,11 +157,14 @@ class DependenteTable(TableCustomMixin, Table):
         }
 
 class EventoMovimentacaoBaseTable(TableCustomMixin, Table):
-    # tipo = Column(verbose_name=_('Tipo'))
-    # inicio = Column(verbose_name=_('Início'))
-    # fim = Column(verbose_name=_('Fim'))
     class Meta:
         paginate_by = 10
+        responsive_columns = {
+            'inicio': 'd-none d-lg-table-cell',
+            'fim': 'd-none d-lg-table-cell',
+            'motivo': 'd-none d-md-table-cell',
+            'valor': 'd-none'
+        }
     def __init__(self, *args, **kwargs):
         related_type = kwargs.pop('related', 'empresa')
         self.actions = [{

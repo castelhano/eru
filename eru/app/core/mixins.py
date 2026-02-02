@@ -212,7 +212,7 @@ class TableCustomMixin:
                     act, url, onclick = cfg.pop('action', ''), cfg.pop('url_name', None), cfg.pop('onclick', None)
                     p_params, q_params = cfg.pop('path_params', {}), cfg.pop('query_params', {})
                     btn_styles = {**b_kw, **cfg}
-                    href = '#'
+                    href = None
                     if url:
                         try:
                             # 2.1. Resolve os argumentos do PATH
@@ -227,7 +227,7 @@ class TableCustomMixin:
                             # Se o reverse falhar, o botao nao eh adicionado
                             continue 
                     elif onclick:
-                        btns.append(btn_tag(act, href='#', onclick=onclick, **btn_styles))
+                        btns.append(btn_tag(act, onclick=onclick, **btn_styles))
                 return mark_safe(f'<div class="d-flex justify-content-end gap-1">{"".join(btns)}</div>')
             # Injecao segura via extra_columns
             col = Column(empty_values=(), attrs={"td": {"class": "text-end fit py-1"}}, orderable=False)
