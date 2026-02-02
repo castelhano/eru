@@ -1,7 +1,8 @@
 {% extends "layout/app.html" %}
 {% load static %}
+{% load i18n %}
+{% load ui_components %}
 {% block title %}Filial{% endblock %}
-{% block title_i18n %}common.branch{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/core.html" %}{% endblock%}
 
 
@@ -65,6 +66,9 @@
 
 <script>
 {% block add_script %}
+    if(document.getElementById('id_cnpj').value == ''){
+        document.getElementById('id_cnpj').value = '{{empresa.cnpj_base}}';
+    }
     const cnpj = IMask(document.getElementById('id_cnpj'),{mask: '00.000.000/0000-00'})
     const cep = IMask(document.getElementById('id_cep'),{mask: '00.000-000'})
     const fone = IMask(document.getElementById('id_fone'),{mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}]})

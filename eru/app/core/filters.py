@@ -23,6 +23,11 @@ class UserFilter(django_filters.FilterSet):
         lookup_expr='exact',
         label=_('Superusuario'),
     )
+    group = django_filters.ModelChoiceFilter(
+        field_name='groups',
+        queryset=Group.objects.all(),
+        label=_('Grupo')
+    )
     class Meta:
         model = User
         fields = {
@@ -49,7 +54,7 @@ class LogEntryFilter(django_filters.FilterSet):
     )
     content_type = ModelMultipleChoiceFilter(
         queryset=ContentType.objects.all(),
-        label='Content Type'
+        # label='Content Type'
     )
     class Meta:
         model = LogEntry
@@ -57,10 +62,11 @@ class LogEntryFilter(django_filters.FilterSet):
 
 
 class EmpresaFilter(django_filters.FilterSet):
-    id = django_filters.NumberFilter(label='Id')
-    nome = django_filters.CharFilter(lookup_expr='icontains')
-    razao_social = django_filters.CharFilter(lookup_expr='icontains')
-    cnpj_base = django_filters.CharFilter(lookup_expr='icontains')
     class Meta:
         model = Empresa
-        fields = ['id', 'nome', 'razao_social', 'cnpj_base']
+        fields = ['nome', 'razao_social', 'cnpj_base']
+        fields = {
+            'nome': ['icontains'],
+            'razao_social': ['icontains'],
+            'cnpj_base': ['icontains']
+        }

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 17:20-0400\n"
+"POT-Creation-Date: 2026-02-02 15:19-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,151 +18,151 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: eru/static/js/app.js:261
+#: .\eru\static\js\app.js:261
 msgid "Tabela: Navega para próxima linha"
 msgstr ""
 
-#: eru/static/js/app.js:262
+#: .\eru\static\js\app.js:262
 msgid "Tabela: Navega para linha anterior"
 msgstr ""
 
-#: eru/static/js/app.js:263
+#: .\eru\static\js\app.js:263
 msgid "Tabela: Acessa registro em foco"
 msgstr ""
 
-#: eru/static/js/app.js:265
+#: .\eru\static\js\app.js:265
 msgid "Tabela: Exibe próxima página da tabela"
 msgstr ""
 
-#: eru/static/js/app.js:266
+#: .\eru\static\js\app.js:266
 msgid "Tabela: Exibe página anterior da tabela"
 msgstr ""
 
-#: eru/static/js/app.js:285
+#: .\eru\static\js\app.js:285
 msgid "Confirma operação"
 msgstr ""
 
-#: eru/static/js/grid.js:6
+#: .\eru\static\js\grid.js:6
 msgid "Nenhum item a exibir"
 msgstr ""
 
-#: eru/static/js/grid.js:185
+#: .\eru\static\js\grid.js:185
 msgid "Seleciona item anterior do grid"
 msgstr ""
 
-#: eru/static/js/grid.js:186
+#: .\eru\static\js\grid.js:186
 msgid "Seleciona próximo item do grid"
 msgstr ""
 
-#: eru/static/js/grid.js:187
+#: .\eru\static\js\grid.js:187
 msgid "Seleciona item abaixo do grid"
 msgstr ""
 
-#: eru/static/js/grid.js:188
+#: .\eru\static\js\grid.js:188
 msgid "Seleciona item acima do grid"
 msgstr ""
 
-#: eru/static/js/grid.js:189
+#: .\eru\static\js\grid.js:189
 msgid "Tenta acessar o item selecionado do grid"
 msgstr ""
 
-#: eru/static/js/keywatch.js:54
+#: .\eru\static\js\keywatch.js:54
 msgid "Exibe lista de atalhos disponíveis na página"
 msgstr ""
 
-#: eru/static/js/keywatch.js:63
+#: .\eru\static\js\keywatch.js:63
 msgid "Critério pesquisa"
 msgstr ""
 
-#: eru/static/js/related.js:12 eru/static/js/related.js:15
+#: .\eru\static\js\related.js:12 .\eru\static\js\related.js:15
 msgid "Nome"
 msgstr ""
 
-#: eru/static/js/related.js:87
+#: .\eru\static\js\related.js:87
 msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
 msgstr ""
 
-#: eru/static/js/related.js:88
+#: .\eru\static\js\related.js:88
 msgid "Gravar"
 msgstr ""
 
-#: eru/static/js/related.js:89
+#: .\eru\static\js\related.js:89
 msgid "Excluir"
 msgstr ""
 
-#: eru/static/js/related.js:294
+#: .\eru\static\js\related.js:294
 msgid "Voltar"
 msgstr ""
 
-#: eru/static/js/related.js:347
+#: .\eru\static\js\related.js:347
 msgid "Salva alterações"
 msgstr ""
 
-#: eru/static/js/related.js:361
+#: .\eru\static\js\related.js:361
 msgid "Exibe form para adicionar registro"
 msgstr ""
 
-#: eru/static/js/related.js:386
+#: .\eru\static\js\related.js:386
 msgid "Exibe lista de registros"
 msgstr ""
 
-#: eru/static/js/related.js:445
-msgid "Erro ao salvar registro:"
+#: .\eru\static\js\related.js:445
+msgid "Erro ao salvar registro"
 msgstr ""
 
-#: eru/static/js/related.js:447
+#: .\eru\static\js\related.js:447
 msgid "Permissão negada"
 msgstr ""
 
-#: eru/static/js/related.js:449
+#: .\eru\static\js\related.js:449
 msgid "Erro de servidor"
 msgstr ""
 
-#: eru/static/js/related.js:497
+#: .\eru\static\js\related.js:497
 msgid "Registro criado com sucesso"
 msgstr ""
 
-#: eru/static/js/related.js:541
+#: .\eru\static\js\related.js:541
 msgid "Registro alterado com sucesso"
 msgstr ""
 
-#: eru/static/js/related.js:579
+#: .\eru\static\js\related.js:579
 msgid "Registro excluído com sucesso"
 msgstr ""
 
-#: eru/static/js/selectm.js:265 eru/static/js/selectm.js:427
+#: .\eru\static\js\selectm.js:265 .\eru\static\js\selectm.js:427
 msgid "Marcar todos"
 msgstr ""
 
-#: eru/static/js/selectm.js:265 eru/static/js/selectm.js:441
+#: .\eru\static\js\selectm.js:265 .\eru\static\js\selectm.js:441
 msgid "Desmarcar todos"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:3
+#: .\eru\templates\pessoal\_form_evento_related.js:3
 msgid "Filiais"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:7
+#: .\eru\templates\pessoal\_form_evento_related.js:7
 msgid "Marca todas as empresas"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:17
+#: .\eru\templates\pessoal\_form_evento_related.js:17
 msgid "Salvar ou Validar formula"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:38
+#: .\eru\templates\pessoal\_form_evento_related.js:40
 msgid "Nome do grupo"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:51
+#: .\eru\templates\pessoal\_form_evento_related.js:53
 msgid "Validando fórmula..."
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:63
+#: .\eru\templates\pessoal\_form_evento_related.js:65
 msgid "Sintaxe é valida"
 msgstr ""
 
-#: eru/templates/pessoal/_form_evento_related.js:70
+#: .\eru\templates\pessoal\_form_evento_related.js:72
 msgid ""
 "[500] Erro no servidor, se o problema persistir, contate o administrador"
 msgstr ""

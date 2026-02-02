@@ -28,9 +28,9 @@ class EmpresaTable(TableCustomMixin, Table):
             "filiais": "d-none d-md-table-cell"
         }
     def render_filiais(self, value):
-        items = [format_html('<span class="badge bg-secondary me-1">{}</span>', f.nome) for f in value.all()[:self.max_filiais]]
+        items = [format_html('<span class="badge btn-secondary-matte me-1">{}</span>', f.nome) for f in value.all()[:self.max_filiais]]
         if value.count() > self.max_filiais:
-            items.append(mark_safe('<i class="bi bi-plus-square-fill align-middle text-body-secondary" style="font-size: 1.2em; line-height: 1;"></i>'))
+            items.append(mark_safe('<b class="badge btn-secondary-matte"><i class="bi bi-plus-lg"></i></b>'))
         return mark_safe("".join(items))
 
 class FilialTable(TableCustomMixin, Table):
@@ -69,8 +69,8 @@ class GrupoTable(TableCustomMixin, Table):
         actions = [
             {'action': 'update', 'url_name': 'grupo_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_group'},
             {
-                'url_name': 'usuario_grupo',
-                'path_params': {'pk': 'id'},
+                'url_name': 'usuario_list',
+                'query_params': {'group': 'id'},
                 'label': mark_safe('<i class="bi bi-people-fill"></i>'),
                 'class': 'btn btn-sm btn-info-matte'
             }

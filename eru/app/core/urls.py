@@ -15,7 +15,6 @@ urlpatterns = [
     *generate_urls('Grupo', views),
     *generate_urls('Empresa', views),
     *generate_urls_related('Filial', views),
-    path('usuarios_grupo/<int:pk>',views.UsuariosPorGrupoListView.as_view(),name='usuario_grupo'),
     path('settings',views.SettingsUpdateView.as_view(),name='settings'),
     path('api/filiais/', views.FilialDataView.as_view(), name='filial_list'),
 ]

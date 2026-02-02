@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load tag_extra %}
 {% load django_tables2 %}
+{% load ui_components %}
 {% block title %}Logs{% endblock %}
 
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
@@ -15,9 +16,8 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title">Logs</h5>
+    <h5 class="card-title">{% translate 'Logs' %}</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
-      
       <form id="filterForm" action="{% url 'logs' %}" method="GET" autocomplete="off">
         {% csrf_token %}
         <div class="row">
@@ -30,26 +30,26 @@
                 <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
               </div>            
               <div class="input-group me-2" role="group">
-                <span class="input-group-text fs-7">Ação</span>
+                <span class="input-group-text fs-7">{% translate 'Ação' %}</span>
                 <select name="action" id="id_action" class="form-select form-select-sm">
-                  <option value="" selected>Todas</option>
-                  <option value="0">Criar</option>
-                  <option value="1">Atualizar</option>
-                  <option value="2">Excluir</option>
+                  <option value="" selected>{% translate 'Todos' %}</option>
+                  <option value="0">{% translate 'Criar' %}</option>
+                  <option value="1">{% translate 'Atualizar' %}</option>
+                  <option value="2">{% translate 'Excluir' %}</option>
                 </select>
               </div>            
               <div class="btn-group me-2" role="group">
                 <div class="input-group">
                   <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
-                  <span class="input-group-text fs-7" >entradas</span>
+                  <span class="input-group-text fs-7" >{% translate 'entradas' %}</span>
                 </div>
               </div>
               <div class="btn-group me-2" role="group">
-                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="Usuario">
+                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="{% translate 'Usuário' %}">
               </div>
               <div class="btn-group me-2" role="group">
                 <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
-                <button type="submit" id="submit" class="btn btn-sm btn-dark border">Filtrar</button>
+                <button type="submit" id="auto_filter_form_submit" class="btn btn-sm btn-dark border">{% translate 'Filtrar' %}</button>
               </div>
               {% if table.rows|length > 0 %}
               <div class="btn-group ms-auto" role="group">
@@ -87,26 +87,26 @@
 </div>
 
 <div class="modal fade" id="detail_modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-body">
         <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
-        <h6 >Detalhes do Log</h6>
+        <h6>{% translate 'Detalhes' %}</h6>
         <hr>
-        <p><span id="log_detail_badge"></span><span >Total de</span> <b id="log_detail_counter" class="text-orange"></b> <span >campos afetados</span>.</p>
+        <p class="fw-bold text-body-secondary" id="log_detail_message"></p>
         <table class="table table-sm border table-striped">
           <thead>
             <tr>
-              <th >Campo</th>
-              <th >Antes</th>
-              <th >Depois</th>
+              <th>{% translate 'Campo' %}</th>
+              <th>{% translate 'Antes' %}</th>
+              <th>{% translate 'Depois' %}</th>
             </tr>
           </thead>
           <tbody id="log_detail_tbody"></tbody>
         </table>
       </div>
       <div class="modal-footer py-1">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" >Fechar</button>
+        {% btn_tag _('Fechar') class="btn btn-sm btn-secondary" data_bs_dismiss="modal"  %}
       </div>
     </div>
   </div>
@@ -131,7 +131,7 @@
   const modelos = new jsSelectm('#id_content_type', { sort: true })
   
   const logs_tbody = document.getElementById('log_detail_tbody');
-  const logs_counter = document.getElementById('log_detail_counter');
+  const logs_message = document.getElementById('log_detail_message');
   const detailModal = new bootstrap.Modal('#detail_modal', {})
   detailModal._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
   
@@ -149,12 +149,11 @@
         
       }
     }
-    logs_counter.innerHTML = String(Object.entries(data).length).padStart(2, '0');
+    const default_message = "{% translate 'Total de $(qtde) campos afetados'|escapejs %}.";
+    logs_message.innerHTML = default_message.replace('$(qtde)', `<span class="text-orange">${String(Object.entries(data).length).padStart(2, '0')}</span>`)
     appKeyMap.setContext('logs_modal');
     detailModal.show();
   }
-
-
   
   {% endblock %}
 </script>

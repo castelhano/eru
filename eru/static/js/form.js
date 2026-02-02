@@ -108,7 +108,7 @@ class jsForm{
         }
         const resp = {};
         Array.from(this.form.elements).forEach(el => {
-            if (!el.name || el.tagName === 'FIELDSET') return;
+            if (!el.name || el.tagName === 'FIELDSET' || (el.type === 'hidden' && el.name.startsWith('initial-'))) return;
             if (el.type === 'select-multiple') {
                 resp[el.name] = Array.from(el.selectedOptions).map(opt => opt.value);
             } 

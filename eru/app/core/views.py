@@ -214,34 +214,6 @@ class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
         })
         return context
 
-# class GrupoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
-#     model = Group
-#     template_name = 'core/grupos.html'
-#     table_class = GrupoTable
-#     permission_required = 'auth.view_group'
-#     def get_queryset(self):
-#         queryset = Group.objects.all().order_by('name')
-#         users_filter = self.request.GET.get('users')
-#         if users_filter == 'false':
-#             queryset = queryset.filter(user__isnull=True)
-#         return queryset
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['users_filter'] = self.request.GET.get('users')
-#         return context
-
-class UsuariosPorGrupoListView(LoginRequiredMixin, PermissionRequiredMixin, BaseListView):
-    model = User
-    template_name = 'core/usuarios_grupo.html'
-    context_object_name = 'usuarios'   
-    permission_required = 'auth.view_group'
-    def get_queryset(self):
-        self.grupo = get_object_or_404(Group, pk=self.kwargs.get('pk'))        
-        return User.objects.filter(groups=self.grupo).order_by('username')
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['grupo'] = self.grupo
-        return context
 
 class EmpresaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = Empresa

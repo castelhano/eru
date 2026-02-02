@@ -171,69 +171,6 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
         return cd
 
 
-
-# class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
-    # class Meta:
-    #     fields = ['evento', 'inicio', 'fim', 'valor', 'motivo']
-    #     widgets = {
-    #         'inicio': forms.DateInput(attrs={'autofocus': True}),
-    #         'evento': forms.Select(attrs={'class': 'form-select'}),
-    #         'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': _('Valor / Formula')}),
-    #         'motivo': forms.Select(attrs={'class': 'form-select'}),
-    #     }
-    # def get_context_filters(self, cleaned_data):
-    #     """
-    #     Deve ser sobrescrito pelos formularios filhos
-    #     Retorna um dicionario de filtros (Q objects ou kwargs) que definem o 'contexto' do conflito
-    #     Ex: {'filiais__id__in': [1, 2]} ou {'funcionario': obj_funcionario}
-    #     """
-    #     raise NotImplementedError("Subclasses devem implementar 'get_context_filters'")
-    # def get_model_class(self):
-    #     """
-    #     Deve ser sobrescrito pelos formularios filhos.
-    #     Retorna a classe do modelo Django associada ao formulario.
-    #     Ex: return EventoCargo
-    #     """
-    #     raise NotImplementedError("Subclasses devem implementar 'get_model_class'")
-#     def clean(self):
-#         cleaned_data = super().clean()
-#         inicio = cleaned_data.get('inicio')
-#         fim = cleaned_data.get('fim')
-#         evento_pai = cleaned_data.get('evento')
-#         # se campos criticos estiverem faltando, paramos aqui (validacao basica falhou)
-#         if not all([inicio, evento_pai]):
-#             return cleaned_data
-#         # garantir que a data de inicio nao seja posterior a data de fim, se ambas existirem
-#         if fim and inicio > fim:
-#             raise forms.ValidationError(_('Data de fim nao pode ser menor que data de inicio'))
-#         # 1. Obter os filtros de contexto especificos do formulario filho (Cargo, Funcionario, Empresa)
-#         context_filters = self.get_context_filters(cleaned_data)
-#         # 2. Obter o modelo correto para consultar (EventoCargo, EventoFuncionario, etc.)
-#         ModelClass = self.get_model_class()
-#         # Adiciona o filtro base comum a todos: mesmo tipo de evento pai
-#         base_filters = Q(evento=evento_pai)
-#         # Combina os filtros base com os filtros de contexto fornecidos pelo filho
-#         full_filters = base_filters & Q(**context_filters) if isinstance(context_filters, dict) else base_filters & context_filters
-#         # Logica de sobreposicao
-#         # q_aberto = Q(fim__isnull=True) & Q(inicio__lte=fim if fim else date.max)
-#         q_aberto = Q(fim__isnull=True) & (Q(inicio__lte=fim) if fim else Q())
-#         q_fechado = Q(
-#             fim__isnull=False,
-#             inicio__lte=fim if fim else date.max,
-#             fim__gte=inicio
-#         )
-#         conflitos_possiveis = ModelClass.objects.filter(
-#             full_filters # Aplica todos os filtros de contexto e evento
-#         ).exclude(
-#             pk=self.instance.pk # Exclui o objeto atual se for uma edicao
-#         ).filter(
-#             q_aberto | q_fechado # Aplica a logica de sobreposicao combinada
-#         )
-#         if conflitos_possiveis.exists():
-#             raise forms.ValidationError(_('Existe registro ativo no periodo informado')) 
-#         return cleaned_data
-
-
 class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoCargo
@@ -256,27 +193,6 @@ class EventoCargoForm(EventoMovimentacaoBaseForm):
         filiais = cleaned_data.get('filiais')
         return {'filiais__id__in': filiais.values_list('id', flat=True)} if filiais else {}
 
-
-# class EventoCargoForm(EventoMovimentacaoBaseForm):
-#     class Meta(EventoMovimentacaoBaseForm.Meta):
-#         model = EventoCargo
-#         fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'filiais']
-#         widgets = EventoMovimentacaoBaseForm.Meta.widgets.copy()
-#     def __init__(self, *args, user=None, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         if user:
-#             self.fields['filiais'].queryset = user.profile.filiais.all()
-#     def get_model_class(self):
-#         return EventoCargo
-#     def get_context_filters(self, cleaned_data):
-#         # Implementa o filtro especifico para Cargo: checa conflito APENAS nas filiais selecionadas
-#         filiais_qs = cleaned_data.get('filiais')
-#         if filiais_qs:
-#             filial_ids = filiais_qs.values_list('id', flat=True)
-#             # Retorna um dicionario de kwargs para o filtro Q(**kwargs)
-#             return {'filiais__id__in': filial_ids}
-#         return {} # retorna vazio se nao houver filiais (embora 'filiais' deva ser obrigatorio neste contexto)
-    
 
 class EventoFuncionarioForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):

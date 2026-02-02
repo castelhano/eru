@@ -442,7 +442,7 @@ class RelatedAddon {
         return data;
     }
     _handleError(status, resp) {
-        let message = `<b>${gettext('Erro ao salvar registro:')}</b>`;
+        let message = `<b>${gettext('Erro ao salvar registro')}:</b>`;
         if (status === 401) {
             message += `<br>${gettext('Permissão negada')}`;
         } else if (status === 500) {
