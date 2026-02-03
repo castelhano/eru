@@ -1,8 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
-{% block title %}Grupo{% endblock %}
-{% block title_i18n %}common.group{% endblock %}
-
+{% load i18n %}
+{% block title %}{% translate 'Grupo' %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -10,7 +9,7 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'grupo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'grupo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
   <form id="app_form" action="{% url 'grupo_create' %}" method="POST" autocomplete="off">
@@ -28,7 +27,7 @@
   {% block add_script %}
 
   const select = new jsSelectm('#id_permissions', {
-    title: 'Permissões',
+    title: '{% translate 'Permissões' %}',
     canFilter: true
   });
   

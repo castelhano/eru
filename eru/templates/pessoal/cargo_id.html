@@ -10,7 +10,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'pessoal:cargo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.pessoal.view_eventocargo %}
             <li class="nav-item"><a class="nav-link text-orange" id="eventos" href="{% url 'pessoal:eventorelated_list' 'cargo' cargo.id|safe %}">{% translate 'Eventos'|hl_str:'t' %}</a></li>
             {% endif %}

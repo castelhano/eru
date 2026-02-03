@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-02 15:11-0400\n"
-"PO-Revision-Date: 2026-02-02 15:11-0400\n"
+"POT-Creation-Date: 2026-02-03 11:41-0400\n"
+"PO-Revision-Date: 2026-02-03 11:46-0400\n"
 "Last-Translator:   <>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -32,7 +32,8 @@ msgstr "[401] Permission denied, please check with your system administrator"
 #: .\eru\app\core\constants.py:6
 msgid ""
 "[500] Erro de servidor, se o problema persistir, contate o administrador"
-msgstr "[500] Server error, if the problem persists, contact the administrator"
+msgstr ""
+"[500] Server error, if the problem persists, contact the administrator"
 
 #: .\eru\app\core\constants.py:7
 msgid "Registro criado com sucesso"
@@ -59,8 +60,8 @@ msgid ""
 "Os críterios de pelo menos um campo não foram atendidos, verifique os "
 "valores lançados"
 msgstr ""
-"The criteria for at least one field were not met; please check the values ​​"
-"released"
+"The criteria for at least one field were not met; please check the values "
+"​​released"
 
 #: .\eru\app\core\constants.py:13 .\eru\app\pessoal\forms.py:170
 msgid "Registro sobrepõe outras entradas existentes"
@@ -90,7 +91,12 @@ msgstr "Never logged in"
 msgid "Superusuario"
 msgstr "Superuser"
 
-#: .\eru\app\core\filters.py:36
+#: .\eru\app\core\filters.py:29 .\eru\app\pessoal\models.py:394
+#: .\eru\templates\_component\menu\core.html:11
+msgid "Grupo"
+msgstr "Group"
+
+#: .\eru\app\core\filters.py:41
 msgid "Sem usuários"
 msgstr "No users"
 
@@ -197,6 +203,7 @@ msgstr "Footer"
 
 #: .\eru\app\core\models.py:72 .\eru\app\pessoal\models.py:129
 #: .\eru\templates\_component\menu\core.html:10
+#: .\eru\templates\core\logs.html:48
 msgid "Usuário"
 msgstr "User"
 
@@ -229,8 +236,14 @@ msgstr "Back"
 #: .\eru\templates\pessoal\afastamento_id.html:43
 #: .\eru\templates\pessoal\contratos.html:94
 #: .\eru\templates\pessoal\dependente_id.html:41
+#: .\eru\templates\pessoal\setor_id.html:43
 msgid "Excluir"
 msgstr "Delete"
+
+#: .\eru\app\core\views.py:290
+#| msgid "Registro atualizado com sucesso"
+msgid "Configurações atualizadas com sucesso!"
+msgstr "Settings updated successfully!"
 
 #: .\eru\app\pessoal\filters.py:12 .\eru\app\pessoal\filters.py:130
 #: .\eru\app\pessoal\models.py:122 .\eru\templates\core\_form_filial.html:4
@@ -743,10 +756,6 @@ msgstr "Reference"
 msgid "Tipo"
 msgstr "Type"
 
-#: .\eru\app\pessoal\models.py:394 .\eru\templates\_component\menu\core.html:11
-msgid "Grupo"
-msgstr "Group"
-
 #: .\eru\app\pessoal\models.py:409
 msgid "Valor"
 msgstr "Value"
@@ -874,6 +883,54 @@ msgstr "Team Member"
 msgid "Super Usuário"
 msgstr "Super User"
 
+#: .\eru\templates\core\change_password.html:20
+#| msgid "Mostra Senha"
+msgid "Alterar Senha"
+msgstr "Change Password"
+
+#: .\eru\templates\core\change_password.html:25
+#| msgid "Senha"
+msgid "Senha atual"
+msgstr "Current password"
+
+#: .\eru\templates\core\change_password.html:31
+#| msgid "Mostra Senha"
+msgid "Nova senha"
+msgstr "New Password"
+
+#: .\eru\templates\core\change_password.html:38
+#| msgid "Confirmar"
+msgid "Confirmar senha"
+msgstr "Confirm password"
+
+#: .\eru\templates\core\change_password.html:53
+msgid "Deve conter letras"
+msgstr "Must contain letters"
+
+#: .\eru\templates\core\change_password.html:54
+#| msgid "Exigir caracteres maiusculos e minusculos"
+msgid "Deve conter maiusculas e minusculas"
+msgstr "Must contain both uppercase and lowercase letters"
+
+#: .\eru\templates\core\change_password.html:55
+msgid "Deve conter números"
+msgstr "Must contain numbers"
+
+#: .\eru\templates\core\change_password.html:56
+#| msgid "Exigir caracteres especiais na senha"
+msgid "Deve conter caracteres especiais"
+msgstr "Require special characters"
+
+#: .\eru\templates\core\change_password.html:59
+#, python-format
+msgid ""
+"\n"
+"                  Não pode coincidir com as últimas %(total)s senhas utilizadas\n"
+"                "
+msgstr ""
+"\n"
+"Cannot match the last %(total)s passwords used"
+
 #: .\eru\templates\core\filial_id.html:23
 #: .\eru\templates\core\filial_id.html:40
 #: .\eru\templates\core\usuario_id.html:17
@@ -895,6 +952,7 @@ msgstr "Super User"
 #: .\eru\templates\pessoal\motivo_reajuste_id.html:17
 #: .\eru\templates\pessoal\motivo_reajuste_id.html:34
 #: .\eru\templates\pessoal\setor_id.html:16
+#: .\eru\templates\pessoal\setor_id.html:33
 #: .\eru\templates\trafego\linha_id.html:26
 #: .\eru\templates\trafego\linha_id.html:43
 msgid "Excluir Registro"
@@ -909,6 +967,7 @@ msgstr "Delete record"
 #: .\eru\templates\pessoal\funcionario_id.html:60
 #: .\eru\templates\pessoal\grupo_evento_id.html:38
 #: .\eru\templates\pessoal\motivo_reajuste_id.html:38
+#: .\eru\templates\pessoal\setor_id.html:37
 msgid "Atenção"
 msgstr "Warning"
 
@@ -923,6 +982,7 @@ msgstr "Warning"
 #: .\eru\templates\pessoal\funcionario_id.html:60
 #: .\eru\templates\pessoal\grupo_evento_id.html:38
 #: .\eru\templates\pessoal\motivo_reajuste_id.html:38
+#: .\eru\templates\pessoal\setor_id.html:37
 msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
 msgstr "This operation cannot be undone, confirm the deletion of the record?"
 
@@ -1062,6 +1122,7 @@ msgstr "Confirm Operation"
 #: .\eru\templates\pessoal\funcionario_add.html:62
 #: .\eru\templates\pessoal\funcionario_id.html:65
 #: .\eru\templates\pessoal\funcionario_id.html:108
+#: .\eru\templates\pessoal\setor_id.html:42
 msgid "Cancelar"
 msgstr "Cancel"
 
@@ -1193,6 +1254,7 @@ msgid "Contratos"
 msgstr "Contracts"
 
 #: .\eru\templates\pessoal\dependentes.html:21
+#: .\eru\templates\pessoal\funcionario_id.html:32
 msgid "Dependentes"
 msgstr "Dependents"
 
@@ -1274,6 +1336,11 @@ msgstr "Webcam"
 #: .\eru\templates\pessoal\funcionario_id.html:107
 msgid "Concluir"
 msgstr "Finish"
+
+#: .\eru\templates\pessoal\funcionario_id.html:33
+#| msgid "Data Afastamento"
+msgid "Afastamentos"
+msgstr "Absences"
 
 #: .\eru\templates\pessoal\funcionario_id.html:35
 msgid "Desligar Funcionário"

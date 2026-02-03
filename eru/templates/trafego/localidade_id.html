@@ -9,7 +9,7 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'trafego:localidades' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.trafego.delete_localidade %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -63,7 +63,7 @@
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
-        <p><b class="text-danger">Atenção!!</b> Esta operação não pode ser desfeita, confirma a exclusão do registro?</p>
+        <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
         <div class="row mt-2">
           <div class="col text-end">
             <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>

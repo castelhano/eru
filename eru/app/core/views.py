@@ -1,6 +1,7 @@
 import os, json, math
 from asteval import Interpreter
 from django.db.models import Count
+from django.utils.translation import gettext_lazy as _
 from itertools import groupby
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -110,6 +111,12 @@ class CustomPasswordChangeView(auth_views.PasswordChangeView):
         messages.success(self.request, 'Senha alterada com sucesso!')
         update_session_auth_hash(self.request, user)
         return response
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj, created = Settings.objects.get_or_create(pk=1)
+        context['settings'] = obj
+        return context
+
 
 class HandlerView(LoginRequiredMixin, BaseTemplateView):
     def get_template_names(self):
@@ -280,8 +287,7 @@ class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdate
     form_class = SettingsForm
     template_name = 'core/settings.html'
     permission_required = 'core.view_settings'
-    context_object_name = 'settings'
-    success_message = "Configurações atualizadas com sucesso!"
+    success_message = _("Configurações atualizadas com sucesso!")
     success_url = reverse_lazy('settings')
     def get_object(self, queryset=None):
         # recuperar instancia ou cria (no primeiro uso) com valores default

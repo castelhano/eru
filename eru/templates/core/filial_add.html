@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}Filial{% endblock %}
+{% block title %}{% translate 'Filial' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/core.html" %}{% endblock%}
 
 {% block style_src %}
@@ -13,7 +13,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'empresa_update' empresa.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'empresa_update' empresa.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
     <form id="app_form" action="{% url 'filial_create' empresa.id|safe %}" method="POST" autocomplete="off" enctype="multipart/form-data" novalidate>

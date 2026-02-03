@@ -2,8 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load ui_components %}
-{% block title %}Configurações{% endblock %}
-
+{% block title %}{% translate 'Configurações' %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -11,7 +10,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'index' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'index' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
     <form id="app_form" action="{% url 'settings' %}" method="POST" autocomplete="off">

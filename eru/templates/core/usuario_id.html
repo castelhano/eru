@@ -1,7 +1,8 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}Usuario{% endblock %}
+{% load ui_components %}
+{% block title %}{% translate 'Usuário' %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -9,12 +10,12 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'usuario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'usuario_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.auth.delete_user %}
       <li class="nav-item dropdown ms-auto">
-        <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+        <a class="nav-link dropdown-toggle border text-body" id="extra" data-bs-toggle="dropdown" href="#" role="button"></a>
         <ul class="dropdown-menu">
-          <li><li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
+          <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
         </ul>
       </li>
       {% endif %}
@@ -31,7 +32,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="row">
-        <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Excluir Usuário</h5></div>
+        <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro' %}</h5></div>
         <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
       </div>
       <div class="modal-body">
@@ -40,8 +41,8 @@
           <div class="col text-end">
             <form action="{% url 'usuario_delete' usuario.id|safe %}" method="POST">
               {% csrf_token %}
-              <a class="btn btn-sm btn-secondary" data-bs-dismiss="modal" aria-label="Close">Cancelar</a>
-              <button type="submit" class="btn btn-sm btn-danger px-3">Excluir</button>
+              {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
+              {% btn_tag 'delete' %}
             </form>
           </div>
         </div>

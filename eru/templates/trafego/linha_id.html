@@ -18,7 +18,7 @@
       <li class="nav-item"><a id="tab_link_base" class="nav-link navTab active" data-seq="0" data-bs-toggle="tab" data-bs-target="#base" onclick="setTimeout(function(){document.getElementById('id_empresa').focus();},220);" href="#"><i class="bi bi-arrow-left-right"></i></a></li>
       <li class="nav-item"><a id="tab_link_extensoes" class="nav-link navTab" data-seq="1" data-bs-toggle="tab" data-bs-target="#extensoes" onclick="setTimeout(function(){document.getElementById('id_extensao_ida').focus();},220);" href="#"><i class="bi bi-rulers"></i></a></li>
       <li class="nav-item ms-1"><a id="tab_link_trajetos" class="nav-link navTab text-purple" data-seq="2" href="{% url 'trafego:trajetos' linha.id|safe %}" title="Trajetos [Ctrl + 3]"><i class="bi bi-arrow-left-right"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'trafego:linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'trafego:linhas' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.trafego.delete_linha %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
