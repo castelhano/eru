@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load ui_components %}
-{% block title %}{% translate 'Configurações' %}{% endblock %}
+{% block title %}{% translate 'Configurações'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -16,14 +16,14 @@
     <form id="app_form" action="{% url 'settings' %}" method="POST" autocomplete="off">
         {% csrf_token %}
         <div class="card-body tab-content">
-            <h5 class="card-title mb-4">{% translate 'Configurações' %}: <b class="text-orange">CORE</b></h5>
+            <h5 class="card-title mb-4">{% translate 'Configurações'|escapejs %}: <b class="text-orange">CORE</b></h5>
             <div class="tab-pane fade show active" id="base" role="tabpanel">
-                <h6 class="mt-4">{% translate 'Autentição e Senhas' %}</h6>
+                <h6 class="mt-4">{% translate 'Autentição e Senhas'|escapejs %}</h6>
                 <div class="row mb-2">
                     <div class="col-lg-auto">
                         <div class="input-group input-group-sm">
                             {{ form.quantidade_caracteres_senha }}
-                            <span class="input-group-text">{% translate 'Quantidade mínima de caracteres' %}</span>
+                            <span class="input-group-text">{% translate 'Quantidade mínima de caracteres'|escapejs %}</span>
                         </div>
                     </div>
                 </div>
@@ -31,35 +31,35 @@
                     <div class="col-lg-auto">
                         <div class="input-group input-group-sm">
                             {{ form.historico_senhas_nao_repetir }}
-                            <span class="input-group-text">{% translate 'Manter histórico últimas senhas' %}**</span>
+                            <span class="input-group-text">{% translate 'Manter histórico últimas senhas'|escapejs %}**</span>
                         </div>
-                        <small class="text-secondary">{% translate 'Usuário não poderá repetir senhas do histórico' %}</small><br>
-                        <small class="text-secondary"><i class="bi bi-info-circle me-2 text-body"></i>{% translate 'Digite 0 (zero) para desativar verificação' %}</small>
+                        <small class="text-secondary">{% translate 'Usuário não poderá repetir senhas do histórico'|escapejs %}</small><br>
+                        <small class="text-secondary"><i class="bi bi-info-circle me-2 text-body"></i>{% translate 'Digite 0 (zero) para desativar verificação'|escapejs %}</small>
                     </div>
                 </div>
                 <div class="form-check form-switch mt-3">
                     {{ form.senha_exige_alpha }}
-                    <label class="form-check-label" for="id_senha_exige_alpha">{% translate 'Exigir alpha na senha' %}</label>
+                    <label class="form-check-label" for="id_senha_exige_alpha">{% translate 'Exigir alpha na senha'|escapejs %}</label>
                 </div>
                 <div class="form-check form-switch">
                     {{ form.senha_exige_maiuscula }}
-                    <label class="form-check-label" for="id_senha_exige_maiuscula">{% translate 'Exigir caracteres maiusculos e minusculos' %}</label>
+                    <label class="form-check-label" for="id_senha_exige_maiuscula">{% translate 'Exigir caracteres maiusculos e minusculos'|escapejs %}</label>
                 </div>
                 <div class="form-check form-switch">
                     {{ form.senha_exige_numero }}
-                    <label class="form-check-label" for="id_senha_exige_numero">{% translate 'Exigir número na senha' %}</label>
+                    <label class="form-check-label" for="id_senha_exige_numero">{% translate 'Exigir número na senha'|escapejs %}</label>
                 </div>
                 <div class="form-check form-switch">
                     {{ form.senha_exige_caractere }}
-                    <label class="form-check-label" for="id_senha_exige_caractere">{% translate 'Exigir caracteres especiais na senha' %}</label>
+                    <label class="form-check-label" for="id_senha_exige_caractere">{% translate 'Exigir caracteres especiais na senha'|escapejs %}</label>
                 </div>
                 <div class="row mt-2">
                     <div class="col-lg-auto">
                         <div class="input-group input-group-sm">
                             {{ form.quantidade_tentantivas_erradas }}
-                            <span class="input-group-text">{% translate 'bloquear em tentativas erradas' %}**</span>
+                            <span class="input-group-text">{% translate 'bloquear em tentativas erradas'|escapejs %}**</span>
                         </div>
-                        <small class="text-secondary">{% translate 'Altere para 0 (zero) para desativar bloqueio' %}</small>
+                        <small class="text-secondary">{% translate 'Altere para 0 (zero) para desativar bloqueio'|escapejs %}</small>
                     </div>
                 </div>
                 

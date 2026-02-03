@@ -35,7 +35,7 @@
 <script>
   {% block add_script %}
   const form = new jsForm(document.getElementById('app_form'), {})
-  appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click()}, {'data-i18n':'traffic.route.form.mainTab', desc: 'Exibe aba com campos básicos'})
-  appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click()}, {'data-i18n':'traffic.route.form.metricsTab', desc: 'Exibe aba com métricas da linha'})
+  appKeyMap.bind('ctrl+1', ()=>{document.getElementById('tab_link_base').click()}, {desc: 'Exibe aba com campos básicos'})
+  appKeyMap.bind('ctrl+2', ()=>{document.getElementById('tab_link_extensoes').click()}, {desc: 'Exibe aba com métricas da linha'})
   {% endblock %}
 </script>

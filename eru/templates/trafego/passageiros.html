@@ -101,7 +101,7 @@
     appKeyMap.handlers.keydown.default['alt,g'][0].i18n = 'traffic.shortcuts.filterPassengersDesc';
     appKeyMap.handlers.keydown.default['alt,g'][0].desc = 'Realiza busca com filtros informados'; // Altera descricao do atalho Alt G 
   }
-  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {'data-i18n': 'traffic.shortcuts.showFilters', desc: 'Exibe/Oculta filtros da pesquisa'})
+  appKeyMap.bind('alt+;', ()=>{document.getElementById('filters_btn').click()}, {desc: 'Exibe/Oculta filtros da pesquisa'})
 
   // Move foco para layout sempre q exibido lista de filtros
   document.querySelector('.collapse').addEventListener('shown.bs.collapse', ()=>{document.getElementById('id_layout').focus()})

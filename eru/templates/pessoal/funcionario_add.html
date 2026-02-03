@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}{% translate 'Funcionário' %}{% endblock %}
+{% block title %}{% translate 'Funcionário'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
@@ -42,24 +42,24 @@
         allowMultipleUploadBatches: false,
         locale: {
             strings: {
-                "dropPasteImportFiles": "{% translate 'Arraste o arquivo aqui, %{browseFiles} ou importe de:' %}",
-                "browseFiles": "{% translate 'selecione do disco' %}",
-                "myDevice": "{% translate 'Arquivo' %}",
-                "editing": "{% translate 'Editando %{file}' %}",
-                "importFrom": "{% translate 'Importar de %{name}' %}",
-                "noCameraTitle": "{% translate 'Nenhuma câmera disponivel' %}",
-                "noCameraDescription": "{% translate 'Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera' %}",
+                "dropPasteImportFiles": "{% translate 'Arraste o arquivo aqui, %{browseFiles} ou importe de:'|escapejs %}",
+                "browseFiles": "{% translate 'selecione do disco'|escapejs %}",
+                "myDevice": "{% translate 'Arquivo'|escapejs %}",
+                "editing": "{% translate 'Editando %{file}'|escapejs %}",
+                "importFrom": "{% translate 'Importar de %{name}'|escapejs %}",
+                "noCameraTitle": "{% translate 'Nenhuma câmera disponivel'|escapejs %}",
+                "noCameraDescription": "{% translate 'Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera'|escapejs %}",
                 "xFilesSelected": {
-                    "0": "{% translate '%{smart_count} arquivo selecionado' %}"
+                    "0": "{% translate '%{smart_count} arquivo selecionado'|escapejs %}"
                 },
                 "uploadXFiles": {
-                    "0": "{% translate 'Carregar' %}"
+                    "0": "{% translate 'Carregar'|escapejs %}"
                 },
-                "takePicture": "{% translate 'Capturar Foto' %}",
-                "pluginNameCamera": "{% translate 'Webcam' %}",
-                "save": "{% translate 'Confirmar' %}",
-                "done": "{% translate 'Concluir' %}",
-                "cancel": "{% translate 'Cancelar' %}"
+                "takePicture": "{% translate 'Capturar Foto'|escapejs %}",
+                "pluginNameCamera": "{% translate 'Webcam'|escapejs %}",
+                "save": "{% translate 'Confirmar'|escapejs %}",
+                "done": "{% translate 'Concluir'|escapejs %}",
+                "cancel": "{% translate 'Cancelar'|escapejs %}"
             },
         },
         restrictions: {

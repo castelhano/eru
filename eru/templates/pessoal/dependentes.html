@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load django_tables2 %}
 {% load ui_components %}
-{% block title %}{% translate 'Dependente' %}{% endblock %}
+{% block title %}{% translate 'Dependente'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -18,7 +18,7 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Dependentes' %}</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Dependentes'|escapejs %}</span></h5>
         <h6 class="text-orange mb-0">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             {% if table.rows %}

@@ -10,7 +10,7 @@
                 data-bs-toggle="collapse" 
                 data-bs-target="#auto_filter_form_container_container">
                 <i class="bi bi-funnel-fill me-2 text-body"></i>
-                <span class="text-body-secondary" >{% translate 'Filtros' %}</span>
+                <span class="text-body-secondary" >{% translate 'Filtros'|escapejs %}</span>
             </button>
         </h2>
         <div id="auto_filter_form_container_container" class="accordion-collapse collapse{% if request.GET %} show{% endif %}" data-bs-parent="#auto_filter_form_container">

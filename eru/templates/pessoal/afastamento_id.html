@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}{% translate 'Afastamento' %}{% endblock %}
+{% block title %}{% translate 'Afastamento'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
 <div class="card mt-2">
@@ -13,7 +13,7 @@
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro'|escapejs %}</a></li>
                 </ul>
             </li>
             {% endif %}
@@ -30,17 +30,17 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>{% translate 'Excluir Registro' %}</h5></div>
+                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>{% translate 'Excluir Registro'|escapejs %}</h5></div>
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
+                <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
                 <div class="row mt-2">
                     <form action="{% url 'pessoal:afastamento_delete' afastamento.id|safe %}">
                         {% csrf_token %}
                         <div class="col text-end">
-                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">{% translate 'Cancelar' %}</a>
-                            <button type="submit" class="btn btn-danger px-3">{% translate 'Excluir' %}</button>
+                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">{% translate 'Cancelar'|escapejs %}</a>
+                            <button type="submit" class="btn btn-danger px-3">{% translate 'Excluir'|escapejs %}</button>
                         </div>
                     </form>
                 </div>

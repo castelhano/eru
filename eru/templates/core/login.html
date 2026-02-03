@@ -28,9 +28,9 @@
       {% csrf_token %}
       <img id="logo" class="mb-4" src="{% static 'img/logo-dark.png' %}" alt="" width="90" height="74">
       <div style="height: 74;"><span class="logo"></span></div>
-      <input type="text" id="id_username" name="username" class="form-control" placeholder="{% translate 'Nome de usuário' %}" required autofocus>
-      <input type="password" id="id_password" name="password" class="form-control" placeholder="{% translate 'Senha' %}">
-      <button class="w-100 btn btn-lg btn-primary" type="submit">{% translate 'Entrar' %}</button>
+      <input type="text" id="id_username" name="username" class="form-control" placeholder="{% translate 'Nome de usuário'|escapejs %}" required autofocus>
+      <input type="password" id="id_password" name="password" class="form-control" placeholder="{% translate 'Senha'|escapejs %}">
+      <button class="w-100 btn btn-lg btn-primary" type="submit">{% translate 'Entrar'|escapejs %}</button>
         {% for message in messages %}
         <div class="alert alert-{{message.tags}} alert-dismissible fade show text-start mt-1" role="alert">
           {{ message|safe }}

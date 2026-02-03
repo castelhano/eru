@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load ui_components %}
 <div class="card-body tab-content">
-    <h5 class="card-title">{% translate 'Cadastro' %}: <b class="text-purple">{% translate 'Dependente' %}</b></h5>
+    <h5 class="card-title">{% translate 'Cadastro'|escapejs %}: <b class="text-purple">{% translate 'Dependente'|escapejs %}</b></h5>
     <h6 class="text-orange mb-3">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row">

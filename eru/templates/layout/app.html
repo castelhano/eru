@@ -33,7 +33,7 @@
         const __sw = screen?.width || null;
         const __ss = __sw == null ? null : __sw >= 1400 ? 'xxl' : __sw >= 1200 ? 'xl' : __sw >= 992 ? 'lg' : __sw >= 768 ? 'md' : 'sm' ;
         {% block script_preload %}{% endblock %}
-        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> {% translate 'Essa página contém um erro, pedimos informar ao administrador' %}<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
+        window.addEventListener('error', (ev) => {appAlert('danger', `<b>Ops</b> {% translate 'Essa página contém um erro, pedimos informar ao administrador'|escapejs %}<br>mensagem: <i>${ev.message}`, {autodismiss: false})})
     </script>
 </head>
 
@@ -45,7 +45,7 @@
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title">{% translate 'Configurações' %}</h5>
+                    <h5 class="offcanvas-title">{% translate 'Configurações'|escapejs %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
                 </div>
                 <div class="row">
@@ -61,7 +61,7 @@
                         <div class="col">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
-                                <label class="form-check-label" for="themeSwitch">{% translate 'Tema escuro ' %}</label>
+                                <label class="form-check-label" for="themeSwitch">{% translate 'Tema escuro '|escapejs %}</label>
                             </div>
                         </div>
                         <div class="col-auto">
@@ -79,8 +79,8 @@
                         <form action="{% url 'logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-primary-matte me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>{% translate 'Sair'|hl_str:'q' %}</button>
-                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha' %}</a>
-                            <a href="" class="btn btn-sm btn-secondary-matte float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>{% translate 'Tarefas' %}</a>
+                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha'|escapejs %}</a>
+                            <a href="" class="btn btn-sm btn-secondary-matte float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>{% translate 'Tarefas'|escapejs %}</a>
                         </form>
                     </div>
                 </div>
@@ -142,13 +142,13 @@
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span>{% translate 'Confirma Operação' %}</span></h1>
+                    <h1 class="modal-title fs-5" id="appModalConfirm_title"><i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i><span>{% translate 'Confirma Operação'|escapejs %}</span></h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="appModalConfirm_message">{% translate 'Confirma Operação' %}?</p>
+                    <p id="appModalConfirm_message">{% translate 'Confirma Operação'|escapejs %}?</p>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% translate 'Cancelar' %}</button>
+                        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{% translate 'Cancelar'|escapejs %}</button>
                         <button id="appModalConfirm_button" class="btn btn-sm btn-primary">{% translate 'Confirmar'|hl_str:'c' %}</button>
                     </div>
                 </div>
@@ -230,13 +230,13 @@
                 case false: canvasNav.hide();break;
             }
         }
-        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {icon: 'bi bi-house-fill', desc:'{% translate 'Retorna à página inicial' %}'})
-        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {desc:'{% translate 'Retorna inicio do módulo' %}'})}
-        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'{% translate 'Novo registro' %}'})}
-        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'{% translate 'Grava alterações' %}'})}
-        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'{% translate 'Retorna origem' %}'})}
-        if(document.getElementById('extra')){appKeyMap.bind('f3', ()=>{try{document.getElementById('extra').click()}catch(e){}}, {icon: 'bi bi-three-dots-vertical', desc:'{% translate 'Exibe lista de operações para registro' %}'})}
-        if(document.getElementById('auto_filter_form_submit')){appKeyMap.bind('alt+f', ()=>{try{document.getElementById('auto_filter_form_submit').click()}catch(e){}}, {icon: 'bi bi-search', desc:'{% translate 'Aplica filtros na página' %}'})}
+        appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {icon: 'bi bi-house-fill', desc:'{% translate 'Retorna à página inicial'|escapejs %}'})
+        if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {desc:'{% translate 'Retorna inicio do módulo'|escapejs %}'})}
+        if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'{% translate 'Novo registro'|escapejs %}'})}
+        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'{% translate 'Grava alterações'|escapejs %}'})}
+        if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'{% translate 'Retorna origem'|escapejs %}'})}
+        if(document.getElementById('extra')){appKeyMap.bind('f3', ()=>{try{document.getElementById('extra').click()}catch(e){}}, {icon: 'bi bi-three-dots-vertical', desc:'{% translate 'Exibe lista de operações para registro'|escapejs %}'})}
+        if(document.getElementById('auto_filter_form_submit')){appKeyMap.bind('alt+f', ()=>{try{document.getElementById('auto_filter_form_submit').click()}catch(e){}}, {icon: 'bi bi-search', desc:'{% translate 'Aplica filtros na página'|escapejs %}'})}
         if(document.getElementById('download')){
             let descBase = '{% translate 'Baixa registro no formato {format}'|escapejs %}';
             appKeyMap.bind('alt+d', ()=>{try{document.getElementById('download').click()}catch(e){}}, {
@@ -244,13 +244,13 @@
                 desc: descBase.replace('{format}', document.getElementById('download').dataset.format)
             })
         }
-        appKeyMap.bind('alt+l', ()=>{window.location.href = "{{ request.path }}"}, {icon: 'bi bi-arrow-clockwise me-2', desc:'{% translate 'Recarregar página (limpa filtros)' %}'})
-        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate 'Abre painel lateral' %}'})
-        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {icon: 'bi bi-power', desc:'{% translate 'Encerra sessão no sistema' %}'})
+        appKeyMap.bind('alt+l', ()=>{window.location.href = "{{ request.path }}"}, {icon: 'bi bi-arrow-clockwise me-2', desc:'{% translate 'Recarregar página (limpa filtros)'|escapejs %}'})
+        appKeyMap.bind('alt+m', ()=>{canvasNav.toggle()}, {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate 'Abre painel lateral'|escapejs %}'})
+        appKeyMap.bind('alt+q', ()=>{try{document.getElementById('logout').click()}catch(e){}}, {icon: 'bi bi-power', desc:'{% translate 'Encerra sessão no sistema'|escapejs %}'})
         if(document.getElementById('auto_filter_form_container')){
             const filterCollapse = document.getElementById('auto_filter_form_container_container');
             const filterBtn = document.getElementById('auto_filter_form_btn');
-            appKeyMap.bind('f2', ()=>{filterBtn.click()}, {icon: 'bi bi-funnel-fill', desc:'{% translate 'Exibe filtros da página' %}', origin: 'app.html'})
+            appKeyMap.bind('f2', ()=>{filterBtn.click()}, {icon: 'bi bi-funnel-fill', desc:'{% translate 'Exibe filtros da página'|escapejs %}', origin: 'app.html'})
             filterCollapse.addEventListener('shown.bs.collapse', () => {
                 const firstInput = filterCollapse.querySelector('input:not([type=hidden]), select, textarea');
                 if (firstInput) { firstInput.focus() }

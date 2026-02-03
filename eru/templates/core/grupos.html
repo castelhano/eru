@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load django_tables2 %}
-{% block title %}{% translate 'Grupo' %}{% endblock %}
+{% block title %}{% translate 'Grupo'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
 
 {% block content_fluid %}
@@ -16,7 +16,7 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title">{% translate 'Grupos' %}</h5>
+    <h5 class="card-title">{% translate 'Grupos'|escapejs %}</h5>
     <div class="row">
       <div class="col-lg order-2 order-lg-1">
         <div class="tab-pane fade show active" id="base" role="tabpanel">
@@ -28,10 +28,10 @@
       </div>
       <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2" style="min-width: 200px;">
         <div class="filter-container">
-          <h6 class="text-body-secondary d-flex justify-content-between"><span >Filtros</span><a class="text-body-secondary text-decoration-none fs-8" href="{{request.path}}">{% translate 'Limpar' %}</a></h6>
+          <h6 class="text-body-secondary d-flex justify-content-between"><span >Filtros</span><a class="text-body-secondary text-decoration-none fs-8" href="{{request.path}}">{% translate 'Limpar'|escapejs %}</a></h6>
           <ul class="list-unstyled">
             <li><hr class="my-1"></li>
-            <li><span id="id_sem_associacoes" class="link pointer" onclick="urlFilter('users_isnull','true')">{% translate 'Sem usuários' %}</span></li>
+            <li><span id="id_sem_associacoes" class="link pointer" onclick="urlFilter('users_isnull','true')">{% translate 'Sem usuários'|escapejs %}</span></li>
           </ul>
         </div>
       </div>

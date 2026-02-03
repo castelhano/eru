@@ -2,7 +2,7 @@
 {% load ui_components %}
 {% load tag_extra %}
 <div class="card-body tab-content">
-    <h5 class="card-title mb-3">{% translate 'Cadastro' %}: <b class="text-purple">{% translate 'Evento' %}</b></h5>
+    <h5 class="card-title mb-3">{% translate 'Cadastro'|escapejs %}: <b class="text-purple">{% translate 'Evento'|escapejs %}</b></h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-2">
             <div class="col-lg col-lg-3">
@@ -35,11 +35,11 @@
                 </div>
             </div>
             <div class="col-lg border-start ms-lg-1">
-                <small class="d-block border-bottom mb-1 pb-1" >** {% translate 'Rastreio usado para composição de fórmulas para módulo de folha' %}</small>
+                <small class="d-block border-bottom mb-1 pb-1" >** {% translate 'Rastreio usado para composição de fórmulas para módulo de folha'|escapejs %}</small>
                 <ol class="fs-7">
-                    <li>{% translate 'Pode conter letras (maiusculas e minusculas), números e underline' %}</li>
-                    <li>{% translate 'Caracteres especiais e espaço não são permitidos' %}</li>
-                    <li>{% translate 'Máximo de 20 caracteres' %}</li>
+                    <li>{% translate 'Pode conter letras (maiusculas e minusculas), números e underline'|escapejs %}</li>
+                    <li>{% translate 'Caracteres especiais e espaço não são permitidos'|escapejs %}</li>
+                    <li>{% translate 'Máximo de 20 caracteres'|escapejs %}</li>
                 </ol>
             </div>
         </div>

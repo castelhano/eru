@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load tag_extra %}
 {% load ui_components %}
-{% block title %}{% translate 'Funcionário' %}{% endblock %}
+{% block title %}{% translate 'Funcionário'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
@@ -23,18 +23,18 @@
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" id="extra" data-bs-toggle="dropdown" href="#" role="button"></a>
                 <ul class="dropdown-menu">
-                    <li><button class="dropdown-item" type="button" id="exportCsvBtn">{% translate 'Baixar' %} CSV</button></li>
+                    <li><button class="dropdown-item" type="button" id="exportCsvBtn">{% translate 'Baixar'|escapejs %} CSV</button></li>
                     <li><hr class="dropdown-divider"></li>
-                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos' %}</a></li>{% endif %}
-                    {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos' %}</a></li>{% endif %}
-                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">{% translate 'Dependentes' %}</a></li>{% endif %}
-                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">{% translate 'Afastamentos' %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos'|escapejs %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos'|escapejs %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">{% translate 'Dependentes'|escapejs %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">{% translate 'Afastamentos'|escapejs %}</a></li>{% endif %}
                     {% if funcionario.status == 'A' %}
-                    <li><a class="dropdown-item disabled" href="#">{% translate 'Desligar Funcionário' %}</a></li>
+                    <li><a class="dropdown-item disabled" href="#">{% translate 'Desligar Funcionário'|escapejs %}</a></li>
                     {% endif %}
                     {% if perms.pessoal.delete_funcionario %}
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro' %}</a></li>
+                    <li><a class="dropdown-item dropdown-item-danger pointer" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro'|escapejs %}</a></li>
                     {% endif %}
                 </ul>
             </li>
@@ -51,11 +51,11 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro' %}</h5></div>
+                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro'|escapejs %}</h5></div>
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
+                <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'pessoal:funcionario_delete' funcionario.id|safe %}" method="POST">
@@ -86,24 +86,24 @@
         allowMultipleUploadBatches: false,
         locale: {
             strings: {
-                "dropPasteImportFiles": "{% translate 'Arraste o arquivo aqui, %{browseFiles} ou importe de:' %}",
-                "browseFiles": "{% translate 'selecione do disco' %}",
-                "myDevice": "{% translate 'Arquivo' %}",
-                "editing": "{% translate 'Editando %{file}' %}",
-                "importFrom": "{% translate 'Importar de %{name}' %}",
-                "noCameraTitle": "{% translate 'Nenhuma câmera disponivel' %}",
-                "noCameraDescription": "{% translate 'Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera' %}",
+                "dropPasteImportFiles": "{% translate 'Arraste o arquivo aqui, %{browseFiles} ou importe de:'|escapejs %}",
+                "browseFiles": "{% translate 'selecione do disco'|escapejs %}",
+                "myDevice": "{% translate 'Arquivo'|escapejs %}",
+                "editing": "{% translate 'Editando %{file}'|escapejs %}",
+                "importFrom": "{% translate 'Importar de %{name}'|escapejs %}",
+                "noCameraTitle": "{% translate 'Nenhuma câmera disponivel'|escapejs %}",
+                "noCameraDescription": "{% translate 'Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera'|escapejs %}",
                 "xFilesSelected": {
-                    "0": "{% translate '%{smart_count} arquivo selecionado' %}"
+                    "0": "{% translate '%{smart_count} arquivo selecionado'|escapejs %}"
                 },
                 "uploadXFiles": {
-                    "0": "{% translate 'Carregar' %}"
+                    "0": "{% translate 'Carregar'|escapejs %}"
                 },
-                "takePicture": "{% translate 'Capturar Foto' %}",
-                "pluginNameCamera": "{% translate 'Webcam' %}",
-                "save": "{% translate 'Confirmar' %}",
-                "done": "{% translate 'Concluir' %}",
-                "cancel": "{% translate 'Cancelar' %}"
+                "takePicture": "{% translate 'Capturar Foto'|escapejs %}",
+                "pluginNameCamera": "{% translate 'Webcam'|escapejs %}",
+                "save": "{% translate 'Confirmar'|escapejs %}",
+                "done": "{% translate 'Concluir'|escapejs %}",
+                "cancel": "{% translate 'Cancelar'|escapejs %}"
             },
         },
         restrictions: {

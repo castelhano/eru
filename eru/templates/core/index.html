@@ -21,7 +21,7 @@
 const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   items: [
-    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', desc: '{% translate 'Pessoal' %}', href: '{% url 'pessoal:funcionario_list' %}'}, {% endif %}
+    {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', desc: '{% translate 'Pessoal'|escapejs %}', href: '{% url 'pessoal:funcionario_list' %}'}, {% endif %}
   ]
 })
 

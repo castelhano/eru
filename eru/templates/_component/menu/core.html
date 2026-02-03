@@ -17,7 +17,7 @@
                 cadastro.click();
                 setTimeout(()=>{cadastro.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc: '{% translate 'Abre menu de cadastro' %}'}
+            {icon: 'bi-layout-sidebar-inset-reverse', desc: '{% translate 'Abre menu de cadastro'|escapejs %}'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -35,7 +35,7 @@
         keybind: [
             'alt+u',
             ()=>{menuSettings.click()},
-            {icon: 'bi bi-gear-fill text-purple', desc: '{% translate 'Configurações gerais do sistema' %}'}
+            {icon: 'bi bi-gear-fill text-purple', desc: '{% translate 'Configurações gerais do sistema'|escapejs %}'}
         ]
     })
     {% endif %}
@@ -50,7 +50,7 @@
         keybind: [
             'alt+o',
             ()=>{menuLogs.click()},
-            {icon: 'bi bi-database-fill-lock text-warning', desc: '{% translate 'Exibir logs' %}'}
+            {icon: 'bi bi-database-fill-lock text-warning', desc: '{% translate 'Exibir logs'|escapejs %}'}
         ]
     })
     {% endif %}

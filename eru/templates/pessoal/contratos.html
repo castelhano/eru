@@ -4,7 +4,7 @@
 {% load tag_extra %}
 {% load ui_components %}
 {% load django_tables2 %}
-{% block title %}{% translate 'Contrato' %}{% endblock %}
+{% block title %}{% translate 'Contrato'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -16,7 +16,7 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Contrato' %}</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Contrato'|escapejs %}</span></h5>
         <h6 class="text-orange mb-3"><span class="text-body" >Funcionário:</span> {{funcionario.matricula}} - {{funcionario.nome}}</h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             {% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
@@ -81,11 +81,11 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="row">
-                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro' %}</h5></div>
+                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro'|escapejs %}</h5></div>
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger">{% translate 'Atenção' %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</p>
+                <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
                         <form action="{% url 'pessoal:contrato_delete' pk_func=funcionario.id|safe pk=form.instance.id|safe %}" method="POST">

@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load ui_components %}
 <div class="card-body tab-content">
-    <h5 class="card-title mb-0">{% translate 'Cadastro' %}: <span class="text-purple">{% translate 'Filial' %}</span></h5>
+    <h5 class="card-title mb-0">{% translate 'Cadastro'|escapejs %}: <span class="text-purple">{% translate 'Filial'|escapejs %}</span></h5>
     <p>{{empresa.razao_social}}</p>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-1">
@@ -75,7 +75,7 @@
             </div>
         </div>
         <div class="row g-1">
-            <span class="ps-1 mt-2 pb-1"><b>{% translate 'Logo' %}:</b></span>
+            <span class="ps-1 mt-2 pb-1"><b>{% translate 'Logo'|escapejs %}:</b></span>
             <div class="col-md">
                 {{ form.logo }}
             </div>

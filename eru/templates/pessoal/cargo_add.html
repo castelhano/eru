@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}{% translate 'Cargo' %}{% endblock %}
+{% block title %}{% translate 'Cargo'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -29,7 +29,7 @@
     {% block add_script %}
     const form = new jsForm(document.getElementById('app_form'), {})
     const ffixa = new jsSelectm('#id_funcoes_fixas', {
-        title: '{% translate 'Função Fixa' %}',
+        title: '{% translate 'Função Fixa'|escapejs %}',
         icon: 'bi bi-diagram-3-fill',
     }); 
     {% endblock %}

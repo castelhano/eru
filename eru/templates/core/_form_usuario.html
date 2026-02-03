@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load ui_components %}
 <div class="card-body tab-content">
-  <h5 class="card-title mb-3">{% translate 'Cadastro de Usuário' %}</h5>
+  <h5 class="card-title mb-3">{% translate 'Cadastro de Usuário'|escapejs %}</h5>
   <div class="tab-pane fade show active" id="base" role="tabpanel">
     <div class="row">
       <div class="col-lg-8">
@@ -13,10 +13,10 @@
           <div class="form-floating mb-1 col-lg">
             {% if 'new' in request.get_full_path %}
             {{ form.password }}
-            <label for="id_password">{% translate 'Senha' %}</label>
+            <label for="id_password">{% translate 'Senha'|escapejs %}</label>
             {% else %}              
             <input type="password" class="form-control" name="password" id="id_password" disabled>
-            <label for="id_password" >{% translate 'Reiniciar senha' %}</label>
+            <label for="id_password" >{% translate 'Reiniciar senha'|escapejs %}</label>
             {% endif %}              
           </div>
         </div>
@@ -39,7 +39,7 @@
         <div class="accordion mt-2" id="accordion_user_profile">
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_empresas"><i class="bi bi-house-gear-fill text-body-secondary me-2"></i>{% translate 'Empresas' %}</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_empresas"><i class="bi bi-house-gear-fill text-body-secondary me-2"></i>{% translate 'Empresas'|escapejs %}</button>
             </h2>
             <div id="accordion_empresas" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
@@ -52,7 +52,7 @@
           {% if not usuario.is_superuser %}
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_grupos"><i class="bi bi-person-video2 text-body-secondary me-2"></i>{% translate 'Grupos' %}</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_grupos"><i class="bi bi-person-video2 text-body-secondary me-2"></i>{% translate 'Grupos'|escapejs %}</button>
             </h2>
             <div id="accordion_grupos" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
@@ -66,7 +66,7 @@
           </div>
           <div class="accordion-item">
             <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_permittions"><i class="bi bi-person-fill-lock text-body-secondary me-2"></i>{% translate 'Permissões' %}</button>
+              <button class="accordion-button collapsed bg-body-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#accordion_permittions"><i class="bi bi-person-fill-lock text-body-secondary me-2"></i>{% translate 'Permissões'|escapejs %}</button>
             </h2>
             <div id="accordion_permittions" class="accordion-collapse collapse" data-bs-parent="#accordion_user_profile">
               <div class="accordion-body">
@@ -85,29 +85,29 @@
         {% if 'update' in request.get_full_path %}
         <div class="form-check form-switch mt-2 mt-lg-1">
           <input type="checkbox" class="form-check-input" id="resetar_senha" name="" value="" onclick="resetPassword();">
-          <label class="form-check-label" for="resetar_senha">{% translate 'Reiniciar senha' %}</label>
+          <label class="form-check-label" for="resetar_senha">{% translate 'Reiniciar senha'|escapejs %}</label>
         </div>
         {% endif %}
         <div class="form-check form-switch mt-1">
           <input type="checkbox" class="form-check-input" id="mostrar_senha" name="" value="" onclick="switchSenha();">
-          <label class="form-check-label" for="mostrar_senha">{% translate 'Mostra Senha' %}</label>
+          <label class="form-check-label" for="mostrar_senha">{% translate 'Mostra Senha'|escapejs %}</label>
         </div>
         <div class="form-check form-switch mt-1">
           {{form.is_active}}
-          <label class="form-check-label" for="id_is_active">{% translate 'Ativo' %}</label>
+          <label class="form-check-label" for="id_is_active">{% translate 'Ativo'|escapejs %}</label>
         </div>
         <div class="form-check form-switch">
           {{form.is_staff}}
-          <label class="form-check-label" for="id_is_staff">{% translate 'Membro de Equipe' %}</label>
+          <label class="form-check-label" for="id_is_staff">{% translate 'Membro de Equipe'|escapejs %}</label>
         </div>
         <div class="form-check form-switch">
           {{form.is_superuser}}
-          <label class="form-check-label text-danger" for="id_is_superuser">{% translate 'Super Usuário' %}</label>
+          <label class="form-check-label text-danger" for="id_is_superuser">{% translate 'Super Usuário'|escapejs %}</label>
         </div>
         <hr />
         <div class="form-check form-switch{% if not 'update' in request.get_full_path %} d-none{% endif %}">
           <input type="checkbox" class="form-check-input" name="force_password_change" id="id_force_password_change"{% if not usuario or usuario.profile.force_password_change %} checked{% endif %}>
-          <label class="form-check-label" for="id_force_password_change">{% translate 'Forçar troca de senha' %}</label>
+          <label class="form-check-label" for="id_force_password_change">{% translate 'Forçar troca de senha'|escapejs %}</label>
         </div>
       </div>
     </div>

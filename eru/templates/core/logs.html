@@ -15,7 +15,7 @@
     </ul>
   </div>
   <div class="card-body tab-content">
-    <h5 class="card-title">{% translate 'Logs' %}</h5>
+    <h5 class="card-title">{% translate 'Logs'|escapejs %}</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
       <form id="filterForm" action="{% url 'logs' %}" method="GET" autocomplete="off">
         {% csrf_token %}
@@ -29,33 +29,33 @@
                 <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
               </div>            
               <div class="input-group me-2" role="group">
-                <span class="input-group-text fs-7">{% translate 'Ação' %}</span>
+                <span class="input-group-text fs-7">{% translate 'Ação'|escapejs %}</span>
                 <select name="action" id="id_action" class="form-select form-select-sm">
-                  <option value="" selected>{% translate 'Todos' %}</option>
-                  <option value="0">{% translate 'Criar' %}</option>
-                  <option value="1">{% translate 'Atualizar' %}</option>
-                  <option value="2">{% translate 'Excluir' %}</option>
+                  <option value="" selected>{% translate 'Todos'|escapejs %}</option>
+                  <option value="0">{% translate 'Criar'|escapejs %}</option>
+                  <option value="1">{% translate 'Atualizar'|escapejs %}</option>
+                  <option value="2">{% translate 'Excluir'|escapejs %}</option>
                 </select>
               </div>            
               <div class="btn-group me-2" role="group">
                 <div class="input-group">
                   <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
-                  <span class="input-group-text fs-7" >{% translate 'entradas' %}</span>
+                  <span class="input-group-text fs-7" >{% translate 'entradas'|escapejs %}</span>
                 </div>
               </div>
               <div class="btn-group me-2" role="group">
-                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="{% translate 'Usuário' %}">
+                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="{% translate 'Usuário'|escapejs %}">
               </div>
               <div class="btn-group me-2" role="group">
                 <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
-                <button type="submit" id="auto_filter_form_submit" class="btn btn-sm btn-dark border">{% translate 'Filtrar' %}</button>
+                <button type="submit" id="auto_filter_form_submit" class="btn btn-sm btn-dark border">{% translate 'Filtrar'|escapejs %}</button>
               </div>
               {% if table.rows|length > 0 %}
               <div class="btn-group ms-auto" role="group">
                 <button type="button" class="btn btn-sm btn-dark border" disabled>{{ table.rows|length }}</button>
                 <button  class="btn btn-sm btn-dark border dropdown-toggle" data-bs-toggle="dropdown"></button>
                 <ul class="dropdown-menu">
-                  <li><button class="dropdown-item fs-7" id="download" type="submit" name="_export" value="csv" data-format="CSV"><i class="bi bi-download me-2"></i>{% translate 'Baixar' %} CSV</button></li>
+                  <li><button class="dropdown-item fs-7" id="download" type="submit" name="_export" value="csv" data-format="CSV"><i class="bi bi-download me-2"></i>{% translate 'Baixar'|escapejs %} CSV</button></li>
                 </ul>
               </div>
               {% endif %}
@@ -90,15 +90,15 @@
     <div class="modal-content">
       <div class="modal-body">
         <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
-        <h6>{% translate 'Detalhes' %}</h6>
+        <h6>{% translate 'Detalhes'|escapejs %}</h6>
         <hr>
         <p class="fw-bold text-body-secondary" id="log_detail_message"></p>
         <table class="table table-sm border table-striped">
           <thead>
             <tr>
-              <th>{% translate 'Campo' %}</th>
-              <th>{% translate 'Antes' %}</th>
-              <th>{% translate 'Depois' %}</th>
+              <th>{% translate 'Campo'|escapejs %}</th>
+              <th>{% translate 'Antes'|escapejs %}</th>
+              <th>{% translate 'Depois'|escapejs %}</th>
             </tr>
           </thead>
           <tbody id="log_detail_tbody"></tbody>

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load ui_components %}
 <div class="card-body">
-    <h5 class="card-title mb-3">{% translate 'Cadastro de Funcionário' %}</h5>
+    <h5 class="card-title mb-3">{% translate 'Cadastro de Funcionário'|escapejs %}</h5>
     <div class="row g-lg-3">
         <div class="col-lg-auto bg-dark-light bg-gradient rounded p-2 widget-thumb-container">
             {% if funcionario.foto %}
@@ -118,7 +118,7 @@
                     <input type="file" name="foto" id="id_foto" style="display:none">
                     <div class="form-check form-switch mt-2">
                         {{form.pne}}
-                        <label class="form-check-label" for="id_pne" >{% translate 'PNE Portador de necessidades especiais' %}</label>
+                        <label class="form-check-label" for="id_pne" >{% translate 'PNE Portador de necessidades especiais'|escapejs %}</label>
                     </div>
                 </div>
                 <div class="tab-pane fade" id="documents" role="tabpanel">
@@ -256,10 +256,10 @@
     function _formRun(){
         const cpf = IMask(document.getElementById('id_cpf'), {mask: '000.000.000-00'})
         const cnh = IMask(document.getElementById('id_cnh'), {mask: '000.000.000-00'})
-        appKeyMap.bind('alt+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabBase', desc: '{% translate 'Exibe aba de campos básicos' %}', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDocs', desc: '{% translate 'Exibe aba de documentos' %}', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabAddress', desc: '{% translate 'Exibe aba de endereço e contato' %}', origin: 'pessoal:_form_funcionario'})
-        appKeyMap.bind('alt+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', 'data-i18n':'personal.employee.form.tabDetail', desc: '{% translate 'Exibe aba de detalhes' %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+1',()=>{document.getElementById('menu_funcionario_basico').click()}, {icon: 'bi bi-palette2 text-purple', desc: '{% translate 'Exibe aba de campos básicos'|escapejs %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+2',()=>{document.getElementById('menu_funcionario_docs').click()}, {icon: 'bi bi-palette2 text-purple', desc: '{% translate 'Exibe aba de documentos'|escapejs %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+3',()=>{document.getElementById('menu_funcionario_contato').click()}, {icon: 'bi bi-palette2 text-purple', desc: '{% translate 'Exibe aba de endereço e contato'|escapejs %}', origin: 'pessoal:_form_funcionario'})
+        appKeyMap.bind('alt+4',()=>{document.getElementById('menu_funcionario_detalhe').click()}, {icon: 'bi bi-palette2 text-purple', desc: '{% translate 'Exibe aba de detalhes'|escapejs %}', origin: 'pessoal:_form_funcionario'})
         return [cpf, cnh]
     }
 </script>

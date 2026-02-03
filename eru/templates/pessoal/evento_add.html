@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}{% translate 'Evento' %}{% endblock %}
+{% block title %}{% translate 'Evento'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -45,9 +45,9 @@ const form = new jsForm(document.getElementById('app_form'), {
 
 {% if perms.pessoal.add_grupoevento %}
 const grupoRelated = new RelatedAddon('#id_grupo', {
-    title: '{% translate 'Grupo Evento' %}',
+    title: '{% translate 'Grupo Evento'|escapejs %}',
     labels: {
-        nome: '{% translate 'Nome do grupo' %}'
+        nome: '{% translate 'Nome do grupo'|escapejs %}'
     },
     url: {
         related: {
