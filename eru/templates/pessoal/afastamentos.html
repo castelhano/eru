@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load django_tables2 %}
-{% block title %}Afastamentos{% endblock %}
+{% block title %}{% translate 'Afastamento' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block content_fluid %}
@@ -17,7 +17,7 @@
         </ul>
     </div>
     <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple" >Afastamentos</span></h5>
+        <h5 class="card-title">{% translate 'Pessoal' %}: <span class="text-purple">{% translate 'Afastamentos' %}</span></h5>
         <h6 class="text-orange mb-3">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
             {{ table.render_filter|safe }}

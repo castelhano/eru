@@ -1,7 +1,6 @@
 {% extends "layout/app.html" %}
-{% load static %}
-{% load i18n %}
-{% block title %}Setor{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate 'Setor' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
 <div class="card mt-2">
@@ -39,8 +38,8 @@
                     <div class="col text-end">
                         <form action="{% url 'pessoal:setor_delete' setor.id|safe %}" method="POST">
                             {% csrf_token %}
-                            <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">{% translate 'Cancelar' %}</a>
-                            <button class="btn btn-danger px-3" type="submit">{% translate 'Excluir' %}</button>
+                            {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
+                            {% btn_tag 'delete' %}
                         </form>
                     </div>
                 </div>

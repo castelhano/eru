@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load ui_components %}
-{% block title %}Evento{% endblock %}
+{% block title %}{% translate 'Evento' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 {% block content_fluid %}
 <div class="card mt-2">
@@ -76,7 +76,7 @@ const form = new jsForm(document.getElementById('app_form'), {
 })
 {% if perms.pessoal.add_grupoevento %}
 const grupoRelated = new RelatedAddon('#id_grupo', {
-    title: '{% translate 'Grupo de Evento' %}',
+    title: '{% translate 'Grupo Evento' %}',
     labels: {
         nome: '{% translate 'Nome do grupo' %}'
     },

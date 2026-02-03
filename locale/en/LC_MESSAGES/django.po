@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-03 11:41-0400\n"
-"PO-Revision-Date: 2026-02-03 11:46-0400\n"
+"POT-Creation-Date: 2026-02-03 15:33-0400\n"
+"PO-Revision-Date: 2026-02-03 15:33-0400\n"
 "Last-Translator:   <>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -32,8 +32,7 @@ msgstr "[401] Permission denied, please check with your system administrator"
 #: .\eru\app\core\constants.py:6
 msgid ""
 "[500] Erro de servidor, se o problema persistir, contate o administrador"
-msgstr ""
-"[500] Server error, if the problem persists, contact the administrator"
+msgstr "[500] Server error, if the problem persists, contact the administrator"
 
 #: .\eru\app\core\constants.py:7
 msgid "Registro criado com sucesso"
@@ -60,8 +59,8 @@ msgid ""
 "Os críterios de pelo menos um campo não foram atendidos, verifique os "
 "valores lançados"
 msgstr ""
-"The criteria for at least one field were not met; please check the values "
-"​​released"
+"The criteria for at least one field were not met; please check the values ​​"
+"released"
 
 #: .\eru\app\core\constants.py:13 .\eru\app\pessoal\forms.py:170
 msgid "Registro sobrepõe outras entradas existentes"
@@ -87,16 +86,18 @@ msgstr "Last login"
 msgid "Nunca logado"
 msgstr "Never logged in"
 
-#: .\eru\app\core\filters.py:24
+#: .\eru\app\core\filters.py:24 .\eru\templates\core\usuarios.html:36
 msgid "Superusuario"
 msgstr "Superuser"
 
 #: .\eru\app\core\filters.py:29 .\eru\app\pessoal\models.py:394
 #: .\eru\templates\_component\menu\core.html:11
+#: .\eru\templates\core\grupo_add.html:4 .\eru\templates\core\grupo_id.html:5
+#: .\eru\templates\core\grupos.html:5
 msgid "Grupo"
 msgstr "Group"
 
-#: .\eru\app\core\filters.py:41
+#: .\eru\app\core\filters.py:41 .\eru\templates\core\grupos.html:34
 msgid "Sem usuários"
 msgstr "No users"
 
@@ -134,6 +135,8 @@ msgstr "Base Cnpj"
 #: .\eru\app\pessoal\tables.py:10 .\eru\app\pessoal\views.py:211
 #: .\eru\templates\_component\menu\core.html:9
 #: .\eru\templates\core\_form_empresa.html:5
+#: .\eru\templates\core\empresa_add.html:4
+#: .\eru\templates\core\empresa_id.html:5 .\eru\templates\core\empresas.html:5
 msgid "Empresa"
 msgstr "Company"
 
@@ -203,7 +206,8 @@ msgstr "Footer"
 
 #: .\eru\app\core\models.py:72 .\eru\app\pessoal\models.py:129
 #: .\eru\templates\_component\menu\core.html:10
-#: .\eru\templates\core\logs.html:48
+#: .\eru\templates\core\logs.html:47 .\eru\templates\core\usuario_add.html:4
+#: .\eru\templates\core\usuario_id.html:5 .\eru\templates\core\usuarios.html:5
 msgid "Usuário"
 msgstr "User"
 
@@ -218,7 +222,8 @@ msgid "Forçar troca de senha"
 msgstr "Force password change"
 
 #: .\eru\app\core\models.py:75 .\eru\templates\_component\menu\core.html:30
-#: .\eru\templates\core\settings.html:20 .\eru\templates\layout\app.html:48
+#: .\eru\templates\core\settings.html:5 .\eru\templates\core\settings.html:19
+#: .\eru\templates\layout\app.html:48
 msgid "Configurações"
 msgstr "Settings"
 
@@ -232,21 +237,19 @@ msgid "Voltar"
 msgstr "Back"
 
 #: .\eru\app\core\templatetags\ui_components.py:22
-#: .\eru\templates\core\logs.html:38
+#: .\eru\templates\core\logs.html:37
 #: .\eru\templates\pessoal\afastamento_id.html:43
-#: .\eru\templates\pessoal\contratos.html:94
-#: .\eru\templates\pessoal\dependente_id.html:41
-#: .\eru\templates\pessoal\setor_id.html:43
 msgid "Excluir"
 msgstr "Delete"
 
 #: .\eru\app\core\views.py:290
-#| msgid "Registro atualizado com sucesso"
 msgid "Configurações atualizadas com sucesso!"
 msgstr "Settings updated successfully!"
 
 #: .\eru\app\pessoal\filters.py:12 .\eru\app\pessoal\filters.py:130
 #: .\eru\app\pessoal\models.py:122 .\eru\templates\core\_form_filial.html:4
+#: .\eru\templates\core\empresa_id.html:14
+#: .\eru\templates\core\filial_add.html:4 .\eru\templates\core\filial_id.html:5
 msgid "Filial"
 msgstr "Branch"
 
@@ -254,7 +257,10 @@ msgstr "Branch"
 #: .\eru\app\pessoal\models.py:98
 #: .\eru\templates\_component\menu\pessoal.html:9
 #: .\eru\templates\pessoal\_form_setor.html:4
-#: .\eru\templates\pessoal\setores.html:19
+#: .\eru\templates\pessoal\setor_add.html:3
+#: .\eru\templates\pessoal\setor_id.html:3
+#: .\eru\templates\pessoal\setores.html:3
+#: .\eru\templates\pessoal\setores.html:17
 msgid "Setor"
 msgstr "Sector"
 
@@ -264,7 +270,10 @@ msgstr "Sector"
 #: .\eru\templates\_component\menu\pessoal.html:10
 #: .\eru\templates\pessoal\_form_afastamento.html:4
 #: .\eru\templates\pessoal\_form_cargo.html:4
-#: .\eru\templates\pessoal\cargos.html:19
+#: .\eru\templates\pessoal\_form_evento_related.html:10
+#: .\eru\templates\pessoal\cargo_add.html:4
+#: .\eru\templates\pessoal\cargo_id.html:6
+#: .\eru\templates\pessoal\cargos.html:5 .\eru\templates\pessoal\cargos.html:19
 #: .\eru\templates\pessoal\eventos_related.html:33
 msgid "Cargo"
 msgstr "Position"
@@ -301,7 +310,13 @@ msgstr "Returns until"
 #: .\eru\templates\_component\menu\pessoal.html:32
 #: .\eru\templates\pessoal\_form_evento.html:5
 #: .\eru\templates\pessoal\_form_evento_related.html:5
+#: .\eru\templates\pessoal\evento_add.html:4
+#: .\eru\templates\pessoal\evento_id.html:5
+#: .\eru\templates\pessoal\evento_related_add.html:4
+#: .\eru\templates\pessoal\evento_related_id.html:6
+#: .\eru\templates\pessoal\eventos.html:5
 #: .\eru\templates\pessoal\eventos.html:19
+#: .\eru\templates\pessoal\eventos_related.html:3
 msgid "Evento"
 msgstr "Event"
 
@@ -319,7 +334,7 @@ msgstr "Start"
 msgid "Fim"
 msgstr "End"
 
-#: .\eru\app\pessoal\forms.py:53 .\eru\templates\core\logs.html:94
+#: .\eru\app\pessoal\forms.py:53 .\eru\templates\core\logs.html:93
 msgid "Detalhes"
 msgstr "Details"
 
@@ -591,6 +606,10 @@ msgstr "Monthly"
 #: .\eru\app\pessoal\models.py:361 .\eru\app\pessoal\models.py:450
 #: .\eru\app\pessoal\views.py:213
 #: .\eru\templates\_component\menu\pessoal.html:8
+#: .\eru\templates\pessoal\_form_evento_related.html:12
+#: .\eru\templates\pessoal\funcionario_add.html:4
+#: .\eru\templates\pessoal\funcionario_id.html:6
+#: .\eru\templates\pessoal\funcionarios.html:5
 msgid "Funcionário"
 msgstr "Employee"
 
@@ -639,7 +658,8 @@ msgstr ""
 "The position %(posicao)s exceeds the limit of %(limite)s days defined for "
 "this shift"
 
-#: .\eru\app\pessoal\models.py:276 .\eru\templates\pessoal\contratos.html:19
+#: .\eru\app\pessoal\models.py:276 .\eru\templates\pessoal\contratos.html:7
+#: .\eru\templates\pessoal\contratos.html:19
 msgid "Contrato"
 msgstr "Contract"
 
@@ -764,7 +784,7 @@ msgstr "Value"
 msgid "Existe registro ativo no periodo informado"
 msgstr "There is an active record in the specified period."
 
-#: .\eru\app\pessoal\tables.py:67
+#: .\eru\app\pessoal\tables.py:67 .\eru\templates\core\usuarios.html:34
 msgid "Ativos"
 msgstr "Active"
 
@@ -797,7 +817,7 @@ msgid "Configurações gerais do sistema"
 msgstr "General system settings"
 
 #: .\eru\templates\_component\menu\core.html:45
-#: .\eru\templates\core\logs.html:19
+#: .\eru\templates\core\logs.html:18
 msgid "Logs"
 msgstr "Logs"
 
@@ -808,22 +828,29 @@ msgstr "Show Logs"
 #: .\eru\templates\_component\menu\pessoal.html:29
 #: .\eru\templates\pessoal\cargo_id.html:15
 #: .\eru\templates\pessoal\eventos_related.html:26
-#: .\eru\templates\pessoal\funcionario_id.html:30
+#: .\eru\templates\pessoal\funcionario_id.html:28
 msgid "Eventos"
 msgstr "Events"
 
 #: .\eru\templates\_component\menu\pessoal.html:33
 #: .\eru\templates\pessoal\_form_grupo_evento.html:4
+#: .\eru\templates\pessoal\evento_add.html:48
+#: .\eru\templates\pessoal\evento_id.html:79
+#: .\eru\templates\pessoal\grupo_evento_add.html:3
+#: .\eru\templates\pessoal\grupos_evento.html:17
 msgid "Grupo Evento"
 msgstr "Event Group"
 
 #: .\eru\templates\_component\menu\pessoal.html:34
 #: .\eru\templates\pessoal\_form_motivo_reajuste.html:4
-#: .\eru\templates\pessoal\motivos_reajuste.html:19
+#: .\eru\templates\pessoal\motivo_reajuste_add.html:3
+#: .\eru\templates\pessoal\motivos_reajuste.html:3
+#: .\eru\templates\pessoal\motivos_reajuste.html:17
 msgid "Motivo reajuste"
 msgstr "Reason for readjustment"
 
 #: .\eru\templates\_component\menu\pessoal.html:37
+#: .\eru\templates\pessoal\_form_evento_related.html:8
 #: .\eru\templates\pessoal\eventos_related.html:29
 msgid "Eventos Globais"
 msgstr "Global Events"
@@ -833,6 +860,7 @@ msgid "Abre menu de Ferramentas"
 msgstr "Open tools menu"
 
 #: .\eru\templates\_tables\auto_filter_form.html:13
+#: .\eru\templates\core\usuarios.html:32
 msgid "Filtros"
 msgstr "Filters"
 
@@ -849,7 +877,8 @@ msgid "Cadastro de Usuário"
 msgstr "User Register"
 
 #: .\eru\templates\core\_form_usuario.html:16
-#: .\eru\templates\layout\app.html:82
+#: .\eru\templates\core\change_password.html:5
+#: .\eru\templates\core\login.html:32 .\eru\templates\layout\app.html:82
 msgid "Senha"
 msgstr "Password"
 
@@ -859,15 +888,17 @@ msgid "Reiniciar senha"
 msgstr "Password reset"
 
 #: .\eru\templates\core\_form_usuario.html:42
-#: .\eru\templates\core\empresas.html:5 .\eru\templates\core\empresas.html:21
+#: .\eru\templates\core\empresas.html:21
 msgid "Empresas"
 msgstr "Companies"
 
 #: .\eru\templates\core\_form_usuario.html:55
+#: .\eru\templates\core\grupos.html:19
 msgid "Grupos"
 msgstr "Groups"
 
 #: .\eru\templates\core\_form_usuario.html:69
+#: .\eru\templates\core\grupo_add.html:30 .\eru\templates\core\grupo_id.html:62
 msgid "Permissões"
 msgstr "Permittions"
 
@@ -876,6 +907,7 @@ msgid "Mostra Senha"
 msgstr "Show Password"
 
 #: .\eru\templates\core\_form_usuario.html:101
+#: .\eru\templates\core\usuarios.html:37
 msgid "Membro de Equipe"
 msgstr "Team Member"
 
@@ -884,22 +916,18 @@ msgid "Super Usuário"
 msgstr "Super User"
 
 #: .\eru\templates\core\change_password.html:20
-#| msgid "Mostra Senha"
 msgid "Alterar Senha"
 msgstr "Change Password"
 
 #: .\eru\templates\core\change_password.html:25
-#| msgid "Senha"
 msgid "Senha atual"
 msgstr "Current password"
 
 #: .\eru\templates\core\change_password.html:31
-#| msgid "Mostra Senha"
 msgid "Nova senha"
 msgstr "New Password"
 
 #: .\eru\templates\core\change_password.html:38
-#| msgid "Confirmar"
 msgid "Confirmar senha"
 msgstr "Confirm password"
 
@@ -908,7 +936,6 @@ msgid "Deve conter letras"
 msgstr "Must contain letters"
 
 #: .\eru\templates\core\change_password.html:54
-#| msgid "Exigir caracteres maiusculos e minusculos"
 msgid "Deve conter maiusculas e minusculas"
 msgstr "Must contain both uppercase and lowercase letters"
 
@@ -917,7 +944,6 @@ msgid "Deve conter números"
 msgstr "Must contain numbers"
 
 #: .\eru\templates\core\change_password.html:56
-#| msgid "Exigir caracteres especiais na senha"
 msgid "Deve conter caracteres especiais"
 msgstr "Require special characters"
 
@@ -925,15 +951,28 @@ msgstr "Require special characters"
 #, python-format
 msgid ""
 "\n"
-"                  Não pode coincidir com as últimas %(total)s senhas utilizadas\n"
+"                  Não pode coincidir com as últimas %(total)s senhas "
+"utilizadas\n"
 "                "
 msgstr ""
 "\n"
 "Cannot match the last %(total)s passwords used"
 
+#: .\eru\templates\core\change_password.html:76
+msgid "Exibe aba de troca de senha"
+msgstr "Show change password tab"
+
+#: .\eru\templates\core\change_password.html:77
+msgid "Exibe aba de ajuda"
+msgstr "Show help tab"
+
+#: .\eru\templates\core\empresa_id.html:21
+#: .\eru\templates\core\empresa_id.html:38
 #: .\eru\templates\core\filial_id.html:23
-#: .\eru\templates\core\filial_id.html:40
-#: .\eru\templates\core\usuario_id.html:17
+#: .\eru\templates\core\filial_id.html:40 .\eru\templates\core\grupo_id.html:18
+#: .\eru\templates\core\grupo_id.html:35
+#: .\eru\templates\core\usuario_id.html:18
+#: .\eru\templates\core\usuario_id.html:35
 #: .\eru\templates\pessoal\afastamento_id.html:16
 #: .\eru\templates\pessoal\afastamento_id.html:33
 #: .\eru\templates\pessoal\cargo_id.html:21
@@ -945,46 +984,71 @@ msgstr ""
 #: .\eru\templates\pessoal\evento_id.html:34
 #: .\eru\templates\pessoal\evento_related_id.html:20
 #: .\eru\templates\pessoal\evento_related_id.html:38
-#: .\eru\templates\pessoal\funcionario_id.html:39
-#: .\eru\templates\pessoal\funcionario_id.html:56
-#: .\eru\templates\pessoal\grupo_evento_id.html:17
-#: .\eru\templates\pessoal\grupo_evento_id.html:34
-#: .\eru\templates\pessoal\motivo_reajuste_id.html:17
-#: .\eru\templates\pessoal\motivo_reajuste_id.html:34
-#: .\eru\templates\pessoal\setor_id.html:16
-#: .\eru\templates\pessoal\setor_id.html:33
+#: .\eru\templates\pessoal\funcionario_id.html:37
+#: .\eru\templates\pessoal\funcionario_id.html:54
+#: .\eru\templates\pessoal\grupo_evento_id.html:15
+#: .\eru\templates\pessoal\grupo_evento_id.html:32
+#: .\eru\templates\pessoal\motivo_reajuste_id.html:15
+#: .\eru\templates\pessoal\motivo_reajuste_id.html:32
+#: .\eru\templates\pessoal\setor_id.html:15
+#: .\eru\templates\pessoal\setor_id.html:32
 #: .\eru\templates\trafego\linha_id.html:26
 #: .\eru\templates\trafego\linha_id.html:43
 msgid "Excluir Registro"
 msgstr "Delete record"
 
-#: .\eru\templates\core\filial_id.html:44
-#: .\eru\templates\core\usuario_id.html:38
+#: .\eru\templates\core\empresa_id.html:42
+#: .\eru\templates\core\filial_id.html:44 .\eru\templates\core\grupo_id.html:39
+#: .\eru\templates\core\usuario_id.html:39
 #: .\eru\templates\pessoal\afastamento_id.html:37
 #: .\eru\templates\pessoal\contratos.html:88
+#: .\eru\templates\pessoal\dependente_id.html:37
 #: .\eru\templates\pessoal\evento_id.html:38
 #: .\eru\templates\pessoal\evento_related_id.html:42
-#: .\eru\templates\pessoal\funcionario_id.html:60
-#: .\eru\templates\pessoal\grupo_evento_id.html:38
-#: .\eru\templates\pessoal\motivo_reajuste_id.html:38
-#: .\eru\templates\pessoal\setor_id.html:37
+#: .\eru\templates\pessoal\funcionario_id.html:58
+#: .\eru\templates\pessoal\grupo_evento_id.html:36
+#: .\eru\templates\pessoal\motivo_reajuste_id.html:36
+#: .\eru\templates\pessoal\setor_id.html:36
+#: .\eru\templates\trafego\_modais_planejamento.html:58
+#: .\eru\templates\trafego\localidade_id.html:66
 msgid "Atenção"
 msgstr "Warning"
 
-#: .\eru\templates\core\filial_id.html:44
-#: .\eru\templates\core\usuario_id.html:38
+#: .\eru\templates\core\empresa_id.html:42
+#: .\eru\templates\core\filial_id.html:44 .\eru\templates\core\grupo_id.html:39
+#: .\eru\templates\core\usuario_id.html:39
 #: .\eru\templates\pessoal\afastamento_id.html:37
 #: .\eru\templates\pessoal\cargo_id.html:42
 #: .\eru\templates\pessoal\contratos.html:88
 #: .\eru\templates\pessoal\dependente_id.html:37
 #: .\eru\templates\pessoal\evento_id.html:38
 #: .\eru\templates\pessoal\evento_related_id.html:42
-#: .\eru\templates\pessoal\funcionario_id.html:60
-#: .\eru\templates\pessoal\grupo_evento_id.html:38
-#: .\eru\templates\pessoal\motivo_reajuste_id.html:38
-#: .\eru\templates\pessoal\setor_id.html:37
+#: .\eru\templates\pessoal\funcionario_id.html:58
+#: .\eru\templates\pessoal\grupo_evento_id.html:36
+#: .\eru\templates\pessoal\motivo_reajuste_id.html:36
+#: .\eru\templates\pessoal\setor_id.html:36
+#: .\eru\templates\trafego\_modais_planejamento.html:58
+#: .\eru\templates\trafego\localidade_id.html:66
 msgid "Esta operação não pode ser desfeita, confirma a exclusão do registro?"
 msgstr "This operation cannot be undone, confirm the deletion of the record?"
+
+#: .\eru\templates\core\empresa_id.html:47
+#: .\eru\templates\core\usuario_id.html:44 .\eru\templates\layout\app.html:151
+#: .\eru\templates\pessoal\afastamento_id.html:42
+#: .\eru\templates\pessoal\cargo_id.html:47
+#: .\eru\templates\pessoal\contratos.html:58
+#: .\eru\templates\pessoal\contratos.html:93
+#: .\eru\templates\pessoal\dependente_id.html:42
+#: .\eru\templates\pessoal\funcionario_add.html:62
+#: .\eru\templates\pessoal\funcionario_id.html:63
+#: .\eru\templates\pessoal\funcionario_id.html:106
+#: .\eru\templates\pessoal\setor_id.html:41
+msgid "Cancelar"
+msgstr "Cancel"
+
+#: .\eru\templates\core\grupos.html:31 .\eru\templates\core\usuarios.html:32
+msgid "Limpar"
+msgstr "Clean"
 
 #: .\eru\templates\core\index.html:24
 #: .\eru\templates\pessoal\afastamentos.html:20
@@ -993,105 +1057,129 @@ msgstr "This operation cannot be undone, confirm the deletion of the record?"
 #: .\eru\templates\pessoal\dependentes.html:21
 #: .\eru\templates\pessoal\eventos.html:19
 #: .\eru\templates\pessoal\eventos_related.html:26
-#: .\eru\templates\pessoal\funcionarios.html:25
-#: .\eru\templates\pessoal\grupos_evento.html:18
-#: .\eru\templates\pessoal\motivos_reajuste.html:19
-#: .\eru\templates\pessoal\setores.html:19
+#: .\eru\templates\pessoal\funcionarios.html:24
+#: .\eru\templates\pessoal\grupos_evento.html:17
+#: .\eru\templates\pessoal\motivos_reajuste.html:17
+#: .\eru\templates\pessoal\setores.html:17
 msgid "Pessoal"
 msgstr "Personal"
 
-#: .\eru\templates\core\logs.html:33
+#: .\eru\templates\core\login.html:31
+msgid "Nome de usuário"
+msgstr "Username"
+
+#: .\eru\templates\core\login.html:33
+msgid "Entrar"
+msgstr "Login"
+
+#: .\eru\templates\core\logs.html:32
 msgid "Ação"
 msgstr "Action"
 
-#: .\eru\templates\core\logs.html:35
+#: .\eru\templates\core\logs.html:34
 msgid "Todos"
 msgstr "All"
 
-#: .\eru\templates\core\logs.html:36
+#: .\eru\templates\core\logs.html:35
 msgid "Criar"
 msgstr "Create"
 
-#: .\eru\templates\core\logs.html:37 .\eru\templates\pessoal\contratos.html:53
+#: .\eru\templates\core\logs.html:36 .\eru\templates\pessoal\contratos.html:53
 msgid "Atualizar"
 msgstr "Update"
 
-#: .\eru\templates\core\logs.html:44
+#: .\eru\templates\core\logs.html:43
 msgid "entradas"
 msgstr "entries"
 
-#: .\eru\templates\core\logs.html:52
+#: .\eru\templates\core\logs.html:51
 msgid "Filtrar"
 msgstr "Filter"
 
-#: .\eru\templates\core\logs.html:59
-#: .\eru\templates\pessoal\funcionario_id.html:28
+#: .\eru\templates\core\logs.html:58
+#: .\eru\templates\pessoal\funcionario_id.html:26
 msgid "Baixar"
 msgstr "Download"
 
-#: .\eru\templates\core\logs.html:100
+#: .\eru\templates\core\logs.html:99
 msgid "Campo"
 msgstr "Field"
 
-#: .\eru\templates\core\logs.html:101
+#: .\eru\templates\core\logs.html:100
 msgid "Antes"
 msgstr "Before"
 
-#: .\eru\templates\core\logs.html:102
+#: .\eru\templates\core\logs.html:101
 msgid "Depois"
 msgstr "After"
 
-#: .\eru\templates\core\logs.html:109
+#: .\eru\templates\core\logs.html:108
 msgid "Fechar"
 msgstr "Close"
 
-#: .\eru\templates\core\logs.html:152
+#: .\eru\templates\core\logs.html:151
 msgid "Total de $(qtde) campos afetados"
 msgstr "Total of $(qtde) fields affected"
 
-#: .\eru\templates\core\settings.html:22
+#: .\eru\templates\core\settings.html:21
 msgid "Autentição e Senhas"
 msgstr "Authentication and Passwords"
 
-#: .\eru\templates\core\settings.html:27
+#: .\eru\templates\core\settings.html:26
 msgid "Quantidade mínima de caracteres"
 msgstr "Minimum number of characters"
 
-#: .\eru\templates\core\settings.html:35
+#: .\eru\templates\core\settings.html:34
 msgid "Manter histórico últimas senhas"
 msgstr "Keep history of recent passwords"
 
-#: .\eru\templates\core\settings.html:37
+#: .\eru\templates\core\settings.html:36
 msgid "Usuário não poderá repetir senhas do histórico"
 msgstr "Users will not be able to reuse passwords from history"
 
-#: .\eru\templates\core\settings.html:38
+#: .\eru\templates\core\settings.html:37
 msgid "Digite 0 (zero) para desativar verificação"
 msgstr "Enter 0 (zero) to disable verification"
 
-#: .\eru\templates\core\settings.html:43
+#: .\eru\templates\core\settings.html:42
 msgid "Exigir alpha na senha"
 msgstr "Require alphanumeric password"
 
-#: .\eru\templates\core\settings.html:47
+#: .\eru\templates\core\settings.html:46
 msgid "Exigir caracteres maiusculos e minusculos"
 msgstr "Require uppercase and lowercase characters"
 
-#: .\eru\templates\core\settings.html:51
+#: .\eru\templates\core\settings.html:50
 msgid "Exigir número na senha"
 msgstr "Require a number in the password"
 
-#: .\eru\templates\core\settings.html:55
+#: .\eru\templates\core\settings.html:54
 msgid "Exigir caracteres especiais na senha"
 msgstr "Require special characters in the password"
 
-#: .\eru\templates\core\settings.html:61
+#: .\eru\templates\core\settings.html:60
 msgid "bloquear em tentativas erradas"
 msgstr "block on incorrect attempts"
 
-#: .\eru\templates\core\settings.html:63
+#: .\eru\templates\core\settings.html:62
 msgid "Altere para 0 (zero) para desativar bloqueio"
 msgstr "Change to 0 (zero) to disable locking"
+
+#: .\eru\templates\core\usuarios.html:20
+msgid "Usuários"
+msgstr "Users"
+
+#: .\eru\templates\core\usuarios.html:35
+msgid "Bloqueados"
+msgstr "Blocked"
+
+#: .\eru\templates\core\usuarios.html:39
+msgid "Inativo +30 dias"
+msgstr "Inactive +30 days"
+
+#: .\eru\templates\core\usuarios.html:40
+msgid "Sem registro de login"
+msgstr "No login records"
 
 #: .\eru\templates\layout\app.html:36
 msgid "Essa página contém um erro, pedimos informar ao administrador"
@@ -1113,22 +1201,9 @@ msgstr "Tasks"
 msgid "Confirma Operação"
 msgstr "Confirm Operation"
 
-#: .\eru\templates\layout\app.html:151
-#: .\eru\templates\pessoal\afastamento_id.html:42
-#: .\eru\templates\pessoal\cargo_id.html:47
-#: .\eru\templates\pessoal\contratos.html:58
-#: .\eru\templates\pessoal\contratos.html:93
-#: .\eru\templates\pessoal\dependente_id.html:40
-#: .\eru\templates\pessoal\funcionario_add.html:62
-#: .\eru\templates\pessoal\funcionario_id.html:65
-#: .\eru\templates\pessoal\funcionario_id.html:108
-#: .\eru\templates\pessoal\setor_id.html:42
-msgid "Cancelar"
-msgstr "Cancel"
-
 #: .\eru\templates\layout\app.html:152
 #: .\eru\templates\pessoal\funcionario_add.html:60
-#: .\eru\templates\pessoal\funcionario_id.html:106
+#: .\eru\templates\pessoal\funcionario_id.html:104
 msgid "Confirmar"
 msgstr "Confirm"
 
@@ -1182,7 +1257,9 @@ msgid "Exibe filtros da página"
 msgstr "Displays page filters"
 
 #: .\eru\templates\pessoal\_form_dependente.html:4
+#: .\eru\templates\pessoal\dependente_add.html:4
 #: .\eru\templates\pessoal\dependente_id.html:4
+#: .\eru\templates\pessoal\dependentes.html:6
 msgid "Dependente"
 msgstr "Dependent"
 
@@ -1240,6 +1317,17 @@ msgstr "Show address and contact tab"
 msgid "Exibe aba de detalhes"
 msgstr "Show details tab"
 
+#: .\eru\templates\pessoal\afastamento_add.html:4
+#: .\eru\templates\pessoal\afastamento_id.html:4
+#: .\eru\templates\pessoal\afastamentos.html:5
+msgid "Afastamento"
+msgstr "Absence"
+
+#: .\eru\templates\pessoal\afastamentos.html:20
+#: .\eru\templates\pessoal\funcionario_id.html:31
+msgid "Afastamentos"
+msgstr "Absences"
+
 #: .\eru\templates\pessoal\cargo_add.html:32
 msgid "Função Fixa"
 msgstr "Fixed Functions"
@@ -1248,13 +1336,8 @@ msgstr "Fixed Functions"
 msgid "Exibe eventos do cargo"
 msgstr "Displays job events"
 
-#: .\eru\templates\pessoal\contratos.html:7
-#: .\eru\templates\pessoal\funcionario_id.html:31
-msgid "Contratos"
-msgstr "Contracts"
-
 #: .\eru\templates\pessoal\dependentes.html:21
-#: .\eru\templates\pessoal\funcionario_id.html:32
+#: .\eru\templates\pessoal\funcionario_id.html:30
 msgid "Dependentes"
 msgstr "Dependents"
 
@@ -1263,116 +1346,114 @@ msgstr "Dependents"
 msgid "Informe um código válido de rastreio"
 msgstr "Provide a valid tracking code"
 
-#: .\eru\templates\pessoal\evento_add.html:48
-#: .\eru\templates\pessoal\evento_id.html:79
-msgid "Grupo de Evento"
-msgstr "Event Group"
-
 #: .\eru\templates\pessoal\evento_add.html:50
 #: .\eru\templates\pessoal\evento_id.html:81
 msgid "Nome do grupo"
 msgstr "Group's Name"
 
 #: .\eru\templates\pessoal\funcionario_add.html:45
-#: .\eru\templates\pessoal\funcionario_id.html:91
+#: .\eru\templates\pessoal\funcionario_id.html:89
 #, python-format, python-brace-format
 msgid "Arraste o arquivo aqui, %%{browseFiles} ou importe de:"
 msgstr "Drag file here, %%{browseFiles} or import from:"
 
 #: .\eru\templates\pessoal\funcionario_add.html:46
-#: .\eru\templates\pessoal\funcionario_id.html:92
+#: .\eru\templates\pessoal\funcionario_id.html:90
 msgid "selecione do disco"
 msgstr "select from disk"
 
 #: .\eru\templates\pessoal\funcionario_add.html:47
-#: .\eru\templates\pessoal\funcionario_id.html:93
+#: .\eru\templates\pessoal\funcionario_id.html:91
 msgid "Arquivo"
 msgstr "File"
 
 #: .\eru\templates\pessoal\funcionario_add.html:48
-#: .\eru\templates\pessoal\funcionario_id.html:94
+#: .\eru\templates\pessoal\funcionario_id.html:92
 #, python-format, python-brace-format
 msgid "Editando %%{file}"
 msgstr "Editing %%{file}"
 
 #: .\eru\templates\pessoal\funcionario_add.html:49
-#: .\eru\templates\pessoal\funcionario_id.html:95
+#: .\eru\templates\pessoal\funcionario_id.html:93
 #, python-format, python-brace-format
 msgid "Importar de %%{name}"
 msgstr "Import from %%{name}"
 
 #: .\eru\templates\pessoal\funcionario_add.html:50
-#: .\eru\templates\pessoal\funcionario_id.html:96
+#: .\eru\templates\pessoal\funcionario_id.html:94
 msgid "Nenhuma câmera disponivel"
 msgstr "No cameras available."
 
 #: .\eru\templates\pessoal\funcionario_add.html:51
-#: .\eru\templates\pessoal\funcionario_id.html:97
+#: .\eru\templates\pessoal\funcionario_id.html:95
 msgid "Para tirar fotos ou gravar vídeos, conecte um dispositivo com câmera"
 msgstr "To take photos or record videos, connect a device with a camera"
 
 #: .\eru\templates\pessoal\funcionario_add.html:53
-#: .\eru\templates\pessoal\funcionario_id.html:99
+#: .\eru\templates\pessoal\funcionario_id.html:97
 #, python-format, python-brace-format
 msgid "%%{smart_count} arquivo selecionado"
 msgstr "%%{smart_count} selected file"
 
 #: .\eru\templates\pessoal\funcionario_add.html:56
-#: .\eru\templates\pessoal\funcionario_id.html:102
+#: .\eru\templates\pessoal\funcionario_id.html:100
 msgid "Carregar"
 msgstr "Load"
 
 #: .\eru\templates\pessoal\funcionario_add.html:58
-#: .\eru\templates\pessoal\funcionario_id.html:104
+#: .\eru\templates\pessoal\funcionario_id.html:102
 msgid "Capturar Foto"
 msgstr "Capture Photo"
 
 #: .\eru\templates\pessoal\funcionario_add.html:59
-#: .\eru\templates\pessoal\funcionario_id.html:105
+#: .\eru\templates\pessoal\funcionario_id.html:103
 msgid "Webcam"
 msgstr "Webcam"
 
 #: .\eru\templates\pessoal\funcionario_add.html:61
-#: .\eru\templates\pessoal\funcionario_id.html:107
+#: .\eru\templates\pessoal\funcionario_id.html:105
 msgid "Concluir"
 msgstr "Finish"
 
-#: .\eru\templates\pessoal\funcionario_id.html:33
-#| msgid "Data Afastamento"
-msgid "Afastamentos"
-msgstr "Absences"
+#: .\eru\templates\pessoal\funcionario_id.html:29
+msgid "Contratos"
+msgstr "Contracts"
 
-#: .\eru\templates\pessoal\funcionario_id.html:35
+#: .\eru\templates\pessoal\funcionario_id.html:33
 msgid "Desligar Funcionário"
 msgstr "Terminate Employee"
 
-#: .\eru\templates\pessoal\funcionario_id.html:168
+#: .\eru\templates\pessoal\funcionario_id.html:166
 msgid "Baixar dados em formato CSV"
 msgstr "Download data in CSV format"
 
-#: .\eru\templates\pessoal\funcionarios.html:25
+#: .\eru\templates\pessoal\funcionarios.html:24
 msgid "Funcionários"
 msgstr "Employees"
 
-#: .\eru\templates\pessoal\funcionarios.html:46
+#: .\eru\templates\pessoal\funcionarios.html:45
 msgid "Critério"
 msgstr "Criterion"
 
-#: .\eru\templates\pessoal\funcionarios.html:53
+#: .\eru\templates\pessoal\funcionarios.html:52
 msgid "Consultas Rápidas"
 msgstr "Quick Search"
 
-#: .\eru\templates\pessoal\funcionarios.html:55
+#: .\eru\templates\pessoal\funcionarios.html:54
 msgid "Condutores CNH vencendo"
 msgstr "Drivers with expiring driver's licenses"
 
-#: .\eru\templates\pessoal\funcionarios.html:56
+#: .\eru\templates\pessoal\funcionarios.html:55
 msgid "Funcionários Afastados"
 msgstr "Employees on leave"
 
-#: .\eru\templates\pessoal\setores.html:5
-msgid "Setores"
-msgstr "Sectors"
+#, fuzzy
+#~| msgid "Setores"
+#~ msgid "Setore"
+#~ msgstr "Sectors"
+
+#~ msgid "Grupo de Evento"
+#~ msgstr "Event Group"
 
 #~ msgid "Fórmula"
 #~ msgstr "Formula"
@@ -1380,9 +1461,6 @@ msgstr "Sectors"
 #, fuzzy
 #~ msgid "inicio"
 #~ msgstr "Start"
-
-#~ msgid "Usuários"
-#~ msgstr "Users"
 
 #~ msgid "nome"
 #~ msgstr "name"

@@ -5,11 +5,11 @@
     <h5 class="card-title">{% translate 'Cadastro' %}: <b class="text-purple">{% translate 'Evento' %}</b></h5>
     <h6 class="mb-3 text-orange">
         {% if related == 'empresa' %}
-            <span>Eventos Globais</span>
+            <span>{% translate 'Eventos Globais' %}</span>
         {% elif related == 'cargo' %}
-            <span class="text-body">Cargo:</span> {{model.nome}}
+            <span class="text-body">{% translate 'Cargo' %}:</span> {{model.nome}}
         {% elif related == 'funcionario' %}
-            <span class="text-body">Funcionário:</span> {{model.matricula}} - {{model.nome}}
+            <span class="text-body">{% translate 'Funcionário' %}:</span> {{model.matricula}} - {{model.nome}}
         {% endif %}</h6>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
         <div class="row g-2">

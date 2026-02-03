@@ -2,8 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load django_tables2 %}
-{% block title %}Funcionarios{% endblock %}
-
+{% block title %}{% translate 'Funcionário' %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
 {% block style_src %}
@@ -80,27 +79,9 @@
 <script>
   {% block add_script %}
   const form = new jsForm('#funcionario_form', {})
-  // const status = new TomSelect('#id_status', {
-  //       plugins: ['remove_button'],
-  //       onInitialize: function() {
-  //           this.wrapper.classList.add('form-select-sm');
-  //       }
-  //   });
   const status = new TomSelect("#id_status", {
     plugins: ['remove_button'],
     allowEmptyOption: true,
 });
-
-
-
-  
-  // Adiciona atalhos para modal de filtros
-  // appKeyMap.bind('alt+e', ()=>{filterForm.empresa.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldCompany', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Empresa'})
-  // appKeyMap.bind('alt+f', ()=>{filterForm.filial.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldBranch', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Filial'})
-  // appKeyMap.bind('alt+s', ()=>{filterForm.status.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldStatus', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Status'})
-  // appKeyMap.bind('alt+r', ()=>{filterForm.regime.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldRegime', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Regime'})
-  // appKeyMap.bind('alt+t', ()=>{filterForm.cargo__setor.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldSector', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Setor'})
-  // appKeyMap.bind('alt+g', ()=>{filterForm.cargo.focus()}, {context: 'filterModal', origin: 'funcionarios.html', 'data-i18n': 'employees.shortcuts.selectFieldPosition', icon: 'bi bi-input-cursor-text text-purple', desc: 'Foca campo Cargo'})
-  
-  {% endblock %}
+{% endblock %}
 </script>

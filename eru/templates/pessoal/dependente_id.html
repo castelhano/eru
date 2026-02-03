@@ -34,11 +34,14 @@
                 <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             </div>
             <div class="modal-body">
-                <p><b class="text-danger" data-i18n="common.warning">Atenção!!</b>{% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</span></p>
+                <p><b class="text-danger">{% translate 'Atenção' %}!!</b>{% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?' %}</span></p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <a class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">{% translate 'Cancelar' %}</a>
-                        <a class="btn btn-danger px-3" href="url">{% translate 'Excluir' %}</a>
+                        <form action="{% url 'pessoal:dependente_delete' dependente.id|safe %}" method="POST">
+                            {% csrf_token %}
+                            {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
+                            {% btn_tag 'delete' %}
+                        </form>
                     </div>
                 </div>
             </div>

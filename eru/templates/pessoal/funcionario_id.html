@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load tag_extra %}
 {% load ui_components %}
-{% block title %}Funcionario{% endblock %}
+{% block title %}{% translate 'Funcionário' %}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
 
 {% block style_src %}
@@ -11,8 +11,6 @@
 <link href="{% static 'css/vendor/uppy.min.css' %}" rel="stylesheet" />
 {% endif %}
 {% endblock %}
-
-
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
