@@ -1,16 +1,16 @@
-from django.db import models
-from django.db.models import Q
 from pathlib import Path
-from django.conf import settings
-from core.models import Empresa, Filial
-from django.utils.translation import gettext_lazy as _
-from core.constants import DEFAULT_MESSAGES
 from datetime import datetime, date
-from django.utils.timezone import now
+from django.db import models, transaction
+from django.db.models import Q
 from django.contrib.auth.models import User
-from django.utils.safestring import mark_safe
-from auditlog.registry import auditlog
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import now
+from django.utils.safestring import mark_safe
+from core.models import Empresa, Filial
+from core.constants import DEFAULT_MESSAGES
+from auditlog.registry import auditlog
 
 class Pessoa(models.Model):
     class EstadoCivil(models.TextChoices):
@@ -145,9 +145,16 @@ class Funcionario(Pessoa):
             raise ValidationError(_("Funcionário já possui um afastamento ativo"))
         return True
     def afastar(self):
+        if self.status != self.Status.ATIVO:
+            raise ValidationError(_("Funcionário precisa estar ativo para ser afastado"))
         self.status = self.Status.AFASTADO
         self.save(update_fields=['status'])
-    def retornar(self):
+    def retornar_afastamento(self):
+        if self.status == self.Status.ATIVO:
+            # se status ja eh ativo nao exetuta nada e sai sem gerar excessao
+            return 
+        if self.status != self.Status.AFASTADO:
+            raise ValidationError(_("Funcionário nao esta afastado"))
         self.status = self.Status.ATIVO
         self.save(update_fields=['status'])
     def dependentes(self):
@@ -338,13 +345,14 @@ class Afastamento(models.Model):
         if overlapping_absences.exists():
             raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        self.full_clean()
-        super().save(*args, **kwargs)
-        if is_new:
-            self.funcionario.afastar()
-        elif self.data_retorno and self.data_retorno <= date.today():
-            self.funcionario.retornar()
+        self.full_clean() 
+        with transaction.atomic():
+            # 3. Executa a lógica no funcionário ANTES de salvar o afastamento
+            if not self.data_retorno:
+                self.funcionario.afastar()
+            else:
+                self.funcionario.retornar_afastamento()
+            super().save(*args, **kwargs)
 auditlog.register(Afastamento)
 
 class Dependente(models.Model):
