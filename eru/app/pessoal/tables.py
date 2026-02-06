@@ -13,7 +13,7 @@ class FuncionarioTable(TableCustomMixin, Table):
         verbose_name="Status",
         attrs={
             "td": {
-                "class": lambda record: f"d-none d-lg-table-cell { 'hl-orange' if record.status != 'A' else '' }"
+                "class": lambda record: f"d-none d-sm-table-cell { 'hl-orange' if record.status != 'A' else '' }"
             },
             "th": {"class": "d-none d-lg-table-cell"}
         }
@@ -26,9 +26,11 @@ class FuncionarioTable(TableCustomMixin, Table):
         ]
         paginate_by = 20
         responsive_columns = {
-            "filial": "d-none d-sm-table-cell",
+            "empresa": "d-none d-md-table-cell",
+            "filial": "d-none d-md-table-cell",
             "nome": "d-none d-lg-table-cell",
             "apelido": "d-table-cell d-lg-none",
+            "nome_social": "d-none",
             "genero": "d-none",
             "data_nascimento": "d-none",
             "data_admissao": "d-none",

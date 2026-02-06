@@ -48,7 +48,7 @@
               </div>
               <small id="employeeSearchHelp" ></small>
             </div>
-            <div class="col-lg">
+            <div class="col-lg mt-2 mt-lg-0">
               <span>{% translate 'Consultas Rápidas'|escapejs %}:</span>
               <ul class="list-unstyled">
                 <li><a href="#" onclick="urlCleanNFilter(['cnh_validade__lte', 'status', 'funcao_fixa'], [dateToday({days: 30, native: true}), 'A', 'M'])">{% translate 'Condutores CNH vencendo'|escapejs %}</a></li>
@@ -60,7 +60,7 @@
           <div>
             {{ table.render_filter|safe }}
           </div>          
-          <div class="{% if not table.rows %}d-none{% endif %}">
+          <div class="table-responsive{% if not table.rows %} d-none{% endif %}">
             {% render_table table %}
           </div>
         </div>

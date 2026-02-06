@@ -1,3 +1,4 @@
+from asteval import Interpreter
 from pathlib import Path
 from datetime import datetime, date
 from django.db import models, transaction
@@ -227,6 +228,10 @@ class Contrato(models.Model):
     salario = models.DecimalField(_('Salário'), max_digits=10, decimal_places=2)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
+    class Meta:
+        indexes = [
+            models.Index(fields=['funcionario', 'inicio', 'fim'], name='idx_contrato_vigencia'),
+        ]
     def __str__(self):
         return f'{self.funcionario.matricula} | start: {self.inicio}'
     def clean(self):
@@ -269,7 +274,7 @@ class TurnoDia(models.Model):
     def __str__(self):
         return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
     def clean(self):
-        if self.posicao_ciclo > self.turno.dias_no_ciclo:
+        if self.posicao_ciclo > self.turno.dias_ciclo:
             raise ValidationError(
                 _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
                     'posicao': self.posicao_ciclo,
@@ -283,8 +288,13 @@ class TurnoHistorico(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='historico_turnos', verbose_name=_('Contrato'))
     turno = turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name=_('Turno'))
     inicio_vigencia = models.DateField(_('Inicio Vigência'), default=datetime.today)
+    class Meta:
+        verbose_name = _('Histórico Turno')
+        verbose_name_plural = _('Históricos Turnos')
+        ordering = ['-inicio_vigencia']
     def __str__(self):
         return f'{self.contrato.funcionario.matricula} | {self.turno.nome}'
+
 auditlog.register(TurnoHistorico)
 
 
@@ -418,6 +428,24 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT, verbose_name=_('Motivo'))
     class Meta:
         abstract = True
+    @property
+    def E_requisitos(self):
+        """
+        Analisa o campo 'valor' (fórmula) e retorna uma lista de 'rastreios'
+        de outros eventos que a fórmula menciona.
+        """
+        if not self.valor or not isinstance(self.valor, str):
+            return []
+        aeval = Interpreter()
+        try:
+            nodes = aeval.parse(self.valor)
+            nomes_encontrados = [
+                node.id for node in ast.walk(nodes) 
+                if isinstance(node, ast.Name) and node.id not in aeval.symtable
+            ]
+            return list(set(nomes_encontrados))
+        except:
+            return []
     def clean(self):
         if self.fim and self.inicio > self.fim:
             raise ValidationError({'fim': _('Data de fim não pode ser menor que data de inicio')})
@@ -443,6 +471,10 @@ class EventoMovimentacao(models.Model):
 # !! deve ser tratado duplicidade de evento no mesmo escopo no form
 class EventoEmpresa(EventoMovimentacao):
     filiais = models.ManyToManyField(Filial, related_name="eventos_filial", verbose_name=_('Filiais'))
+    class Meta:
+        indexes = [
+            models.Index(fields=['inicio', 'fim'], name='idx_ev_emp_vigencia'),
+        ]
     def __str__(self):
         return f'event:company | {self.evento.nome}'
 auditlog.register(EventoEmpresa, m2m_fields={"filiais"})
@@ -450,12 +482,21 @@ auditlog.register(EventoEmpresa, m2m_fields={"filiais"})
 class EventoCargo(EventoMovimentacao):
     cargo = models.ForeignKey(Cargo, on_delete=models.RESTRICT, verbose_name=_('Cargo'))
     filiais = models.ManyToManyField(Filial, related_name="eventos_cargo", verbose_name=_('Filiais'))
+    class Meta:
+        indexes = [
+            models.Index(fields=['cargo', 'inicio', 'fim'], name='idx_ev_cargo_vigencia'),
+        ]
     def __str__(self):
         return f'event:position | {self.evento.nome}'
 auditlog.register(EventoCargo, m2m_fields={"filiais"})
 
 class EventoFuncionario(EventoMovimentacao):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionário'))
+    class Meta:
+        indexes = [
+            models.Index(fields=['funcionario', 'inicio', 'fim'], name='idx_ev_func_vigencia'),
+        ]
     def __str__(self):
         return f'event:company | {self.evento.nome}'
+
 auditlog.register(EventoFuncionario)
