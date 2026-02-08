@@ -1,111 +1,153 @@
 import os
 import django
+import math
+from decimal import Decimal
+from datetime import date
 
-# Inicializa o ambiente Django se for rodar como script fora do 'manage.py test'
+# 1. Configuração do Ambiente
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'seu_projeto.settings')
 django.setup()
 
-from pessoal.folha.engine import get_interpreter, dependence_resolve, engine_run
-from decimal import Decimal
 from django.test import TestCase
+from django.db import transaction
+from pessoal.folha.engine import get_interpreter, dependence_resolve, engine_run
+from pessoal.folha.persistence import payroll_memory
 
-# 1. Classe Dummy para simular a Frequência que ainda não existe
+# ==============================================================================
+# MOCKS PARA SIMULAÇÃO DO AMBIENTE
+# ==============================================================================
+
 class FrequenciaMock:
-    @property
-    def H_faltas(self): return 2
-    @property
-    def H_horas_extras(self): return 10.0
-
-# 2. Mock de objetos de Regras (Simulando o que viria do banco)
-class RegraMock:
-    def __init__(self, rastreio, valor):
-        self.valor = valor
-        self.rastreio = rastreio
-        # Mock do objeto Evento relacionado
-        class EventoMock:
-            def __init__(self, r): self.rastreio = r
-        self.evento = EventoMock(rastreio)
-
-def testar_motor_folha():
-    print("Iniciando Teste do Motor de Folha...\n")
-
-    # Cenário: Dependências encadeadas
-    # U_salario_bruto depende de F_salario (do modelo)
-    # U_gratificacao depende de U_salario_bruto
-    # U_inss depende de U_salario_bruto + U_gratificacao
-    regras = {
-        'U_inss': RegraMock('U_inss', '(U_salario_bruto + U_gratificacao) * 0.11'),
-        'U_salBase': RegraMock('U_salario_bruto', 'F_salario - (H_faltas * 100)'),
-        'U_gratificacao': RegraMock('U_gratificacao', 'U_salario_bruto * 0.05'),
-    }
-
-    # Contexto inicial (Simulando o que vem do get_event_vars_master)
-    vars_dict = {
-        'F_salario': 5000.00,
-        'H_faltas': FrequenciaMock().H_faltas,
-        'H_horas_extras': FrequenciaMock().H_horas_extras,
-    }
-
-    print(f"Contexto Inicial: {vars_dict}")
-
-    # Passo 1: Resolver Grafo
-    try:
-        ordem = dependence_resolve(regras)
-        print(f"Ordem de Cálculo Gerada: {ordem}")
-    except Exception as e:
-        print(f"ERRO NO GRAFO: {e}")
-        return
-
-    # Passo 2: Executar Engine
-    aeval = get_interpreter()
-    resultado, erros = engine_run(aeval, vars_dict, ordem, regras)
-
-    if erros:
-        print(f"ERROS DE CÁLCULO: {erros}")
-    else:
-        print("\n--- Resultados Finais ---")
-        print(f"U_salario_bruto: {resultado.get('U_salario_bruto')}")
-        print(f"U_gratificacao: {resultado.get('U_gratificacao')}")
-        print(f"U_inss: {resultado.get('U_inss')}")
-        
-        # Validação manual rápida:
-        # Bruto: 5000 - (2 * 100) = 4800
-        # Grat: 4800 * 0.05 = 240
-        # INSS: (4800 + 240) * 0.11 = 554.4
-        if resultado.get('U_inss') == 554.4:
-            print("\n✅ SUCESSO: O cálculo e as dependências estão perfeitos!")
-        else:
-            print("\n❌ AVISO: O valor calculado diverge do esperado.")
-
-class FolhaMotorTest(TestCase):
-    def test_calculo_encadeado_com_sucesso(self):
-        """Valida se o motor calcula U_inss dependendo de U_bruto corretamente."""
-        
-        # 1. Mock de Regras (Simulando banco de dados)
-        class Regra:
-            def __init__(self, valor): self.valor = valor
-
-        regras = {
-            'U_inss': Regra('U_bruto * 0.11'),
-            'U_bruto': Regra('F_salario - 200'),
+    """Simula o modelo FrequenciaConsolidada e seu JSONField 'consolidado'"""
+    def __init__(self):
+        self.consolidado = {
+            'H_faltas': 2,
+            'H_horas_extras': 10.5
         }
 
-        # 2. Contexto inicial (Simulando propriedades do modelo)
+class EventoMock:
+    """Simula o modelo Evento"""
+    def __init__(self, rastreio, nome, tipo='P'):
+        self.rastreio = rastreio
+        self.nome = nome
+        self.tipo = tipo # 'P' Provento, 'D' Desconto
+
+class RegraBaseMock:
+    """Simula as classes EventoFuncionario, EventoCargo ou EventoEmpresa"""
+    def __init__(self, id, rastreio, valor, tipo='P'):
+        self.id = id
+        self.valor = str(valor)
+        self.evento = EventoMock(rastreio, f"Evento {rastreio}", tipo)
+
+class EventoFuncionario(RegraBaseMock): pass # Simula nome da classe para persistence.py
+
+# ==============================================================================
+# SCRIPT DE TESTE FUNCIONAL (MODO SCRIPT)
+# ==============================================================================
+
+def testar_motor_folha_manual():
+    print("\n" + "="*50)
+    print("INICIANDO TESTE MANUAL DO MOTOR DE FOLHA")
+    print("="*50 + "\n")
+
+    # CENÁRIO:
+    # U_bruto = Salário(5000) - Faltas(2 * 100) = 4800
+    # U_gratificacao = 4800 * 0.05 = 240
+    # U_inss (Desconto) = (4800 + 240) * 0.11 = 554.40
+    
+    regras = {
+        'U_inss': EventoFuncionario(1, 'U_inss', '(U_salario_bruto + U_gratificacao) * 0.11', 'D'),
+        'U_salario_bruto': EventoFuncionario(2, 'U_salario_bruto', 'F_salario - (H_faltas * 100)'),
+        'U_gratificacao': EventoFuncionario(3, 'U_gratificacao', 'U_salario_bruto * 0.05'),
+    }
+
+    # Contexto simulado (Vem do get_event_vars_master)
+    freq = FrequenciaMock()
+    vars_dict = {
+        'F_salario': 5000.00,
+        'H_faltas': freq.consolidado['H_faltas'],
+        'H_horas_extras': freq.consolidado['H_horas_extras'],
+    }
+
+    print(f"[*] Contexto de Entrada: {vars_dict}")
+
+    # 1. RESOLVER GRAFO (Engine)
+    try:
+        ordem = dependence_resolve(regras)
+        print(f"[*] Ordem de Cálculo: {ordem}")
+    except Exception as e:
+        print(f"[-] ERRO NO GRAFO: {e}")
+        return
+
+    # 2. EXECUTAR ENGINE (Engine)
+    aeval = get_interpreter()
+    resultado_final, erros = engine_run(aeval, vars_dict, ordem, regras)
+
+    if erros:
+        print(f"[-] ERROS DE CÁLCULO: {erros}")
+        return
+
+    # 3. GERAR MEMÓRIA DE CÁLCULO (Persistence)
+    try:
+        memoria = payroll_memory(resultado_final, regras, erros)
+        print("[+] Memória de Cálculo (JSON) gerada com sucesso.")
+    except Exception as e:
+        print(f"[-] ERRO NA PERSISTÊNCIA: {e}")
+        return
+
+    # 4. VALIDAÇÃO DOS RESULTADOS
+    bruto = resultado_final.get('U_salario_bruto')
+    grat = resultado_final.get('U_gratificacao')
+    inss = resultado_final.get('U_inss')
+
+    print(f"\n--- Tabela de Resultados ---")
+    print(f"Bruto:        R$ {bruto:>10.2f}")
+    print(f"Gratificação: R$ {grat:>10.2f}")
+    print(f"INSS (Desc):  R$ {inss:>10.2f}")
+    
+    liquido_esperado = (4800 + 240) - 554.40
+    liquido_calc = (float(bruto) + float(grat)) - float(inss)
+
+    if math.isclose(liquido_calc, liquido_esperado, rel_tol=1e-5):
+        print("\n✅ SUCESSO: O motor calculou os valores encadeados corretamente!")
+    else:
+        print(f"\n❌ ERRO: Valor líquido {liquido_calc} diverge do esperado {liquido_esperado}")
+
+# ==============================================================================
+# CLASSE DE TESTE UNITÁRIO (DJANGO TEST CASE)
+# ==============================================================================
+
+class FolhaMotorTest(TestCase):
+    def setUp(self):
+        self.aeval = get_interpreter()
+
+    def test_dependencia_e_calculo(self):
+        """Valida se o INSS é calculado após o Bruto em um fluxo real"""
+        regras = {
+            'U_inss': EventoFuncionario(10, 'U_inss', 'U_bruto * 0.11', 'D'),
+            'U_bruto': EventoFuncionario(11, 'U_bruto', 'F_salario - 200'),
+        }
         vars_dict = {'F_salario': 5000.00}
 
-        # 3. Execução
         ordem = dependence_resolve(regras)
-        aeval = get_interpreter()
-        resultado, erros = engine_run(aeval, vars_dict, ordem, regras)
+        resultado, erros = engine_run(self.aeval, vars_dict, ordem, regras)
 
-        # 4. Asserts (Validações)
-        self.assertEqual(len(erros), 0, f"Erros encontrados: {erros}")
-        self.assertEqual(ordem, ['U_bruto', 'U_inss']) # Valida se o grafo ordenou certo
-        self.assertEqual(resultado['U_bruto'], 4800.00)
-        self.assertEqual(resultado['U_inss'], 528.00) # 4800 * 0.11
+        # Asserts
+        self.assertEqual(len(erros), 0)
+        self.assertEqual(ordem, ['U_bruto', 'U_inss']) # Valida precedência
+        self.assertAlmostEqual(float(resultado['U_inss']), 528.00)
 
-
-
+    def test_erro_sintaxe_formula(self):
+        """Valida se o motor captura erros de fórmulas mal escritas sem travar"""
+        regras = {
+            'U_erro': EventoFuncionario(20, 'U_erro', 'F_salario / 0'), # Divisão por zero
+        }
+        vars_dict = {'F_salario': 5000.00}
+        ordem = ['U_erro']
+        
+        resultado, erros = engine_run(self.aeval, vars_dict, ordem, regras)
+        self.assertIn('U_erro', erros)
+        self.assertEqual(resultado['U_erro'], 0) # Engine deve zerar o valor com erro
 
 if __name__ == "__main__":
-    testar_motor_folha()
+    testar_motor_folha_manual()

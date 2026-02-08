@@ -17,9 +17,7 @@
         <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Motivo reajuste'|escapejs %}</span></h5>
         <div class="tab-pane fade show active mt-3" id="base" role="tabpanel">
             {{ table.render_filter|safe }}
-            <div class="table-responsive">
-                {% render_table table %}
-            </div>
+            {% render_table table %}
         </div>
     </div>
 </div>

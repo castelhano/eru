@@ -36,6 +36,10 @@
                         {{ form.regime.i18n_label }}
                     </div>
                     <div class="form-floating mb-1 col-lg">
+                        {{ form.carga_mensal }}
+                        {{ form.carga_mensal.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
                         {{ form.salario }}
                         {{ form.salario.i18n_label }}
                     </div>
@@ -68,9 +72,7 @@
             {% endif %}
             <hr>
             {{ table.render_filter|safe }}
-            <div class="table-resposive">
-                {% render_table table %}
-            </div>
+            {% render_table table %}
         </div>
     </div>
 </div>

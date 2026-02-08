@@ -1,13 +1,7 @@
+from django.db import transaction
 from .collectors import get_period, get_batch_data, get_event_vars_master
 from .engine import get_interpreter, dependence_resolve, engine_run
 from .persistence import payroll_memory, db_save
-
-
-class FrequenciaFake:
-    @property
-    def H_faltas(self): return 2
-    @property
-    def H_extras(self): return 5.0
 
 
 def merge_events(ev_e, ev_c, ev_f):
@@ -27,10 +21,10 @@ def run_single(contrato, competencia, ev_e, ev_c_list, ev_f_list, freq, aeval):
     vars_dict = get_event_vars_master(
         funcionario=contrato.funcionario, 
         contrato=contrato,
-        freq=FrequenciaFake()
+        consolidado=freq
     )
     # 2. Define as regras de variaveis de usuario (U_*) e a ordem de calculo
-    regras = merge_events(contrato, ev_e, ev_c_list, ev_f_list)
+    regras = merge_events(ev_e, ev_c_list, ev_f_list)
     ordem = dependence_resolve(regras)    
     # 3. Executa o motor de calculo
     resultado_vars, erros = engine_run(aeval, vars_dict, ordem, regras)
@@ -39,10 +33,16 @@ def run_single(contrato, competencia, ev_e, ev_c_list, ev_f_list, freq, aeval):
     return db_save(contrato, competencia, memoria, erros)
 
 
+
+
 def payroll_run(filial_id, mes, ano):
-# metodo principal, consome todos as demais metodos para processar a folha
-    ini, fim = get_period(mes, ano) # datas de início/fim
+    ini, fim = get_period(mes, ano)
     contratos, ev_e, ev_c, ev_f, freqs = get_batch_data(filial_id, ini, fim)
     aeval = get_interpreter()
-    for c in contratos:
-        run_single(c, inicio, ev_e, ev_c.get(c.cargo_id), ev_f.get(c.funcionario_id), freqs.get(c.id), aeval)
+    with transaction.atomic():
+        for c in contratos:
+            ev_c_list = ev_c.get(c.cargo_id, [])
+            ev_f_list = ev_f.get(c.funcionario_id, [])
+            freq_obj = freqs.get(c.id) # se for None, run_single deve tratar
+            run_single(c, ini, ev_e, ev_c_list, ev_f_list, freq_obj, aeval)
+    return len(contratos)

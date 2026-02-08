@@ -175,7 +175,7 @@ class Funcionario(Pessoa):
             ).order_by('-inicio').first()
         return self._cached_contrato
     @property
-    def F_ehEditavel(self):
+    def F_eh_editavel(self):
         return self.status != self.Status.DESLIGADO
     @property
     def F_cargo(self):
@@ -190,10 +190,10 @@ class Funcionario(Pessoa):
     def F_pne(self):
         return self.pne
     @property
-    def F_anosEmpresa(self):
+    def F_anos_empresa(self):
         return self.F_diasEmpresa // 365
     @property
-    def F_diasEmpresa(self):
+    def F_dias_empresa(self):
         if not self.data_admissao: return 0
         fim = self.data_desligamento or now().date()
         return max((fim - self.data_admissao).days, 0)
@@ -228,6 +228,7 @@ class Contrato(models.Model):
     salario = models.DecimalField(_('Salário'), max_digits=10, decimal_places=2)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
+    carga_mensal = models.PositiveIntegerField(_('Carga Mensal'), default=220)
     class Meta:
         indexes = [
             models.Index(fields=['funcionario', 'inicio', 'fim'], name='idx_contrato_vigencia'),
@@ -246,14 +247,22 @@ class Contrato(models.Model):
             if overlap.exists():
                 raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'))
     @property
-    def C_diasContrato(self):
+    def C_dias_contrato(self):
         return max(((self.fim or date.today()) - self.inicio).days, 0)
+    @property
+    def C_salario_hora(self):
+        if self.salario and self.carga_mensal > 0:
+            return round(self.salario / self.carga_mensal, 4)
+        return 0.0
+    @property
+    def C_carga_mensal(self):
+        return self.carga_mensal
 auditlog.register(Contrato)
 
 
 class Turno(models.Model):
     nome = models.CharField(_('Nome'), max_length=30, unique=True, blank=False)
-    dias_ciclo = models.PositiveIntegerField(_('Dias Ciclo'), default=7)
+    dias_ciclo = models.PositiveIntegerField(_('Dias Ciclo'), default=0)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     def __str__(self):
         return self.nome
@@ -272,14 +281,14 @@ class TurnoDia(models.Model):
         ordering = ['posicao_ciclo']
     def __str__(self):
         return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
-    # def clean(self):
-    #     if self.posicao_ciclo > self.turno.dias_ciclo:
-    #         raise ValidationError(
-    #             _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
-    #                 'posicao': self.posicao_ciclo,
-    #                 'limite': self.turno.dias_ciclo,
-    #             }
-    #         )
+    def clean(self):
+        if self.posicao_ciclo > self.turno.dias_ciclo:
+            raise ValidationError(
+                _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
+                    'posicao': self.posicao_ciclo,
+                    'limite': self.turno.dias_ciclo,
+                }
+            )
 auditlog.register(TurnoDia)
 
 
@@ -318,7 +327,7 @@ class Afastamento(models.Model):
     def __str__(self):
         return f'{self.funcionario.matricula} | {self.data_afastamento}'
     @property
-    def T_diasAfastado(self):
+    def T_dias_afastado(self):
         # retorna quantidade de dias que funcionario ficou/esta em afastamento
         if self.data_afastamento is None:
             return 0
@@ -528,13 +537,17 @@ auditlog.register(EventoFrequencia, exclude_fields=['cor'])
 
 class Frequencia(models.Model):
     contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
-    data = models.DateField(_('Data'), db_index=True)
     evento = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
     inicio = models.TimeField(_('Início'), null=True, blank=True)
     fim = models.TimeField(_('Fim'), null=True, blank=True)
     observacao = models.CharField(_('Observação'), max_length=255, blank=True)
     class Meta:
-        ordering = ['data', 'inicio']
+        ordering = ['inicio']
+    @property
+    def H_jornada(self):
+        if self.inicio and self.fim:
+            return self.fim - self.inicio
+        return None
 auditlog.register(Frequencia, exclude_fields=['observacao'])
 
 class FrequenciaConsolidada(models.Model):
@@ -544,8 +557,8 @@ class FrequenciaConsolidada(models.Model):
         PROCESSADO = 'P', _('Processado')
     contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='consolidados_freq')
     competencia = models.DateField(_('Competência'), db_index=True)
-    inicio = models.DateField(_('Data Início'))
-    fim = models.DateField(_('Data Fim'))
+    inicio = models.DateTimeField(_('Início'), db_index=True)
+    fim = models.DateTimeField(_('Fim'), null=True, blank=True)
     status = models.CharField(_('Status'), max_length=1, choices=Status.choices, default=Status.ABERTO)
     bloqueado = models.BooleanField(_('Bloqueado'), default=False)
     processamento = models.DateTimeField(_('Data Processamento'), null=True, blank=True)

@@ -1,6 +1,5 @@
 import json
 from decimal import Decimal
-from django.db import transaction
 from pessoal.models import FolhaPagamento
 
 
@@ -26,23 +25,42 @@ def payroll_memory(result, original_rules, errors):
     }
 
 
+# def db_save(contract, competence, json_memo, errors):
+#     proventos = sum(e['valor'] for e in json_memo['eventos'] if e['tipo'] == 'P')
+#     descontos = sum(e['valor'] for e in json_memo['eventos'] if e['tipo'] == 'D')
+#     liquido = proventos - descontos
+#     with transaction.atomic():
+#         obj, created = FolhaPagamento.objects.update_or_create(
+#             contrato=contract,
+#             competencia=competence,
+#             defaults={
+#                 'proventos': proventos,
+#                 'descontos': descontos,
+#                 'liquido': liquido,
+#                 'regras': json_memo,
+#                 'erros': erros if erros else None,
+#                 'total_erros': len(erros) if erros else 0,
+#                 'status': 'rascunho'
+#             }
+#         )
+#     return obj
+
 def db_save(contract, competence, json_memo, errors):
 # salva no banco entrada para folha vinculada ao contract e mes de referencia
     proventos = sum(e['valor'] for e in json_memo['eventos'] if e['tipo'] == 'P')
     descontos = sum(e['valor'] for e in json_memo['eventos'] if e['tipo'] == 'D')
-    liquido = proventos - descontos
-    with transaction.atomic():
-        obj, created = FolhaPagamento.objects.update_or_create(
-            contrato=contract,
-            competencia=competence,
-            defaults={
-                'proventos': proventos,
-                'descontos': descontos,
-                'liquido': liquido,
-                'regras': json_memo,
-                'erros': erros if erros else None,
-                'total_erros': len(erros) if erros else 0,
-                'status': 'rascunho'
-            }
-        )
+    # update_or_create garante idempotencia (pode rodar varias vezes sem duplicar)
+    obj, _ = FolhaPagamento.objects.update_or_create(
+        contrato=contract,
+        competencia=competence,
+        defaults={
+            'proventos': proventos,
+            'descontos': descontos,
+            'liquido': proventos - descontos,
+            'regras': json_memo,
+            'erros': errors or None,
+            'total_erros': len(errors) if errors else 0,
+            'status': 'R'
+        }
+    )
     return obj

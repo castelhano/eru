@@ -69,7 +69,7 @@ class ContratoForm(BootstrapMixin, forms.ModelForm):
     salario = forms.DecimalField(label=_('Salário'), widget=forms.TextInput(), localize=True)
     class Meta:
         model = Contrato
-        fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim']
+        fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim', 'carga_mensal']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         sid = self.data.get('setor') or (self.instance.cargo.setor_id if self.instance.pk and self.instance.cargo else None)
@@ -245,14 +245,12 @@ class TurnoForm(BootstrapMixin, forms.ModelForm):
 TurnoDiaFormSet = inlineformset_factory(
     Turno, 
     TurnoDia,
-    fields=['posicao_ciclo', 'entrada', 'saida', 'carga_horaria', 'tolerancia', 'eh_folga'], # Adicionei tolerancia
+    fields=['posicao_ciclo', 'entrada', 'saida', 'tolerancia', 'eh_folga'],
     extra=0,
-    can_delete=True,
     widgets={
-        'entrada': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control form-control-sm'}),
-        'saida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control form-control-sm'}),
-        'carga_horaria': forms.TextInput(attrs={'placeholder': '08:00:00', 'class': 'form-control form-control-sm'}),
-        'tolerancia': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}), # Widget para tolerancia
-        'posicao_ciclo': forms.NumberInput(attrs={'readonly': True, 'class': 'form-control bg-light form-control-sm'}),
+        'entrada': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
+        'saida': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
+        'posicao_ciclo': forms.NumberInput(attrs={'class': 'form-control-sm', 'readonly': True}),
+        'tolerancia': forms.NumberInput(attrs={'class': 'form-control-sm'}),
     }
 )

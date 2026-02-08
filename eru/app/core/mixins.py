@@ -237,7 +237,7 @@ class TableCustomMixin:
             kwargs['extra_columns'] = extra
         super().__init__(*args, **kwargs)
         # Configuracoes de layout e atributos da tabela
-        self.template_name = getattr(self, 'template_name', "_tables/bootstrap5_custom.html")
+        self.template_name = getattr(self.Meta, 'template_name', "_tables/bootstrap5_custom.html")
         self.empty_text = self.empty_text or _("Nenhum registro a exibir")
         self.attrs = {
             "class": "table border table-striped table-hover mb-2", 

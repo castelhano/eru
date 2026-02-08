@@ -36,8 +36,6 @@ def dependence_resolve(rules):
 def engine_run(aeval, context, order_calc, rules_dict):
 # recebe um dicionario {event: formula} e uma lista dos eventos ordenados por precedencia
 # ele itera, calcula e insere o resultado no proprio context para o proximo calculo
-    print('engine_run: order_calc')
-    print(order_calc)
     aeval.symtable.clear()
     aeval.symtable.update(get_whitelist())
     aeval.symtable.update(context)
@@ -45,10 +43,13 @@ def engine_run(aeval, context, order_calc, rules_dict):
     for rastreio in order_calc:
         if rastreio in rules_dict:
             res = aeval(rules_dict[rastreio].valor)
-            if aeval.error:
+            if len(aeval.error) > 0:
                 err = aeval.error[0]
-                erros[rastreio] = f"{err.type}: {err.msg}"
-                aeval.symtable[rastreio] = 0
+                tipo_erro = getattr(err, 'exc_name', 'Error')
+                msg_erro = getattr(err, 'msg', 'Erro desconhecido')
+                erros[rastreio] = f"{tipo_erro}: {msg_erro}"
+                aeval.symtable[rastreio] = 0 # garante que o calculo siga sem quebrar
+                aeval.error = [] # limpa os erros do interpretador para a proxima iteracao
             else:
                 aeval.symtable[rastreio] = res            
     return dict(aeval.symtable), erros

@@ -60,7 +60,7 @@
           <div>
             {{ table.render_filter|safe }}
           </div>          
-          <div class="table-responsive{% if not table.rows %} d-none{% endif %}">
+          <div class="{% if not table.rows %} d-none{% endif %}">
             {% render_table table %}
           </div>
         </div>

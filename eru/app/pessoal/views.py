@@ -151,65 +151,41 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         return self.request.path
 
 
-class TurnoManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+class TurnoManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Turno
     form_class = TurnoForm
     template_name = 'pessoal/turnos.html'
     permission_required = 'pessoal.view_turno'
-    def get_instance(self):
+    def get_object(self, queryset=None):
         pk = self.kwargs.get('pk') or self.request.GET.get('edit')
         return get_object_or_404(Turno, pk=pk) if pk else None
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        instance = self.get_instance()
-        if instance and not ctx.get('form'):
-            ctx['form'] = self.form_class(instance=instance)
-        if self.request.method == 'POST':
-            ctx['dias_formset'] = TurnoDiaFormSet(self.request.POST, instance=instance, prefix='dias')
-        else:
-            ctx['dias_formset'] = TurnoDiaFormSet(instance=instance, prefix='dias')
-        qs = Turno.objects.all().order_by('nome')
-        ctx['table'] = TurnoTable(qs).config(self.request)
-        ctx['is_update'] = instance is not None
-        return ctx
+        instance = self.get_object()
+        self.object = instance 
+        kwargs.setdefault('form', self.form_class(instance=instance))
+        kwargs['dias_formset'] = TurnoDiaFormSet(
+            self.request.POST if self.request.method == 'POST' else None,
+            instance=instance, 
+            prefix='dias'
+        )
+        kwargs['table'] = TurnoTable(Turno.objects.all().order_by('nome')).config(self.request)
+        kwargs['is_update'] = instance is not None
+        return super().get_context_data(**kwargs)
     def form_valid(self, form):
-        # 1. Pegamos o formset do contexto (que já foi instanciado com o POST)
-        ctx = self.get_context_data()
+        ctx = self.get_context_data(form=form)
         dias_formset = ctx['dias_formset']
-        
-        # 2. Primeiro validamos o formulário PAI (Turno)
-        if form.is_valid():
-            # Salvamos o pai PRIMEIRO para gerar o ID (pk) no banco
+        if form.is_valid() and dias_formset.is_valid():
             self.object = form.save()
-            
-            # 3. Agora "avisamos" o formset quem é o pai dele
             dias_formset.instance = self.object
-            
-            # 4. Validamos e salvamos os FILHOS
-            if dias_formset.is_valid():
-                dias_formset.save()
-                # Retorna o sucesso padrão da sua BaseCreateView (SuccessMessageMixin)
-                return super().form_valid(form)
-            else:
-                # Se o formset for inválido (ex: falta de dados obrigatórios nos dias)
-                # Precisamos re-renderizar a página com os erros do formset
-                return self.render_to_response(self.get_context_data(form=form))
-                
+            dias_formset.save()
+            return super().form_valid(form)
         return self.form_invalid(form)
-
-    # def form_valid(self, form):
-    #     ctx = self.get_context_data()
-    #     dias_formset = ctx['dias_formset']
-    #     if dias_formset.is_valid():
-    #         self.object = form.save()
-    #         dias_formset.instance = self.object
-    #         dias_formset.save()
-    #         return redirect(self.get_success_url())
-    #     else:
-    #         return self.form_invalid(form)
+    def get_success_message(self, cleaned_data):
+        if self.request.GET.get('edit') or self.kwargs.get('pk'):
+            return DEFAULT_MESSAGES.get('updated')
+        return DEFAULT_MESSAGES.get('created')
     def get_success_url(self):
         return reverse('pessoal:turno_list')
-
 
 
 class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
@@ -519,7 +495,7 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
         funcionario = self.get_object()
         if request.method == 'POST' and not request.user.has_perm('pessoal.change_funcionario'):
             return redirect('handler', 403)
-        if not funcionario.F_ehEditavel:
+        if not funcionario.F_eh_editavel:
             messages.error( request, _("Não é possível alterar dados de funcionários desligados"))
             return redirect('pessoal:funcionario_list', id=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
@@ -553,7 +529,7 @@ class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpd
     def dispatch(self, request, *args, **kwargs):
         # so permite edicao de afastamentos de funcionarios ativos
         afastamento = self.get_object()
-        if not afastamento.funcionario.F_ehEditavel:
+        if not afastamento.funcionario.F_eh_editavel:
             messages.error(
                 request,
                 _('Não é possível alterar dados de funcionários desligados')
@@ -577,7 +553,7 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if not self.object.funcionario.F_ehEditavel:
+        if not self.object.funcionario.F_eh_editavel:
             messages.error(request, _('Não é possível alterar dados de funcionários desligados'))
             return redirect('pessoal:dependente_update', pk=self.object.id)
         return super().dispatch(request, *args, **kwargs)

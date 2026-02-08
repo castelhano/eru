@@ -2,7 +2,7 @@ import calendar
 from datetime import date
 from django.db.models import Q
 from pessoal.extras import get_props
-from pessoal.models import Funcionario, Contrato, Evento
+from pessoal.models import Funcionario, Contrato, Evento, FrequenciaConsolidada
 
 
 def get_period(mes, ano):
@@ -23,6 +23,7 @@ def get_event_vars_master(asDict=False, **kwargs):
     targets = [
         kwargs.get('funcionario', Funcionario),
         kwargs.get('contrato', Contrato),
+        kwargs.get('consolidado', FrequenciaConsolidada),
     ]
     res = {} if (asDict or is_calc) else []
     for obj in targets:
@@ -30,7 +31,7 @@ def get_event_vars_master(asDict=False, **kwargs):
         props = [n for n, v in cls.__dict__.items() if isinstance(v, property)]
         if isinstance(res, list): res.extend(props)
         else: res.update({p: getattr(obj, p) if is_calc else 1 for p in props})
-    freq = kwargs.get('frequencia')
+    freq = kwargs.get('consolidado')
     if freq:
         # se for calculo, pega o dicionario salvo (JSON) na frequecia 'consolidado'
         data_h = freq.consolidado if (is_calc and not isinstance(freq, type)) else {}        

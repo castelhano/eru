@@ -51,7 +51,7 @@ class ContratoTable(TableCustomMixin, Table):
     export_csv = True
     class Meta:
         model = Contrato        
-        fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim',)
+        fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal',)
         paginate_by = 10
         actions = [
             {

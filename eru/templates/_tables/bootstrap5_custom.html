@@ -1,6 +1,14 @@
 {% extends "django_tables2/bootstrap5.html" %}
 {% load django_tables2 %}
 
+{% block table-wrapper %}
+    <div class="table-responsive">
+        {% block table %}
+            {{ block.super }}
+        {% endblock table %}
+    </div>
+{% endblock table-wrapper %}
+
 {% block table.thead %}
     <thead {{ table.attrs.thead.as_html }}>
         <tr>

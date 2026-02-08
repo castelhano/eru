@@ -37,6 +37,22 @@
         {% render_table table %}
     </div>
 
+<table style="display:none">
+    <tbody id="template-row">
+        <tr class="formset-row">
+            {% with dias_formset.empty_form as ef %}
+                <td>{{ ef.posicao_ciclo }}</td>
+                <td>{{ ef.entrada }}</td>
+                <td>{{ ef.saida }}</td>
+                <td>{{ ef.tolerancia }}</td>
+                <td class="text-center">{{ ef.eh_folga }}</td>
+                <td class="text-center">---</td> <!-- DELETE não costuma ser usado em Create -->
+                {% for hidden in ef.hidden_fields %}{{ hidden }}{% endfor %}
+            {% endwith %}
+        </tr>
+    </tbody>
+</table>
+
     <!-- DETAIL: Formulário -->
     <div class="col-md-8 p-4">
         <form method="post">
@@ -45,8 +61,8 @@
             <!-- Campos do Turno usando seu Mixin -->
             <div class="row mb-4">
                 <div class="col-md-6">
-                    {{ form.nome.i18n_label }}
                     {{ form.nome }}
+                    {{ form.nome.i18n_label }}
                 </div>
                 <div class="col-md-3">
                     {{ form.dias_ciclo.i18n_label }}
@@ -59,6 +75,7 @@
             </div>
 
             <h6 class="border-bottom pb-2">Configuração dos Dias do Ciclo</h6>
+            {{ dias_formset.non_form_errors }}
             {{ dias_formset.management_form }}
             <table class="table table-sm align-middle mt-3">
                 <thead class="table-light">
@@ -66,7 +83,7 @@
                         <th width="80">Posição</th>
                         <th>Entrada</th>
                         <th>Saída</th>
-                        <th width="120">Carga Horária</th>
+                        <th>Tolerancia</th>
                         <th class="text-center">Folga</th>
                         <th class="text-center">Excluir</th>
                     </tr>
@@ -78,7 +95,7 @@
                         <td>{{ form_dia.posicao_ciclo }}</td>
                         <td>{{ form_dia.entrada }}</td>
                         <td>{{ form_dia.saida }}</td>
-                        <td>{{ form_dia.carga_horaria }}</td>
+                        <td>{{ form_dia.tolerancia }}</td>
                         <td class="text-center">{{ form_dia.eh_folga }}</td>
                         <td class="text-center">{{ form_dia.DELETE }}</td>
                     </tr>
@@ -107,48 +124,40 @@
 {% endblock %}
 <script>
 {% block add_script %}
+(function() {
+    const inputCiclo = document.querySelector('[name="dias_ciclo"]');
+    const body = document.getElementById('formset-body');
+    const totalForms = document.querySelector('[name="dias-TOTAL_FORMS"]');
+    const template = document.querySelector('#template-row tr');
 
-const diasCicloInput = document.querySelector('input[name="dias_ciclo"]');
-const formsetBody = document.getElementById('formset-body');
-const totalForms = document.querySelector('input[name="dias-TOTAL_FORMS"]');
+    inputCiclo?.addEventListener('change', () => {
+        const alvo = parseInt(inputCiclo.value) || 0;
+        let linhas = body.querySelectorAll('.formset-row');
 
-diasCicloInput.addEventListener('change', function() {
-    const quantidadeDesejada = parseInt(this.value) || 0;
-    let linhasAtuais = formsetBody.querySelectorAll('.formset-row');
-    
-    // 1. Se precisar remover linhas (ciclo diminuiu)
-    if (linhasAtuais.length > quantidadeDesejada) {
-        for (let i = linhasAtuais.length - 1; i >= quantidadeDesejada; i--) {
-            linhasAtuais[i].remove();
-        }
-    } 
-    // 2. Se precisar adicionar linhas (ciclo aumentou)
-    else if (linhasAtuais.length < quantidadeDesejada) {
-        for (let i = linhasAtuais.length; i < quantidadeDesejada; i++) {
-            const novaLinha = linhasAtuais[0].cloneNode(true);
-            
-            // Limpa os valores dos inputs e ajusta os IDs/Names (padrão Django Formset)
-            novaLinha.querySelectorAll('input').forEach(input => {
-                const name = input.name.replace('-0-', `-${i}-`);
-                const id = input.id.replace('-0-', `-${i}-`);
-                input.name = name;
-                input.id = id;
-                
-                if (input.name.includes('posicao_ciclo')) {
-                    input.value = i + 1; // Define automaticamente o dia do ciclo
-                } else if (input.type !== 'hidden') {
-                    input.value = '';
-                    input.checked = false;
-                }
+        // Adiciona a diferença
+        for (let i = linhas.length; i < alvo; i++) {
+            const nova = template.cloneNode(true);
+            nova.querySelectorAll('input, select').forEach(el => {
+                el.name = el.name.replace(/__prefix__/g, i);
+                el.id = el.id.replace(/__prefix__/g, i);
+                if (el.name.includes('posicao_ciclo')) el.value = i + 1;
             });
-            formsetBody.appendChild(novaLinha);
+            body.appendChild(nova);
         }
-    }
-    
-    // 3. Atualiza o TOTAL_FORMS para o Django aceitar o POST
-    totalForms.value = quantidadeDesejada;
-});
+        // Remove o excesso
+        while (body.children.length > alvo) body.lastElementChild.remove();
+        
+        totalForms.value = body.children.length;
+    });
 
+    body.addEventListener('change', (e) => {
+        if (e.target.name.includes('DELETE')) {
+            const val = parseInt(inputCiclo.value) || 0;
+            inputCiclo.value = e.target.checked ? val - 1 : val + 1;
+            e.target.closest('tr').classList.toggle('table-danger', e.target.checked);
+        }
+    });
+})();
 
 
 {% endblock %}
