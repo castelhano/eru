@@ -263,9 +263,8 @@ auditlog.register(Turno)
 class TurnoDia(models.Model):
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='dias', verbose_name=_('Turno'))
     posicao_ciclo = models.IntegerField(_('Posição Ciclo'))
-    entrada = models.TimeField(_('Entrada'))
-    saida = models.TimeField(_('Saída'))
-    carga_horaria = models.DurationField(_('Carga Horária'))
+    entrada = models.TimeField(_('Entrada'), null=True, blank=True)
+    saida = models.TimeField(_('Saída'), null=True, blank=True)
     tolerancia = models.PositiveIntegerField(_('Tolerância'), default=10)
     eh_folga = models.BooleanField(_('É Folga'), default=False)
     class Meta:
@@ -273,15 +272,15 @@ class TurnoDia(models.Model):
         ordering = ['posicao_ciclo']
     def __str__(self):
         return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
-    def clean(self):
-        if self.posicao_ciclo > self.turno.dias_ciclo:
-            raise ValidationError(
-                _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
-                    'posicao': self.posicao_ciclo,
-                    'limite': self.turno.dias_no_ciclo,
-                }
-            )
-auditlog.register(Turno)
+    # def clean(self):
+    #     if self.posicao_ciclo > self.turno.dias_ciclo:
+    #         raise ValidationError(
+    #             _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
+    #                 'posicao': self.posicao_ciclo,
+    #                 'limite': self.turno.dias_ciclo,
+    #             }
+    #         )
+auditlog.register(TurnoDia)
 
 
 class TurnoHistorico(models.Model):
@@ -294,7 +293,6 @@ class TurnoHistorico(models.Model):
         ordering = ['-inicio_vigencia']
     def __str__(self):
         return f'{self.contrato.funcionario.matricula} | {self.turno.nome}'
-
 auditlog.register(TurnoHistorico)
 
 
@@ -428,24 +426,6 @@ class EventoMovimentacao(models.Model):
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT, verbose_name=_('Motivo'))
     class Meta:
         abstract = True
-    @property
-    def E_requisitos(self):
-        """
-        Analisa o campo 'valor' (fórmula) e retorna uma lista de 'rastreios'
-        de outros eventos que a fórmula menciona.
-        """
-        if not self.valor or not isinstance(self.valor, str):
-            return []
-        aeval = Interpreter()
-        try:
-            nodes = aeval.parse(self.valor)
-            nomes_encontrados = [
-                node.id for node in ast.walk(nodes) 
-                if isinstance(node, ast.Name) and node.id not in aeval.symtable
-            ]
-            return list(set(nomes_encontrados))
-        except:
-            return []
     def clean(self):
         if self.fim and self.inicio > self.fim:
             raise ValidationError({'fim': _('Data de fim não pode ser menor que data de inicio')})
@@ -498,5 +478,90 @@ class EventoFuncionario(EventoMovimentacao):
         ]
     def __str__(self):
         return f'event:company | {self.evento.nome}'
-
 auditlog.register(EventoFuncionario)
+
+
+class FolhaPagamento(models.Model):
+    class Status(models.TextChoices):
+        RASCUNHO = "R", _("Rascunho")
+        FECHADO  = "F", _("Fechado")
+        PAGO     = "P", _("Pago")
+        CANCELADO = "C", _("Cancelado")
+    contrato = models.ForeignKey('Contrato', on_delete=models.PROTECT, related_name='folhas', verbose_name=_('Contrato'))
+    competencia = models.DateField(_('Competência'), db_index=True)    
+    proventos = models.DecimalField(_('Total Proventos'), max_digits=12, decimal_places=2, default=0)
+    descontos = models.DecimalField(_('Total Descontos'), max_digits=12, decimal_places=2, default=0)
+    liquido = models.DecimalField(_('Valor Líquido'), max_digits=12, decimal_places=2, default=0)    
+    regras = models.JSONField(_('Regras'), default=dict)    
+    erros = models.JSONField(_('Erros'), null=True, blank=True)
+    total_erros = models.PositiveIntegerField(_('Qtde Erros'), default=0, db_index=True)
+    status = models.CharField(_('Status'), max_length=2, choices=Status.choices, default=Status.RASCUNHO, db_index=True)    
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        verbose_name = _('Folha de Pagamento')
+        verbose_name_plural = _('Folhas de Pagamento')
+        unique_together = ('contrato', 'competencia')
+        ordering = ['-competencia', 'contrato__funcionario__matricula']
+    def __str__(self):
+        return f"{self.contrato.funcionario.matricula} | {self.competencia.strftime('%m/%Y')}"
+
+
+class EventoFrequencia(models.Model):
+    class Categoria(models.TextChoices):
+        JORNADA = 'PRD', _('Jornada/Trabalho')
+        INTERVALO = 'INT', _('Intervalo')
+        AUSENCIA_JUST = 'AJ', _('Ausência Justificada')
+        AUSENCIA_NJUST = 'ANJ', _('Ausência Não Justificada')
+        HORA_EXTRA = 'HE', _('Hora Extra')
+    nome = models.CharField(_('Nome'), max_length=100)
+    categoria = models.CharField(_('Categoria'), max_length=4, choices=Categoria.choices, default=Categoria.JORNADA)
+    contabiliza_horas = models.BooleanField(_('Contabiliza Horas'), default=True)
+    remunerado = models.BooleanField(_('Remunerado'), default=True)
+    dia_inteiro = models.BooleanField(_('Dia Inteiro'), default=False)
+    prioridade = models.PositiveIntegerField(_('Prioridade'), default=1)
+    cor = models.CharField(_('Cor Hex'), max_length=7, default='#3498db')
+    def __str__(self):
+        return f"{self.nome} ({self.get_categoria_display()})"
+auditlog.register(EventoFrequencia, exclude_fields=['cor'])
+
+
+class Frequencia(models.Model):
+    contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
+    data = models.DateField(_('Data'), db_index=True)
+    evento = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
+    inicio = models.TimeField(_('Início'), null=True, blank=True)
+    fim = models.TimeField(_('Fim'), null=True, blank=True)
+    observacao = models.CharField(_('Observação'), max_length=255, blank=True)
+    class Meta:
+        ordering = ['data', 'inicio']
+auditlog.register(Frequencia, exclude_fields=['observacao'])
+
+class FrequenciaConsolidada(models.Model):
+    class Status(models.TextChoices):
+        ABERTO = 'A', _('Aberto')
+        FECHADO = 'F', _('Fechado')
+        PROCESSADO = 'P', _('Processado')
+    contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='consolidados_freq')
+    competencia = models.DateField(_('Competência'), db_index=True)
+    inicio = models.DateField(_('Data Início'))
+    fim = models.DateField(_('Data Fim'))
+    status = models.CharField(_('Status'), max_length=1, choices=Status.choices, default=Status.ABERTO)
+    bloqueado = models.BooleanField(_('Bloqueado'), default=False)
+    processamento = models.DateTimeField(_('Data Processamento'), null=True, blank=True)
+    consolidado = models.JSONField(_('Valores Consolidados'), default=dict, blank=True)
+    erros = models.JSONField(_('Logs de Erros'), default=dict, blank=True)
+    class Meta:
+        unique_together = ('contrato', 'competencia')
+    def __str__(self):
+        return f"{self.contrato.funcionario.matricula} - {self.competencia.strftime('%m/%Y')}"
+    @property
+    def H_faltas_justificadas(self): return self.consolidado.get('H_faltas_justificadas', 0)
+    @property
+    def H_faltas_injustificadas(self): return self.consolidado.get('H_faltas_injustificadas', 0)
+    @property
+    def H_horas_trabalhadas(self): return self.consolidado.get('H_horas_trabalhadas', 0.0)
+    @property
+    def H_horas_extras(self): return self.consolidado.get('H_horas_extras', 0.0)
+    @property
+    def H_atestados(self): return self.consolidado.get('H_atestados', 0)

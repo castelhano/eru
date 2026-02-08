@@ -1,13 +1,19 @@
 import re
+from itertools import groupby
 from django import forms
+from django.forms import inlineformset_factory
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django.contrib.auth.models import User
-from .models import Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import (
+    Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, 
+    EventoCargo, EventoFuncionario, MotivoReajuste, Turno, TurnoDia
+)
 from datetime import date
 from core.mixins import BootstrapMixin
-from core.views import asteval_run
-from .extras import getEventProps
+from core.extras import asteval_run
+from pessoal.folha.collectors import get_event_vars_master
+
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
@@ -153,7 +159,7 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
         if not all([inicio, ev]): return cd
         # 1. Validacao Asteval (Sintaxe)
         if val:
-            check = asteval_run(val, getEventProps(True))
+            check = asteval_run(val, get_event_vars_master(True))
             if not check['status']:
                 self.add_error('valor', f"{_('Erro de sintaxe')}:<br>{check['message']}")
         # 2. Validacao de Datas
@@ -175,7 +181,6 @@ class EventoCargoForm(EventoMovimentacaoBaseForm):
     class Meta(EventoMovimentacaoBaseForm.Meta):
         model = EventoCargo
         fields = EventoMovimentacaoBaseForm.Meta.fields + ['cargo', 'filiais']
-
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user:
@@ -227,3 +232,27 @@ class EventoEmpresaForm(EventoMovimentacaoBaseForm):
             filial_ids = filiais_qs.values_list('id', flat=True)
             return {'filiais__id__in': filial_ids}
         return {}
+
+
+class TurnoForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = Turno
+        fields = ['nome', 'dias_ciclo', 'inicio']
+        widgets = {
+            'inicio': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+TurnoDiaFormSet = inlineformset_factory(
+    Turno, 
+    TurnoDia,
+    fields=['posicao_ciclo', 'entrada', 'saida', 'carga_horaria', 'tolerancia', 'eh_folga'], # Adicionei tolerancia
+    extra=0,
+    can_delete=True,
+    widgets={
+        'entrada': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control form-control-sm'}),
+        'saida': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control form-control-sm'}),
+        'carga_horaria': forms.TextInput(attrs={'placeholder': '08:00:00', 'class': 'form-control form-control-sm'}),
+        'tolerancia': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}), # Widget para tolerancia
+        'posicao_ciclo': forms.NumberInput(attrs={'readonly': True, 'class': 'form-control bg-light form-control-sm'}),
+    }
+)

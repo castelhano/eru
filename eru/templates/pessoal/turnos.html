@@ -1,0 +1,155 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% load django_tables2 %}
+{% block title %}{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            {% if perms.app.add_modelo %}
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="url"><i class="bi bi-plus-lg text-success"></i></a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item pointer" href="url">Novo item</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title">Módulo: <span class="text-purple">Modelo</span></h5>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+
+
+
+            <div class="row">
+    <!-- MASTER: Lista -->
+    <div class="col-md-4 border-end">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Escalas Cadastradas</h5>
+            <a href="{% url 'pessoal:turno_list' %}" class="btn btn-sm btn-outline-primary">+ Novo</a>
+        </div>
+        {% render_table table %}
+    </div>
+
+    <!-- DETAIL: Formulário -->
+    <div class="col-md-8 p-4">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Campos do Turno usando seu Mixin -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    {{ form.nome.i18n_label }}
+                    {{ form.nome }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.dias_ciclo.i18n_label }}
+                    {{ form.dias_ciclo }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.inicio.i18n_label }}
+                    {{ form.inicio }}
+                </div>
+            </div>
+
+            <h6 class="border-bottom pb-2">Configuração dos Dias do Ciclo</h6>
+            {{ dias_formset.management_form }}
+            <table class="table table-sm align-middle mt-3">
+                <thead class="table-light">
+                    <tr class="small text-muted">
+                        <th width="80">Posição</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th width="120">Carga Horária</th>
+                        <th class="text-center">Folga</th>
+                        <th class="text-center">Excluir</th>
+                    </tr>
+                </thead>
+                <tbody id="formset-body">
+                    {% for form_dia in dias_formset %}
+                    <tr class="formset-row">
+                        {% for hidden in form_dia.hidden_fields %}{{ hidden }}{% endfor %}
+                        <td>{{ form_dia.posicao_ciclo }}</td>
+                        <td>{{ form_dia.entrada }}</td>
+                        <td>{{ form_dia.saida }}</td>
+                        <td>{{ form_dia.carga_horaria }}</td>
+                        <td class="text-center">{{ form_dia.eh_folga }}</td>
+                        <td class="text-center">{{ form_dia.DELETE }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="text-end mt-4">
+                <button type="submit" class="btn btn-primary px-5">Salvar Escala</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+        </div>
+    </div>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+{% endblock %}
+<script>
+{% block add_script %}
+
+const diasCicloInput = document.querySelector('input[name="dias_ciclo"]');
+const formsetBody = document.getElementById('formset-body');
+const totalForms = document.querySelector('input[name="dias-TOTAL_FORMS"]');
+
+diasCicloInput.addEventListener('change', function() {
+    const quantidadeDesejada = parseInt(this.value) || 0;
+    let linhasAtuais = formsetBody.querySelectorAll('.formset-row');
+    
+    // 1. Se precisar remover linhas (ciclo diminuiu)
+    if (linhasAtuais.length > quantidadeDesejada) {
+        for (let i = linhasAtuais.length - 1; i >= quantidadeDesejada; i--) {
+            linhasAtuais[i].remove();
+        }
+    } 
+    // 2. Se precisar adicionar linhas (ciclo aumentou)
+    else if (linhasAtuais.length < quantidadeDesejada) {
+        for (let i = linhasAtuais.length; i < quantidadeDesejada; i++) {
+            const novaLinha = linhasAtuais[0].cloneNode(true);
+            
+            // Limpa os valores dos inputs e ajusta os IDs/Names (padrão Django Formset)
+            novaLinha.querySelectorAll('input').forEach(input => {
+                const name = input.name.replace('-0-', `-${i}-`);
+                const id = input.id.replace('-0-', `-${i}-`);
+                input.name = name;
+                input.id = id;
+                
+                if (input.name.includes('posicao_ciclo')) {
+                    input.value = i + 1; // Define automaticamente o dia do ciclo
+                } else if (input.type !== 'hidden') {
+                    input.value = '';
+                    input.checked = false;
+                }
+            });
+            formsetBody.appendChild(novaLinha);
+        }
+    }
+    
+    // 3. Atualiza o TOTAL_FORMS para o Django aceitar o POST
+    totalForms.value = quantidadeDesejada;
+});
+
+
+
+{% endblock %}
+</script>

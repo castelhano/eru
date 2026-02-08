@@ -1,5 +1,4 @@
-import os, json, math
-from asteval import Interpreter
+import os, json
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
 from itertools import groupby
@@ -380,33 +379,7 @@ class GrupoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteVie
     success_url = reverse_lazy('grupo_list')
 
 
-def asteval_run(expression, vars_dict):
-    # expression espera uma string com calculo a ser realizado
-    whitelist = {
-        'sqrt': math.sqrt,
-        'sin': math.sin,
-        'cos': math.cos,
-        'log': math.log,
-        'e': math.e,
-        'pi': math.pi,
-        # Adicione operadores logicos se necessario (and, or, not sao nativos)
-        'True': True,
-        'False': False,
-    }
-    aeval = Interpreter(
-        minimal=True,
-        user_symbols=whitelist,
-        use_numpy=False,
-        with_if=True,
-        with_ifexp=True,
-        builtins_readonly=True
-    )
-    aeval.symtable.update(vars_dict)
-    result = aeval(expression)      # tenta interpretar codigo
-    if aeval.error:
-        error_message = aeval.error[0].get_error()
-        return {'status': False, 'type': error_message[0], 'message': error_message[1]}
-    return {'status': True, 'result': result }
+
 
 
 class FilialDataView(LoginRequiredMixin, View):

@@ -1,15 +1,54 @@
+import ast, math
+from graphlib import TopologicalSorter, CycleError
+from asteval import Interpreter
 
 
+def get_whitelist():
+    return {
+        'sqrt': math.sqrt, 'sin': math.sin, 'cos': math.cos,
+        'round': round, 'min': min, 'max': max, 'abs': abs,
+        'True': True, 'False': False,
+    }
 
-def asteval_run(expression, vars_dict):
-# interpretador do asteval
-    pass
+def get_interpreter():
+    return Interpreter(minimal=True, user_symbols=get_whitelist(), builtins_readonly=True)
+
+
+def extract_deps(formula):
+# usa ast.parse para ler a string da formula e retornar uma lista das variaveis de usuario (U_*)
+    try:
+        tree = ast.parse(str(formula))
+        return {node.id for node in ast.walk(tree) if isinstance(node, ast.Name) and node.id.startswith('U_')}
+    except: return set()
+
 
 def dependence_resolve(rules):
-# pega a lista de formulas, extrai as dependencias, e retorna lista de eventos na ordem a ser executada
-    pass
+# cria um grafo de dependencias e retorna a ordem logica de calculo,
+# ex: se U_inss depende de U_salario, U_salario vem primeiro
+# TopologicalSorter: py 3.9+ trata eventuais referencias circulares e gera excessao
+    grafo = {rastreio: extract_deps(mov.valor) for rastreio, mov in rules.items()}
+    try:
+        return list(TopologicalSorter(grafo).static_order())
+    except Exception as e:
+        raise ValueError(f"Ciclo de dependência detectado: {e}")
 
-def engine_run(context, ordered_rules):
+
+def engine_run(aeval, context, order_calc, rules_dict):
 # recebe um dicionario {event: formula} e uma lista dos eventos ordenados por precedencia
 # ele itera, calcula e insere o resultado no proprio context para o proximo calculo
-    pass
+    print('engine_run: order_calc')
+    print(order_calc)
+    aeval.symtable.clear()
+    aeval.symtable.update(get_whitelist())
+    aeval.symtable.update(context)
+    erros = {}
+    for rastreio in order_calc:
+        if rastreio in rules_dict:
+            res = aeval(rules_dict[rastreio].valor)
+            if aeval.error:
+                err = aeval.error[0]
+                erros[rastreio] = f"{err.type}: {err.msg}"
+                aeval.symtable[rastreio] = 0
+            else:
+                aeval.symtable[rastreio] = res            
+    return dict(aeval.symtable), erros

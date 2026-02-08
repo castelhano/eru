@@ -1,6 +1,6 @@
-import base64
-import os, glob
+import os, glob, math, base64
 from pathlib import Path
+from asteval import Interpreter
 
 
 # Cria imagem a partir de dataUrl
@@ -52,3 +52,32 @@ def get_props(model_class):
         if isinstance(value, property):
             prop_list.append(name)
     return prop_list
+
+
+def asteval_run(expression, vars_dict):
+    # expression espera uma string com calculo a ser realizado
+    whitelist = {
+        'sqrt': math.sqrt,
+        'sin': math.sin,
+        'cos': math.cos,
+        'log': math.log,
+        'e': math.e,
+        'pi': math.pi,
+        # Adicione operadores logicos se necessario (and, or, not sao nativos)
+        'True': True,
+        'False': False,
+    }
+    aeval = Interpreter(
+        minimal=True,
+        user_symbols=whitelist,
+        use_numpy=False,
+        with_if=True,
+        with_ifexp=True,
+        builtins_readonly=True
+    )
+    aeval.symtable.update(vars_dict)
+    result = aeval(expression)      # tenta interpretar codigo
+    if aeval.error:
+        error_message = aeval.error[0].get_error()
+        return {'status': False, 'type': error_message[0], 'message': error_message[1]}
+    return {'status': True, 'result': result }

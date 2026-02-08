@@ -15,28 +15,28 @@ from django_tables2 import SingleTableView
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
 from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
-from core.views import asteval_run
+from core.extras import asteval_run
 from core.models import Empresa, Filial
-from .extras import getEventProps
+from pessoal.folha.collectors import get_event_vars_master
 # third-party
 from rest_framework import viewsets, permissions
 from .serializers import FuncionarioSerializer
 # local app
 from .models import (
     Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
-    EventoCargo, EventoFuncionario
+    EventoCargo, EventoFuncionario, Turno
 )
 from .forms import (
-    SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm,
-    EventoForm, GrupoEventoForm, EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
+    SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, 
+    EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, TurnoForm, TurnoDiaFormSet
 )
 from .filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter,
     MotivoReajusteFilter
 )
 from .tables import (
-    FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable,
-    MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, EventoFuncionarioTable
+    FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable, MotivoReajusteTable, 
+    EventoEmpresaTable, EventoCargoTable, EventoFuncionarioTable, TurnoTable
 )
 # ....................
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
@@ -149,6 +149,67 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         return ctx
     def get_success_url(self):
         return self.request.path
+
+
+class TurnoManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+    model = Turno
+    form_class = TurnoForm
+    template_name = 'pessoal/turnos.html'
+    permission_required = 'pessoal.view_turno'
+    def get_instance(self):
+        pk = self.kwargs.get('pk') or self.request.GET.get('edit')
+        return get_object_or_404(Turno, pk=pk) if pk else None
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        instance = self.get_instance()
+        if instance and not ctx.get('form'):
+            ctx['form'] = self.form_class(instance=instance)
+        if self.request.method == 'POST':
+            ctx['dias_formset'] = TurnoDiaFormSet(self.request.POST, instance=instance, prefix='dias')
+        else:
+            ctx['dias_formset'] = TurnoDiaFormSet(instance=instance, prefix='dias')
+        qs = Turno.objects.all().order_by('nome')
+        ctx['table'] = TurnoTable(qs).config(self.request)
+        ctx['is_update'] = instance is not None
+        return ctx
+    def form_valid(self, form):
+        # 1. Pegamos o formset do contexto (que já foi instanciado com o POST)
+        ctx = self.get_context_data()
+        dias_formset = ctx['dias_formset']
+        
+        # 2. Primeiro validamos o formulário PAI (Turno)
+        if form.is_valid():
+            # Salvamos o pai PRIMEIRO para gerar o ID (pk) no banco
+            self.object = form.save()
+            
+            # 3. Agora "avisamos" o formset quem é o pai dele
+            dias_formset.instance = self.object
+            
+            # 4. Validamos e salvamos os FILHOS
+            if dias_formset.is_valid():
+                dias_formset.save()
+                # Retorna o sucesso padrão da sua BaseCreateView (SuccessMessageMixin)
+                return super().form_valid(form)
+            else:
+                # Se o formset for inválido (ex: falta de dados obrigatórios nos dias)
+                # Precisamos re-renderizar a página com os erros do formset
+                return self.render_to_response(self.get_context_data(form=form))
+                
+        return self.form_invalid(form)
+
+    # def form_valid(self, form):
+    #     ctx = self.get_context_data()
+    #     dias_formset = ctx['dias_formset']
+    #     if dias_formset.is_valid():
+    #         self.object = form.save()
+    #         dias_formset.instance = self.object
+    #         dias_formset.save()
+    #         return redirect(self.get_success_url())
+    #     else:
+    #         return self.form_invalid(form)
+    def get_success_url(self):
+        return reverse('pessoal:turno_list')
+
 
 
 class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
@@ -399,7 +460,7 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
         user = self.request.user
         filiais_autorizadas = user.profile.filiais.all()
         context['related'] = self.related
-        context['props'] = getEventProps()
+        context['props'] = get_event_vars_master()
         if self.related == 'empresa':
             context['model'] = {'id': 0, 'pk': 0}
         elif self.related == 'cargo':
@@ -703,7 +764,7 @@ class FormulaValidateView(LoginRequiredMixin, View):
                     'type': 'Empty', 
                     'message': 'Expressao vazia'
                 }, status=400)
-            result = asteval_run(expression, getEventProps(True))
+            result = asteval_run(expression, get_event_vars_master(True))
             if not result['status']:
                 return JsonResponse({
                     'status': 'erro', 
