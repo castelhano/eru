@@ -21,5 +21,6 @@ urlpatterns = [
     path('evento_related/<str:related>/<int:pk>/delete', views.EventoRelatedDeleteView.as_view(),name='eventorelated_delete'),
     path('turnos/', views.TurnoManagementView.as_view(), name='turno_list'),
     path('turnos/<int:pk>/edit/', views.TurnoManagementView.as_view(), name='turno_update'),
+    path('frequencia/', views.FrequenciaManagementView.as_view(), name='frequencia_list'),
     path('api/formula_validate',views.FormulaValidateView.as_view(),name='formula_validate'),
 ]

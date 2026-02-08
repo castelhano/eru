@@ -51,7 +51,7 @@ class UsuarioTable(TableCustomMixin, Table):
     class Meta:
         model = User
         fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
-        paginate_by = 2
+        paginate_by = 10
         actions = [
             {'action': 'update', 'url_name': 'usuario_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_user'}
         ]

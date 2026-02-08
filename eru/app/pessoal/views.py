@@ -1,11 +1,12 @@
 import json
-from datetime import date
+from datetime import date, datetime, timedelta
 from django.views import View
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.utils.timezone import now
@@ -17,18 +18,19 @@ from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
 from core.views_base import BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from core.extras import asteval_run
 from core.models import Empresa, Filial
-from pessoal.folha.collectors import get_event_vars_master
+from pessoal.folha.collectors import get_event_vars_master, get_period
 # third-party
 from rest_framework import viewsets, permissions
 from .serializers import FuncionarioSerializer
 # local app
 from .models import (
     Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, Turno
+    EventoCargo, EventoFuncionario, Turno, Frequencia, EventoFrequencia
 )
 from .forms import (
     SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, 
-    EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, TurnoForm, TurnoDiaFormSet
+    EventoEmpresaForm, EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, TurnoForm, TurnoDiaFormSet, FrequenciaForm,
+    inlineformset_factory, ContratoFrequenciaForm
 )
 from .filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, EventoFuncionarioFilter,
@@ -70,8 +72,6 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
         f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
         context['table'] = CargoTable(f.qs).config(self.request, filter_obj=f)
         return context
-
-
     # def get_queryset(self):
     #     queryset = Cargo.objects.all().order_by('nome')
     #     setor_id = self.request.GET.get('cargo__setor') or self.request.GET.get('setor')
@@ -519,6 +519,197 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
         return context
     def get_success_url(self):
         return reverse('pessoal:funcionario_update', kwargs={'pk': self.object.id})
+
+# from django.utils import timezone 
+# class FrequenciaManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+#     model = Contrato
+#     form_class = ContratoFrequenciaForm
+#     template_name = 'pessoal/frequencia.html'
+#     permission_required = 'pessoal.view_frequencia'
+
+#     def get_object(self, queryset=None):
+#         val = self.request.GET.get('contrato') or self.kwargs.get('pk')
+#         if not val: return None
+#         obj = Contrato.objects.select_related('funcionario__filial', 'cargo').filter(
+#             funcionario__matricula=val,
+#             funcionario__filial__in=self.request.user.profile.filiais.all()
+#         ).first()
+#         if val and not obj:
+#             messages.warning(self.request, DEFAULT_MESSAGES.get('emptyQuery'))
+#         return obj
+
+#     def get_context_data(self, **kwargs):
+#         self.object = self.get_object()
+#         if not self.object: return super().get_context_data(formset=None, **kwargs)
+
+#         m, a = int(self.request.GET.get('mes', date.today().month)), int(self.request.GET.get('ano', date.today().year))
+#         ini, fim = get_period(m, a)
+#         qs = Frequencia.objects.filter(contrato=self.object, inicio__date__range=[ini, fim]).select_related('evento')
+        
+#         initial_data, extra_forms = [], 0
+#         if self.request.method == 'GET':
+#             datas_mes = [ini + timedelta(days=x) for x in range((fim - ini).days + 1)]
+#             datas_no_banco = set(qs.values_list('inicio__date', flat=True))
+#             initial_data = [{'data_referencia': d} for d in datas_mes if d not in datas_no_banco]
+#             extra_forms = len(initial_data)
+
+#         # Factory dinâmica para suportar a grade de dias vazios
+#         fs_class = inlineformset_factory(Contrato, Frequencia, form=FrequenciaForm, extra=extra_forms, can_delete=True)
+#         kwargs.update({
+#             'formset': fs_class(self.request.POST or None, instance=self.object, queryset=qs, initial=initial_data, prefix='dias'),
+#             'mes_ref': m, 'ano_ref': a, 'is_update': True
+#         })
+#         return super().get_context_data(**kwargs)
+#     def form_valid(self, form):
+#         self.object = self.get_object()
+#         ctx = self.get_context_data(form=form)
+#         fs = ctx.get('formset')
+
+#         if fs and fs.is_valid():
+#             try:
+#                 with transaction.atomic():
+#                     ev_padrao = EventoFrequencia.objects.filter(categoria='PRD').first()
+                    
+#                     for f in fs:
+#                         # 1. Trata deleção (se o checkbox DELETE foi marcado)
+#                         if fs.can_delete and fs._should_delete_form(f):
+#                             if f.instance.pk:
+#                                 f.instance.delete()
+#                             continue
+
+#                         # 2. Trata salvamento (se a linha mudou)
+#                         if f.has_changed():
+#                             d = f.cleaned_data.get('data_referencia')
+#                             hi = f.cleaned_data.get('inicio_time')
+#                             hf = f.cleaned_data.get('fim_time')
+#                             # Forçamos o evento padrão caso o usuário não tenha selecionado
+#                             evento = f.cleaned_data.get('evento') or ev_padrao
+
+#                             if d and hi:
+#                                 f.instance.contrato = self.object
+#                                 f.instance.evento = evento # Garante o NOT NULL
+                                
+#                                 # Datas Aware (Timezone)
+#                                 dt_ini = datetime.combine(d, hi)
+#                                 f.instance.inicio = timezone.make_aware(dt_ini)
+                                
+#                                 if hf:
+#                                     v_noite = timedelta(1) if hf < hi else timedelta(0)
+#                                     dt_fim = datetime.combine(d + v_noite, hf)
+#                                     f.instance.fim = timezone.make_aware(dt_fim)
+                                
+#                                 f.instance.save()
+
+#                 messages.success(self.request, "Espelho de ponto atualizado!")
+#                 return redirect(self.request.get_full_path())
+                
+#             except Exception as e:
+#                 messages.error(self.request, f"Erro no banco: {e}")
+#                 return self.form_invalid(form)
+                
+#         return self.form_invalid(form)
+
+from django.utils import timezone
+class FrequenciaManagementView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+    model = Contrato
+    form_class = ContratoFrequenciaForm
+    template_name = 'pessoal/frequencia.html'
+    permission_required = 'pessoal.view_frequencia'
+
+    def get_object(self, queryset=None):
+        val = self.request.GET.get('contrato') or self.kwargs.get('pk')
+        if not val: return None
+        return Contrato.objects.select_related('funcionario').filter(
+            funcionario__matricula=val,
+            funcionario__filial__in=self.request.user.profile.filiais.all()
+        ).first()
+
+    def get_context_data(self, **kwargs):
+        self.object = self.get_object()
+        context = super().get_context_data(**kwargs)
+        
+        if not self.object:
+            return context
+
+        # 1. Definição do Período
+        m = int(self.request.GET.get('mes', date.today().month))
+        a = int(self.request.GET.get('ano', date.today().year))
+        ini, fim = get_period(m, a) # Sua função utilitária
+        
+        # 2. Queryset e Grade de dias faltantes
+        qs = Frequencia.objects.filter(contrato=self.object, inicio__date__range=[ini, fim]).select_related('evento')
+        
+        # Se for GET, preparamos os dias vazios do mês como 'initial'
+        initial = []
+        if self.request.method == 'GET':
+            datas_no_banco = set(qs.values_list('inicio__date', flat=True))
+            dias_mes = [ini + timedelta(days=x) for x in range((fim - ini).days + 1)]
+            # Passamos a data para o campo 'inicio'. O Widget datetime-local lidará com isso.
+            initial = [{'inicio': d} for d in dias_mes if d not in datas_no_banco]
+
+        # 3. Formset (Dinâmico como o do Turno)
+        FS = inlineformset_factory(
+            Contrato, Frequencia, form=FrequenciaForm, 
+            extra=len(initial), can_delete=True
+        )
+        
+        context['formset'] = FS(
+            self.request.POST or None, 
+            instance=self.object, 
+            queryset=qs, 
+            initial=initial, 
+            prefix='dias'
+        )
+        context.update({'mes_ref': m, 'ano_ref': a})
+        return context
+
+    def form_valid(self, form):
+        ctx = self.get_context_data(form=form)
+        fs = ctx['formset']
+        
+        if fs.is_valid():
+            try:
+                with transaction.atomic():
+                    ev_padrao = EventoFrequencia.objects.filter(categoria='PRD').first()
+                    
+                    # 1. CORREÇÃO: Itera sobre os formulários marcados para deletar
+                    for f in fs.deleted_forms:
+                        if f.instance.pk:
+                            f.instance.delete()
+                    
+                    # 2. Salva apenas o que mudou (usando o método save customizado do Form)
+                    for f in fs.forms:
+                        if f.has_changed() and not fs._should_delete_form(f):
+                            f.save(self.object, ev_padrao)
+
+                messages.success(self.request, "Folha de frequência atualizada!")
+                return redirect(self.request.get_full_path())
+            except Exception as e:
+                messages.error(self.request, f"Erro ao salvar: {e}")
+                
+        return self.form_invalid(form)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Afastamento

@@ -531,7 +531,7 @@ class EventoFrequencia(models.Model):
     prioridade = models.PositiveIntegerField(_('Prioridade'), default=1)
     cor = models.CharField(_('Cor Hex'), max_length=7, default='#3498db')
     def __str__(self):
-        return f"{self.nome} ({self.get_categoria_display()})"
+        return self.nome
 auditlog.register(EventoFrequencia, exclude_fields=['cor'])
 
 
@@ -550,6 +550,18 @@ class Frequencia(models.Model):
     observacao = models.CharField(_('Observação'), max_length=255, blank=True)
     class Meta:
         ordering = ['inicio']
+    def clean(self):
+        super().clean()
+        if self.inicio and self.fim:
+            if self.fim <= self.inicio:
+                raise ValidationError("Horário de fim deve ser maior que o início")
+            overlap = Frequencia.objects.filter(
+                contrato=self.contrato,
+                inicio__lt=self.fim,
+                fim__gt=self.inicio
+            ).exclude(pk=self.pk)
+            if overlap.exists():
+                raise ValidationError("Registro sobrepõe outras entradas existentes")
     @property
     def H_jornada(self):
         if self.inicio and self.fim:
