@@ -538,8 +538,15 @@ auditlog.register(EventoFrequencia, exclude_fields=['cor'])
 class Frequencia(models.Model):
     contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
     evento = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
-    inicio = models.TimeField(_('Início'), null=True, blank=True)
-    fim = models.TimeField(_('Fim'), null=True, blank=True)
+    inicio = models.DateTimeField(_('Início'), null=True, blank=True, db_index=True)
+    fim = models.DateTimeField(_('Fim'), null=True, blank=True)
+    metadados = models.JSONField(
+        _('Importação'), 
+        default=dict, 
+        blank=True, 
+        help_text="Armazena os horários vindos da FrequenciaImport antes da edição"
+    )
+    editado = models.BooleanField(_('Editado Manualmente'), default=False)
     observacao = models.CharField(_('Observação'), max_length=255, blank=True)
     class Meta:
         ordering = ['inicio']
@@ -548,7 +555,12 @@ class Frequencia(models.Model):
         if self.inicio and self.fim:
             return self.fim - self.inicio
         return None
-auditlog.register(Frequencia, exclude_fields=['observacao'])
+    @property
+    def H_horas_decimais(self):
+        duracao = self.H_jornada
+        return duracao.total_seconds() / 3600 if duracao else 0.0
+auditlog.register(Frequencia, exclude_fields=['metadados','editado','observacao'])
+
 
 class FrequenciaConsolidada(models.Model):
     class Status(models.TextChoices):
@@ -578,3 +590,29 @@ class FrequenciaConsolidada(models.Model):
     def H_horas_extras(self): return self.consolidado.get('H_horas_extras', 0.0)
     @property
     def H_atestados(self): return self.consolidado.get('H_atestados', 0)
+
+
+class FrequenciaImport(models.Model):
+    class Origem(models.TextChoices):
+        RELOGIO_AFD = 'AFD', _('Arquivo AFD (Relógio Físico)')
+        APP_MOBILE  = 'APP', _('Aplicativo Móvel (GPS)')
+        PORTAL_WEB  = 'WEB', _('Portal do Funcionário')
+        IMPORT_CSV  = 'CSV', _('Importação de Planilha')
+    contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='batidas_brutas')
+    data_hora = models.DateTimeField(_('Data e Hora Original'), db_index=True)
+    origem = models.CharField(_('Origem'), max_length=3, choices=Origem.choices, default=Origem.RELOGIO_AFD)
+    nsr = models.CharField(_('NSR'), max_length=50, blank=True, null=True, help_text="Número Sequencial de Registro (AFD)")
+    num_relogio = models.CharField(_('Nº Relógio/Equipamento'), max_length=50, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    hash_verificacao = models.CharField(max_length=255, blank=True, null=True, help_text="Hash de integridade do registro original")
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name = _('Importação de Frequência')
+        verbose_name_plural = _('Importações de Frequências')
+        ordering = ['-data_hora']
+        indexes = [
+            models.Index(fields=['contrato', 'data_hora']),
+        ]
+    def __str__(self):
+        return f"{self.contrato.funcionario.matricula} | {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
