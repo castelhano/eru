@@ -65,13 +65,7 @@ class Pessoa(models.Model):
     nome_pai = models.CharField(_('Nome do Pai'), max_length=150, blank=True)
     detalhe = models.TextField(_('Detalhe'), blank=True)
     def cnh_eh_valida(self):
-        if self.cnh_validade != None:
-            if self.cnh_validade >= date.today():
-                return True
-            else:
-                return False
-        else:
-            return True
+        return self.cnh_validade is None or self.cnh_validade >= date.today()
     def idade(self):
         if self.data_nascimento:
             hoje = date.today()
@@ -119,10 +113,10 @@ class Funcionario(Pessoa):
         PEDIDO           = "PD", _("Pedido de Desligamento")
         RESCISAO_INDIRETA= "RI", _("Rescisão Indireta")
         ABANDONO         = "AB", _("Abandono de Emprego")
-        DECISAO_JUDICIAL = "DJ", _("Descisão Judicial")
+        DECISAO_JUDICIAL = "DJ", _("Decisão Judicial")
     filial = models.ForeignKey(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'))
     matricula = models.CharField(_('Matricula'), max_length=15, unique=True, blank=False)
-    data_admissao = models.DateField(_('Data Admissão'), blank=True, null=True, default=datetime.today)
+    data_admissao = models.DateField(_('Data Admissão'), blank=True, null=True, default=date.today)
     data_desligamento = models.DateField(_('Data Desligamento'), blank=True, null=True)
     motivo_desligamento = models.CharField(_('Motivo Desligamento'), max_length=3,choices=MotivoDesligamento.choices, blank=True)
     pne = models.BooleanField(_('Pne'), default=False)
@@ -272,8 +266,9 @@ auditlog.register(Turno)
 class TurnoDia(models.Model):
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='dias', verbose_name=_('Turno'))
     posicao_ciclo = models.IntegerField(_('Posição Ciclo'))
-    entrada = models.TimeField(_('Entrada'), null=True, blank=True)
-    saida = models.TimeField(_('Saída'), null=True, blank=True)
+    horarios = models.JSONField(_('Horários'), default=dict)    
+    # entrada = models.TimeField(_('Entrada'), null=True, blank=True)
+    # saida = models.TimeField(_('Saída'), null=True, blank=True)
     tolerancia = models.PositiveIntegerField(_('Tolerância'), default=10)
     eh_folga = models.BooleanField(_('É Folga'), default=False)
     class Meta:
@@ -281,14 +276,6 @@ class TurnoDia(models.Model):
         ordering = ['posicao_ciclo']
     def __str__(self):
         return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
-    def clean(self):
-        if self.posicao_ciclo > self.turno.dias_ciclo:
-            raise ValidationError(
-                _("A posição %(posicao)s excede o limite de %(limite)s dias definido para este turno") % {
-                    'posicao': self.posicao_ciclo,
-                    'limite': self.turno.dias_ciclo,
-                }
-            )
 auditlog.register(TurnoDia)
 
 
@@ -522,6 +509,7 @@ class EventoFrequencia(models.Model):
         INTERVALO = 'INT', _('Intervalo')
         AUSENCIA_JUST = 'AJ', _('Ausência Justificada')
         AUSENCIA_NJUST = 'ANJ', _('Ausência Não Justificada')
+        FOLGA = 'FLG', _('Folga')
         HORA_EXTRA = 'HE', _('Hora Extra')
     nome = models.CharField(_('Nome'), max_length=100)
     categoria = models.CharField(_('Categoria'), max_length=4, choices=Categoria.choices, default=Categoria.JORNADA)

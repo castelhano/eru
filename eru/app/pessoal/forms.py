@@ -243,16 +243,47 @@ class TurnoForm(BootstrapMixin, forms.ModelForm):
             'inicio': forms.DateInput(attrs={'type': 'date'}),
         }
 
+from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
+
+class BaseTurnoDiaFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        # O segredo: Se o formulário pai (Turno) estiver no POST, 
+        # pegamos o valor de lá, senão pegamos da instância.
+        if self.data:
+            # Busca o valor do campo 'dias_ciclo' no POST data
+            # O nome do campo no POST geralmente é apenas 'dias_ciclo'
+            # mas usamos get para evitar KeyError
+            limite_ciclo = int(self.data.get('dias_ciclo', 0))
+        else:
+            limite_ciclo = self.instance.dias_ciclo or 0
+        
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            if not form.cleaned_data:
+                continue
+                
+            posicao = form.cleaned_data.get('posicao_ciclo')
+            if posicao and posicao > limite_ciclo:
+                form.add_error('posicao_ciclo', f"A posição {posicao} excede o limite de {limite_ciclo} dias")
+
+
 TurnoDiaFormSet = inlineformset_factory(
     Turno, 
     TurnoDia,
-    fields=['posicao_ciclo', 'entrada', 'saida', 'tolerancia', 'eh_folga'],
+    formset=BaseTurnoDiaFormSet,
+    fields=['posicao_ciclo', 'horarios', 'tolerancia', 'eh_folga'],
     extra=0,
     widgets={
-        'entrada': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
-        'saida': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
-        'posicao_ciclo': forms.NumberInput(attrs={'class': 'form-control-sm', 'readonly': True}),
-        'tolerancia': forms.NumberInput(attrs={'class': 'form-control-sm'}),
+        # 'entrada': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
+        # 'saida': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control-sm'}),
+        # 'posicao_ciclo': forms.NumberInput(attrs={'class': 'form-control-sm', 'readonly': True}),
+        # 'tolerancia': forms.NumberInput(attrs={'class': 'form-control-sm'}),
     }
 )
 

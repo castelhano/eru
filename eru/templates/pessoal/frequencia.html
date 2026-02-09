@@ -1,254 +1,291 @@
 {% extends "layout/app.html" %}
-{% load static i18n ui_components %}
-{% block title %}Frequência{% endblock %}
-{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+{% load static %}
 
-<style>
-{% block style %}
-/* 1. Esconde o checkbox real */
-input[name$="-DELETE"] { display: none; }
-/* 2. Estilo base do ícone */
-.btn-delete-icon {
-    cursor: pointer;
-    color: #dee2e6; /* Cor cinza claro (frio) */
-}
-/* 4. Selecionado: Quando o checkbox (escondido) é marcado */
-input[name$="-DELETE"]:checked + .btn-delete-icon {
-    color: #7d4444;
-}
-/* 5. Feedback na linha inteira ao marcar para excluir */
-.row-frequencia:has(input[name$="-DELETE"]:checked) {
-    background-color: rgba(220, 53, 69, 0.05) !important;
-    border-color: #7d4444 !important;
-}
-{% endblock%}
-</style>
-
-{% block content_fluid %}
-<div class="card mt-2">
-    <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item dropdown ms-auto">
-                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pointer" href="url">Novo item</a></li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-    <div class="card-body tab-content">
-        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Frequência'|escapejs %}</span></h5>
-        <div class="tab-pane fade show active" id="base" role="tabpanel">
-            
-            <!-- ***************************************** -->
-            
-            
-            <form method="get" class="row g-2 mb-4 align-items-end">
-                <div class="col-md-3">
-                    <label class="small text-body-secondary fw-bold">Contrato / Matrícula</label>
-                    <input type="text" name="contrato" value="{{ request.GET.contrato|default:'' }}" class="form-control form-control-sm" placeholder="ID ou Matrícula...">
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-body-secondary fw-bold">Mês</label>
-                    <select name="mes" class="form-select form-select-sm">
-                        {% for i in ""|ljust:"12"|make_list %}
-                        <option value="{{ forloop.counter }}" {% if mes_ref == forloop.counter %}selected{% endif %}>{{ forloop.counter|stringformat:"02d" }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="small text-body-secondary fw-bold">Ano</label>
-                    <input type="number" name="ano" value="{{ ano_ref|safe }}" class="form-control form-control-sm">
-                </div>
-                <div class="col-md-auto">
-                    <button type="submit" class="btn btn-sm btn-primary">
-                        <i class="bi bi-search me-1"></i> Buscar
-                    </button>
-                </div>
-            </form>
-            
-            {% if object %}
-            <div class="alert alert-secondary d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="mb-0">{{ object.funcionario.matricula }} - {{ object.funcionario.nome }}</h6>
-                    <small class="text-body-secondary">
-                        {{ object.cargo.nome }} | {{ object.regime }} | 
-                        <span class="text-body">Competência: {{ mes_ref|stringformat:"02d" }}/{{ ano_ref|safe }}</span class="text-body">
-                    </small>
-                </div>
-                <div class="text-end">
-                    {% btn_tag 'submit' %}
-                </div>
-            </div>
-            
-            <form method="post">
-                {% csrf_token %}
-                {{ formset.management_form }}
-
-                <div class="row d-none d-md-flex fw-bold text-body-secondary border-bottom pb-2 mb-2 px-2">
-                    <div class="col-md-2">Data</div>
-                    <div class="col-md-2">Evento</div>
-                    <div class="col-md-2 text-center">Entrada</div>
-                    <div class="col-md-2 text-center">Saída</div>
-                    <div class="col-md-3">Observação</div>
-                    <div class="col-md-1 text-end">Ações</div>
-                </div>
-                    {% for f in formset %}
-                    <div class="row gx-2 align-items-center p-2 mb-2 border rounded bg-body-tertiary hover-shadow mx-0 row-frequencia">
-                        <!-- Campos Ocultos Obrigatórios -->
-                        {{ f.id }}
-                        {{ f.data_ref }}
-                        <div class="d-none">{{ f.editado }}</div> 
-                        {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-                        
-                        <div class="col-12 col-md-2 mb-2 mb-md-0">
-                            <span class="fw-bold">
-                                {% if f.instance.inicio %}
-                                {{ f.instance.inicio|date:"d/m" }}
-                                {% else %}
-                                {{ f.initial.inicio|date:"d/m" }}
-                                {% endif %}
-                            </span>
-                            <small class="text-body-secondary d-md-block">
-                                {% if f.instance.inicio %}
-                                {{ f.instance.inicio|date:"l" }}
-                                {% else %}
-                                {{ f.initial.inicio|date:"l" }}
-                                {% endif %}
-                            </small>
-                        </div>
-                        
-                        <!-- 2. Coluna Evento -->
-                        <div class="col-12 col-md-2 mb-2 mb-md-0">
-                            {{ f.evento }}
-                        </div>
-                        
-                        <!-- 3. Coluna Entrada -->
-                        <div class="col-6 col-md-2 text-center">
-                            <label class="d-md-none small text-body-secondary d-block">Entrada</label>
-                            {{ f.inicio_t }}
-                        </div>
-                        
-                        <!-- 4. Coluna Saída -->
-                        <div class="col-6 col-md-2 text-center">
-                            <label class="d-md-none small text-body-secondary d-block">Saída</label>
-                            {{ f.fim_t }}
-                        </div>
-                        
-                        <!-- 5. Coluna Observação -->
-                        <div class="col">
-                            {{ f.observacao }}
-                        </div>
-                        
-                        <!-- 6. Coluna Ações (Dropdown) -->
-                        <div class="col-auto text-end" style="min-width: 50px;">
-                            <div class="d-flex align-items-center justify-content-end">
-                                
-                                <div class="delete-control mx-2">
-                                    {% if f.instance.pk %}
-                                    {{ f.DELETE }} <!-- O CSS vai esconder esse checkbox -->
-                                    <label for="{{ f.DELETE.id_for_label }}" class="btn-delete-icon" title="Excluir">
-                                        <i class="bi bi-x-square-fill fs-5"></i>
-                                    </label>
-                                    {% else %}
-                                    <span class="text-light"> <!-- se novo registro -->
-                                        <i class="bi bi-x-square-fill fs-5 text-transparent"></i>
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="dropdown">
-                                    <button class="btn btn-link btn-sm text-body-secondary p-0" type="button" data-bs-toggle="dropdown">
-                                        <i class="bi bi-three-dots-vertical fs-5"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li class="px-3 py-1 small text-muted italic text-center">Opções</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    {% endfor %}
-                </div>
-            </form>
-            {% else %}
-            <div class="text-center py-2">
-                <p class="text-body-secondary"><i class="bi bi-search text-body me-2"></i> Informe a matricula e competência para consulta</p>
-            </div>
-            {% endif %}
-            
-            
-            
-            <!-- ***************************************** -->
-            
-            
+{% block content %}
+<div class="container-fluid">
+  <h4 class="mb-3">Edição de Frequência Mensal</h4>
+  
+  <!-- Formulário de Filtro -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <form method="get" id="form-filtro" class="row g-3">
+        <div class="col-md-4">
+          <label for="matricula" class="form-label">Matrícula</label>
+          <input type="text" 
+                 class="form-control" 
+                 id="matricula" 
+                 name="matricula" 
+                 value="{{ filtro_form.matricula }}"
+                 placeholder="Ex: 12345"
+                 required>
         </div>
+        <div class="col-md-4">
+          <label for="competencia" class="form-label">Competência</label>
+          <input type="month" 
+                 class="form-control" 
+                 id="competencia" 
+                 name="competencia" 
+                 value="{{ filtro_form.competencia }}"
+                 required>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+        </div>
+      </form>
     </div>
+  </div>
+
+  {% if contrato %}
+  <!-- Dados do Funcionário -->
+  <div class="alert alert-info d-flex justify-content-between align-items-center">
+    <div>
+      <strong>{{ funcionario.nome }}</strong> ({{ funcionario.matricula }}) - 
+      {{ contrato.cargo.nome }} | 
+      <span class="text-muted">{{ competencia|date:"F/Y" }}</span>
+    </div>
+    <button id="btn-save" class="btn btn-success">💾 Salvar Todas</button>
+  </div>
+
+  <!-- Calendário de Frequências -->
+  <div id="calendario-frequencia">
+    {% for dia, horarios in dias_mes.items %}
+    <div class="card mb-2">
+      <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <strong>{{ dia|date:"d/m/Y (l)" }}</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary btn-add-horario" 
+                data-dia="{{ dia|date:'Y-m-d' }}">
+          ➕ Adicionar Horário
+        </button>
+      </div>
+      <div class="card-body p-2">
+        <div class="horarios-container" data-dia="{{ dia|date:'Y-m-d' }}">
+          {% if horarios %}
+            {% for h in horarios %}
+            <div class="row mb-2 horario-row g-2" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
+              <input type="hidden" class="freq-id" value="{{ h.id|default:'' }}">
+              
+              <!-- Entrada (col-2 em desktop, col-6 em mobile) -->
+              <div class="col-6 col-md-2 horario-field">
+                <label class="form-label small d-md-none">Entrada</label>
+                <input type="time" class="form-control form-control-sm entrada" 
+                       value="{{ h.entrada }}" 
+                       {% if not h.dia_inteiro %}required{% endif %}>
+              </div>
+              
+              <!-- Saída (col-2 em desktop, col-6 em mobile) -->
+              <div class="col-6 col-md-2 horario-field">
+                <label class="form-label small d-md-none">Saída</label>
+                <input type="time" class="form-control form-control-sm saida" 
+                       value="{{ h.saida }}" 
+                       {% if not h.dia_inteiro %}required{% endif %}>
+              </div>
+              
+              <!-- Evento (col-12 md-3) -->
+              <div class="col-12 col-md-3">
+                <label class="form-label small d-md-none">Evento</label>
+                <select class="form-select form-select-sm evento" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
+                  {% for ev in eventos_choices %}
+                  <option value="{{ ev.id }}" 
+                          data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+                          {% if ev.id == h.evento_id %}selected{% endif %}>
+                    {{ ev.nome }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <!-- Observação (col-10 md-4) -->
+              <div class="col-10 col-md-4">
+                <label class="form-label small d-md-none">Observação</label>
+                <input type="text" 
+                       class="form-control form-control-sm observacao" 
+                       placeholder="Observação..."
+                       value="{{ h.observacao|default:'' }}">
+              </div>
+              
+              <!-- Botão Remover (col-2 md-1) -->
+              <div class="col-2 col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-sm btn-danger btn-remove w-100">🗑️</button>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted mb-0">📅 Folga</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
-{% endblock%}
-
-{% block add_script_src %}
-{% endblock %}
 <script>
-    {% block add_script %}
+// ✅ Template de eventos para JS
+const eventoOptionsHTML = `
+  {% for ev in eventos_choices %}
+  <option value="{{ ev.id }}" data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}">
+    {{ ev.nome }}
+  </option>
+  {% endfor %}
+`;
+
+// ✅ Função para mostrar/esconder campos de horário
+function toggleHorarioFields(row, isDiaInteiro) {
+  const horarioFields = row.querySelectorAll('.horario-field');
+  const entradaInput = row.querySelector('.entrada');
+  const saidaInput = row.querySelector('.saida');
+  
+  if (isDiaInteiro) {
+    horarioFields.forEach(field => field.style.display = 'none');
+    entradaInput.removeAttribute('required');
+    saidaInput.removeAttribute('required');
+    entradaInput.value = '';
+    saidaInput.value = '';
+  } else {
+    horarioFields.forEach(field => field.style.display = '');
+    entradaInput.setAttribute('required', 'required');
+    saidaInput.setAttribute('required', 'required');
+  }
+}
+
+// ✅ Inicializa campos na carga da página
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.horario-row').forEach(row => {
+    const eventoSelect = row.querySelector('.evento');
+    if (eventoSelect) {
+      const selectedOption = eventoSelect.selectedOptions[0];
+      const isDiaInteiro = selectedOption.dataset.diaInteiro === 'true';
+      toggleHorarioFields(row, isDiaInteiro);
+    }
+  });
+});
+
+// ✅ Monitora mudança de evento
+document.addEventListener('change', function(e) {
+  if (e.target.classList.contains('evento')) {
+    const selectedOption = e.target.selectedOptions[0];
+    const isDiaInteiro = selectedOption.dataset.diaInteiro === 'true';
+    const row = e.target.closest('.horario-row');
+    toggleHorarioFields(row, isDiaInteiro);
+  }
+});
+
+// Adicionar novo horário
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('btn-add-horario')) {
+    const dia = e.target.dataset.dia;
+    const container = document.querySelector(`.horarios-container[data-dia="${dia}"]`);
     
-    document.addEventListener('DOMContentLoaded', function() {
-        const grid = document.querySelector('.espelho-grid');
-        
-        if (grid) {
-            grid.addEventListener('change', function(e) {
-                const row = e.target.closest('.row-frequencia');
-                if (!row) return;
-                
-                // Seletores atualizados para bater com os campos virtuais do Django
-                const inputInicio = row.querySelector('input[name$="-inicio_t"]');
-                const inputFim = row.querySelector('input[name$="-fim_t"]');
-                const selectEvento = row.querySelector('select[name$="-evento"]');
-                const checkEditado = row.querySelector('input[name$="-editado"]');
-                
-                // 1. Lógica de "Evento Padrão" (Jornada)
-                // Dispara apenas quando o usuário preenche a Entrada e o Evento está vazio
-                if (e.target === inputInicio && inputInicio.value && !selectEvento.value) {
-                    for (let opt of selectEvento.options) {
-                        // Busca 'Jornada' ou 'Trabalho' no texto da opção
-                        const txt = opt.text.toLowerCase();
-                        if (txt.includes('jornada') || txt.includes('trabalho')) {
-                            selectEvento.value = opt.value;
-                            break;
-                        }
-                    }
-                }
-                
-                // 2. Marca "Editado Manual" automaticamente
-                // Agora monitorando os novos nomes dos campos
-                const camposRelevantes = ['-inicio_t', '-fim_t', '-evento', '-observacao'];
-                if (camposRelevantes.some(suffix => e.target.name.endsWith(suffix))) {
-                    if (checkEditado) {
-                        checkEditado.checked = true;
-                        row.classList.add('border-warning'); // Destaque visual de alteração
-                    }
-                }
-                
-                // 3. Cálculo de Saldo Visual no Console
-                if (inputInicio && inputFim && inputInicio.value && inputFim.value) {
-                    const [h1, m1] = inputInicio.value.split(':').map(Number);
-                    const [h2, m2] = inputFim.value.split(':').map(Number);
-                    
-                    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-                    if (diff < 0) diff += 1440; // Suporte para escala noturna
-                    
-                    const horas = Math.floor(diff / 60);
-                    const minutos = diff % 60;
-                    console.log(`Duração calculada para a linha: ${horas}h ${minutos}min`);
-                }
-            });
-        }
+    const folga = container.querySelector('.text-muted');
+    if (folga) folga.remove();
+    
+    const template = `
+      <div class="row mb-2 horario-row g-2" data-dia-inteiro="false">
+        <input type="hidden" class="freq-id" value="">
+        <div class="col-6 col-md-2 horario-field">
+          <label class="form-label small d-md-none">Entrada</label>
+          <input type="time" class="form-control form-control-sm entrada" required>
+        </div>
+        <div class="col-6 col-md-2 horario-field">
+          <label class="form-label small d-md-none">Saída</label>
+          <input type="time" class="form-control form-control-sm saida" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small d-md-none">Evento</label>
+          <select class="form-select form-select-sm evento">
+            ${eventoOptionsHTML}
+          </select>
+        </div>
+        <div class="col-10 col-md-4">
+          <label class="form-label small d-md-none">Observação</label>
+          <input type="text" class="form-control form-control-sm observacao" placeholder="Observação...">
+        </div>
+        <div class="col-2 col-md-1 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-danger btn-remove w-100">🗑️</button>
+        </div>
+      </div>`;
+    container.insertAdjacentHTML('beforeend', template);
+  }
+  
+  if (e.target.classList.contains('btn-remove')) {
+    const row = e.target.closest('.horario-row');
+    const container = row.closest('.horarios-container');
+    row.remove();
+    
+    if (container.querySelectorAll('.horario-row').length === 0) {
+      container.innerHTML = '<p class="text-muted mb-0">📅 Folga</p>';
+    }
+  }
+});
+
+// Salvar
+document.getElementById('btn-save')?.addEventListener('click', function() {
+  const frequencias = [];
+  const matricula = document.getElementById('matricula').value;
+  const competencia = document.getElementById('competencia').value;
+  
+  document.querySelectorAll('.horarios-container').forEach(container => {
+    const dia = container.dataset.dia;
+    
+    container.querySelectorAll('.horario-row').forEach(row => {
+      const eventoSelect = row.querySelector('.evento');
+      const selectedOption = eventoSelect.selectedOptions[0];
+      const isDiaInteiro = selectedOption.dataset.diaInteiro === 'true';
+      const entrada = row.querySelector('.entrada').value;
+      const saida = row.querySelector('.saida').value;
+      
+      // ✅ Eventos dia inteiro não precisam de horários
+      if (isDiaInteiro || (entrada && saida)) {
+        frequencias.push({
+          id: row.querySelector('.freq-id').value || null,
+          dia: dia,
+          entrada: entrada,
+          saida: saida,
+          evento_id: eventoSelect.value,
+          observacao: row.querySelector('.observacao').value
+        });
+      }
     });
-    
-    
-    
-    {% endblock %}
+  });
+  
+  if (frequencias.length === 0) {
+    alert('⚠️ Nenhuma frequência para salvar.');
+    return;
+  }
+  
+  const btnSave = this;
+  btnSave.disabled = true;
+  btnSave.textContent = '⏳ Salvando...';
+  
+  fetch(window.location.pathname, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      matricula: matricula,
+      competencia: competencia,
+      frequencias: frequencias
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'success') {
+      alert('✅ Frequências salvas com sucesso!');
+      location.reload();
+    } else {
+      alert('❌ Erro: ' + data.message);
+      btnSave.disabled = false;
+      btnSave.textContent = '💾 Salvar Todas';
+    }
+  })
+  .catch(error => {
+    alert('❌ Erro: ' + error);
+    btnSave.disabled = false;
+    btnSave.textContent = '💾 Salvar Todas';
+  });
+});
 </script>
+{% endblock %}

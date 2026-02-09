@@ -1,0 +1,254 @@
+{% extends "layout/app.html" %}
+{% load static i18n ui_components %}
+{% block title %}Frequência{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+<style>
+{% block style %}
+/* 1. Esconde o checkbox real */
+input[name$="-DELETE"] { display: none; }
+/* 2. Estilo base do ícone */
+.btn-delete-icon {
+    cursor: pointer;
+    color: #dee2e6; /* Cor cinza claro (frio) */
+}
+/* 4. Selecionado: Quando o checkbox (escondido) é marcado */
+input[name$="-DELETE"]:checked + .btn-delete-icon {
+    color: #7d4444;
+}
+/* 5. Feedback na linha inteira ao marcar para excluir */
+.row-frequencia:has(input[name$="-DELETE"]:checked) {
+    background-color: rgba(220, 53, 69, 0.05) !important;
+    border-color: #7d4444 !important;
+}
+{% endblock%}
+</style>
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item pointer" href="url">Novo item</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Frequência'|escapejs %}</span></h5>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+            
+            <!-- ***************************************** -->
+            
+            
+            <form method="get" class="row g-2 mb-4 align-items-end">
+                <div class="col-md-3">
+                    <label class="small text-body-secondary fw-bold">Contrato / Matrícula</label>
+                    <input type="text" name="contrato" value="{{ request.GET.contrato|default:'' }}" class="form-control form-control-sm" placeholder="ID ou Matrícula...">
+                </div>
+                <div class="col-md-2">
+                    <label class="small text-body-secondary fw-bold">Mês</label>
+                    <select name="mes" class="form-select form-select-sm">
+                        {% for i in ""|ljust:"12"|make_list %}
+                        <option value="{{ forloop.counter }}" {% if mes_ref == forloop.counter %}selected{% endif %}>{{ forloop.counter|stringformat:"02d" }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="small text-body-secondary fw-bold">Ano</label>
+                    <input type="number" name="ano" value="{{ ano_ref|safe }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-search me-1"></i> Buscar
+                    </button>
+                </div>
+            </form>
+            
+            {% if object %}
+            <div class="alert alert-secondary d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">{{ object.funcionario.matricula }} - {{ object.funcionario.nome }}</h6>
+                    <small class="text-body-secondary">
+                        {{ object.cargo.nome }} | {{ object.regime }} | 
+                        <span class="text-body">Competência: {{ mes_ref|stringformat:"02d" }}/{{ ano_ref|safe }}</span class="text-body">
+                    </small>
+                </div>
+                <div class="text-end">
+                    {% btn_tag 'submit' %}
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                <div class="row d-none d-md-flex fw-bold text-body-secondary border-bottom pb-2 mb-2 px-2">
+                    <div class="col-md-2">Data</div>
+                    <div class="col-md-2">Evento</div>
+                    <div class="col-md-2 text-center">Entrada</div>
+                    <div class="col-md-2 text-center">Saída</div>
+                    <div class="col-md-3">Observação</div>
+                    <div class="col-md-1 text-end">Ações</div>
+                </div>
+                    {% for f in formset %}
+                    <div class="row gx-2 align-items-center p-2 mb-2 border rounded bg-body-tertiary hover-shadow mx-0 row-frequencia">
+                        <!-- Campos Ocultos Obrigatórios -->
+                        {{ f.id }}
+                        {{ f.data_ref }}
+                        <div class="d-none">{{ f.editado }}</div> 
+                        {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+                        
+                        <div class="col-12 col-md-2 mb-2 mb-md-0">
+                            <span class="fw-bold">
+                                {% if f.instance.inicio %}
+                                {{ f.instance.inicio|date:"d/m" }}
+                                {% else %}
+                                {{ f.initial.inicio|date:"d/m" }}
+                                {% endif %}
+                            </span>
+                            <small class="text-body-secondary d-md-block">
+                                {% if f.instance.inicio %}
+                                {{ f.instance.inicio|date:"l" }}
+                                {% else %}
+                                {{ f.initial.inicio|date:"l" }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <!-- 2. Coluna Evento -->
+                        <div class="col-12 col-md-2 mb-2 mb-md-0">
+                            {{ f.evento }}
+                        </div>
+                        
+                        <!-- 3. Coluna Entrada -->
+                        <div class="col-6 col-md-2 text-center">
+                            <label class="d-md-none small text-body-secondary d-block">Entrada</label>
+                            {{ f.inicio_t }}
+                        </div>
+                        
+                        <!-- 4. Coluna Saída -->
+                        <div class="col-6 col-md-2 text-center">
+                            <label class="d-md-none small text-body-secondary d-block">Saída</label>
+                            {{ f.fim_t }}
+                        </div>
+                        
+                        <!-- 5. Coluna Observação -->
+                        <div class="col">
+                            {{ f.observacao }}
+                        </div>
+                        
+                        <!-- 6. Coluna Ações (Dropdown) -->
+                        <div class="col-auto text-end" style="min-width: 50px;">
+                            <div class="d-flex align-items-center justify-content-end">
+                                
+                                <div class="delete-control mx-2">
+                                    {% if f.instance.pk %}
+                                    {{ f.DELETE }} <!-- O CSS vai esconder esse checkbox -->
+                                    <label for="{{ f.DELETE.id_for_label }}" class="btn-delete-icon" title="Excluir">
+                                        <i class="bi bi-x-square-fill fs-5"></i>
+                                    </label>
+                                    {% else %}
+                                    <span class="text-light"> <!-- se novo registro -->
+                                        <i class="bi bi-x-square-fill fs-5 text-transparent"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-body-secondary p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical fs-5"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li class="px-3 py-1 small text-muted italic text-center">Opções</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+                </div>
+            </form>
+            {% else %}
+            <div class="text-center py-2">
+                <p class="text-body-secondary"><i class="bi bi-search text-body me-2"></i> Informe a matricula e competência para consulta</p>
+            </div>
+            {% endif %}
+            
+            
+            
+            <!-- ***************************************** -->
+            
+            
+        </div>
+    </div>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+{% endblock %}
+<script>
+    {% block add_script %}
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const grid = document.querySelector('.espelho-grid');
+        
+        if (grid) {
+            grid.addEventListener('change', function(e) {
+                const row = e.target.closest('.row-frequencia');
+                if (!row) return;
+                
+                // Seletores atualizados para bater com os campos virtuais do Django
+                const inputInicio = row.querySelector('input[name$="-inicio_t"]');
+                const inputFim = row.querySelector('input[name$="-fim_t"]');
+                const selectEvento = row.querySelector('select[name$="-evento"]');
+                const checkEditado = row.querySelector('input[name$="-editado"]');
+                
+                // 1. Lógica de "Evento Padrão" (Jornada)
+                // Dispara apenas quando o usuário preenche a Entrada e o Evento está vazio
+                if (e.target === inputInicio && inputInicio.value && !selectEvento.value) {
+                    for (let opt of selectEvento.options) {
+                        // Busca 'Jornada' ou 'Trabalho' no texto da opção
+                        const txt = opt.text.toLowerCase();
+                        if (txt.includes('jornada') || txt.includes('trabalho')) {
+                            selectEvento.value = opt.value;
+                            break;
+                        }
+                    }
+                }
+                
+                // 2. Marca "Editado Manual" automaticamente
+                // Agora monitorando os novos nomes dos campos
+                const camposRelevantes = ['-inicio_t', '-fim_t', '-evento', '-observacao'];
+                if (camposRelevantes.some(suffix => e.target.name.endsWith(suffix))) {
+                    if (checkEditado) {
+                        checkEditado.checked = true;
+                        row.classList.add('border-warning'); // Destaque visual de alteração
+                    }
+                }
+                
+                // 3. Cálculo de Saldo Visual no Console
+                if (inputInicio && inputFim && inputInicio.value && inputFim.value) {
+                    const [h1, m1] = inputInicio.value.split(':').map(Number);
+                    const [h2, m2] = inputFim.value.split(':').map(Number);
+                    
+                    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+                    if (diff < 0) diff += 1440; // Suporte para escala noturna
+                    
+                    const horas = Math.floor(diff / 60);
+                    const minutos = diff % 60;
+                    console.log(`Duração calculada para a linha: ${horas}h ${minutos}min`);
+                }
+            });
+        }
+    });
+    
+    
+    
+    {% endblock %}
+</script>

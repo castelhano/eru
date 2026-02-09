@@ -87,10 +87,6 @@ class Profile(models.Model):
                 to_attr='filiais_permitidas'
                 )).distinct().order_by('pk')
     class Meta:
-        permissions = [
-            ("debug", "Can debug system"),
-            ("docs", "Can access system docs"),
-        ]
         default_permissions = []
 auditlog.register(User, exclude_fields=['last_login'])
 auditlog.register(Profile, m2m_fields={"filiais"}, exclude_fields=['force_password_change','config'])
