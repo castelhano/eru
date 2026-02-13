@@ -40,7 +40,7 @@ def btn_tag(action, url_name=None, **kwargs):
         tag_name = 'a'
     else:
         tag_name = 'button'
-        kwargs['type'] = 'submit' if action in ['submit', 'delete'] else 'button'
+        kwargs.setdefault('type', 'submit' if action in ['submit', 'delete'] else 'button')
     if shortcut_key and hl and '<' not in label:
         label = hl_str(label, shortcut_key)
     if kwargs.pop('disabled', False): kwargs['disabled'] = 'disabled'
