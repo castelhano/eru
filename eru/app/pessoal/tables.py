@@ -53,11 +53,11 @@ class ContratoTable(TableCustomMixin, Table):
         model = Contrato
         template_name = '_tables/contrato_table.html'
         fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal',)
-        paginate_by = 10
+        paginate_by = 2
         actions = [
             {
                 'label': '<i class="bi bi-chevron-down"></i>',
-                'class': 'btn btn-sm btn-outline-secondary',
+                'class': 'btn btn-sm btn-info-matte',
                 'data_bs_toggle': 'collapse',
                 'data_bs_target': lambda record: f'#turnos-{record.id}',
             },

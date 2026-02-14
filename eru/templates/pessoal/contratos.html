@@ -75,154 +75,196 @@
 {% block add_script_src %}<script src="{% static 'js/vendor/imask.js' %}"></script>{% endblock %}
 <script>
     {% block add_script %}
-    {% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
-    const radix = "{% i18n_format "DECIMAL_SEPARATOR" %}";
-    const separator = "{% i18n_format "THOUSAND_SEPARATOR" %}";
-    IMask(document.getElementById('id_salario'), {mask: Number, scale: 2, thousandsSeparator: separator, padFractionalZeros: true, radix: radix, mapToRadix: [separator]});
-    {% endif %}
+{% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
+const radix = "{% i18n_format "DECIMAL_SEPARATOR" %}";
+const separator = "{% i18n_format "THOUSAND_SEPARATOR" %}";
+IMask(document.getElementById('id_salario'), {mask: Number, scale: 2, thousandsSeparator: separator, padFractionalZeros: true, radix: radix, mapToRadix: [separator]});
+{% endif %}
+
+// CRUD de Turnos
+// CRUD de Turnos
+(function() {
+    'use strict';
     
-    // CRUD de Turnos
-    (function() {
-        'use strict';
-        
-        let turnosCache = null;
-        
-        async function loadTurnos() {
-            if (turnosCache) return turnosCache;
-            try {
-                const res = await fetch('{% url "pessoal:turno_list" %}?format=json');
-                turnosCache = await res.json();
-                return turnosCache;
-            } catch (e) {
-                console.error('{% translate "Erro ao carregar turnos"|escapejs %}:', e);
-                return [];
+    let turnosCache = null;
+    let currentEditingRow = null;
+    
+    async function loadTurnos() {
+        if (turnosCache) return turnosCache;
+        try {
+            const res = await fetch('{% url "pessoal:turno_list" %}?format=json');
+            turnosCache = await res.json();
+            return turnosCache;
+        } catch (e) {
+            console.error('{% translate "Erro ao carregar turnos"|escapejs %}:', e);
+            return [];
+        }
+    }
+    
+    async function populateTurnosSelect(select) {
+        const turnos = await loadTurnos();
+        select.innerHTML = '<option value="">---</option>';
+        turnos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.nome;
+            select.appendChild(opt);
+        });
+    }
+    
+    function setEditingRow(card) {
+        if (currentEditingRow) {
+            currentEditingRow.classList.remove('table-emphasis');
+        }
+        if (card) {
+            const row = card.closest('tr').previousElementSibling;
+            if (row) {
+                row.classList.add('table-emphasis');
+                currentEditingRow = row;
             }
         }
-        
-        async function populateTurnosSelect(select) {
-            const turnos = await loadTurnos();
-            select.innerHTML = '<option value="">---</option>';
-            turnos.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.nome;
-                select.appendChild(opt);
-            });
+    }
+    
+    function clearEditingRow() {
+        if (currentEditingRow) {
+            currentEditingRow.classList.remove('table-emphasis');
+            currentEditingRow = null;
         }
+    }
+    
+    window.deleteTurnoConfirmed = function() {
+        const turnoId = this.dataset?.turnoId;
+        if (!turnoId) return;
         
-        // Função global para confirmar exclusão
-        window.deleteTurnoConfirmed = function() {
-            const turnoId = this.dataset?.turnoId;
-            if (!turnoId) return;
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({action: 'delete_turno', id: turnoId})
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                appNotify('success', '{% translate "Registro excluído com sucesso"|escapejs %}');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                appNotify('danger', d.message, {autodismiss: false});
+            }
+        })
+        .catch(() => appNotify('danger', '{% translate "Erro ao excluir registro"|escapejs %}', {autodismiss: false}));
+    }
+    
+    document.addEventListener('click', e => {
+        const target = e.target.closest('[data-role]');
+        if (!target) return;
+        const role = target.dataset.role;
+        
+        if (role === 'addTurno') {
+            const cid = target.dataset.contratoId;
+            const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
+            const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
+            const form = document.getElementById(`turno-form-${cid}`);
+            const select = form.querySelector('[data-field="turno"]');
+            
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            
+            form.querySelectorAll('[data-field]').forEach(f => {
+                if (f.tagName !== 'SELECT' && f.dataset.field !== 'contrato_id') {
+                    f.value = '';
+                }
+            });
+            
+            populateTurnosSelect(select);
+            setEditingRow(form);
+            form.style.display = 'block';
+        }
+        else if (role === 'editTurno') {
+            const cid = target.dataset.contratoId;
+            const form = document.getElementById(`turno-form-${cid}`);
+            const select = form.querySelector('[data-field="turno"]');
+            
+            form.querySelector('[data-field="id"]').value = target.dataset.id;
+            form.querySelector('[data-field="inicio_vigencia"]').value = target.dataset.inicio;
+            form.querySelector('[data-field="fim_vigencia"]').value = target.dataset.fim || '';
+            
+            populateTurnosSelect(select).then(() => {
+                select.value = target.dataset.turnoId;
+            });
+            
+            setEditingRow(form);
+            form.style.display = 'block';
+        }
+        else if (role === 'saveTurno') {
+            e.preventDefault();
+            const form = target.closest('[id^="turno-form-"]');
+            const data = {
+                action: 'save_turno',
+                id: form.querySelector('[data-field="id"]').value || null,
+                contrato_id: form.querySelector('[data-field="contrato_id"]').value,
+                turno: form.querySelector('[data-field="turno"]').value,
+                inicio_vigencia: form.querySelector('[data-field="inicio_vigencia"]').value,
+                fim_vigencia: form.querySelector('[data-field="fim_vigencia"]').value || null
+            };
+            
+            if (!data.turno || !data.inicio_vigencia || !data.contrato_id) {
+                appNotify('warning', '{% translate "Preencha os campos obrigatórios"|escapejs %}', {autodismiss: false});
+                return;
+            }
             
             fetch(window.location.pathname, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
-                body: JSON.stringify({action: 'delete_turno', id: turnoId})
+                body: JSON.stringify(data)
             })
             .then(r => r.json())
             .then(d => {
                 if (d.status === 'success') {
-                    appNotify('success', '{% translate "Registro excluído com sucesso"|escapejs %}');
+                    clearEditingRow();
+                    appNotify('success', '{% translate "Registro salvo com sucesso"|escapejs %}');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    appNotify('danger', d.message);
+                    appNotify('danger', d.message, {autodismiss: false});
                 }
             })
-            .catch(() => appNotify('danger', '{% translate "Erro ao excluir registro"|escapejs %}'));
+            .catch(() => appNotify('danger', '{% translate "Erro ao salvar registro"|escapejs %}', {autodismiss: false}));
         }
-        
-        document.addEventListener('click', e => {
-            const target = e.target.closest('[data-role]');
-            if (!target) return;
-            const role = target.dataset.role;
+        else if (role === 'cancelTurno') {
+            e.preventDefault();
+            const form = target.closest('[id^="turno-form-"]');
+            const cid = form.querySelector('[data-field="contrato_id"]').value;
+            const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
+            const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
             
-            if (role === 'addTurno') {
-                const cid = target.dataset.contratoId;
-                const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
-                const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
-                const form = document.getElementById(`turno-form-${cid}`);
-                const select = form.querySelector('[data-field="turno"]');
-                
-                if (emptyMsg) emptyMsg.style.display = 'none';
-                
-                form.querySelectorAll('[data-field]').forEach(f => {
-                    if (f.tagName !== 'SELECT' && f.dataset.field !== 'contrato_id') {
-                        f.value = '';
-                    }
-                });
-                
-                populateTurnosSelect(select);
-                form.style.display = 'block';
+            if (emptyMsg && container.querySelectorAll('.card').length === 0) {
+                emptyMsg.style.display = 'block';
             }
-            else if (role === 'editTurno') {
-                const cid = target.dataset.contratoId;
-                const form = document.getElementById(`turno-form-${cid}`);
-                const select = form.querySelector('[data-field="turno"]');
-                
-                form.querySelector('[data-field="id"]').value = target.dataset.id;
-                form.querySelector('[data-field="inicio_vigencia"]').value = target.dataset.inicio;
-                form.querySelector('[data-field="fim_vigencia"]').value = target.dataset.fim || '';
-                
-                populateTurnosSelect(select).then(() => {
-                    select.value = target.dataset.turnoId;
-                });
-                
-                form.style.display = 'block';
+            
+            clearEditingRow();
+            form.style.display = 'none';
+        }
+        else if (role === 'deleteTurno') {
+            const confirmBtn = document.getElementById('appModalConfirm_button');
+            if (confirmBtn) {
+                confirmBtn.dataset.turnoId = target.dataset.id;
             }
-            else if (role === 'saveTurno') {
-                e.preventDefault();
-                const form = target.closest('[id^="turno-form-"]');
-                const data = {
-                    action: 'save_turno',
-                    id: form.querySelector('[data-field="id"]').value || null,
-                    contrato_id: form.querySelector('[data-field="contrato_id"]').value,
-                    turno: form.querySelector('[data-field="turno"]').value,
-                    inicio_vigencia: form.querySelector('[data-field="inicio_vigencia"]').value,
-                    fim_vigencia: form.querySelector('[data-field="fim_vigencia"]').value || null
-                };
-                
-                if (!data.turno || !data.inicio_vigencia || !data.contrato_id) {
-                    appNotify('warning', '{% translate "Preencha os campos obrigatórios"|escapejs %}');
-                    return;
-                }
-                
-                fetch(window.location.pathname, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
-                    body: JSON.stringify(data)
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'success') {
-                        appNotify('success', '{% translate "Registro salvo com sucesso"|escapejs %}');
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        appNotify('danger', d.message);
-                    }
-                })
-                .catch(() => appNotify('danger', '{% translate "Erro ao salvar registro"|escapejs %}'));
-            }
-            else if (role === 'cancelTurno') {
-                e.preventDefault();
-                const form = target.closest('[id^="turno-form-"]');
-                const cid = form.querySelector('[data-field="contrato_id"]').value;
-                const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
-                const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
-                if (emptyMsg && container.querySelectorAll('.card').length === 0) {
-                    emptyMsg.style.display = 'block';
-                }
-                
-                form.style.display = 'none';
-            }
-            else if (role === 'deleteTurno') {
-                // Configura o botão de confirmação com o ID do turno
-                const confirmBtn = document.getElementById('appModalConfirm_button');
-                if (confirmBtn) {
-                    confirmBtn.dataset.turnoId = target.dataset.id;
+        }
+    });
+    (function highlightEditingContract() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+        if (editId) {
+            const editLink = document.querySelector(`a[href*="edit=${editId}"]`);
+            if (editLink) {
+                const row = editLink.closest('tr');
+                if (row) {
+                    row.classList.add('table-emphasis');
+                    currentEditingRow = row;
+                    // Scroll suave até a linha
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
-        });
+        }
     })();
-    {% endblock %}
+    
+})();
+{% endblock %}
 </script>

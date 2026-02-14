@@ -162,6 +162,7 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
             if action == 'save_turno':
                 th_id = data.get('id') or None
                 contrato = get_object_or_404(Contrato, id=data['contrato_id'], funcionario_id=self.kwargs['pk'])
+                
                 if th_id:
                     th = get_object_or_404(TurnoHistorico, id=th_id, contrato=contrato)
                     th.turno_id = data['turno']
@@ -178,17 +179,27 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
                     )
                     th.full_clean()
                     th.save()
+                
                 messages.success(request, DEFAULT_MESSAGES.get('updated' if th_id else 'created'))
                 return JsonResponse({'status': 'success', 'reload': True})
+            
             elif action == 'delete_turno':
                 th = get_object_or_404(TurnoHistorico, id=data['id'], contrato__funcionario_id=self.kwargs['pk'])
                 th.delete()
                 messages.success(request, DEFAULT_MESSAGES.get('deleted'))
                 return JsonResponse({'status': 'success', 'reload': True})
+            
             return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)
+        
         except ValidationError as e:
             if hasattr(e, 'message_dict'):
-                msg = ', '.join([f"{k}: {v[0]}" for k, v in e.message_dict.items()])
+                errors = []
+                for field, msgs in e.message_dict.items():
+                    if field == '__all__':
+                        errors.extend(msgs)
+                    else:
+                        errors.extend([f"{field}: {msg}" for msg in msgs])
+                msg = ', '.join(errors)
             elif hasattr(e, 'messages'):
                 msg = ', '.join(e.messages)
             else:
