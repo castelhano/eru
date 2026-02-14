@@ -127,48 +127,69 @@
                                 </div>
                             </div>
                             <div class="col-md-auto ms-auto">
+                                <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
+                                    <i class="bi bi-calculator"></i> {% translate 'Calcular'|escapejs %}
+                                </button>
                                 <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
                                     <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
                                 </button>
                             </div>
                         </div>
                         
+                        <!-- Substituir a seção de horários dentro do loop -->
                         <div data-role="horariosContainer">
                             {% if dia.horarios %}
                             {% for h in dia.horarios %}
-                            <div class="row g-2 mb-2" data-role="horarioRow">
+                            <div class="row g-1 mb-2" data-role="horarioRow">
                                 <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
+                                    <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}" style="min-width: 0;">
                                 </div>
                                 <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
+                                    <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}" style="min-width: 0;">
                                 </div>
-                                <div class="col-2 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                                <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
+                                    <div class="d-md-none w-100" style="height: 20px;"></div>
+                                    <button type="button" class="btn btn-sm btn-secondary-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
                                         <i class="bi bi-trash3-fill"></i>
                                     </button>
                                 </div>
                             </div>
                             {% endfor %}
                             {% else %}
-                            <div class="row g-2 mb-2" data-role="horarioRow">
+                            <div class="row g-1 mb-2" data-role="horarioRow">
                                 <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="entrada">
+                                    <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
                                 </div>
                                 <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="saida">
+                                    <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
                                 </div>
-                                <div class="col-2 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                                <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
+                                    <div class="d-md-none w-100" style="height: 20px;"></div>
+                                    <button type="button" class="btn btn-sm btn-secondary-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
                                         <i class="bi bi-trash3-fill"></i>
                                     </button>
                                 </div>
                             </div>
                             {% endif %}
+                        </div>
+                        
+                        <!-- Resumo do Turno Dia -->
+                        <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
+                            <small class="text-muted">
+                                {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
+                                {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
+                                {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+                            </small>
                         </div>
                     </div>
                     
@@ -193,13 +214,13 @@
         
         const i18n = {
             diasSemana: [
-                "{% translate 'Domingo'|escapejs %}",
-                "{% translate 'Segunda'|escapejs %}",
-                "{% translate 'Terça'|escapejs %}",
-                "{% translate 'Quarta'|escapejs %}",
-                "{% translate 'Quinta'|escapejs %}",
-                "{% translate 'Sexta'|escapejs %}",
-                "{% translate 'Sábado'|escapejs %}"
+            "{% translate 'Domingo'|escapejs %}",
+            "{% translate 'Segunda'|escapejs %}",
+            "{% translate 'Terça'|escapejs %}",
+            "{% translate 'Quarta'|escapejs %}",
+            "{% translate 'Quinta'|escapejs %}",
+            "{% translate 'Sexta'|escapejs %}",
+            "{% translate 'Sábado'|escapejs %}"
             ],
             novoTurnoUrl: '?turno_id=novo',
             cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
@@ -239,15 +260,29 @@
                 const card = target.closest('[data-role="diaCard"]');
                 const container = card.querySelector('[data-role="horariosContainer"]');
                 container.appendChild(criarLinhaHorario());
+                atualizarBotoesOrdenacao(container);
             }
             else if (role === 'removeHorario') {
                 const container = target.closest('[data-role="horariosContainer"]');
                 const rows = container.querySelectorAll('[data-role="horarioRow"]');
                 if (rows.length > 1) {
                     target.closest('[data-role="horarioRow"]').remove();
+                    atualizarBotoesOrdenacao(container);
                 } else {
                     appNotify('warning', i18n.manterLinha);
                 }
+            }
+            else if (role === 'moveUp') {
+                const row = target.closest('[data-role="horarioRow"]');
+                const prev = row.previousElementSibling;
+                if (prev && prev.dataset.role === 'horarioRow') {
+                    row.parentNode.insertBefore(row, prev);
+                    atualizarBotoesOrdenacao(row.closest('[data-role="horariosContainer"]'));
+                }
+            }
+            else if (role === 'calcularResumo') {
+                const card = target.closest('[data-role="diaCard"]');
+                calcularResumo(card);
             }
             else if (role === 'saveTurno') {
                 saveTurno();
@@ -295,21 +330,92 @@
             });
         }
         
+        function atualizarBotoesOrdenacao(container) {
+            const rows = container.querySelectorAll('[data-role="horarioRow"]');
+            rows.forEach((row, index) => {
+                const btnUp = row.querySelector('[data-role="moveUp"]');
+                btnUp.disabled = index === 0;
+            });
+        }
+        
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+        
+        function minutesToTime(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        
+        function calcularResumo(card) {
+            const rows = card.querySelectorAll('[data-role="horarioRow"]');
+            const horarios = [];
+            
+            for (const row of rows) {
+                const entrada = row.querySelector('[data-field="entrada"]').value;
+                const saida = row.querySelector('[data-field="saida"]').value;
+                
+                if (entrada && saida) {
+                    horarios.push({
+                        entrada: timeToMinutes(entrada),
+                        saida: timeToMinutes(saida)
+                    });
+                }
+            }
+            
+            const resumo = card.querySelector('[data-role="resumo"]');
+            
+            if (horarios.length === 0) {
+                resumo.querySelector('[data-field="horasTotais"]').textContent = '--';
+                resumo.querySelector('[data-field="intrajornada"]').textContent = '--';
+                resumo.querySelector('[data-field="interjornada"]').textContent = '--';
+                return;
+            }
+            
+            // Horas Totais
+            let horasTotais = 0;
+            horarios.forEach(h => {
+                horasTotais += (h.saida - h.entrada);
+            });
+            
+            // Intrajornada (intervalos entre jornadas)
+            let intrajornada = 0;
+            for (let i = 0; i < horarios.length - 1; i++) {
+                intrajornada += (horarios[i + 1].entrada - horarios[i].saida);
+            }
+            
+            // Interjornada (tempo entre fim da última e início da primeira no próximo dia)
+            const primeiraEntrada = horarios[0].entrada;
+            const ultimaSaida = horarios[horarios.length - 1].saida;
+            const interjornada = (1440 - ultimaSaida) + primeiraEntrada; // 1440 = 24h em minutos
+            
+            resumo.querySelector('[data-field="horasTotais"]').textContent = minutesToTime(horasTotais);
+            resumo.querySelector('[data-field="intrajornada"]').textContent = minutesToTime(intrajornada);
+            resumo.querySelector('[data-field="interjornada"]').textContent = minutesToTime(interjornada);
+        }
+        
         function criarLinhaHorario() {
             const div = document.createElement('div');
-            div.className = 'row g-2 mb-2';
+            div.className = 'row g-1 mb-2';
             div.setAttribute('data-role', 'horarioRow');
             div.innerHTML = `
       <div class="col-5 col-md-3">
-        <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-        <input type="time" class="form-control form-control-sm" data-field="entrada">
+        <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+        <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
       </div>
       <div class="col-5 col-md-3">
-        <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-        <input type="time" class="form-control form-control-sm" data-field="saida">
+        <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+        <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
       </div>
-      <div class="col-2 col-md-auto">
-        <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+      <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
+        <div class="d-md-none w-100" style="height: 20px;"></div>
+        <button type="button" class="btn btn-sm btn-secondary-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
+          <i class="bi bi-arrow-up"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
           <i class="bi bi-trash3-fill"></i>
         </button>
       </div>
@@ -364,6 +470,9 @@
               </div>
             </div>
             <div class="col-md-auto ms-auto">
+              <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
+                <i class="bi bi-calculator"></i> {% translate 'Calcular'|escapejs %}
+              </button>
               <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
                 <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
               </button>
@@ -372,6 +481,14 @@
           <div data-role="horariosContainer">
             ${criarLinhaHorario().outerHTML}
           </div>
+          
+          <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
+            <small class="text-muted">
+              {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
+              {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
+              {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+            </small>
+          </div>
         </div>
         
         <div data-role="folgaContainer" style="display:none">
@@ -379,6 +496,10 @@
         </div>
       </div>
     `;
+            
+            const container = div.querySelector('[data-role="horariosContainer"]');
+            atualizarBotoesOrdenacao(container);
+            
             return div;
         }
         
@@ -516,8 +637,19 @@
             .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
         }
         
-        // Inicializa os dias da semana ao carregar
+        // Inicializa
         atualizarDiasSemana();
+        document.querySelectorAll('[data-role="horariosContainer"]').forEach(atualizarBotoesOrdenacao);
+        
+        // Calcula resumo automaticamente ao carregar turno existente
+        if ($$.turnoId) {
+            document.querySelectorAll('[data-role="diaCard"]').forEach(card => {
+                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+                if (!ehFolga) {
+                    calcularResumo(card);
+                }
+            });
+        }
         
     })();
     {% endblock %}
