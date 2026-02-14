@@ -271,9 +271,7 @@ auditlog.register(Turno)
 class TurnoDia(models.Model):
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='dias', verbose_name=_('Turno'))
     posicao_ciclo = models.IntegerField(_('Posição Ciclo'))
-    horarios = models.JSONField(_('Horários'), default=dict)    
-    # entrada = models.TimeField(_('Entrada'), null=True, blank=True)
-    # saida = models.TimeField(_('Saída'), null=True, blank=True)
+    horarios = models.JSONField(_('Horários'), default=list)    
     tolerancia = models.PositiveIntegerField(_('Tolerância'), default=10)
     eh_folga = models.BooleanField(_('É Folga'), default=False)
     class Meta:
@@ -281,12 +279,11 @@ class TurnoDia(models.Model):
         ordering = ['posicao_ciclo']
     def __str__(self):
         return f'{self.turno.nome} | cicle: {self.posicao_ciclo}'
-auditlog.register(TurnoDia)
 
 
 class TurnoHistorico(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='historico_turnos', verbose_name=_('Contrato'))
-    turno = turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name=_('Turno'))
+    turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name=_('Turno'))
     inicio_vigencia = models.DateField(_('Inicio Vigência'), default=datetime.today)
     class Meta:
         verbose_name = _('Histórico Turno')
@@ -294,6 +291,27 @@ class TurnoHistorico(models.Model):
         ordering = ['-inicio_vigencia']
     def __str__(self):
         return f'{self.contrato.funcionario.matricula} | {self.turno.nome}'
+    def clean(self):
+        # valida sobreposicao de periodos
+        super().clean()        
+        if not self.inicio_vigencia or not self.contrato_id:
+            return        
+        # validacao: fim deve ser maior que inicio
+        if self.fim_vigencia and self.fim_vigencia < self.inicio_vigencia:
+            raise ValidationError({
+                'fim_vigencia': _('Data de fim não pode ser anterior à data de início')
+            })
+        # validacao de overlap        
+        overlap = TurnoHistorico.objects.filter(contrato_id=self.contrato_id).exclude(pk=self.pk)        
+        if self.fim_vigencia:
+            overlap = overlap.filter(
+                Q(fim_vigencia__gte=self.inicio_vigencia) | Q(fim_vigencia__isnull=True),
+                inicio_vigencia__lte=self.fim_vigencia
+            )
+        else:
+            overlap = overlap.filter(Q(fim_vigencia__gte=self.inicio_vigencia) | Q(fim_vigencia__isnull=True))
+        if overlap.exists():
+            raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
 auditlog.register(TurnoHistorico)
 
 

@@ -55,14 +55,15 @@
     
 
     const menuFolha = new canvasNavDropdown({
-        name: '{% translate "Folha"|hl_str:'f' %}',
+        name: '{% translate "Folha"|hl_str:'o' %}',
         icon: 'bi bi-person-vcard',
         itens: [
+        {% if perms.pessoal.view_turno %}{name: '{% translate "Turno"|hl_str:'t' %}', id:'menu_turno', href: '{% url 'pessoal:turno_list' %}', keybind: ['t', ()=>{if(menuFolha.isOpen()){document.getElementById('menu_turno').click()}}, {display: false, preventDefault: false}]},{% endif %}
         {% if perms.pessoal.view_frequencia %} {name: '{% translate "Frequência"|hl_str:'r' %}', id:'menu_frequencia', href: '{% url 'pessoal:frequencia_list' %}', keybind: ['r', ()=>{if(menuFolha.isOpen()){document.getElementById('menu_frequencia').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         {% if perms.pessoal.view_eventofrequencia %}{name: '{% translate "Evento Frequência"|hl_str:'e' %}', id:'menu_evento_frequencia', href: '{# url 'pessoal:eventofrequencia_list' #}', keybind: ['e', ()=>{if(menuFolha.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
         ],
         keybind: [
-            'alt+f',
+            'alt+o',
             (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
                 canvasNavActive(true); // Exibe o canvasNav (caso oculto)
                 menuFolha.click();
@@ -71,5 +72,5 @@
             {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Folha" %}'}
         ]
         })
-        {% if perms.pessoal.view_frequencia %}appKeyMap.bind('f+r', ()=>{document.getElementById('menu_frequencia').click()}, {display: false}){% endif %}    
+        {% if perms.pessoal.view_frequencia %}appKeyMap.bind('o+r', ()=>{document.getElementById('menu_frequencia').click()}, {display: false}){% endif %}    
 </script>
