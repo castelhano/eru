@@ -213,6 +213,7 @@ function deepMerge(target, ...sources) {
   }
   return deepMerge(target, ...sources);
 }
+
 function appNavigateTable(el, options){
 // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
 // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
@@ -222,8 +223,19 @@ function appNavigateTable(el, options){
   const actionSelector = options?.actionSelector || '.btn';
   const nav = document.querySelector(`nav[data-target="${table.id}"]`);
   if(!table){return}
+  
+  const getVisibleRows = () => {
+    return Array.from(table.querySelectorAll('tbody tr')).filter(r => {
+        const tds = r.querySelectorAll('td');
+        // Se tem apenas 1 td com colspan, é linha expansível
+        if (tds.length === 1 && tds[0].hasAttribute('colspan')) return false;
+        return r.style.display !== 'none' && !r.hidden;
+    });
+  };
+  
   const nextRow = ()=>{
     document.activeElement.blur();
+    rows = getVisibleRows();
     if (rowIndex < rows.length - 1) {
       rowIndex++;
       highlightRow();
@@ -231,6 +243,7 @@ function appNavigateTable(el, options){
   }
   const previousRow = ()=>{
     document.activeElement.blur();
+    rows = getVisibleRows();
     if (rowIndex > 0) {
       rowIndex--;
       highlightRow();
@@ -253,7 +266,7 @@ function appNavigateTable(el, options){
     rows.forEach(r => r.classList.remove('selected'));
     if (rows[rowIndex]) {
       rows[rowIndex].classList.add('selected');
-      rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel no caso de scroll da tela
+      rows[rowIndex].scrollIntoView({ block: 'nearest' });
     }
   }
   const bindListeners = ()=>{
@@ -264,15 +277,77 @@ function appNavigateTable(el, options){
     if(nav){
       appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
       appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
-
     }
   }
   const init = ()=>{
-    rows = Array.from(table.querySelectorAll('tbody tr')); // pre carrega as linhas
+    rows = getVisibleRows();
     bindListeners();
   }
   init();
 }
+
+
+
+// function appNavigateTable(el, options){
+// // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
+// // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
+//   let rowIndex = -1;
+//   let rows = [];
+//   const table = el.tagName == 'TABLE' ? el : null;
+//   const actionSelector = options?.actionSelector || '.btn';
+//   const nav = document.querySelector(`nav[data-target="${table.id}"]`);
+//   if(!table){return}
+//   const nextRow = ()=>{
+//     document.activeElement.blur();
+//     if (rowIndex < rows.length - 1) {
+//       rowIndex++;
+//       highlightRow();
+//     }
+//   }
+//   const previousRow = ()=>{
+//     document.activeElement.blur();
+//     if (rowIndex > 0) {
+//       rowIndex--;
+//       highlightRow();
+//     }
+//   }
+//   const nextPage = ()=>{
+//     document.activeElement.blur();
+//     const nextBtn = nav?.querySelector('.next a');
+//     if (nextBtn) nextBtn.click();
+//   }
+//   const previousPage = ()=>{
+//     const prevBtn = nav?.querySelector('.previous a');
+//     if (prevBtn) prevBtn.click();
+//   }
+//   const runAction = ()=>{
+//     let row = rows[rowIndex];
+//     if (row) { row.querySelector(actionSelector)?.click() }
+//   }
+//   const highlightRow = ()=>{
+//     rows.forEach(r => r.classList.remove('selected'));
+//     if (rows[rowIndex]) {
+//       rows[rowIndex].classList.add('selected');
+//       rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel no caso de scroll da tela
+//     }
+//   }
+//   const bindListeners = ()=>{
+//     let context = table.dataset?.context || 'default';
+//     appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
+//     appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
+//     appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
+//     if(nav){
+//       appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
+//       appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
+
+//     }
+//   }
+//   const init = ()=>{
+//     rows = Array.from(table.querySelectorAll('tbody tr')); // pre carrega as linhas
+//     bindListeners();
+//   }
+//   init();
+// }
 
 
 

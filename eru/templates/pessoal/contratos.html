@@ -82,76 +82,128 @@
     {% endif %}
     
     // CRUD de Turnos
-    (function() {
-        'use strict';
-        
-        document.addEventListener('click', e => {
-            const target = e.target.closest('[data-role]');
-            if (!target) return;
-            const role = target.dataset.role;
-            
-            if (role === 'addTurno') {
-                const cid = target.dataset.contratoId;
-                const form = document.getElementById(`turno-form-${cid}`);
-                form.style.display = 'block';
-                form.querySelectorAll('[data-field]').forEach(f => f.value = '');
-            }
-            else if (role === 'editTurno') {
-                const cid = target.dataset.contratoId;
-                const tid = target.dataset.id;
-                const form = document.getElementById(`turno-form-${cid}`);
-                
-                // Busca dados via AJAX (ou poderia usar data-attributes no HTML)
-                fetch(`/pessoal/turnos-historico/${tid}/`)
-                .then(r => r.json())
-                .then(data => {
-                    form.querySelector('[data-field="id"]').value = data.id;
-                    form.querySelector('[data-field="turno"]').value = data.turno;
-                    form.querySelector('[data-field="inicio_vigencia"]').value = data.inicio_vigencia;
-                    form.querySelector('[data-field="fim_vigencia"]').value = data.fim_vigencia || '';
-                    form.style.display = 'block';
-                });
-            }
-            else if (role === 'saveTurno') {
-                e.preventDefault();
-                const form = target.closest('[id^="turno-form-"]');
-                const data = {
-                    action: 'save_turno',
-                    id: form.querySelector('[data-field="id"]').value || null,
-                    contrato_id: form.querySelector('[data-field="contrato_id"]').value,
-                    turno: form.querySelector('[data-field="turno"]').value,
-                    inicio_vigencia: form.querySelector('[data-field="inicio_vigencia"]').value,
-                    fim_vigencia: form.querySelector('[data-field="fim_vigencia"]').value || null
-                };
-                
-                fetch(window.location.pathname, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
-                    body: JSON.stringify(data)
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'success') window.location.reload();
-                    else alert('Erro: ' + JSON.stringify(d.errors || d.message));
-                });
-            }
-            else if (role === 'cancelTurno') {
-                e.preventDefault();
-                target.closest('[id^="turno-form-"]').style.display = 'none';
-            }
-            else if (role === 'deleteTurno') {
-                if (!confirm('{% translate "Confirma exclusão?"|escapejs %}')) return;
-                fetch(window.location.pathname, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
-                    body: JSON.stringify({action: 'delete_turno', id: target.dataset.id})
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'success') window.location.reload();
-                });
-            }
+    // CRUD de Turnos
+(function() {
+    'use strict';
+    
+    let turnosCache = null;
+    
+    async function loadTurnos() {
+        if (turnosCache) return turnosCache;
+        try {
+            const res = await fetch('{% url "pessoal:turno_list" %}?format=json');
+            turnosCache = await res.json();
+            return turnosCache;
+        } catch (e) {
+            console.error('Erro ao carregar turnos:', e);
+            return [];
+        }
+    }
+    
+    async function populateTurnosSelect(select) {
+        const turnos = await loadTurnos();
+        select.innerHTML = '<option value="">---</option>';
+        turnos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.nome;
+            select.appendChild(opt);
         });
-    })();
+    }
+    
+    document.addEventListener('click', e => {
+        const target = e.target.closest('[data-role]');
+        if (!target) return;
+        const role = target.dataset.role;
+        
+        if (role === 'addTurno') {
+            const cid = target.dataset.contratoId;
+            const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
+            const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
+            const form = document.getElementById(`turno-form-${cid}`);
+            const select = form.querySelector('[data-field="turno"]');
+            
+            if (emptyMsg) emptyMsg.style.display = 'none';
+            
+            // Limpa campos EXCETO contrato_id
+            form.querySelectorAll('[data-field]').forEach(f => {
+                if (f.tagName !== 'SELECT' && f.dataset.field !== 'contrato_id') {
+                    f.value = '';
+                }
+            });
+            
+            populateTurnosSelect(select);
+            form.style.display = 'block';
+        }
+        else if (role === 'editTurno') {
+            const cid = target.dataset.contratoId;
+            const form = document.getElementById(`turno-form-${cid}`);
+            const select = form.querySelector('[data-field="turno"]');
+            
+            form.querySelector('[data-field="id"]').value = target.dataset.id;
+            form.querySelector('[data-field="inicio_vigencia"]').value = target.dataset.inicio;
+            form.querySelector('[data-field="fim_vigencia"]').value = target.dataset.fim || '';
+            
+            populateTurnosSelect(select).then(() => {
+                select.value = target.dataset.turnoId;
+            });
+            
+            form.style.display = 'block';
+        }
+        else if (role === 'saveTurno') {
+            e.preventDefault();
+            const form = target.closest('[id^="turno-form-"]');
+            const data = {
+                action: 'save_turno',
+                id: form.querySelector('[data-field="id"]').value || null,
+                contrato_id: form.querySelector('[data-field="contrato_id"]').value,
+                turno: form.querySelector('[data-field="turno"]').value,
+                inicio_vigencia: form.querySelector('[data-field="inicio_vigencia"]').value,
+                fim_vigencia: form.querySelector('[data-field="fim_vigencia"]').value || null
+            };
+            
+            if (!data.turno || !data.inicio_vigencia || !data.contrato_id) {
+                alert('{% translate "Preencha os campos obrigatórios"|escapejs %}');
+                return;
+            }
+            
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') window.location.reload();
+                else alert('Erro: ' + JSON.stringify(d.errors || d.message));
+            });
+        }
+        else if (role === 'cancelTurno') {
+            e.preventDefault();
+            const form = target.closest('[id^="turno-form-"]');
+            const cid = form.querySelector('[data-field="contrato_id"]').value;
+            const container = document.querySelector(`[data-role="turnosContainer"][data-contrato-id="${cid}"]`);
+            const emptyMsg = container.querySelector('[data-role="emptyMessage"]');
+            
+            if (emptyMsg && container.querySelectorAll('.card').length === 0) {
+                emptyMsg.style.display = 'block';
+            }
+            
+            form.style.display = 'none';
+        }
+        else if (role === 'deleteTurno') {
+            if (!confirm('{% translate "Confirma exclusão?"|escapejs %}')) return;
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'},
+                body: JSON.stringify({action: 'delete_turno', id: target.dataset.id})
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') window.location.reload();
+            });
+        }
+    });
+})();
     {% endblock %}
 </script>
