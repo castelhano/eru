@@ -307,8 +307,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
       if(el.hasAttribute('href')){
         document.getElementById('appModalConfirm_button').onclick = ()=>{ location.href = el.href };
       }
-      else if(el.hasAttribute('onclick')){
-        document.getElementById('appModalConfirm_button').onclick = options.onclick;
+      else if(el.hasAttribute('data-appConfirmAction')){
+        document.getElementById('appModalConfirm_button').onclick = window[el.getAttribute('data-appConfirmAction')];
       }
       if(el.hasAttribute('data-appConfirmDelay')){
         span = document.createElement('span');

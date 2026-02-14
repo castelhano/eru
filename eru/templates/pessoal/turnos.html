@@ -42,11 +42,15 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">{% translate 'Dados do Turno'|escapejs %}</h6>
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-success-matte" data-role="saveTurno">
-                            <i class="bi bi-save"></i> {% translate 'Salvar'|escapejs %}
-                        </button>
+                        {% btn_tag 'submit' class="btn btn-sm btn-success-matte" data_role="saveTurno" %}
                         {% if turno %}
-                        <button type="button" class="btn btn-sm btn-danger-matte" data-role="deleteTurno">
+                        <button type="button" 
+                            class="btn btn-sm btn-danger-matte" 
+                            data-appConfirmAction="deleteTurnoConfirmed"
+                            data-appConfirm="true"
+                            data-appConfirmMessage="{% translate 'Deseja realmente excluir este turno? Esta operação não pode ser desfeita'|escapejs %}"
+                            data-appConfirmColor="danger-matte"
+                            data-appConfirmText="{% translate 'Excluir'|escapejs %}">
                             <i class="bi bi-trash3"></i>
                         </button>
                         {% endif %}
@@ -128,10 +132,10 @@
                             </div>
                             <div class="col-md-auto ms-auto">
                                 <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
-                                    <i class="bi bi-calculator"></i> {% translate 'Calcular'|escapejs %}
+                                    <i class="bi bi-calculator"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
-                                    <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
+                                    <i class="bi bi-plus-lg"></i> {% translate 'Horário'|escapejs %}
                                 </button>
                             </div>
                         </div>
@@ -208,12 +212,12 @@
 
 
 <script>
-    {% block add_script %}
-    (function() {
-        'use strict';
-        
-        const i18n = {
-            diasSemana: [
+   {% block add_script %}
+(function() {
+    'use strict';
+    
+    const i18n = {
+        diasSemana: [
             "{% translate 'Domingo'|escapejs %}",
             "{% translate 'Segunda'|escapejs %}",
             "{% translate 'Terça'|escapejs %}",
@@ -221,436 +225,458 @@
             "{% translate 'Quinta'|escapejs %}",
             "{% translate 'Sexta'|escapejs %}",
             "{% translate 'Sábado'|escapejs %}"
-            ],
-            novoTurnoUrl: '?turno_id=novo',
-            cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
-            manterLinha: "{% translate 'Mantenha ao menos uma linha.'|escapejs %}",
-            camposObrigatorios: "{% translate 'Preencha todos os campos obrigatórios do turno'|escapejs %}",
-            preenchaHorarios: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'preencha entrada E saída ou deixe ambos vazios'|escapejs %}",
-            saidaMaior: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'saída deve ser maior que entrada'|escapejs %}",
-            horariosConflitam: "{% translate 'Registro sobrepõe outras entradas existentes'|escapejs %}",
-            confirmarExclusao: "{% translate 'Deseja realmente excluir este turno?'|escapejs %}",
-            salvando: '<span class="spinner-border spinner-border-sm"></span> {% translate "Salvando..."|escapejs %}',
-            salvar: '<i class="bi bi-save"></i> {% translate "Salvar"|escapejs %}',
-            erro: "{% translate 'Erro'|escapejs %}: ",
-        };
+        ],
+        novoTurnoUrl: '?turno_id=novo',
+        cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
+        manterLinha: "{% translate 'Mantenha ao menos uma linha.'|escapejs %}",
+        camposObrigatorios: "{% translate 'Preencha todos os campos obrigatórios do turno'|escapejs %}",
+        preenchaHorarios: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'preencha entrada E saída ou deixe ambos vazios'|escapejs %}",
+        saidaMaior: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'saída deve ser maior que entrada'|escapejs %}",
+        horariosConflitam: "{% translate 'Registro sobrepõe outras entradas existentes'|escapejs %}",
+        salvando: '<span class="spinner-border spinner-border-sm"></span> {% translate "Salvando..."|escapejs %}',
+        erro: "{% translate 'Erro'|escapejs %}: ",
+    };
+    
+    const $$ = {
+        turnoId: "{{ turno.id|default:'' }}",
+        cicloContainer: document.querySelector('[data-role="cicloContainer"]'),
+        iniciaEm: document.getElementById('id_inicia_em'),
+    };
+    
+    let isSaving = false;
+    
+    // ========== EVENT DELEGATION ==========
+    document.addEventListener('click', e => {
+        const target = e.target.closest('[data-role]');
+        if (!target) return;
         
-        const $$ = {
-            turnoId: "{{ turno.id|default:'' }}",
-            cicloContainer: document.querySelector('[data-role="cicloContainer"]'),
-            iniciaEm: document.getElementById('id_inicia_em'),
-        };
+        const role = target.dataset.role;
         
-        let isSaving = false;
-        
-        // ========== EVENT DELEGATION ==========
-        document.addEventListener('click', e => {
-            const target = e.target.closest('[data-role]');
-            if (!target) return;
-            
-            const role = target.dataset.role;
-            
-            if (role === 'novoTurno') {
-                window.location = i18n.novoTurnoUrl;
-            }
-            else if (role === 'gerarCiclo') {
-                gerarCiclo();
-            }
-            else if (role === 'addHorario') {
-                const card = target.closest('[data-role="diaCard"]');
-                const container = card.querySelector('[data-role="horariosContainer"]');
-                container.appendChild(criarLinhaHorario());
-                atualizarBotoesOrdenacao(container);
-            }
-            else if (role === 'removeHorario') {
-                const container = target.closest('[data-role="horariosContainer"]');
-                const rows = container.querySelectorAll('[data-role="horarioRow"]');
-                if (rows.length > 1) {
-                    target.closest('[data-role="horarioRow"]').remove();
-                    atualizarBotoesOrdenacao(container);
-                } else {
-                    appNotify('warning', i18n.manterLinha);
-                }
-            }
-            else if (role === 'moveUp') {
-                const row = target.closest('[data-role="horarioRow"]');
-                const prev = row.previousElementSibling;
-                if (prev && prev.dataset.role === 'horarioRow') {
-                    row.parentNode.insertBefore(row, prev);
-                    atualizarBotoesOrdenacao(row.closest('[data-role="horariosContainer"]'));
-                }
-            }
-            else if (role === 'calcularResumo') {
-                const card = target.closest('[data-role="diaCard"]');
-                calcularResumo(card);
-            }
-            else if (role === 'saveTurno') {
-                saveTurno();
-            }
-            else if (role === 'deleteTurno') {
-                if (confirm(i18n.confirmarExclusao)) {
-                    deleteTurno();
-                }
-            }
-        });
-        
-        // Toggle eh_folga e mudança de inicia_em
-        document.addEventListener('change', e => {
-            if (e.target.dataset.field === 'eh_folga') {
-                const card = e.target.closest('[data-role="diaCard"]');
-                const configContainer = card.querySelector('[data-role="configContainer"]');
-                const folgaContainer = card.querySelector('[data-role="folgaContainer"]');
-                
-                if (e.target.checked) {
-                    configContainer.style.display = 'none';
-                    folgaContainer.style.display = '';
-                } else {
-                    configContainer.style.display = '';
-                    folgaContainer.style.display = 'none';
-                }
-            }
-            else if (e.target.id === 'id_inicia_em') {
-                atualizarDiasSemana();
-            }
-        });
-        
-        // ========== FUNÇÕES ==========
-        function getDiaSemana(posicao) {
-            const iniciaEm = parseInt($$.iniciaEm.value);
-            const diaSemanaIndex = (iniciaEm + posicao) % 7;
-            return i18n.diasSemana[diaSemanaIndex];
+        if (role === 'novoTurno') {
+            window.location = i18n.novoTurnoUrl;
         }
-        
-        function atualizarDiasSemana() {
-            const cards = document.querySelectorAll('[data-role="diaCard"]');
-            cards.forEach(card => {
-                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
-                const spanDia = card.querySelector('[data-role="diaSemana"]');
-                spanDia.textContent = `(${getDiaSemana(posicao)})`;
-            });
+        else if (role === 'gerarCiclo') {
+            gerarCiclo();
         }
-        
-        function atualizarBotoesOrdenacao(container) {
-            const rows = container.querySelectorAll('[data-role="horarioRow"]');
-            rows.forEach((row, index) => {
-                const btnUp = row.querySelector('[data-role="moveUp"]');
-                btnUp.disabled = index === 0;
-            });
-        }
-        
-        function timeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const [h, m] = timeStr.split(':').map(Number);
-            return h * 60 + m;
-        }
-        
-        function minutesToTime(minutes) {
-            const h = Math.floor(minutes / 60);
-            const m = minutes % 60;
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        }
-        
-        function calcularResumo(card) {
-            const rows = card.querySelectorAll('[data-role="horarioRow"]');
-            const horarios = [];
-            
-            for (const row of rows) {
-                const entrada = row.querySelector('[data-field="entrada"]').value;
-                const saida = row.querySelector('[data-field="saida"]').value;
-                
-                if (entrada && saida) {
-                    horarios.push({
-                        entrada: timeToMinutes(entrada),
-                        saida: timeToMinutes(saida)
-                    });
-                }
-            }
-            
-            const resumo = card.querySelector('[data-role="resumo"]');
-            
-            if (horarios.length === 0) {
-                resumo.querySelector('[data-field="horasTotais"]').textContent = '--';
-                resumo.querySelector('[data-field="intrajornada"]').textContent = '--';
-                resumo.querySelector('[data-field="interjornada"]').textContent = '--';
-                return;
-            }
-            
-            // Horas Totais
-            let horasTotais = 0;
-            horarios.forEach(h => {
-                horasTotais += (h.saida - h.entrada);
-            });
-            
-            // Intrajornada (intervalos entre jornadas)
-            let intrajornada = 0;
-            for (let i = 0; i < horarios.length - 1; i++) {
-                intrajornada += (horarios[i + 1].entrada - horarios[i].saida);
-            }
-            
-            // Interjornada (tempo entre fim da última e início da primeira no próximo dia)
-            const primeiraEntrada = horarios[0].entrada;
-            const ultimaSaida = horarios[horarios.length - 1].saida;
-            const interjornada = (1440 - ultimaSaida) + primeiraEntrada; // 1440 = 24h em minutos
-            
-            resumo.querySelector('[data-field="horasTotais"]').textContent = minutesToTime(horasTotais);
-            resumo.querySelector('[data-field="intrajornada"]').textContent = minutesToTime(intrajornada);
-            resumo.querySelector('[data-field="interjornada"]').textContent = minutesToTime(interjornada);
-        }
-        
-        function criarLinhaHorario() {
-            const div = document.createElement('div');
-            div.className = 'row g-1 mb-2';
-            div.setAttribute('data-role', 'horarioRow');
-            div.innerHTML = `
-      <div class="col-5 col-md-3">
-        <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
-        <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
-      </div>
-      <div class="col-5 col-md-3">
-        <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
-        <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
-      </div>
-      <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
-        <div class="d-md-none w-100" style="height: 20px;"></div>
-        <button type="button" class="btn btn-sm btn-secondary-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
-          <i class="bi bi-arrow-up"></i>
-        </button>
-        <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
-          <i class="bi bi-trash3-fill"></i>
-        </button>
-      </div>
-    `;
-            return div;
-        }
-        
-        function gerarCiclo() {
-            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
-            
-            if (!diasCiclo || diasCiclo < 1) {
-                appNotify('warning', i18n.cicloInvalido);
-                return;
-            }
-            
-            $$.cicloContainer.innerHTML = '';
-            for (let pos = 0; pos < diasCiclo; pos++) {
-                $$.cicloContainer.appendChild(criarCardDia(pos));
-            }
-        }
-        
-        function criarCardDia(pos) {
-            const uniqueId = `folga_${pos}_${Date.now()}`;
-            const diaSemana = getDiaSemana(pos);
-            const div = document.createElement('div');
-            div.className = 'card mb-2';
-            div.setAttribute('data-role', 'diaCard');
-            div.innerHTML = `
-      <div class="card-header">
-        <div class="row align-items-center">
-          <div class="col">
-            <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: ${pos} <span data-role="diaSemana">(${diaSemana})</span></strong>
-          </div>
-          <div class="col-auto">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="${uniqueId}" data-field="eh_folga">
-              <label class="form-check-label small" for="${uniqueId}">{% translate 'É Folga'|escapejs %}</label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <input type="hidden" data-field="id" value="">
-        <input type="hidden" data-field="posicao_ciclo" value="${pos}">
-        
-        <div data-role="configContainer">
-          <div class="row mb-2">
-            <div class="col-md-3">
-              <div class="input-group input-group-sm">
-                <span class="input-group-text">{% translate 'Tolerância (min)'|escapejs %}</span>
-                <input type="number" class="form-control" data-field="tolerancia" value="10" min="0" max="60">
-              </div>
-            </div>
-            <div class="col-md-auto ms-auto">
-              <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
-                <i class="bi bi-calculator"></i> {% translate 'Calcular'|escapejs %}
-              </button>
-              <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
-                <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
-              </button>
-            </div>
-          </div>
-          <div data-role="horariosContainer">
-            ${criarLinhaHorario().outerHTML}
-          </div>
-          
-          <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
-            <small class="text-muted">
-              {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
-              {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
-              {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
-            </small>
-          </div>
-        </div>
-        
-        <div data-role="folgaContainer" style="display:none">
-          <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
-        </div>
-      </div>
-    `;
-            
-            const container = div.querySelector('[data-role="horariosContainer"]');
+        else if (role === 'addHorario') {
+            const card = target.closest('[data-role="diaCard"]');
+            const container = card.querySelector('[data-role="horariosContainer"]');
+            container.appendChild(criarLinhaHorario());
             atualizarBotoesOrdenacao(container);
-            
-            return div;
         }
-        
-        function saveTurno() {
-            if (isSaving) return;
-            
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            
-            const nome = document.getElementById('id_nome').value.trim();
-            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
-            const inicio = document.getElementById('id_inicio').value;
-            const iniciaEm = $$.iniciaEm.value;
-            
-            if (!nome || !diasCiclo || !inicio) {
-                appNotify('warning', i18n.camposObrigatorios);
-                return;
+        else if (role === 'removeHorario') {
+            const container = target.closest('[data-role="horariosContainer"]');
+            const rows = container.querySelectorAll('[data-role="horarioRow"]');
+            if (rows.length > 1) {
+                target.closest('[data-role="horarioRow"]').remove();
+                atualizarBotoesOrdenacao(container);
+            } else {
+                appNotify('warning', i18n.manterLinha);
             }
+        }
+        else if (role === 'moveUp') {
+            const row = target.closest('[data-role="horarioRow"]');
+            const prev = row.previousElementSibling;
+            if (prev && prev.dataset.role === 'horarioRow') {
+                row.parentNode.insertBefore(row, prev);
+                atualizarBotoesOrdenacao(row.closest('[data-role="horariosContainer"]'));
+            }
+        }
+        else if (role === 'calcularResumo') {
+            const card = target.closest('[data-role="diaCard"]');
+            calcularResumo(card);
+        }
+        else if (role === 'saveTurno') {
+            saveTurno();
+        }
+    });
+    
+    // Toggle eh_folga e mudança de inicia_em
+    document.addEventListener('change', e => {
+        if (e.target.dataset.field === 'eh_folga') {
+            const card = e.target.closest('[data-role="diaCard"]');
+            const configContainer = card.querySelector('[data-role="configContainer"]');
+            const folgaContainer = card.querySelector('[data-role="folgaContainer"]');
             
-            const dias = [];
-            const cards = document.querySelectorAll('[data-role="diaCard"]');
+            if (e.target.checked) {
+                configContainer.style.display = 'none';
+                folgaContainer.style.display = '';
+            } else {
+                configContainer.style.display = '';
+                folgaContainer.style.display = 'none';
+            }
+        }
+        else if (e.target.id === 'id_inicia_em') {
+            atualizarDiasSemana();
+        }
+    });
+    
+    // ========== FUNÇÕES ==========
+    function getDiaSemana(posicao) {
+        const iniciaEm = parseInt($$.iniciaEm.value);
+        const diaSemanaIndex = (iniciaEm + posicao) % 7;
+        return i18n.diasSemana[diaSemanaIndex];
+    }
+    
+    function atualizarDiasSemana() {
+        const cards = document.querySelectorAll('[data-role="diaCard"]');
+        cards.forEach(card => {
+            const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+            const spanDia = card.querySelector('[data-role="diaSemana"]');
+            spanDia.textContent = `(${getDiaSemana(posicao)})`;
+        });
+    }
+    
+    function atualizarBotoesOrdenacao(container) {
+        const rows = container.querySelectorAll('[data-role="horarioRow"]');
+        rows.forEach((row, index) => {
+            const btnUp = row.querySelector('[data-role="moveUp"]');
+            btnUp.disabled = index === 0;
+        });
+    }
+    
+    function timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+    
+    function minutesToTime(minutes) {
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    
+    function calcularResumo(card) {
+        const rows = card.querySelectorAll('[data-role="horarioRow"]');
+        const horarios = [];
+        
+        for (const row of rows) {
+            const entrada = row.querySelector('[data-field="entrada"]').value;
+            const saida = row.querySelector('[data-field="saida"]').value;
             
-            for (const card of cards) {
-                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
-                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
-                const id = card.querySelector('[data-field="id"]').value || null;
-                const tolerancia = parseInt(card.querySelector('[data-field="tolerancia"]')?.value || 10);
-                
-                const horarios = [];
-                if (!ehFolga) {
-                    const rowsHorario = card.querySelectorAll('[data-role="horarioRow"]');
-                    for (const row of rowsHorario) {
-                        const inputEntrada = row.querySelector('[data-field="entrada"]');
-                        const inputSaida = row.querySelector('[data-field="saida"]');
-                        const entrada = inputEntrada.value;
-                        const saida = inputSaida.value;
-                        
-                        if (!entrada && !saida) continue;
-                        
-                        if (!entrada || !saida) {
-                            appNotify('warning', i18n.preenchaHorarios.replace('%(pos)s', posicao));
-                            return;
-                        }
-                        
-                        if (saida <= entrada) {
-                            inputEntrada.classList.add('is-invalid');
-                            inputSaida.classList.add('is-invalid');
-                            appNotify('warning', i18n.saidaMaior.replace('%(pos)s', posicao));
-                            return;
-                        }
-                        
-                        horarios.push({ entrada, saida, inputEntrada, inputSaida });
-                    }
-                    
-                    // Validação de conflitos
-                    for (let i = 0; i < horarios.length; i++) {
-                        for (let j = i + 1; j < horarios.length; j++) {
-                            const h1 = horarios[i];
-                            const h2 = horarios[j];
-                            
-                            if (h1.entrada < h2.saida && h1.saida > h2.entrada) {
-                                if (h1.saida > h2.entrada && h1.entrada < h2.entrada) {
-                                    h1.inputSaida.classList.add('is-invalid');
-                                    h2.inputEntrada.classList.add('is-invalid');
-                                }
-                                else if (h2.saida > h1.entrada && h2.entrada < h1.entrada) {
-                                    h2.inputSaida.classList.add('is-invalid');
-                                    h1.inputEntrada.classList.add('is-invalid');
-                                }
-                                else {
-                                    h1.inputEntrada.classList.add('is-invalid');
-                                    h1.inputSaida.classList.add('is-invalid');
-                                    h2.inputEntrada.classList.add('is-invalid');
-                                    h2.inputSaida.classList.add('is-invalid');
-                                }
-                                
-                                appNotify('warning', i18n.horariosConflitam);
-                                return;
-                            }
-                        }
-                    }
-                }
-                
-                dias.push({ 
-                    id, 
-                    posicao_ciclo: posicao, 
-                    eh_folga: ehFolga, 
-                    tolerancia: ehFolga ? 0 : tolerancia, 
-                    horarios: horarios.map(h => ({ entrada: h.entrada, saida: h.saida }))
+            if (entrada && saida) {
+                horarios.push({
+                    entrada: timeToMinutes(entrada),
+                    saida: timeToMinutes(saida)
                 });
             }
-            
-            isSaving = true;
-            const btn = document.querySelector('[data-role="saveTurno"]');
-            const originalHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = i18n.salvando;
-            
-            fetch(window.location.pathname, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ 
-                    action: 'save_turno', 
-                    turno_id: $$.turnoId || null, 
-                    nome, 
-                    dias_ciclo: diasCiclo, 
-                    inicio, 
-                    inicia_em: iniciaEm,
-                    dias 
-                })
-            })
-            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
-            .then(data => {
-                if (data.status === 'success') window.location = data.redirect;
-                else throw new Error(data.message);
-            })
-            .catch(error => {
-                appNotify('danger', i18n.erro + (error.message || error));
-                isSaving = false;
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-            });
         }
         
-        function deleteTurno() {
-            fetch(window.location.pathname, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ action: 'delete_turno', turno_id: $$.turnoId })
-            })
-            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
-            .then(data => {
-                if (data.status === 'success') window.location = data.redirect;
-                else throw new Error(data.message);
-            })
-            .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
+        const resumo = card.querySelector('[data-role="resumo"]');
+        
+        if (horarios.length === 0) {
+            resumo.querySelector('[data-field="horasTotais"]').textContent = '--';
+            resumo.querySelector('[data-field="intrajornada"]').textContent = '--';
+            resumo.querySelector('[data-field="interjornada"]').textContent = '--';
+            return;
         }
         
-        // Inicializa
-        atualizarDiasSemana();
-        document.querySelectorAll('[data-role="horariosContainer"]').forEach(atualizarBotoesOrdenacao);
+        // Normaliza horários considerando virada de dia
+        const horariosNormalizados = [];
         
-        // Calcula resumo automaticamente ao carregar turno existente
-        if ($$.turnoId) {
-            document.querySelectorAll('[data-role="diaCard"]').forEach(card => {
-                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
-                if (!ehFolga) {
-                    calcularResumo(card);
+        for (let i = 0; i < horarios.length; i++) {
+            let entrada = horarios[i].entrada;
+            let saida = horarios[i].saida;
+            
+            if (i > 0) {
+                const ultimaSaida = horariosNormalizados[i - 1].saida;
+                
+                if (entrada < ultimaSaida) {
+                    entrada += 1440;
                 }
+                
+                if (saida <= entrada) {
+                    saida += 1440;
+                }
+            } else {
+                if (saida < entrada) {
+                    saida += 1440;
+                }
+            }
+            
+            horariosNormalizados.push({ entrada, saida });
+        }
+        
+        // Horas Totais
+        let horasTotais = 0;
+        horariosNormalizados.forEach(h => {
+            horasTotais += (h.saida - h.entrada);
+        });
+        
+        // Intrajornada
+        let intrajornada = 0;
+        for (let i = 0; i < horariosNormalizados.length - 1; i++) {
+            intrajornada += (horariosNormalizados[i + 1].entrada - horariosNormalizados[i].saida);
+        }
+        
+        // Interjornada
+        const primeiraEntrada = horariosNormalizados[0].entrada;
+        const ultimaSaida = horariosNormalizados[horariosNormalizados.length - 1].saida;
+        const interjornada = (primeiraEntrada + 1440) - ultimaSaida;
+        
+        resumo.querySelector('[data-field="horasTotais"]').textContent = minutesToTime(horasTotais);
+        resumo.querySelector('[data-field="intrajornada"]').textContent = minutesToTime(intrajornada);
+        resumo.querySelector('[data-field="interjornada"]').textContent = minutesToTime(interjornada);
+    }
+    
+    function criarLinhaHorario() {
+        const div = document.createElement('div');
+        div.className = 'row g-1 mb-2';
+        div.setAttribute('data-role', 'horarioRow');
+        div.innerHTML = `
+            <div class="col-5 col-md-3">
+                <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+                <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
+            </div>
+            <div class="col-5 col-md-3">
+                <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+                <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
+            </div>
+            <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
+                <div class="d-md-none w-100" style="height: 20px;"></div>
+                <button type="button" class="btn btn-sm btn-secondary-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            </div>
+        `;
+        return div;
+    }
+    
+    function gerarCiclo() {
+        const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+        
+        if (!diasCiclo || diasCiclo < 1) {
+            appNotify('warning', i18n.cicloInvalido);
+            return;
+        }
+        
+        $$.cicloContainer.innerHTML = '';
+        for (let pos = 0; pos < diasCiclo; pos++) {
+            $$.cicloContainer.appendChild(criarCardDia(pos));
+        }
+    }
+    
+    function criarCardDia(pos) {
+        const uniqueId = `folga_${pos}_${Date.now()}`;
+        const diaSemana = getDiaSemana(pos);
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.setAttribute('data-role', 'diaCard');
+        div.innerHTML = `
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: ${pos} <span data-role="diaSemana">(${diaSemana})</span></strong>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="${uniqueId}" data-field="eh_folga">
+                            <label class="form-check-label small" for="${uniqueId}">{% translate 'É Folga'|escapejs %}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <input type="hidden" data-field="id" value="">
+                <input type="hidden" data-field="posicao_ciclo" value="${pos}">
+                
+                <div data-role="configContainer">
+                    <div class="row mb-2">
+                        <div class="col-md-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">{% translate 'Tolerância (min)'|escapejs %}</span>
+                                <input type="number" class="form-control" data-field="tolerancia" value="10" min="0" max="60">
+                            </div>
+                        </div>
+                        <div class="col-md-auto ms-auto">
+                            <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
+                                <i class="bi bi-calculator"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
+                                <i class="bi bi-plus-lg"></i> {% translate 'Horário'|escapejs %}
+                            </button>
+                        </div>
+                    </div>
+                    <div data-role="horariosContainer">
+                        ${criarLinhaHorario().outerHTML}
+                    </div>
+                    
+                    <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
+                        <small class="text-muted">
+                            {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
+                            {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
+                            {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+                        </small>
+                    </div>
+                </div>
+                
+                <div data-role="folgaContainer" style="display:none">
+                    <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
+                </div>
+            </div>
+        `;
+        
+        const container = div.querySelector('[data-role="horariosContainer"]');
+        atualizarBotoesOrdenacao(container);
+        
+        return div;
+    }
+    
+    function saveTurno() {
+        if (isSaving) return;
+        
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        
+        const nome = document.getElementById('id_nome').value.trim();
+        const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+        const inicio = document.getElementById('id_inicio').value;
+        const iniciaEm = $$.iniciaEm.value;
+        
+        if (!nome || !diasCiclo || !inicio) {
+            appNotify('warning', i18n.camposObrigatorios);
+            return;
+        }
+        
+        const dias = [];
+        const cards = document.querySelectorAll('[data-role="diaCard"]');
+        
+        for (const card of cards) {
+            const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+            const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+            const id = card.querySelector('[data-field="id"]').value || null;
+            const tolerancia = parseInt(card.querySelector('[data-field="tolerancia"]')?.value || 10);
+            
+            const horarios = [];
+            if (!ehFolga) {
+                const rowsHorario = card.querySelectorAll('[data-role="horarioRow"]');
+                for (const row of rowsHorario) {
+                    const inputEntrada = row.querySelector('[data-field="entrada"]');
+                    const inputSaida = row.querySelector('[data-field="saida"]');
+                    const entrada = inputEntrada.value;
+                    const saida = inputSaida.value;
+                    
+                    if (!entrada && !saida) continue;
+                    
+                    if (!entrada || !saida) {
+                        appNotify('warning', i18n.preenchaHorarios.replace('%(pos)s', posicao));
+                        return;
+                    }
+                    
+                    if (saida <= entrada) {
+                        inputEntrada.classList.add('is-invalid');
+                        inputSaida.classList.add('is-invalid');
+                        appNotify('warning', i18n.saidaMaior.replace('%(pos)s', posicao));
+                        return;
+                    }
+                    
+                    horarios.push({ entrada, saida, inputEntrada, inputSaida });
+                }
+                
+                // Validação de conflitos
+                for (let i = 0; i < horarios.length; i++) {
+                    for (let j = i + 1; j < horarios.length; j++) {
+                        const h1 = horarios[i];
+                        const h2 = horarios[j];
+                        
+                        if (h1.entrada < h2.saida && h1.saida > h2.entrada) {
+                            if (h1.saida > h2.entrada && h1.entrada < h2.entrada) {
+                                h1.inputSaida.classList.add('is-invalid');
+                                h2.inputEntrada.classList.add('is-invalid');
+                            }
+                            else if (h2.saida > h1.entrada && h2.entrada < h1.entrada) {
+                                h2.inputSaida.classList.add('is-invalid');
+                                h1.inputEntrada.classList.add('is-invalid');
+                            }
+                            else {
+                                h1.inputEntrada.classList.add('is-invalid');
+                                h1.inputSaida.classList.add('is-invalid');
+                                h2.inputEntrada.classList.add('is-invalid');
+                                h2.inputSaida.classList.add('is-invalid');
+                            }
+                            
+                            appNotify('warning', i18n.horariosConflitam);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            dias.push({ 
+                id, 
+                posicao_ciclo: posicao, 
+                eh_folga: ehFolga, 
+                tolerancia: ehFolga ? 0 : tolerancia, 
+                horarios: horarios.map(h => ({ entrada: h.entrada, saida: h.saida }))
             });
         }
         
-    })();
-    {% endblock %}
+        isSaving = true;
+        const btn = document.querySelector('[data-role="saveTurno"]');
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = i18n.salvando;
+        
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ 
+                action: 'save_turno', 
+                turno_id: $$.turnoId || null, 
+                nome, 
+                dias_ciclo: diasCiclo, 
+                inicio, 
+                inicia_em: iniciaEm,
+                dias 
+            })
+        })
+        .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+        .then(data => {
+            if (data.status === 'success') window.location = data.redirect;
+            else throw new Error(data.message);
+        })
+        .catch(error => {
+            appNotify('danger', i18n.erro + (error.message || error));
+            isSaving = false;
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        });
+    }
+    
+    // Função global para ser chamada pelo modal de confirmação
+    window.deleteTurnoConfirmed = function() {
+        console.log('AQUIIIIIII');
+        
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ action: 'delete_turno', turno_id: $$.turnoId })
+        })
+        .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+        .then(data => {
+            if (data.status === 'success') window.location = data.redirect;
+            else throw new Error(data.message);
+        })
+        .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
+    }
+    
+    // Inicializa
+    atualizarDiasSemana();
+    document.querySelectorAll('[data-role="horariosContainer"]').forEach(atualizarBotoesOrdenacao);
+    
+    // Calcula resumo automaticamente ao carregar turno existente
+    if ($$.turnoId) {
+        document.querySelectorAll('[data-role="diaCard"]').forEach(card => {
+            const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+            if (!ehFolga) {
+                calcularResumo(card);
+            }
+        });
+    }
+    
+})();
+{% endblock %}
 </script>
