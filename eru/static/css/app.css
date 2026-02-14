@@ -101,7 +101,7 @@ dialog:focus-visible{outline: none!important;}
 .btn-primary-matte:active, .btn-primary-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
 .btn-primary-matte:focus { box-shadow: 0 0 0 0.10rem rgba(90, 125, 154, 0.25); }
 
-.btn-warning-matte, .btn-warning-matte:focus { --matte-bg: #d4a35d; --matte-color: #ffffff; --matte-border: #b88d50; background-color: var(--matte-bg); border-color: var(--matte-border); color: var(--matte-color); transition: filter 0.2s ease, background-color 0.2s ease; }
+.btn-warning-matte, .btn-warning-matte:focus { --matte-bg: #d4a35d; --matte-color: #ffffff; --matte-border: #b88d50; background-color: var(--matte-bg)!important; border-color: var(--matte-border)!important; color: var(--matte-color)!important; transition: filter 0.2s ease, background-color 0.2s ease; }
 [data-bs-theme="dark"] .btn-warning-matte { --matte-bg: #8c6d3e; --matte-border: #755b34; }
 .btn-warning-matte:hover { color: var(--matte-color); background-color: var(--matte-bg); filter: brightness(1.08) saturate(1.1); border-color: var(--matte-border); }
 .btn-warning-matte:active, .btn-warning-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
@@ -113,7 +113,7 @@ dialog:focus-visible{outline: none!important;}
 .btn-danger-matte:active, .btn-danger-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
 .btn-danger-matte:focus { box-shadow: 0 0 0 0.10rem rgba(179, 102, 102, 0.25); }
 
-.btn-info-matte, .btn-info-matte:focus { --matte-bg: #6ea8ab; --matte-color: #ffffff; --matte-border: #5d8f92; background-color: var(--matte-bg); border-color: var(--matte-border); color: var(--matte-color); transition: filter 0.2s ease, background-color 0.2s ease; }
+.btn-info-matte, .btn-info-matte:focus { --matte-bg: #6ea8ab; --matte-color: #ffffff; --matte-border: #5d8f92; background-color: var(--matte-bg)!important; border-color: var(--matte-border)!important; color: var(--matte-color)!important; transition: filter 0.2s ease, background-color 0.2s ease; }
 [data-bs-theme="dark"] .btn-info-matte { --matte-bg: #4a7274; --matte-border: #3d5e60; }
 .btn-info-matte:hover { color: var(--matte-color); background-color: var(--matte-bg); filter: brightness(1.08) saturate(1.1); border-color: var(--matte-border); }
 .btn-info-matte:active, .btn-info-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }

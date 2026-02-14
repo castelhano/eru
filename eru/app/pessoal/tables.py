@@ -4,7 +4,7 @@ from django.utils.encoding import force_str
 from django_tables2 import Table, Column
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
-    EventoEmpresa, EventoCargo, EventoFuncionario, Turno
+    EventoEmpresa, EventoCargo, EventoFuncionario
 )
 
 
@@ -199,18 +199,3 @@ class EventoFuncionarioTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoFuncionario
         fields = ('evento', 'inicio', 'fim', 'motivo', 'valor')
-
-
-class TurnoTable(TableCustomMixin, Table):
-    export_csv = True
-    class Meta:
-        model = Turno
-        fields = ('nome', 'dias_ciclo', 'inicio')
-        actions = [
-            {
-                'action': 'update', 
-                'url_name': 'pessoal:turno_list',
-                'query_params': {'edit': 'id'},
-                'perm': 'pessoal.change_turno',
-            }
-        ]

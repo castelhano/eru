@@ -45,7 +45,7 @@ from .tables import (
     FuncionarioTable, ContratoTable, SetorTable, CargoTable, 
     AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable, 
     MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, 
-    EventoFuncionarioTable, TurnoTable
+    EventoFuncionarioTable
 )
 from .serializers import FuncionarioSerializer
 from .folha.collectors import get_event_vars_master
