@@ -18,6 +18,7 @@
     <div class="card-body tab-content">
         <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Cargo'|escapejs %}</span></h5>
         <div class="tab-pane fade show active" id="base" role="tabpanel">
+            {{ table.render_filter|safe }}
             {% render_table table %}
         </div>
     </div>

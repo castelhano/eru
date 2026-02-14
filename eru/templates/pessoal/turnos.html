@@ -1,164 +1,524 @@
 {% extends "layout/app.html" %}
-{% load static %}
-{% load django_tables2 %}
-{% block title %}{% endblock %}
-{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+{% load static i18n ui_components %}
+{% block title %}{% translate 'Turnos'|escapejs %}{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
 {% block content_fluid %}
 <div class="card mt-2">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            {% if perms.app.add_modelo %}
-            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="url"><i class="bi bi-plus-lg text-success"></i></a></li>
-            {% endif %}
-            <li class="nav-item"><a class="nav-link pointer" id="search"><i class="bi bi-funnel-fill"></i></a></li>
-            <li class="nav-item dropdown ms-auto">
-                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pointer" href="url">Novo item</a></li>
-                </ul>
-            </li>
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:turno_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
-    <div class="card-body tab-content">
-        <h5 class="card-title">Módulo: <span class="text-purple">Modelo</span></h5>
-        <div class="tab-pane fade show active" id="base" role="tabpanel">
-
-
-
-            <div class="row">
-    <!-- MASTER: Lista -->
-    <div class="col-md-4 border-end">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Escalas Cadastradas</h5>
-            <a href="{% url 'pessoal:turno_list' %}" class="btn btn-sm btn-outline-primary">+ Novo</a>
-        </div>
-        {% render_table table %}
-    </div>
-
-<table style="display:none">
-    <tbody id="template-row">
-        <tr class="formset-row">
-            {% with dias_formset.empty_form as ef %}
-                <td>{{ ef.posicao_ciclo }}</td>
-                <td>{{ ef.entrada }}</td>
-                <td>{{ ef.saida }}</td>
-                <td>{{ ef.tolerancia }}</td>
-                <td class="text-center">{{ ef.eh_folga }}</td>
-                <td class="text-center">---</td> <!-- DELETE não costuma ser usado em Create -->
-                {% for hidden in ef.hidden_fields %}{{ hidden }}{% endfor %}
-            {% endwith %}
-        </tr>
-    </tbody>
-</table>
-
-    <!-- DETAIL: Formulário -->
-    <div class="col-md-8 p-4">
-        <form method="post">
-            {% csrf_token %}
-            
-            <!-- Campos do Turno usando seu Mixin -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    {{ form.nome }}
-                    {{ form.nome.i18n_label }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.dias_ciclo.i18n_label }}
-                    {{ form.dias_ciclo }}
-                </div>
-                <div class="col-md-3">
-                    {{ form.inicio.i18n_label }}
-                    {{ form.inicio }}
-                </div>
-            </div>
-
-            <h6 class="border-bottom pb-2">Configuração dos Dias do Ciclo</h6>
-            {{ dias_formset.non_form_errors }}
-            {{ dias_formset.management_form }}
-            <table class="table table-sm align-middle mt-3">
-                <thead class="table-light">
-                    <tr class="small text-muted">
-                        <th width="80">Posição</th>
-                        <th>Entrada</th>
-                        <th>Saída</th>
-                        <th>Tolerancia</th>
-                        <th class="text-center">Folga</th>
-                        <th class="text-center">Excluir</th>
-                    </tr>
-                </thead>
-                <tbody id="formset-body">
-                    {% for form_dia in dias_formset %}
-                    <tr class="formset-row">
-                        {% for hidden in form_dia.hidden_fields %}{{ hidden }}{% endfor %}
-                        <td>{{ form_dia.posicao_ciclo }}</td>
-                        <td>{{ form_dia.entrada }}</td>
-                        <td>{{ form_dia.saida }}</td>
-                        <td>{{ form_dia.tolerancia }}</td>
-                        <td class="text-center">{{ form_dia.eh_folga }}</td>
-                        <td class="text-center">{{ form_dia.DELETE }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <div class="text-end mt-4">
-                <button type="submit" class="btn btn-primary px-5">Salvar Escala</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-
-
-
-        </div>
-    </div>
-</div>
-
-{% endblock%}
-
-{% block add_script_src %}
-{% endblock %}
-<script>
-{% block add_script %}
-(function() {
-    const inputCiclo = document.querySelector('[name="dias_ciclo"]');
-    const body = document.getElementById('formset-body');
-    const totalForms = document.querySelector('[name="dias-TOTAL_FORMS"]');
-    const template = document.querySelector('#template-row tr');
-
-    inputCiclo?.addEventListener('change', () => {
-        const alvo = parseInt(inputCiclo.value) || 0;
-        let linhas = body.querySelectorAll('.formset-row');
-
-        // Adiciona a diferença
-        for (let i = linhas.length; i < alvo; i++) {
-            const nova = template.cloneNode(true);
-            nova.querySelectorAll('input, select').forEach(el => {
-                el.name = el.name.replace(/__prefix__/g, i);
-                el.id = el.id.replace(/__prefix__/g, i);
-                if (el.name.includes('posicao_ciclo')) el.value = i + 1;
-            });
-            body.appendChild(nova);
-        }
-        // Remove o excesso
-        while (body.children.length > alvo) body.lastElementChild.remove();
+    
+    <div class="card-body">
+        <h5 class="card-title mb-3">{% translate 'Pessoal'|escapejs %}: <b class="text-purple">{% translate 'Turnos'|escapejs %}</b></h5>
         
-        totalForms.value = body.children.length;
-    });
-
-    body.addEventListener('change', (e) => {
-        if (e.target.name.includes('DELETE')) {
-            const val = parseInt(inputCiclo.value) || 0;
-            inputCiclo.value = e.target.checked ? val - 1 : val + 1;
-            e.target.closest('tr').classList.toggle('table-danger', e.target.checked);
-        }
-    });
-})();
-
-
+        <!-- Seleção/Criação de Turno -->
+        <div class="row g-2 mb-3">
+            <div class="col-lg-4">
+                <div class="input-group">
+                    <div class="form-floating flex-grow-1">
+                        <select id="id_turno" class="form-select" onchange="if(this.value) window.location='?turno_id='+this.value">
+                            <option value="">{% translate 'Selecione ou crie novo'|escapejs %}</option>
+                            {% for t in turnos_list %}
+                            <option value="{{ t.id }}" {% if turno.id == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <label>{% translate 'Turno'|escapejs %}</label>
+                    </div>
+                    <button class="btn btn-success-matte" type="button" data-role="novoTurno">
+                        <i class="bi bi-plus-lg"></i> {% translate 'Novo'|escapejs %}
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        {% if turno or request.GET.turno_id == 'novo' %}
+        <!-- Card de Dados do Turno -->
+        <div class="card mb-2">
+            <div class="card-header bg-body-secondary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">{% translate 'Dados do Turno'|escapejs %}</h6>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-success-matte" data-role="saveTurno">
+                            <i class="bi bi-save"></i> {% translate 'Salvar'|escapejs %}
+                        </button>
+                        {% if turno %}
+                        <button type="button" class="btn btn-sm btn-danger-matte" data-role="deleteTurno">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <input type="text" id="id_nome" class="form-control" value="{{ turno.nome|default:'' }}" placeholder=" " required>
+                            <label>{% translate 'Nome'|escapejs %} *</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="number" id="id_dias_ciclo" class="form-control" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
+                            <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <select id="id_inicia_em" class="form-select">
+                                <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
+                                <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
+                                <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
+                                <option value="3" {% if turno.inicia_em == '3' %}selected{% endif %}>{% translate 'Quarta'|escapejs %}</option>
+                                <option value="4" {% if turno.inicia_em == '4' %}selected{% endif %}>{% translate 'Quinta'|escapejs %}</option>
+                                <option value="5" {% if turno.inicia_em == '5' %}selected{% endif %}>{% translate 'Sexta'|escapejs %}</option>
+                                <option value="6" {% if turno.inicia_em == '6' %}selected{% endif %}>{% translate 'Sábado'|escapejs %}</option>
+                            </select>
+                            <label>{% translate 'Inicia em'|escapejs %}</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <input type="date" id="id_inicio" class="form-control" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
+                            <label>{% translate 'Data Início'|escapejs %} *</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
+                            <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Container de Dias do Ciclo -->
+        <div id="ciclo-container" data-role="cicloContainer">
+            {% for pos, dia in dias_ciclo.items %}
+            <div class="card mb-2" data-role="diaCard">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: {{ pos }} <span data-role="diaSemana"></span></strong>
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="folga_{{ pos }}" data-field="eh_folga" {% if dia.eh_folga %}checked{% endif %}>
+                                <label class="form-check-label small" for="folga_{{ pos }}">{% translate 'É Folga'|escapejs %}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <input type="hidden" data-field="id" value="{{ dia.id|default:'' }}">
+                    <input type="hidden" data-field="posicao_ciclo" value="{{ pos }}">
+                    
+                    <div data-role="configContainer" {% if dia.eh_folga %}style="display:none"{% endif %}>
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">{% translate 'Tolerância (min)'|escapejs %}</span>
+                                    <input type="number" class="form-control" data-field="tolerancia" value="{{ dia.tolerancia }}" min="0" max="60">
+                                </div>
+                            </div>
+                            <div class="col-md-auto ms-auto">
+                                <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
+                                    <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div data-role="horariosContainer">
+                            {% if dia.horarios %}
+                            {% for h in dia.horarios %}
+                            <div class="row g-2 mb-2" data-role="horarioRow">
+                                <div class="col-5 col-md-3">
+                                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
+                                </div>
+                                <div class="col-5 col-md-3">
+                                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
+                                </div>
+                                <div class="col-2 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div class="row g-2 mb-2" data-role="horarioRow">
+                                <div class="col-5 col-md-3">
+                                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="entrada">
+                                </div>
+                                <div class="col-5 col-md-3">
+                                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+                                    <input type="time" class="form-control form-control-sm" data-field="saida">
+                                </div>
+                                <div class="col-2 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div data-role="folgaContainer" {% if not dia.eh_folga %}style="display:none"{% endif %}>
+                        <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
 {% endblock %}
+
+
+<script>
+    {% block add_script %}
+    (function() {
+        'use strict';
+        
+        const i18n = {
+            diasSemana: [
+                "{% translate 'Domingo'|escapejs %}",
+                "{% translate 'Segunda'|escapejs %}",
+                "{% translate 'Terça'|escapejs %}",
+                "{% translate 'Quarta'|escapejs %}",
+                "{% translate 'Quinta'|escapejs %}",
+                "{% translate 'Sexta'|escapejs %}",
+                "{% translate 'Sábado'|escapejs %}"
+            ],
+            novoTurnoUrl: '?turno_id=novo',
+            cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
+            manterLinha: "{% translate 'Mantenha ao menos uma linha.'|escapejs %}",
+            camposObrigatorios: "{% translate 'Preencha todos os campos obrigatórios do turno'|escapejs %}",
+            preenchaHorarios: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'preencha entrada E saída ou deixe ambos vazios'|escapejs %}",
+            saidaMaior: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'saída deve ser maior que entrada'|escapejs %}",
+            horariosConflitam: "{% translate 'Registro sobrepõe outras entradas existentes'|escapejs %}",
+            confirmarExclusao: "{% translate 'Deseja realmente excluir este turno?'|escapejs %}",
+            salvando: '<span class="spinner-border spinner-border-sm"></span> {% translate "Salvando..."|escapejs %}',
+            salvar: '<i class="bi bi-save"></i> {% translate "Salvar"|escapejs %}',
+            erro: "{% translate 'Erro'|escapejs %}: ",
+        };
+        
+        const $$ = {
+            turnoId: "{{ turno.id|default:'' }}",
+            cicloContainer: document.querySelector('[data-role="cicloContainer"]'),
+            iniciaEm: document.getElementById('id_inicia_em'),
+        };
+        
+        let isSaving = false;
+        
+        // ========== EVENT DELEGATION ==========
+        document.addEventListener('click', e => {
+            const target = e.target.closest('[data-role]');
+            if (!target) return;
+            
+            const role = target.dataset.role;
+            
+            if (role === 'novoTurno') {
+                window.location = i18n.novoTurnoUrl;
+            }
+            else if (role === 'gerarCiclo') {
+                gerarCiclo();
+            }
+            else if (role === 'addHorario') {
+                const card = target.closest('[data-role="diaCard"]');
+                const container = card.querySelector('[data-role="horariosContainer"]');
+                container.appendChild(criarLinhaHorario());
+            }
+            else if (role === 'removeHorario') {
+                const container = target.closest('[data-role="horariosContainer"]');
+                const rows = container.querySelectorAll('[data-role="horarioRow"]');
+                if (rows.length > 1) {
+                    target.closest('[data-role="horarioRow"]').remove();
+                } else {
+                    appNotify('warning', i18n.manterLinha);
+                }
+            }
+            else if (role === 'saveTurno') {
+                saveTurno();
+            }
+            else if (role === 'deleteTurno') {
+                if (confirm(i18n.confirmarExclusao)) {
+                    deleteTurno();
+                }
+            }
+        });
+        
+        // Toggle eh_folga e mudança de inicia_em
+        document.addEventListener('change', e => {
+            if (e.target.dataset.field === 'eh_folga') {
+                const card = e.target.closest('[data-role="diaCard"]');
+                const configContainer = card.querySelector('[data-role="configContainer"]');
+                const folgaContainer = card.querySelector('[data-role="folgaContainer"]');
+                
+                if (e.target.checked) {
+                    configContainer.style.display = 'none';
+                    folgaContainer.style.display = '';
+                } else {
+                    configContainer.style.display = '';
+                    folgaContainer.style.display = 'none';
+                }
+            }
+            else if (e.target.id === 'id_inicia_em') {
+                atualizarDiasSemana();
+            }
+        });
+        
+        // ========== FUNÇÕES ==========
+        function getDiaSemana(posicao) {
+            const iniciaEm = parseInt($$.iniciaEm.value);
+            const diaSemanaIndex = (iniciaEm + posicao) % 7;
+            return i18n.diasSemana[diaSemanaIndex];
+        }
+        
+        function atualizarDiasSemana() {
+            const cards = document.querySelectorAll('[data-role="diaCard"]');
+            cards.forEach(card => {
+                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+                const spanDia = card.querySelector('[data-role="diaSemana"]');
+                spanDia.textContent = `(${getDiaSemana(posicao)})`;
+            });
+        }
+        
+        function criarLinhaHorario() {
+            const div = document.createElement('div');
+            div.className = 'row g-2 mb-2';
+            div.setAttribute('data-role', 'horarioRow');
+            div.innerHTML = `
+      <div class="col-5 col-md-3">
+        <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+        <input type="time" class="form-control form-control-sm" data-field="entrada">
+      </div>
+      <div class="col-5 col-md-3">
+        <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+        <input type="time" class="form-control form-control-sm" data-field="saida">
+      </div>
+      <div class="col-2 col-md-auto">
+        <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+          <i class="bi bi-trash3-fill"></i>
+        </button>
+      </div>
+    `;
+            return div;
+        }
+        
+        function gerarCiclo() {
+            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+            
+            if (!diasCiclo || diasCiclo < 1) {
+                appNotify('warning', i18n.cicloInvalido);
+                return;
+            }
+            
+            $$.cicloContainer.innerHTML = '';
+            for (let pos = 0; pos < diasCiclo; pos++) {
+                $$.cicloContainer.appendChild(criarCardDia(pos));
+            }
+        }
+        
+        function criarCardDia(pos) {
+            const uniqueId = `folga_${pos}_${Date.now()}`;
+            const diaSemana = getDiaSemana(pos);
+            const div = document.createElement('div');
+            div.className = 'card mb-2';
+            div.setAttribute('data-role', 'diaCard');
+            div.innerHTML = `
+      <div class="card-header">
+        <div class="row align-items-center">
+          <div class="col">
+            <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: ${pos} <span data-role="diaSemana">(${diaSemana})</span></strong>
+          </div>
+          <div class="col-auto">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="${uniqueId}" data-field="eh_folga">
+              <label class="form-check-label small" for="${uniqueId}">{% translate 'É Folga'|escapejs %}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <input type="hidden" data-field="id" value="">
+        <input type="hidden" data-field="posicao_ciclo" value="${pos}">
+        
+        <div data-role="configContainer">
+          <div class="row mb-2">
+            <div class="col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">{% translate 'Tolerância (min)'|escapejs %}</span>
+                <input type="number" class="form-control" data-field="tolerancia" value="10" min="0" max="60">
+              </div>
+            </div>
+            <div class="col-md-auto ms-auto">
+              <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
+                <i class="bi bi-plus-lg"></i> {% translate 'Adicionar Horário'|escapejs %}
+              </button>
+            </div>
+          </div>
+          <div data-role="horariosContainer">
+            ${criarLinhaHorario().outerHTML}
+          </div>
+        </div>
+        
+        <div data-role="folgaContainer" style="display:none">
+          <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
+        </div>
+      </div>
+    `;
+            return div;
+        }
+        
+        function saveTurno() {
+            if (isSaving) return;
+            
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
+            const nome = document.getElementById('id_nome').value.trim();
+            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+            const inicio = document.getElementById('id_inicio').value;
+            const iniciaEm = $$.iniciaEm.value;
+            
+            if (!nome || !diasCiclo || !inicio) {
+                appNotify('warning', i18n.camposObrigatorios);
+                return;
+            }
+            
+            const dias = [];
+            const cards = document.querySelectorAll('[data-role="diaCard"]');
+            
+            for (const card of cards) {
+                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+                const id = card.querySelector('[data-field="id"]').value || null;
+                const tolerancia = parseInt(card.querySelector('[data-field="tolerancia"]')?.value || 10);
+                
+                const horarios = [];
+                if (!ehFolga) {
+                    const rowsHorario = card.querySelectorAll('[data-role="horarioRow"]');
+                    for (const row of rowsHorario) {
+                        const inputEntrada = row.querySelector('[data-field="entrada"]');
+                        const inputSaida = row.querySelector('[data-field="saida"]');
+                        const entrada = inputEntrada.value;
+                        const saida = inputSaida.value;
+                        
+                        if (!entrada && !saida) continue;
+                        
+                        if (!entrada || !saida) {
+                            appNotify('warning', i18n.preenchaHorarios.replace('%(pos)s', posicao));
+                            return;
+                        }
+                        
+                        if (saida <= entrada) {
+                            inputEntrada.classList.add('is-invalid');
+                            inputSaida.classList.add('is-invalid');
+                            appNotify('warning', i18n.saidaMaior.replace('%(pos)s', posicao));
+                            return;
+                        }
+                        
+                        horarios.push({ entrada, saida, inputEntrada, inputSaida });
+                    }
+                    
+                    // Validação de conflitos
+                    for (let i = 0; i < horarios.length; i++) {
+                        for (let j = i + 1; j < horarios.length; j++) {
+                            const h1 = horarios[i];
+                            const h2 = horarios[j];
+                            
+                            if (h1.entrada < h2.saida && h1.saida > h2.entrada) {
+                                if (h1.saida > h2.entrada && h1.entrada < h2.entrada) {
+                                    h1.inputSaida.classList.add('is-invalid');
+                                    h2.inputEntrada.classList.add('is-invalid');
+                                }
+                                else if (h2.saida > h1.entrada && h2.entrada < h1.entrada) {
+                                    h2.inputSaida.classList.add('is-invalid');
+                                    h1.inputEntrada.classList.add('is-invalid');
+                                }
+                                else {
+                                    h1.inputEntrada.classList.add('is-invalid');
+                                    h1.inputSaida.classList.add('is-invalid');
+                                    h2.inputEntrada.classList.add('is-invalid');
+                                    h2.inputSaida.classList.add('is-invalid');
+                                }
+                                
+                                appNotify('warning', i18n.horariosConflitam);
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                dias.push({ 
+                    id, 
+                    posicao_ciclo: posicao, 
+                    eh_folga: ehFolga, 
+                    tolerancia: ehFolga ? 0 : tolerancia, 
+                    horarios: horarios.map(h => ({ entrada: h.entrada, saida: h.saida }))
+                });
+            }
+            
+            isSaving = true;
+            const btn = document.querySelector('[data-role="saveTurno"]');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = i18n.salvando;
+            
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ 
+                    action: 'save_turno', 
+                    turno_id: $$.turnoId || null, 
+                    nome, 
+                    dias_ciclo: diasCiclo, 
+                    inicio, 
+                    inicia_em: iniciaEm,
+                    dias 
+                })
+            })
+            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+            .then(data => {
+                if (data.status === 'success') window.location = data.redirect;
+                else throw new Error(data.message);
+            })
+            .catch(error => {
+                appNotify('danger', i18n.erro + (error.message || error));
+                isSaving = false;
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+        }
+        
+        function deleteTurno() {
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ action: 'delete_turno', turno_id: $$.turnoId })
+            })
+            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+            .then(data => {
+                if (data.status === 'success') window.location = data.redirect;
+                else throw new Error(data.message);
+            })
+            .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
+        }
+        
+        // Inicializa os dias da semana ao carregar
+        atualizarDiasSemana();
+        
+    })();
+    {% endblock %}
 </script>

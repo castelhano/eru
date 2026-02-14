@@ -1,7 +1,7 @@
 {% extends "layout/app.html" %}
 {% load static i18n ui_components %}
 {% block title %}{% translate 'Frequência'|escapejs %}{% endblock %}
-{% block canvas_menu %}{% include '_component/menu/core.html' %}{% endblock %}
+{% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
 {% block content_fluid %}
 <div class="card mt-2">
@@ -130,210 +130,192 @@
 <script>
   {% block add_script %}
   (function() {
-  'use strict';
-  
-  // Template de eventos
-  const eventoOptionsHTML = `
-  <option value="">------</option>
-  {% for ev in eventos_choices %}
-  <option value="{{ ev.id }}" data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}">
-    {{ ev.nome }}
-  </option>
-  {% endfor %}
-`;
-  
-  // Seletores cache
-  const $$ = {
-    calendario: document.querySelector('[data-role="calendario"]'),
-    btnSave: document.querySelector('[data-role="saveAll"]'),
-    matricula: document.getElementById('id_matricula'),
-    competencia: document.getElementById('id_competencia')
-  };
-  
-  // Toggle campos de horário baseado no tipo de evento
-  function toggleHorarioFields(row, isDiaInteiro) {
-    const wrappers = row.querySelectorAll('[data-field-wrapper]');
-    const entrada = row.querySelector('[data-field="entrada"]');
-    const saida = row.querySelector('[data-field="saida"]');
+    'use strict';
     
-    wrappers.forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
+    const $$ = {
+      calendario: document.querySelector('[data-role="calendario"]'),
+      btnSave: document.querySelector('[data-role="saveAll"]'),
+      matricula: document.getElementById('id_matricula'),
+      competencia: document.getElementById('id_competencia')
+    };
     
-    if (isDiaInteiro) {
-      entrada.value = '';
-      saida.value = '';
-    }
-  }
-  
-  // Inicializa campos existentes
-  function initExistingRows() {
-    document.querySelectorAll('[data-role="horarioRow"]').forEach(row => {
+    let isSaving = false;
+    
+    // Toggle visual para campos de "Dia Inteiro"
+    function toggleRowFields(row) {
       const select = row.querySelector('[data-field="evento"]');
-      if (select?.selectedOptions[0]) {
-        const isDiaInteiro = select.selectedOptions[0].dataset.diaInteiro === 'true';
-        toggleHorarioFields(row, isDiaInteiro);
+      const isDiaInteiro = select.selectedOptions[0]?.dataset.diaInteiro === 'true';
+      row.querySelectorAll('[data-field-wrapper]').forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
+      row.setAttribute('data-dia-inteiro', isDiaInteiro);
+    }
+    
+    // Delegated Events (Click)
+    document.addEventListener('click', e => {
+      const target = e.target.closest('[data-role]');
+      if (!target) return;
+      
+      const role = target.dataset.role;
+      
+      if (role === 'addHorario') {
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
+        // Clona a primeira linha que encontrar ou cria uma base
+        const baseRow = document.querySelector('[data-role="horarioRow"]');
+        const newRow = baseRow.cloneNode(true);
+        
+        // Limpa valores
+        newRow.querySelectorAll('input').forEach(i => i.value = '');
+        newRow.querySelector('select').selectedIndex = 0;
+        newRow.classList.remove('border-danger');
+        container.appendChild(newRow);
+        toggleRowFields(newRow);
+      } 
+      
+      else if (role === 'removeHorario') {
+        const rows = document.querySelectorAll('[data-role="horarioRow"]');
+        if (rows.length > 1) target.closest('[data-role="horarioRow"]').remove();
+        else alert("Mantenha ao menos uma linha (ou limpe os campos).");
+      } 
+      
+      else if (role === 'saveAll') {
+        saveFrequencias();
       }
     });
-  }
-  
-  // Template de nova linha
-  function createHorarioRow() {
-    const div = document.createElement('div');
-    div.className = 'row mb-2 g-2';
-    div.setAttribute('data-role', 'horarioRow');
-    div.innerHTML = `
-    <input type="hidden" data-field="id" value="">
-    <div class="col-6 col-md-2" data-field-wrapper="entrada">
-      <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-      <input type="time" class="form-control form-control-sm" data-field="entrada">
-    </div>
-    <div class="col-6 col-md-2" data-field-wrapper="saida">
-      <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-      <input type="time" class="form-control form-control-sm" data-field="saida">
-    </div>
-    <div class="col-12 col-md-3">
-      <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
-      <select class="form-select form-select-sm" data-field="evento">${eventoOptionsHTML}</select>
-    </div>
-    <div class="col-md">
-      <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-      <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
-    </div>
-    <div class="col-md-auto">
-      <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-        <i class="bi bi-trash3-fill"></i>
-      </button>
-    </div>
-  `;
-    return div;
-  }
-  
-  // Event delegation
-  document.addEventListener('click', e => {
-    const target = e.target.closest('[data-role]');
-    if (!target) return;
     
-    const role = target.dataset.role;
-    
-    // Adicionar horário
-    if (role === 'addHorario') {
-      e.preventDefault();
-      e.stopPropagation();
-      const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
-      if (container) {
-        container.appendChild(createHorarioRow());
+    // Delegated Events (Change) - Para esconder campos se mudar o evento
+    document.addEventListener('change', e => {
+      if (e.target.dataset.field === 'evento') {
+        toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
       }
-      return;
-    }
+    });
     
-    // Remover horário
-    if (role === 'removeHorario') {
-      e.preventDefault();
-      e.stopPropagation();
-      target.closest('[data-role="horarioRow"]').remove();
-      return;
-    }
-    
-    // Salvar
-    if (role === 'saveAll') {
-      e.preventDefault();
-      e.stopPropagation();
-      saveFrequencias();
-      return;
-    }
-  });
-  
-  // Monitorar mudança de evento
-  document.addEventListener('change', e => {
-    if (e.target.dataset.field === 'evento') {
-      const option = e.target.selectedOptions[0];
-      const isDiaInteiro = option?.dataset.diaInteiro === 'true';
-      const row = e.target.closest('[data-role="horarioRow"]');
-      if (row) toggleHorarioFields(row, isDiaInteiro);
-    }
-  });
-  
-  // Coletar dados
-  function collectFrequencias() {
-    const frequencias = [];
-    
-    document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
-      const dia = container.dataset.dia;
+    function saveFrequencias() {
+      if (isSaving) return;
+      const frequencias = [];
+      const slotsPorDia = {}; 
       
-      container.querySelectorAll('[data-role="horarioRow"]').forEach(row => {
-        const eventoSelect = row.querySelector('[data-field="evento"]');
-        const eventoId = eventoSelect.value;
+      // 1. Limpa estados de erro visuais de tentativas anteriores
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      
+      const rows = document.querySelectorAll('[data-role="horarioRow"]');
+      
+      for (const row of rows) {
+        const container = row.closest('[data-role="horariosContainer"]');
+        const dia = container.dataset.dia;
+        const evSelect = row.querySelector('[data-field="evento"]');
+        const inputIn = row.querySelector('[data-field="entrada"]');
+        const inputOut = row.querySelector('[data-field="saida"]');
         
-        // Ignora linhas sem evento selecionado
-        if (!eventoId) return;
+        // const isDiaInteiro = evSelect.selectedOptions?.dataset.diaInteiro === 'true';
+        const selectedOption = evSelect.options[evSelect.selectedIndex];
+        const isDiaInteiro = selectedOption ? selectedOption.dataset.diaInteiro === 'true' : false;
+        const hIn = inputIn.value;
+        const hOut = inputOut.value;
         
-        const option = eventoSelect.selectedOptions[0];
-        const isDiaInteiro = option?.dataset.diaInteiro === 'true';
-        const entrada = row.querySelector('[data-field="entrada"]').value;
-        const saida = row.querySelector('[data-field="saida"]').value;
+        // --- REGRA DE OURO: IGNORAR LINHAS VAZIAS ---
+        // Pula a linha se não houver evento selecionado E não houver horários digitados
+        if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) {
+          continue; 
+        }
         
-        // Valida: eventos normais precisam de entrada E saída
-        if (!isDiaInteiro && (!entrada || !saida)) return;
+        // Se o usuário selecionou um evento mas esqueceu as horas (em eventos normais)
+        if (!isDiaInteiro && (!hIn || !hOut)) {
+          inputIn.classList.add('is-invalid');
+          inputOut.classList.add('is-invalid');
+          alert(`No dia ${dia}, preencha os horários de entrada e saída.`);
+          return;
+        }
+        
+        // Normaliza valores para validação de conflito
+        const valIn = isDiaInteiro ? "00:00" : hIn;
+        const valOut = isDiaInteiro ? "23:59" : hOut;
+        
+        // Validação lógica: Saída deve ser maior que entrada
+        if (valOut <= valIn) {
+          inputIn.classList.add('is-invalid');
+          inputOut.classList.add('is-invalid');
+          alert(`No dia ${dia}, a saída (${valOut}) deve ser após a entrada (${valIn}).`);
+          return;
+        }
+        
+        // Validação de Overlap (Sobreposição entre registros)
+        if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
+        
+        const conflito = slotsPorDia[dia].find(s => valIn < s.out && valOut > s.in);
+        
+        if (conflito) {
+          // marca campos conflitantes com form-invalid
+          const inputOutAnterior = conflito.rowRef.querySelector('[data-field="saida"]');
+          inputOutAnterior.classList.add('is-invalid');
+          inputIn.classList.add('is-invalid');
+          appNotify('warning', 'Registro sobrepõe outras entradas existentes')
+          return;
+        }
+        
+        // Registra o slot para validar contra as próximas linhas do mesmo dia
+        slotsPorDia[dia].push({ in: valIn, out: valOut, rowRef: row });
         
         frequencias.push({
           id: row.querySelector('[data-field="id"]').value || null,
           dia: dia,
-          entrada: entrada,
-          saida: saida,
-          evento_id: eventoId,
+          entrada: valIn,
+          saida: valOut,
+          evento_id: evSelect.value,
           observacao: row.querySelector('[data-field="observacao"]').value
         });
+      }
+      
+      if (frequencias.length === 0) {
+        alert("Nenhuma frequência preenchida para salvar.");
+        return;
+      }
+      
+      // 2. Envio via AJAX
+      isSaving = true;
+      const btn = $$.btnSave;
+      const originalHTML = btn.innerHTML;
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+      
+      fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ 
+          matricula: $$.matricula.value, 
+          competencia: $$.competencia.value, 
+          frequencias: frequencias 
+        })
+      })
+      .then(response => {
+        if (response.ok) return response.json();
+        return response.json().then(err => { throw err; });
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          window.location.reload();
+        } else {
+          throw new Error(data.message || "Erro desconhecido");
+        }
+      })
+      .catch(error => {
+        alert("Erro: " + (error.message || error));
+        isSaving = false;
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
       });
-    });
-    
-    return frequencias;
-  }
-  
-  // Salvar
-  function saveFrequencias() {
-    const frequencias = collectFrequencias();
-    
-    if (frequencias.length === 0) {
-      alert('⚠️ Nenhuma frequência válida para salvar.');
-      return;
     }
     
-    const btn = $$.btnSave;
-    if (!btn) return;
     
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Salvando...';
     
-    fetch(window.location.pathname, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({
-        matricula: $$.matricula.value,
-        competencia: $$.competencia.value,
-        frequencias: frequencias
-      })
-    })
-    .then(r => r.ok ? r.json() : Promise.reject(r))
-    .then(data => {
-      if (data.status === 'success') {
-        location.reload();
-      } else {
-        throw new Error(data.message || 'Erro desconhecido');
-      }
-    })
-    .catch(error => {
-      alert('❌ Erro: ' + (error.message || error));
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
-    });
-  }
+    
+    
+    // Inicialização: Ajusta visibilidade dos campos no Load
+    document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
+    
+  })();
   
-  // Init
-  initExistingRows();
-  
-})();
   {% endblock %}
 </script>

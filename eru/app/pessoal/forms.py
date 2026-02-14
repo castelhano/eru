@@ -355,55 +355,55 @@ TurnoDiaFormSet = inlineformset_factory(
 #         return has_time or has_event or super().has_changed()
 
 
-from django.utils import timezone
-class FrequenciaForm(BootstrapMixin, forms.ModelForm):
-    inicio_t = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False)
-    fim_t = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False)
-    data_ref = forms.CharField(widget=forms.HiddenInput(), required=False)
-    class Meta:
-        model = Frequencia
-        fields = ['evento', 'observacao', 'editado']
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['evento'].required = False
-        inst = self.instance
+# from django.utils import timezone
+# class FrequenciaForm(BootstrapMixin, forms.ModelForm):
+#     inicio_t = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False)
+#     fim_t = forms.TimeField(widget=forms.TimeInput(attrs={'type': 'time'}), required=False)
+#     data_ref = forms.CharField(widget=forms.HiddenInput(), required=False)
+#     class Meta:
+#         model = Frequencia
+#         fields = ['evento', 'observacao', 'editado']
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['evento'].required = False
+#         inst = self.instance
         
-        # Simplificando a extração de dados
-        dt_ini = timezone.localtime(inst.inicio) if inst.pk and inst.inicio else None
-        data_v = dt_ini.date() if dt_ini else self.initial.get('inicio')
+#         # Simplificando a extração de dados
+#         dt_ini = timezone.localtime(inst.inicio) if inst.pk and inst.inicio else None
+#         data_v = dt_ini.date() if dt_ini else self.initial.get('inicio')
 
-        if dt_ini:
-            self.fields['inicio_t'].initial = dt_ini.time()
-            if inst.fim: 
-                self.fields['fim_t'].initial = timezone.localtime(inst.fim).time()
+#         if dt_ini:
+#             self.fields['inicio_t'].initial = dt_ini.time()
+#             if inst.fim: 
+#                 self.fields['fim_t'].initial = timezone.localtime(inst.fim).time()
 
-        if data_v:
-            val = data_v.strftime('%Y-%m-%d') if hasattr(data_v, 'strftime') else data_v
-            self.fields['data_ref'].initial = val
-            self.fields['data_ref'].widget.value = val
+#         if data_v:
+#             val = data_v.strftime('%Y-%m-%d') if hasattr(data_v, 'strftime') else data_v
+#             self.fields['data_ref'].initial = val
+#             self.fields['data_ref'].widget.value = val
 
-    def save(self, contrato, ev_padrao):
-        """Centraliza a 'montagem' do registro aqui"""
-        d_str = self.cleaned_data.get('data_ref')
-        hi = self.cleaned_data.get('inicio_t')
-        hf = self.cleaned_data.get('fim_t')
+#     def save(self, contrato, ev_padrao):
+#         """Centraliza a 'montagem' do registro aqui"""
+#         d_str = self.cleaned_data.get('data_ref')
+#         hi = self.cleaned_data.get('inicio_t')
+#         hf = self.cleaned_data.get('fim_t')
 
-        if not (d_str and hi): return None
+#         if not (d_str and hi): return None
 
-        d_obj = datetime.strptime(d_str, '%Y-%m-%d').date()
-        self.instance.contrato = contrato
-        self.instance.evento = self.cleaned_data.get('evento') or ev_padrao
+#         d_obj = datetime.strptime(d_str, '%Y-%m-%d').date()
+#         self.instance.contrato = contrato
+#         self.instance.evento = self.cleaned_data.get('evento') or ev_padrao
         
-        # Monta os Datetimes
-        self.instance.inicio = timezone.make_aware(datetime.combine(d_obj, hi))
-        if hf:
-            virada = timedelta(1) if hf < hi else timedelta(0)
-            self.instance.fim = timezone.make_aware(datetime.combine(d_obj + virada, hf))
-        else:
-            self.instance.fim = None
+#         # Monta os Datetimes
+#         self.instance.inicio = timezone.make_aware(datetime.combine(d_obj, hi))
+#         if hf:
+#             virada = timedelta(1) if hf < hi else timedelta(0)
+#             self.instance.fim = timezone.make_aware(datetime.combine(d_obj + virada, hf))
+#         else:
+#             self.instance.fim = None
         
-        self.instance.save()
-        return self.instance
+#         self.instance.save()
+#         return self.instance
 
 
 
@@ -414,13 +414,13 @@ class FrequenciaForm(BootstrapMixin, forms.ModelForm):
 
 
 
-FrequenciaFormSet = inlineformset_factory(
-    Contrato,
-    Frequencia,
-    form=FrequenciaForm,
-    extra=0,
-    can_delete=True
-)
+# FrequenciaFormSet = inlineformset_factory(
+#     Contrato,
+#     Frequencia,
+#     form=FrequenciaForm,
+#     extra=0,
+#     can_delete=True
+# )
 
 class ContratoFrequenciaForm(forms.ModelForm):
 # form necessario para FrequenciaManagementView

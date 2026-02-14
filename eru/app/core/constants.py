@@ -5,6 +5,8 @@ DEFAULT_MESSAGES = {
     '401': _('[401] Permissão negada, por favor verifique com o administrador do sistema'),
     '500': _('[500] Erro de servidor, se o problema persistir, contate o administrador'),
     'created': _('Registro criado com sucesso'),
+    'updated': _('Registro atualizado com sucesso'),
+    'updated_plural': _('Registros atualizados com sucesso'),
     'deleted': _('Registro excluido, essa operação não pode ser desfeita'),
     'deleteError': _('Erro ao tentar apagar registro'),
     'emptyQuery': _('Nenhum resultado encontrado com os critérios informados'),
@@ -13,5 +15,4 @@ DEFAULT_MESSAGES = {
     'recordOverlap': _('Registro sobrepõe outras entradas existentes'),
     'endShorterThanStart': _('Data de fim não pode ser menor que inicio'),
     'saveError': _('Erro ao salvar registro'),
-    'updated': _('Registro atualizado com sucesso'),
 }

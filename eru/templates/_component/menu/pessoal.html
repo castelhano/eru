@@ -16,7 +16,7 @@
                 menuCadastro.click();
                 setTimeout(()=>{menuCadastro.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de cadastro" %}'}
+            {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de cadastro" %}'}
         ]
     })
     // Adicionando atalhos diretos Ctrl+c [THEN] E ==> C+E
@@ -44,7 +44,7 @@
                 menuEvento.click();
                 setTimeout(()=>{menuEvento.focus()}, 340);
             },
-            {icon: 'bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Ferramentas" %}'}
+            {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Ferramentas" %}'}
         ]
         })
     {% if perms.pessoal.view_evento %}appKeyMap.bind('e+t', ()=>{document.getElementById('menu_evento').click()}, {display: false}){% endif %}
@@ -53,5 +53,23 @@
     {% if perms.pessoal.view_eventoempresa %}appKeyMap.bind('e+v', ()=>{document.getElementById('menu_eventos_globais').click()}, {display: false}){% endif %}
     {% if perms.pessoal.change_evento %}appKeyMap.bind('e+r', ()=>{document.getElementById('menu_evento_copy').click()}, {keydown: false, keyup: true, display: false}){% endif %}
     
-    
+
+    const menuFolha = new canvasNavDropdown({
+        name: '{% translate "Folha"|hl_str:'f' %}',
+        icon: 'bi bi-person-vcard',
+        itens: [
+        {% if perms.pessoal.view_frequencia %} {name: '{% translate "Frequência"|hl_str:'r' %}', id:'menu_frequencia', href: '{% url 'pessoal:frequencia_list' %}', keybind: ['r', ()=>{if(menuFolha.isOpen()){document.getElementById('menu_frequencia').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.pessoal.view_eventofrequencia %}{name: '{% translate "Evento Frequência"|hl_str:'e' %}', id:'menu_evento_frequencia', href: '{# url 'pessoal:eventofrequencia_list' #}', keybind: ['e', ()=>{if(menuFolha.isOpen()){document.getElementById('menu_grupo_evento').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        ],
+        keybind: [
+            'alt+f',
+            (ev)=>{ // Abre menu de cadastro, exibe o canvas Nav caso nao esteja visivel
+                canvasNavActive(true); // Exibe o canvasNav (caso oculto)
+                menuFolha.click();
+                setTimeout(()=>{menuFolha.focus()}, 340);
+            },
+            {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Folha" %}'}
+        ]
+        })
+        {% if perms.pessoal.view_frequencia %}appKeyMap.bind('f+r', ()=>{document.getElementById('menu_frequencia').click()}, {display: false}){% endif %}    
 </script>

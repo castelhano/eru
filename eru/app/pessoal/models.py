@@ -251,9 +251,18 @@ auditlog.register(Contrato)
 
 
 class Turno(models.Model):
+    class DiaSemana(models.TextChoices):
+        DOMINGO = '0', _('Domingo')
+        SEGUNDA = '1', _('Segunda')
+        TERCA = '2', _('Terça')
+        QUARTA = '3', _('Quarta')
+        QUINTA = '4', _('Quinta')
+        SEXTA = '5', _('Sexta')
+        SABADO = '6', _('Sábado')
     nome = models.CharField(_('Nome'), max_length=30, unique=True, blank=False)
     dias_ciclo = models.PositiveIntegerField(_('Dias Ciclo'), default=0)
     inicio = models.DateField(_('Inicio'), default=datetime.today)
+    inicia_em = models.CharField(_('Inicia em'), max_length=1, choices=DiaSemana.choices, default=DiaSemana.DOMINGO)
     def __str__(self):
         return self.nome
 auditlog.register(Turno)
