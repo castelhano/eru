@@ -285,6 +285,7 @@ class TurnoHistorico(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='historico_turnos', verbose_name=_('Contrato'))
     turno = models.ForeignKey(Turno, on_delete=models.PROTECT, verbose_name=_('Turno'))
     inicio_vigencia = models.DateField(_('Inicio Vigência'), default=datetime.today)
+    fim_vigencia = models.DateField(_('Fim Vigência'), blank=True, null=True)
     class Meta:
         verbose_name = _('Histórico Turno')
         verbose_name_plural = _('Históricos Turnos')

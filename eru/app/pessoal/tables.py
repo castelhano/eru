@@ -1,7 +1,7 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
-from django_tables2 import Table, Column
+from django_tables2 import Table, Column, TemplateColumn
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
     EventoEmpresa, EventoCargo, EventoFuncionario
@@ -50,10 +50,17 @@ class FuncionarioTable(TableCustomMixin, Table):
 class ContratoTable(TableCustomMixin, Table):
     export_csv = True
     class Meta:
-        model = Contrato        
+        model = Contrato
+        template_name = '_tables/contrato_table.html'
         fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal',)
         paginate_by = 10
         actions = [
+            {
+                'label': '<i class="bi bi-chevron-down"></i>',
+                'class': 'btn btn-sm btn-outline-secondary',
+                'data_bs_toggle': 'collapse',
+                'data_bs_target': lambda record: f'#turnos-{record.id}',
+            },
             {
                 'action': 'update',
                 'url_name': 'pessoal:contrato_list',

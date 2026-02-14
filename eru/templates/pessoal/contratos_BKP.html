@@ -1,0 +1,129 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% load i18n %}
+{% load tag_extra %}
+{% load ui_components %}
+{% load django_tables2 %}
+{% block title %}{% translate 'Contrato'|escapejs %}{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item ms-1"><a class="nav-link border" id="back" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Contrato'|escapejs %}</span></h5>
+        <h6 class="text-orange mb-3"><span class="text-body" >Funcionário:</span> {{funcionario.matricula}} - {{funcionario.nome}}</h6>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+            {% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
+            <form id="contrato_form" method="POST" autocomplete="off">
+                {% csrf_token %}
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.setor }}
+                        {{ form.setor.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.cargo }}
+                        {{ form.cargo.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.regime }}
+                        {{ form.regime.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.carga_mensal }}
+                        {{ form.carga_mensal.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.salario }}
+                        {{ form.salario.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.inicio }}
+                        {{ form.inicio.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.fim }}
+                        {{ form.fim.i18n_label }}
+                    </div>
+                    <div class="col-12 my-2 text-end">
+                    {% if is_update %}
+                        {% if perms.pessoal.change_contrato %}
+                            {% btn_tag 'submit' label=_('Atualizar') class="btn btn-sm btn-primary-matte" %}
+                        {% endif %}
+                        {% if perms.pessoal.delete_contrato %}
+                            {% btn_tag 'delete' data_bs_toggle="modal" data_bs_target="#delete_modal" %}
+                        {% endif %}
+                        <a href="{{ request.path }}" class="btn btn-sm btn-secondary-matte">{% translate "Cancelar" %}</a>
+                    {% else %}
+                        {% if perms.pessoal.add_contrato %}
+                            {% btn_tag 'submit' label=_('Gravar') class="btn btn-sm btn-success-matte" %}
+                        {% endif %}
+                    {% endif %}
+                    </div>
+                </div>
+                <input type="hidden" name="funcionario" id="id_funcionario" value="{{funcionario.id|safe}}">
+            </form>
+            {% endif %}
+            <hr>
+            {{ table.render_filter|safe }}
+            {% render_table table %}
+        </div>
+    </div>
+</div>
+
+
+{% if is_update and form.instance.id and perms.pessoal.delete_contrato %}
+<div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col"><h5 class="ms-3 mt-3"><i class="fas fa-exclamation-triangle text-danger me-2"></i>{% translate 'Excluir Registro'|escapejs %}</h5></div>
+                <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            </div>
+            <div class="modal-body">
+                <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
+                <div class="row mt-2">
+                    <div class="col text-end">
+                        <form action="{% url 'pessoal:contrato_delete' pk_func=funcionario.id|safe pk=form.instance.id|safe %}" method="POST">
+                            {% csrf_token %}
+                            {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
+                            {% btn_tag 'delete' %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/vendor/imask.js' %}"></script>
+{% endblock %}
+<script>
+{% block add_script %}
+
+
+{% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
+
+const radix = "{% i18n_format "DECIMAL_SEPARATOR" %}";
+const separator = "{% i18n_format "THOUSAND_SEPARATOR" %}";
+
+IMask(document.getElementById('id_salario'), {
+    mask: Number,
+    scale: 2,
+    thousandsSeparator: separator,
+    padFractionalZeros: true,
+    radix: radix,
+    mapToRadix: [separator]
+});
+{% endif %}
+{% endblock %}
+</script>

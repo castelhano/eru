@@ -34,7 +34,7 @@ from .models import (
 # Pessoal App
 from .forms import (
     SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
-    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm
+    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, TurnoHistoricoForm
 )
 from .filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, 
@@ -123,36 +123,107 @@ class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
         return context
 
 
+# class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseCreateView):
+#     model = Contrato
+#     form_class = ContratoForm
+#     template_name = 'pessoal/contratos.html'
+#     def get_form_kwargs(self):
+#         kwargs = super().get_form_kwargs()
+#         eid = self.request.GET.get('edit')
+#         func_id = self.kwargs['pk']
+#         if eid: 
+#             kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=func_id)
+#         else:
+#             kwargs['instance'] = Contrato(funcionario_id=func_id)
+#         return kwargs
+#     def get_permission_required(self):
+#         if self.request.method == 'POST':
+#             return ('pessoal.change_contrato',) if self.request.GET.get('edit') else ('pessoal.add_contrato',)
+#         return ('pessoal.view_contrato',)
+#     def get_context_data(self, **kwargs):
+#         ctx = super().get_context_data(**kwargs)
+#         func = ctx['form'].instance.funcionario 
+#         qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
+#         f = ContratoFilter(self.request.GET, queryset=qs)
+#         ctx.update({
+#             'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
+#             'funcionario': func,
+#             'is_update': ctx['form'].instance.pk is not None
+#         })
+#         return ctx
+#     def get_success_url(self):
+#         return self.request.path
+
 class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseCreateView):
     model = Contrato
     form_class = ContratoForm
-    template_name = 'pessoal/contratos.html'
+    template_name = 'pessoal/contratos.html'    
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         eid = self.request.GET.get('edit')
         func_id = self.kwargs['pk']
-        if eid: 
-            kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=func_id)
-        else:
-            kwargs['instance'] = Contrato(funcionario_id=func_id)
+        kwargs['instance'] = get_object_or_404(Contrato, id=eid, funcionario_id=func_id) if eid else Contrato(funcionario_id=func_id)
         return kwargs
+    
     def get_permission_required(self):
         if self.request.method == 'POST':
             return ('pessoal.change_contrato',) if self.request.GET.get('edit') else ('pessoal.add_contrato',)
         return ('pessoal.view_contrato',)
+    
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        func = ctx['form'].instance.funcionario 
-        qs = Contrato.objects.select_related('cargo__setor').filter(funcionario=func).order_by('-inicio')
+        func = ctx['form'].instance.funcionario
+        qs = Contrato.objects.select_related('cargo__setor').prefetch_related('historico_turnos__turno').filter(funcionario=func).order_by('-inicio')
         f = ContratoFilter(self.request.GET, queryset=qs)
         ctx.update({
             'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
             'funcionario': func,
-            'is_update': ctx['form'].instance.pk is not None
+            'is_update': ctx['form'].instance.pk is not None,
+            'turnos_disponiveis': Turno.objects.all().order_by('nome'),
         })
         return ctx
+    
     def get_success_url(self):
         return self.request.path
+    
+    def post(self, request, *args, **kwargs):
+        # AJAX para turnos
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return self._handle_turno_ajax(request)
+        return super().post(request, *args, **kwargs)
+    
+    def _handle_turno_ajax(self, request):
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            
+            if action == 'save_turno':
+                th_id = data.get('id')
+                contrato = get_object_or_404(Contrato, id=data['contrato_id'], funcionario_id=self.kwargs['pk'])
+                
+                if th_id:
+                    th = get_object_or_404(TurnoHistorico, id=th_id, contrato=contrato)
+                    form = TurnoHistoricoForm(data, instance=th)
+                else:
+                    form = TurnoHistoricoForm(data, initial={'contrato': contrato})
+                
+                if form.is_valid():
+                    th = form.save(commit=False)
+                    th.contrato = contrato
+                    th.save()
+                    messages.success(request, DEFAULT_MESSAGES.get('updated' if th_id else 'created'))
+                    return JsonResponse({'status': 'success', 'reload': True})
+                return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+            
+            elif action == 'delete_turno':
+                th = get_object_or_404(TurnoHistorico, id=data['id'], contrato__funcionario_id=self.kwargs['pk'])
+                th.delete()
+                messages.success(request, DEFAULT_MESSAGES.get('deleted'))
+                return JsonResponse({'status': 'success', 'reload': True})
+            
+            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
 class TurnoManagementView(LoginRequiredMixin, BaseTemplateView):

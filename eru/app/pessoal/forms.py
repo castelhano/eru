@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from .models import (
     Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, MotivoReajuste, FrequenciaImport
+    EventoCargo, EventoFuncionario, MotivoReajuste, FrequenciaImport, TurnoHistorico
 )
 from datetime import date
 from core.mixins import BootstrapMixin
@@ -232,6 +232,11 @@ class EventoEmpresaForm(EventoMovimentacaoBaseForm):
             return {'filiais__id__in': filial_ids}
         return {}
 
+
+class TurnoHistoricoForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = TurnoHistorico
+        fields = ['turno', 'inicio_vigencia', 'fim_vigencia']
 
 class ContratoFrequenciaForm(forms.ModelForm):
 # form necessario para FrequenciaManagementView
