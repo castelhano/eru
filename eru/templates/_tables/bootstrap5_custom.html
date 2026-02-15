@@ -18,15 +18,13 @@
 {% endblock %}
 
 {% block pagination %}
-    {% if table.page and table.paginator.num_pages > 1 %}
-        <nav class="d-flex justify-content-between align-items-top mt-1" data-target="{{ table.attrs.id }}">
-            <div class="text-body-secondary small ps-1">
-                {% translate 'Exibindo'|escapejs %} <b>{{ table.page.start_index }}</b> - <b>{{ table.page.end_index }}</b> 
-                {% translate 'de'|escapejs %} <b>{{ table.paginator.count }}</b> {% translate 'registros'|escapejs %}
-            </div>
-            <ul class="pagination pagination-sm mb-0">
-                {{ block.super }}
-            </ul>
-        </nav>
-    {% endif %}
+    <nav class="d-flex justify-content-between align-items-top mt-1" data-target="{{ table.attrs.id }}">
+        <div class="text-body-secondary small ps-1">
+            {% translate 'Exibindo'|escapejs %} <b>{{ table.page.start_index }}</b> - <b>{{ table.page.end_index }}</b> 
+            {% translate 'de'|escapejs %} <b>{{ table.paginator.count }}</b> {% translate 'registros'|escapejs %}
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+            {{ block.super }}
+        </ul>
+    </nav>
 {% endblock %}

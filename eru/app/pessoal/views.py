@@ -810,6 +810,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         self._preencher_dias_vazios(dias_mes, contrato, competencia)
         return dias_mes
     def _preencher_dias_vazios(self, dias_mes, contrato, competencia):
+        # monta entradas para todos os dias do mes (que nao tem registro em frequencia)
         turno_hist = contrato.historico_turnos.filter(inicio_vigencia__lte=competencia).order_by('-inicio_vigencia').select_related('turno').prefetch_related('turno__dias').first()
         evento_jornada = EventoFrequencia.objects.filter(categoria=EventoFrequencia.Categoria.JORNADA).first()
         if not turno_hist:
@@ -830,7 +831,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
             else:
                 dias_mes[data] = self._extrair_horarios_turno(turno_dia, evento_jornada)
     def _extrair_horarios_turno(self, turno_dia, evento_jornada):
-        """Extrai hororios do turno (JSONField)"""
+        # extrai horarios do turno (JSONField)
         if hasattr(turno_dia, 'horarios') and turno_dia.horarios:
             return [{
                 'id': None,
@@ -901,7 +902,6 @@ class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpd
     model = Afastamento
     form_class = AfastamentoForm
     template_name = 'pessoal/afastamento_id.html'
-    context_object_name = 'afastamento'
     permission_required = 'pessoal.change_afastamento'
     def dispatch(self, request, *args, **kwargs):
         # so permite edicao de afastamentos de funcionarios ativos
@@ -925,21 +925,17 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
     model = Dependente
     form_class = DependenteForm
     template_name = 'pessoal/dependente_id.html'
-    context_object_name = 'dependente'
     permission_required = 'pessoal.change_dependente'
-
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
         if not self.object.funcionario.F_eh_editavel:
             messages.error(request, _('Não é possível alterar dados de funcionários desligados'))
             return redirect('pessoal:dependente_update', pk=self.object.id)
         return super().dispatch(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['funcionario'] = self.object.funcionario
         return context
-
     def get_success_url(self):
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
 
@@ -960,13 +956,12 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
         self.related = kwargs.get('related').lower()
         self.related_id = kwargs.get('pk')
         perm_name = f"pessoal.change_evento{self.related}"
-        print('UPDATE:perm_name: ', perm_name)
         if self.related not in ['empresa', 'cargo', 'funcionario']:
             messages.error(
                 request, 
                 f"{DEFAULT_MESSAGES['400']} <b>evento_related_update [bad request]</b>"
             )
-            return redirect('index') # Ou para uma página de erro apropriada
+            return redirect('index')
         if not request.user.has_perm(perm_name):
             return redirect('handler', 403)
         return super().dispatch(request, *args, **kwargs)

@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
 from .models import (
-    Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, Dependente, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste,
+    Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste,
     EventoFrequencia
 )
 

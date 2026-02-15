@@ -127,6 +127,7 @@
 {% endblock %}
 
 
+
 <script>
   {% block add_script %}
   (function() {
@@ -221,7 +222,6 @@
         if (!isDiaInteiro && (!hIn || !hOut)) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
-          alert(`No dia ${dia}, preencha os horários de entrada e saída.`);
           return;
         }
         
