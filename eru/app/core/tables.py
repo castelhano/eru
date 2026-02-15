@@ -17,7 +17,6 @@ class EmpresaTable(TableCustomMixin, Table):
     class Meta:
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
-        paginate_by = 20
         actions = [
             {'action': 'update', 'url_name': 'empresa_update', 'path_params': {'pk': 'id'}, 'perm': 'core.change_empresa'}
         ]
@@ -37,7 +36,6 @@ class FilialTable(TableCustomMixin, Table):
     class Meta:
         model = Filial
         fields = ("id", "nome", "cnpj", "cidade")
-        paginate_by = 1
         actions = [
             {'action': 'update', 'url_name': 'filial_update', 'path_params': {'pk': 'id'}, 'perm':'core.change_filial'}
         ]
@@ -52,7 +50,6 @@ class UsuarioTable(TableCustomMixin, Table):
     class Meta:
         model = User
         fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
-        paginate_by = 10
         actions = [
             {'action': 'update', 'url_name': 'usuario_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_user'}
         ]
@@ -91,7 +88,6 @@ class LogsTable(TableCustomMixin, Table):
         action_script = "showDetails(this)"
         action_innerhtml = '<i class="bi bi-search"></i>'
         exclude_from_export = ["changes"]
-        paginate_by = 20
         responsive_columns = {
             "changes": "d-none col-changes",
         }

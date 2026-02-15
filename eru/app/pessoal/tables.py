@@ -27,7 +27,6 @@ class FuncionarioTable(TableCustomMixin, Table):
         actions = [
             {'action': 'update', 'url_name': 'pessoal:funcionario_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.view_funcionario'}
         ]
-        paginate_by = 20
         responsive_columns = {
             "empresa": "d-none d-md-table-cell",
             "filial": "d-none d-md-table-cell",
@@ -53,7 +52,6 @@ class ContratoTable(TableCustomMixin, Table):
         model = Contrato
         template_name = '_tables/contrato_table.html'
         fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal',)
-        paginate_by = 2
         actions = [
             {
                 'label': '<i class="bi bi-chevron-down"></i>',
@@ -80,7 +78,6 @@ class SetorTable(TableCustomMixin, Table):
     class Meta:
         model = Setor        
         fields = ('nome','ativos')
-        paginate_by = 20
         actions = [
             {'action': 'update', 'url_name': 'pessoal:setor_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_setor'}
         ]
@@ -90,7 +87,6 @@ class GrupoEventoTable(TableCustomMixin, Table):
     class Meta:
         model = GrupoEvento
         fields = ('nome',)
-        paginate_by = 20
         actions = [
             {'action': 'update', 'url_name': 'pessoal:grupoevento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_grupoevento'}
         ]
@@ -165,7 +161,6 @@ class DependenteTable(TableCustomMixin, Table):
 
 class EventoMovimentacaoBaseTable(TableCustomMixin, Table):
     class Meta:
-        paginate_by = 10
         responsive_columns = {
             'inicio': 'd-none d-lg-table-cell',
             'fim': 'd-none d-lg-table-cell',
