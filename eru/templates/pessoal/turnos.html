@@ -8,7 +8,6 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:turno_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
         </ul>
     </div>
     
@@ -28,8 +27,8 @@
                         </select>
                         <label>{% translate 'Turno'|escapejs %}</label>
                     </div>
-                    <button class="btn btn-success-matte" type="button" data-role="novoTurno">
-                        <i class="bi bi-plus-lg"></i> {% translate 'Novo'|escapejs %}
+                    <button class="btn btn-success-matte px-3" type="button" data-role="novoTurno">
+                        <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
             </div>
@@ -38,7 +37,7 @@
         {% if turno or request.GET.turno_id == 'novo' %}
         <!-- Card de Dados do Turno -->
         <div class="card mb-2">
-            <div class="card-header bg-body-secondary">
+            <div class="card-header text-bg-primary-matte hl-primary">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">{% translate 'Dados do Turno'|escapejs %}</h6>
                     <div class="btn-group">
@@ -57,23 +56,23 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-body-tertiary">
                 <div class="row g-2">
                     <div class="col-md-3">
                         <div class="form-floating">
-                            <input type="text" id="id_nome" class="form-control" value="{{ turno.nome|default:'' }}" placeholder=" " required>
+                            <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " required>
                             <label>{% translate 'Nome'|escapejs %} *</label>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="form-floating">
-                            <input type="number" id="id_dias_ciclo" class="form-control" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
+                            <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
                             <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="form-floating">
-                            <select id="id_inicia_em" class="form-select">
+                            <select id="id_inicia_em" class="form-select bg-body-secondary">
                                 <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
                                 <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
                                 <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
@@ -87,7 +86,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-floating">
-                            <input type="date" id="id_inicio" class="form-control" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
+                            <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
                             <label>{% translate 'Data Início'|escapejs %} *</label>
                         </div>
                     </div>
@@ -648,8 +647,6 @@
     
     // Função global para ser chamada pelo modal de confirmação
     window.deleteTurnoConfirmed = function() {
-        console.log('AQUIIIIIII');
-        
         fetch(window.location.pathname, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },

@@ -1,0 +1,37 @@
+{% extends "layout/app.html" %}
+{% load i18n django_tables2 %}
+{% block title %}{% translate 'Evento Frequência'|escapejs %}{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            {% if perms.pessoal.add_eventofrequencia %}
+            <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'pessoal:eventofrequencia_create' %}"><i class="bi bi-plus-lg text-success"></i></a></li>
+            {% endif %}
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item pointer" href="url">Novo item</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body tab-content">
+        <h5 class="card-title">{% translate 'Pessoal'|escapejs %}: <span class="text-purple">{% translate 'Evento Frequência'|escapejs %}</span></h5>
+        <div class="tab-pane fade show active" id="base" role="tabpanel">
+            {{ table.render_filter|safe }}
+            {% render_table table %}        
+        </div>
+    </div>
+</div>
+{% endblock%}
+
+{% block add_script_src %}
+{% endblock %}
+<script>
+{% block add_script %}
+{% endblock %}
+</script>

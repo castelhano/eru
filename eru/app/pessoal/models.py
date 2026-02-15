@@ -271,7 +271,7 @@ auditlog.register(Turno)
 class TurnoDia(models.Model):
     turno = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='dias', verbose_name=_('Turno'))
     posicao_ciclo = models.IntegerField(_('Posição Ciclo'))
-    horarios = models.JSONField(_('Horários'), default=list)    
+    horarios = models.JSONField(_('Horários'), default=list)
     tolerancia = models.PositiveIntegerField(_('Tolerância'), default=10)
     eh_folga = models.BooleanField(_('É Folga'), default=False)
     class Meta:

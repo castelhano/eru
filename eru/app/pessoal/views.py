@@ -34,18 +34,15 @@ from .models import (
 # Pessoal App
 from .forms import (
     SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
-    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, TurnoHistoricoForm
+    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm
 )
 from .filters import (
-    FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, 
-    EventoFilter, EventoEmpresaFilter, EventoCargoFilter, 
-    EventoFuncionarioFilter, MotivoReajusteFilter
+    FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, 
+    EventoFuncionarioFilter, MotivoReajusteFilter, EventoFrequenciaFilter
 )
 from .tables import (
-    FuncionarioTable, ContratoTable, SetorTable, CargoTable, 
-    AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable, 
-    MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, 
-    EventoFuncionarioTable
+    FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable, 
+    MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, EventoFuncionarioTable, EventoFrequenciaTable
 )
 from .serializers import FuncionarioSerializer
 from .folha.collectors import get_event_vars_master
@@ -80,7 +77,7 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
-        context['table'] = CargoTable(f.qs, request=self.request).config(self.request, filter_obj=f)
+        context['table'] = CargoTable(f.qs).config(self.request, filter_obj=f)
         return context
 
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
@@ -524,6 +521,18 @@ class MotivoReajusteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseLi
         context['table'] = MotivoReajusteTable(f.qs).config(self.request, filter_obj=f)
         return context
 
+class EventoFrequenciaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
+    model = EventoFrequencia
+    template_name = 'pessoal/eventos_frequencia.html'
+    permission_required = 'pessoal.view_eventofrequencia'
+    filterset_class = EventoFrequenciaFilter
+    def get_queryset(self):
+        return EventoFrequencia.objects.all().order_by('nome')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context['table'] = EventoFrequenciaTable(f.qs, request=self.request).config(self.request, filter_obj=f)
+        return context
 
 # Metodos ADD
 class SetorCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
@@ -672,6 +681,12 @@ class MotivoReajusteCreateView(LoginRequiredMixin, PermissionRequiredMixin, Ajax
     permission_required = 'pessoal.add_motivoreajuste'
     success_url = reverse_lazy('pessoal:motivoreajuste_create')
 
+class EventoFrequenciaCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
+    model = EventoFrequencia
+    form_class = EventoFrequenciaForm
+    template_name = 'pessoal/evento_frequencia_add.html'
+    success_url = reverse_lazy('pessoal:eventofrequencia_create')
+    permission_required = 'pessoal.add_eventofrequencia'
 
 # Metodos UPDATE
 class SetorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):

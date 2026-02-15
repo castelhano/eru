@@ -4,7 +4,10 @@ from django import forms
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
-from .models import Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, Dependente, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste
+from .models import (
+    Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, Dependente, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste,
+    EventoFrequencia
+)
 
 
 class FuncionarioFilter(django_filters.FilterSet):
@@ -163,3 +166,15 @@ class EventoFuncionarioFilter(EventoMovimentacaoFilterSet):
     class Meta(EventoMovimentacaoFilterSet.Meta):
         model = EventoFuncionario
         fields = EventoMovimentacaoFilterSet.Meta.fields + ['funcionario']
+
+class EventoFrequenciaFilter(django_filters.FilterSet):
+    class Meta:
+        model = EventoFrequencia
+        fields = {
+            'nome': ['icontains'], 
+            'categoria': ['exact'], 
+            'contabiliza_horas': ['exact'], 
+            'remunerado': ['exact'], 
+            'dia_inteiro': ['exact'], 
+            'prioridade': ['gte'], 
+        }

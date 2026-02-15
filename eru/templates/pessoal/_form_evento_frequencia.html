@@ -1,0 +1,47 @@
+{% load i18n %}
+{% load ui_components %}
+<div class="card-body tab-content">
+    <h5 class="card-title mb-3">{% translate 'Cadastro'|escapejs %}: <b class="text-purple">{% translate 'Evento Frequência'|escapejs %}</b></h5>
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row">
+            <div class="col col-lg-5">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.nome }}
+                        {{ form.nome.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-auto">
+                        {{ form.prioridade }}
+                        {{ form.prioridade.i18n_label }}
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col">
+                        {{ form.categoria }}
+                        {{ form.categoria.i18n_label }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mt-2">
+                        {% btn_tag 'submit' %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg mt-3 mt-lg-0">
+                <div class="form-check form-switch">
+                    {{form.contabiliza_horas}}
+                    {{form.contabiliza_horas.i18n_label}}
+                </div>
+                <div class="form-check form-switch">
+                    {{form.remunerado}}
+                    {{form.remunerado.i18n_label}}
+                </div>
+                <div class="form-check form-switch">
+                    {{form.dia_inteiro}}
+                    {{form.dia_inteiro.i18n_label}}
+                </div>
+                {{form.cor}}
+            </div>
+        </div>
+    </div>
+</div>

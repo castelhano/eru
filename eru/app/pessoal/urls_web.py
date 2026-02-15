@@ -13,6 +13,7 @@ urlpatterns = [
     *generate_urls('Evento', views),
     *generate_urls('MotivoReajuste', views, plural_name='motivos_reajuste'),
     *generate_urls('GrupoEvento', views, plural_name='grupos_evento'),
+    *generate_urls('EventoFrequencia', views, plural_name='eventos_frequencia'),
     path('contratos/<int:pk>', views.ContratoManagementView.as_view(),name='contrato_list'),
     path('contratos/<int:pk_func>/delete/<int:pk>/', views.ContratoDeleteView.as_view(), name='contrato_delete'),
     path('eventos_related/<str:related>/<int:pk>/', views.EventoRelatedListView.as_view(),name='eventorelated_list'),

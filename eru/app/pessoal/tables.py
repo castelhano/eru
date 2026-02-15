@@ -4,7 +4,7 @@ from django.utils.encoding import force_str
 from django_tables2 import Table, Column, TemplateColumn
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
-    EventoEmpresa, EventoCargo, EventoFuncionario
+    EventoEmpresa, EventoCargo, EventoFuncionario, EventoFrequencia
 )
 
 
@@ -16,7 +16,7 @@ class FuncionarioTable(TableCustomMixin, Table):
         verbose_name="Status",
         attrs={
             "td": {
-                "class": lambda record: f"d-none d-sm-table-cell { 'hl-orange' if record.status != 'A' else '' }"
+                "class": lambda record: f"d-none d-sm-table-cell { 'text-bg-orange-matte hl-orange' if record.status != 'A' else '' }"
             },
             "th": {"class": "d-none d-lg-table-cell"}
         }
@@ -196,3 +196,21 @@ class EventoFuncionarioTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoFuncionario
         fields = ('evento', 'inicio', 'fim', 'motivo', 'valor')
+
+
+class EventoFrequenciaTable(TableCustomMixin, Table):
+    export_csv = True
+    class Meta:
+        model = EventoFrequencia        
+        fields = ('id','nome', 'categoria', 'contabiliza_horas', 'remunerado', 'dia_inteiro', 'prioridade', 'cor',)
+        actions = [
+            {'action': 'update', 'url_name': 'pessoal:eventofrequencia_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_eventofrequencia'}
+        ]
+        responsive_columns = {
+            'categoria' : 'd-none d-sm-table-cell',
+            'contabiliza_horas' : 'd-none d-lg-table-cell',
+            'remunerado' : 'd-none d-lg-table-cell',
+            'dia_inteiro' : 'd-none d-lg-table-cell',
+            'prioridade' : 'd-none d-md-table-cell',
+            'cor' : 'd-none d-xl-table-cell',
+        }
