@@ -6,11 +6,11 @@
         <div class="row">
             <div class="col col-lg-5">
                 <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg">
+                    <div class="form-floating mb-lg-1 col-lg">
                         {{ form.nome }}
                         {{ form.nome.i18n_label }}
                     </div>
-                    <div class="form-floating mb-lg-1 col-lg-auto">
+                    <div class="form-floating mb-1 col-lg-auto">
                         {{ form.prioridade }}
                         {{ form.prioridade.i18n_label }}
                     </div>
@@ -40,7 +40,10 @@
                     {{form.dia_inteiro}}
                     {{form.dia_inteiro.i18n_label}}
                 </div>
-                {{form.cor}}
+                <hr>
+                <div>
+                    {{form.cor}}
+                </div>
             </div>
         </div>
     </div>

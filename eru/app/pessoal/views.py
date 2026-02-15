@@ -521,7 +521,7 @@ class MotivoReajusteListView(LoginRequiredMixin, PermissionRequiredMixin, BaseLi
         context['table'] = MotivoReajusteTable(f.qs).config(self.request, filter_obj=f)
         return context
 
-class EventoFrequenciaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, BaseListView):
+class EventoFrequenciaListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, CSVExportMixin, BaseListView):
     model = EventoFrequencia
     template_name = 'pessoal/eventos_frequencia.html'
     permission_required = 'pessoal.view_eventofrequencia'
@@ -1023,6 +1023,14 @@ class MotivoReajusteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Base
     def get_success_url(self):
         return reverse('pessoal:motivoreajuste_update', kwargs={'pk': self.object.id})
 
+
+class EventoFrequenciaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+    model = EventoFrequencia
+    form_class = EventoFrequenciaForm
+    template_name = 'pessoal/evento_frequencia_id.html'
+    permission_required = 'pessoal.change_eventofrequencia'
+    success_url = reverse_lazy('pessoal:eventofrequencia_list')
+
 # Metodos DELETE
 class SetorDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Setor
@@ -1098,6 +1106,11 @@ class MotivoReajusteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Base
     model = MotivoReajuste
     permission_required = 'pessoal.delete_motivoreajuste'
     success_url = reverse_lazy('pessoal:motivoreajuste_list')
+
+class EventoFrequenciaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
+    model = EventoFrequencia
+    permission_required = 'pessoal.delete_eventofrequencia'
+    success_url = reverse_lazy('pessoal:eventofrequencia_list')
 
 
 # Metodos Ajax

@@ -19,9 +19,9 @@ def btn_tag(action, url_name=None, **kwargs):
         'search': {'label': mark_safe('<i class="bi bi-search"></i>'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-info-matte'},
         'submit': {'label': _('Gravar'), 'key': 'g', 'id': 'submit', 'class': 'btn btn-sm btn-primary'},
         'back':   {'label': _('Voltar'), 'key': 'v', 'id': 'back', 'class': 'btn btn-sm btn-secondary'},
-        'delete': {'label': _('Excluir'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-danger'},
+        'delete': {'label': _('Excluir'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-danger-matte'},
     }
-    btn = config.get(action, {'label': action, 'key': '', 'id': '', 'class': 'btn btn-sm btn-secondary'})
+    btn = config.get(action, {'label': action, 'key': '', 'id': '', 'class': 'btn btn-sm btn-secondary-matte'})
     shortcut_key = kwargs.pop('key', btn['key'])
     label = str(kwargs.pop('label', btn['label']))
     hl = kwargs.pop('hl', True)     # atalho para desativar o destaque do texto (mesmo definido key)

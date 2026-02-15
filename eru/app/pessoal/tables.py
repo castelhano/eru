@@ -1,6 +1,7 @@
 from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
+from django.utils.safestring import mark_safe
 from django_tables2 import Table, Column, TemplateColumn
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
@@ -212,5 +213,11 @@ class EventoFrequenciaTable(TableCustomMixin, Table):
             'remunerado' : 'd-none d-lg-table-cell',
             'dia_inteiro' : 'd-none d-lg-table-cell',
             'prioridade' : 'd-none d-md-table-cell',
-            'cor' : 'd-none d-xl-table-cell',
+            'cor' : 'fit d-none d-xl-table-cell',
         }
+    def render_cor(self, value, **kwargs):
+        return mark_safe(
+            f'<span class="badge w-100" style="background-color: {value}; color: #fff;'
+            f'text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: all; cursor: pointer;">'
+            f'{value}</span>'
+        )
