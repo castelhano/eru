@@ -215,7 +215,7 @@ div.btn-light:hover{background-color: #d3d4d5;}
 .dropdown-item-secondary {color: #6c757d!important;}
 .dropdown-item-secondary:hover, .dropdown-item-purple:focus {color: #fff!important;background-color: #6c757d!important;}
 
-
+.table-container {overflow-x: auto; -webkit-overflow-scrolling: touch;}
 .table.border tr{border-left:3px solid var(--bs-table-border-color);}
 .table.border tbody tr.bg-body-secondary{border-left:3px solid var(--bs-tertiary-color);}
 .table td.fit,.table th.fit {white-space: nowrap;width: 1%;}

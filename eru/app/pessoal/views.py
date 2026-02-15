@@ -80,7 +80,7 @@ class CargoListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMix
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         f = self.filterset_class(self.request.GET, queryset=self.get_queryset())
-        context['table'] = CargoTable(f.qs).config(self.request, filter_obj=f)
+        context['table'] = CargoTable(f.qs, request=self.request).config(self.request, filter_obj=f)
         return context
 
 class FuncionarioListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):

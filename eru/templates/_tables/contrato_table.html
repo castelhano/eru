@@ -98,14 +98,14 @@
 </table>
 
 {% if table.page %}
-<nav>
-    <ul class="pagination pagination-sm justify-content-end">
+<nav class="d-flex justify-content-end mt-1">
+    <ul class="pagination">
         {% if table.page.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ table.page.previous_page_number }}">‹</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ table.page.previous_page_number }}"><span aria-hidden="true">&laquo;</span></a></li>
         {% endif %}
         <li class="page-item disabled"><span class="page-link">{{ table.page.number }} / {{ table.paginator.num_pages }}</span></li>
         {% if table.page.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ table.page.next_page_number }}">›</a></li>
+        <li class="next page-item"><a class="page-link" href="?page={{ table.page.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
         {% endif %}
     </ul>
 </nav>

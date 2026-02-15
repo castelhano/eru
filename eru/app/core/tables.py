@@ -37,6 +37,7 @@ class FilialTable(TableCustomMixin, Table):
     class Meta:
         model = Filial
         fields = ("id", "nome", "cnpj", "cidade")
+        paginate_by = 1
         actions = [
             {'action': 'update', 'url_name': 'filial_update', 'path_params': {'pk': 'id'}, 'perm':'core.change_filial'}
         ]

@@ -1,52 +1,13 @@
 {% extends "django_tables2/bootstrap5.html" %}
 {% load django_tables2 %}
 
-{% block table-wrapper %}
-    <div class="table-responsive">
-        {% block table %}
-            {{ block.super }}
-        {% endblock table %}
-    </div>
-{% endblock table-wrapper %}
-
-{% block table.thead %}
-    <thead {{ table.attrs.thead.as_html }}>
-        <tr>
-        {% for column in table.columns %}
-            <th {{ column.attrs.th.as_html }}>
-                {% if column.orderable %}
-                    {% with key=table.prefixed_order_by_field value=column.order_by_alias.next %}
-                        <a href="{% querystring key=value %}" {% if column.i18n_key %}{% endif %}>
-                            {{ column.header }}
-                        </a>
-                    {% endwith %}
-                {% else %}
-                    <span {% if column.i18n_key %}{% endif %}>
-                        {{ column.header }}
-                    </span>
-                {% endif %}
-            </th>
-        {% endfor %}
-        </tr>
-    </thead>
-{% endblock table.thead %}
-
-{% block table.tbody.empty_text %}
-    <tr>
-        <td colspan="{{ table.columns|length }}" class="text-body-secondary">
-            {{ table.empty_text }}
-        </td>
-    </tr>
-{% endblock table.tbody.empty_text %}
-
-
 {% block pagination.previous %}
     <li class="previous page-item">
         <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}" class="page-link">
             <span aria-hidden="true">&laquo;</span>
         </a>
     </li>
-{% endblock pagination.previous %}
+{% endblock %}
 
 {% block pagination.next %}
     <li class="next page-item">
@@ -54,14 +15,14 @@
             <span aria-hidden="true">&raquo;</span>
         </a>
     </li>
-{% endblock pagination.next %}
+{% endblock %}
 
 {% block pagination %}
-    {% if table.page %}
-        <nav class="d-flex justify-content-end mt-1" data-target="{{ table.attrs.id }}" aria-label="Table navigation">
-            <ul class="pagination">
+    {% if table.page and table.paginator.num_pages > 1 %}
+        <nav class="d-flex justify-content-end mt-1" data-target="{{ table.attrs.id }}">
+            <ul class="pagination pagination-sm">
                 {{ block.super }}
             </ul>
         </nav>
     {% endif %}
-{% endblock pagination %}
+{% endblock %}

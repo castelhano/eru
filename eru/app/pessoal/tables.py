@@ -101,7 +101,6 @@ class EventoTable(TableCustomMixin, Table):
     class Meta:
         model = Evento
         fields = ('nome', 'tipo', 'grupo', 'rastreio')
-        paginate_by = 20
         actions = [
             {'action': 'update', 'url_name': 'pessoal:evento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_evento'}
         ]
@@ -116,7 +115,6 @@ class CargoTable(TableCustomMixin, Table):
     class Meta:
         model = Cargo
         fields = ('nome', 'setor', 'funcoes_fixas')
-        paginate_by =  20
         actions = [
             {'action': 'update', 'url_name': 'pessoal:cargo_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_cargo'}
         ]
@@ -129,7 +127,6 @@ class AfastamentoTable(TableCustomMixin, Table):
     class Meta:
         model = Afastamento        
         fields = ('funcionario','motivo','origem','data_afastamento','data_retorno','reabilitado','remunerado',)
-        paginate_by = 10
         actions = [
             {'action': 'update', 'url_name': 'pessoal:afastamento_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_afastamento'}
         ]
@@ -140,7 +137,6 @@ class MotivoReajusteTable(TableCustomMixin, Table):
     class Meta:
         model = MotivoReajuste        
         fields = ('nome',)
-        paginate_by = 10
         actions = [
             {'action': 'update', 'url_name': 'pessoal:motivoreajuste_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_motivoreajuste'}
         ]
@@ -152,7 +148,6 @@ class DependenteTable(TableCustomMixin, Table):
     class Meta:
         model = Dependente        
         fields = ('funcionario','nome','parentesco','genero','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf',)
-        paginate_by = 10
         actions = [
             {'action': 'update', 'url_name': 'pessoal:dependente_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_dependente'}
         ]
