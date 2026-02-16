@@ -57,40 +57,32 @@
                 </div>
             </div>
             <div class="card-body bg-body-tertiary">
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <div class="form-floating">
-                            <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " required>
-                            <label>{% translate 'Nome'|escapejs %} *</label>
-                        </div>
+                <div class="row g-1">
+                    <div class="form-floating col-lg-4">
+                        <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " required>
+                        <label>{% translate 'Nome'|escapejs %} *</label>
                     </div>
-                    <div class="col-md-2">
-                        <div class="form-floating">
-                            <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
-                            <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
-                        </div>
+                    <div class="form-floating col-lg-2">
+                        <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
+                        <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
                     </div>
-                    <div class="col-md-2">
-                        <div class="form-floating">
-                            <select id="id_inicia_em" class="form-select bg-body-secondary">
-                                <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
-                                <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
-                                <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
-                                <option value="3" {% if turno.inicia_em == '3' %}selected{% endif %}>{% translate 'Quarta'|escapejs %}</option>
-                                <option value="4" {% if turno.inicia_em == '4' %}selected{% endif %}>{% translate 'Quinta'|escapejs %}</option>
-                                <option value="5" {% if turno.inicia_em == '5' %}selected{% endif %}>{% translate 'Sexta'|escapejs %}</option>
-                                <option value="6" {% if turno.inicia_em == '6' %}selected{% endif %}>{% translate 'Sábado'|escapejs %}</option>
-                            </select>
-                            <label>{% translate 'Inicia em'|escapejs %}</label>
-                        </div>
+                    <div class="form-floating col-lg-2">
+                        <select id="id_inicia_em" class="form-select bg-body-secondary">
+                            <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
+                            <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
+                            <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
+                            <option value="3" {% if turno.inicia_em == '3' %}selected{% endif %}>{% translate 'Quarta'|escapejs %}</option>
+                            <option value="4" {% if turno.inicia_em == '4' %}selected{% endif %}>{% translate 'Quinta'|escapejs %}</option>
+                            <option value="5" {% if turno.inicia_em == '5' %}selected{% endif %}>{% translate 'Sexta'|escapejs %}</option>
+                            <option value="6" {% if turno.inicia_em == '6' %}selected{% endif %}>{% translate 'Sábado'|escapejs %}</option>
+                        </select>
+                        <label>{% translate 'Inicia em'|escapejs %}</label>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-floating">
-                            <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
-                            <label>{% translate 'Data Início'|escapejs %} *</label>
-                        </div>
+                    <div class="form-floating col-lg-2">
+                        <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
+                        <label>{% translate 'Data Início'|escapejs %} *</label>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2">
                         <button type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
                             <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
                         </button>
@@ -122,19 +114,19 @@
                     <input type="hidden" data-field="posicao_ciclo" value="{{ pos }}">
                     
                     <div data-role="configContainer" {% if dia.eh_folga %}style="display:none"{% endif %}>
-                        <div class="row mb-2">
-                            <div class="col-md-3">
+                        <div class="row g-1 mb-2">
+                            <div class="col col-md-4 col-lg-3">
                                 <div class="input-group input-group-sm">
-                                    <span class="input-group-text">{% translate 'Tolerância (min)'|escapejs %}</span>
+                                    <span class="input-group-text">{% translate 'Tolerância'|escapejs %} <span class="d-none d-sm-inline ms-1">(min)</span></span>
                                     <input type="number" class="form-control" data-field="tolerancia" value="{{ dia.tolerancia }}" min="0" max="60">
                                 </div>
                             </div>
-                            <div class="col-md-auto ms-auto">
+                            <div class="col-auto ms-auto text-end">
                                 <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
                                     <i class="bi bi-calculator"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
-                                    <i class="bi bi-plus-lg"></i> {% translate 'Horário'|escapejs %}
+                                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">{% translate 'Horário'|escapejs %}</span>
                                 </button>
                             </div>
                         </div>
@@ -144,21 +136,20 @@
                             {% if dia.horarios %}
                             {% for h in dia.horarios %}
                             <div class="row g-1 mb-2" data-role="horarioRow">
-                                <div class="col-5 col-md-3">
+                                <div class="col-6 col-md-3">
                                     <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
                                     <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}" style="min-width: 0;">
                                 </div>
-                                <div class="col-5 col-md-3">
+                                <div class="col-6 col-md-3">
                                     <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
                                     <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}" style="min-width: 0;">
                                 </div>
-                                <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
-                                    <div class="d-md-none w-100" style="height: 20px;"></div>
-                                    <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
-                                        <i class="bi bi-arrow-up"></i>
+                                <div class="col-auto col-md d-flex gap-1 align-items-end ms-auto">
+                                    <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}">
+                                        <i class="bi bi-arrow-up px-1"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
-                                        <i class="bi bi-trash3-fill"></i>
+                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario">
+                                        <i class="bi bi-trash3-fill px-1"></i>
                                     </button>
                                 </div>
                             </div>
@@ -174,7 +165,6 @@
                                     <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
                                 </div>
                                 <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
-                                    <div class="d-md-none w-100" style="height: 20px;"></div>
                                     <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
                                         <i class="bi bi-arrow-up"></i>
                                     </button>
@@ -305,7 +295,7 @@
                 folgaContainer.style.display = 'none';
             }
         }
-        else if (e.target.id === 'id_inicia_em') {
+        else if (e.target.id === 'id_inicia_em') {info
             atualizarDiasSemana();
         }
     });
@@ -424,21 +414,20 @@
         div.className = 'row g-1 mb-2';
         div.setAttribute('data-role', 'horarioRow');
         div.innerHTML = `
-            <div class="col-5 col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
                 <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
             </div>
-            <div class="col-5 col-md-3">
+            <div class="col-6 col-md-3">
                 <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
                 <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
             </div>
-            <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
-                <div class="d-md-none w-100" style="height: 20px;"></div>
-                <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
-                    <i class="bi bi-arrow-up"></i>
+            <div class="col-auto col-md d-flex gap-1 align-items-end ms-auto">
+                <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp">
+                    <i class="bi bi-arrow-up px-1"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
-                    <i class="bi bi-trash3-fill"></i>
+                <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario">
+                    <i class="bi bi-trash3-fill px-1"></i>
                 </button>
             </div>
         `;

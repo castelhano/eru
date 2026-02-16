@@ -25,8 +25,8 @@
                 <ul class="dropdown-menu">
                     <li><button class="dropdown-item" type="button" id="exportCsvBtn">{% translate 'Baixar'|escapejs %} CSV</button></li>
                     <li><hr class="dropdown-divider"></li>
-                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos'|escapejs %}</a></li>{% endif %}
                     {% if perms.pessoal.view_contrato %}<li><a class="dropdown-item" href="{% url 'pessoal:contrato_list' funcionario.id|safe %}">{% translate 'Contratos'|escapejs %}</a></li>{% endif %}
+                    {% if perms.pessoal.view_eventofuncionario %}<li><a class="dropdown-item" href="{% url 'pessoal:eventorelated_list' 'funcionario' funcionario.id|safe %}">{% translate 'Eventos'|escapejs %}</a></li>{% endif %}
                     {% if perms.pessoal.view_dependente %}<li><a class="dropdown-item" href="{% url 'pessoal:dependente_list' funcionario.id|safe %}">{% translate 'Dependentes'|escapejs %}</a></li>{% endif %}
                     {% if perms.pessoal.view_afastamento %}<li><a class="dropdown-item" href="{% url 'pessoal:afastamento_list' funcionario.id|safe %}">{% translate 'Afastamentos'|escapejs %}</a></li>{% endif %}
                     {% if funcionario.status == 'A' %}
