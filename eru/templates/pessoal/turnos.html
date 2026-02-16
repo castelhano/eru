@@ -44,169 +44,172 @@
                         {% btn_tag 'submit' class="btn btn-sm btn-success-matte" data_role="saveTurno" %}
                         {% if turno %}
                         <button type="button" 
-                            class="btn btn-sm btn-danger-matte" 
-                            data-appConfirmAction="deleteTurnoConfirmed"
-                            data-appConfirm="true"
-                            data-appConfirmMessage="{% translate 'Deseja realmente excluir este turno? Esta operação não pode ser desfeita'|escapejs %}"
-                            data-appConfirmColor="danger-matte"
-                            data-appConfirmText="{% translate 'Excluir'|escapejs %}">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="card-body bg-body-tertiary">
-                <div class="row g-1">
-                    <div class="form-floating col-lg-4">
-                        <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " required>
-                        <label>{% translate 'Nome'|escapejs %} *</label>
-                    </div>
-                    <div class="form-floating col-lg-2">
-                        <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
-                        <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
-                    </div>
-                    <div class="form-floating col-lg-2">
-                        <select id="id_inicia_em" class="form-select bg-body-secondary">
-                            <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
-                            <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
-                            <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
-                            <option value="3" {% if turno.inicia_em == '3' %}selected{% endif %}>{% translate 'Quarta'|escapejs %}</option>
-                            <option value="4" {% if turno.inicia_em == '4' %}selected{% endif %}>{% translate 'Quinta'|escapejs %}</option>
-                            <option value="5" {% if turno.inicia_em == '5' %}selected{% endif %}>{% translate 'Sexta'|escapejs %}</option>
-                            <option value="6" {% if turno.inicia_em == '6' %}selected{% endif %}>{% translate 'Sábado'|escapejs %}</option>
-                        </select>
-                        <label>{% translate 'Inicia em'|escapejs %}</label>
-                    </div>
-                    <div class="form-floating col-lg-2">
-                        <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
-                        <label>{% translate 'Data Início'|escapejs %} *</label>
-                    </div>
-                    <div class="col-lg-2">
-                        <button type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
-                            <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
-                        </button>
-                    </div>
+                        class="btn btn-sm btn-danger-matte" 
+                        data-appConfirmAction="deleteTurnoConfirmed"
+                        data-appConfirm="true"
+                        data-appConfirmMessage="{% translate 'Deseja realmente excluir este turno? Esta operação não pode ser desfeita'|escapejs %}"
+                        data-appConfirmColor="danger-matte"
+                        data-appConfirmText="{% translate 'Excluir'|escapejs %}">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        
-        <!-- Container de Dias do Ciclo -->
-        <div id="ciclo-container" data-role="cicloContainer">
-            {% for pos, dia in dias_ciclo.items %}
-            <div class="card mb-2" data-role="diaCard">
-                <div class="card-header">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: {{ pos }} <span data-role="diaSemana"></span></strong>
+        <div class="card-body bg-body-tertiary">
+            <div class="row g-1">
+                <div class="form-floating col-lg-4">
+                    <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " required>
+                    <label>{% translate 'Nome'|escapejs %} *</label>
+                </div>
+                <div class="form-floating col-lg-2">
+                    <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
+                    <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
+                </div>
+                <div class="form-floating col-lg-2">
+                    <select id="id_inicia_em" class="form-select bg-body-secondary">
+                        <option value="0" {% if turno.inicia_em == '0' %}selected{% endif %}>{% translate 'Domingo'|escapejs %}</option>
+                        <option value="1" {% if turno.inicia_em == '1' or not turno %}selected{% endif %}>{% translate 'Segunda'|escapejs %}</option>
+                        <option value="2" {% if turno.inicia_em == '2' %}selected{% endif %}>{% translate 'Terça'|escapejs %}</option>
+                        <option value="3" {% if turno.inicia_em == '3' %}selected{% endif %}>{% translate 'Quarta'|escapejs %}</option>
+                        <option value="4" {% if turno.inicia_em == '4' %}selected{% endif %}>{% translate 'Quinta'|escapejs %}</option>
+                        <option value="5" {% if turno.inicia_em == '5' %}selected{% endif %}>{% translate 'Sexta'|escapejs %}</option>
+                        <option value="6" {% if turno.inicia_em == '6' %}selected{% endif %}>{% translate 'Sábado'|escapejs %}</option>
+                    </select>
+                    <label>{% translate 'Inicia em'|escapejs %}</label>
+                </div>
+                <div class="form-floating col-lg-2">
+                    <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
+                    <label>{% translate 'Data Início'|escapejs %} *</label>
+                </div>
+                <div class="col-lg-2">
+                    <button type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
+                        <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Container de Dias do Ciclo -->
+    <div id="ciclo-container" data-role="cicloContainer">
+        {% for pos, dia in dias_ciclo.items %}
+        <div class="card mb-2" data-role="diaCard">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <strong class="text-body-secondary">{% translate 'Posição'|escapejs %}: {{ pos }} <span data-role="diaSemana"></span></strong>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="folga_{{ pos }}" data-field="eh_folga" {% if dia.eh_folga %}checked{% endif %}>
+                            <label class="form-check-label small" for="folga_{{ pos }}">{% translate 'É Folga'|escapejs %}</label>
                         </div>
-                        <div class="col-auto">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="folga_{{ pos }}" data-field="eh_folga" {% if dia.eh_folga %}checked{% endif %}>
-                                <label class="form-check-label small" for="folga_{{ pos }}">{% translate 'É Folga'|escapejs %}</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <input type="hidden" data-field="id" value="{{ dia.id|default:'' }}">
+                <input type="hidden" data-field="posicao_ciclo" value="{{ pos }}">
+                
+                <div data-role="configContainer" {% if dia.eh_folga %}style="display:none"{% endif %}>
+                    <div class="row g-1 mb-2">
+                        <div class="col col-md-4 col-lg-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">{% translate 'Tolerância'|escapejs %} <span class="d-none d-sm-inline ms-1">(min)</span></span>
+                                <input type="number" class="form-control" data-field="tolerancia" value="{{ dia.tolerancia }}" min="0" max="60">
                             </div>
                         </div>
+                        <div class="col-auto ms-auto text-end">
+                            <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
+                                <i class="bi bi-calculator"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
+                                <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">{% translate 'Horário'|escapejs %}</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary-matte" data-role="replicarAbaixo" title="{% translate 'Replicar abaixo'|escapejs %}">
+                                <i class="bi bi-arrow-bar-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Substituir a seção de horários dentro do loop -->
+                    <div data-role="horariosContainer">
+                        {% if dia.horarios %}
+                        {% for h in dia.horarios %}
+                        <div class="row g-1 mb-2" data-role="horarioRow">
+                            <div class="col-6 col-md-3">
+                                <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+                                <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}" style="min-width: 0;">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+                                <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}" style="min-width: 0;">
+                            </div>
+                            <div class="col-auto col-md d-flex gap-1 align-items-end ms-auto">
+                                <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}">
+                                    <i class="bi bi-arrow-up px-1"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario">
+                                    <i class="bi bi-trash3-fill px-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="row g-1 mb-2" data-role="horarioRow">
+                            <div class="col-5 col-md-3">
+                                <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
+                                <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
+                            </div>
+                            <div class="col-5 col-md-3">
+                                <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
+                                <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
+                            </div>
+                            <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
+                                <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
+                                    <i class="bi bi-arrow-up"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Resumo do Turno Dia -->
+                    <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
+                        <small class="text-muted">
+                            {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
+                            {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
+                            {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+                        </small>
                     </div>
                 </div>
                 
-                <div class="card-body">
-                    <input type="hidden" data-field="id" value="{{ dia.id|default:'' }}">
-                    <input type="hidden" data-field="posicao_ciclo" value="{{ pos }}">
-                    
-                    <div data-role="configContainer" {% if dia.eh_folga %}style="display:none"{% endif %}>
-                        <div class="row g-1 mb-2">
-                            <div class="col col-md-4 col-lg-3">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text">{% translate 'Tolerância'|escapejs %} <span class="d-none d-sm-inline ms-1">(min)</span></span>
-                                    <input type="number" class="form-control" data-field="tolerancia" value="{{ dia.tolerancia }}" min="0" max="60">
-                                </div>
-                            </div>
-                            <div class="col-auto ms-auto text-end">
-                                <button type="button" class="btn btn-sm btn-primary-matte" data-role="calcularResumo">
-                                    <i class="bi bi-calculator"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
-                                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">{% translate 'Horário'|escapejs %}</span>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Substituir a seção de horários dentro do loop -->
-                        <div data-role="horariosContainer">
-                            {% if dia.horarios %}
-                            {% for h in dia.horarios %}
-                            <div class="row g-1 mb-2" data-role="horarioRow">
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}" style="min-width: 0;">
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}" style="min-width: 0;">
-                                </div>
-                                <div class="col-auto col-md d-flex gap-1 align-items-end ms-auto">
-                                    <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}">
-                                        <i class="bi bi-arrow-up px-1"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario">
-                                        <i class="bi bi-trash3-fill px-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                            {% else %}
-                            <div class="row g-1 mb-2" data-role="horarioRow">
-                                <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
-                                </div>
-                                <div class="col-5 col-md-3">
-                                    <label class="form-label small d-md-none mb-0">{% translate 'Saída'|escapejs %}</label>
-                                    <input type="time" class="form-control form-control-sm" data-field="saida" style="min-width: 0;">
-                                </div>
-                                <div class="col-2 col-md-auto d-flex gap-1 align-items-end">
-                                    <button type="button" class="btn btn-sm btn-info-matte p-1" data-role="moveUp" title="{% translate 'Mover para cima'|escapejs %}" style="width: 28px; height: 28px;">
-                                        <i class="bi bi-arrow-up"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger-matte p-1" data-role="removeHorario" style="width: 28px; height: 28px;">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Resumo do Turno Dia -->
-                        <div class="mt-3 p-2 bg-body-secondary rounded" data-role="resumo">
-                            <small class="text-muted">
-                                {% translate 'Horas Totais'|escapejs %}: <strong data-field="horasTotais">--</strong> | 
-                                {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> | 
-                                {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div data-role="folgaContainer" {% if not dia.eh_folga %}style="display:none"{% endif %}>
-                        <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
-                    </div>
+                <div data-role="folgaContainer" {% if not dia.eh_folga %}style="display:none"{% endif %}>
+                    <p class="text-center text-bg-info-matte rounded mb-0 py-3"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% endif %}
-        
+        {% endfor %}
     </div>
+    {% endif %}
+    
+</div>
 </div>
 {% endblock %}
 
 
 <script>
-   {% block add_script %}
-(function() {
-    'use strict';
-    
-    const i18n = {
-        diasSemana: [
+    {% block add_script %}
+    (function() {
+        'use strict';
+        
+        const i18n = {
+            diasSemana: [
             "{% translate 'Domingo'|escapejs %}",
             "{% translate 'Segunda'|escapejs %}",
             "{% translate 'Terça'|escapejs %}",
@@ -214,206 +217,264 @@
             "{% translate 'Quinta'|escapejs %}",
             "{% translate 'Sexta'|escapejs %}",
             "{% translate 'Sábado'|escapejs %}"
-        ],
-        novoTurnoUrl: '?turno_id=novo',
-        cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
-        manterLinha: "{% translate 'Mantenha ao menos uma linha.'|escapejs %}",
-        camposObrigatorios: "{% translate 'Preencha todos os campos obrigatórios do turno'|escapejs %}",
-        preenchaHorarios: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'preencha entrada E saída ou deixe ambos vazios'|escapejs %}",
-        saidaMaior: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'saída deve ser maior que entrada'|escapejs %}",
-        horariosConflitam: "{% translate 'Registro sobrepõe outras entradas existentes'|escapejs %}",
-        salvando: '<span class="spinner-border spinner-border-sm"></span> {% translate "Salvando..."|escapejs %}',
-        erro: "{% translate 'Erro'|escapejs %}: ",
-    };
-    
-    const $$ = {
-        turnoId: "{{ turno.id|default:'' }}",
-        cicloContainer: document.querySelector('[data-role="cicloContainer"]'),
-        iniciaEm: document.getElementById('id_inicia_em'),
-    };
-    
-    let isSaving = false;
-    
-    // ========== EVENT DELEGATION ==========
-    document.addEventListener('click', e => {
-        const target = e.target.closest('[data-role]');
-        if (!target) return;
+            ],
+            novoTurnoUrl: '?turno_id=novo',
+            cicloInvalido: "{% translate 'Informe um número válido de dias no ciclo'|escapejs %}",
+            manterLinha: "{% translate 'Mantenha ao menos uma linha.'|escapejs %}",
+            camposObrigatorios: "{% translate 'Preencha todos os campos obrigatórios do turno'|escapejs %}",
+            preenchaHorarios: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'preencha entrada E saída ou deixe ambos vazios'|escapejs %}",
+            saidaMaior: "{% translate 'Posição'|escapejs %} %(pos)s: {% translate 'saída deve ser maior que entrada'|escapejs %}",
+            horariosConflitam: "{% translate 'Registro sobrepõe outras entradas existentes'|escapejs %}",
+            salvando: '<span class="spinner-border spinner-border-sm"></span> {% translate "Salvando..."|escapejs %}',
+            erro: "{% translate 'Erro'|escapejs %}: ",
+        };
         
-        const role = target.dataset.role;
+        const $$ = {
+            turnoId: "{{ turno.id|default:'' }}",
+            cicloContainer: document.querySelector('[data-role="cicloContainer"]'),
+            iniciaEm: document.getElementById('id_inicia_em'),
+        };
         
-        if (role === 'novoTurno') {
-            window.location = i18n.novoTurnoUrl;
-        }
-        else if (role === 'gerarCiclo') {
-            gerarCiclo();
-        }
-        else if (role === 'addHorario') {
-            const card = target.closest('[data-role="diaCard"]');
-            const container = card.querySelector('[data-role="horariosContainer"]');
-            container.appendChild(criarLinhaHorario());
-            atualizarBotoesOrdenacao(container);
-        }
-        else if (role === 'removeHorario') {
-            const container = target.closest('[data-role="horariosContainer"]');
-            const rows = container.querySelectorAll('[data-role="horarioRow"]');
-            if (rows.length > 1) {
-                target.closest('[data-role="horarioRow"]').remove();
+        let isSaving = false;
+        
+        // ========== EVENT DELEGATION ==========
+        document.addEventListener('click', e => {
+            const target = e.target.closest('[data-role]');
+            if (!target) return;
+            
+            const role = target.dataset.role;
+            
+            if (role === 'novoTurno') {
+                window.location = i18n.novoTurnoUrl;
+            }
+            else if (role === 'gerarCiclo') {
+                gerarCiclo();
+            }
+            else if (role === 'addHorario') {
+                const card = target.closest('[data-role="diaCard"]');
+                const container = card.querySelector('[data-role="horariosContainer"]');
+                container.appendChild(criarLinhaHorario());
                 atualizarBotoesOrdenacao(container);
-            } else {
-                appNotify('warning', i18n.manterLinha);
             }
-        }
-        else if (role === 'moveUp') {
-            const row = target.closest('[data-role="horarioRow"]');
-            const prev = row.previousElementSibling;
-            if (prev && prev.dataset.role === 'horarioRow') {
-                row.parentNode.insertBefore(row, prev);
-                atualizarBotoesOrdenacao(row.closest('[data-role="horariosContainer"]'));
+            else if (role === 'removeHorario') {
+                const container = target.closest('[data-role="horariosContainer"]');
+                const rows = container.querySelectorAll('[data-role="horarioRow"]');
+                if (rows.length > 1) {
+                    target.closest('[data-role="horarioRow"]').remove();
+                    atualizarBotoesOrdenacao(container);
+                } else {
+                    appNotify('warning', i18n.manterLinha);
+                }
             }
-        }
-        else if (role === 'calcularResumo') {
-            const card = target.closest('[data-role="diaCard"]');
-            calcularResumo(card);
-        }
-        else if (role === 'saveTurno') {
-            saveTurno();
-        }
-    });
-    
-    // Toggle eh_folga e mudança de inicia_em
-    document.addEventListener('change', e => {
-        if (e.target.dataset.field === 'eh_folga') {
-            const card = e.target.closest('[data-role="diaCard"]');
-            const configContainer = card.querySelector('[data-role="configContainer"]');
-            const folgaContainer = card.querySelector('[data-role="folgaContainer"]');
-            
-            if (e.target.checked) {
-                configContainer.style.display = 'none';
-                folgaContainer.style.display = '';
-            } else {
-                configContainer.style.display = '';
-                folgaContainer.style.display = 'none';
+            else if (role === 'moveUp') {
+                const row = target.closest('[data-role="horarioRow"]');
+                const prev = row.previousElementSibling;
+                if (prev && prev.dataset.role === 'horarioRow') {
+                    row.parentNode.insertBefore(row, prev);
+                    atualizarBotoesOrdenacao(row.closest('[data-role="horariosContainer"]'));
+                }
             }
-        }
-        else if (e.target.id === 'id_inicia_em') {info
-            atualizarDiasSemana();
-        }
-    });
-    
-    // ========== FUNÇÕES ==========
-    function getDiaSemana(posicao) {
-        const iniciaEm = parseInt($$.iniciaEm.value);
-        const diaSemanaIndex = (iniciaEm + posicao) % 7;
-        return i18n.diasSemana[diaSemanaIndex];
-    }
-    
-    function atualizarDiasSemana() {
-        const cards = document.querySelectorAll('[data-role="diaCard"]');
-        cards.forEach(card => {
-            const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
-            const spanDia = card.querySelector('[data-role="diaSemana"]');
-            spanDia.textContent = `(${getDiaSemana(posicao)})`;
+            else if (role === 'calcularResumo') {
+                const card = target.closest('[data-role="diaCard"]');
+                calcularResumo(card);
+            }
+            else if (role === 'replicarAbaixo') {
+                replicarAbaixo(target);
+            }
+            else if (role === 'saveTurno') {
+                saveTurno();
+            }
         });
-    }
-    
-    function atualizarBotoesOrdenacao(container) {
-        const rows = container.querySelectorAll('[data-role="horarioRow"]');
-        rows.forEach((row, index) => {
-            const btnUp = row.querySelector('[data-role="moveUp"]');
-            btnUp.disabled = index === 0;
-        });
-    }
-    
-    function timeToMinutes(timeStr) {
-        if (!timeStr) return 0;
-        const [h, m] = timeStr.split(':').map(Number);
-        return h * 60 + m;
-    }
-    
-    function minutesToTime(minutes) {
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-    
-    function calcularResumo(card) {
-        const rows = card.querySelectorAll('[data-role="horarioRow"]');
-        const horarios = [];
         
-        for (const row of rows) {
-            const entrada = row.querySelector('[data-field="entrada"]').value;
-            const saida = row.querySelector('[data-field="saida"]').value;
-            
-            if (entrada && saida) {
-                horarios.push({
-                    entrada: timeToMinutes(entrada),
-                    saida: timeToMinutes(saida)
-                });
-            }
-        }
-        
-        const resumo = card.querySelector('[data-role="resumo"]');
-        
-        if (horarios.length === 0) {
-            resumo.querySelector('[data-field="horasTotais"]').textContent = '--';
-            resumo.querySelector('[data-field="intrajornada"]').textContent = '--';
-            resumo.querySelector('[data-field="interjornada"]').textContent = '--';
-            return;
-        }
-        
-        // Normaliza horários considerando virada de dia
-        const horariosNormalizados = [];
-        
-        for (let i = 0; i < horarios.length; i++) {
-            let entrada = horarios[i].entrada;
-            let saida = horarios[i].saida;
-            
-            if (i > 0) {
-                const ultimaSaida = horariosNormalizados[i - 1].saida;
+        // Toggle eh_folga e mudança de inicia_em
+        document.addEventListener('change', e => {
+            if (e.target.dataset.field === 'eh_folga') {
+                const card = e.target.closest('[data-role="diaCard"]');
+                const configContainer = card.querySelector('[data-role="configContainer"]');
+                const folgaContainer = card.querySelector('[data-role="folgaContainer"]');
                 
-                if (entrada < ultimaSaida) {
-                    entrada += 1440;
+                if (e.target.checked) {
+                    configContainer.style.display = 'none';
+                    folgaContainer.style.display = '';
+                } else {
+                    configContainer.style.display = '';
+                    folgaContainer.style.display = 'none';
                 }
+            }
+            else if (e.target.id === 'id_inicia_em') {info
+                atualizarDiasSemana();
+            }
+        });
+        
+        // ========== FUNÇÕES ==========
+        function getDiaSemana(posicao) {
+            const iniciaEm = parseInt($$.iniciaEm.value);
+            const diaSemanaIndex = (iniciaEm + posicao) % 7;
+            return i18n.diasSemana[diaSemanaIndex];
+        }
+        
+        function atualizarDiasSemana() {
+            const cards = document.querySelectorAll('[data-role="diaCard"]');
+            cards.forEach(card => {
+                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+                const spanDia = card.querySelector('[data-role="diaSemana"]');
+                spanDia.textContent = `(${getDiaSemana(posicao)})`;
+            });
+        }
+        
+        function atualizarBotoesOrdenacao(container) {
+            const rows = container.querySelectorAll('[data-role="horarioRow"]');
+            rows.forEach((row, index) => {
+                const btnUp = row.querySelector('[data-role="moveUp"]');
+                btnUp.disabled = index === 0;
+            });
+        }
+        
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+        
+        function minutesToTime(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        
+        function calcularResumo(card) {
+            const rows = card.querySelectorAll('[data-role="horarioRow"]');
+            const horarios = [];
+            
+            for (const row of rows) {
+                const entrada = row.querySelector('[data-field="entrada"]').value;
+                const saida = row.querySelector('[data-field="saida"]').value;
                 
-                if (saida <= entrada) {
-                    saida += 1440;
-                }
-            } else {
-                if (saida < entrada) {
-                    saida += 1440;
+                if (entrada && saida) {
+                    horarios.push({
+                        entrada: timeToMinutes(entrada),
+                        saida: timeToMinutes(saida)
+                    });
                 }
             }
             
-            horariosNormalizados.push({ entrada, saida });
+            const resumo = card.querySelector('[data-role="resumo"]');
+            
+            if (horarios.length === 0) {
+                resumo.querySelector('[data-field="horasTotais"]').textContent = '--';
+                resumo.querySelector('[data-field="intrajornada"]').textContent = '--';
+                resumo.querySelector('[data-field="interjornada"]').textContent = '--';
+                return;
+            }
+            
+            // Normaliza horários considerando virada de dia
+            const horariosNormalizados = [];
+            
+            for (let i = 0; i < horarios.length; i++) {
+                let entrada = horarios[i].entrada;
+                let saida = horarios[i].saida;
+                
+                if (i > 0) {
+                    const ultimaSaida = horariosNormalizados[i - 1].saida;
+                    
+                    if (entrada < ultimaSaida) {
+                        entrada += 1440;
+                    }
+                    
+                    if (saida <= entrada) {
+                        saida += 1440;
+                    }
+                } else {
+                    if (saida < entrada) {
+                        saida += 1440;
+                    }
+                }
+                
+                horariosNormalizados.push({ entrada, saida });
+            }
+            
+            // Horas Totais
+            let horasTotais = 0;
+            horariosNormalizados.forEach(h => {
+                horasTotais += (h.saida - h.entrada);
+            });
+            
+            // Intrajornada
+            let intrajornada = 0;
+            for (let i = 0; i < horariosNormalizados.length - 1; i++) {
+                intrajornada += (horariosNormalizados[i + 1].entrada - horariosNormalizados[i].saida);
+            }
+            
+            // Interjornada
+            const primeiraEntrada = horariosNormalizados[0].entrada;
+            const ultimaSaida = horariosNormalizados[horariosNormalizados.length - 1].saida;
+            const interjornada = (primeiraEntrada + 1440) - ultimaSaida;
+            
+            resumo.querySelector('[data-field="horasTotais"]').textContent = minutesToTime(horasTotais);
+            resumo.querySelector('[data-field="intrajornada"]').textContent = minutesToTime(intrajornada);
+            resumo.querySelector('[data-field="interjornada"]').textContent = minutesToTime(interjornada);
+        }
+
+        function replicarAbaixo(btn) {
+            const currentCard = btn.closest('[data-role="diaCard"]');
+            const currentPosicao = parseInt(currentCard.querySelector('[data-field="posicao_ciclo"]').value);
+            const currentTolerancia = currentCard.querySelector('[data-field="tolerancia"]').value;
+            
+            // Obtém horários do card atual
+            const horarios = [];
+            const rows = currentCard.querySelectorAll('[data-role="horarioRow"]');
+            rows.forEach(row => {
+                const entrada = row.querySelector('[data-field="entrada"]').value;
+                const saida = row.querySelector('[data-field="saida"]').value;
+                if (entrada && saida) {
+                    horarios.push({ entrada, saida });
+                }
+            });
+            if (horarios.length === 0) {
+                appNotify('warning', "{% translate 'Nenhum horário para replicar'|escapejs %}");
+                return;
+            }            
+            // Encontra todos os cards abaixo da posição atual
+            const allCards = Array.from(document.querySelectorAll('[data-role="diaCard"]'));
+            let replicatedCount = 0;
+            
+            allCards.forEach(card => {
+                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+                
+                // Aplica apenas em posições maiores e que não sejam folga
+                if (posicao > currentPosicao && !ehFolga) {
+                    const container = card.querySelector('[data-role="horariosContainer"]');
+                    const toleranciaInput = card.querySelector('[data-field="tolerancia"]');
+                    
+                    // Limpa horários existentes
+                    container.innerHTML = '';
+                    
+                    // Replica tolerância
+                    if (toleranciaInput) {
+                        toleranciaInput.value = currentTolerancia;
+                    }
+                    
+                    // Adiciona os horários replicados
+                    horarios.forEach(h => {
+                        const novaLinha = criarLinhaHorario();
+                        novaLinha.querySelector('[data-field="entrada"]').value = h.entrada;
+                        novaLinha.querySelector('[data-field="saida"]').value = h.saida;
+                        container.appendChild(novaLinha);
+                    });
+                    
+                    atualizarBotoesOrdenacao(container);
+                    calcularResumo(card);
+                    replicatedCount++;
+                }
+            });
         }
         
-        // Horas Totais
-        let horasTotais = 0;
-        horariosNormalizados.forEach(h => {
-            horasTotais += (h.saida - h.entrada);
-        });
-        
-        // Intrajornada
-        let intrajornada = 0;
-        for (let i = 0; i < horariosNormalizados.length - 1; i++) {
-            intrajornada += (horariosNormalizados[i + 1].entrada - horariosNormalizados[i].saida);
-        }
-        
-        // Interjornada
-        const primeiraEntrada = horariosNormalizados[0].entrada;
-        const ultimaSaida = horariosNormalizados[horariosNormalizados.length - 1].saida;
-        const interjornada = (primeiraEntrada + 1440) - ultimaSaida;
-        
-        resumo.querySelector('[data-field="horasTotais"]').textContent = minutesToTime(horasTotais);
-        resumo.querySelector('[data-field="intrajornada"]').textContent = minutesToTime(intrajornada);
-        resumo.querySelector('[data-field="interjornada"]').textContent = minutesToTime(interjornada);
-    }
-    
-    function criarLinhaHorario() {
-        const div = document.createElement('div');
-        div.className = 'row g-1 mb-2';
-        div.setAttribute('data-role', 'horarioRow');
-        div.innerHTML = `
+        function criarLinhaHorario() {
+            const div = document.createElement('div');
+            div.className = 'row g-1 mb-2';
+            div.setAttribute('data-role', 'horarioRow');
+            div.innerHTML = `
             <div class="col-6 col-md-3">
                 <label class="form-label small d-md-none mb-0">{% translate 'Entrada'|escapejs %}</label>
                 <input type="time" class="form-control form-control-sm" data-field="entrada" style="min-width: 0;">
@@ -431,30 +492,30 @@
                 </button>
             </div>
         `;
-        return div;
-    }
-    
-    function gerarCiclo() {
-        const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
-        
-        if (!diasCiclo || diasCiclo < 1) {
-            appNotify('warning', i18n.cicloInvalido);
-            return;
+            return div;
         }
         
-        $$.cicloContainer.innerHTML = '';
-        for (let pos = 0; pos < diasCiclo; pos++) {
-            $$.cicloContainer.appendChild(criarCardDia(pos));
+        function gerarCiclo() {
+            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+            
+            if (!diasCiclo || diasCiclo < 1) {
+                appNotify('warning', i18n.cicloInvalido);
+                return;
+            }
+            
+            $$.cicloContainer.innerHTML = '';
+            for (let pos = 0; pos < diasCiclo; pos++) {
+                $$.cicloContainer.appendChild(criarCardDia(pos));
+            }
         }
-    }
-    
-    function criarCardDia(pos) {
-        const uniqueId = `folga_${pos}_${Date.now()}`;
-        const diaSemana = getDiaSemana(pos);
-        const div = document.createElement('div');
-        div.className = 'card mb-2';
-        div.setAttribute('data-role', 'diaCard');
-        div.innerHTML = `
+        
+        function criarCardDia(pos) {
+            const uniqueId = `folga_${pos}_${Date.now()}`;
+            const diaSemana = getDiaSemana(pos);
+            const div = document.createElement('div');
+            div.className = 'card mb-2';
+            div.setAttribute('data-role', 'diaCard');
+            div.innerHTML = `
             <div class="card-header">
                 <div class="row align-items-center">
                     <div class="col">
@@ -487,6 +548,9 @@
                             <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario">
                                 <i class="bi bi-plus-lg"></i> {% translate 'Horário'|escapejs %}
                             </button>
+                            <button type="button" class="btn btn-sm btn-secondary-matte" data-role="replicarAbaixo" title="{% translate 'Replicar abaixo'|escapejs %}">
+                                <i class="bi bi-arrow-bar-down"></i>
+                            </button>
                         </div>
                     </div>
                     <div data-role="horariosContainer">
@@ -503,166 +567,166 @@
                 </div>
                 
                 <div data-role="folgaContainer" style="display:none">
-                    <p class="text-center text-body-secondary rounded mb-0 py-3 bg-body-secondary"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
+                    <p class="text-center rounded mb-0 py-3 text-bg-info-matte"><strong>{% translate 'FOLGA'|escapejs %}</strong></p>
                 </div>
             </div>
         `;
-        
-        const container = div.querySelector('[data-role="horariosContainer"]');
-        atualizarBotoesOrdenacao(container);
-        
-        return div;
-    }
-    
-    function saveTurno() {
-        if (isSaving) return;
-        
-        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        
-        const nome = document.getElementById('id_nome').value.trim();
-        const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
-        const inicio = document.getElementById('id_inicio').value;
-        const iniciaEm = $$.iniciaEm.value;
-        
-        if (!nome || !diasCiclo || !inicio) {
-            appNotify('warning', i18n.camposObrigatorios);
-            return;
+            
+            const container = div.querySelector('[data-role="horariosContainer"]');
+            atualizarBotoesOrdenacao(container);
+            
+            return div;
         }
         
-        const dias = [];
-        const cards = document.querySelectorAll('[data-role="diaCard"]');
-        
-        for (const card of cards) {
-            const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
-            const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
-            const id = card.querySelector('[data-field="id"]').value || null;
-            const tolerancia = parseInt(card.querySelector('[data-field="tolerancia"]')?.value || 10);
+        function saveTurno() {
+            if (isSaving) return;
             
-            const horarios = [];
-            if (!ehFolga) {
-                const rowsHorario = card.querySelectorAll('[data-role="horarioRow"]');
-                for (const row of rowsHorario) {
-                    const inputEntrada = row.querySelector('[data-field="entrada"]');
-                    const inputSaida = row.querySelector('[data-field="saida"]');
-                    const entrada = inputEntrada.value;
-                    const saida = inputSaida.value;
-                    
-                    if (!entrada && !saida) continue;
-                    
-                    if (!entrada || !saida) {
-                        appNotify('warning', i18n.preenchaHorarios.replace('%(pos)s', posicao));
-                        return;
-                    }
-                    
-                    if (saida <= entrada) {
-                        inputEntrada.classList.add('is-invalid');
-                        inputSaida.classList.add('is-invalid');
-                        appNotify('warning', i18n.saidaMaior.replace('%(pos)s', posicao));
-                        return;
-                    }
-                    
-                    horarios.push({ entrada, saida, inputEntrada, inputSaida });
-                }
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
+            const nome = document.getElementById('id_nome').value.trim();
+            const diasCiclo = parseInt(document.getElementById('id_dias_ciclo').value);
+            const inicio = document.getElementById('id_inicio').value;
+            const iniciaEm = $$.iniciaEm.value;
+            
+            if (!nome || !diasCiclo || !inicio) {
+                appNotify('warning', i18n.camposObrigatorios);
+                return;
+            }
+            
+            const dias = [];
+            const cards = document.querySelectorAll('[data-role="diaCard"]');
+            
+            for (const card of cards) {
+                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+                const posicao = parseInt(card.querySelector('[data-field="posicao_ciclo"]').value);
+                const id = card.querySelector('[data-field="id"]').value || null;
+                const tolerancia = parseInt(card.querySelector('[data-field="tolerancia"]')?.value || 10);
                 
-                // Validação de conflitos
-                for (let i = 0; i < horarios.length; i++) {
-                    for (let j = i + 1; j < horarios.length; j++) {
-                        const h1 = horarios[i];
-                        const h2 = horarios[j];
+                const horarios = [];
+                if (!ehFolga) {
+                    const rowsHorario = card.querySelectorAll('[data-role="horarioRow"]');
+                    for (const row of rowsHorario) {
+                        const inputEntrada = row.querySelector('[data-field="entrada"]');
+                        const inputSaida = row.querySelector('[data-field="saida"]');
+                        const entrada = inputEntrada.value;
+                        const saida = inputSaida.value;
                         
-                        if (h1.entrada < h2.saida && h1.saida > h2.entrada) {
-                            if (h1.saida > h2.entrada && h1.entrada < h2.entrada) {
-                                h1.inputSaida.classList.add('is-invalid');
-                                h2.inputEntrada.classList.add('is-invalid');
-                            }
-                            else if (h2.saida > h1.entrada && h2.entrada < h1.entrada) {
-                                h2.inputSaida.classList.add('is-invalid');
-                                h1.inputEntrada.classList.add('is-invalid');
-                            }
-                            else {
-                                h1.inputEntrada.classList.add('is-invalid');
-                                h1.inputSaida.classList.add('is-invalid');
-                                h2.inputEntrada.classList.add('is-invalid');
-                                h2.inputSaida.classList.add('is-invalid');
-                            }
-                            
-                            appNotify('warning', i18n.horariosConflitam);
+                        if (!entrada && !saida) continue;
+                        
+                        if (!entrada || !saida) {
+                            appNotify('warning', i18n.preenchaHorarios.replace('%(pos)s', posicao));
                             return;
+                        }
+                        
+                        if (saida <= entrada) {
+                            inputEntrada.classList.add('is-invalid');
+                            inputSaida.classList.add('is-invalid');
+                            appNotify('warning', i18n.saidaMaior.replace('%(pos)s', posicao));
+                            return;
+                        }
+                        
+                        horarios.push({ entrada, saida, inputEntrada, inputSaida });
+                    }
+                    
+                    // Validação de conflitos
+                    for (let i = 0; i < horarios.length; i++) {
+                        for (let j = i + 1; j < horarios.length; j++) {
+                            const h1 = horarios[i];
+                            const h2 = horarios[j];
+                            
+                            if (h1.entrada < h2.saida && h1.saida > h2.entrada) {
+                                if (h1.saida > h2.entrada && h1.entrada < h2.entrada) {
+                                    h1.inputSaida.classList.add('is-invalid');
+                                    h2.inputEntrada.classList.add('is-invalid');
+                                }
+                                else if (h2.saida > h1.entrada && h2.entrada < h1.entrada) {
+                                    h2.inputSaida.classList.add('is-invalid');
+                                    h1.inputEntrada.classList.add('is-invalid');
+                                }
+                                else {
+                                    h1.inputEntrada.classList.add('is-invalid');
+                                    h1.inputSaida.classList.add('is-invalid');
+                                    h2.inputEntrada.classList.add('is-invalid');
+                                    h2.inputSaida.classList.add('is-invalid');
+                                }
+                                
+                                appNotify('warning', i18n.horariosConflitam);
+                                return;
+                            }
                         }
                     }
                 }
+                
+                dias.push({ 
+                    id, 
+                    posicao_ciclo: posicao, 
+                    eh_folga: ehFolga, 
+                    tolerancia: ehFolga ? 0 : tolerancia, 
+                    horarios: horarios.map(h => ({ entrada: h.entrada, saida: h.saida }))
+                });
             }
             
-            dias.push({ 
-                id, 
-                posicao_ciclo: posicao, 
-                eh_folga: ehFolga, 
-                tolerancia: ehFolga ? 0 : tolerancia, 
-                horarios: horarios.map(h => ({ entrada: h.entrada, saida: h.saida }))
+            isSaving = true;
+            const btn = document.querySelector('[data-role="saveTurno"]');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = i18n.salvando;
+            
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ 
+                    action: 'save_turno', 
+                    turno_id: $$.turnoId || null, 
+                    nome, 
+                    dias_ciclo: diasCiclo, 
+                    inicio, 
+                    inicia_em: iniciaEm,
+                    dias 
+                })
+            })
+            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+            .then(data => {
+                if (data.status === 'success') window.location = data.redirect;
+                else throw new Error(data.message);
+            })
+            .catch(error => {
+                appNotify('danger', i18n.erro + (error.message || error));
+                isSaving = false;
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
             });
         }
         
-        isSaving = true;
-        const btn = document.querySelector('[data-role="saveTurno"]');
-        const originalHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = i18n.salvando;
-        
-        fetch(window.location.pathname, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-            body: JSON.stringify({ 
-                action: 'save_turno', 
-                turno_id: $$.turnoId || null, 
-                nome, 
-                dias_ciclo: diasCiclo, 
-                inicio, 
-                inicia_em: iniciaEm,
-                dias 
+        // Função global para ser chamada pelo modal de confirmação
+        window.deleteTurnoConfirmed = function() {
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ action: 'delete_turno', turno_id: $$.turnoId })
             })
-        })
-        .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
-        .then(data => {
-            if (data.status === 'success') window.location = data.redirect;
-            else throw new Error(data.message);
-        })
-        .catch(error => {
-            appNotify('danger', i18n.erro + (error.message || error));
-            isSaving = false;
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-        });
-    }
-    
-    // Função global para ser chamada pelo modal de confirmação
-    window.deleteTurnoConfirmed = function() {
-        fetch(window.location.pathname, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-            body: JSON.stringify({ action: 'delete_turno', turno_id: $$.turnoId })
-        })
-        .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
-        .then(data => {
-            if (data.status === 'success') window.location = data.redirect;
-            else throw new Error(data.message);
-        })
-        .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
-    }
-    
-    // Inicializa
-    atualizarDiasSemana();
-    document.querySelectorAll('[data-role="horariosContainer"]').forEach(atualizarBotoesOrdenacao);
-    
-    // Calcula resumo automaticamente ao carregar turno existente
-    if ($$.turnoId) {
-        document.querySelectorAll('[data-role="diaCard"]').forEach(card => {
-            const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
-            if (!ehFolga) {
-                calcularResumo(card);
-            }
-        });
-    }
-    
-})();
-{% endblock %}
+            .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
+            .then(data => {
+                if (data.status === 'success') window.location = data.redirect;
+                else throw new Error(data.message);
+            })
+            .catch(error => appNotify('danger', i18n.erro + (error.message || error)));
+        }
+        
+        // Inicializa
+        atualizarDiasSemana();
+        document.querySelectorAll('[data-role="horariosContainer"]').forEach(atualizarBotoesOrdenacao);
+        
+        // Calcula resumo automaticamente ao carregar turno existente
+        if ($$.turnoId) {
+            document.querySelectorAll('[data-role="diaCard"]').forEach(card => {
+                const ehFolga = card.querySelector('[data-field="eh_folga"]').checked;
+                if (!ehFolga) {
+                    calcularResumo(card);
+                }
+            });
+        }
+        
+    })();
+    {% endblock %}
 </script>
