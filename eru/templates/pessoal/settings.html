@@ -30,7 +30,7 @@
                                 {% endfor %}
                             </select>
                             {% btn_tag 'submit' disabled="disabled" %}
-                            <button id="extra" class="btn btn-sm btn-primary-matte dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <button id="extra" class="btn btn-sm btn-primary-matte dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled></button>
                             <ul class="dropdown-menu dropdown-menu-end fs-7">
                                 <li>
                                     <button 
@@ -38,9 +38,9 @@
                                     onclick="urlFilter('reset_default','true')"
                                     data-appConfirm="true"
                                     data-appConfirmMessage='<b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma restauração das definições padrão?'|escapejs %}'
+                                    data-appConfirmDelay="4"
                                     data-appConfirmColor="danger-matte"
                                     ><i class="bi bi-exclamation-diamond-fill me-2"></i>{% translate 'Redefinir todos'|escapejs %}</button>
-                                    <!-- data-appConfirmDelay="4" -->
                                 </li>
                             </ul>
                         </div>
@@ -56,6 +56,7 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/vendor/jsoneditor.js' %}"></script>
+<script src="{% static 'js/jsoneditor.config.js' %}"></script>
 <script src="{% static 'js/url.js' %}"></script>
 {% endblock %}
 
@@ -63,26 +64,16 @@
     {% block add_script %}
     const filial = document.getElementById('id_filial');
     filial.onchange = ()=>{
-        if(filial.value == '') urlRedirect(`/pessoal/settings/`);
-        urlRedirect(`/pessoal/settings/${filial.value}`);
+        if(filial.value == '') window.location.href = '/pessoal/settings/';
+        window.location.href = `/pessoal/settings/${filial.value}`;
     }
     {% if object %}
     document.getElementById('submit').disabled = false;
+    document.getElementById('extra').disabled = false;
     const element = document.getElementById('editor_holder');
-    const options = {
-        theme: 'bootstrap5',
-        iconlib: 'bootstrap-icons',
-        schema: {{ schema_json|safe }},
-        startval: {{ config_json|safe }},
-        disable_edit_json: true,
-        disable_properties: true,
-        // no_additional_properties: true,
-        // disable_collapse: true,        
-        // object_layout: 'grid',
-        // show_errors: 'change',
-        // display_required_only: false
-    };
-    const editor = new JSONEditor(element, options);
+    const schema = {schema: {{ schema_json|safe }}, startval: {{ config_json|safe }}};
+    
+    const editor = new JSONEditor(element, {...jsoneditor_options, ...schema});
     const form = document.getElementById('app_form');
     form.onsubmit = (e) => {
         const errors = editor.validate();

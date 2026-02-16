@@ -6,20 +6,22 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from core.models import Filial
+from core.model_base import BaseSettings
 from core.constants import DEFAULT_MESSAGES
 from auditlog.registry import auditlog
 from .schemas import PessoalSettingsSchema
 
 
-class PessoalSettings(models.Model):
-    filial = models.OneToOneField(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'))
-    config = models.JSONField(default=dict)
+class PessoalSettings(BaseSettings):
+    filial = models.OneToOneField(
+        'core.Filial',
+        on_delete=models.RESTRICT,
+        related_name='pessoal_settings'
+    )
+    def get_schema(self):
+        return PessoalSettingsSchema
     def __str__(self):
         return "Pessoal settings"
-    def save(self, *args, **kwargs):
-        schema = PessoalSettingsSchema(**(self.config or {}))
-        self.config = schema.model_dump()
-        super().save(*args, **kwargs)
 auditlog.register(PessoalSettings)
 
 

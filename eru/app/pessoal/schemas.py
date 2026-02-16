@@ -18,10 +18,8 @@ class FolhaSchema(BaseModel):
         False,
         json_schema_extra={'format': 'checkbox'}
         )
-    bar: bool = Field(
-        True,
-        json_schema_extra={'format': 'checkbox'}
-        )
+    bar: bool = Field( True, json_schema_extra={'format': 'checkbox'} )
+    non: bool = Field( True, json_schema_extra={'format': 'checkbox'} )
 
 class PessoalSettingsSchema(BaseModel):
     model_config = {"title": _("Configurações Gerais")}

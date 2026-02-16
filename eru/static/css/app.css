@@ -320,7 +320,3 @@ dialog.related  {width: 100%; box-sizing: border-box; margin: 0; padding: 1rem;}
 #editor_holder .card-body {margin-top: 0 !important;}
 #editor_holder .h3{font-size: 1.4rem !important;color: var(--bs-secondary-text-emphasis);}
 #editor_holder .level-1 .json-editor-btn-collapse {display: none !important;}
-
-/* #editor_holder > div > .h3.card-title:first-of-type { display: none !important;} */
-/* #editor_holder, #editor_holder .card-body {margin-top: 0 !important;} */
-/* #editor_holder .card-body .card-body {border: 0px; padding: 0.5rem !important;} */

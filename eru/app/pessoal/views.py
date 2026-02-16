@@ -57,7 +57,7 @@ class PessoalSettingsUpdateView(BaseUpdateView):
     def get_object(self, queryset=None):
         filial_id = self.kwargs.get('filial_id')
         if not filial_id:
-            return None        
+            return None
         try:
             filial = self.request.user.profile.filiais.get(id=filial_id)
         except Exception as e:
@@ -74,7 +74,7 @@ class PessoalSettingsUpdateView(BaseUpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.object:
-            context['config_json'] = json.dumps(self.object.config, cls=DjangoJSONEncoder)
+            context['config_json'] = json.dumps(self.object.config.model_dump(), cls=DjangoJSONEncoder)
             schema_dict = PessoalSettingsSchema.model_json_schema()
             context['schema_json'] = json.dumps(schema_dict, cls=DjangoJSONEncoder)
         else:
