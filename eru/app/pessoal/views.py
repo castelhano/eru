@@ -2,11 +2,11 @@ import json
 import calendar
 from datetime import datetime, date
 from collections import OrderedDict
-
 # Django Core
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Q, Count
 from django.http import JsonResponse
@@ -28,12 +28,12 @@ from core.views_base import (BaseListView, BaseTemplateView, BaseCreateView, Bas
 
 # Pessoal App - Models
 from .models import (
-    Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
+    PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
     EventoCargo, EventoFuncionario, Turno, TurnoDia, TurnoHistorico, Frequencia, EventoFrequencia
 )
 # Pessoal App
 from .forms import (
-    SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
+    PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
     EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm
 )
 from .filters import (
@@ -46,8 +46,46 @@ from .tables import (
 )
 from .serializers import FuncionarioSerializer
 from .folha.collectors import get_event_vars_master
+from .schemas import PessoalSettingsSchema
 
-# ....................
+###########################
+
+class PessoalSettingsUpdateView(BaseUpdateView):
+    model = PessoalSettings
+    form_class = PessoalSettingsForm
+    template_name = 'pessoal/settings.html'
+    def get_object(self, queryset=None):
+        filial_id = self.kwargs.get('filial_id')
+        if not filial_id:
+            return None        
+        try:
+            filial = self.request.user.profile.filiais.get(id=filial_id)
+        except Exception as e:
+            print('[ERROR] PessoalSettingsUpdateView: ', e)
+            raise PermissionDenied
+        obj, created = PessoalSettings.objects.get_or_create(filial=filial)
+        if created:
+            obj.save() 
+        return obj
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object:
+            context['config_json'] = json.dumps(self.object.config, cls=DjangoJSONEncoder)
+            schema_dict = PessoalSettingsSchema.model_json_schema()
+            context['schema_json'] = json.dumps(schema_dict, cls=DjangoJSONEncoder)
+        else:
+            context['config_json'] = json.dumps({})
+            context['schema_json'] = json.dumps({})
+        return context
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.config = form.cleaned_data['config_data']
+        self.object.save()
+        return super().form_valid(form)
+    def get_success_url(self):
+        return reverse('pessoal:settings_update', kwargs={'filial_id': self.object.filial.id})
+
+
 class SetorListView(LoginRequiredMixin, PermissionRequiredMixin, AjaxableListMixin, SingleTableView):
     model = Setor
     login_url = '/handler/403'
@@ -154,12 +192,10 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
     def _handle_turno_ajax(self, request):
         try:
             data = json.loads(request.body)
-            action = data.get('action')
-            
+            action = data.get('action')            
             if action == 'save_turno':
                 th_id = data.get('id') or None
-                contrato = get_object_or_404(Contrato, id=data['contrato_id'], funcionario_id=self.kwargs['pk'])
-                
+                contrato = get_object_or_404(Contrato, id=data['contrato_id'], funcionario_id=self.kwargs['pk'])                
                 if th_id:
                     th = get_object_or_404(TurnoHistorico, id=th_id, contrato=contrato)
                     th.turno_id = data['turno']
@@ -175,19 +211,15 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
                         fim_vigencia=data.get('fim_vigencia') or None
                     )
                     th.full_clean()
-                    th.save()
-                
+                    th.save()                
                 messages.success(request, DEFAULT_MESSAGES.get('updated' if th_id else 'created'))
-                return JsonResponse({'status': 'success', 'reload': True})
-            
+                return JsonResponse({'status': 'success', 'reload': True})            
             elif action == 'delete_turno':
                 th = get_object_or_404(TurnoHistorico, id=data['id'], contrato__funcionario_id=self.kwargs['pk'])
                 th.delete()
                 messages.success(request, DEFAULT_MESSAGES.get('deleted'))
-                return JsonResponse({'status': 'success', 'reload': True})
-            
-            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)
-        
+                return JsonResponse({'status': 'success', 'reload': True})            
+            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)        
         except ValidationError as e:
             if hasattr(e, 'message_dict'):
                 errors = []
@@ -213,27 +245,21 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         turno_id = self.request.GET.get('turno_id', '')
-        
         context.update({
             'filtro_form': {'turno_id': turno_id},
             'turnos_list': Turno.objects.all().order_by('nome'),
             'dias_semana_choices': Turno.DiaSemana.choices,
         })
-        
-        # Só processa se turno_id for um número válido
         if turno_id and turno_id != 'novo':
             self._processar_filtro(context, turno_id)
         elif turno_id == 'novo':
-            # Inicializa estrutura vazia para novo turno
             context.update({
                 'turno': None,
                 'dias_ciclo': OrderedDict(),
-            })
-        
+            })        
         return context
-    
     def _processar_filtro(self, context, turno_id):
-        """Carrega dados do turno selecionado"""
+        # carrega dados do turno selecionado
         try:
             turno = Turno.objects.prefetch_related('dias').get(id=turno_id)
             context.update({
@@ -241,64 +267,50 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
                 'dias_ciclo': self._montar_ciclo(turno),
             })
         except Turno.DoesNotExist:
-            messages.error(self.request, _("Turno não encontrado"))
-    
+            messages.error(self.request, DEFAULT_MESSAGES.get('filterError'))
     def _montar_ciclo(self, turno):
-        """Monta estrutura de dias do ciclo com horários"""
-        dias_ciclo = OrderedDict()
-        
+        # monta estrutura de dias do ciclo com horarios
+        dias_ciclo = OrderedDict()        
         for pos in range(turno.dias_ciclo):
             dias_ciclo[pos] = {
                 'id': None,
                 'eh_folga': False,
                 'tolerancia': 10,
                 'horarios': []
-            }
-        
+            }        
         for dia in turno.dias.all():
             dias_ciclo[dia.posicao_ciclo] = {
                 'id': dia.id,
                 'eh_folga': dia.eh_folga,
                 'tolerancia': dia.tolerancia,
                 'horarios': self._extrair_horarios(dia)
-            }
-        
+            }        
         return dias_ciclo
-    
     def _extrair_horarios(self, turno_dia):
-        """Extrai horários do JSONField e converte para lista"""
+        # extrai horarios do JSONField e converte para lista
         if not turno_dia.horarios:
-            return [{'entrada': '', 'saida': ''}]
-        
+            return [{'entrada': '', 'saida': ''}]        
         if isinstance(turno_dia.horarios, list):
-            return turno_dia.horarios
-        
+            return turno_dia.horarios        
         if isinstance(turno_dia.horarios, dict) and 'entrada' in turno_dia.horarios:
-            return [turno_dia.horarios]
-        
-        return [{'entrada': '', 'saida': ''}]
-    
+            return [turno_dia.horarios]        
+        return [{'entrada': '', 'saida': ''}]    
     def post(self, request, *args, **kwargs):
-        """Salva turno e seus dias via AJAX"""
+        # salva turno e seus dias via AJAX
         try:
             data = json.loads(request.body)
-            action = data.get('action')
-            
+            action = data.get('action')            
             if action == 'save_turno':
                 return self._salvar_turno(data)
             elif action == 'delete_turno':
-                return self._deletar_turno(data)
-            
-            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)
-            
+                return self._deletar_turno(data)            
+            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)            
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-    
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)    
     def _salvar_turno(self, data):
-        """Salva/atualiza turno e dias do ciclo"""
+        # salva/atualiza turno e dias do ciclo
         with transaction.atomic():
-            turno_id = data.get('turno_id')
-            
+            turno_id = data.get('turno_id')            
             if turno_id:
                 turno = Turno.objects.get(id=turno_id)
                 turno.nome = data.get('nome')
@@ -312,16 +324,12 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
                     dias_ciclo=int(data.get('dias_ciclo')),
                     inicio=datetime.strptime(data.get('inicio'), '%Y-%m-%d').date(),
                     inicia_em=data.get('inicia_em')
-                )
-            
-            dias_data = data.get('dias', [])
-            
-            # Validação de conflitos no servidor
-            self._validar_conflitos(dias_data)
-            
+                )            
+            dias_data = data.get('dias', [])            
+            # validacao de conflitos
+            self._validar_conflitos(dias_data)            
             ids_enviados = [d['id'] for d in dias_data if d.get('id')]
-            TurnoDia.objects.filter(turno=turno).exclude(id__in=ids_enviados).delete()
-            
+            TurnoDia.objects.filter(turno=turno).exclude(id__in=ids_enviados).delete()            
             for dia_item in dias_data:
                 TurnoDia.objects.update_or_create(
                     id=dia_item.get('id'),
@@ -333,63 +341,49 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
                         'eh_folga': dia_item.get('eh_folga', False),
                     }
                 )
-            
             messages.success(self.request, DEFAULT_MESSAGES.get('updated'))
             return JsonResponse({
                 'status': 'success',
                 'turno_id': turno.id,
                 'redirect': f'?turno_id={turno.id}'
             })
-    
     def _validar_conflitos(self, dias_data):
-        """Valida conflitos de horários entre dias"""
+        # valida conflito de horarios entre dias
         for dia in dias_data:
             if dia.get('eh_folga'):
-                continue
-            
+                continue            
             posicao = dia['posicao_ciclo']
-            horarios = dia.get('horarios', [])
-            
-            # Valida conflitos dentro do mesmo dia
+            horarios = dia.get('horarios', [])            
+            # valida conflitos dentro do mesmo dia
             for i, h1 in enumerate(horarios):
                 for h2 in horarios[i+1:]:
                     if self._horarios_conflitam(h1, h2):
-                        raise ValidationError(
-                            _("Posição %(pos)s: horários se sobrepõem") % {'pos': posicao}
-                        )
-    
+                        raise ValidationError(f"{DEFAULT_MESSAGES.get('recordOverlap')} <br>{_('Posição')}: {posicao}")
     def _horarios_conflitam(self, h1, h2):
-        """Verifica se dois horários se sobrepõem"""
-        return h1['entrada'] < h2['saida'] and h1['saida'] > h2['entrada']
-    
+        # verifica se dois horarios se sobrepoem
+        return h1['entrada'] < h2['saida'] and h1['saida'] > h2['entrada']    
     def _parse_horarios(self, horarios_list):
-        """Converte lista de horários para JSON, removendo entradas vazias"""
+        # converte lista de horarios para JSON, removendo entradas vazias
         if not horarios_list:
-            return []
-        
+            return []        
         return [
             {'entrada': h['entrada'], 'saida': h['saida']}
             for h in horarios_list
             if h.get('entrada') and h.get('saida')
-        ]
-    
+        ]    
     def _deletar_turno(self, data):
-        """Deleta turno (se não tiver histórico vinculado)"""
-        turno_id = data.get('turno_id')
-        
+        # deleta turno (se nao tiver historico vinculado)
+        turno_id = data.get('turno_id')        
         try:
-            turno = Turno.objects.get(id=turno_id)
-            
+            turno = Turno.objects.get(id=turno_id)            
             if TurnoHistorico.objects.filter(turno=turno).exists():
                 return JsonResponse({
                     'status': 'error',
-                    'message': _('Não é possível excluir: turno está vinculado a contratos')
-                }, status=400)
-            
+                    'message': DEFAULT_MESSAGES.get('deleteError')
+                }, status=400)            
             turno.delete()
             messages.success(self.request, DEFAULT_MESSAGES.get('deleted'))
-            return JsonResponse({'status': 'success', 'redirect': self.request.path})
-            
+            return JsonResponse({'status': 'success', 'redirect': self.request.path})            
         except Turno.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': _('Turno não encontrado')}, status=404)
 
@@ -417,7 +411,6 @@ class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExport
 class DependenteListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, SingleTableView):
     model = Dependente
     template_name = 'pessoal/dependentes.html'
-    context_object_name = 'dependentes'
     permission_required = 'pessoal.view_dependente'
     table_class = DependenteTable
     def get_queryset(self):
@@ -692,8 +685,7 @@ class EventoFrequenciaCreateView(LoginRequiredMixin, PermissionRequiredMixin, Ba
 class SetorUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Setor
     form_class = SetorForm
-    template_name = 'pessoal/setor_id.html' # Mantendo o seu template original
-    context_object_name = 'setor'           # Permite usar {{ setor.nome }} no HTML
+    template_name = 'pessoal/setor_id.html'
     permission_required = 'pessoal.change_setor'
     def get_success_url(self):
         return reverse('pessoal:setor_update', kwargs={'pk': self.object.id})
@@ -703,7 +695,6 @@ class CargoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVie
     model = Cargo
     form_class = CargoForm
     template_name = 'pessoal/cargo_id.html'
-    context_object_name = 'cargo'
     permission_required = 'pessoal.change_cargo'
     def get_success_url(self):
         return reverse('pessoal:cargo_update', kwargs={'pk': self.object.id})
@@ -713,7 +704,6 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
     model = Funcionario
     form_class = FuncionarioForm
     template_name = 'pessoal/funcionario_id.html'
-    context_object_name = 'funcionario'
     permission_required = 'pessoal.view_funcionario' # exige apenas view para carregar usuario (mesmo sem perm de update)
     def dispatch(self, request, *args, **kwargs):
         funcionario = self.get_object()
@@ -944,7 +934,6 @@ class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVi
     model = Evento
     form_class = EventoForm
     template_name = 'pessoal/evento_id.html'
-    context_object_name = 'evento'
     permission_required = 'pessoal.change_evento'
     def get_success_url(self):
         return reverse('pessoal:evento_update', kwargs={'pk': self.object.id})

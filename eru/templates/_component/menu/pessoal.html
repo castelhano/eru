@@ -72,5 +72,20 @@
             {icon: 'bi bi-layout-sidebar-inset-reverse', desc:'{% translate "Abre menu de Folha" %}'}
         ]
         })
-        {% if perms.pessoal.view_frequencia %}appKeyMap.bind('o+r', ()=>{document.getElementById('menu_frequencia').click()}, {display: false}){% endif %}    
+        {% if perms.pessoal.view_frequencia %}appKeyMap.bind('o+r', ()=>{document.getElementById('menu_frequencia').click()}, {display: false}){% endif %}
+        
+    {% if perms.pessoal.view_pessoalsettings %}
+    const menuSettings = new canvasNavLink({
+        name: '{% translate 'Configurações'|hl_str:'u' %}',
+        id: 'menu_menuSettings',
+        class: 'link',
+        icon: 'bi bi-gear-fill',
+        href: '{% url 'pessoal:settings_list' %}',
+        keybind: [
+            'alt+u',
+            ()=>{menuSettings.click()},
+            {icon: 'bi bi-gear-fill text-purple', desc: '{% translate 'Configurações do módulo'|escapejs %}'}
+        ]
+    })
+    {% endif %}
 </script>

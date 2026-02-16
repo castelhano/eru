@@ -137,6 +137,17 @@ dialog:focus-visible{outline: none!important;}
 .btn-dark-matte:active, .btn-dark-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.9); }
 .btn-dark-matte:focus { box-shadow: 0 0 0 0.10rem rgba(68, 68, 68, 0.25); }
 
+.btn[class*="-matte"]:disabled,
+.btn[class*="-matte"].disabled {
+    background-color: var(--matte-bg) !important;
+    border-color: var(--matte-border) !important;
+    color: var(--matte-color) !important;
+    opacity: 0.5;
+    filter: saturate(0.5);
+    cursor: not-allowed;
+}
+
+
 div.btn-primary{background-color: #0d6efd; color: #FFF;}
 div.btn-primary:hover{background-color: #0b5ed7;}
 div.btn-success{background-color: #198754; color: #FFF;}
@@ -296,8 +307,15 @@ dialog.related  {width: 100%; box-sizing: border-box; margin: 0; padding: 1rem;}
 .custom-tom-select .ts-control, .custom-tom-select .ts-control input{ color: var(--bs-body-color)!important; }
 .highlight{ background-color: transparent!important; color: #F35B04; }
 
+/* ajustes tom select */
 .ts-wrapper.ts-compact{height: 31px !important;}
 .ts-compact .ts-control .item{ --matte-bg: #6c8e68; --matte-color: #ffffff; --matte-border: #5d7a59; background-color: var(--matte-bg) !important; border-color: var(--matte-border) !important; color: var(--matte-color) !important; font-size: 0.75rem; margin-bottom: 1px !important; }
 [data-bs-theme="dark"].ts-control .item{--matte-bg: #5d4f6d; --matte-border: #4d415a; }
 .ts-dropdown{ color: var(--bs-secondary-text-emphasis)!important; }
 .ts-wrapper.single .ts-control { height: calc(3.5rem + calc(var(--bs-border-width) * 2)); line-height: 1.25 !important; }
+
+/* ajustes json editor */
+[data-bs-theme="dark"] .card .bg-light{background-color: var(--bs-body-bg) !important; color: var(--bs-body-color) !important;}
+#editor_holder, #editor_holder .card-body {margin-top: 0 !important;}
+#editor_holder .card-body .card-body {border: 0px; padding: 0.5rem !important;}
+#editor_holder .h3{font-size: 1.4rem !important;color: var(--bs-secondary-text-emphasis);}

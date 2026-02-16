@@ -1,5 +1,4 @@
 import os, sys
-from pathlib import Path
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from .settings_local import *
@@ -15,7 +14,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'auditlog',
     'django_tables2',
-    # 'django_extensions',
+    'pydantic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

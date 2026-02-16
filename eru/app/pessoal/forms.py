@@ -1,10 +1,10 @@
-import re
+import re, json
 from itertools import groupby
 from django import forms
 from django.db.models import Q
 from django.urls import reverse_lazy
 from .models import (
-    Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, 
+    PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, 
     EventoCargo, EventoFuncionario, MotivoReajuste, FrequenciaImport, EventoFrequencia
 )
 from datetime import date
@@ -17,6 +17,22 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 RASTREIO_REGEX = re.compile(r'^[a-zA-Z][a-zA-Z0-9_]*$')
+
+
+
+class PessoalSettingsForm(forms.ModelForm):
+    config_data = forms.CharField(widget=forms.HiddenInput(), required=False)
+    class Meta:
+        model = PessoalSettings
+        fields = []
+    def clean_config_data(self):
+        data = self.cleaned_data.get('config_data')
+        try:
+            return json.loads(data)
+        except:
+            raise forms.ValidationError("JSON inválido")
+
+
 
 
 class SetorForm(BootstrapMixin, forms.ModelForm):

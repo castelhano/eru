@@ -1,0 +1,86 @@
+{% extends "layout/app.html" %}
+{% load static i18n ui_components %}
+{% block title %}{% translate 'Configurações'|escapejs %}{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+        </ul>
+    </div>
+    <form id="app_form" action="" method="POST" autocomplete="off" novalidate>
+        {% csrf_token %}
+        {{ form.config_data }}
+        <div class="card-body tab-content">
+            <h5 class="card-title mb-3">{% translate 'Pessoal'|escapejs %}: <b class="text-purple">{% translate 'Configurações'|escapejs %}</b></h5>
+            <div class="tab-pane fade show active" id="base" role="tabpanel">
+                <div class="row g-1">
+                    <div class="mb-1 col-lg-3">
+                        <div class="input-group">
+                            <select class="form-select" id="id_filial" name="filial">
+                                <option value="">---------</option>
+                                {% for empresa in user.profile.empresas %}
+                                <optgroup label="{{empresa.nome}}">
+                                    {% for filial in empresa.filiais_permitidas %}
+                                    <option value="{{filial.id|safe}}" {% if pessoalsettings.filial.id == filial.id %} selected{% endif %}>{{filial.nome}}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                            {% btn_tag 'submit' disabled="disabled" %}
+                        </div>
+                    </div>
+                </div>
+                <div id="editor_holder" class="mt-4"></div>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/vendor/jsoneditor.js' %}"></script>
+<script src="{% static 'js/url.js' %}"></script>
+{% endblock %}
+
+<script>
+    {% block add_script %}
+    const filial = document.getElementById('id_filial');
+    filial.onchange = ()=>{
+        if(filial.value == '') urlRedirect(`/pessoal/settings/`);
+        urlRedirect(`/pessoal/settings/${filial.value}`);
+    }
+    {% if object %}
+    document.getElementById('submit').disabled = false;
+    const element = document.getElementById('editor_holder');
+    const options = {
+        theme: 'bootstrap5',
+        schema: {{ schema_json|safe }},
+        startval: {{ config_json|safe }},
+        disable_edit_json: true,
+        disable_properties: true,
+        no_additional_properties: true,
+        disable_collapse: true,        
+        object_layout: 'grid',
+        show_errors: 'change',
+        display_required_only: false
+    };
+    const editor = new JSONEditor(element, options);
+    const form = document.getElementById('app_form');
+    form.onsubmit = (e) => {
+        const errors = editor.validate();
+        if (errors.length) {
+            console.log(errors);
+            appNotify('danger', _('Existem campos inválidos, verifique antes de prosseguir'))
+            e.preventDefault();
+            return;
+        }        
+        const jsonString = JSON.stringify(editor.getValue());
+        document.getElementById('id_config_data').value = jsonString;
+    };
+    {% endif %}
+    {% endblock %}
+</script>

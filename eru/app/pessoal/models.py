@@ -8,6 +8,20 @@ from django.utils.timezone import now
 from core.models import Filial
 from core.constants import DEFAULT_MESSAGES
 from auditlog.registry import auditlog
+from .schemas import PessoalSettingsSchema
+
+
+class PessoalSettings(models.Model):
+    filial = models.ForeignKey(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'), unique=True)
+    config = models.JSONField(default=dict)
+    def __str__(self):
+        return "Pessoal settings"
+    def save(self, *args, **kwargs):
+        schema = PessoalSettingsSchema(**self.config)
+        self.config = schema.model_dump()
+        super().save(*args, **kwargs)
+auditlog.register(PessoalSettings)
+
 
 class Pessoa(models.Model):
     class EstadoCivil(models.TextChoices):

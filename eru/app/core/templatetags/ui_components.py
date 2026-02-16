@@ -17,7 +17,7 @@ def btn_tag(action, url_name=None, **kwargs):
         'add':    {'label': mark_safe('<i class="bi bi-plus-lg"></i>'), 'key': 'n', 'id': 'add', 'class': 'btn btn-sm btn-success'},
         'update': {'label': mark_safe('<i class="bi bi-pen-fill"></i>'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-dark'},
         'search': {'label': mark_safe('<i class="bi bi-search"></i>'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-info-matte'},
-        'submit': {'label': _('Gravar'), 'key': 'g', 'id': 'submit', 'class': 'btn btn-sm btn-primary'},
+        'submit': {'label': _('Gravar'), 'key': 'g', 'id': 'submit', 'class': 'btn btn-sm btn-primary-matte'},
         'back':   {'label': _('Voltar'), 'key': 'v', 'id': 'back', 'class': 'btn btn-sm btn-secondary'},
         'delete': {'label': _('Excluir'), 'key': '', 'id': '', 'class': 'btn btn-sm btn-danger-matte'},
     }

@@ -1,7 +1,6 @@
 import calendar
 from datetime import date
 from django.db.models import Q
-from pessoal.extras import get_props
 from pessoal.models import Funcionario, Contrato, Evento, FrequenciaConsolidada
 
 
