@@ -7,6 +7,7 @@ DEFAULT_MESSAGES = {
     'created': _('Registro criado com sucesso'),
     'updated': _('Registro atualizado com sucesso'),
     'updated_plural': _('Registros atualizados com sucesso'),
+    'reset_default': _('Configurações restauradas para o padrão'),
     'deleted': _('Registro excluido, essa operação não pode ser desfeita'),
     'deleteError': _('Erro ao tentar apagar registro'),
     'emptyQuery': _('Nenhum resultado encontrado com os critérios informados'),

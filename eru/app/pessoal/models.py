@@ -12,12 +12,12 @@ from .schemas import PessoalSettingsSchema
 
 
 class PessoalSettings(models.Model):
-    filial = models.ForeignKey(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'), unique=True)
+    filial = models.OneToOneField(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'))
     config = models.JSONField(default=dict)
     def __str__(self):
         return "Pessoal settings"
     def save(self, *args, **kwargs):
-        schema = PessoalSettingsSchema(**self.config)
+        schema = PessoalSettingsSchema(**(self.config or {}))
         self.config = schema.model_dump()
         super().save(*args, **kwargs)
 auditlog.register(PessoalSettings)

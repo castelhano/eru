@@ -30,6 +30,19 @@
                                 {% endfor %}
                             </select>
                             {% btn_tag 'submit' disabled="disabled" %}
+                            <button id="extra" class="btn btn-sm btn-primary-matte dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                            <ul class="dropdown-menu dropdown-menu-end fs-7">
+                                <li>
+                                    <button 
+                                    class="dropdown-item dropdown-item-danger" 
+                                    onclick="urlFilter('reset_default','true')"
+                                    data-appConfirm="true"
+                                    data-appConfirmMessage='<b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma restauração das definições padrão?'|escapejs %}'
+                                    data-appConfirmColor="danger-matte"
+                                    ><i class="bi bi-exclamation-diamond-fill me-2"></i>{% translate 'Redefinir todos'|escapejs %}</button>
+                                    <!-- data-appConfirmDelay="4" -->
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>

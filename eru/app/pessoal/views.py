@@ -61,10 +61,14 @@ class PessoalSettingsUpdateView(BaseUpdateView):
         try:
             filial = self.request.user.profile.filiais.get(id=filial_id)
         except Exception as e:
-            print('[ERROR] PessoalSettingsUpdateView: ', e)
             raise PermissionDenied
         obj, created = PessoalSettings.objects.get_or_create(filial=filial)
-        if created:
+        if self.request.GET.get('reset_default') == 'true':
+        # se definido url param ?reset_default=true, reseta das configuracoes para o padrao
+            obj.config = {}
+            obj.save()
+            messages.success(self.request, DEFAULT_MESSAGES.get('reset_default'))
+        elif created:
             obj.save() 
         return obj
     def get_context_data(self, **kwargs):
