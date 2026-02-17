@@ -750,41 +750,54 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         context.update({
             'filtro_form': {'matricula': matricula, 'competencia': competencia_str},
             'eventos_choices': EventoFrequencia.objects.all(),
+            'evento_folga_id': None,  # default, sobrescrito em _processar_filtro
         })
         if matricula and competencia_str:
             self._processar_filtro(context, matricula, competencia_str)
         return context
+
     def _processar_filtro(self, context, matricula, competencia_str):
-        """Processa filtro e carrega dados do mes"""
         try:
             funcionario = Funcionario.objects.get(matricula=matricula)
             competencia = datetime.strptime(competencia_str, '%Y-%m').date()
             ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
-            contrato = funcionario.contratos.filter(inicio__lte=ultimo_dia).filter(Q(fim__gte=competencia) | Q(fim__isnull=True)).order_by('-inicio').first()
+            contrato = funcionario.contratos.filter(
+                inicio__lte=ultimo_dia
+            ).filter(
+                Q(fim__gte=competencia) | Q(fim__isnull=True)
+            ).order_by('-inicio').first()
             if not contrato:
                 messages.warning(self.request, f"Funcionário {matricula} sem contrato vigente em {competencia_str}")
                 return
+
+            # settings da filial do funcionario
+            settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
+            evento_folga_id = settings_obj.config.frequencia.evento_folga_id if settings_obj else None
+
             frequencias = Frequencia.objects.filter(
                 contrato=contrato,
                 inicio__year=competencia.year,
                 inicio__month=competencia.month
             ).select_related('evento').order_by('inicio')
+
             contratos_mes = funcionario.contratos.filter(
                 inicio__lte=ultimo_dia
             ).filter(
                 Q(fim__gte=competencia) | Q(fim__isnull=True)
             ).order_by('inicio')
+
             context.update({
                 'contrato': contrato,
                 'contratos_mes': contratos_mes,
                 'funcionario': funcionario,
                 'competencia': competencia,
+                'evento_folga_id': evento_folga_id,
                 'dias_mes': self._montar_calendario(competencia, frequencias, contrato, contratos_mes),
             })
         except Funcionario.DoesNotExist:
             messages.error(self.request, f"Matrícula {matricula} não encontrada")
         except ValueError:
-            messages.error(self.request, "Formato de competência inválido. Use YYYY-MM")    
+            messages.error(self.request, "Formato de competência inválido. Use YYYY-MM") 
     def _montar_calendario(self, competencia, frequencias, contrato, contratos_mes):
         dias_mes = OrderedDict()
         num_dias = calendar.monthrange(competencia.year, competencia.month)[1]
@@ -794,8 +807,13 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         for dia_num in range(1, num_dias + 1):
             data = date(competencia.year, competencia.month, dia_num)
             tem_contrato = any(c.inicio <= data <= (c.fim or date.max) for c in contratos_mes)
-            dias_mes[data] = {'horarios': [], 'escala': None, 'escala_json': '[]',  'bloqueado': not tem_contrato}
-
+            dias_mes[data] = {
+                'horarios': [], 
+                'escala': None, 
+                'escala_json': '[]',
+                'escala_folga': False,
+                'bloqueado': not tem_contrato
+            }
         for freq in frequencias:
             inicio_local = freq.inicio.astimezone(tz_local)
             fim_local = freq.fim.astimezone(tz_local) if freq.fim else None
@@ -850,9 +868,11 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
             if not turno_dia or turno_dia.eh_folga:
                 info['escala'] = 'Folga'
                 info['escala_json'] = '[]'
+                info['escala_folga'] = True
             elif turno_dia.horarios:
                 info['escala'] = ' | '.join(f"{h.get('entrada','')}–{h.get('saida','')}" for h in turno_dia.horarios)
                 info['escala_json'] = json.dumps(turno_dia.horarios)
+                info['escala_folga'] = False
     def _get_origem(self, freq):
         if freq.metadados.get('fonte'):
             return freq.metadados['fonte']

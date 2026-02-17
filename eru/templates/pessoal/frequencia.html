@@ -103,8 +103,7 @@
         </div><!-- /card resumo -->
         
         <!-- calendario -->
-        <div id="calendario-frequencia" data-role="calendario">
-          
+        <div id="calendario-frequencia" data-role="calendario" data-evento-folga="{{ evento_folga_id|default:'' }}">
           {% for dia, info in dias_mes.items %}
           {% if not info.bloqueado %}
           
@@ -113,14 +112,15 @@
               <div class="row">
                 <div class="col d-flex align-items-center text-body-secondary">{{ dia|date:"d/m/Y (l)" }}</div>
                 <div class="col-auto d-flex gap-2">
-                  {% if info.escala and info.escala != 'Folga' %}
+                  {% if info.escala and not info.escala_folga or info.escala_folga and evento_folga_id %}
                   <button type="button" class="btn btn-sm btn-secondary-matte"
                   data-role="carregarEscala"
                   data-dia="{{ dia|date:'Y-m-d' }}"
-                  data-escala='{{ info.escala_json }}'>
+                  data-escala='{{ info.escala_json }}'
+                  data-folga="{{ info.escala_folga|yesno:'true,false' }}">
                   <i class="bi bi-calendar2-week"></i> Escala
                 </button>
-                {% endif %}<!-- /if escala_json -->
+                {% endif %} <!-- /if escala_json -->
                 <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
                   <i class="bi bi-plus-lg"></i>
                 </button>
@@ -225,6 +225,7 @@
       matricula: document.getElementById('id_matricula'),
       competencia: document.getElementById('id_competencia'),
       rowTpl: document.getElementById('horario-row-tpl'),
+      eventoFolgaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoFolga || null,
     };
     
     let isSaving = false;
@@ -232,14 +233,23 @@
     function novaRow() {
       return $$.rowTpl.content.firstElementChild.cloneNode(true);
     }
-    
     function toggleRowFields(row) {
       const select = row.querySelector('[data-field="evento"]');
       const isDiaInteiro = select.selectedOptions[0]?.dataset.diaInteiro === 'true';
       row.querySelectorAll('[data-field-wrapper]').forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
       row.setAttribute('data-dia-inteiro', isDiaInteiro);
+      
+      // se dia inteiro, marca as outras linhas do mesmo dia como conflito
+      const container = row.closest('[data-role="horariosContainer"]');
+      if (!container) return;
+      const outrasRows = [...container.querySelectorAll('[data-role="horarioRow"]')].filter(r => r !== row);
+      // outrasRows.forEach(r => r.classList.toggle('opacity-50 pe-none text-decoration-line-through', isDiaInteiro));
+      outrasRows.forEach(r => {
+        ['opacity-50', 'pe-none', 'text-decoration-line-through'].forEach(cls => 
+        r.classList.toggle(cls, isDiaInteiro)
+        );
+      });
     }
-    
     // inicialização
     document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
     // insere linha vazia em dias sem horarios
@@ -266,21 +276,36 @@
         toggleRowFields(row);
       }
       else if (role === 'carregarEscala') {
-        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);        
-        // limpa tudo que existe no dia
-        container.innerHTML = '';
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
+        const ehFolga = target.dataset.folga === 'true';
         
-        const horarios = JSON.parse(target.dataset.escala);
-        horarios.forEach(h => {
-          const row = novaRow();
-          row.querySelector('[data-field="entrada"]').value = h.entrada || '';
-          row.querySelector('[data-field="saida"]').value = h.saida || '';
-          container.appendChild(row);
-          toggleRowFields(row);
-        });
-        // nao remove o botao, apenas atualiza visual para indicar que foi carregado
+        if (ehFolga) {
+          // nao limpa — apenas ajusta a primeira linha existente
+          const row = container.querySelector('[data-role="horarioRow"]');
+          if (row) {
+            const select = row.querySelector('[data-field="evento"]');
+            const optFolga = [...select.options].find(o => o.value == $$.eventoFolgaId);
+            if (optFolga) {
+              optFolga.selected = true;
+              toggleRowFields(row);
+            }
+          }
+        } else {
+          // jornada: limpa e popula com horarios da escala
+          container.innerHTML = '';
+          const horarios = JSON.parse(target.dataset.escala);
+          horarios.forEach(h => {
+            const row = novaRow();
+            row.querySelector('[data-field="entrada"]').value = h.entrada || '';
+            row.querySelector('[data-field="saida"]').value = h.saida || '';
+            container.appendChild(row);
+            toggleRowFields(row);
+          });
+        }
+        
         target.classList.replace('btn-secondary-matte', 'btn-success-matte');
       }
+      
       
       
       else if (role === 'removeHorario') {
@@ -310,6 +335,7 @@
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       
       for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
+        if (row.classList.contains('pe-none')) continue;
         const container = row.closest('[data-role="horariosContainer"]');
         const dia = container.dataset.dia;
         const evSelect = row.querySelector('[data-field="evento"]');
