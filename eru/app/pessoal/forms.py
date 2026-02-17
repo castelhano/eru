@@ -255,7 +255,7 @@ class EventoFrequenciaForm(BootstrapMixin, forms.ModelForm):
         fields = ['nome', 'categoria', 'contabiliza_horas', 'remunerado', 'dia_inteiro', 'prioridade', 'cor']
         widgets = {
             'nome': forms.TextInput(attrs={'autofocus': True}),
-            'cor': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'cor': forms.TextInput(attrs={'type': 'hidden', 'class': 'form-control-color'}),
         }
 
 class FrequenciaImportForm(BootstrapMixin, forms.Form):

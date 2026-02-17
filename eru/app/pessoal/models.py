@@ -557,7 +557,7 @@ class EventoFrequencia(models.Model):
     remunerado = models.BooleanField(_('Remunerado'), default=True)
     dia_inteiro = models.BooleanField(_('Dia Inteiro'), default=False)
     prioridade = models.PositiveIntegerField(_('Prioridade'), default=1)
-    cor = models.CharField(_('Cor Hex'), max_length=7, default='#3498db')
+    cor = models.CharField(_('Cor Hex'), max_length=7, null=True, blank=True)
     def __str__(self):
         return self.nome
 auditlog.register(EventoFrequencia, exclude_fields=['cor'])

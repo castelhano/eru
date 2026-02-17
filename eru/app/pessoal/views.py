@@ -1,6 +1,6 @@
 import json
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from collections import OrderedDict
 # Django Core
 from django.contrib import messages
@@ -922,22 +922,33 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     def _salvar_frequencias(self, frequencias_data, contrato):
-        if not frequencias_data: return        
+        if not frequencias_data: return
         ids_enviados = [f['id'] for f in frequencias_data if f.get('id')]
         comp_str = frequencias_data[0]['dia']
         dt_ref = datetime.strptime(comp_str, '%Y-%m-%d')
         tz = timezone.get_current_timezone()
         with transaction.atomic():
-            # 1. Remove o que nao veio no POST (Sincronizacao)
-            Frequencia.objects.filter(contrato=contrato, inicio__year=dt_ref.year, inicio__month=dt_ref.month).exclude(id__in=ids_enviados).delete()
-            # 2. Upsert com validacao de conflito
+            Frequencia.objects.filter(
+                contrato=contrato, 
+                inicio__year=dt_ref.year, 
+                inicio__month=dt_ref.month
+            ).exclude(id__in=ids_enviados).delete()
+
             for item in frequencias_data:
                 evento = EventoFrequencia.objects.get(id=item['evento_id'])
-                entrada = self._parse_datetime(item['dia'], '00:00' if evento.dia_inteiro else item['entrada'], tz)
-                saida = self._parse_datetime(item['dia'], '23:59' if evento.dia_inteiro else item['saida'], tz)
-                # validacao de Overlap (Inicio A < Fim B AND Fim A > Inicio B)
-                if Frequencia.objects.filter(contrato=contrato, inicio__lt=saida, fim__gt=entrada).exclude(id=item.get('id')).exists():
+                entrada = self._parse_datetime(item['dia'], '00:00', tz) if evento.dia_inteiro else self._parse_datetime(item['dia'], item['entrada'], tz)
+                if evento.dia_inteiro:
+                    # usa inicio do proximo dia menos 1 segundo para evitar overlap com UTC
+                    dia_seguinte = (datetime.strptime(item['dia'], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+                    saida = self._parse_datetime(dia_seguinte, '00:00', tz) - timedelta(seconds=1)
+                else:
+                    saida = self._parse_datetime(item['dia'], item['saida'], tz)
+
+                if Frequencia.objects.filter(
+                    contrato=contrato, inicio__lt=saida, fim__gt=entrada
+                ).exclude(id=item.get('id')).exists():
                     raise ValidationError(f"Conflito de horários no dia {item['dia']}.")
+
                 Frequencia.objects.update_or_create(
                     id=item.get('id'),
                     defaults={
@@ -946,9 +957,8 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                     }
                 )
     def _parse_datetime(self, dia_str, hora_str, tz_local):
-        """Converte string para datetime aware"""
         dt_naive = datetime.strptime(f"{dia_str} {hora_str}", '%Y-%m-%d %H:%M')
-        return dt_naive.replace(tzinfo=tz_local)
+        return timezone.make_aware(dt_naive, tz_local)
 
 
 class AfastamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
