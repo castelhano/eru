@@ -6,13 +6,11 @@ from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse, HttpResponse, QueryDict
 from django.contrib import messages
 from django.urls import reverse
-from django.core import serializers
 from django.utils.safestring import mark_safe
 from django.utils.html import strip_tags
 from django_tables2 import RequestConfig, Column
 from django.template.loader import render_to_string
 from django.forms.models import model_to_dict
-from django.db.models.fields import DateField
 from .templatetags.ui_components import btn_tag
 
 

@@ -6,7 +6,6 @@ from django.utils import formats
 from django.utils.translation import gettext as _
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-from urllib.parse import urlparse, parse_qs
 
 
 register = template.Library()

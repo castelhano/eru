@@ -72,7 +72,10 @@
 {% endif %}
 {% endblock%}
 
-{% block add_script_src %}<script src="{% static 'js/vendor/imask.js' %}"></script>{% endblock %}
+{% block add_script_src %}
+<script src="{% static 'js/vendor/imask.js' %}"></script>
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
 <script>
     {% block add_script %}
 {% if perms.pessoal.add_contrato or perms.pessoal.change_contrato %}
@@ -219,8 +222,7 @@ IMask(document.getElementById('id_salario'), {mask: Number, scale: 2, thousandsS
             .then(d => {
                 if (d.status === 'success') {
                     clearEditingRow();
-                    appNotify('success', '{% translate "Registro salvo com sucesso"|escapejs %}');
-                    setTimeout(() => window.location.reload(), 1000);
+                    window.location.reload();
                 } else {
                     appNotify('danger', d.message, {autodismiss: false});
                 }

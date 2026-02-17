@@ -759,71 +759,104 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         try:
             funcionario = Funcionario.objects.get(matricula=matricula)
             competencia = datetime.strptime(competencia_str, '%Y-%m').date()
-            contrato = funcionario.contratos.filter(inicio__lte=competencia ).filter( Q(fim__gte=competencia) | Q(fim__isnull=True)).first()            
+            ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
+            contrato = funcionario.contratos.filter(inicio__lte=ultimo_dia).filter(Q(fim__gte=competencia) | Q(fim__isnull=True)).order_by('-inicio').first()
             if not contrato:
                 messages.warning(self.request, f"Funcionário {matricula} sem contrato vigente em {competencia_str}")
-                return            
+                return
             frequencias = Frequencia.objects.filter(
                 contrato=contrato,
                 inicio__year=competencia.year,
                 inicio__month=competencia.month
-            ).select_related('evento').order_by('inicio')            
+            ).select_related('evento').order_by('inicio')
+            contratos_mes = funcionario.contratos.filter(
+                inicio__lte=ultimo_dia
+            ).filter(
+                Q(fim__gte=competencia) | Q(fim__isnull=True)
+            ).order_by('inicio')
             context.update({
                 'contrato': contrato,
+                'contratos_mes': contratos_mes,
                 'funcionario': funcionario,
                 'competencia': competencia,
-                'dias_mes': self._montar_calendario(competencia, frequencias, contrato),
+                'dias_mes': self._montar_calendario(competencia, frequencias, contrato, contratos_mes),
             })
         except Funcionario.DoesNotExist:
             messages.error(self.request, f"Matrícula {matricula} não encontrada")
         except ValueError:
             messages.error(self.request, "Formato de competência inválido. Use YYYY-MM")    
-    def _montar_calendario(self, competencia, frequencias, contrato):
-        """Monta estrutura de dias com frequências"""
+    def _montar_calendario(self, competencia, frequencias, contrato, contratos_mes):
         dias_mes = OrderedDict()
         num_dias = calendar.monthrange(competencia.year, competencia.month)[1]
-        tz_local = timezone.get_current_timezone()        
-        # inicializa todos os dias do mes (competencia informada)
+        tz_local = timezone.get_current_timezone()
+        ultimo_dia = competencia.replace(day=num_dias)
+
         for dia_num in range(1, num_dias + 1):
-            dias_mes[date(competencia.year, competencia.month, dia_num)] = []        
-        # preenche com registros existentes
+            data = date(competencia.year, competencia.month, dia_num)
+            tem_contrato = any(c.inicio <= data <= (c.fim or date.max) for c in contratos_mes)
+            dias_mes[data] = {'horarios': [], 'escala': None, 'escala_json': '[]',  'bloqueado': not tem_contrato}
+
         for freq in frequencias:
             inicio_local = freq.inicio.astimezone(tz_local)
             fim_local = freq.fim.astimezone(tz_local) if freq.fim else None
             dia = inicio_local.date()
             if dia in dias_mes:
-                dias_mes[dia].append({
+                dias_mes[dia]['horarios'].append({
                     'id': freq.id,
                     'entrada': inicio_local.strftime('%H:%M'),
                     'saida': fim_local.strftime('%H:%M') if fim_local else '',
                     'evento_id': freq.evento_id,
                     'observacao': freq.observacao or '',
                     'dia_inteiro': freq.evento.dia_inteiro,
+                    'origem': self._get_origem(freq),
                 })
-        # preenche dias vazios com base no turno
-        self._preencher_dias_vazios(dias_mes, contrato, competencia)
+
+        # busca TODOS os turnos vigentes no mes de uma vez
+        turnos_hist = list(
+            contrato.historico_turnos.filter(
+                inicio_vigencia__lte=ultimo_dia
+            ).filter(
+                Q(fim_vigencia__gte=competencia) | Q(fim_vigencia__isnull=True)
+            ).order_by('inicio_vigencia').select_related('turno').prefetch_related('turno__dias')
+        )
+
+        self._preencher_escala(dias_mes, turnos_hist)
         return dias_mes
-    def _preencher_dias_vazios(self, dias_mes, contrato, competencia):
-        # monta entradas para todos os dias do mes (que nao tem registro em frequencia)
-        turno_hist = contrato.historico_turnos.filter(inicio_vigencia__lte=competencia).order_by('-inicio_vigencia').select_related('turno').prefetch_related('turno__dias').first()
-        evento_jornada = EventoFrequencia.objects.filter(categoria=EventoFrequencia.Categoria.JORNADA).first()
-        if not turno_hist:
-            for data in dias_mes:
-                if not dias_mes[data]: dias_mes[data] = [{'id': None, 'entrada': '', 'saida': '', 'evento_id': evento_jornada.id if evento_jornada else None}]
+
+    def _preencher_escala(self, dias_mes, turnos_hist):
+        if not turnos_hist:
             return
-        turno = turno_hist.turno
-        # converte para lista em memoria para evitar hits ao banco no loop
-        dias_turno = list(turno.dias.all())
-        for data in dias_mes:
-            if dias_mes[data]: continue            
+
+        # pre-carrega dias de todos os turnos em memoria
+        dias_por_turno = {th.turno_id: list(th.turno.dias.all()) for th in turnos_hist}
+
+        for data, info in dias_mes.items():
+            # encontra o turno_hist vigente para este dia especifico
+            turno_hist = next((
+                th for th in reversed(turnos_hist)
+                if th.inicio_vigencia <= data and (th.fim_vigencia is None or th.fim_vigencia >= data)
+            ), None)
+
+            if not turno_hist:
+                continue
+
+            turno = turno_hist.turno
+            dias_turno = dias_por_turno[turno.id]
+
             dias_desde_inicio = (data - turno.inicio).days
             pos = dias_desde_inicio % turno.dias_ciclo if turno.dias_ciclo > 0 else 0
-            # busca no objeto em memoria
-            turno_dia = next((d for d in dias_turno if d.posicao_ciclo == pos), None)            
+            turno_dia = next((d for d in dias_turno if d.posicao_ciclo == pos), None)
+
             if not turno_dia or turno_dia.eh_folga:
-                dias_mes[data] = [] if turno_dia and turno_dia.eh_folga else [{'id': None, 'entrada': '', 'saida': '', 'evento_id': evento_jornada.id if evento_jornada else None}]
-            else:
-                dias_mes[data] = self._extrair_horarios_turno(turno_dia, evento_jornada)
+                info['escala'] = 'Folga'
+                info['escala_json'] = '[]'
+            elif turno_dia.horarios:
+                info['escala'] = ' | '.join(f"{h.get('entrada','')}–{h.get('saida','')}" for h in turno_dia.horarios)
+                info['escala_json'] = json.dumps(turno_dia.horarios)
+    def _get_origem(self, freq):
+        if freq.metadados.get('fonte'):
+            return freq.metadados['fonte']
+        return 'manual' if freq.editado else 'sistema'
     def _extrair_horarios_turno(self, turno_dia, evento_jornada):
         # extrai horarios do turno (JSONField)
         if hasattr(turno_dia, 'horarios') and turno_dia.horarios:
@@ -852,7 +885,13 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
             competencia_str = data.get('competencia')
             funcionario = Funcionario.objects.get(matricula=matricula)
             competencia = datetime.strptime(competencia_str, '%Y-%m').date()
-            contrato = funcionario.contratos.filter(inicio__lte=competencia).filter(Q(fim__gte=competencia) | Q(fim__isnull=True)).first()            
+            ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])  # <-- faltava isso
+            contrato = funcionario.contratos.filter(
+                inicio__lte=ultimo_dia
+            ).filter(
+                Q(fim__gte=competencia) | Q(fim__isnull=True)
+            ).order_by('-inicio').first()
+            # contrato = funcionario.contratos.filter(inicio__lte=competencia).filter(Q(fim__gte=competencia) | Q(fim__isnull=True)).first()
             if not contrato:
                 return JsonResponse({'status': 'error', 'message': 'Contrato não encontrado'}, status=400)            
             self._salvar_frequencias(data.get('frequencias', []), contrato)            

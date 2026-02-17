@@ -4,45 +4,89 @@
 {% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
 {% block content_fluid %}
-<div class="card mt-2">
+
+<!-- template oculto para clone de horarioRow -->
+<template id="horario-row-tpl">
+  <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="false">
+    <input type="hidden" data-field="id" value="">
+    <div class="col-auto d-flex align-items-center">
+      <i class="bi bi-plus-lg text-body-secondary" title="Novo registro"></i>
+    </div>
+    <div class="col-6 col-md-2" data-field-wrapper="entrada">
+      <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+      <input type="time" class="form-control form-control-sm" data-field="entrada">
+    </div><!-- /col entrada -->
+    <div class="col-6 col-md-2" data-field-wrapper="saida">
+      <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+      <input type="time" class="form-control form-control-sm" data-field="saida">
+    </div><!-- /col saida -->
+    <div class="col-12 col-md-3">
+      <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
+      <select class="form-select form-select-sm" data-field="evento">
+        {% for ev in eventos_choices %}
+        <option value="{{ ev.id }}"
+        data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}">
+        {{ ev.nome }}
+      </option>
+      {% endfor %}<!-- /for eventos_choices -->
+    </select>
+  </div><!-- /col evento -->
+  <div class="col-md">
+    <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+    <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
+  </div><!-- /col observacao -->
+  <div class="col-md-auto text-end">
+    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+      <i class="bi bi-trash3-fill"></i>
+    </button>
+  </div><!-- /col actions -->
+</div><!-- /horarioRow -->
+</template>
+
+<div class="card mt-2"><!-- card principal -->
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="url"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
-  </div>
+  </div><!-- /card-header -->
+  
   <div class="card-body tab-content">
     <h5 class="card-title mb-3">{% translate 'Pessoal'|escapejs %}: <b class="text-purple">{% translate 'Frequência'|escapejs %}</b></h5>
+    
     <form method="get" id="form-filtro" class="row g-3" autocomplete="off">
       <div class="tab-pane fade show active" id="base" role="tabpanel">
-        <!-- card de pesquisa -->
+        
+        <!-- filtro -->
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-3">
             <input type="text" id="id_matricula" name="matricula" value="{{ filtro_form.matricula }}" class="form-control" placeholder=" " required autofocus>
             <label for="id_matricula">{% translate 'Matrícula'|escapejs %}</label>
-          </div>
+          </div><!-- /col matricula -->
           <div class="col-lg-3 mb-1">
             <div class="input-group">
               <div class="form-floating">
                 <input type="month" id="id_competencia" name="competencia" value="{{ filtro_form.competencia }}" class="form-control" placeholder=" " required>
                 <label for="id_competencia">{% translate 'Competência'|escapejs %}</label>
-              </div>
+              </div><!-- /form-floating competencia -->
               <button class="btn btn-primary-matte px-3" type="submit"><i class="bi bi-search"></i></button>
-            </div>
-          </div>
-        </div>
+            </div><!-- /input-group -->
+          </div><!-- /col competencia -->
+        </div><!-- /row filtro -->
+        
         {% if contrato %}
-        <!-- header de resumo -->
+        
+        <!-- header resumo -->
         <div class="card my-1">
           <div class="card-body py-2 text-bg-primary-matte hl-primary rounded">
             <div class="row">
               <div class="col d-flex align-items-center order-1 text-nowrap overflow-hidden">
-                <span class="text-truncate me-1"> {{ funcionario.nome }}</span>
-                <span class="d-none d-lg-inline">({{ funcionario.matricula }}) [ <b>{{contrato.cargo.nome}}</b> ]</span>
-              </div>
+                <span class="text-truncate me-1">{{ funcionario.nome }}</span>
+                <span class="d-none d-lg-inline">({{ funcionario.matricula }}) [ <b>{{ contrato.cargo.nome }}</b> ]</span>
+              </div><!-- /col nome -->
               <div class="col-lg d-flex align-items-center order-3 order-lg-2">
                 <b class="text-body-secondary">{{ competencia|date:"F/Y" }}</b>
-              </div>
+              </div><!-- /col competencia -->
               <div class="col-auto order-2 order-lg-3">
                 <div class="input-group text-end">
                   {% btn_tag 'submit' type="button" class="btn btn-sm btn-success-matte" data_role="saveAll" %}
@@ -52,103 +96,161 @@
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#">Separated link</a></li>
                   </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- container de calendario -->
+                </div><!-- /input-group acoes -->
+              </div><!-- /col acoes -->
+            </div><!-- /row resumo -->
+          </div><!-- /card-body resumo -->
+        </div><!-- /card resumo -->
+        
+        <!-- calendario -->
         <div id="calendario-frequencia" data-role="calendario">
-          {% for dia, horarios in dias_mes.items %}
-          <!-- cards para dias -->
-          <div class="card mt-2">
+          
+          {% for dia, info in dias_mes.items %}
+          {% if not info.bloqueado %}
+          
+          <div class="card mt-2"><!-- card dia -->
             <div class="card-header">
               <div class="row">
                 <div class="col d-flex align-items-center text-body-secondary">{{ dia|date:"d/m/Y (l)" }}</div>
-                <div class="col-auto">
-                  <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="card-body">
-              <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
-                {% if horarios %}
-                {% for h in horarios %}
-                <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
-                  <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
-                  <!-- field entrada / saida -->
-                  <div class="col-6 col-md-2" data-field-wrapper="entrada">
-                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
-                  </div>
-                  <div class="col-6 col-md-2" data-field-wrapper="saida">
-                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
-                  </div>
-                  <!-- field evento -->
-                  <div class="col-12 col-md-3">
-                    <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
-                    <select class="form-select form-select-sm" data-field="evento">
-                      {% for ev in eventos_choices %}
-                      <option value="{{ ev.id }}" 
-                      data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
-                      {% if ev.id == h.evento_id %}selected{% endif %}>
-                      {{ ev.nome }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <!-- field observacao -->
-                <div class="col-md">
-                  <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-                  <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
-                </div>
-                <!-- actions -->
-                <div class="col-md-auto text-end">
-                  <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-                    <i class="bi bi-trash3-fill"></i>
-                  </button>
-                </div>
-              </div>
-              {% endfor %}
-              {% endif %}
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div> <!-- tab-pane -->
-  </form>
-</div> <!-- card-body -->
-</div> <!-- card principal -->
+                <div class="col-auto d-flex gap-2">
+                  {% if info.escala and info.escala != 'Folga' %}
+                  <button type="button" class="btn btn-sm btn-secondary-matte"
+                  data-role="carregarEscala"
+                  data-dia="{{ dia|date:'Y-m-d' }}"
+                  data-escala='{{ info.escala_json }}'>
+                  <i class="bi bi-calendar2-week"></i> Escala
+                </button>
+                {% endif %}<!-- /if escala_json -->
+                <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div><!-- /col-auto botoes -->
+            </div><!-- /row header dia -->
+          </div><!-- /card-header dia -->
+          
+          <div class="card-body">
+            
+            {% if info.escala %}
+            <p class="text-body-secondary small mb-2">
+              <i class="bi bi-calendar2-week"></i> Escala: <b>{{ info.escala }}</b>
+            </p>
+            {% endif %}<!-- /if escala -->
+            
+            <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
+              
+              {% for h in info.horarios %}
+              <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}"><!-- /horarioRow -->
+                <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
+                
+                <!-- icone origem -->
+                <div class="col-auto d-flex align-items-center">
+                  {% if h.id %}
+                  {% if h.origem == 'manual' %}
+                  <i class="bi bi-pencil-fill text-warning" title="Editado manualmente"></i>
+                  {% elif h.origem == 'ponto' %}
+                  <i class="bi bi-clock-fill text-info" title="Importado do ponto"></i>
+                  {% else %}
+                  <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
+                  {% endif %}
+                  {% else %}
+                  <i class="bi bi-calendar2-week text-body-secondary" title="Escala do turno"></i>
+                  {% endif %}<!-- /if origem -->
+                </div><!-- /col icone origem -->
+                
+                <div class="col-6 col-md-2" data-field-wrapper="entrada">
+                  <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+                  <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
+                </div><!-- /col entrada -->
+                
+                <div class="col-6 col-md-2" data-field-wrapper="saida">
+                  <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+                  <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
+                </div><!-- /col saida -->
+                
+                <div class="col-12 col-md-3">
+                  <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
+                  <select class="form-select form-select-sm" data-field="evento">
+                    {% for ev in eventos_choices %}
+                    <option value="{{ ev.id }}"
+                    data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+                    {% if ev.id == h.evento_id %}selected{% endif %}>
+                    {{ ev.nome }}
+                  </option>
+                  {% endfor %}<!-- /for eventos_choices -->
+                </select>
+              </div><!-- /col evento -->
+              
+              <div class="col-md">
+                <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+                <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
+              </div><!-- /col observacao -->
+              
+              <div class="col-md-auto text-end">
+                <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
+              </div><!-- /col actions -->
+              
+            </div><!-- /horarioRow -->
+            {% endfor %}<!-- /for info.horarios -->
+            
+          </div><!-- /horariosContainer -->
+          
+        </div><!-- /card-body dia -->
+      </div><!-- /card dia -->
+      
+      {% endif %}<!-- /if not bloqueado -->
+      {% endfor %}<!-- /for dias_mes -->
+      
+    </div><!-- /calendario -->
+    
+    {% endif %}<!-- /if contrato -->
+    
+  </div><!-- /tab-pane -->
+</form>
+
+</div><!-- /card-body tab-content -->
+</div><!-- /card principal -->
 {% endblock %}
-
-
 
 <script>
   {% block add_script %}
-  (function() {
+  (function () {
     'use strict';
+    
     
     const $$ = {
       calendario: document.querySelector('[data-role="calendario"]'),
       btnSave: document.querySelector('[data-role="saveAll"]'),
       matricula: document.getElementById('id_matricula'),
-      competencia: document.getElementById('id_competencia')
+      competencia: document.getElementById('id_competencia'),
+      rowTpl: document.getElementById('horario-row-tpl'),
     };
     
     let isSaving = false;
     
-    // Toggle visual para campos de "Dia Inteiro"
+    function novaRow() {
+      return $$.rowTpl.content.firstElementChild.cloneNode(true);
+    }
+    
     function toggleRowFields(row) {
       const select = row.querySelector('[data-field="evento"]');
       const isDiaInteiro = select.selectedOptions[0]?.dataset.diaInteiro === 'true';
       row.querySelectorAll('[data-field-wrapper]').forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
       row.setAttribute('data-dia-inteiro', isDiaInteiro);
     }
+    
+    // inicialização
+    document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
+    // insere linha vazia em dias sem horarios
+    document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
+      if (container.querySelectorAll('[data-role="horarioRow"]').length === 0) {
+        const row = novaRow();
+        container.appendChild(row);
+        toggleRowFields(row);
+      }
+    });
+    
     
     // Delegated Events (Click)
     document.addEventListener('click', e => {
@@ -159,30 +261,41 @@
       
       if (role === 'addHorario') {
         const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
-        // Clona a primeira linha que encontrar ou cria uma base
-        const baseRow = document.querySelector('[data-role="horarioRow"]');
-        const newRow = baseRow.cloneNode(true);
+        const row = novaRow();
+        container.appendChild(row);
+        toggleRowFields(row);
+      }
+      else if (role === 'carregarEscala') {
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);        
+        // limpa tudo que existe no dia
+        container.innerHTML = '';
         
-        // Limpa valores
-        newRow.querySelectorAll('input').forEach(i => i.value = '');
-        newRow.querySelector('select').selectedIndex = 0;
-        newRow.classList.remove('border-danger');
-        container.appendChild(newRow);
-        toggleRowFields(newRow);
-      } 
+        const horarios = JSON.parse(target.dataset.escala);
+        horarios.forEach(h => {
+          const row = novaRow();
+          row.querySelector('[data-field="entrada"]').value = h.entrada || '';
+          row.querySelector('[data-field="saida"]').value = h.saida || '';
+          container.appendChild(row);
+          toggleRowFields(row);
+        });
+        // nao remove o botao, apenas atualiza visual para indicar que foi carregado
+        target.classList.replace('btn-secondary-matte', 'btn-success-matte');
+      }
+      
       
       else if (role === 'removeHorario') {
-        const rows = document.querySelectorAll('[data-role="horarioRow"]');
+        const container = target.closest('[data-role="horariosContainer"]');
+        const rows = container.querySelectorAll('[data-role="horarioRow"]');
         if (rows.length > 1) target.closest('[data-role="horarioRow"]').remove();
-        else alert("Mantenha ao menos uma linha (ou limpe os campos).");
-      } 
+        else appNotify('warning', 'Mantenha ao menos uma linha (ou limpe os campos)');
+      }
       
       else if (role === 'saveAll') {
         saveFrequencias();
       }
     });
     
-    // Delegated Events (Change) - Para esconder campos se mudar o evento
+    // Delegated Events (Change)
     document.addEventListener('change', e => {
       if (e.target.dataset.field === 'evento') {
         toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
@@ -192,71 +305,54 @@
     function saveFrequencias() {
       if (isSaving) return;
       const frequencias = [];
-      const slotsPorDia = {}; 
+      const slotsPorDia = {};
       
-      // 1. Limpa estados de erro visuais de tentativas anteriores
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       
-      const rows = document.querySelectorAll('[data-role="horarioRow"]');
-      
-      for (const row of rows) {
+      for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
         const container = row.closest('[data-role="horariosContainer"]');
         const dia = container.dataset.dia;
         const evSelect = row.querySelector('[data-field="evento"]');
         const inputIn = row.querySelector('[data-field="entrada"]');
         const inputOut = row.querySelector('[data-field="saida"]');
-        
-        // const isDiaInteiro = evSelect.selectedOptions?.dataset.diaInteiro === 'true';
         const selectedOption = evSelect.options[evSelect.selectedIndex];
         const isDiaInteiro = selectedOption ? selectedOption.dataset.diaInteiro === 'true' : false;
         const hIn = inputIn.value;
         const hOut = inputOut.value;
         
-        // --- REGRA DE OURO: IGNORAR LINHAS VAZIAS ---
-        // Pula a linha se não houver evento selecionado E não houver horários digitados
-        if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) {
-          continue; 
-        }
+        // ignora linhas vazias
+        if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) continue;
         
-        // Se o usuário selecionou um evento mas esqueceu as horas (em eventos normais)
+        // evento selecionado mas horas faltando
         if (!isDiaInteiro && (!hIn || !hOut)) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
           return;
         }
         
-        // Normaliza valores para validação de conflito
         const valIn = isDiaInteiro ? "00:00" : hIn;
         const valOut = isDiaInteiro ? "23:59" : hOut;
         
-        // Validação lógica: Saída deve ser maior que entrada
         if (valOut <= valIn) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
-          alert(`No dia ${dia}, a saída (${valOut}) deve ser após a entrada (${valIn}).`);
+          appNotify('warning', `Horário de fim não pode ser menor que inicio ${dia}`, false);
           return;
         }
         
-        // Validação de Overlap (Sobreposição entre registros)
         if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
-        
         const conflito = slotsPorDia[dia].find(s => valIn < s.out && valOut > s.in);
-        
         if (conflito) {
-          // marca campos conflitantes com form-invalid
-          const inputOutAnterior = conflito.rowRef.querySelector('[data-field="saida"]');
-          inputOutAnterior.classList.add('is-invalid');
+          conflito.rowRef.querySelector('[data-field="saida"]').classList.add('is-invalid');
           inputIn.classList.add('is-invalid');
-          appNotify('warning', 'Registro sobrepõe outras entradas existentes')
+          appNotify('warning', 'Registro sobrepõe outras entradas existentes');
           return;
         }
         
-        // Registra o slot para validar contra as próximas linhas do mesmo dia
         slotsPorDia[dia].push({ in: valIn, out: valOut, rowRef: row });
-        
         frequencias.push({
           id: row.querySelector('[data-field="id"]').value || null,
-          dia: dia,
+          dia,
           entrada: valIn,
           saida: valOut,
           evento_id: evSelect.value,
@@ -269,36 +365,21 @@
         return;
       }
       
-      // 2. Envio via AJAX
       isSaving = true;
       const btn = $$.btnSave;
       const originalHTML = btn.innerHTML;
-      
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
       
       fetch(window.location.pathname, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ 
-          matricula: $$.matricula.value, 
-          competencia: $$.competencia.value, 
-          frequencias: frequencias 
-        })
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ matricula: $$.matricula.value, competencia: $$.competencia.value, frequencias })
       })
-      .then(response => {
-        if (response.ok) return response.json();
-        return response.json().then(err => { throw err; });
-      })
+      .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
       .then(data => {
-        if (data.status === 'success') {
-          window.location.reload();
-        } else {
-          throw new Error(data.message || "Erro desconhecido");
-        }
+        if (data.status === 'success') window.location.reload();
+        else throw new Error(data.message || "Erro desconhecido");
       })
       .catch(error => {
         alert("Erro: " + (error.message || error));
@@ -308,14 +389,9 @@
       });
     }
     
-    
-    
-    
-    
-    // Inicialização: Ajusta visibilidade dos campos no Load
+    // inicialização
     document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
     
   })();
-  
   {% endblock %}
 </script>
