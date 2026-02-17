@@ -24,5 +24,6 @@ urlpatterns = [
     path('settings/', views.PessoalSettingsUpdateView.as_view(), name='settings_list'),
     path('settings/<int:filial_id>/', views.PessoalSettingsUpdateView.as_view(), name='settings_update'),
     path('frequencia/', views.FrequenciaManagementView.as_view(), name='frequencia_list'),
+    path('frequencia/import/', views.FrequenciaImportView.as_view(), name='frequencia_import'),
     path('api/formula_validate',views.FormulaValidateView.as_view(),name='formula_validate'),
 ]

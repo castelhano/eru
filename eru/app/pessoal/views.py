@@ -21,6 +21,7 @@ from rest_framework import viewsets, permissions
 from django_tables2 import SingleTableView
 
 # Core App
+from core.models import Filial
 from core.extras import asteval_run
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
@@ -29,12 +30,12 @@ from core.views_base import (BaseListView, BaseTemplateView, BaseCreateView, Bas
 # Pessoal App - Models
 from .models import (
     PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, Turno, TurnoDia, TurnoHistorico, Frequencia, EventoFrequencia
+    EventoCargo, EventoFuncionario, Turno, TurnoDia, TurnoHistorico, Frequencia, EventoFrequencia, FrequenciaImport
 )
 # Pessoal App
 from .forms import (
     PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
-    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm
+    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm, FrequenciaImportForm
 )
 from .filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, 
@@ -948,6 +949,640 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         """Converte strings de data e hora para datetime aware no timezone local"""
         dt_naive = datetime.strptime(f"{dia_str} {hora_str}", '%Y-%m-%d %H:%M')
         return timezone.make_aware(dt_naive, tz_local)  # make_aware trata DST corretamente
+
+
+
+import csv
+import json
+from datetime import datetime, timedelta
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views import View
+from django.utils import timezone
+from collections import defaultdict
+import hashlib
+class FrequenciaImportView(LoginRequiredMixin, View):
+    """
+    View para importação de registros de ponto eletrônico.
+    
+    Fluxo:
+    1. GET: Exibe formulário de upload
+    2. POST (step=upload): Processa arquivo e retorna preview dos dados
+    3. POST (step=confirm): Persiste os registros validados no banco
+    """
+    
+    template_name = 'pessoal/frequencia_import.html'
+    
+    def get(self, request):
+        """Renderiza formulário inicial"""
+        form = FrequenciaImportForm(user=request.user)
+        context = {
+            'form': form,
+            'origens_info': self._get_origens_info(),
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        """Processa upload ou confirmação de importação"""
+        step = request.POST.get('step', 'upload')
+        
+        if step == 'upload':
+            return self._handle_upload(request)
+        elif step == 'confirm':
+            return self._handle_confirm(request)
+        
+        return JsonResponse({'error': 'Ação inválida'}, status=400)
+    
+    def _handle_upload(self, request):
+        """
+        Processa arquivo enviado e retorna preview dos dados.
+        Valida formato, identifica funcionários e agrupa batidas por dia.
+        """
+        form = FrequenciaImportForm(request.POST, request.FILES, user=request.user)
+        
+        if not form.is_valid():
+            return JsonResponse({
+                'error': 'Formulário inválido',
+                'errors': form.errors
+            }, status=400)
+        
+        try:
+            filial = form.cleaned_data['filial']
+            origem = form.cleaned_data['origem']
+            arquivo = request.FILES['arquivo']
+            
+            # Parse do arquivo baseado na origem
+            registros, erros = self._parse_arquivo(arquivo, origem, filial)
+            
+            if not registros:
+                erro_msg = 'Nenhum registro válido encontrado no arquivo'
+                if erros:
+                    erro_msg += f'\n\nDetalhes dos erros:\n' + '\n'.join(erros[:5])
+                return JsonResponse({
+                    'error': erro_msg
+                }, status=400)
+            
+            # Agrupa e prepara dados para preview
+            preview_data = self._preparar_preview(registros, filial)
+            
+            # Salva dados na sessão para confirmação posterior
+            request.session['import_data'] = {
+                'filial_id': filial.id,
+                'origem': origem,
+                'registros': registros,
+            }
+            request.session.modified = True
+            
+            return JsonResponse({
+                'success': True,
+                'preview': preview_data,
+                'totais': {
+                    'registros': len(registros),
+                    'funcionarios': len(preview_data['funcionarios']),
+                    'periodo': preview_data['periodo'],
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Erro ao processar arquivo: {str(e)}'
+            }, status=500)
+    
+    def _handle_confirm(self, request):
+        """
+        Persiste registros aprovados no banco de dados.
+        Cria FrequenciaImport e gera Frequencia agrupadas.
+        """
+        import_data = request.session.get('import_data')
+        
+        if not import_data:
+            return JsonResponse({
+                'error': 'Dados de importação não encontrados. Por favor, faça upload novamente.'
+            }, status=400)
+        
+        try:
+            with transaction.atomic():
+                filial = Filial.objects.get(id=import_data['filial_id'])
+                origem = import_data['origem']
+                registros = import_data['registros']
+                
+                # Importa registros brutos
+                imports_criados = []
+                for reg in registros:
+                    freq_import = FrequenciaImport.objects.create(
+                        contrato_id=reg['contrato_id'],
+                        data_hora=reg['data_hora'],
+                        origem=origem,
+                        nsr=reg.get('nsr'),
+                        num_relogio=reg.get('num_relogio'),
+                        latitude=reg.get('latitude'),
+                        longitude=reg.get('longitude'),
+                        hash_verificacao=reg.get('hash'),
+                    )
+                    imports_criados.append(freq_import)
+                
+                # Agrupa batidas e cria Frequencia
+                frequencias_criadas = self._gerar_frequencias(imports_criados, origem)
+                
+                # Limpa sessão
+                del request.session['import_data']
+                request.session.modified = True
+                
+                messages.success(
+                    request,
+                    f'Importação concluída: {len(imports_criados)} batidas processadas, '
+                    f'{len(frequencias_criadas)} frequências geradas.'
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'redirect': '/pessoal/frequencia/',  # ajustar URL conforme necessário
+                    'totais': {
+                        'batidas': len(imports_criados),
+                        'frequencias': len(frequencias_criadas),
+                    }
+                })
+                
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Erro ao importar: {str(e)}'
+            }, status=500)
+    
+    def _parse_arquivo(self, arquivo, origem, filial):
+        """
+        Parse do arquivo baseado no tipo de origem.
+        Retorna tupla (lista de dicionários com dados normalizados, lista de erros).
+        """
+        if origem == 'AFD':
+            return self._parse_afd(arquivo, filial)
+        elif origem == 'CSV':
+            return self._parse_csv(arquivo, filial)
+        elif origem == 'APP':
+            return self._parse_app(arquivo, filial)
+        elif origem == 'WEB':
+            return self._parse_web(arquivo, filial)
+        
+        raise ValueError(f'Origem não suportada: {origem}')
+    
+    def _parse_afd(self, arquivo, filial):
+        """
+        Parser para arquivo AFD (padrão Portaria 1510/2009 MTE).
+        Formato: linha com tipo de registro + campos de tamanho fixo.
+        
+        Exemplo linha tipo 3 (marcação):
+        3XXXXXXXXXXXXNNNNNNNNNNDDMMYYYYHHMMSS
+        """
+        from django.db.models import Q
+        
+        registros = []
+        erros = []
+        
+        try:
+            conteudo = arquivo.read().decode('latin-1')
+            linhas = conteudo.splitlines()
+            
+            erros.append(f"DEBUG: {len(linhas)} linhas no arquivo AFD")
+            
+            for idx, linha in enumerate(linhas, start=1):
+                linha = linha.strip()
+                if not linha:
+                    continue
+                    
+                if linha[0] != '3':  # tipo 3 = marcação de ponto
+                    continue
+                
+                try:
+                    # Layout AFD simplificado (adaptar conforme padrão real)
+                    if len(linha) < 37:
+                        erros.append(f"Linha {idx}: tamanho insuficiente ({len(linha)} caracteres)")
+                        continue
+                    
+                    tipo = linha[0]
+                    nsr = linha[1:13].strip()
+                    pis = linha[13:25].strip()
+                    data_str = linha[25:33]  # DDMMYYYY
+                    hora_str = linha[33:37]  # HHMM
+                    
+                    # Busca funcionário pelo PIS (assumindo que está no CPF ou num campo específico)
+                    # Ajuste conforme seu modelo
+                    funcionario = Funcionario.objects.filter(
+                        Q(cpf=pis) | Q(matricula=pis),
+                        filial=filial
+                    ).first()
+                    
+                    if not funcionario:
+                        erros.append(f"Linha {idx}: PIS/Matrícula {pis} não encontrado")
+                        continue
+                    
+                    # Monta datetime com timezone
+                    try:
+                        dt_naive = datetime.strptime(
+                            f"{data_str} {hora_str}", 
+                            '%d%m%Y %H%M'
+                        )
+                    except ValueError as e:
+                        erros.append(f"Linha {idx}: Data/hora inválida ({data_str} {hora_str})")
+                        continue
+                    
+                    data_hora = timezone.make_aware(
+                        dt_naive, 
+                        timezone.get_current_timezone()
+                    )
+                    
+                    # Contrato vigente
+                    data_marcacao = dt_naive.date()
+                    contrato = funcionario.contratos.filter(
+                        inicio__lte=data_marcacao
+                    ).filter(
+                        Q(fim__gte=data_marcacao) | Q(fim__isnull=True)
+                    ).order_by('-inicio').first()
+                    
+                    if not contrato:
+                        erros.append(f"Linha {idx}: Funcionário {pis} sem contrato em {data_marcacao}")
+                        continue
+                    
+                    # Hash para integridade
+                    hash_str = f"{pis}{data_str}{hora_str}{nsr}"
+                    hash_value = hashlib.md5(hash_str.encode()).hexdigest()
+                    
+                    registros.append({
+                        'contrato_id': contrato.id,
+                        'funcionario_nome': funcionario.nome,
+                        'funcionario_matricula': funcionario.matricula,
+                        'data_hora': data_hora.isoformat(),
+                        'nsr': nsr,
+                        'num_relogio': None,
+                        'hash': hash_value,
+                    })
+                    
+                except Exception as e:
+                    erros.append(f"Linha {idx}: Erro ao processar - {str(e)}")
+                    continue
+            
+            if registros:
+                erros.append(f"DEBUG: {len(registros)} registros AFD processados")
+                
+        except Exception as e:
+            erros.append(f"Erro geral ao processar AFD: {str(e)}")
+        
+        return registros, erros
+    
+    def _parse_csv(self, arquivo, filial):
+        """
+        Parser para CSV genérico.
+        Formato esperado: matricula,data,hora[,equipamento]
+        """
+        from django.db.models import Q
+        
+        registros = []
+        erros = []
+        conteudo = arquivo.read().decode('utf-8-sig')
+        
+        try:
+            reader = csv.DictReader(conteudo.splitlines())
+            linhas = list(reader)
+            
+            if not linhas:
+                erros.append("Arquivo CSV vazio ou sem dados")
+                return registros, erros
+            
+            # Log das colunas encontradas
+            colunas = linhas[0].keys() if linhas else []
+            erros.append(f"DEBUG: Colunas encontradas: {', '.join(colunas)}")
+            
+            for idx, row in enumerate(linhas, start=2):  # linha 2 porque linha 1 é header
+                try:
+                    # Busca campos com nomes flexíveis
+                    matricula = (row.get('matricula') or row.get('Matricula') or 
+                                row.get('MATRICULA') or row.get('mat') or '').strip()
+                    data_str = (row.get('data') or row.get('Data') or 
+                               row.get('DATA') or '').strip()
+                    hora_str = (row.get('hora') or row.get('Hora') or 
+                               row.get('HORA') or '').strip()
+                    
+                    if not matricula or not data_str or not hora_str:
+                        erros.append(f"Linha {idx}: campos vazios (mat={matricula}, data={data_str}, hora={hora_str})")
+                        continue
+                    
+                    # Busca funcionário
+                    funcionario = Funcionario.objects.filter(
+                        matricula=matricula,
+                        filial=filial
+                    ).first()
+                    
+                    if not funcionario:
+                        # Tenta buscar em qualquer filial para dar feedback melhor
+                        func_outra_filial = Funcionario.objects.filter(matricula=matricula).first()
+                        if func_outra_filial:
+                            erros.append(f"Linha {idx}: Funcionário {matricula} existe mas não pertence à filial selecionada")
+                        else:
+                            erros.append(f"Linha {idx}: Funcionário com matrícula {matricula} não encontrado")
+                        continue
+                    
+                    # Parse data/hora - aceita vários formatos
+                    dt_naive = None
+                    formatos_data = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+                    formatos_hora = ['%H:%M', '%H:%M:%S']
+                    
+                    for fmt_data in formatos_data:
+                        for fmt_hora in formatos_hora:
+                            try:
+                                dt_naive = datetime.strptime(
+                                    f"{data_str} {hora_str}",
+                                    f"{fmt_data} {fmt_hora}"
+                                )
+                                break
+                            except ValueError:
+                                continue
+                        if dt_naive:
+                            break
+                    
+                    if not dt_naive:
+                        erros.append(f"Linha {idx}: Formato de data/hora inválido ({data_str} {hora_str})")
+                        continue
+                    
+                    data_hora = timezone.make_aware(
+                        dt_naive,
+                        timezone.get_current_timezone()
+                    )
+                    
+                    # Contrato vigente
+                    contrato = funcionario.contratos.filter(
+                        inicio__lte=dt_naive.date()
+                    ).filter(
+                        Q(fim__gte=dt_naive.date()) | Q(fim__isnull=True)
+                    ).order_by('-inicio').first()
+                    
+                    if not contrato:
+                        erros.append(f"Linha {idx}: Funcionário {matricula} sem contrato vigente em {data_str}")
+                        continue
+                    
+                    hash_str = f"{matricula}{data_str}{hora_str}"
+                    hash_value = hashlib.md5(hash_str.encode()).hexdigest()
+                    
+                    registros.append({
+                        'contrato_id': contrato.id,
+                        'funcionario_nome': funcionario.nome,
+                        'funcionario_matricula': funcionario.matricula,
+                        'data_hora': data_hora.isoformat(),
+                        'nsr': None,
+                        'num_relogio': row.get('equipamento', row.get('Equipamento', None)),
+                        'hash': hash_value,
+                    })
+                    
+                except Exception as e:
+                    erros.append(f"Linha {idx}: Erro ao processar - {str(e)}")
+                    continue
+            
+            if registros:
+                erros.append(f"DEBUG: {len(registros)} registros processados com sucesso")
+            
+        except Exception as e:
+            erros.append(f"Erro geral ao processar CSV: {str(e)}")
+        
+        return registros, erros
+    
+    def _parse_app(self, arquivo, filial):
+        """Parser para JSON do app mobile (com GPS)"""
+        from django.db.models import Q
+        
+        registros = []
+        erros = []
+        
+        try:
+            conteudo = arquivo.read().decode('utf-8')
+            dados = json.loads(conteudo)
+            
+            if not isinstance(dados, list):
+                erros.append("JSON deve ser uma lista de registros")
+                return registros, erros
+            
+            erros.append(f"DEBUG: {len(dados)} registros encontrados no JSON")
+            
+            for idx, item in enumerate(dados, start=1):
+                try:
+                    matricula = item.get('matricula')
+                    if not matricula:
+                        erros.append(f"Registro {idx}: campo 'matricula' não encontrado")
+                        continue
+                    
+                    funcionario = Funcionario.objects.filter(
+                        matricula=matricula,
+                        filial=filial
+                    ).first()
+                    
+                    if not funcionario:
+                        erros.append(f"Registro {idx}: Funcionário {matricula} não encontrado na filial")
+                        continue
+                    
+                    # Parse timestamp - aceita vários formatos
+                    timestamp_str = item.get('timestamp')
+                    if not timestamp_str:
+                        erros.append(f"Registro {idx}: campo 'timestamp' não encontrado")
+                        continue
+                    
+                    # Tenta parser ISO format primeiro
+                    try:
+                        dt_naive = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                        if dt_naive.tzinfo:
+                            data_hora = dt_naive.astimezone(timezone.get_current_timezone())
+                        else:
+                            data_hora = timezone.make_aware(dt_naive, timezone.get_current_timezone())
+                    except:
+                        # Tenta outros formatos
+                        for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S']:
+                            try:
+                                dt_naive = datetime.strptime(timestamp_str, fmt)
+                                data_hora = timezone.make_aware(dt_naive, timezone.get_current_timezone())
+                                break
+                            except:
+                                continue
+                        else:
+                            erros.append(f"Registro {idx}: formato de timestamp inválido ({timestamp_str})")
+                            continue
+                    
+                    contrato = funcionario.contratos.filter(
+                        inicio__lte=data_hora.date()
+                    ).filter(
+                        Q(fim__gte=data_hora.date()) | Q(fim__isnull=True)
+                    ).order_by('-inicio').first()
+                    
+                    if not contrato:
+                        erros.append(f"Registro {idx}: Funcionário {matricula} sem contrato vigente em {data_hora.date()}")
+                        continue
+                    
+                    hash_str = f"{matricula}{timestamp_str}"
+                    hash_value = hashlib.md5(hash_str.encode()).hexdigest()
+                    
+                    registros.append({
+                        'contrato_id': contrato.id,
+                        'funcionario_nome': funcionario.nome,
+                        'funcionario_matricula': funcionario.matricula,
+                        'data_hora': data_hora.isoformat(),
+                        'latitude': item.get('latitude'),
+                        'longitude': item.get('longitude'),
+                        'hash': hash_value,
+                    })
+                    
+                except Exception as e:
+                    erros.append(f"Registro {idx}: Erro ao processar - {str(e)}")
+                    continue
+            
+            if registros:
+                erros.append(f"DEBUG: {len(registros)} registros processados com sucesso")
+                
+        except json.JSONDecodeError as e:
+            erros.append(f"Erro ao decodificar JSON: {str(e)}")
+        except Exception as e:
+            erros.append(f"Erro geral ao processar JSON: {str(e)}")
+        
+        return registros, erros
+    
+    def _parse_web(self, arquivo, filial):
+        """Parser para registros do portal web (similar ao APP)"""
+        return self._parse_app(arquivo, filial)
+    
+    def _preparar_preview(self, registros, filial):
+        """
+        Agrupa registros por funcionário e dia para preview.
+        Detecta possíveis problemas (batidas ímpares, horários suspeitos).
+        """
+        agrupado = defaultdict(lambda: defaultdict(list))
+        
+        for reg in registros:
+            dt = datetime.fromisoformat(reg['data_hora'])
+            dia = dt.date()
+            agrupado[reg['funcionario_matricula']][dia].append({
+                'hora': dt.strftime('%H:%M'),
+                'data_hora': reg['data_hora'],
+            })
+        
+        # Ordena batidas
+        for matricula in agrupado:
+            for dia in agrupado[matricula]:
+                agrupado[matricula][dia].sort(key=lambda x: x['hora'])
+        
+        # Monta estrutura para frontend
+        funcionarios = []
+        data_min = None
+        data_max = None
+        
+        for matricula, dias in agrupado.items():
+            func_reg = next(r for r in registros if r['funcionario_matricula'] == matricula)
+            
+            dias_lista = []
+            for dia, batidas in sorted(dias.items()):
+                if data_min is None or dia < data_min:
+                    data_min = dia
+                if data_max is None or dia > data_max:
+                    data_max = dia
+                
+                # Detecta problemas
+                alertas = []
+                if len(batidas) % 2 != 0:
+                    alertas.append('Número ímpar de batidas')
+                
+                # Verifica intervalos muito curtos (< 1h)
+                for i in range(len(batidas) - 1):
+                    h1 = datetime.fromisoformat(batidas[i]['data_hora'])
+                    h2 = datetime.fromisoformat(batidas[i+1]['data_hora'])
+                    if (h2 - h1).total_seconds() < 3600:
+                        alertas.append('Intervalo curto entre batidas')
+                        break
+                
+                dias_lista.append({
+                    'data': dia.strftime('%d/%m/%Y'),
+                    'batidas': batidas,
+                    'total': len(batidas),
+                    'alertas': alertas,
+                })
+            
+            funcionarios.append({
+                'matricula': matricula,
+                'nome': func_reg['funcionario_nome'],
+                'dias': dias_lista,
+                'total_dias': len(dias_lista),
+            })
+        
+        periodo = f"{data_min.strftime('%d/%m/%Y')} a {data_max.strftime('%d/%m/%Y')}"
+        
+        return {
+            'funcionarios': funcionarios,
+            'periodo': periodo,
+        }
+    
+    def _gerar_frequencias(self, imports, origem):
+        """
+        Agrupa batidas consecutivas em pares entrada/saída e cria Frequencia.
+        Batidas ímpares geram registros incompletos (fim=null).
+        """
+        from django.db.models import Q
+        
+        # Evento padrão (ajustar conforme necessidade)
+        evento_padrao = EventoFrequencia.objects.filter(
+            nome__icontains='jornada'
+        ).first() or EventoFrequencia.objects.first()
+        
+        # Agrupa por contrato e dia
+        agrupado = defaultdict(list)
+        for imp in imports:
+            dia = imp.data_hora.date()
+            agrupado[(imp.contrato_id, dia)].append(imp)
+        
+        frequencias = []
+        
+        for (contrato_id, dia), batidas in agrupado.items():
+            # Ordena por horário
+            batidas.sort(key=lambda x: x.data_hora)
+            
+            # Agrupa em pares entrada/saída
+            for i in range(0, len(batidas), 2):
+                entrada = batidas[i]
+                saida = batidas[i+1] if i+1 < len(batidas) else None
+                
+                freq = Frequencia.objects.create(
+                    contrato_id=contrato_id,
+                    evento=evento_padrao,
+                    inicio=entrada.data_hora,
+                    fim=saida.data_hora if saida else None,
+                    editado=False,
+                    metadados={
+                        'fonte': origem,
+                        'import_ids': [entrada.id, saida.id if saida else None],
+                        'batida_entrada': entrada.data_hora.isoformat(),
+                        'batida_saida': saida.data_hora.isoformat() if saida else None,
+                    }
+                )
+                frequencias.append(freq)
+        
+        return frequencias
+    
+    def _get_origens_info(self):
+        """Retorna informações sobre cada tipo de origem"""
+        return {
+            'AFD': {
+                'nome': 'Arquivo AFD (Relógio Físico)',
+                'formato': '.txt',
+                'descricao': 'Padrão Portaria 1510/2009 do MTE',
+            },
+            'CSV': {
+                'nome': 'Planilha CSV',
+                'formato': '.csv',
+                'descricao': 'Colunas: matricula, data, hora',
+            },
+            'APP': {
+                'nome': 'App Móvel (GPS)',
+                'formato': '.json',
+                'descricao': 'JSON com timestamp e coordenadas',
+            },
+            'WEB': {
+                'nome': 'Portal Web',
+                'formato': '.json',
+                'descricao': 'Registros do portal do funcionário',
+            },
+        }
+
 
 
 
