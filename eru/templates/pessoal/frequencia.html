@@ -3,6 +3,35 @@
 {% block title %}{% translate 'Frequência'|escapejs %}{% endblock %}
 {% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
+<style>
+{% block style %}
+.sticky_card {
+  position: sticky;
+  top: 50px;
+  z-index: 1020;
+}
+
+.is-stuck {
+  top: 48px !important;
+  margin-top: 0 !important;
+  width: 100vw !important;
+  max-width: none !important;
+  margin-left: calc(-50vw + 50%) !important;
+  margin-right: calc(-50vw + 50%) !important;
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+}
+
+body {
+  overflow-x: hidden;
+}
+{% endblock %}
+</style>
+
+
 {% block content_fluid %}
 
 <!-- template oculto: base para clonagem de linhas de horario via JS -->
@@ -78,7 +107,7 @@
         {% if contrato %}
 
         <!-- header resumo do funcionario -->
-        <div class="card my-1">
+        <div class="card my-1 sticky_card">
           <div class="card-body py-2 text-bg-primary-matte hl-primary rounded">
             <div class="row">
               <div class="col d-flex align-items-center order-1 text-nowrap overflow-hidden">
@@ -212,6 +241,18 @@
 
 <script>
 {% block add_script %}
+
+
+{% if contrato %}
+// manipula comportamento do card stick
+const sticky_card = document.querySelector('.sticky_card');
+window.addEventListener('scroll', () => {
+  const rect = sticky_card.getBoundingClientRect();
+  if (rect.top <= 50){sticky_card.classList.add('is-stuck')} 
+  else {sticky_card.classList.remove('is-stuck')}
+});
+{% endif %}
+
 (function () {
   'use strict';
 
