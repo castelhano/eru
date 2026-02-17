@@ -758,12 +758,8 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
     def _processar_filtro(self, context, matricula, competencia_str):
         """Carrega dados do mes para o funcionario/competencia informados"""
         try:
-            competencia = datetime.strptime(competencia_str, '%Y-%m').date()
-        except ValueError:
-            messages.error(self.request, "Formato de competência inválido. Use YYYY-MM")
-            return
-        try:
             funcionario = Funcionario.objects.get(matricula=matricula)
+            competencia = datetime.strptime(competencia_str, '%Y-%m').date()
             ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
             # contrato mais recente vigente no mes (abrange contratos iniciados no meio do mes)
             contrato = funcionario.contratos.filter(

@@ -24,4 +24,5 @@ const jsoneditor_options = {
     iconlib: 'bootstrapicons',
     disable_edit_json: true,
     disable_properties: true,
+    remove_empty_properties: true,
 };

@@ -28,7 +28,7 @@ class PessoalSettingsForm(forms.ModelForm):
     def clean_config_data(self):
         data = self.cleaned_data.get('config_data')
         try:
-            return json.loads(data)
+            return json.loads(data) if data else {}
         except:
             raise forms.ValidationError("JSON inválido")
 
