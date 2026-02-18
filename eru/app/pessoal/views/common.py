@@ -1,5 +1,5 @@
 import json
-import calendar
+# import calendar
 from datetime import datetime, date, timedelta
 from collections import OrderedDict
 # Django Core
@@ -28,26 +28,26 @@ from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
 from core.views_base import (BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView)
 
 # Pessoal App - Models
-from .models import (
+from pessoal.models import (
     PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
     EventoCargo, EventoFuncionario, Turno, TurnoDia, TurnoHistorico, Frequencia, EventoFrequencia, FrequenciaImport
 )
 # Pessoal App
-from .forms import (
+from pessoal.forms import (
     PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
     EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm, FrequenciaImportForm
 )
-from .filters import (
+from pessoal.filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, 
     EventoFuncionarioFilter, MotivoReajusteFilter, EventoFrequenciaFilter
 )
-from .tables import (
+from pessoal.tables import (
     FuncionarioTable, ContratoTable, SetorTable, CargoTable, AfastamentoTable, DependenteTable, EventoTable, GrupoEventoTable, 
     MotivoReajusteTable, EventoEmpresaTable, EventoCargoTable, EventoFuncionarioTable, EventoFrequenciaTable
 )
-from .serializers import FuncionarioSerializer
-from .folha.collectors import get_event_vars_master
-from .schemas import PessoalSettingsSchema
+from pessoal.serializers import FuncionarioSerializer
+from pessoal.services.folha.collectors import get_event_vars_master
+from pessoal.schemas import PessoalSettingsSchema
 
 ###########################
 
@@ -241,156 +241,6 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
             return JsonResponse({'status': 'error', 'message': msg}, status=400)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-
-class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateView):
-    template_name = 'pessoal/turnos.html'
-    def get_queryset(self):
-        return Turno.objects.all().order_by('nome')    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        turno_id = self.request.GET.get('turno_id', '')
-        context.update({
-            'filtro_form': {'turno_id': turno_id},
-            'turnos_list': Turno.objects.all().order_by('nome'),
-            'dias_semana_choices': Turno.DiaSemana.choices,
-        })
-        if turno_id and turno_id != 'novo':
-            self._processar_filtro(context, turno_id)
-        elif turno_id == 'novo':
-            context.update({
-                'turno': None,
-                'dias_ciclo': OrderedDict(),
-            })        
-        return context
-    def _processar_filtro(self, context, turno_id):
-        # carrega dados do turno selecionado
-        try:
-            turno = Turno.objects.prefetch_related('dias').get(id=turno_id)
-            context.update({
-                'turno': turno,
-                'dias_ciclo': self._montar_ciclo(turno),
-            })
-        except Turno.DoesNotExist:
-            messages.error(self.request, DEFAULT_MESSAGES.get('filterError'))
-    def _montar_ciclo(self, turno):
-        # monta estrutura de dias do ciclo com horarios
-        dias_ciclo = OrderedDict()        
-        for pos in range(turno.dias_ciclo):
-            dias_ciclo[pos] = {
-                'id': None,
-                'eh_folga': False,
-                'tolerancia': 10,
-                'horarios': []
-            }        
-        for dia in turno.dias.all():
-            dias_ciclo[dia.posicao_ciclo] = {
-                'id': dia.id,
-                'eh_folga': dia.eh_folga,
-                'tolerancia': dia.tolerancia,
-                'horarios': self._extrair_horarios(dia)
-            }        
-        return dias_ciclo
-    def _extrair_horarios(self, turno_dia):
-        # extrai horarios do JSONField e converte para lista
-        if not turno_dia.horarios:
-            return [{'entrada': '', 'saida': ''}]        
-        if isinstance(turno_dia.horarios, list):
-            return turno_dia.horarios        
-        if isinstance(turno_dia.horarios, dict) and 'entrada' in turno_dia.horarios:
-            return [turno_dia.horarios]        
-        return [{'entrada': '', 'saida': ''}]    
-    def post(self, request, *args, **kwargs):
-        # salva turno e seus dias via AJAX
-        try:
-            data = json.loads(request.body)
-            action = data.get('action')            
-            if action == 'save_turno':
-                return self._salvar_turno(data)
-            elif action == 'delete_turno':
-                return self._deletar_turno(data)            
-            return JsonResponse({'status': 'error', 'message': _('Ação inválida')}, status=400)            
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)    
-    def _salvar_turno(self, data):
-        # salva/atualiza turno e dias do ciclo
-        with transaction.atomic():
-            turno_id = data.get('turno_id')            
-            if turno_id:
-                turno = Turno.objects.get(id=turno_id)
-                turno.nome = data.get('nome')
-                turno.dias_ciclo = int(data.get('dias_ciclo'))
-                turno.inicio = datetime.strptime(data.get('inicio'), '%Y-%m-%d').date()
-                turno.inicia_em = data.get('inicia_em')
-                turno.save()
-            else:
-                turno = Turno.objects.create(
-                    nome=data.get('nome'),
-                    dias_ciclo=int(data.get('dias_ciclo')),
-                    inicio=datetime.strptime(data.get('inicio'), '%Y-%m-%d').date(),
-                    inicia_em=data.get('inicia_em')
-                )            
-            dias_data = data.get('dias', [])            
-            # validacao de conflitos
-            self._validar_conflitos(dias_data)            
-            ids_enviados = [d['id'] for d in dias_data if d.get('id')]
-            TurnoDia.objects.filter(turno=turno).exclude(id__in=ids_enviados).delete()            
-            for dia_item in dias_data:
-                TurnoDia.objects.update_or_create(
-                    id=dia_item.get('id'),
-                    defaults={
-                        'turno': turno,
-                        'posicao_ciclo': dia_item['posicao_ciclo'],
-                        'horarios': self._parse_horarios(dia_item.get('horarios', [])),
-                        'tolerancia': dia_item.get('tolerancia', 10),
-                        'eh_folga': dia_item.get('eh_folga', False),
-                    }
-                )
-            messages.success(self.request, DEFAULT_MESSAGES.get('updated'))
-            return JsonResponse({
-                'status': 'success',
-                'turno_id': turno.id,
-                'redirect': f'?turno_id={turno.id}'
-            })
-    def _validar_conflitos(self, dias_data):
-        # valida conflito de horarios entre dias
-        for dia in dias_data:
-            if dia.get('eh_folga'):
-                continue            
-            posicao = dia['posicao_ciclo']
-            horarios = dia.get('horarios', [])            
-            # valida conflitos dentro do mesmo dia
-            for i, h1 in enumerate(horarios):
-                for h2 in horarios[i+1:]:
-                    if self._horarios_conflitam(h1, h2):
-                        raise ValidationError(f"{DEFAULT_MESSAGES.get('recordOverlap')} <br>{_('Posição')}: {posicao}")
-    def _horarios_conflitam(self, h1, h2):
-        # verifica se dois horarios se sobrepoem
-        return h1['entrada'] < h2['saida'] and h1['saida'] > h2['entrada']    
-    def _parse_horarios(self, horarios_list):
-        # converte lista de horarios para JSON, removendo entradas vazias
-        if not horarios_list:
-            return []        
-        return [
-            {'entrada': h['entrada'], 'saida': h['saida']}
-            for h in horarios_list
-            if h.get('entrada') and h.get('saida')
-        ]    
-    def _deletar_turno(self, data):
-        # deleta turno (se nao tiver historico vinculado)
-        turno_id = data.get('turno_id')        
-        try:
-            turno = Turno.objects.get(id=turno_id)            
-            if TurnoHistorico.objects.filter(turno=turno).exists():
-                return JsonResponse({
-                    'status': 'error',
-                    'message': DEFAULT_MESSAGES.get('deleteError')
-                }, status=400)            
-            turno.delete()
-            messages.success(self.request, DEFAULT_MESSAGES.get('deleted'))
-            return JsonResponse({'status': 'success', 'redirect': self.request.path})            
-        except Turno.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': _('Turno não encontrado')}, status=404)
 
 
 class AfastamentoListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
@@ -742,213 +592,6 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
 
 
 
-class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
-    template_name = 'pessoal/frequencia.html'
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        matricula = self.request.GET.get('matricula', '')
-        competencia_str = self.request.GET.get('competencia', date.today().strftime('%Y-%m'))
-        context.update({
-            'filtro_form': {'matricula': matricula, 'competencia': competencia_str},
-            'eventos_choices': EventoFrequencia.objects.all(),
-            'evento_folga_id': None,  # sobrescrito em _processar_filtro se settings existir
-        })
-        if matricula and competencia_str:
-            self._processar_filtro(context, matricula, competencia_str)
-        return context
-    def _processar_filtro(self, context, matricula, competencia_str):
-        """Carrega dados do mes para o funcionario/competencia informados"""
-        try:
-            funcionario = Funcionario.objects.get(matricula=matricula)
-            competencia = datetime.strptime(competencia_str, '%Y-%m').date()
-            ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
-            # contrato mais recente vigente no mes (abrange contratos iniciados no meio do mes)
-            contrato = funcionario.contratos.filter(
-                inicio__lte=ultimo_dia
-            ).filter(
-                Q(fim__gte=competencia) | Q(fim__isnull=True)
-            ).order_by('-inicio').first()
-
-            if not contrato:
-                messages.warning(self.request, f"Funcionário {matricula} sem contrato vigente em {competencia_str}")
-                return
-
-            # evento de folga configurado na filial do funcionario
-            settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
-            evento_folga_id = settings_obj.config.frequencia.evento_folga_id if settings_obj else None
-
-            frequencias = Frequencia.objects.filter(
-                contrato=contrato,
-                inicio__year=competencia.year,
-                inicio__month=competencia.month
-            ).select_related('evento').order_by('inicio')
-
-            # todos os contratos vigentes no mes (para calcular dias bloqueados)
-            contratos_mes = funcionario.contratos.filter(
-                inicio__lte=ultimo_dia
-            ).filter(
-                Q(fim__gte=competencia) | Q(fim__isnull=True)
-            ).order_by('inicio')
-
-            context.update({
-                'contrato': contrato,
-                'funcionario': funcionario,
-                'competencia': competencia,
-                'evento_folga_id': evento_folga_id,
-                'dias_mes': self._montar_calendario(competencia, frequencias, contrato, contratos_mes),
-            })
-        except Funcionario.DoesNotExist:
-            messages.error(self.request, f"Matrícula {matricula} não encontrada")
-        except Exception as e:
-            messages.error(self.request, f"Erro ao carregar frequência: {type(e).__name__}")
-    def _montar_calendario(self, competencia, frequencias, contrato, contratos_mes):
-        """Monta OrderedDict com todos os dias do mes, frequencias existentes e escala do turno"""
-        dias_mes = OrderedDict()
-        num_dias = calendar.monthrange(competencia.year, competencia.month)[1]
-        tz_local = timezone.get_current_timezone()
-        ultimo_dia = competencia.replace(day=num_dias)
-
-        # inicializa estrutura de cada dia
-        for dia_num in range(1, num_dias + 1):
-            data = date(competencia.year, competencia.month, dia_num)
-            # dia bloqueado se nao ha contrato vigente nesta data
-            tem_contrato = any(c.inicio <= data <= (c.fim or date.max) for c in contratos_mes)
-            dias_mes[data] = {
-                'horarios': [],
-                'escala': None,
-                'escala_json': '[]',
-                'escala_folga': False,
-                'bloqueado': not tem_contrato,
-            }
-
-        # preenche com frequencias ja persistidas no banco
-        for freq in frequencias:
-            inicio_local = freq.inicio.astimezone(tz_local)
-            fim_local = freq.fim.astimezone(tz_local) if freq.fim else None
-            dia = inicio_local.date()
-            if dia in dias_mes:
-                dias_mes[dia]['horarios'].append({
-                    'id': freq.id,
-                    'entrada': inicio_local.strftime('%H:%M'),
-                    'saida': fim_local.strftime('%H:%M') if fim_local else '',
-                    'evento_id': freq.evento_id,
-                    'observacao': freq.observacao or '',
-                    'dia_inteiro': freq.evento.dia_inteiro,
-                    'origem': self._get_origem(freq),
-                })
-
-        # busca todos os turnos vigentes no mes de uma vez (evita N+1)
-        turnos_hist = list(
-            contrato.historico_turnos.filter(
-                inicio_vigencia__lte=ultimo_dia
-            ).filter(
-                Q(fim_vigencia__gte=competencia) | Q(fim_vigencia__isnull=True)
-            ).order_by('inicio_vigencia').select_related('turno').prefetch_related('turno__dias')
-        )
-        self._preencher_escala(dias_mes, turnos_hist)
-        return dias_mes
-
-    def _preencher_escala(self, dias_mes, turnos_hist):
-        """Preenche escala planejada de cada dia com base no ciclo do turno vigente"""
-        if not turnos_hist:
-            return
-        # pre-carrega dias de todos os turnos em memoria (zero queries no loop)
-        dias_por_turno = {th.turno_id: list(th.turno.dias.all()) for th in turnos_hist}
-        for data, info in dias_mes.items():
-            # turno vigente para este dia especifico (reversed = mais recente primeiro)
-            turno_hist = next((
-                th for th in reversed(turnos_hist)
-                if th.inicio_vigencia <= data and (th.fim_vigencia is None or th.fim_vigencia >= data)
-            ), None)
-            if not turno_hist:
-                continue
-            turno = turno_hist.turno
-            dias_turno = dias_por_turno[turno.id]
-            pos = (data - turno.inicio).days % turno.dias_ciclo if turno.dias_ciclo > 0 else 0
-            turno_dia = next((d for d in dias_turno if d.posicao_ciclo == pos), None)
-            if not turno_dia or turno_dia.eh_folga:
-                info['escala'] = 'Folga'
-                info['escala_folga'] = True
-            elif turno_dia.horarios:
-                info['escala'] = ' | '.join(f"{h.get('entrada','')}–{h.get('saida','')}" for h in turno_dia.horarios)
-                info['escala_json'] = json.dumps(turno_dia.horarios)
-
-    def _get_origem(self, freq):
-        """Determina a origem do registro: fonte externa, manual ou sistema"""
-        if freq.metadados.get('fonte'):
-            return freq.metadados['fonte']
-        return 'manual' if freq.editado else 'sistema'
-
-    def post(self, request, *args, **kwargs):
-        """Recebe frequencias via AJAX e persiste no banco"""
-        try:
-            data = json.loads(request.body)
-            matricula = data.get('matricula')
-            competencia_str = data.get('competencia')
-            funcionario = Funcionario.objects.get(matricula=matricula)
-            competencia = datetime.strptime(competencia_str, '%Y-%m').date()
-            ultimo_dia = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
-            contrato = funcionario.contratos.filter(
-                inicio__lte=ultimo_dia
-            ).filter(
-                Q(fim__gte=competencia) | Q(fim__isnull=True)
-            ).order_by('-inicio').first()
-            if not contrato:
-                return JsonResponse({'status': 'error', 'message': 'Contrato não encontrado'}, status=400)
-            self._salvar_frequencias(data.get('frequencias', []), contrato)
-            messages.success(request, DEFAULT_MESSAGES.get('updated_plural'))
-            return JsonResponse({'status': 'success'})
-        except Funcionario.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Funcionário não encontrado'}, status=404)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-    def _salvar_frequencias(self, frequencias_data, contrato):
-        """Sincroniza frequencias do mes: remove ausentes, upsert presentes"""
-        if not frequencias_data:
-            return
-        ids_enviados = [f['id'] for f in frequencias_data if f.get('id')]
-        dt_ref = datetime.strptime(frequencias_data[0]['dia'], '%Y-%m-%d')
-        tz = timezone.get_current_timezone()
-        with transaction.atomic():
-            # remove registros do mes que nao vieram no payload (foram deletados na UI)
-            Frequencia.objects.filter(
-                contrato=contrato,
-                inicio__year=dt_ref.year,
-                inicio__month=dt_ref.month
-            ).exclude(id__in=ids_enviados).delete()
-
-            for item in frequencias_data:
-                evento = EventoFrequencia.objects.get(id=item['evento_id'])
-                entrada = self._parse_datetime(item['dia'], '00:00', tz) if evento.dia_inteiro else self._parse_datetime(item['dia'], item['entrada'], tz)
-                if evento.dia_inteiro:
-                    # fim = inicio do dia seguinte - 1s para cobrir o dia inteiro sem overlap em UTC
-                    dia_seguinte = (datetime.strptime(item['dia'], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-                    saida = self._parse_datetime(dia_seguinte, '00:00', tz) - timedelta(seconds=1)
-                else:
-                    saida = self._parse_datetime(item['dia'], item['saida'], tz)
-
-                # validacao de overlap: Inicio A < Fim B AND Fim A > Inicio B
-                if Frequencia.objects.filter(
-                    contrato=contrato, inicio__lt=saida, fim__gt=entrada
-                ).exclude(id=item.get('id')).exists():
-                    raise ValidationError(f"Conflito de horários no dia {item['dia']}.")
-
-                Frequencia.objects.update_or_create(
-                    id=item.get('id'),
-                    defaults={
-                        'contrato': contrato, 'evento': evento,
-                        'inicio': entrada, 'fim': saida,
-                        'observacao': item.get('observacao', ''),
-                        'editado': True,
-                        # metadados nunca alterado aqui — imutavel apos importacao
-                    }
-                )
-
-    def _parse_datetime(self, dia_str, hora_str, tz_local):
-        """Converte strings de data e hora para datetime aware no timezone local"""
-        dt_naive = datetime.strptime(f"{dia_str} {hora_str}", '%Y-%m-%d %H:%M')
-        return timezone.make_aware(dt_naive, tz_local)  # make_aware trata DST corretamente
 
 
 

@@ -11,7 +11,7 @@ from datetime import date
 from core.mixins import BootstrapMixin
 from core.extras import asteval_run
 from core.models import Filial
-from pessoal.folha.collectors import get_event_vars_master
+from pessoal.services.folha.collectors import get_event_vars_master
 
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
