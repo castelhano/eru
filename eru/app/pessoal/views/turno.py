@@ -25,7 +25,6 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
         context.update({
             'filtro_form': {'turno_id': turno_id},
             'turnos_list': Turno.objects.all().order_by('nome'),
-            'dias_semana_choices': Turno.DiaSemana.choices,
         })
         
         if turno_id and turno_id != 'novo':
@@ -92,14 +91,12 @@ class TurnoManagementView(LoginRequiredMixin, AjaxableListMixin, BaseTemplateVie
                 turno.nome = data.get('nome')
                 turno.dias_ciclo = int(data.get('dias_ciclo'))
                 turno.inicio = datetime.strptime(data.get('inicio'), '%Y-%m-%d').date()
-                turno.inicia_em = data.get('inicia_em')
                 turno.save()
             else:
                 turno = Turno.objects.create(
                     nome=data.get('nome'),
                     dias_ciclo=int(data.get('dias_ciclo')),
                     inicio=datetime.strptime(data.get('inicio'), '%Y-%m-%d').date(),
-                    inicia_em=data.get('inicia_em')
                 )
             
             # Remove dias não enviados (deletados na UI)

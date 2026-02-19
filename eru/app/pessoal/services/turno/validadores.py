@@ -39,20 +39,26 @@ class TurnoValidador:
     @staticmethod
     def _horarios_conflitam(h1, h2):
         """Verifica se dois horários se sobrepõem"""
-        return h1['entrada'] < h2['saida'] and h1['saida'] > h2['entrada']
+        def to_min(t): h, m = t.split(':'); return int(h) * 60 + int(m)
+        in1  = to_min(h1['entrada'])
+        out1 = to_min(h1['saida']) + (1440 if h1.get('virada') else 0)
+        in2  = to_min(h2['entrada'])
+        out2 = to_min(h2['saida']) + (1440 if h2.get('virada') else 0)
+        return in1 < out2 and out1 > in2
+
     
-    @staticmethod
-    def validar_horario_individual(entrada, saida, posicao):
-        """Valida um par entrada/saída individual"""
-        if not entrada and not saida:
-            return  # Ambos vazios é válido (será ignorado)
+    # @staticmethod
+    # def validar_horario_individual(entrada, saida, posicao):
+    #     """Valida um par entrada/saída individual"""
+    #     if not entrada and not saida:
+    #         return  # Ambos vazios é válido (será ignorado)
         
-        if not entrada or not saida:
-            raise ValidationError(
-                f"Posição {posicao}: preencha entrada E saída ou deixe ambos vazios"
-            )
+    #     if not entrada or not saida:
+    #         raise ValidationError(
+    #             f"Posição {posicao}: preencha entrada E saída ou deixe ambos vazios"
+    #         )
         
-        if saida <= entrada:
-            raise ValidationError(
-                f"Posição {posicao}: saída deve ser maior que entrada"
-            )
+    #     if saida <= entrada:
+    #         raise ValidationError(
+    #             f"Posição {posicao}: saída deve ser maior que entrada"
+    #         )
