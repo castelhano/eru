@@ -4,31 +4,31 @@
 {% block canvas_menu %}{% include '_component/menu/pessoal.html' %}{% endblock %}
 
 <style>
-{% block style %}
-.sticky_card {
-  position: sticky;
-  top: 50px;
-  z-index: 1020;
-}
-
-.is-stuck {
-  top: 48px !important;
-  margin-top: 0 !important;
-  width: 100vw !important;
-  max-width: none !important;
-  margin-left: calc(-50vw + 50%) !important;
-  margin-right: calc(-50vw + 50%) !important;
-  border-radius: 0 !important;
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-}
-
-body {
-  overflow-x: hidden;
-}
-{% endblock %}
+  {% block style %}
+  .sticky_card {
+    position: sticky;
+    top: 50px;
+    z-index: 1020;
+  }
+  
+  .is-stuck {
+    top: 48px !important;
+    margin-top: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    border-radius: 0 !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+  }
+  
+  body {
+    overflow-x: hidden;
+  }
+  {% endblock %}
 </style>
 
 
@@ -39,7 +39,7 @@ body {
   <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="false">
     <input type="hidden" data-field="id" value="">
     <div class="col-auto d-flex align-items-center">
-      <i class="bi bi-plus-lg text-body-secondary" title="Novo registro"></i>
+      <i class="bi bi-plus-lg text-body-secondary" data-role="origemIcon"></i>
     </div>
     <div class="col-6 col-md-2" data-field-wrapper="entrada">
       <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
@@ -54,23 +54,23 @@ body {
       <select class="form-select form-select-sm" data-field="evento">
         {% for ev in eventos_choices %}
         <option value="{{ ev.id }}"
-          data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
-          data-cor="{{ ev.cor|default:'' }}">
-          {{ ev.nome }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md">
-      <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-      <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
-    </div>
-    <div class="col-md-auto text-end">
-      <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-        <i class="bi bi-trash3-fill"></i>
-      </button>
-    </div>
+        data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+        data-cor="{{ ev.cor|default:'' }}">
+        {{ ev.nome }}
+      </option>
+      {% endfor %}
+    </select>
   </div>
+  <div class="col-md">
+    <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+    <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
+  </div>
+  <div class="col-md-auto text-end">
+    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+      <i class="bi bi-trash3-fill"></i>
+    </button>
+  </div>
+</div>
 </template>
 
 <div class="card mt-2"><!-- card principal -->
@@ -80,13 +80,13 @@ body {
       <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="url"><i class="bi bi-arrow-counterclockwise"></i></a></li>
     </ul>
   </div>
-
+  
   <div class="card-body tab-content">
     <h5 class="card-title mb-3">{% translate 'Pessoal'|escapejs %}: <b class="text-purple">{% translate 'Frequência'|escapejs %}</b></h5>
-
+    
     <form method="get" id="form-filtro" class="row g-3" autocomplete="off">
       <div class="tab-pane fade show active" id="base" role="tabpanel">
-
+        
         <!-- filtro -->
         <div class="row g-1">
           <div class="form-floating mb-lg-1 col-lg-3">
@@ -103,9 +103,9 @@ body {
             </div>
           </div>
         </div><!-- /filtro -->
-
+        
         {% if contrato %}
-
+        
         <!-- header resumo do funcionario -->
         <div class="card my-1 sticky_card">
           <div class="card-body py-2 text-bg-primary-matte hl-primary rounded">
@@ -131,13 +131,13 @@ body {
             </div>
           </div>
         </div><!-- /header resumo -->
-
+        
         <!-- calendario: data-evento-folga usado pelo JS para selecionar evento de folga -->
         <div id="calendario-frequencia" data-role="calendario" data-evento-folga="{{ evento_folga_id|default:'' }}">
-
+          
           {% for dia, info in dias_mes.items %}
           {% if not info.bloqueado %}
-
+          
           <div class="card mt-2"><!-- card dia -->
             <div class="card-header">
               <div class="row">
@@ -146,317 +146,389 @@ body {
                   {% if info.escala and not info.escala_folga or info.escala_folga and evento_folga_id %}
                   <!-- botao visivel se ha escala de jornada OU folga com evento configurado -->
                   <button type="button" class="btn btn-sm btn-secondary-matte"
-                    data-role="carregarEscala"
-                    data-dia="{{ dia|date:'Y-m-d' }}"
-                    data-escala='{{ info.escala_json }}'
-                    data-folga="{{ info.escala_folga|yesno:'true,false' }}">
-                    <i class="bi bi-calendar2-week"></i> Escala
-                  </button>
-                  {% endif %}
-                  <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
-                </div>
+                  data-role="carregarEscala"
+                  data-dia="{{ dia|date:'Y-m-d' }}"
+                  data-escala='{{ info.escala_json }}'
+                  data-folga="{{ info.escala_folga|yesno:'true,false' }}">
+                  <i class="bi bi-calendar2-week"></i> Escala
+                </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
               </div>
-            </div><!-- /card-header dia -->
+            </div>
+          </div><!-- /card-header dia -->
+          
+          <div class="card-body">
+            
+            {% if info.escala %}
+            <p class="text-body-secondary small mb-2">
+              <i class="bi bi-calendar2-week"></i> Escala: <b>{{ info.escala }}</b>
+            </p>
+            {% endif %}
+            
+            <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
+              {% for h in info.horarios %}
+              <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
+                <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
+                
+                <!-- icone indica origem do registro -->
+                <div class="col-auto d-flex align-items-center">
+                  {% if h.id %}
+                  {% if h.origem == 'manual' %}
+                  <i class="bi bi-pencil-fill text-warning" title="Editado manualmente"></i>
+                  {% elif h.origem == 'ponto' %}
+                  <i class="bi bi-clock-fill text-info" title="Importado do ponto"></i>
+                  {% else %}
+                  <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
+                  {% endif %}
+                  {% else %}
+                  <i class="bi bi-calendar2-week text-body-secondary" title="Escala do turno"></i>
+                  {% endif %}
+                </div>
+                
+                <div class="col-6 col-md-2" data-field-wrapper="entrada">
+                  <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+                  <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
+                </div>
+                <div class="col-6 col-md-2" data-field-wrapper="saida">
+                  <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+                  <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
+                  <select class="form-select form-select-sm" data-field="evento">
+                    {% for ev in eventos_choices %}
+                    <option value="{{ ev.id }}"
+                    data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+                    data-cor="{{ ev.cor|default:'' }}"
+                    {% if ev.id == h.evento_id %}selected{% endif %}>
+                    {{ ev.nome }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md">
+                <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+                <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
+              </div>
+              <div class="col-md-auto text-end">
+                <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
+              </div>
+            </div><!-- /horarioRow -->
+            {% endfor %}<!-- /for info.horarios -->
+          </div><!-- /horariosContainer -->
+          <!-- adiciona resumo de horas ao final de cada dia -->
+          <div class="mt-2" data-role="resumoDia">
+            <small class="text-body-secondary">
+              {% translate 'Horas'|escapejs %}: <strong data-field="horasTotais">--</strong> |
+              {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> |
+              {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+            </small>
+          </div>          
+        </div><!-- /card-body dia -->
+      </div><!-- /card dia -->
+      
+      {% endif %}<!-- /if not bloqueado -->
+      {% endfor %}<!-- /for dias_mes -->
+      
+    </div><!-- /calendario -->
+    
+    {% endif %}<!-- /if contrato -->
+    
+  </div><!-- /tab-pane -->
+</form>
 
-            <div class="card-body">
-
-              {% if info.escala %}
-              <p class="text-body-secondary small mb-2">
-                <i class="bi bi-calendar2-week"></i> Escala: <b>{{ info.escala }}</b>
-              </p>
-              {% endif %}
-
-              <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
-                {% for h in info.horarios %}
-                <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
-                  <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
-
-                  <!-- icone indica origem do registro -->
-                  <div class="col-auto d-flex align-items-center">
-                    {% if h.id %}
-                      {% if h.origem == 'manual' %}
-                        <i class="bi bi-pencil-fill text-warning" title="Editado manualmente"></i>
-                      {% elif h.origem == 'ponto' %}
-                        <i class="bi bi-clock-fill text-info" title="Importado do ponto"></i>
-                      {% else %}
-                        <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
-                      {% endif %}
-                    {% else %}
-                      <i class="bi bi-calendar2-week text-body-secondary" title="Escala do turno"></i>
-                    {% endif %}
-                  </div>
-
-                  <div class="col-6 col-md-2" data-field-wrapper="entrada">
-                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
-                  </div>
-                  <div class="col-6 col-md-2" data-field-wrapper="saida">
-                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
-                  </div>
-                  <div class="col-12 col-md-3">
-                    <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
-                    <select class="form-select form-select-sm" data-field="evento">
-                      {% for ev in eventos_choices %}
-                      <option value="{{ ev.id }}"
-                        data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
-                        data-cor="{{ ev.cor|default:'' }}"
-                        {% if ev.id == h.evento_id %}selected{% endif %}>
-                        {{ ev.nome }}
-                      </option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                  <div class="col-md">
-                    <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-                    <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
-                  </div>
-                  <div class="col-md-auto text-end">
-                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-                      <i class="bi bi-trash3-fill"></i>
-                    </button>
-                  </div>
-                </div><!-- /horarioRow -->
-                {% endfor %}<!-- /for info.horarios -->
-              </div><!-- /horariosContainer -->
-
-            </div><!-- /card-body dia -->
-          </div><!-- /card dia -->
-
-          {% endif %}<!-- /if not bloqueado -->
-          {% endfor %}<!-- /for dias_mes -->
-
-        </div><!-- /calendario -->
-
-        {% endif %}<!-- /if contrato -->
-
-      </div><!-- /tab-pane -->
-    </form>
-
-  </div><!-- /card-body tab-content -->
+</div><!-- /card-body tab-content -->
 </div><!-- /card principal -->
 {% endblock %}
 
 <script>
-{% block add_script %}
-
-
-{% if contrato %}
-// manipula comportamento do card stick
-const sticky_card = document.querySelector('.sticky_card');
-window.addEventListener('scroll', () => {
-  const rect = sticky_card.getBoundingClientRect();
-  if (rect.top <= 50){sticky_card.classList.add('is-stuck')} 
-  else {sticky_card.classList.remove('is-stuck')}
-});
-{% endif %}
-
-(function () {
-  'use strict';
-
-  const $$ = {
-    btnSave: document.querySelector('[data-role="saveAll"]'),
-    matricula: document.getElementById('id_matricula'),
-    competencia: document.getElementById('id_competencia'),
-    rowTpl: document.getElementById('horario-row-tpl'),
-    eventoFolgaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoFolga || null,
-  };
-
-  let isSaving = false;
-
-  // clona o template oculto para criar nova linha de horario
-  function novaRow() {
-    return $$.rowTpl.content.firstElementChild.cloneNode(true);
-  }
-
-  // aplica cor de fundo do evento no select, com contraste automatico no texto
-  function aplicarCorEvento(select) {
-    const opt = select.options[select.selectedIndex];
-    const cor = opt?.dataset.cor || '';
-    select.style.backgroundColor = cor;
-    if (cor) {
-      const r = parseInt(cor.slice(1, 3), 16);
-      const g = parseInt(cor.slice(3, 5), 16);
-      const b = parseInt(cor.slice(5, 7), 16);
-      const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-      select.style.color = luminancia > 0.5 ? '#000' : '#fff';
-    } else {
-      select.style.color = '';
-    }
-  }
-
-  // ajusta visibilidade dos campos de hora e marca linhas conflitantes se evento for dia_inteiro
-  function toggleRowFields(row) {
-    const select = row.querySelector('[data-field="evento"]');
-    const isDiaInteiro = select.selectedOptions[0]?.dataset.diaInteiro === 'true';
-    row.querySelectorAll('[data-field-wrapper]').forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
-    row.setAttribute('data-dia-inteiro', isDiaInteiro);
-    aplicarCorEvento(select);
-    const container = row.closest('[data-role="horariosContainer"]');
-    if (!container) return;
-    // demais linhas do dia ficam semi-transparentes quando ha evento de dia_inteiro
-    [...container.querySelectorAll('[data-role="horarioRow"]')]
-      .filter(r => r !== row)
-      .forEach(r => ['opacity-50', 'pe-none', 'text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro)));
-  }
-
-  // inicializacao: ajusta campos e insere linha vazia em dias sem horario
-  document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
-  document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
-    if (!container.querySelector('[data-role="horarioRow"]')) {
-      const row = novaRow();
-      container.appendChild(row);
-      toggleRowFields(row);
-    }
+  {% block add_script %}
+  
+  {% if contrato %}
+  const sticky_card = document.querySelector('.sticky_card');
+  window.addEventListener('scroll', () => {
+    const rect = sticky_card.getBoundingClientRect();
+    if (rect.top <= 50) sticky_card.classList.add('is-stuck');
+    else sticky_card.classList.remove('is-stuck');
   });
-
-  // delegated click — unico listener para todas as acoes do calendario
-  document.addEventListener('click', e => {
-    const target = e.target.closest('[data-role]');
-    if (!target) return;
-    const role = target.dataset.role;
-
-    if (role === 'addHorario') {
-      const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
-      const row = novaRow();
-      container.appendChild(row);
-      toggleRowFields(row);
+  {% endif %}
+  
+  (function () {
+    'use strict';
+    
+    const $$ = {
+      btnSave: document.querySelector('[data-role="saveAll"]'),
+      matricula: document.getElementById('id_matricula'),
+      competencia: document.getElementById('id_competencia'),
+      rowTpl: document.getElementById('horario-row-tpl'),
+      eventoFolgaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoFolga || null,
+    };
+    
+    let isSaving = false;
+    
+    function novaRow() {
+      return $$.rowTpl.content.firstElementChild.cloneNode(true);
+    }
+    
+    function aplicarCorEvento(select) {
+      const opt = select.options[select.selectedIndex];
+      const cor = opt?.dataset.cor || '';
+      select.style.backgroundColor = cor;
+      if (cor) {
+        const r = parseInt(cor.slice(1,3),16), g = parseInt(cor.slice(3,5),16), b = parseInt(cor.slice(5,7),16);
+        select.style.color = (0.299*r + 0.587*g + 0.114*b)/255 > 0.5 ? '#000' : '#fff';
+      } else {
+        select.style.color = '';
+      }
+    }
+    
+    // converte "HH:MM" em minutos totais
+    function timeToMinutes(t) {
+      if (!t) return null;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    }
+    
+    function minutesToTime(min) {
+      return `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
+    }
+    
+    // detecta virada de dia (saida <= entrada) e atualiza icone da linha
+    function atualizarVirada(row) {
+      const entrada = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
+      const saida   = timeToMinutes(row.querySelector('[data-field="saida"]').value);
+      const isDiaInteiro = row.dataset.diaInteiro === 'true';
+      const virada = !isDiaInteiro && entrada !== null && saida !== null && saida <= entrada;
+      
+      row.dataset.virada = virada; // sempre seta, independente de ter ícone
+      
+      const icon = row.querySelector('[data-role="origemIcon"]');
+      if (!icon) return; // ícones fixos do Django não são atualizados, ok
+      if (virada) {
+        icon.className = 'bi bi-moon-fill text-warning';
+        icon.title = '+1 dia (virada de dia)';
+      } else if (!row.querySelector('[data-field="id"]')?.value) {
+        icon.className = 'bi bi-plus-lg text-body-secondary';
+        icon.title = 'Novo registro';
+      }
     }
 
-    else if (role === 'carregarEscala') {
-      const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
-      const ehFolga = target.dataset.folga === 'true';
-
-      if (ehFolga) {
-        // folga: seleciona evento configurado na primeira linha existente (nao limpa)
-        const row = container.querySelector('[data-role="horarioRow"]');
-        if (row) {
-          const select = row.querySelector('[data-field="evento"]');
-          const optFolga = [...select.options].find(o => o.value == $$.eventoFolgaId);
-          if (optFolga) { optFolga.selected = true; toggleRowFields(row); }
+    
+    // calcula e exibe resumo de horas do dia no bloco resumoDia
+    function calcularResumoDia(container) {
+      const resumo = container.closest('.card-body')?.querySelector('[data-role="resumoDia"]');
+      if (!resumo) return;
+      
+      // oculta resumo se houver evento de dia inteiro ativo no container
+      const temDiaInteiro = container.querySelector('[data-role="horarioRow"][data-dia-inteiro="true"]');
+      if (temDiaInteiro) { resumo.style.display = 'none'; return; }
+      resumo.style.display = '';
+      
+      const rows = [...container.querySelectorAll('[data-role="horarioRow"]')]
+      .filter(r => !r.classList.contains('pe-none'));
+      
+      const slots = [];
+      for (const row of rows) {
+        let entrada = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
+        let saida   = timeToMinutes(row.querySelector('[data-field="saida"]').value);
+        if (entrada === null || saida === null) continue;
+        if (saida <= entrada) saida += 1440; // normaliza virada
+        slots.push({ entrada, saida });
+      }
+      
+      const temDados = slots.length > 0;
+      let totalMin = 0, intraMin = 0;
+      slots.forEach((s, i) => {
+        totalMin += s.saida - s.entrada;
+        if (i > 0) intraMin += s.entrada - slots[i-1].saida;
+      });
+      
+      // interjornada: tempo livre entre fim deste dia e início do próximo (baseado em 24h de ciclo)
+      const interjornada = temDados
+      ? (slots[0].entrada + 1440) - slots[slots.length-1].saida
+      : 0;
+      
+      resumo.querySelector('[data-field="horasTotais"]').textContent   = temDados ? minutesToTime(totalMin) : '--';
+      resumo.querySelector('[data-field="interjornada"]').textContent  = temDados ? minutesToTime(interjornada) : '--'; // exibe antes de intra
+      resumo.querySelector('[data-field="intrajornada"]').textContent  = temDados && slots.length > 1 ? minutesToTime(intraMin) : '--';
+    }
+    
+    
+    function toggleRowFields(row) {
+      const select = row.querySelector('[data-field="evento"]');
+      const isDiaInteiro = select.selectedOptions[0]?.dataset.diaInteiro === 'true';
+      row.querySelectorAll('[data-field-wrapper]').forEach(w => w.style.display = isDiaInteiro ? 'none' : '');
+      row.setAttribute('data-dia-inteiro', isDiaInteiro);
+      aplicarCorEvento(select);
+      atualizarVirada(row);
+      const container = row.closest('[data-role="horariosContainer"]');
+      if (!container) return;
+      [...container.querySelectorAll('[data-role="horarioRow"]')]
+      .filter(r => r !== row)
+      .forEach(r => ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro)));
+      calcularResumoDia(container); // atualiza resumo após qualquer mudança de evento
+    }
+    
+    document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
+    document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
+      if (!container.querySelector('[data-role="horarioRow"]')) {
+        const row = novaRow();
+        container.appendChild(row);
+        toggleRowFields(row);
+      }
+      calcularResumoDia(container); // inicializa resumo ao carregar página
+    });
+    
+    document.addEventListener('click', e => {
+      const target = e.target.closest('[data-role]');
+      if (!target) return;
+      const role = target.dataset.role;
+      
+      if (role === 'addHorario') {
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
+        const row = novaRow();
+        container.appendChild(row);
+        toggleRowFields(row);
+      }
+      else if (role === 'carregarEscala') {
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
+        const ehFolga = target.dataset.folga === 'true';
+        if (ehFolga) {
+          const row = container.querySelector('[data-role="horarioRow"]');
+          if (row) {
+            const select = row.querySelector('[data-field="evento"]');
+            const optFolga = [...select.options].find(o => o.value == $$.eventoFolgaId);
+            if (optFolga) { optFolga.selected = true; toggleRowFields(row); }
+          }
+        } else {
+          container.innerHTML = '';
+          JSON.parse(target.dataset.escala).forEach(h => {
+            const row = novaRow();
+            row.querySelector('[data-field="entrada"]').value = h.entrada || '';
+            row.querySelector('[data-field="saida"]').value   = h.saida || '';
+            container.appendChild(row);
+            toggleRowFields(row);
+          });
         }
-      } else {
-        // jornada: limpa container e popula com horarios da escala
-        container.innerHTML = '';
-        JSON.parse(target.dataset.escala).forEach(h => {
-          const row = novaRow();
-          row.querySelector('[data-field="entrada"]').value = h.entrada || '';
-          row.querySelector('[data-field="saida"]').value = h.saida || '';
-          container.appendChild(row);
-          toggleRowFields(row);
+        target.classList.replace('btn-secondary-matte', 'btn-success-matte');
+        target.disabled = true;
+        calcularResumoDia(container);
+      }
+      else if (role === 'removeHorario') {
+        const container = target.closest('[data-role="horariosContainer"]');
+        if (container.querySelectorAll('[data-role="horarioRow"]').length > 1) {
+          target.closest('[data-role="horarioRow"]').remove();
+          calcularResumoDia(container); // atualiza resumo após remoção
+        } else {
+          appNotify('warning', 'Mantenha ao menos uma linha (ou limpe os campos)');
+        }
+      }
+      else if (role === 'saveAll') {
+        saveFrequencias();
+      }
+    });
+    
+    document.addEventListener('change', e => {
+      if (e.target.dataset.field === 'evento')
+      toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
+      // atualiza virada e resumo ao mudar qualquer campo de hora
+      if (e.target.dataset.field === 'entrada' || e.target.dataset.field === 'saida') {
+        const row = e.target.closest('[data-role="horarioRow"]');
+        atualizarVirada(row);
+        calcularResumoDia(row.closest('[data-role="horariosContainer"]'));
+      }
+    });
+    
+    function saveFrequencias() {
+      if (isSaving) return;
+      const frequencias = [];
+      const slotsPorDia = {};
+      
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      
+      for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
+        if (row.classList.contains('pe-none')) continue;
+        const container = row.closest('[data-role="horariosContainer"]');
+        const dia = container.dataset.dia;
+        const evSelect  = row.querySelector('[data-field="evento"]');
+        const inputIn   = row.querySelector('[data-field="entrada"]');
+        const inputOut  = row.querySelector('[data-field="saida"]');
+        const isDiaInteiro = evSelect.options[evSelect.selectedIndex]?.dataset.diaInteiro === 'true';
+        const hIn = inputIn.value, hOut = inputOut.value;
+        
+        if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) continue;
+        
+        if (!isDiaInteiro && (!hIn || !hOut)) {
+          inputIn.classList.add('is-invalid');
+          inputOut.classList.add('is-invalid');
+          return;
+        }
+        
+        const valIn  = isDiaInteiro ? '00:00' : hIn;
+        const valOut = isDiaInteiro ? '23:59' : hOut;
+        // virada: saida no dia seguinte — sinaliza ao backend via flag
+        const virada = row.dataset.virada === 'true';
+        if (!virada && timeToMinutes(valOut) <= timeToMinutes(valIn)) {
+          inputIn.classList.add('is-invalid');
+          inputOut.classList.add('is-invalid');
+          appNotify('warning', `Horário de fim não pode ser menor que início em ${dia}`);
+          return;
+        }
+        
+        if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
+        // para comparação de overlap, normaliza saida de virada com +1440min
+        const minIn  = timeToMinutes(valIn);
+        const minOut = timeToMinutes(valOut) + (virada ? 1440 : 0);
+        const conflito = slotsPorDia[dia].find(s => minIn < s.out && minOut > s.in);
+        if (conflito) {
+          conflito.rowRef.querySelector('[data-field="saida"]').classList.add('is-invalid');
+          inputIn.classList.add('is-invalid');
+          appNotify('warning', 'Registro sobrepõe outras entradas existentes');
+          return;
+        }
+        
+        slotsPorDia[dia].push({ in: minIn, out: minOut, rowRef: row });
+        frequencias.push({
+          id: row.querySelector('[data-field="id"]').value || null,
+          dia, entrada: valIn, saida: valOut,
+          virada, // backend usa para incrementar data de saida
+          evento_id: evSelect.value,
+          observacao: row.querySelector('[data-field="observacao"]').value,
         });
       }
-      target.classList.replace('btn-secondary-matte', 'btn-success-matte');
-      target.disabled = true;
-    }
-
-    else if (role === 'removeHorario') {
-      const container = target.closest('[data-role="horariosContainer"]');
-      // permite remover somente se houver mais de uma linha no dia
-      if (container.querySelectorAll('[data-role="horarioRow"]').length > 1)
-        target.closest('[data-role="horarioRow"]').remove();
-      else
-        appNotify('warning', 'Mantenha ao menos uma linha (ou limpe os campos)');
-    }
-
-    else if (role === 'saveAll') {
-      saveFrequencias();
-    }
-  });
-
-  // atualiza visual do select ao trocar evento
-  document.addEventListener('change', e => {
-    if (e.target.dataset.field === 'evento')
-      toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
-  });
-
-  function saveFrequencias() {
-    if (isSaving) return;
-    const frequencias = [];
-    const slotsPorDia = {};
-
-    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-    for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
-      if (row.classList.contains('pe-none')) continue; // linha bloqueada por evento dia_inteiro
-      const container = row.closest('[data-role="horariosContainer"]');
-      const dia = container.dataset.dia;
-      const evSelect = row.querySelector('[data-field="evento"]');
-      const inputIn = row.querySelector('[data-field="entrada"]');
-      const inputOut = row.querySelector('[data-field="saida"]');
-      const selectedOption = evSelect.options[evSelect.selectedIndex];
-      const isDiaInteiro = selectedOption?.dataset.diaInteiro === 'true';
-      const hIn = inputIn.value;
-      const hOut = inputOut.value;
-
-      // ignora linhas sem evento e sem horarios preenchidos
-      if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) continue;
-
-      if (!isDiaInteiro && (!hIn || !hOut)) {
-        inputIn.classList.add('is-invalid');
-        inputOut.classList.add('is-invalid');
-        return;
-      }
-
-      const valIn = isDiaInteiro ? '00:00' : hIn;
-      const valOut = isDiaInteiro ? '23:59' : hOut;
-
-      if (valOut <= valIn) {
-        inputIn.classList.add('is-invalid');
-        inputOut.classList.add('is-invalid');
-        appNotify('warning', `Horário de fim não pode ser menor que início em ${dia}`);
-        return;
-      }
-
-      if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
-      const conflito = slotsPorDia[dia].find(s => valIn < s.out && valOut > s.in);
-      if (conflito) {
-        conflito.rowRef.querySelector('[data-field="saida"]').classList.add('is-invalid');
-        inputIn.classList.add('is-invalid');
-        appNotify('warning', 'Registro sobrepõe outras entradas existentes');
-        return;
-      }
-
-      slotsPorDia[dia].push({ in: valIn, out: valOut, rowRef: row });
-      frequencias.push({
-        id: row.querySelector('[data-field="id"]').value || null,
-        dia, entrada: valIn, saida: valOut,
-        evento_id: evSelect.value,
-        observacao: row.querySelector('[data-field="observacao"]').value,
-      });
-    }
-
-    if (!frequencias.length) {
-      alert('Nenhuma frequência preenchida para salvar.');
-      return;
-    }
-
-    isSaving = true;
-    const btn = $$.btnSave;
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
-
-    fetch(window.location.pathname, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-      body: JSON.stringify({ matricula: $$.matricula.value, competencia: $$.competencia.value, frequencias }),
-    })
+      
+      if (!frequencias.length) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return; }
+      
+      isSaving = true;
+      const btn = $$.btnSave;
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+      
+      fetch(window.location.pathname, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ matricula: $$.matricula.value, competencia: $$.competencia.value, frequencias }),
+      })
       .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
       .then(data => {
         if (data.status === 'success') window.location.reload();
         else throw new Error(data.message || 'Erro desconhecido');
       })
       .catch(error => {
-        alert('Erro: ' + (error.message || error));
+        appAlert('danger', 'Erro: ' + (error.message || error));
         isSaving = false;
         btn.disabled = false;
         btn.innerHTML = originalHTML;
       });
-  }
-
-})();
-{% endblock %}
+    }
+    
+  })();
+  
+  {% endblock %}
 </script>
