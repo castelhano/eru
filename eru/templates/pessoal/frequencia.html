@@ -310,7 +310,7 @@
       const icon = row.querySelector('[data-role="origemIcon"]');
       if (!icon) return; // ícones fixos do Django não são atualizados, ok
       if (virada) {
-        icon.className = 'bi bi-moon-fill text-warning';
+        icon.className = 'bi bi-moon-fill text-orange';
         icon.title = '+1 dia (virada de dia)';
       } else if (!row.querySelector('[data-field="id"]')?.value) {
         icon.className = 'bi bi-plus-lg text-body-secondary';

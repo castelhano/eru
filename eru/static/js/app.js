@@ -62,7 +62,7 @@ function appAlert(tipo, mensagem, options={}){
   
 function appNotify(tipo, mensagem, options={}){
   if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
-  let e = document.createElement('div'); 
+  let e = document.createElement('div');
   e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
   let b = document.createElement('button'); 
   b.classList = 'btn-close'; 

@@ -56,22 +56,24 @@ class CalendarioFrequenciaService:
         return dias_mes
     
     def _preencher_frequencias(self, dias_mes, frequencias):
-        """Preenche dias com frequências já registradas no banco"""
         for freq in frequencias:
-            inicio_local = freq.inicio.astimezone(self.tz_local)
-            fim_local = freq.fim.astimezone(self.tz_local) if freq.fim else None
-            dia = inicio_local.date()
-            
-            if dia in dias_mes:
-                dias_mes[dia]['horarios'].append({
-                    'id': freq.id,
-                    'entrada': inicio_local.strftime('%H:%M'),
-                    'saida': fim_local.strftime('%H:%M') if fim_local else '',
-                    'evento_id': freq.evento_id,
-                    'observacao': freq.observacao or '',
-                    'dia_inteiro': freq.evento.dia_inteiro,
-                    'origem': self._get_origem(freq),
-                })
+            if freq.data:
+                dia = freq.data
+            else:
+                dia = freq.inicio.astimezone(self.tz_local).date()
+            if dia not in dias_mes:
+                continue
+            entrada = freq.inicio.astimezone(self.tz_local).strftime('%H:%M') if freq.inicio else ''
+            saida   = freq.fim.astimezone(self.tz_local).strftime('%H:%M') if freq.fim else ''
+            dias_mes[dia]['horarios'].append({
+                'id':         freq.id,
+                'entrada':    entrada,
+                'saida':      saida,
+                'evento_id':  freq.evento_id,
+                'observacao': freq.observacao or '',
+                'dia_inteiro': freq.evento.dia_inteiro,
+                'origem':     self._get_origem(freq),
+            })
     
     def _preencher_escalas(self, dias_mes, turnos_hist):
         """Preenche escala planejada de cada dia com base no ciclo do turno vigente"""

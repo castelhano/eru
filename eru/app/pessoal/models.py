@@ -566,6 +566,7 @@ auditlog.register(EventoFrequencia, exclude_fields=['cor'])
 class Frequencia(models.Model):
     contrato = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
     evento = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
+    data = models.DateField(_('Data'), null=True, blank=True, db_index=True)
     inicio = models.DateTimeField(_('Início'), null=True, blank=True, db_index=True)
     fim = models.DateTimeField(_('Fim'), null=True, blank=True)
     metadados = models.JSONField(
