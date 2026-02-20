@@ -55,6 +55,7 @@
         {% for ev in eventos_choices %}
         <option value="{{ ev.id }}"
         data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+        data-categoria="{{ ev.categoria }}"
         data-cor="{{ ev.cor|default:'' }}">
         {{ ev.nome }}
       </option>
@@ -122,7 +123,7 @@
                   {% btn_tag 'submit' type="button" class="btn btn-sm btn-success-matte" data_role="saveAll" %}
                   <button id="extra" class="btn btn-sm btn-success-matte active dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
                   <ul class="dropdown-menu dropdown-menu-end fs-7">
-                    <li><a class="dropdown-item" href="#">Action</a></li>
+                    <li><button type="button" class="dropdown-item" data-role="carregarEscalaTodos"><b class="text-orange me-1">{% translate 'Todos'|escapejs %}: </b>{% translate 'Carregar Escala'|escapejs %}</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#">Separated link</a></li>
                   </ul>
@@ -202,6 +203,7 @@
                     {% for ev in eventos_choices %}
                     <option value="{{ ev.id }}"
                     data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+                    data-categoria="{{ ev.categoria }}"
                     data-cor="{{ ev.cor|default:'' }}"
                     {% if ev.id == h.evento_id %}selected{% endif %}>
                     {{ ev.nome }}
@@ -317,7 +319,7 @@
         icon.title = 'Novo registro';
       }
     }
-
+    
     
     // calcula e exibe resumo de horas do dia no bloco resumoDia
     function calcularResumoDia(container) {
@@ -444,6 +446,31 @@
       }
     });
     
+    // carregar escala para todos os dias nao preenchidos
+    document.querySelector('[data-role="carregarEscalaTodos"]')?.addEventListener('click', () => {
+      document.querySelectorAll('[data-role="carregarEscala"]').forEach(btn => {
+        if (btn.disabled) return; // já carregado
+        
+        const container = document.querySelector(
+        `[data-role="horariosContainer"][data-dia="${btn.dataset.dia}"]`
+        );
+        if (!container) return;
+        
+        // pula se ha qualquer registro ja salvo (id preenchido)
+        const temSalvo = [...container.querySelectorAll('[data-field="id"]')]
+        .some(el => el.value.trim() !== '');
+        if (temSalvo) return;
+        
+        // pula se há evento dia inteiro ativo
+        const temDiaInteiro = container.querySelector(
+        '[data-role="horarioRow"][data-dia-inteiro="true"]'
+        );
+        if (temDiaInteiro) return;
+        
+        btn.click();
+      });
+    });
+    
     function saveFrequencias() {
       if (isSaving) return;
       const frequencias = [];
@@ -528,6 +555,44 @@
       });
     }
     
+    // funcao para filtro nas linhas (tudo no cliente)
+    // apenas aplica d-none
+    function filtrarDias(options = {}) {
+      const {
+        apenasVazios = false,
+        categoria    = null,
+        inicio   = null,
+        fim      = null,
+      } = options;
+      
+      document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
+        const card = container.closest('.card');
+        const dia  = container.dataset.dia;
+        
+        // filtro de intervalo
+        if (inicio && dia < inicio) { card.style.display = 'none'; return; }
+        if (fim    && dia > fim)    { card.style.display = 'none'; return; }
+        
+        // filtro dias em branco: nenhum id salvo E nenhum valor preenchido
+        if (apenasVazios) {
+          const temSalvo   = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value);
+          const temPreench = [...container.querySelectorAll('[data-field="entrada"]')].some(el => el.value);
+          if (temSalvo || temPreench) { card.style.display = 'none'; return; }
+        }
+        
+        // filtro por categoria de evento
+        if (categoria) {
+          const rows = [...container.querySelectorAll('[data-role="horarioRow"]')];
+          const bate = rows.some(row => {
+            const sel = row.querySelector('[data-field="evento"]');
+            return sel?.selectedOptions[0]?.dataset.categoria === categoria;
+          });
+          if (!bate) { card.style.display = 'none'; return; }
+        }
+        
+        card.style.display = '';
+      });
+    }
   })();
   
   {% endblock %}

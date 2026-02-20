@@ -618,32 +618,3 @@ class MultipleAddon{ // Adiciona lista suspensa em controle para selecao multipl
     }
     get(){return this.list}
 }
-
-
-// Configuracoes / Listeners ao carregar pagina
-window.addEventListener('load', ()=>{
-    // Evita tabulacao em elementos select com classe readonly
-    document.querySelectorAll('select.readonly').forEach((e) => {e.tabIndex = -1});
-    
-    // Adiciona eventos auxiliares a input:date ([t => today()], [+ currentday + 1], [- currentday - 1])
-    // para desativar, crie variavel jsForm_dateExtra e atribua valor false. Ex: var jsForm_dateExtra = false;
-    if(typeof jsForm_dateExtra == 'undefined' || jsForm_dateExtra == true){
-        document.querySelectorAll('input[type=date]').forEach((el) => {
-            el.onkeydown = (e) => {
-                if(e.key == 't'){el.value = dateToday({native:true})} // Precionado a letra T, carrega data atual
-                else{
-                    if(!['-', '+'].includes(e.key)){return} // Se nao for teclas - ou + encerra bloco
-                    let current = Date.parse(el.value + ' 00:00') ? new Date(el.value + ' 00:00') : new Date();
-                    if(e.key == '-'){ // Precionado -
-                        current.setDate(current.getDate() - 1);
-                        el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
-                    }
-                    if(e.key == '+'){ // Precionado +
-                        current.setDate(current.getDate() + 1);
-                        el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
-                    }
-                }
-            }
-        });
-    }
-})

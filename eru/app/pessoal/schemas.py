@@ -8,6 +8,10 @@ class FrequenciaSchema(BaseModel):
         title= _("Incluir intervalos na jornada"),
         json_schema_extra={'format': 'checkbox'}
     )
+    evento_jornada_id: int | SkipJsonSchema[None] = Field(
+        None, 
+        title=_("Evento padrão Jornada"),
+        )
     evento_folga_id: int | SkipJsonSchema[None] = Field(
         None, 
         title=_("Evento padrão para Folga"),
@@ -28,5 +32,5 @@ class FolhaSchema(BaseModel):
 
 class PessoalSettingsSchema(BaseModel):
     model_config = {"title": _("Configurações Gerais")}
-    frequencia: FrequenciaSchema = Field(default_factory=FrequenciaSchema, title=_("Frequência"))
-    folha: FolhaSchema = Field(default_factory=FolhaSchema, title=_("Folha"))
+    frequencia: FrequenciaSchema = Field(default_factory=FrequenciaSchema, title=_("Frequência"), json_schema_extra={"options": {"collapsed": True}})
+    folha: FolhaSchema = Field(default_factory=FolhaSchema, title=_("Folha"), json_schema_extra={"options": {"collapsed": True}})

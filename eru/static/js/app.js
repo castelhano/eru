@@ -6,7 +6,7 @@ String.prototype.captalize = function(){ return this.charAt(0).toUpperCase() + t
 
 // exibe modal de carregameto ao sair da pagina
 appModalLoading._element.addEventListener('shown.bs.modal', ()=>{ if(pageshow_persisted){ appModalLoading.hide() } })
-
+  
 // trata erro de modal permanecer aberto ao usar o history back do navegador
 window.addEventListener('pageshow', (event) => { pageshow_persisted = event.persisted });
 window.onbeforeunload = (ev) => { 
@@ -29,7 +29,7 @@ window.onbeforeunload = (ev) => {
   // Se em 10 segundos nada acontecer (download falhar ou internet lenta), 
   // paramos o vigia para não gastar processamento
   setTimeout(() => clearInterval(monitorDownload), 10000);
-
+  
 }
 
 /*
@@ -60,376 +60,398 @@ function appAlert(tipo, mensagem, options={}){
   document.body.appendChild(e);
   if(options.autodismiss){setTimeout(function() {e.remove()}, 5000)}}
   
-function appNotify(tipo, mensagem, options={}){
-  if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
-  let e = document.createElement('div');
-  e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
-  let b = document.createElement('button'); 
-  b.classList = 'btn-close'; 
-  b.setAttribute('data-bs-dismiss','alert'); 
-  e.innerHTML = mensagem; 
-  e.appendChild(b);
-  document.getElementById('notify_container').appendChild(e); 
-  if(options.autodismiss){setTimeout(function() {e.remove()}, 4500);} 
-}
-
-// Limpa area de notificacao
-function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
-
-// funca eh chama ao realiazar logout, procedimentos de limpeza ou outros scripts do lado do cleinte
-// poder ser adicionados aqui, retorne true ou false (para cancelar logout do usuario)
-function appOnLogout(){return true}
-
-// Busca dados no servidor (espera um json como resposta), retorna promise
-// Ex: appGetData({url: '...'}).then((resp)=>{...do something})
-function appGetData(options) {
-  return new Promise(function(resolve, reject) {
-    let xhr = new XMLHttpRequest();
-    xhr.onload = function() {
-      let d = JSON.parse(this.responseText);
-      if(typeof d != 'object'){d = JSON.parse(d)}
-      resolve(d);
-    };
-    xhr.onerror = reject;
-    xhr.open(options?.method || 'GET', options.url + options.params || '');
-    xhr.send();
-  });
-}
-
-function formatCur(value, precision=2){return value.toLocaleString('pt-br', {minimumFractionDigits: precision});}
-
-
-// Ativa bootstrap tooltip
-function tooltipActivate(){let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {return new bootstrap.Tooltip(tooltipTriggerEl)})}
-
-
-// dateToday({})                        Retorna data atual no formato dd/mm/aaaa
-// dateToday({native: true})            Retorna data atual no formato aaaa-mm-dd  
-// dateToday({days: 2, months:1})       Retorna data atual somando 2 dias e 1 mes
-// dateToday({target: element})         Altera o elemento informado (no value ou innerHTML) com a data atual
-function dateToday(opt={}){
-  let today = new Date();
-  if(opt.days){today.setDate(today.getDate() + opt.days)}
-  if(opt.months){today.setMonth(today.getMonth() + opt.months)}
-  if(opt.years){today.setFullYear(today.getFullYear() + opt.years)}
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-  if(!opt.target){return opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
-  else{
-    if(opt.target.hasAttribute('value')){opt.target.value = opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
-    else{opt.target.innerHTML = opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
+  function appNotify(tipo, mensagem, options={}){
+    if(!options.hasOwnProperty('autodismiss')){options.autodismiss = true}
+    let e = document.createElement('div');
+    e.classList = `alert alert-${tipo} alert-dismissible slideIn mb-2`; 
+    let b = document.createElement('button'); 
+    b.classList = 'btn-close'; 
+    b.setAttribute('data-bs-dismiss','alert'); 
+    e.innerHTML = mensagem; 
+    e.appendChild(b);
+    document.getElementById('notify_container').appendChild(e); 
+    if(options.autodismiss){setTimeout(function() {e.remove()}, 4500);} 
   }
-}
-
-// timeNow({})                        Retorna hora atual hh:mm
-// timeNow({hours: 3, minutes: 22})   Retorna hora atual somando 3 horas e 22 minutos
-// timeNow({showSeconds: true})       Retorna hora atual no formado hh:mm:ss
-// timeNow({target: element})         Altera o elemento informado (no value ou innerHTML) com a hora atual
-function timeNow(opt={}){
-  let today = new Date();
-  if(opt.hours){today.setHours(today.getHours() + opt.hours)}
-  if(opt.minutes){today.setMinutes(today.getMinutes() + opt.minutes)}
-  const hh = String(today.getHours()).padStart(2, '0');
-  const ii = String(today.getMinutes()).padStart(2, '0');
-  const ss = String(today.getSeconds()).padStart(2, '0');
-  if(!opt.target){return opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
-  else{
-    if(opt.target.hasAttribute('value')){opt.target.value = opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
-    else{opt.target.innerHTML = opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
+  
+  // Limpa area de notificacao
+  function cleanNotify(){document.getElementById('notify_container').innerHTML = '';}
+  
+  // funca eh chama ao realiazar logout, procedimentos de limpeza ou outros scripts do lado do cleinte
+  // poder ser adicionados aqui, retorne true ou false (para cancelar logout do usuario)
+  function appOnLogout(){return true}
+  
+  // Busca dados no servidor (espera um json como resposta), retorna promise
+  // Ex: appGetData({url: '...'}).then((resp)=>{...do something})
+  function appGetData(options) {
+    return new Promise(function(resolve, reject) {
+      let xhr = new XMLHttpRequest();
+      xhr.onload = function() {
+        let d = JSON.parse(this.responseText);
+        if(typeof d != 'object'){d = JSON.parse(d)}
+        resolve(d);
+      };
+      xhr.onerror = reject;
+      xhr.open(options?.method || 'GET', options.url + options.params || '');
+      xhr.send();
+    });
   }
-}
-
-/*
-* getCookie Busca no arquivo de cookie pela chave informada e retorna o valor
-*
-* @version  1.0
-* @since    31/08/2022
-* @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
-* @param    {String} name
-* @returns  {String} Valor da chave (se encontrada) ou null caso nao encontrado
-* @example  let token = getCookie('csrftoken');
-*/
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== ''){
-    const cookies = document.cookie.split(';');
-    for(let i = 0; i < cookies.length; i++){
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')){
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
+  
+  function formatCur(value, precision=2){return value.toLocaleString('pt-br', {minimumFractionDigits: precision});}
+  
+  
+  // Ativa bootstrap tooltip
+  function tooltipActivate(){let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {return new bootstrap.Tooltip(tooltipTriggerEl)})}
+  
+  
+  // dateToday({})                        Retorna data atual no formato dd/mm/aaaa
+  // dateToday({native: true})            Retorna data atual no formato aaaa-mm-dd  
+  // dateToday({days: 2, months:1})       Retorna data atual somando 2 dias e 1 mes
+  // dateToday({target: element})         Altera o elemento informado (no value ou innerHTML) com a data atual
+  function dateToday(opt={}){
+    let today = new Date();
+    if(opt.days){today.setDate(today.getDate() + opt.days)}
+    if(opt.months){today.setMonth(today.getMonth() + opt.months)}
+    if(opt.years){today.setFullYear(today.getFullYear() + opt.years)}
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    if(!opt.target){return opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
+    else{
+      if(opt.target.hasAttribute('value')){opt.target.value = opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
+      else{opt.target.innerHTML = opt.native == true ? `${yyyy}-${mm}-${dd}` : `${dd}/${mm}/${yyyy}`;}
+    }
+  }
+  
+  // timeNow({})                        Retorna hora atual hh:mm
+  // timeNow({hours: 3, minutes: 22})   Retorna hora atual somando 3 horas e 22 minutos
+  // timeNow({showSeconds: true})       Retorna hora atual no formado hh:mm:ss
+  // timeNow({target: element})         Altera o elemento informado (no value ou innerHTML) com a hora atual
+  function timeNow(opt={}){
+    let today = new Date();
+    if(opt.hours){today.setHours(today.getHours() + opt.hours)}
+    if(opt.minutes){today.setMinutes(today.getMinutes() + opt.minutes)}
+    const hh = String(today.getHours()).padStart(2, '0');
+    const ii = String(today.getMinutes()).padStart(2, '0');
+    const ss = String(today.getSeconds()).padStart(2, '0');
+    if(!opt.target){return opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
+    else{
+      if(opt.target.hasAttribute('value')){opt.target.value = opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
+      else{opt.target.innerHTML = opt.showSeconds == true ? `${hh}:${ii}:${ss}` : `${hh}:${ii}`;}
+    }
+  }
+  
+  /*
+  * getCookie Busca no arquivo de cookie pela chave informada e retorna o valor
+  *
+  * @version  1.0
+  * @since    31/08/2022
+  * @author   Rafael Gustavo ALves {@email castelhano.rafael@gmail.com }
+  * @param    {String} name
+  * @returns  {String} Valor da chave (se encontrada) ou null caso nao encontrado
+  * @example  let token = getCookie('csrftoken');
+  */
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== ''){
+      const cookies = document.cookie.split(';');
+      for(let i = 0; i < cookies.length; i++){
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')){
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
       }
     }
+    return cookieValue;
   }
-  return cookieValue;
-}
-
-// Exibe modal para confirmacao no evento click para elementos com data-appConfirm="true"
-function confirmOnClick(options){
-  if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
-  appModalConfirm.show()
-}
-
-function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item))}
-
-// dictIsEqual Recebe dois objetos (dict) e compara se sao iguais, levando em consideracao nao somente primtivos, mais apontadores e objetos
-function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
-  if (obj1 === obj2) {return true} //para comparacao de valores primitivos, como strings e numeros
-  if (obj1 instanceof HTMLElement && obj2 instanceof HTMLElement) {return obj1 === obj2} // Verifica se sao elementos DOM, retorna true apenas se for a mesma instancia de elemento
-  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) { return false } // Verifica se nao sao objetos ou se um deles eh nulo
-  if (seen.has(obj1) || seen.has(obj2)) {return seen.get(obj1) === obj2} // Trata referencias circulares
-  seen.set(obj1, obj2);
-
-  // Obtém as chaves de ambos os objetos
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
   
-  if (keys1.length !== keys2.length) {return false} // Compara o numero de chaves
-
-  // Percorre as chaves e compara os valores recursivamente
-  for (const key of keys1) {
-    if (!keys2.includes(key) || !dictIsEqual(obj1[key], obj2[key], seen)) {
-      return false;
-    }
+  // Exibe modal para confirmacao no evento click para elementos com data-appConfirm="true"
+  function confirmOnClick(options){
+    if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
+    appModalConfirm.show()
   }
-  return true;
-}
-
-// faz deep merge de dois ou mais objetos, uso: deepMerge({}, obj1, obj2)
-function deepMerge(target, ...sources) {
-  if (!sources.length) return target;
-  let source = sources.shift();
-
-  if (isObject(target) && isObject(source)) {
-    for (let key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        deepMerge(target[key], source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
+  
+  function isObject(item) { return (item && typeof item === 'object' && !Array.isArray(item))}
+  
+  // dictIsEqual Recebe dois objetos (dict) e compara se sao iguais, levando em consideracao nao somente primtivos, mais apontadores e objetos
+  function dictIsEqual(obj1, obj2, seen = new WeakMap()) {
+    if (obj1 === obj2) {return true} //para comparacao de valores primitivos, como strings e numeros
+    if (obj1 instanceof HTMLElement && obj2 instanceof HTMLElement) {return obj1 === obj2} // Verifica se sao elementos DOM, retorna true apenas se for a mesma instancia de elemento
+    if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) { return false } // Verifica se nao sao objetos ou se um deles eh nulo
+    if (seen.has(obj1) || seen.has(obj2)) {return seen.get(obj1) === obj2} // Trata referencias circulares
+    seen.set(obj1, obj2);
+    
+    // Obtém as chaves de ambos os objetos
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    
+    if (keys1.length !== keys2.length) {return false} // Compara o numero de chaves
+    
+    // Percorre as chaves e compara os valores recursivamente
+    for (const key of keys1) {
+      if (!keys2.includes(key) || !dictIsEqual(obj1[key], obj2[key], seen)) {
+        return false;
       }
     }
+    return true;
   }
-  return deepMerge(target, ...sources);
-}
-
-function appNavigateTable(el, options){
-// implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
-// Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
-  let rowIndex = -1;
-  let rows = [];
-  const table = el.tagName == 'TABLE' ? el : null;
-  const actionSelector = options?.actionSelector || '.btn';
-  const nav = document.querySelector(`nav[data-target="${table.id}"]`);
-  if(!table){return}
   
-  const getVisibleRows = () => {
-    return Array.from(table.querySelectorAll('tbody tr')).filter(r => {
+  // faz deep merge de dois ou mais objetos, uso: deepMerge({}, obj1, obj2)
+  function deepMerge(target, ...sources) {
+    if (!sources.length) return target;
+    let source = sources.shift();
+    
+    if (isObject(target) && isObject(source)) {
+      for (let key in source) {
+        if (isObject(source[key])) {
+          if (!target[key]) Object.assign(target, { [key]: {} });
+          deepMerge(target[key], source[key]);
+        } else {
+          Object.assign(target, { [key]: source[key] });
+        }
+      }
+    }
+    return deepMerge(target, ...sources);
+  }
+  
+  function appNavigateTable(el, options){
+    // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
+    // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
+    let rowIndex = -1;
+    let rows = [];
+    const table = el.tagName == 'TABLE' ? el : null;
+    const actionSelector = options?.actionSelector || '.btn';
+    const nav = document.querySelector(`nav[data-target="${table.id}"]`);
+    if(!table){return}
+    
+    const getVisibleRows = () => {
+      return Array.from(table.querySelectorAll('tbody tr')).filter(r => {
         const tds = r.querySelectorAll('td');
         // Se tem apenas 1 td com colspan, é linha expansível
         if (tds.length === 1 && tds[0].hasAttribute('colspan')) return false;
         return r.style.display !== 'none' && !r.hidden;
-    });
-  };
+      });
+    };
+    
+    const nextRow = ()=>{
+      document.activeElement.blur();
+      rows = getVisibleRows();
+      if (rowIndex < rows.length - 1) {
+        rowIndex++;
+        highlightRow();
+      }
+    }
+    const previousRow = ()=>{
+      document.activeElement.blur();
+      rows = getVisibleRows();
+      if (rowIndex > 0) {
+        rowIndex--;
+        highlightRow();
+      }
+    }
+    const nextPage = ()=>{
+      document.activeElement.blur();
+      const nextBtn = nav?.querySelector('.next a');
+      if (nextBtn) nextBtn.click();
+    }
+    const previousPage = ()=>{
+      const prevBtn = nav?.querySelector('.previous a');
+      if (prevBtn) prevBtn.click();
+    }
+    const runAction = ()=>{
+      let row = rows[rowIndex];
+      if (row) { row.querySelector(actionSelector)?.click() }
+    }
+    const highlightRow = ()=>{
+      rows.forEach(r => r.classList.remove('selected'));
+      if (rows[rowIndex]) {
+        rows[rowIndex].classList.add('selected');
+        rows[rowIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+    const bindListeners = ()=>{
+      let context = table.dataset?.context || 'default';
+      appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
+      appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
+      appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
+      if(nav){
+        appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
+        appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
+      }
+    }
+    const init = ()=>{
+      rows = getVisibleRows();
+      bindListeners();
+    }
+    init();
+  }
   
-  const nextRow = ()=>{
-    document.activeElement.blur();
-    rows = getVisibleRows();
-    if (rowIndex < rows.length - 1) {
-      rowIndex++;
-      highlightRow();
-    }
-  }
-  const previousRow = ()=>{
-    document.activeElement.blur();
-    rows = getVisibleRows();
-    if (rowIndex > 0) {
-      rowIndex--;
-      highlightRow();
-    }
-  }
-  const nextPage = ()=>{
-    document.activeElement.blur();
-    const nextBtn = nav?.querySelector('.next a');
-    if (nextBtn) nextBtn.click();
-  }
-  const previousPage = ()=>{
-    const prevBtn = nav?.querySelector('.previous a');
-    if (prevBtn) prevBtn.click();
-  }
-  const runAction = ()=>{
-    let row = rows[rowIndex];
-    if (row) { row.querySelector(actionSelector)?.click() }
-  }
-  const highlightRow = ()=>{
-    rows.forEach(r => r.classList.remove('selected'));
-    if (rows[rowIndex]) {
-      rows[rowIndex].classList.add('selected');
-      rows[rowIndex].scrollIntoView({ block: 'nearest' });
-    }
-  }
-  const bindListeners = ()=>{
-    let context = table.dataset?.context || 'default';
-    appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
-    appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
-    appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
-    if(nav){
-      appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
-      appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
-    }
-  }
-  const init = ()=>{
-    rows = getVisibleRows();
-    bindListeners();
-  }
-  init();
-}
-
-
-
-// function appNavigateTable(el, options){
-// // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
-// // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
-//   let rowIndex = -1;
-//   let rows = [];
-//   const table = el.tagName == 'TABLE' ? el : null;
-//   const actionSelector = options?.actionSelector || '.btn';
-//   const nav = document.querySelector(`nav[data-target="${table.id}"]`);
-//   if(!table){return}
-//   const nextRow = ()=>{
-//     document.activeElement.blur();
-//     if (rowIndex < rows.length - 1) {
-//       rowIndex++;
-//       highlightRow();
-//     }
-//   }
-//   const previousRow = ()=>{
-//     document.activeElement.blur();
-//     if (rowIndex > 0) {
-//       rowIndex--;
-//       highlightRow();
-//     }
-//   }
-//   const nextPage = ()=>{
-//     document.activeElement.blur();
-//     const nextBtn = nav?.querySelector('.next a');
-//     if (nextBtn) nextBtn.click();
-//   }
-//   const previousPage = ()=>{
-//     const prevBtn = nav?.querySelector('.previous a');
-//     if (prevBtn) prevBtn.click();
-//   }
-//   const runAction = ()=>{
-//     let row = rows[rowIndex];
-//     if (row) { row.querySelector(actionSelector)?.click() }
-//   }
-//   const highlightRow = ()=>{
-//     rows.forEach(r => r.classList.remove('selected'));
-//     if (rows[rowIndex]) {
-//       rows[rowIndex].classList.add('selected');
-//       rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel no caso de scroll da tela
-//     }
-//   }
-//   const bindListeners = ()=>{
-//     let context = table.dataset?.context || 'default';
-//     appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
-//     appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
-//     appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
-//     if(nav){
-//       appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
-//       appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
-
-//     }
-//   }
-//   const init = ()=>{
-//     rows = Array.from(table.querySelectorAll('tbody tr')); // pre carrega as linhas
-//     bindListeners();
-//   }
-//   init();
-// }
-
-
-
-// Codigo a ser executado apos carregamento completo da pagina
-document.addEventListener("DOMContentLoaded", function(event) {
-
-  // retorna context para anterior a abertura do modal de confirmacao
-  appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
-  if(document.querySelector('[data-appConfirm="true"]')){
-    appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: gettext('Confirma operação')})
-  }
-
-  // implementa navegacao em tabela com data-navigate="true"  
-  document.querySelectorAll('table[data-navigate="true"]').forEach(t => appNavigateTable(t, t.dataset));
-
   
-  // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
-  document.querySelectorAll('[data-appConfirm="true"]').forEach((el)=>{
-    let timeout, interv, span;
-    el.onclick = (e)=>{
-      e.preventDefault();
-      appKeyMap.setContext('appConfirmModal');
-      if(span){
-        clearInterval(interv);
-        clearTimeout(timeout);
-        span.remove();
-      }
-      if(el.hasAttribute('data-appConfirmTitle')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-appConfirmTitle')}
-      if(el.hasAttribute('data-appConfirmMessage')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-appConfirmMessage')}
-      if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
-      if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
-      if(el.hasAttribute('href')){
-        document.getElementById('appModalConfirm_button').onclick = ()=>{ location.href = el.href };
-      }
-      else if(el.hasAttribute('onclick')){
-        const originalClick = el.getAttribute('onclick');
-        document.getElementById('appModalConfirm_button').onclick = () => {
-          new Function(originalClick)();
-          appModalConfirm.hide();
-        };
-      }
-      if(el.hasAttribute('data-appConfirmDelay')){
-        span = document.createElement('span');
-        let counter = el.getAttribute('data-appConfirmDelay');
-        span.innerHTML = ' ' + counter;
-        document.getElementById('appModalConfirm_button').disabled = true;
-        document.getElementById('appModalConfirm_button').appendChild(span);
-        timeout = setTimeout(()=>{
-          span.parentNode.disabled = false;
+  
+  // function appNavigateTable(el, options){
+  // // implementa navegacao na tabela (linhas e paginas), adicione data-navigate="true" na tabela para habilitar
+  // // Atencao!! apenas uma tabela por pagina deve usar este recurso para evitar conflito com os atalhos
+  //   let rowIndex = -1;
+  //   let rows = [];
+  //   const table = el.tagName == 'TABLE' ? el : null;
+  //   const actionSelector = options?.actionSelector || '.btn';
+  //   const nav = document.querySelector(`nav[data-target="${table.id}"]`);
+  //   if(!table){return}
+  //   const nextRow = ()=>{
+    //     document.activeElement.blur();
+  //     if (rowIndex < rows.length - 1) {
+  //       rowIndex++;
+  //       highlightRow();
+  //     }
+  //   }
+  //   const previousRow = ()=>{
+    //     document.activeElement.blur();
+  //     if (rowIndex > 0) {
+  //       rowIndex--;
+  //       highlightRow();
+  //     }
+  //   }
+  //   const nextPage = ()=>{
+    //     document.activeElement.blur();
+  //     const nextBtn = nav?.querySelector('.next a');
+  //     if (nextBtn) nextBtn.click();
+  //   }
+  //   const previousPage = ()=>{
+    //     const prevBtn = nav?.querySelector('.previous a');
+  //     if (prevBtn) prevBtn.click();
+  //   }
+  //   const runAction = ()=>{
+    //     let row = rows[rowIndex];
+  //     if (row) { row.querySelector(actionSelector)?.click() }
+  //   }
+  //   const highlightRow = ()=>{
+    //     rows.forEach(r => r.classList.remove('selected'));
+  //     if (rows[rowIndex]) {
+  //       rows[rowIndex].classList.add('selected');
+  //       rows[rowIndex].scrollIntoView({ block: 'nearest' }); // mantem a linha visivel no caso de scroll da tela
+  //     }
+  //   }
+  //   const bindListeners = ()=>{
+    //     let context = table.dataset?.context || 'default';
+  //     appKeyMap.bind('ctrl+arrowdown', ()=>{nextRow()}, {icon: 'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para próxima linha'), context: context})
+  //     appKeyMap.bind('ctrl+arrowup', ()=>{previousRow()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Navega para linha anterior'), context: context})
+  //     appKeyMap.bind('ctrl+enter', ()=>{runAction()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Acessa registro em foco'), context: context})
+  //     if(nav){
+  //       appKeyMap.bind('ctrl+arrowright', ()=>{nextPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe próxima página da tabela'), context: context})
+  //       appKeyMap.bind('ctrl+arrowleft', ()=>{previousPage()}, {icon:'bi bi-grid-1x2-fill text-purple', desc:gettext('Tabela: Exibe página anterior da tabela'), context: context})
+  
+  //     }
+  //   }
+  //   const init = ()=>{
+    //     rows = Array.from(table.querySelectorAll('tbody tr')); // pre carrega as linhas
+  //     bindListeners();
+  //   }
+  //   init();
+  // }
+  
+  
+  
+  // Codigo a ser executado apos carregamento completo da pagina
+  document.addEventListener("DOMContentLoaded", function(event) {
+    
+    // retorna context para anterior a abertura do modal de confirmacao
+    appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
+    if(document.querySelector('[data-appConfirm="true"]')){
+      appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: gettext('Confirma operação')})
+    }
+    
+    // implementa navegacao em tabela com data-navigate="true"  
+    document.querySelectorAll('table[data-navigate="true"]').forEach(t => appNavigateTable(t, t.dataset));
+    
+    
+    // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
+    document.querySelectorAll('[data-appConfirm="true"]').forEach((el)=>{
+      let timeout, interv, span;
+      el.onclick = (e)=>{
+        e.preventDefault();
+        appKeyMap.setContext('appConfirmModal');
+        if(span){
           clearInterval(interv);
+          clearTimeout(timeout);
           span.remove();
-        }, counter * 1000);
-        interv = setInterval(()=>{counter--;span.innerHTML = ` ${counter}`}, 1000);
+        }
+        if(el.hasAttribute('data-appConfirmTitle')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-appConfirmTitle')}
+        if(el.hasAttribute('data-appConfirmMessage')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-appConfirmMessage')}
+        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
+        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
+        if(el.hasAttribute('href')){
+          document.getElementById('appModalConfirm_button').onclick = ()=>{ location.href = el.href };
+        }
+        else if(el.hasAttribute('onclick')){
+          const originalClick = el.getAttribute('onclick');
+          document.getElementById('appModalConfirm_button').onclick = () => {
+            new Function(originalClick)();
+            appModalConfirm.hide();
+          };
+        }
+        if(el.hasAttribute('data-appConfirmDelay')){
+          span = document.createElement('span');
+          let counter = el.getAttribute('data-appConfirmDelay');
+          span.innerHTML = ' ' + counter;
+          document.getElementById('appModalConfirm_button').disabled = true;
+          document.getElementById('appModalConfirm_button').appendChild(span);
+          timeout = setTimeout(()=>{
+            span.parentNode.disabled = false;
+            clearInterval(interv);
+            span.remove();
+          }, counter * 1000);
+          interv = setInterval(()=>{counter--;span.innerHTML = ` ${counter}`}, 1000);
+        }
+        appModalConfirm.show();
       }
-      appModalConfirm.show();
-    }
-  })
-
-  // implementa consulta ajax automatica para campos data-chained-field="id_campo_origem",
-  // sempre que o select de origem for alterado roda url informada em data-url
-  // attrs devem ser carregados no campo de destino (select que sera preenchido)
-  document.addEventListener('change', async e => {
-    const child = document.querySelector(`[data-chained-field="${e.target.id}"]`);
-    if (!child) return;
-    const { url, chainedId = 'id', chainedText = 'nome' } = child.dataset;
-    if (!e.target.value) {child.innerHTML = '<option value="">---------</option>'}
-    else {
+    })
+    
+    // adiciona funcionaliades para inputs type=date
+    // - subtrai um dia na data
+    // + soma um dia na data
+    // t altera para data atual (today)
+    document.querySelectorAll('input[type=date]').forEach((el) => {
+      el.onkeydown = (e) => {
+        if(e.key == 't'){el.value = dateToday({native:true})} // Precionado a letra T, carrega data atual
+        else{
+          if(!['-', '+'].includes(e.key)){return} // Se nao for teclas - ou + encerra bloco
+          let current = Date.parse(el.value + ' 00:00') ? new Date(el.value + ' 00:00') : new Date();
+          if(e.key == '-'){ // Precionado -
+            current.setDate(current.getDate() - 1);
+            el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
+          }
+          if(e.key == '+'){ // Precionado +
+            current.setDate(current.getDate() + 1);
+            el.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2,'0')}-${String(current.getDate()).padStart(2, '0')}`;
+          }
+        }
+      }
+    });
+    
+    // implementa consulta ajax automatica para campos data-chained-field="id_campo_origem",
+    // sempre que o select de origem for alterado roda url informada em data-url
+    // attrs devem ser carregados no campo de destino (select que sera preenchido)
+    document.addEventListener('change', async e => {
+      const child = document.querySelector(`[data-chained-field="${e.target.id}"]`);
+      if (!child) return;
+      const { url, chainedId = 'id', chainedText = 'nome' } = child.dataset;
+      if (!e.target.value) {child.innerHTML = '<option value="">---------</option>'}
+      else {
         try {
-            const response = await fetch(`${url}?${e.target.name}=${e.target.value}`, { headers: {'X-Requested-With': 'XMLHttpRequest'}});
-            const data = await response.json();
-            const items = data.object_list || data;
-            child.innerHTML = '<option value="">---------</option>' + 
-                items.map(item => `<option value="${item[chainedId]}">${item[chainedText]}</option>`).join('');
+          const response = await fetch(`${url}?${e.target.name}=${e.target.value}`, { headers: {'X-Requested-With': 'XMLHttpRequest'}});
+          const data = await response.json();
+          const items = data.object_list || data;
+          child.innerHTML = '<option value="">---------</option>' + 
+          items.map(item => `<option value="${item[chainedId]}">${item[chainedText]}</option>`).join('');
         } catch (err) { console.error('ChainedSelect Error:', err); }
-    }
-    child.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      child.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    
+    // funcao auxiliar, precarrega dados ja preenchidos no carregamento da pagina
+    document.querySelectorAll('[data-chained-field]').forEach(el => {
+      const parent = document.getElementById(el.getAttribute('data- -field'));
+      if (parent && parent.value) parent.dispatchEvent(new Event('change', {bubbles: true}));
+    });
+    
   });
-
-  // funcao auxiliar, precarrega dados ja preenchidos no carregamento da pagina
-  document.querySelectorAll('[data-chained-field]').forEach(el => {
-    const parent = document.getElementById(el.getAttribute('data- -field'));
-    if (parent && parent.value) parent.dispatchEvent(new Event('change', {bubbles: true}));
-  });
-
-});

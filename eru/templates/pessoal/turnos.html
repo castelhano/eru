@@ -27,7 +27,7 @@
                         </select>
                         <label>{% translate 'Turno'|escapejs %}</label>
                     </div>
-                    <button class="btn btn-success-matte px-3" type="button" data-role="novoTurno">
+                    <button class="btn btn-success-matte px-3" id="add" type="button" data-role="novoTurno">
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
@@ -57,25 +57,27 @@
             </div>
         </div>
         <div class="card-body bg-body-tertiary">
-            <div class="row g-1">
-                <div class="form-floating col-lg">
-                    <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " autocomplete="off" required>
-                    <label>{% translate 'Nome'|escapejs %} *</label>
+            <form action="">
+                <div class="row g-1">
+                    <div class="form-floating col-lg">
+                        <input type="text" id="id_nome" class="form-control bg-body-secondary" value="{{ turno.nome|default:'' }}" placeholder=" " autocomplete="off" required autofocus>
+                        <label>{% translate 'Nome'|escapejs %} *</label>
+                    </div>
+                    <div class="form-floating col-lg-2">
+                        <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
+                        <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
+                    </div>
+                    <div class="form-floating col-lg-3">
+                        <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
+                        <label>{% translate 'Data Início'|escapejs %} *</label>
+                    </div>
+                    <div class="col-lg-2">
+                        <button type="button" type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
+                            <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
+                        </button>
+                    </div>
                 </div>
-                <div class="form-floating col-lg-2">
-                    <input type="number" id="id_dias_ciclo" class="form-control bg-body-secondary" value="{{ turno.dias_ciclo|default:'7' }}" min="1" max="365" placeholder=" " required>
-                    <label>{% translate 'Dias no Ciclo'|escapejs %} *</label>
-                </div>
-                <div class="form-floating col-lg-3">
-                    <input type="date" id="id_inicio" class="form-control bg-body-secondary" value="{{ turno.inicio|date:'Y-m-d'|default:'' }}" placeholder=" " required>
-                    <label>{% translate 'Data Início'|escapejs %} *</label>
-                </div>
-                <div class="col-lg-2">
-                    <button type="button" class="btn btn-primary-matte w-100 h-100" data-role="gerarCiclo">
-                        <i class="bi bi-arrow-repeat"></i> {% translate 'Gerar Ciclo'|escapejs %}
-                    </button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
     
