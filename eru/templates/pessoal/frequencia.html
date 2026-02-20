@@ -28,6 +28,24 @@
   body {
     overflow-x: hidden;
   }
+
+@media (max-width: 991.98px) {
+  /* borda lateral colorida indica a origem do registro, so aplicado no mobile */
+  [data-role="horarioRow"] {
+    border-left: 2px solid transparent;
+    padding-left: 4px;
+    border-radius: 2px;
+  }
+  [data-role="horarioRow"][data-origem="manual"]  { border-color: var(--bs-warning); }
+  [data-role="horarioRow"][data-origem="ponto"]   { border-color: var(--bs-info);    }
+  [data-role="horarioRow"][data-origem="sistema"] { border-color: var(--bs-secondary); }
+  [data-role="horarioRow"][data-origem="escala"]  { border-color: var(--bs-secondary-color); }
+  /* nova linha (sem id) — sem borda, discreta */
+  [data-role="horarioRow"][data-origem="novo"]    { border-color: var(--bs-secondary-color); }
+}
+
+
+  
   {% endblock %}
 </style>
 
@@ -36,9 +54,9 @@
 
 <!-- template oculto: base para clonagem de linhas de horario via JS -->
 <template id="horario-row-tpl">
-  <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="false">
+  <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="false" data-origem="novo">
     <input type="hidden" data-field="id" value="">
-    <div class="col-auto d-none d-md-flex align-items-center">
+    <div class="col-auto d-none d-lg-flex align-items-center">
       <i class="bi bi-plus-lg text-body-secondary" data-role="origemIcon"></i>
     </div>
     <div class="col-6 col-md-2" data-field-wrapper="entrada">
@@ -97,7 +115,7 @@
           <div class="col-lg-3 mb-1">
             <div class="input-group">
               <div class="form-floating">
-                <input type="month" id="id_competencia" name="competencia" value="{{ filtro_form.competencia }}" class="form-control" placeholder=" " required>
+                <input type="month" id="id_competencia" name="competencia" value="{{ filtro_form.competencia }}" class="form-control" required>
                 <label for="id_competencia">{% translate 'Competência'|escapejs %}</label>
               </div>
               <button class="btn btn-primary-matte px-3" type="submit"><i class="bi bi-search"></i></button>
@@ -123,7 +141,7 @@
                   {% btn_tag 'submit' type="button" class="btn btn-sm btn-success-matte" data_role="saveAll" %}
                   <button id="extra" class="btn btn-sm btn-success-matte active dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
                   <ul class="dropdown-menu dropdown-menu-end fs-7">
-                    <li><button type="button" class="dropdown-item" data-role="carregarEscalaTodos"><b class="text-orange me-1">{% translate 'Escala'|escapejs %}: </b>{% translate 'Carregar'|escapejs %}</button></li>
+                    <li><button type="button" class="dropdown-item" data-role="carregarEscalaTodos"><b class="text-orange me-1">{% translate 'Escala'|escapejs %}: </b>{% translate 'Carregar todos'|escapejs %}</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#">Separated link</a></li>
                   </ul>
@@ -206,17 +224,17 @@
                 <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
                 
                 <!-- icone indica origem do registro -->
-                <div class="col-auto d-none d-md-flex align-items-center">
+                <div class="col-auto d-none d-lg-flex align-items-center">
                   {% if h.id %}
                     {% if h.origem == 'manual' %}
-                    <i class="bi bi-pencil-fill text-warning-matte" title="{% translate 'Editado manualmente'|escapejs %}"></i>
+                    <i class="bi bi-pencil-fill text-warning-matte" data-role="origemIcon" title="{% translate 'Editado manualmente'|escapejs %}"></i>
                     {% elif h.origem == 'ponto' %}
-                    <i class="bi bi-clock-fill text-info" title="{% translate 'Importação'|escapejs %}"></i>
+                    <i class="bi bi-clock-fill text-info" data-role="origemIcon" title="{% translate 'Importação'|escapejs %}"></i>
                     {% else %}
-                    <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
+                    <i class="bi bi-gear-fill text-secondary" data-role="origemIcon" title="Gerado pelo sistema"></i>
                     {% endif %}
                   {% else %}
-                    <i class="bi bi-calendar2-week text-body-secondary" title="{% translate 'Novo'|escapejs %}"></i>
+                    <i class="bi bi-calendar2-week text-body-secondary" data-role="origemIcon" title="{% translate 'Novo'|escapejs %}"></i>
                   {% endif %}
                 </div>
                 
@@ -332,22 +350,25 @@
     }
     
     // detecta virada de dia (saida <= entrada) e atualiza icone da linha
-    function atualizarVirada(row) {
+    function atualizarVirada(row, editando=false) {
       const entrada = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
       const saida   = timeToMinutes(row.querySelector('[data-field="saida"]').value);
       const isDiaInteiro = row.dataset.diaInteiro === 'true';
       const virada = !isDiaInteiro && entrada !== null && saida !== null && saida <= entrada;
-      
-      row.dataset.virada = virada; // sempre seta, independente de ter ícone
-      
+      row.dataset.virada = virada;
+      if (!editando) return;
       const icon = row.querySelector('[data-role="origemIcon"]');
-      if (!icon) return; // ícones fixos do Django não são atualizados, ok
-      if (virada) {
+      if (!icon) return;
+       if (virada) {
+        icon.dataset.classeOriginal ??= icon.className;  // salva só na primeira vez
+        icon.dataset.tituloOriginal ??= icon.title;
         icon.className = 'bi bi-moon-fill text-orange';
         icon.title = '+1 dia (virada de dia)';
-      } else if (!row.querySelector('[data-field="id"]')?.value) {
-        icon.className = 'bi bi-plus-lg text-body-secondary';
-        icon.title = 'Novo registro';
+      } else if (icon.dataset.classeOriginal) {
+        icon.className = icon.dataset.classeOriginal;
+        icon.title     = icon.dataset.tituloOriginal;
+        delete icon.dataset.classeOriginal;
+        delete icon.dataset.tituloOriginal;
       }
     }
     
@@ -456,11 +477,19 @@
       }
       else if (role === 'removeHorario') {
         const container = target.closest('[data-role="horariosContainer"]');
+        const row = target.closest('[data-role="horarioRow"]');
         if (container.querySelectorAll('[data-role="horarioRow"]').length > 1) {
           target.closest('[data-role="horarioRow"]').remove();
           calcularResumoDia(container); // atualiza resumo após remoção
         } else {
-          appNotify('warning', 'Mantenha ao menos uma linha (ou limpe os campos)');
+          // ao tentar apagar ultima linha, apenas limpa dados
+          row.querySelector('[data-field="id"]').value        = '';
+          row.querySelector('[data-field="entrada"]').value   = '';
+          row.querySelector('[data-field="saida"]').value     = '';
+          row.querySelector('[data-field="observacao"]').value = '';
+          row.querySelector('[data-field="evento"]').selectedIndex = 0;
+          toggleRowFields(row);   // reseta cor, dia-inteiro, virada
+          calcularResumoDia(container); // reseta resumo de horas
         }
       }
       else if (role === 'saveAll') {
@@ -474,7 +503,7 @@
       // atualiza virada e resumo ao mudar qualquer campo de hora
       if (e.target.dataset.field === 'entrada' || e.target.dataset.field === 'saida') {
         const row = e.target.closest('[data-role="horarioRow"]');
-        atualizarVirada(row);
+        atualizarVirada(row, true);
         calcularResumoDia(row.closest('[data-role="horariosContainer"]'));
       }
     });
@@ -581,7 +610,7 @@
         else throw new Error(data.message || 'Erro desconhecido');
       })
       .catch(error => {
-        appAlert('danger', 'Erro: ' + (error.message || error));
+        appAlert('danger', 'Erro: ' + (error.message || error), false);
         isSaving = false;
         btn.disabled = false;
         btn.innerHTML = originalHTML;
