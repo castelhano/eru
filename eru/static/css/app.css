@@ -148,6 +148,16 @@ dialog:focus-visible{outline: none!important;}
 }
 
 
+
+.btn-group > .btn[class*="-matte"]:last-child:not(:first-child) {
+    border-left: 0;
+}
+.btn-group > .btn[class*="-matte"]:not(:first-child) {
+    margin-left: -1px;
+}
+
+
+
 div.btn-primary{background-color: #0d6efd; color: #FFF;}
 div.btn-primary:hover{background-color: #0b5ed7;}
 div.btn-success{background-color: #198754; color: #FFF;}

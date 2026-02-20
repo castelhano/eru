@@ -123,22 +123,41 @@
                   {% btn_tag 'submit' type="button" class="btn btn-sm btn-success-matte" data_role="saveAll" %}
                   <button id="extra" class="btn btn-sm btn-success-matte active dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
                   <ul class="dropdown-menu dropdown-menu-end fs-7">
-                    <li><button type="button" class="dropdown-item" data-role="carregarEscalaTodos"><b class="text-orange me-1">{% translate 'Todos'|escapejs %}: </b>{% translate 'Carregar Escala'|escapejs %}</button></li>
+                    <li><button type="button" class="dropdown-item" data-role="carregarEscalaTodos"><b class="text-orange me-1">{% translate 'Escala'|escapejs %}: </b>{% translate 'Carregar'|escapejs %}</button></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#">Separated link</a></li>
                   </ul>
                 </div>
               </div>
             </div>
-            <div class="row small text-body-tertiary">
-              <div class="col">
+            <!-- filtros -->
+            <div class="row gx-2 small text-body-tertiary mt-2">
+              <div class="col col-lg-auto pt-1 order-1">
                 <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" name="" id="id_">
-                <label class="form-check-label" for="id_">Somente vazias</label>
-              </div>                
+                  <input class="form-check-input" type="checkbox" role="switch" id="id_filter_empty">
+                  <label class="form-check-label" for="id_filter_empty">{% translate 'Pendentes'|escapejs %}</label>
+                </div>                
               </div>
-            </div>
-          </div>
+              <div class="col-lg-auto order-3 order-lg-2 mb-1 mb-lg-0">
+                <select id="id_filter_categoria" class="form-select form-select-sm">
+                  <option value="">------</option>
+                  {% for valor, nome in categorias %}
+                  <option value="{{valor}}">{{nome}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-lg-auto order-4 order-lg-3">
+                <div class="input-group">
+                  <input type="date" class="form-control form-control-sm" id="id_filter_inicio">
+                  <input type="date" class="form-control form-control-sm" id="id_filter_fim">
+                </div>
+              </div>
+              <div class="col-auto order-2 order-lg-4 mb-1 mb-lg-0">
+                <button type="button" id="btn_filter" data-role="run_filter" class="btn btn-sm btn-info-matte"><i class="bi bi-funnel-fill"></i></button>
+                <button type="button" id="btn_clear_filter" data-role="clear_filter" class="btn btn-sm btn-primary-matte" style="display: none;"><i class="bi bi-x-lg"></i></button>
+              </div>
+            </div><!-- fecha row de filtros -->
+          </div><!-- fecha card body -->
         </div><!-- /header resumo -->
         
         <!-- calendario: data-evento-folga usado pelo JS para selecionar evento de folga -->
@@ -399,7 +418,9 @@
       if (!target) return;
       const role = target.dataset.role;
       
-      if (role === 'addHorario') {
+      if (role === 'run_filter') { aplicarFiltros() }
+      else if (role === 'clear_filter') { limparFiltros() }
+      else if (role === 'addHorario') {
         const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
         const row = novaRow();
         container.appendChild(row);
@@ -575,9 +596,9 @@
       
       document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
         const card = container.closest('.card');
-        const dia  = container.dataset.dia;
+        const dia  = container.dataset.dia; // formato YYYY-MM-DD
         
-        // filtro de intervalo
+        // intervalo de datas
         if (inicio && dia < inicio) { card.style.display = 'none'; return; }
         if (fim    && dia > fim)    { card.style.display = 'none'; return; }
         
@@ -596,11 +617,38 @@
             return sel?.selectedOptions[0]?.dataset.categoria === categoria;
           });
           if (!bate) { card.style.display = 'none'; return; }
-        }
-        
+        }        
         card.style.display = '';
       });
     }
+
+    function aplicarFiltros() {
+      const apenasVazios = document.getElementById('id_filter_empty')?.checked   ?? false;
+      const categoria    = document.getElementById('id_filter_categoria')?.value || null;
+      const inicio       = document.getElementById('id_filter_inicio')?.value    || null;
+      const fim          = document.getElementById('id_filter_fim')?.value       || null;
+      
+      filtrarDias({ apenasVazios, categoria, inicio, fim });
+      
+      // indica visualmente que há filtro ativo
+      const temFiltro = apenasVazios || categoria || inicio || fim;
+      document.getElementById('btn_clear_filter').style.display = temFiltro ? '' : 'none';
+    }
+
+  function limparFiltros() {
+    const ids = ['id_filter_empty', 'id_filter_categoria', 'id_filter_inicio', 'id_filter_fim'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+    filtrarDias({}); // chama funcao sem params para limpar filtros
+    document.getElementById('btn_clear_filter').style.display = 'none';
+  }
+
+
+
   })();
   
   {% endblock %}

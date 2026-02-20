@@ -21,6 +21,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         context.update({
             'filtro_form': {'matricula': matricula, 'competencia': competencia_str},
             'eventos_choices': EventoFrequencia.objects.all(),
+            'categorias': EventoFrequencia.Categoria.choices,
             'evento_folga_id': None,
         })
         if matricula and competencia_str:
