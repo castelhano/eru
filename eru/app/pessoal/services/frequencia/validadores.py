@@ -36,7 +36,7 @@ class FrequenciaValidador:
         in2,  out2 = to_min(item2['entrada']), to_min(item2['saida']) + (1440 if item2.get('virada') else 0) # normaliza virada para comparação correta
         return in1 < out2 and out1 > in2
 
-    def validar_overlap_com_existentes(self, entrada_dt, saida_dt, excluir_id=None):
+    def validar_overlap_com_existentes(self, entrada_dt, saida_dt, dia_str, excluir_id=None):
         query = Frequencia.objects.filter(
             contrato=self.contrato,
             inicio__lt=saida_dt,
@@ -45,4 +45,4 @@ class FrequenciaValidador:
         if excluir_id:
             query = query.exclude(id=excluir_id)
         if query.exists():
-            raise ValidationError("Registro sobrepõe outras entradas existentes")
+            raise ValidationError(f"Registro sobrepõe outras entradas existentes. <br>Dia: {dia_str[-2:]}")

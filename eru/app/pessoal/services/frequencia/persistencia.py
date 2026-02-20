@@ -49,7 +49,7 @@ class FrequenciaPersistenciaService:
             saida = self._parse_datetime(dia_saida, item['saida'])
 
         if entrada and saida: # overlap só faz sentido quando há horário definido
-            self.validador.validar_overlap_com_existentes(entrada, saida, excluir_id=item.get('id'))
+            self.validador.validar_overlap_com_existentes(entrada, saida, item['dia'], excluir_id=item.get('id'))
         defaults = {
             'contrato': self.contrato,
             'evento': evento,

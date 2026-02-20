@@ -69,7 +69,8 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
         except Funcionario.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Funcionário não encontrado'}, status=404)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            msg = e.messages[0] if hasattr(e, 'messages') else str(e)
+            return JsonResponse({'status': 'error', 'message': msg}, status=400)
 
     # helpers reutilizados em get e post
     def _parse_competencia(self, competencia_str):
