@@ -38,7 +38,7 @@
 <template id="horario-row-tpl">
   <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="false">
     <input type="hidden" data-field="id" value="">
-    <div class="col-auto d-flex align-items-center">
+    <div class="col-auto d-none d-md-flex align-items-center">
       <i class="bi bi-plus-lg text-body-secondary" data-role="origemIcon"></i>
     </div>
     <div class="col-6 col-md-2" data-field-wrapper="entrada">
@@ -108,8 +108,8 @@
         {% if contrato %}
         
         <!-- header resumo do funcionario -->
-        <div class="card my-1 sticky_card">
-          <div class="card-body py-2 text-bg-primary-matte hl-primary rounded">
+        <div class="card my-1 sticky_card hl-primary rounded">
+          <div class="card-body py-2 text-bg-primary-matte">
             <div class="row">
               <div class="col d-flex align-items-center order-1 text-nowrap overflow-hidden">
                 <span class="text-truncate me-1">{{ funcionario.nome }}</span>
@@ -168,9 +168,9 @@
           
           <div class="card mt-2"><!-- card dia -->
             <div class="card-header">
-              <div class="row">
-                <div class="col d-flex align-items-center text-body-secondary">{{ dia|date:"d/m/Y (l)" }}</div>
-                <div class="col-auto d-flex gap-2">
+              <div class="row g-1">
+                <div class="col d-flex align-items-center text-body-secondary text-truncate">{{ dia|date:"d/m/y (l)" }}</div>
+                <div class="col-auto d-flex gap-1">
                   {% if info.escala and not info.escala_folga or info.escala_folga and evento_folga_id %}
                   <!-- botao visivel se ha escala de jornada OU folga com evento configurado -->
                   <button type="button" class="btn btn-sm btn-secondary-matte"
@@ -198,21 +198,25 @@
             
             <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
               {% for h in info.horarios %}
-              <div class="row mb-2 g-2" data-role="horarioRow" data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}">
+              <div class="row mb-2 g-2" 
+              data-role="horarioRow" 
+              data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
+              data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
+              >
                 <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
                 
                 <!-- icone indica origem do registro -->
-                <div class="col-auto d-flex align-items-center">
+                <div class="col-auto d-none d-md-flex align-items-center">
                   {% if h.id %}
-                  {% if h.origem == 'manual' %}
-                  <i class="bi bi-pencil-fill text-warning" title="Editado manualmente"></i>
-                  {% elif h.origem == 'ponto' %}
-                  <i class="bi bi-clock-fill text-info" title="Importado do ponto"></i>
+                    {% if h.origem == 'manual' %}
+                    <i class="bi bi-pencil-fill text-warning-matte" title="{% translate 'Editado manualmente'|escapejs %}"></i>
+                    {% elif h.origem == 'ponto' %}
+                    <i class="bi bi-clock-fill text-info" title="{% translate 'Importação'|escapejs %}"></i>
+                    {% else %}
+                    <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
+                    {% endif %}
                   {% else %}
-                  <i class="bi bi-gear-fill text-secondary" title="Gerado pelo sistema"></i>
-                  {% endif %}
-                  {% else %}
-                  <i class="bi bi-calendar2-week text-body-secondary" title="Escala do turno"></i>
+                    <i class="bi bi-calendar2-week text-body-secondary" title="{% translate 'Novo'|escapejs %}"></i>
                   {% endif %}
                 </div>
                 
@@ -621,7 +625,7 @@
         card.style.display = '';
       });
     }
-
+    
     function aplicarFiltros() {
       const apenasVazios = document.getElementById('id_filter_empty')?.checked   ?? false;
       const categoria    = document.getElementById('id_filter_categoria')?.value || null;
@@ -634,21 +638,21 @@
       const temFiltro = apenasVazios || categoria || inicio || fim;
       document.getElementById('btn_clear_filter').style.display = temFiltro ? '' : 'none';
     }
-
-  function limparFiltros() {
-    const ids = ['id_filter_empty', 'id_filter_categoria', 'id_filter_inicio', 'id_filter_fim'];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (el.type === 'checkbox') el.checked = false;
-      else el.value = '';
-    });
-    filtrarDias({}); // chama funcao sem params para limpar filtros
-    document.getElementById('btn_clear_filter').style.display = 'none';
-  }
-
-
-
+    
+    function limparFiltros() {
+      const ids = ['id_filter_empty', 'id_filter_categoria', 'id_filter_inicio', 'id_filter_fim'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = false;
+        else el.value = '';
+      });
+      filtrarDias({}); // chama funcao sem params para limpar filtros
+      document.getElementById('btn_clear_filter').style.display = 'none';
+    }
+    
+    
+    
   })();
   
   {% endblock %}
