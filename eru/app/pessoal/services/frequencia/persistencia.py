@@ -26,11 +26,6 @@ class FrequenciaPersistenciaService:
                 Q(inicio__year=dt_ref.year, inicio__month=dt_ref.month) | # registros com horário
                 Q(data__year=dt_ref.year,   data__month=dt_ref.month)     # registros dia inteiro
             ).exclude(id__in=ids_enviados).delete()
-            Frequencia.objects.filter(  # remove registros do mês ausentes no payload
-                contrato=self.contrato,
-                inicio__year=dt_ref.year,
-                inicio__month=dt_ref.month
-            ).exclude(id__in=ids_enviados).delete()
             for item in frequencias_data:
                 self._salvar_item(item)
         return len(frequencias_data)
