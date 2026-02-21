@@ -78,6 +78,7 @@ class GrupoTable(TableCustomMixin, Table):
 class LogsTable(TableCustomMixin, Table):
     class Meta:
         model = LogEntry
+        paginate_by = 20
         fields = ("timestamp", "actor", "action", "content_type", "object_repr", "changes")
         actions = [
             {

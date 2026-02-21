@@ -20,48 +20,68 @@
       <form id="filterForm" action="{% url 'logs' %}" method="GET" autocomplete="off">
         {% csrf_token %}
         <div class="row">
-          <div class="col bg-body-secondary py-2">
-            <div class="btn-toolbar" role="toolbar">
-                <div class="btn-group" role="group">
-                  <input type="date" id="id_timestamp_min" name="timestamp_min" class="form-control" autofocus>
-                </div>            
-              <div class="btn-group me-2" role="group">
-                <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control">
-              </div>            
-              <div class="input-group me-2" role="group">
-                <span class="input-group-text fs-7">{% translate 'Ação'|escapejs %}</span>
-                <select name="action" id="id_action" class="form-select form-select-sm">
-                  <option value="" selected>{% translate 'Todos'|escapejs %}</option>
-                  <option value="0">{% translate 'Criar'|escapejs %}</option>
-                  <option value="1">{% translate 'Atualizar'|escapejs %}</option>
-                  <option value="2">{% translate 'Excluir'|escapejs %}</option>
-                </select>
-              </div>            
-              <div class="btn-group me-2" role="group">
-                <div class="input-group">
-                  <input type="number" name="entries" id="id_entries" class="form-control" value="100" style="width: 80px;" placeholder="Entradas">
-                  <span class="input-group-text fs-7" >{% translate 'entradas'|escapejs %}</span>
+          
+          <div class="col bg-body-secondary py-3">
+            <!-- Layout em Grid para Responsividade -->
+            <div class="row g-1 align-items-center">
+              
+              <!-- Intervalo de Datas -->
+              <div class="col-12 col-xl-auto">
+                <div class="input-group input-group-sm">
+                  <input type="date" id="id_timestamp_min" name="timestamp_min" class="form-control" title="Data Inicial">
+                  <input type="date" id="id_timestamp_max" name="timestamp_max" class="form-control" title="Data Final">
                 </div>
               </div>
-              <div class="btn-group me-2" role="group">
-                <input type="text" name="actor" id="id_actor" class="form-control" value="" style="width: 150px;" placeholder="{% translate 'Usuário'|escapejs %}">
+              
+              <!-- Filtro de Ação -->
+              <div class="col-6 col-xl-auto">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">{% translate 'Ação'|escapejs %}</span>
+                  <select name="action" id="id_action" class="form-select">
+                    <option value="" selected>{% translate 'Todos'|escapejs %}</option>
+                    <option value="0">{% translate 'Criar'|escapejs %}</option>
+                    <option value="1">{% translate 'Atualizar'|escapejs %}</option>
+                    <option value="2">{% translate 'Excluir'|escapejs %}</option>
+                  </select>
+                </div>
               </div>
-              <div class="btn-group me-2" role="group">
-                <button type="button" class="btn btn-sm btn-dark border" title="Limpar filtros" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
-                <button type="submit" id="filter" class="btn btn-sm btn-dark border">{% translate 'Filtrar'|escapejs %}</button>
+              
+              <!-- Filtro por Usuário (Actor) -->
+              <div class="col-6 col-xl-auto">
+                <input type="text" name="actor" id="id_actor" class="form-control form-control-sm" placeholder="{% translate 'Usuário'|escapejs %}">
               </div>
-              {% if table.rows|length > 0 %}
-              <div class="btn-group ms-auto" role="group">
-                <button type="button" class="btn btn-sm btn-dark border" disabled>{{ table.rows|length }}</button>
-                <button  class="btn btn-sm btn-dark border dropdown-toggle" data-bs-toggle="dropdown"></button>
-                <ul class="dropdown-menu">
-                  <li><button class="dropdown-item fs-7" id="download" type="submit" name="_export" value="csv" data-format="CSV"><i class="bi bi-download me-2"></i>{% translate 'Baixar'|escapejs %} CSV</button></li>
-                </ul>
+              
+              <!-- Filtro de descricao do objeto -->
+              <div class="col col-xl">
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" name="object_repr" id="id_object_repr" class="form-control" placeholder="{% translate 'Buscar no objeto'|escapejs %}...">
+                </div>
               </div>
-              {% endif %}
+              
+              <!-- Entradas -->
+              <div class="col-auto">
+                <div class="input-group input-group-sm" style="width: 100px;">
+                  <input type="number" name="entries" id="id_entries" class="form-control" value="100">
+                  <span class="input-group-text">Qtd</span>
+                </div>
+              </div>
+              
+              <!-- Entradas e Botões de Ação -->
+              <div class="col-12 col-md-auto ms-auto">
+                <div class="btn-group me-2" role="group">
+                  <button type="submit" id="filter" class="btn btn-sm btn-info-matte">{% translate 'Filtrar'|escapejs %}</button>
+                  <button type="button" class="btn btn-sm btn-dark-matte" title="{% translate 'Limpar filtros'|escapejs %}" onclick="appKeyMap.run('alt+l')" tabindex="-1"><i class="bi bi-eraser-fill"></i></button>
+                  {% if table.rows|length > 0 %}
+                  <button type="submit" class="btn btn-sm btn-secondary-matte" id="download" name="_export" value="csv" data-format="CSV"><i class="bi bi-download"></i></button>
+                  {% endif %}
+                </div>             
+              </div>
+              
             </div>
           </div>
-        </div>
+
+        </div> <!-- fecha row -->
         <div class="row mt-3">
           <div class="col-lg-auto">
             <select name="content_type" id="id_content_type" style="display: none;" multiple>

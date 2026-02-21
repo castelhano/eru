@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes.models import ContentType
 from auditlog.models import LogEntry
-from .models import Empresa, Filial
+from .models import Empresa
 from django_filters import DateFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters.widgets import RangeWidget
 
@@ -49,16 +49,14 @@ class LogEntryFilter(django_filters.FilterSet):
     timestamp = DateFromToRangeFilter(widget=RangeWidget(attrs={'type': 'date'}), label='Interval')
     actor = django_filters.CharFilter(
         field_name='actor__username', 
-        # lookup_expr='icontains',
-        # label='Username'
     )
     content_type = ModelMultipleChoiceFilter(
         queryset=ContentType.objects.all(),
-        # label='Content Type'
     )
+    object_repr = django_filters.CharFilter(lookup_expr='icontains')
     class Meta:
         model = LogEntry
-        fields = ['actor', 'action', 'content_type', 'timestamp']
+        fields = ['actor', 'action', 'content_type', 'timestamp', 'object_repr']
 
 
 class EmpresaFilter(django_filters.FilterSet):

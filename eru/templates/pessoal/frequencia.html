@@ -428,14 +428,8 @@
       .filter(r => r !== row)
       .forEach(r => {
         ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro));
-        if (isDiaInteiro) {
-          // ao selecionar dia inteiro, se existe mais de uma linha elas devem ser deletadas
-          const id = r.querySelector('[data-field="id"]').value;
-          if (id) deletarRelatedIds.add(id); // adiciona id para ser removido no servidor
-        } else {
-          const id = r.querySelector('[data-field="id"]').value;
-          if (id) deletarRelatedIds.delete(id); // limpa id da lista de remocao
-        }
+        const id = r.querySelector('[data-field="id"]').value;
+        if(id) isDiaInteiro ? deletarRelatedIds.add(id) : deletarRelatedIds.delete(id);
       });
       calcularResumoDia(container); // atualiza resumo após qualquer mudança de evento
     }
@@ -615,7 +609,7 @@
         });
       }
       
-      if (!frequencias.length && !deletarIds.size) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return; }
+      if (!frequencias.length && !deletarIds.size && !deletarRelatedIds.size) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return;}
       
       isSaving = true;
       const btn = $$.btnSave;
