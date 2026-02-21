@@ -578,6 +578,10 @@ class Frequencia(models.Model):
     observacao = models.CharField(_('Observação'), max_length=255, blank=True)
     class Meta:
         ordering = ['inicio']
+    def __str__(self):
+        dia = (self.data or (self.inicio.date() if self.inicio else '?'))
+        horario = f"{self.inicio.strftime('%H:%M')}–{self.fim.strftime('%H:%M')}" if self.inicio and self.fim else 'dia inteiro'
+        return f"{self.contrato.funcionario} | {dia} | {self.evento} ({horario})"
     def clean(self):
         super().clean()
         if self.inicio and self.fim:

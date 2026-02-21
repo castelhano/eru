@@ -321,6 +321,8 @@
     };
     
     let isSaving = false;
+    const deletarIds = new Set();
+    const deletarRelatedIds = new Set();
     
     function novaRow() {
       return $$.rowTpl.content.firstElementChild.cloneNode(true);
@@ -424,7 +426,17 @@
       if (!container) return;
       [...container.querySelectorAll('[data-role="horarioRow"]')]
       .filter(r => r !== row)
-      .forEach(r => ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro)));
+      .forEach(r => {
+        ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro));
+        if (isDiaInteiro) {
+          // ao selecionar dia inteiro, se existe mais de uma linha elas devem ser deletadas
+          const id = r.querySelector('[data-field="id"]').value;
+          if (id) deletarRelatedIds.add(id); // adiciona id para ser removido no servidor
+        } else {
+          const id = r.querySelector('[data-field="id"]').value;
+          if (id) deletarRelatedIds.delete(id); // limpa id da lista de remocao
+        }
+      });
       calcularResumoDia(container); // atualiza resumo após qualquer mudança de evento
     }
     
@@ -478,11 +490,15 @@
       else if (role === 'removeHorario') {
         const container = target.closest('[data-role="horariosContainer"]');
         const row = target.closest('[data-role="horarioRow"]');
+        const id = row.querySelector('[data-field="id"]').value;
         if (container.querySelectorAll('[data-role="horarioRow"]').length > 1) {
-          target.closest('[data-role="horarioRow"]').remove();
-          calcularResumoDia(container); // atualiza resumo após remoção
+          if (id) deletarIds.add(id);
+          row.remove();
+          calcularResumoDia(container); // atualiza resumo apos remocao
         } else {
           // ao tentar apagar ultima linha, apenas limpa dados
+          if (id) deletarIds.add(id);
+          row.dataset.deleted = 'true';
           row.querySelector('[data-field="id"]').value        = '';
           row.querySelector('[data-field="entrada"]').value   = '';
           row.querySelector('[data-field="saida"]').value     = '';
@@ -498,6 +514,11 @@
     });
     
     document.addEventListener('change', e => {
+      // marca linha como data-dirty=true para informar que foi alterada, somente linhas 
+      // alteradas são enviadas para o payload
+      if (['entrada', 'saida', 'evento', 'observacao'].includes(e.target.dataset.field)) {
+        e.target.closest('[data-role="horarioRow"]')?.setAttribute('data-dirty', 'true');
+      }
       if (e.target.dataset.field === 'evento')
       toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
       // atualiza virada e resumo ao mudar qualquer campo de hora
@@ -541,6 +562,9 @@
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       
       for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
+        if (row.dataset.deleted === 'true') continue; // linha apagada, já em deletarIds
+        const isDirty = row.dataset.dirty === 'true' || !row.querySelector('[data-field="id"]').value;
+        if (!isDirty) continue; // ignora linhas nao alteradas
         if (row.classList.contains('pe-none')) continue;
         const container = row.closest('[data-role="horariosContainer"]');
         const dia = container.dataset.dia;
@@ -591,7 +615,7 @@
         });
       }
       
-      if (!frequencias.length) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return; }
+      if (!frequencias.length && !deletarIds.size) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return; }
       
       isSaving = true;
       const btn = $$.btnSave;
@@ -602,7 +626,13 @@
       fetch(window.location.pathname, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ matricula: $$.matricula.value, competencia: $$.competencia.value, frequencias }),
+        body: JSON.stringify({ 
+          matricula: $$.matricula.value, 
+          competencia: $$.competencia.value, 
+          frequencias,
+          deletar_ids: [...deletarIds],
+          deletar_related_ids: [...deletarRelatedIds],
+        }),
       })
       .then(r => r.ok ? r.json() : r.json().then(err => { throw err; }))
       .then(data => {

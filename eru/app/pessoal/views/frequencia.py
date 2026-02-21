@@ -63,7 +63,11 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
             contrato = self._get_contrato(funcionario, competencia, ultimo_dia)
             if not contrato:
                 return JsonResponse({'status': 'error', 'message': 'Contrato não encontrado'}, status=400)
-            FrequenciaPersistenciaService(contrato).sincronizar_mes(data.get('frequencias', []))
+            FrequenciaPersistenciaService(contrato).sincronizar_mes(
+                data.get('frequencias', []), 
+                deletar_ids=data.get('deletar_ids', []),
+                deletar_related_ids=data.get('deletar_related_ids', []),
+            )
             messages.success(request, DEFAULT_MESSAGES.get('updated_plural'))
             return JsonResponse({'status': 'success'})
         except Funcionario.DoesNotExist:

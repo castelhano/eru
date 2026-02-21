@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.utils import timezone
 from pessoal.models import Frequencia, EventoFrequencia
 from .validadores import FrequenciaValidador
+from auditlog.context import disable_auditlog
 
 
 class FrequenciaPersistenciaService:
@@ -13,52 +14,50 @@ class FrequenciaPersistenciaService:
         self.validador = FrequenciaValidador(contrato)
         self.tz = timezone.get_current_timezone()
 
-    def sincronizar_mes(self, frequencias_data):
-        if not frequencias_data:
+    def sincronizar_mes(self, frequencias_data, deletar_ids=None, deletar_related_ids=None):
+        if not frequencias_data and not deletar_ids:
             return 0
-        self.validador.validar_lote(frequencias_data)
-        ids_enviados = [f['id'] for f in frequencias_data if f.get('id')]
-        dt_ref = datetime.strptime(frequencias_data[0]['dia'], '%Y-%m-%d')
+        if frequencias_data:
+            self.validador.validar_lote(frequencias_data)
         with transaction.atomic():
-            Frequencia.objects.filter(
-                contrato=self.contrato
-            ).filter(
-                Q(inicio__year=dt_ref.year, inicio__month=dt_ref.month) | # registros com horário
-                Q(data__year=dt_ref.year,   data__month=dt_ref.month)     # registros dia inteiro
-            ).exclude(id__in=ids_enviados).delete()
+            if deletar_ids:
+                # contrato no filtro evita deleção cruzada entre contratos
+                Frequencia.objects.filter(contrato=self.contrato, id__in=deletar_ids).delete()
+            if deletar_related_ids:
+                # ao editar uma frequencia para evento de dia inteiro sera realizado um update (registrado no auditlog)
+                # e n exclusoes (baseado em quantas entradas existia neste dia) estas exclusoes nao serao registradas no log
+                with disable_auditlog():
+                    Frequencia.objects.filter(contrato=self.contrato, id__in=deletar_related_ids).delete()
             for item in frequencias_data:
                 self._salvar_item(item)
         return len(frequencias_data)
-
     def _salvar_item(self, item):
-        evento = EventoFrequencia.objects.get(id=item['evento_id'])
+        evento   = EventoFrequencia.objects.get(id=item['evento_id'])
         dia_date = datetime.strptime(item['dia'], '%Y-%m-%d').date()
         if evento.dia_inteiro:
-            entrada, saida = None, None # dia inteiro sem horário — evita conflito com outros registros
+            entrada = saida = None  # sem horário evita conflito de overlap
         else:
-            entrada = self._parse_datetime(item['dia'], item['entrada'])
             dia_saida = (
                 (datetime.strptime(item['dia'], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
                 if item.get('virada') else item['dia']
             )
-            saida = self._parse_datetime(dia_saida, item['saida'])
-
-        if entrada and saida: # overlap só faz sentido quando há horário definido
+            entrada = self._parse_datetime(item['dia'], item['entrada'])
+            saida   = self._parse_datetime(dia_saida,   item['saida'])
             self.validador.validar_overlap_com_existentes(entrada, saida, item['dia'], excluir_id=item.get('id'))
-        defaults = {
-            'contrato': self.contrato,
-            'evento': evento,
-            'data': dia_date,
-            'inicio': entrada,
-            'fim': saida,
-            'observacao': item.get('observacao', ''),
-            'editado': True,
-        }
+        fields = dict(
+            evento=evento, data=dia_date,
+            inicio=entrada, fim=saida,
+            observacao=item.get('observacao', ''),
+            editado=True,
+        )
         freq_id = item.get('id')
-        if freq_id: # update
-            Frequencia.objects.filter(id=freq_id).update(**defaults)
-        else: # create — update_or_create com id=None causa "Cannot use None as query value"
-            Frequencia.objects.create(**defaults)
+        if freq_id:
+            freq = Frequencia.objects.get(id=freq_id, contrato=self.contrato)
+            for k, v in fields.items():
+                setattr(freq, k, v)
+            freq.save()  # save() em vez de update() para disparar signals para o auditlog
+        else:
+            Frequencia.objects.create(contrato=self.contrato, **fields)
     def _parse_datetime(self, dia_str, hora_str):
         dt_naive = datetime.strptime(f"{dia_str} {hora_str}", '%Y-%m-%d %H:%M')
         return timezone.make_aware(dt_naive, self.tz)  # make_aware trata DST corretamente

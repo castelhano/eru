@@ -10,7 +10,6 @@ class FrequenciaValidador:
     def validar_lote(self, frequencias_data):
         for item in frequencias_data:
             self._validar_horarios(item)
-        self._validar_conflitos_internos(frequencias_data)
 
     def _validar_horarios(self, item):
         entrada = item.get('entrada', '')
@@ -19,16 +18,6 @@ class FrequenciaValidador:
             return
         if not item.get('virada') and saida <= entrada: # virada de dia é válida, não rejeita
             raise ValidationError(f"Horário de saída deve ser maior que entrada no dia {item['dia']}")
-
-    def _validar_conflitos_internos(self, frequencias_data):
-        por_dia = {}
-        for item in frequencias_data:
-            por_dia.setdefault(item['dia'], []).append(item) # agrupa por dia sem verificação dupla
-        for dia, items in por_dia.items():
-            for i, item1 in enumerate(items):
-                for item2 in items[i+1:]:
-                    if self._horarios_conflitam(item1, item2):
-                        raise ValidationError(f"Conflito de horários no dia {dia}")
 
     def _horarios_conflitam(self, item1, item2):
         def to_min(t): h, m = t.split(':'); return int(h) * 60 + int(m)
