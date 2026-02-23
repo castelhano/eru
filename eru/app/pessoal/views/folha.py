@@ -4,88 +4,116 @@ GET  → carrega contexto do dashboard (resumos, status dos jobs, etc.)
 POST → despacha ações: consolidar frequência ou processar folha
 """
 import calendar
+import csv
 from datetime import datetime, date
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
+from django.db.models import Sum, Count, Q as Qm
+from django.http import JsonResponse, HttpResponse
 from django.utils.translation import gettext_lazy as _
 from core.views import BaseTemplateView
-from pessoal.models import ProcessamentoJob
+from pessoal.models import (
+    ProcessamentoJob, FrequenciaConsolidada, FolhaPagamento, Contrato
+)
 from pessoal.tasks import disparar_consolidacao, disparar_folha
 
-# FolhaDashboardView: Ações aceitas via POST 
+
 _ACOES = {
     'consolidar_freq': _('Consolidar frequência'),
     'processar_folha': _('Processar folha'),
 }
 
-from django.db.models import Sum, Count, Q as Qm
-from pessoal.models import FrequenciaConsolidada, FolhaPagamento
-import csv
-from django.http import HttpResponse
-from pessoal.models import FrequenciaConsolidada
-from pessoal.models import FrequenciaConsolidada
+
 class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'pessoal/folha_dashboard.html'
+
     # ── GET ──────────────────────────────────────────────────────────────────
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         filial_id, competencia = self._parse_params()
         context['filtro'] = {
             'filial_id':   filial_id,
             'competencia': competencia.strftime('%Y-%m') if competencia else datetime.today().strftime('%Y-%m'),
-            'acoes': _ACOES,
-            'consultado': False
+            'acoes':       _ACOES,
         }
+        context['consultado'] = False
         if filial_id and competencia:
             context.update(self._montar_dashboard(filial_id, competencia))
         return context
+
     def _montar_dashboard(self, filial_id: int, competencia: date) -> dict:
         jobs = ProcessamentoJob.objects.filter(filial_id=filial_id, competencia=competencia)
 
-        # FrequenciaConsolidada agregada da filial — soma os consolidados existentes
-        consolidados = FrequenciaConsolidada.objects.filter(
-            contrato__funcionario__filial_id=filial_id,
-            competencia=competencia,
+        # carrega consolidados em lista para reusar sem múltiplas queries
+        consolidados = list(
+            FrequenciaConsolidada.objects.filter(
+                contrato__funcionario__filial_id=filial_id,
+                competencia=competencia,
+            )
         )
-        # agrega os erros de todos os consolidados num único dict {data: motivo}
-        erros_freq = {}
+
+        # agrega totais e erros de todos os consolidados da filial
+        erros_freq  = {}
         resumo_freq = None
-        if consolidados.exists():
-            totais = {'H_horas_extras': 0.0,
-                    'H_faltas_justificadas': 0.0, 'H_faltas_injustificadas': 0.0,
-                    'H_atestados': 0.0, 'H_dias_trabalhados': 0}
-            for c in consolidados:
+        if consolidados:
+            totais = {
+                'H_horas_trabalhadas':     0.0,
+                'H_horas_extras':          0.0,
+                'H_faltas_justificadas':   0.0,
+                'H_faltas_injustificadas': 0.0,
+                'H_atestados':             0.0,
+            }
+            for fc in consolidados:
                 for k in totais:
-                    totais[k] += c.consolidado.get(k, 0)
-                erros_freq.update(c.erros or {})
-            totais['qtd_funcionarios'] = consolidados.count()
+                    totais[k] += fc.consolidado.get(k, 0)
+                erros_freq.update(fc.erros or {})
+            totais['qtd_funcionarios'] = len(consolidados)
             resumo_freq = totais
 
+        # total de contratos vigentes na competência — base de comparação
+        _, fim_comp = self._parse_periodo(competencia)
+        total_contratos = (
+            Contrato.objects
+            .filter(funcionario__filial_id=filial_id, inicio__lte=fim_comp)
+            .filter(Qm(fim__gte=competencia) | Qm(fim__isnull=True))
+            .count()
+        )
+
+        # situação real: reflete o estado atual de todos os consolidados
+        # independente de quando ou quantas vezes o job foi executado
+        qtd_erros_freq = sum(len(fc.erros or {}) for fc in consolidados)
+        situacao_freq  = {
+            'consolidados':    len(consolidados),
+            'total_contratos': total_contratos,
+            'pendencias':      qtd_erros_freq,
+            # FECHADO só se há consolidados e nenhuma pendência
+            'status': 'FECHADO' if consolidados and not qtd_erros_freq else 'ABERTO',
+        }
+
         # resumo de folha
-        resumo_folha = FolhaPagamento.objects.filter(
-            contrato__funcionario__filial_id=filial_id,
-            competencia=competencia,
-        ).aggregate(
+        folha_qs     = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id, competencia=competencia
+        )
+        resumo_folha = folha_qs.aggregate(
             total_bruto=Sum('proventos'),
             total_descontos=Sum('descontos'),
             total_liq=Sum('liquido'),
             qtd_total=Count('id'),
             qtd_erros=Count('id', filter=Qm(total_erros__gt=0)),
-        ) if FolhaPagamento.objects.filter(
-            contrato__funcionario__filial_id=filial_id, competencia=competencia
-        ).exists() else None
+        ) if folha_qs.exists() else None
 
         return {
-            'job_freq':    jobs.filter(tipo=ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ).first(),
-            'job_folha':   jobs.filter(tipo=ProcessamentoJob.Tipo.FOLHA).first(),
-            'resumo_freq': resumo_freq,
-            'resumo_folha': resumo_folha,
-            'erros_freq':  erros_freq,
-            'qtd_erros_freq': sum(len(fc.erros or {}) for fc in consolidados),
-            'consultado': True
+            'job_freq':       jobs.filter(tipo=ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ).first(),
+            'job_folha':      jobs.filter(tipo=ProcessamentoJob.Tipo.FOLHA).first(),
+            'resumo_freq':    resumo_freq,
+            'resumo_folha':   resumo_folha,
+            'situacao_freq':  situacao_freq,
+            'qtd_erros_freq': qtd_erros_freq,
+            'consultado':     True,
         }
+
     def get(self, request, *args, **kwargs):
-        # polling do JS
+        # polling do JS — retorna só o status do job
         job_id = request.GET.get('job_status')
         if job_id:
             try:
@@ -98,11 +126,12 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         if request.GET.get('erros_json'):
             return self._export_erros_json(request)
 
-        # download CSV
+        # download CSV dos dias pendentes
         if request.GET.get('export') == 'erros_freq':
             return self._export_erros_csv(request)
 
         return super().get(request, *args, **kwargs)
+
     def _export_erros_json(self, request):
         """Retorna erros de consolidação formatados para o modal."""
         filial_id, competencia = self._parse_params()
@@ -123,11 +152,12 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         return JsonResponse(rows, safe=False)
 
     def _export_erros_csv(self, request):
+        """Gera download CSV com os dias pendentes."""
         filial_id, competencia = self._parse_params()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="erros_freq_{competencia}.csv"'
         response.write('\ufeff'.encode('utf8'))
-        response.set_cookie('fileDownload', 'true', max_age=60) # necessario para fechar modal loading (se usado no cliente)
+        response.set_cookie('fileDownload', 'true', max_age=60)  # fecha appModalLoading no cliente
         writer = csv.writer(response, delimiter=';')
         writer.writerow(['Matrícula', 'Funcionário', 'Data', 'Motivo'])
         for fc in FrequenciaConsolidada.objects.filter(
@@ -138,9 +168,6 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             for data, motivo in sorted((fc.erros or {}).items()):
                 writer.writerow([func.matricula, func.nome, data, motivo])
         return response
-
-
-
 
     # ── POST ─────────────────────────────────────────────────────────────────
 
@@ -161,23 +188,20 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     def _acao_consolidar_freq(self, filial_id: int, competencia: date) -> ProcessamentoJob:
         """Valida parâmetros e dispara consolidação de frequência."""
         inicio, fim = self._parse_periodo(competencia)
-        inicio_str = self.request.POST.get('inicio', '').strip()
-        fim_str    = self.request.POST.get('fim',    '').strip()
-        if inicio_str:            
+        inicio_str  = self.request.POST.get('inicio', '').strip()
+        fim_str     = self.request.POST.get('fim',    '').strip()
+        if inicio_str:
             inicio = date.fromisoformat(inicio_str)
         if fim_str:
             fim = date.fromisoformat(fim_str)
-        matricula_de  = self.request.POST.get('matricula_de',  '').strip() or None
-        matricula_ate = self.request.POST.get('matricula_ate', '').strip() or None
-        incluir_intervalo = self.request.POST.get('incluir_intervalo') == '1'
         return disparar_consolidacao(
             filial_id=filial_id,
             competencia=competencia,
             inicio=inicio,
             fim=fim,
-            incluir_intervalo=incluir_intervalo,
-            matricula_de=matricula_de,
-            matricula_ate=matricula_ate,
+            incluir_intervalo=self.request.POST.get('incluir_intervalo') == '1',
+            matricula_de=self.request.POST.get('matricula_de',  '').strip() or None,
+            matricula_ate=self.request.POST.get('matricula_ate', '').strip() or None,
             usuario=self.request.user,
         )
 

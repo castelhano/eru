@@ -80,22 +80,22 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
         iniciado_em=now(),
     )
     try:
-        inicio     = date.fromisoformat(inicio_str)
-        fim        = date.fromisoformat(fim_str)
-        contratos  = _filtrar_contratos(filial_id, inicio, fim, matricula_de, matricula_ate)
+        inicio    = date.fromisoformat(inicio_str)
+        fim       = date.fromisoformat(fim_str)
+        contratos = _filtrar_contratos(filial_id, inicio, fim, matricula_de, matricula_ate)
         processados, erros_count = 0, 0
         for c in contratos:
             try:
                 consolidar(c, inicio, fim, incluir_intervalo)
                 processados += 1
-            except Exception:
-                erros_count += 1  # continua os demais mesmo se um falhar
-                print(f"[ERRO consolidar] contrato={c.id} funcionario={c.funcionario.matricula} erro={e}")  # debug
+            except Exception as e:  # 'as e' obrigatório — usado no print abaixo
+                erros_count += 1    # continua os demais mesmo se um falhar
+                print(f"[ERRO consolidar] contrato={c.id} funcionario={c.funcionario.matricula} erro={e}")
 
         _fechar_job(job_id, {
             'processados': processados,
             'erros':       erros_count,
-            'periodo': f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}",
+            'periodo':     f"{inicio.strftime('%d/%m/%Y')} a {fim.strftime('%d/%m/%Y')}",
             'filtro_de':   matricula_de,
             'filtro_ate':  matricula_ate,
         })
@@ -130,13 +130,14 @@ def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: 
     Enfileira consolidação de frequência via Django Q2.
     Retorna o ProcessamentoJob criado para rastreamento no dashboard.
     """
-    
     job = _abrir_job(ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ, filial_id, competencia, usuario)
     async_task(
         _worker_consolidar,
         job.id, filial_id,
         competencia.isoformat(), inicio.isoformat(), fim.isoformat(),
         incluir_intervalo, matricula_de, matricula_ate,
+        # timestamp no task_name evita deduplicação indevida pelo Django Q2
+        # garantindo que reprocessamentos do mesmo mês sempre executem
         task_name=f"consolidar_freq_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job
@@ -151,6 +152,7 @@ def disparar_folha(filial_id: int, competencia: date, usuario=None) -> Processam
     async_task(
         _worker_folha,
         job.id, filial_id, competencia.month, competencia.year,
-        task_name=f"folha_{filial_id}_{competencia.isoformat()}",
+        # timestamp pelo mesmo motivo
+        task_name=f"folha_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job
