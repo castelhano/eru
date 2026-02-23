@@ -12,7 +12,6 @@ from core.views import BaseTemplateView
 from pessoal.models import ProcessamentoJob
 from pessoal.tasks import disparar_consolidacao, disparar_folha
 
-
 # FolhaDashboardView: Ações aceitas via POST 
 _ACOES = {
     'consolidar_freq': _('Consolidar frequência'),
@@ -52,13 +51,14 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         erros_freq = {}
         resumo_freq = None
         if consolidados.exists():
-            totais = {'H_horas_trabalhadas': 0.0, 'H_horas_extras': 0.0,
+            totais = {'H_horas_extras': 0.0,
                     'H_faltas_justificadas': 0.0, 'H_faltas_injustificadas': 0.0,
                     'H_atestados': 0.0, 'H_dias_trabalhados': 0}
             for c in consolidados:
                 for k in totais:
                     totais[k] += c.consolidado.get(k, 0)
                 erros_freq.update(c.erros or {})
+            totais['qtd_funcionarios'] = consolidados.count()
             resumo_freq = totais
 
         # resumo de folha
@@ -161,6 +161,12 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     def _acao_consolidar_freq(self, filial_id: int, competencia: date) -> ProcessamentoJob:
         """Valida parâmetros e dispara consolidação de frequência."""
         inicio, fim = self._parse_periodo(competencia)
+        inicio_str = self.request.POST.get('inicio', '').strip()
+        fim_str    = self.request.POST.get('fim',    '').strip()
+        if inicio_str:            
+            inicio = date.fromisoformat(inicio_str)
+        if fim_str:
+            fim = date.fromisoformat(fim_str)
         matricula_de  = self.request.POST.get('matricula_de',  '').strip() or None
         matricula_ate = self.request.POST.get('matricula_ate', '').strip() or None
         incluir_intervalo = self.request.POST.get('incluir_intervalo') == '1'

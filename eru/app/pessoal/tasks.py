@@ -90,6 +90,7 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
                 processados += 1
             except Exception:
                 erros_count += 1  # continua os demais mesmo se um falhar
+                print(f"[ERRO consolidar] contrato={c.id} funcionario={c.funcionario.matricula} erro={e}")  # debug
 
         _fechar_job(job_id, {
             'processados': processados,
@@ -129,13 +130,14 @@ def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: 
     Enfileira consolidação de frequência via Django Q2.
     Retorna o ProcessamentoJob criado para rastreamento no dashboard.
     """
+    
     job = _abrir_job(ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ, filial_id, competencia, usuario)
     async_task(
         _worker_consolidar,
         job.id, filial_id,
         competencia.isoformat(), inicio.isoformat(), fim.isoformat(),
         incluir_intervalo, matricula_de, matricula_ate,
-        task_name=f"consolidar_freq_{filial_id}_{competencia.isoformat()}",
+        task_name=f"consolidar_freq_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job
 

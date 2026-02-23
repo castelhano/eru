@@ -103,6 +103,7 @@ def consolidar(contrato, inicio: date, fim: date, incluir_intervalo: bool = Fals
     Processa o período [inicio, fim] para o contrato e persiste FrequenciaConsolidada.
     Retorna a instância salva.
     """
+    print(f"[ENGINE] contrato={contrato.id} periodo={inicio} a {fim}")  # debug
     tz = timezone.get_current_timezone()
 
     # 1. Busca registros do período — inclui dia_inteiro via campo data
