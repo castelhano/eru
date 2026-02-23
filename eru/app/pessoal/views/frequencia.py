@@ -110,10 +110,3 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 Q(fim_vigencia__gte=competencia) | Q(fim_vigencia__isnull=True)
             ).order_by('inicio_vigencia').select_related('turno').prefetch_related('turno__dias')
         )
-
-
-class FrequenciaImportView(LoginRequiredMixin, BaseTemplateView):
-    template_name = 'pessoal/frequencia_import.html'
-
-    def get_context_data(self, **kwargs):
-        return super().get_context_data(**kwargs)

@@ -6,6 +6,8 @@ charset-normalizer==3.4.4
 Django==6.0.2
 django-auditlog==3.4.1
 django-filter==25.2
+django-picklefield==3.4.0  
+django-q2==1.9.0
 django-tables2==2.8.0
 djangorestframework==3.16.1
 idna==3.11

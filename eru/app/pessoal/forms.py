@@ -84,7 +84,7 @@ class ContratoForm(BootstrapMixin, forms.ModelForm):
     salario = forms.DecimalField(label=_('Salário'), widget=forms.TextInput(), localize=True)
     class Meta:
         model = Contrato
-        fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim', 'carga_mensal']
+        fields = ['funcionario','setor','cargo', 'regime', 'salario', 'inicio', 'fim', 'carga_mensal', 'carga_diaria']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         sid = self.data.get('setor') or (self.instance.cargo.setor_id if self.instance.pk and self.instance.cargo else None)

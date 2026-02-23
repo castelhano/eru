@@ -15,6 +15,7 @@ INSTALLED_APPS = [
     'auditlog',
     'django_tables2',
     'pydantic',
+    'django_q',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,6 +38,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'auditlog.middleware.AuditlogMiddleware'
 ]
+
+# django_q settings
+Q_CLUSTER = {
+    'name':       'pessoal',
+    'workers':    2,
+    'timeout':    120,          # segundos até considerar a task travada
+    'retry':      180,
+    # 'django_redis': 'default',  # comentado ate migrar para redis
+    'orm':        'default',    # usa o banco Django como broker
+}
 
 ROOT_URLCONF = 'eru.urls'
 

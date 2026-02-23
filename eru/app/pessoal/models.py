@@ -219,6 +219,8 @@ auditlog.register(Funcionario, exclude_fields=['foto'])
 # Modelos para contrato / frequencia / escala
 
 class Contrato(models.Model):
+    # caega_diaria espera receber valor decimal ja convertido, 07:20 -> 7.3333, deve ser tratado
+    # na validacao do form e/ou no cliente
     class Regime(models.TextChoices):
         CLT        = "CLT", _("CLT")
         PJ         = "PJ",  _("Pessoa Jurídica")
@@ -235,6 +237,7 @@ class Contrato(models.Model):
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
     carga_mensal = models.PositiveIntegerField(_('Carga Mensal'), default=220)
+    carga_diaria = models.DecimalField( _('Carga Diária'), max_digits=5, decimal_places=2, null=True, blank=True)
     class Meta:
         indexes = [
             models.Index(fields=['funcionario', 'inicio', 'fim'], name='idx_contrato_vigencia'),
@@ -263,6 +266,12 @@ class Contrato(models.Model):
     @property
     def C_carga_mensal(self):
         return self.carga_mensal
+    @property
+    def C_carga_diaria(self) -> float:
+        # Carga diaria efetiva: campo explicito ou fallback carga_mensal/30
+        if self.carga_diaria:
+            return float(self.carga_diaria)
+        return round(self.carga_mensal / 30, 4)
 auditlog.register(Contrato)
 
 
@@ -634,6 +643,19 @@ class FrequenciaConsolidada(models.Model):
     def H_horas_extras(self): return self.consolidado.get('H_horas_extras', 0.0)
     @property
     def H_atestados(self): return self.consolidado.get('H_atestados', 0)
+    @property
+    def H_horas_intervalo(self): return self.consolidado.get('H_intervalos', 0.0)
+    @property
+    def H_dias_trabalhados(self): return self.consolidado.get('H_dias_trabalhados', 0)
+    @property
+    def H_dias_falta_just(self): return self.consolidado.get('H_dias_falta_just', 0)
+    @property
+    def H_dias_falta_njust(self): return self.consolidado.get('H_dias_falta_njust', 0)
+    @property
+    def H_dias_folga(self): return self.consolidado.get('H_dias_folga', 0)
+    @property
+    def H_dias_afastamento(self): return self.consolidado.get('H_dias_afastamento', 0)
+    def tem_erros(self) -> bool: return self.bloqueado
 
 
 class FrequenciaImport(models.Model):
@@ -660,3 +682,31 @@ class FrequenciaImport(models.Model):
         ]
     def __str__(self):
         return f"{self.contrato.funcionario.matricula} | {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
+
+
+class ProcessamentoJob(models.Model):
+    class Tipo(models.TextChoices):
+        CONSOLIDACAO_FREQ = 'CF', _('Consolidação de Frequência')
+        FOLHA             = 'FP', _('Folha de Pagamento')
+    class Status(models.TextChoices):
+        AGUARDANDO   = 'AG', _('Aguardando')
+        PROCESSANDO  = 'PR', _('Processando')
+        CONCLUIDO    = 'OK', _('Concluído')
+        ERRO         = 'ER', _('Erro')
+    tipo = models.CharField(_('Tipo'), max_length=2, choices=Tipo.choices)
+    filial = models.ForeignKey('core.Filial', on_delete=models.CASCADE, verbose_name=_('Filial'))
+    competencia = models.DateField(_('Competência'), db_index=True)
+    status = models.CharField(_('Status'), max_length=2, choices=Status.choices, default=Status.AGUARDANDO, db_index=True)
+    criado_por = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Criado por'))
+    iniciado_em = models.DateTimeField(_('Iniciado em'),  null=True, blank=True)
+    concluido_em = models.DateTimeField(_('Concluído em'), null=True, blank=True)
+    resultado = models.JSONField(_('Resultado'), default=dict, blank=True)
+    class Meta:
+        verbose_name = _('Job de Processamento')
+        # um job por tipo/filial/competência — reabre no lugar do anterior
+        unique_together = ('tipo', 'filial', 'competencia')
+        ordering = ['-concluido_em']
+    def __str__(self):
+        return f"{self.get_tipo_display()} | {self.filial} | {self.competencia.strftime('%m/%Y')} | {self.get_status_display()}"
+    @property
+    def em_execucao(self) -> bool: return self.status in (self.Status.AGUARDANDO, self.Status.PROCESSANDO)

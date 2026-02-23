@@ -69,7 +69,7 @@ class FuncionarioFilter(django_filters.FilterSet):
 class ContratoFilter(django_filters.FilterSet):
     class Meta:
         model = Contrato
-        fields = ['cargo', 'regime', 'inicio', 'fim','carga_mensal']
+        fields = ['cargo', 'regime', 'inicio', 'fim','carga_mensal', 'carga_diaria']
 
 class CargoFilter(django_filters.FilterSet):
     nome = django_filters.CharFilter(lookup_expr='icontains', label=_('Nome'))

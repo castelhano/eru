@@ -1,6 +1,6 @@
 # pessoal/urls.py
 from django.urls import path
-from pessoal.views import common, frequencia, turno
+from pessoal.views import common, frequencia, turno, folha
 
 app_name = 'pessoal'
 
@@ -92,13 +92,17 @@ urlpatterns = [
     path('evento_related/<str:related>/<int:pk>/delete', common.EventoRelatedDeleteView.as_view(), name='eventorelated_delete'),
     
     # ============================================
-    # FREQUÊNCIA (Refatorada com Services)
+    # FOLHA
     # ============================================
-    path('frequencia/', frequencia.FrequenciaManagementView.as_view(), name='frequencia_list'),
-    path('frequencia/import/', frequencia.FrequenciaImportView.as_view(), name='frequencia_import'),
+    path('dashboard/', folha.FolhaDashboardView.as_view(), name='folha_dashboard'),
     
     # ============================================
-    # TURNO (Refatorado com Services)
+    # FREQUÊNCIA
+    # ============================================
+    path('frequencia/', frequencia.FrequenciaManagementView.as_view(), name='frequencia_list'),
+    
+    # ============================================
+    # TURNO
     # ============================================
     path('turnos/', turno.TurnoManagementView.as_view(), name='turno_list'),
     

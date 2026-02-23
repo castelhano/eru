@@ -1,0 +1,408 @@
+{% extends "layout/app.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+<style>
+{% block style %}
+.dash-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 992px) { .dash-grid { grid-template-columns: 280px 1fr; align-items: start; } }
+
+.dash-panel { background: var(--bs-tertiary-bg); border-radius: .5rem; padding: 1.25rem; border: 1px solid var(--bs-border-color); }
+.panel-title { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--bs-secondary-color); margin-bottom: 1rem; }
+
+.job-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 2rem; white-space: nowrap; }
+.job-status.AG { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.job-status.PR { background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); }
+.job-status.OK { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.job-status.ER { background: var(--bs-danger-bg-subtle);  color: var(--bs-danger-text-emphasis); }
+
+.job-block { border-left: 3px solid var(--bs-border-color); padding: .5rem .75rem; margin-top: .6rem; font-size: .82rem; }
+.job-block.OK { border-color: var(--bs-success); }
+.job-block.ER { border-color: var(--bs-danger); }
+.jb-row { display: flex; justify-content: space-between; padding: .15rem 0; border-bottom: 1px solid var(--bs-border-color-translucent); }
+.jb-row:last-child { border-bottom: none; }
+.jb-label { color: var(--bs-secondary-color); }
+.jb-val   { font-weight: 600; }
+
+.metric-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .6rem; margin-top: .75rem; }
+.metric-box   { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: .4rem; padding: .6rem .75rem; text-align: center; }
+.metric-box .m-val   { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+.metric-box .m-label { font-size: .68rem; color: var(--bs-secondary-color); margin-top: .2rem; }
+.metric-box.accent { border-color: var(--bs-primary); }
+.metric-box.warn   { border-color: var(--bs-warning); }
+.metric-box.danger { border-color: var(--bs-danger);  }
+
+/* tabela de erros no modal */
+#tbl_erros td { font-size: .82rem; vertical-align: middle; }
+#tbl_erros td:first-child { white-space: nowrap; font-weight: 600; width: 110px; }
+
+.spin { animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.mat-range { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+{% endblock %}
+</style>
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" href="#"><i class="bi bi-speedometer2"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="#"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <form id="app_form" method="POST" autocomplete="off" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="acao" id="id_acao">
+
+            <div class="dash-grid">
+
+                <!-- ── Painel de controle ─────────────────────────────── -->
+                <div class="dash-panel">
+                    <div class="panel-title"><i class="bi bi-sliders me-1"></i>Parâmetros</div>
+
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Filial</label>
+                        <select name="filial_id" id="id_filial" class="form-select form-select-sm">
+                            {% for empresa in user.profile.empresas %}
+                            <optgroup label="{{ empresa.nome }}">
+                                {% for filial in empresa.filiais_permitidas %}
+                                <option value="{{ filial.id }}" {% if filtro.filial_id == filial.id %}selected{% endif %}>{{ filial.nome }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Competência</label>
+                        <input type="month" name="competencia" id="id_competencia" class="form-control form-control-sm" value="{{ filtro.competencia }}">
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-3" id="btn_filtrar">
+                        <i class="bi bi-search me-1"></i>Consultar
+                    </button>
+
+                    {% if consultado %}
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Intervalo de matrículas <span class="text-secondary">(opcional)</span></label>
+                        <div class="mat-range">
+                            <input type="text" name="matricula_de"  class="form-control form-control-sm" placeholder="De">
+                            <input type="text" name="matricula_ate" class="form-control form-control-sm" placeholder="Até">
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="incluir_intervalo" id="id_incl_int" value="1">
+                        <label class="form-check-label form-label-sm" for="id_incl_int">Incluir intervalos na jornada</label>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-grid gap-2">
+                        {% for valor, label in filtro.acoes.items %}
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-acao" data-acao="{{ valor }}">
+                            <i class="bi bi-play-fill me-1"></i>{{ label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- ── Painel direito ─────────────────────────────────── -->
+                {% if consultado %}
+                <div>
+
+                    {% if resumo_freq %}
+                    <div class="dash-panel mb-3">
+                        <div class="panel-title"><i class="bi bi-clock-history me-1"></i>Resumo de Frequência — {{ filtro.competencia }}</div>
+                        <div class="metric-grid">
+                            <div class="metric-box accent">
+                                <div class="m-val">{{ resumo_freq.H_horas_trabalhadas|floatformat:1 }}h</div>
+                                <div class="m-label">Horas trabalhadas</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="m-val">{{ resumo_freq.H_horas_extras|floatformat:1 }}h</div>
+                                <div class="m-label">Horas extras</div>
+                            </div>
+                            <div class="metric-box warn">
+                                <div class="m-val">{{ resumo_freq.H_faltas_justificadas|floatformat:1 }}h</div>
+                                <div class="m-label">Faltas justif.</div>
+                            </div>
+                            <div class="metric-box danger">
+                                <div class="m-val">{{ resumo_freq.H_faltas_injustificadas|floatformat:1 }}h</div>
+                                <div class="m-label">Faltas injustif.</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="m-val">{{ resumo_freq.H_atestados|floatformat:1 }}h</div>
+                                <div class="m-label">Atestados</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="m-val">{{ resumo_freq.H_dias_trabalhados }}</div>
+                                <div class="m-label">Dias trabalhados</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if resumo_folha %}
+                    <div class="dash-panel mb-3">
+                        <div class="panel-title"><i class="bi bi-cash-stack me-1"></i>Resumo de Folha — {{ filtro.competencia }}</div>
+                        <div class="metric-grid">
+                            <div class="metric-box accent">
+                                <div class="m-val">R$&nbsp;{{ resumo_folha.total_bruto|floatformat:2 }}</div>
+                                <div class="m-label">Proventos</div>
+                            </div>
+                            <div class="metric-box danger">
+                                <div class="m-val">R$&nbsp;{{ resumo_folha.total_descontos|floatformat:2 }}</div>
+                                <div class="m-label">Descontos</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="m-val">R$&nbsp;{{ resumo_folha.total_liq|floatformat:2 }}</div>
+                                <div class="m-label">Líquido</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="m-val">{{ resumo_folha.qtd_total }}</div>
+                                <div class="m-label">Funcionários</div>
+                            </div>
+                            {% if resumo_folha.qtd_erros %}
+                            <div class="metric-box danger">
+                                <div class="m-val">{{ resumo_folha.qtd_erros }}</div>
+                                <div class="m-label">Com erros</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Jobs: última execução -->
+                    <div class="dash-panel">
+                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>Última execução</div>
+                        <div class="row g-3">
+
+                            <!-- Frequência -->
+                            <div class="col-12 col-xl-6">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                                    <span class="fw-semibold" style="font-size:.85rem">Consolidação de Frequência</span>
+                                    {% if job_freq %}
+                                    <span class="job-status {{ job_freq.status }}">
+                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+                                        {{ job_freq.get_status_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-secondary" style="font-size:.75rem">Não executado</span>
+                                    {% endif %}
+                                </div>
+                                {% if job_freq %}
+                                <div class="job-block {{ job_freq.status }}">
+                                    {% if job_freq.resultado.erro %}
+                                    <div class="text-danger small">{{ job_freq.resultado.erro }}</div>
+                                    {% else %}
+                                    <div class="jb-row"><span class="jb-label">Processados</span><span class="jb-val">{{ job_freq.resultado.processados|default:"—" }}</span></div>
+                                    <div class="jb-row"> <span class="jb-label">Falhas no processo</span> <span class="jb-val">{{ job_freq.resultado.erros|default:"0" }}</span></div>
+                                    <div class="jb-row"><span class="jb-label">Período</span><span class="jb-val">{{ job_freq.resultado.periodo|default:"—" }}</span></div>
+                                    {% if job_freq.resultado.filtro_de or job_freq.resultado.filtro_ate %}
+                                    <div class="jb-row"><span class="jb-label">Matrículas</span><span class="jb-val">{{ job_freq.resultado.filtro_de|default:"início" }} → {{ job_freq.resultado.filtro_ate|default:"fim" }}</span></div>
+                                    {% endif %}
+                                    <div class="jb-row"><span class="jb-label">Iniciado</span><span class="jb-val">{{ job_freq.iniciado_em|date:"d/m/Y H:i"|default:"—" }}</span></div>
+                                    <div class="jb-row"><span class="jb-label">Concluído</span><span class="jb-val">{{ job_freq.concluido_em|date:"d/m/Y H:i"|default:"—" }}</span></div>
+                                    {% if job_freq.iniciado_em and job_freq.concluido_em %}
+                                    <div class="jb-row"><span class="jb-label">Duração</span><span class="jb-val" id="dur_freq"></span></div>
+                                    {% endif %}
+                                    <div class="jb-row"><span class="jb-label">Por</span><span class="jb-val">{{ job_freq.criado_por|default:"—" }}</span></div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- botões de erros — só exibe se há erros de consolidação -->
+                                {% if qtd_erros_freq %}
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn_ver_erros">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>{{ qtd_erros_freq }} pendência(s)
+                                    </button>
+                                    <a href="?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&export=erros_freq"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-download me-1"></i>CSV
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <!-- Folha -->
+                            <div class="col-12 col-xl-6">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+                                    <span class="fw-semibold" style="font-size:.85rem">Folha de Pagamento</span>
+                                    {% if job_folha %}
+                                    <span class="job-status {{ job_folha.status }}">
+                                        {% if job_folha.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+                                        {{ job_folha.get_status_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-secondary" style="font-size:.75rem">Não executado</span>
+                                    {% endif %}
+                                </div>
+                                {% if job_folha %}
+                                <div class="job-block {{ job_folha.status }}">
+                                    {% if job_folha.resultado.erro %}
+                                    <div class="text-danger small">{{ job_folha.resultado.erro }}</div>
+                                    {% else %}
+                                    <div class="jb-row"><span class="jb-label">Processados</span><span class="jb-val">{{ job_folha.resultado.processados|default:"—" }}</span></div>
+                                    <div class="jb-row"><span class="jb-label">Iniciado</span><span class="jb-val">{{ job_folha.iniciado_em|date:"d/m/Y H:i"|default:"—" }}</span></div>
+                                    <div class="jb-row"><span class="jb-label">Concluído</span><span class="jb-val">{{ job_folha.concluido_em|date:"d/m/Y H:i"|default:"—" }}</span></div>
+                                    {% if job_folha.iniciado_em and job_folha.concluido_em %}
+                                    <div class="jb-row"><span class="jb-label">Duração</span><span class="jb-val" id="dur_folha"></span></div>
+                                    {% endif %}
+                                    <div class="jb-row"><span class="jb-label">Por</span><span class="jb-val">{{ job_folha.criado_por|default:"—" }}</span></div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div><!-- /dash-grid -->
+        </form>
+    </div>
+</div>
+
+<!-- Modal de erros de frequência -->
+<div class="modal fade" id="modal_erros" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Dias pendentes — Frequência</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="modal_erros_loading" class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-secondary"></div>
+                </div>
+                <table class="table table-sm table-hover mb-0 d-none" id="tbl_erros">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Funcionário</th>
+                            <th>Data</th>
+                            <th>Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer py-2 justify-content-between">
+                <small class="text-secondary" id="modal_erros_count"></small>
+                <div class="d-flex gap-2">
+                    <a href="?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&export=erros_freq"
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download me-1"></i>Baixar CSV
+                    </a>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block add_script_src %}{% endblock %}
+
+<script>
+{% block add_script %}
+const form     = document.getElementById('app_form');
+const idAcao   = document.getElementById('id_acao');
+const filialEl = document.getElementById('id_filial');
+const compEl   = document.getElementById('id_competencia');
+
+// GET — consulta filial+competência
+document.getElementById('btn_filtrar').addEventListener('click', () => {
+    const f = filialEl.value, c = compEl.value;
+    if (!f || !c) { alert('Informe filial e competência.'); return; }
+    window.location.href = `?filial_id=${f}&competencia=${c}`;
+});
+
+// POST — dispara ação selecionada
+document.querySelectorAll('.btn-acao').forEach(btn => {
+    btn.addEventListener('click', () => { idAcao.value = btn.dataset.acao; _disparar(); });
+});
+
+async function _disparar() {
+    const f = filialEl.value, c = compEl.value;
+    if (!f || !c) { alert('Informe filial e competência.'); return; }
+    document.querySelectorAll('.btn-acao').forEach(b => b.disabled = true);
+    appModalLoading.show();
+    try {
+        const resp = await fetch(form.action || location.href, {
+            method: 'POST', body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await resp.json();
+        if (data.status === 'queued') _polling(data.job_id, f, c);
+        else {
+            appModalLoading.hide();
+            alert(data.message || 'Erro ao disparar.');
+            document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
+        }
+    } catch {
+        appModalLoading.hide();
+        alert('Erro de comunicação.');
+        document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
+    }
+}
+
+function _polling(jobId, filial, comp, ms = 3000) {
+    const t = setInterval(async () => {
+        try {
+            const d = await (await fetch(`?job_status=${jobId}`)).json();
+            if (d.status !== 'AG' && d.status !== 'PR') {
+                clearInterval(t);
+                window.location.href = `?filial_id=${filial}&competencia=${comp}`;
+            }
+        } catch { clearInterval(t); }
+    }, ms);
+}
+
+// duração legível
+function _duracao(ini, fim) {
+    const s = Math.round((new Date(fim) - new Date(ini)) / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60), r = s % 60;
+    return r ? `${m}min ${r}s` : `${m}min`;
+}
+{% if job_freq and job_freq.iniciado_em and job_freq.concluido_em %}
+document.getElementById('dur_freq').textContent = _duracao('{{ job_freq.iniciado_em|date:"c" }}', '{{ job_freq.concluido_em|date:"c" }}');
+{% endif %}
+{% if job_folha and job_folha.iniciado_em and job_folha.concluido_em %}
+document.getElementById('dur_folha').textContent = _duracao('{{ job_folha.iniciado_em|date:"c" }}', '{{ job_folha.concluido_em|date:"c" }}');
+{% endif %}
+
+// modal de erros — carrega via AJAX apenas ao abrir
+{% if qtd_erros_freq %}
+const modalEl   = document.getElementById('modal_erros');
+const bsModal   = new bootstrap.Modal(modalEl);
+let   errosCarregados = false;
+
+document.getElementById('btn_ver_erros').addEventListener('click', () => {
+    bsModal.show();
+    if (errosCarregados) return;
+    fetch(`?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&erros_json=1`)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.querySelector('#tbl_erros tbody');
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${row.matricula}</td><td>${row.funcionario}</td><td>${row.data}</td><td>${row.motivo}</td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('modal_erros_loading').classList.add('d-none');
+            document.getElementById('tbl_erros').classList.remove('d-none');
+            document.getElementById('modal_erros_count').textContent = `${data.length} registro(s)`;
+            errosCarregados = true;
+        })
+        .catch(() => {
+            document.getElementById('modal_erros_loading').innerHTML = '<span class="text-danger small">Erro ao carregar.</span>';
+        });
+});
+{% endif %}
+{% endblock %}
+</script>

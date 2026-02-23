@@ -2,7 +2,7 @@ from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
-from django_tables2 import Table, Column, TemplateColumn
+from django_tables2 import Table, Column
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
     EventoEmpresa, EventoCargo, EventoFuncionario, EventoFrequencia
@@ -52,7 +52,7 @@ class ContratoTable(TableCustomMixin, Table):
     class Meta:
         model = Contrato
         template_name = '_tables/contrato_table.html'
-        fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal',)
+        fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal','carga_diaria',)
         actions = [
             {
                 'label': '<i class="bi bi-chevron-down"></i>',
