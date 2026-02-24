@@ -14,7 +14,7 @@
 .dash-panel { background: var(--bs-tertiary-bg); border-radius: .5rem; padding: 1.25rem; border: 1px solid var(--bs-border-color); }
 .panel-title { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--bs-secondary-color); margin-bottom: 1rem; }
 
-.job-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 2rem; white-space: nowrap; cursor: default; }
+.job-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 2rem; white-space: nowrap;}
 .job-status.AG { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
 .job-status.PR { background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); cursor: pointer; }
 .job-status.OK { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
@@ -114,12 +114,11 @@
                     <div class="d-grid gap-2">
                         {% for valor, label in filtro.acoes.items %}
                         <button type="button"
+                                onclick="_disparar('{{ valor }}')"
                                 class="btn btn-sm btn-primary-matte btn-acao"
-                                data-acao="{{ valor }}"
                                 data-appConfirm="true"
                                 data-appConfirmTitle="<i class='bi bi-braces-asterisk me-2'></i>{{ label }}"
-                                data-appConfirmMessage="Confirma operação? O processo será <b>executado em segundo plano</b>."
-                                >
+                                data-appConfirmMessage="Confirma operação? O processo será <b>executado em segundo plano</b>.">
                             {{ label }}
                         </button>
                         {% endfor %}
@@ -235,15 +234,12 @@
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
                                     <span class="fw-semibold" style="font-size:.85rem">Consolidação de Frequência</span>
                                     {% if job_freq %}
-                                    {# badge PR é clicável para recarregar e atualizar status #}
-                                    <span class="job-status {{ job_freq.status }}"
-                                          {% if job_freq.status == 'PR' %}
+                                    <span class="job-status {{ job_freq.status }}{% if job_freq.status in 'PR AG' %} pointer{% endif %}"
+                                          {% if job_freq.status in 'PR AG' %}
                                           onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
-                                          title="Clique para atualizar"
                                           {% endif %}>
-                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-repeat spin me-1"></i>{% endif %}
                                         {{ job_freq.get_status_display }}
-                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
+                                        {% if job_freq.status in 'PR AG' %}<i class="bi bi-arrow-repeat ms-1" style="font-size:.7rem"></i>{% endif %}
                                     </span>
                                     {% else %}
                                     <span class="text-secondary" style="font-size:.75rem">Não executado</span>
@@ -365,35 +361,15 @@ document.getElementById('btn_filtrar').addEventListener('click', () => {
 
 // Botões de ação: o appConfirm intercepta o onclick definido abaixo.
 // Ao confirmar, executa _disparar(acao) e fecha o modal de confirmação.
-document.querySelectorAll('.btn-acao').forEach(btn => {
-    // seta onclick como string para o appConfirm capturar via new Function()
-    const acao = btn.dataset.acao;
-    btn.setAttribute('onclick', `_disparar('${acao}')`);
-});
+// document.querySelectorAll('.btn-acao').forEach(btn => {
+//     const acao = btn.dataset.acao;
+//     btn.setAttribute('onclick', `_disparar('${acao}')`);
+// });
 
-async function _disparar(acao) {
-    // fecha modal de confirmação caso ainda esteja aberto
+function _disparar(acao) {
     try { appModalConfirm.hide(); } catch(e) {}
-
     idAcao.value = acao;
-    const f = filialEl.value, c = compEl.value;
-    document.querySelectorAll('.btn-acao').forEach(b => b.disabled = true);
-    appNotify('info', '<i class="bi bi-hourglass-split me-1"></i>Processo enfileirado, executando em segundo plano...');
-    try {
-        const resp = await fetch(form.action || location.href, {
-            method: 'POST', body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        const data = await resp.json();
-        if (data.status !== 'queued') {
-            appAlert('danger', data.message || 'Erro ao disparar.');
-            document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
-        }
-        // sem polling — usuário recarrega via click no badge PR ou ao voltar à página
-    } catch {
-        appAlert('danger', 'Erro de comunicação.');
-        document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
-    }
+    form.submit();
 }
 
 // duração legível entre dois ISO datetimes

@@ -7,10 +7,12 @@ import calendar
 import csv
 from datetime import datetime, date
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.db.models import Sum, Count, Min, Max, Q as Qm
 from django.http import JsonResponse, HttpResponse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.shortcuts import redirect
 from core.views import BaseTemplateView
 from pessoal.models import (
     Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob
@@ -195,16 +197,23 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
 
     def post(self, request, *args, **kwargs):
         acao = request.POST.get('acao', '').strip()
+        filial_id, competencia = self._parse_params()
+
         if acao not in _ACOES:
-            return JsonResponse({'status': 'error', 'message': 'Ação inválida'}, status=400)
+            messages.error(request, 'Ação inválida.')
+            return redirect(request.path)
+
+        if not filial_id or not competencia:
+            messages.error(request, 'Filial e competência obrigatórios.')
+            return redirect(request.path)
+
         try:
-            filial_id, competencia = self._parse_params()
-            if not filial_id or not competencia:
-                return JsonResponse({'status': 'error', 'message': 'Filial e competência obrigatórios'}, status=400)
-            job = getattr(self, f'_acao_{acao}')(filial_id, competencia)
-            return JsonResponse({'status': 'queued', 'job_id': job.id})
+            getattr(self, f'_acao_{acao}')(filial_id, competencia)
+            return redirect(f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}")
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            messages.error(request, str(e))
+            return redirect(f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}")
+
 
     def _acao_consolidar_freq(self, filial_id: int, competencia: date) -> ProcessamentoJob:
         inicio, fim = self._parse_periodo(competencia)
