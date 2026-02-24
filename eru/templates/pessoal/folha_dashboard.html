@@ -6,18 +6,20 @@
 <style>
 {% block style %}
 .dash-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 992px) { .dash-grid { grid-template-columns: 330px 1fr; align-items: start; } }
+@media (min-width: 992px) {
+    .dash-grid { grid-template-columns: 330px 1fr; align-items: start; }
+    .dash-panel .mat-range { grid-template-columns: 1fr; }   /* empilha campos no painel lateral */
+}
 
 .dash-panel { background: var(--bs-tertiary-bg); border-radius: .5rem; padding: 1.25rem; border: 1px solid var(--bs-border-color); }
-.panel-title { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--bs-secondary-color); margin-bottom: 1rem; }
+.panel-title { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--bs-secondary-color); margin-bottom: 1rem; }
 
-.job-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 2rem; white-space: nowrap; }
+.job-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 600; padding: .2rem .55rem; border-radius: 2rem; white-space: nowrap; cursor: default; }
 .job-status.AG { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
-.job-status.PR { background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); }
+.job-status.PR { background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); cursor: pointer; }
 .job-status.OK { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
 .job-status.ER { background: var(--bs-danger-bg-subtle);  color: var(--bs-danger-text-emphasis); }
 
-/* status geral do consolidado */
 .freq-status { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; font-weight: 700; padding: .25rem .65rem; border-radius: 2rem; }
 .freq-status.FECHADO { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
 .freq-status.ABERTO  { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
@@ -85,9 +87,10 @@
                     </div>
 
                     <button type="button" class="btn btn-sm btn-secondary-matte w-100" id="btn_filtrar">
-                        <i class="bi bi-search me-1"></i>{% translate 'Consultar'|escapejs %}
+                        <i class="bi bi-search me-1"></i>{% translate 'Consultar' %}
                     </button>
                     <hr>
+
                     {% if consultado %}
                     <div class="mb-3">
                         <label class="form-label form-label-sm">Período <span class="text-secondary">(padrão: mês inteiro)</span></label>
@@ -110,7 +113,14 @@
                     <hr class="my-2">
                     <div class="d-grid gap-2">
                         {% for valor, label in filtro.acoes.items %}
-                        <button type="button" data-appConfirm="true" class="btn btn-sm btn-primary-matte btn-acao" data-acao="{{ valor }}">
+                        <button type="button"
+                                class="btn btn-sm btn-primary-matte btn-acao"
+                                data-acao="{{ valor }}"
+                                data-appConfirm="true"
+                                data-appConfirmTitle="Confirmar processamento"
+                                data-appConfirmMessage="Deseja iniciar <b>{{ label }}</b>?<br><small class='text-secondary'>O processo será executado em segundo plano.</small>"
+                                data-appConfirmText="Iniciar"
+                                data-appConfirmColor="primary">
                             {{ label }}
                         </button>
                         {% endfor %}
@@ -122,19 +132,21 @@
                 {% if consultado %}
                 <div>
 
-                    <!-- Situação real do consolidado de frequência -->
+                    <!-- Situação real do consolidado -->
                     <div class="dash-panel mb-3">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
                             <div class="panel-title mb-0"><i class="bi bi-clipboard-check me-2"></i>Situação da Frequência — {{ filtro.competencia }}</div>
                             <span class="freq-status {{ situacao_freq.status }}">
-                                {% if situacao_freq.status == 'FECHADO' %}
-                                <i class="bi bi-check-circle-fill"></i>
-                                {% else %}
-                                <i class="bi bi-exclamation-circle-fill"></i>
-                                {% endif %}
+                                {% if situacao_freq.status == 'FECHADO' %}<i class="bi bi-check-circle-fill"></i>
+                                {% else %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}
                                 {{ situacao_freq.status }}
                             </span>
                         </div>
+
+                        {% if situacao_freq.periodo %}
+                        <span class="fs-8 border rounded py-1 px-2 text-bg-primary-matte">Consolidado: <span class="border rounded text-bg-info-matte mx-1 px-1">{{situacao_freq.periodo.inicio}}</span> à <span class="border rounded text-bg-info-matte mx-1 px-1">{{situacao_freq.periodo.fim}}</span></span>
+                        {% endif %}
+
                         <div class="metric-grid">
                             <div class="metric-box accent">
                                 <div class="m-val">{{ situacao_freq.consolidados }}</div>
@@ -145,7 +157,7 @@
                                 <div class="m-label">Contratos ativos</div>
                             </div>
                             {% if situacao_freq.pendencias %}
-                            <button type="button" id="btn_ver_erros" class="metric-box danger">
+                            <button type="button" id="btn_ver_erros" class="metric-box danger" style="cursor:pointer; border: 1px solid var(--bs-danger);">
                                 <div class="m-val">{{ situacao_freq.pendencias }}</div>
                                 <div class="m-label">Pendências</div>
                             </button>
@@ -158,29 +170,25 @@
                         </div>
                     </div>
 
-                    <!-- Resumo de frequência (totais agregados) -->
+                    <!-- Totais de frequência -->
                     {% if resumo_freq %}
                     <div class="dash-panel mb-3">
                         <div class="panel-title"><i class="bi bi-clock-history me-2"></i>Totais de Frequência — {{ filtro.competencia }}</div>
                         <div class="metric-grid">
                             <div class="metric-box accent">
-                                <div class="m-val">{{ resumo_freq.H_horas_trabalhadas|floatformat:1 }}h</div>
-                                <div class="m-label">Horas trabalhadas</div>
-                            </div>
-                            <div class="metric-box">
                                 <div class="m-val">{{ resumo_freq.H_horas_extras|floatformat:1 }}h</div>
                                 <div class="m-label">Horas extras</div>
                             </div>
                             <div class="metric-box warn">
-                                <div class="m-val">{{ resumo_freq.H_faltas_justificadas|floatformat:1 }}h</div>
+                                <div class="m-val">{{ resumo_freq.dias_falta_just }}</div>
                                 <div class="m-label">Faltas justif.</div>
                             </div>
                             <div class="metric-box danger">
-                                <div class="m-val">{{ resumo_freq.H_faltas_injustificadas|floatformat:1 }}h</div>
+                                <div class="m-val">{{ resumo_freq.dias_falta_njust }}</div>
                                 <div class="m-label">Faltas injustif.</div>
                             </div>
                             <div class="metric-box">
-                                <div class="m-val">{{ resumo_freq.H_atestados|floatformat:1 }}h</div>
+                                <div class="m-val">{{ resumo_freq.dias_atestado }}</div>
                                 <div class="m-label">Atestados</div>
                             </div>
                         </div>
@@ -228,9 +236,15 @@
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
                                     <span class="fw-semibold" style="font-size:.85rem">Consolidação de Frequência</span>
                                     {% if job_freq %}
-                                    <span class="job-status {{ job_freq.status }}">
-                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+                                    {# badge PR é clicável para recarregar e atualizar status #}
+                                    <span class="job-status {{ job_freq.status }}"
+                                          {% if job_freq.status == 'PR' %}
+                                          onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
+                                          title="Clique para atualizar"
+                                          {% endif %}>
+                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-repeat spin me-1"></i>{% endif %}
                                         {{ job_freq.get_status_display }}
+                                        {% if job_freq.status == 'PR' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
                                     </span>
                                     {% else %}
                                     <span class="text-secondary" style="font-size:.75rem">Não executado</span>
@@ -263,9 +277,14 @@
                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
                                     <span class="fw-semibold" style="font-size:.85rem">Folha de Pagamento</span>
                                     {% if job_folha %}
-                                    <span class="job-status {{ job_folha.status }}">
-                                        {% if job_folha.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+                                    <span class="job-status {{ job_folha.status }}"
+                                          {% if job_folha.status == 'PR' %}
+                                          onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
+                                          title="Clique para atualizar"
+                                          {% endif %}>
+                                        {% if job_folha.status == 'PR' %}<i class="bi bi-arrow-repeat spin me-1"></i>{% endif %}
                                         {{ job_folha.get_status_display }}
+                                        {% if job_folha.status == 'PR' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
                                     </span>
                                     {% else %}
                                     <span class="text-secondary" style="font-size:.75rem">Não executado</span>
@@ -298,12 +317,12 @@
     </div>
 </div>
 
-<!-- Modal de pendências de frequência -->
+<!-- Modal de pendências -->
 <div class="modal fade" id="modal_erros" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pendências - Frequência</h6>
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pendências — Frequência</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -345,48 +364,37 @@ document.getElementById('btn_filtrar').addEventListener('click', () => {
     window.location.href = `?filial_id=${f}&competencia=${c}`;
 });
 
-// POST — dispara ação selecionada
+// Botões de ação: o appConfirm intercepta o onclick definido abaixo.
+// Ao confirmar, executa _disparar(acao) e fecha o modal de confirmação.
 document.querySelectorAll('.btn-acao').forEach(btn => {
-    btn.addEventListener('click', () => { idAcao.value = btn.dataset.acao; _disparar(); });
+    // seta onclick como string para o appConfirm capturar via new Function()
+    const acao = btn.dataset.acao;
+    btn.setAttribute('onclick', `_disparar('${acao}')`);
 });
 
-async function _disparar() {
+async function _disparar(acao) {
+    // fecha modal de confirmação caso ainda esteja aberto
+    try { appModalConfirm.hide(); } catch(e) {}
+
+    idAcao.value = acao;
     const f = filialEl.value, c = compEl.value;
-    if (!f || !c) { appAlert('warning', 'Informe filial e competência.'); return; }
     document.querySelectorAll('.btn-acao').forEach(b => b.disabled = true);
-    appModalLoading.show();
+    appNotify('info', '<i class="bi bi-hourglass-split me-1"></i>Processo enfileirado, executando em segundo plano...');
     try {
         const resp = await fetch(form.action || location.href, {
             method: 'POST', body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
         const data = await resp.json();
-        if (data.status === 'queued') {
-            _polling(data.job_id, f, c); // mantém modal aberto durante polling
-        } else {
-            appModalLoading.hide();
+        if (data.status !== 'queued') {
             appAlert('danger', data.message || 'Erro ao disparar.');
             document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
         }
+        // sem polling — usuário recarrega via click no badge PR ou ao voltar à página
     } catch {
-        appModalLoading.hide();
         appAlert('danger', 'Erro de comunicação.');
         document.querySelectorAll('.btn-acao').forEach(b => b.disabled = false);
     }
-}
-
-// polling: aguarda job sair de AG/PR e recarrega com filtros ativos
-// o window.location.href dispara onbeforeunload → appModalLoading.show() novamente (correto)
-function _polling(jobId, filial, comp, ms = 3000) {
-    const t = setInterval(async () => {
-        try {
-            const d = await (await fetch(`?job_status=${jobId}`)).json();
-            if (d.status !== 'AG' && d.status !== 'PR') {
-                clearInterval(t);
-                window.location.href = `?filial_id=${filial}&competencia=${comp}`;
-            }
-        } catch { clearInterval(t); }
-    }, ms);
 }
 
 // duração legível entre dois ISO datetimes
@@ -403,11 +411,11 @@ document.getElementById('dur_freq').textContent = _duracao('{{ job_freq.iniciado
 document.getElementById('dur_folha').textContent = _duracao('{{ job_folha.iniciado_em|date:"c" }}', '{{ job_folha.concluido_em|date:"c" }}');
 {% endif %}
 
-// modal de pendências — carrega via AJAX lazy (só na abertura)
+// modal de pendências — carrega via AJAX lazy
 {% if situacao_freq.pendencias %}
 const bsModal = new bootstrap.Modal(document.getElementById('modal_erros'));
-document.getElementById('modal_erros').addEventListener('hidden.bs.modal', ()=>{appKeyMap.setContext()})
-let   errosCarregados = false;
+document.getElementById('modal_erros').addEventListener('hidden.bs.modal', () => { appKeyMap.setContext(); });
+let errosCarregados = false;
 
 document.getElementById('btn_ver_erros').addEventListener('click', () => {
     bsModal.show();
