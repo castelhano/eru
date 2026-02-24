@@ -67,7 +67,6 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
                 for k in totais:
                     totais[k] += fc.consolidado.get(k, 0)
                 erros_freq.update(fc.erros or {})
-            totais['qtd_funcionarios'] = len(consolidados)
             resumo_freq = totais
 
         # total de contratos vigentes na competência — base de comparação
