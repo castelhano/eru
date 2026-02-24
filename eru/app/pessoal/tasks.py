@@ -79,6 +79,8 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
         status=ProcessamentoJob.Status.PROCESSANDO,
         iniciado_em=now(),
     )
+    import time
+    time.sleep(30)
     try:
         inicio    = date.fromisoformat(inicio_str)
         fim       = date.fromisoformat(fim_str)

@@ -117,10 +117,9 @@
                                 class="btn btn-sm btn-primary-matte btn-acao"
                                 data-acao="{{ valor }}"
                                 data-appConfirm="true"
-                                data-appConfirmTitle="Confirmar processamento"
-                                data-appConfirmMessage="Deseja iniciar <b>{{ label }}</b>?<br><small class='text-secondary'>O processo será executado em segundo plano.</small>"
-                                data-appConfirmText="Iniciar"
-                                data-appConfirmColor="primary">
+                                data-appConfirmTitle="<i class='bi bi-braces-asterisk me-2'></i>{{ label }}"
+                                data-appConfirmMessage="Confirma operação? O processo será <b>executado em segundo plano</b>."
+                                >
                             {{ label }}
                         </button>
                         {% endfor %}
