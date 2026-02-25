@@ -547,6 +547,9 @@ class FolhaPagamento(models.Model):
         verbose_name_plural = _('Folhas de Pagamento')
         unique_together = ('contrato', 'competencia')
         ordering = ['-competencia', 'contrato__funcionario__matricula']
+        permissions = [
+            ("folha_dashboard", "Can view folha dashboard"),
+        ]
     def __str__(self):
         return f"{self.contrato.funcionario.matricula} | {self.competencia.strftime('%m/%Y')}"
 
