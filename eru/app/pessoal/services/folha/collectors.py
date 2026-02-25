@@ -1,7 +1,7 @@
 import calendar
 from datetime import date
-from django.db.models import Q
-from pessoal.models import Funcionario, Contrato, Evento, FrequenciaConsolidada
+from django.db.models import Q, Sum, Count
+from pessoal.models import (Funcionario, Contrato, Evento, FolhaPagamento, FrequenciaConsolidada, EventoEmpresa, EventoCargo, EventoFuncionario)
 
 
 def get_period(mes, ano):
@@ -74,5 +74,5 @@ def get_filial_summary(filial_id, competence):
         total_bruto=Sum('proventos'),
         total_liq=Sum('liquido'),
         qtd_total=Count('id'),
-        qtd_erros=Count('id', filter=models.Q(total_erros__gt=0))
+        qtd_erros=Count('id', filter=Q(total_erros__gt=0))
     )

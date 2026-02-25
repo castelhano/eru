@@ -691,6 +691,7 @@ class ProcessamentoJob(models.Model):
     class Tipo(models.TextChoices):
         CONSOLIDACAO_FREQ = 'CF', _('Consolidação de Frequência')
         FOLHA             = 'FP', _('Folha de Pagamento')
+        CARGA_ESCALA      = 'CE', _('Carga de Escala')
     class Status(models.TextChoices):
         AGUARDANDO   = 'AG', _('Aguardando')
         PROCESSANDO  = 'PR', _('Processando')

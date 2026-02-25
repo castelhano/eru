@@ -1,7 +1,14 @@
 """
 views.py (dashboard) — View única do painel de frequência/folha.
 GET  → carrega contexto do dashboard (resumos, status dos jobs, etc.)
-POST → despacha ações: consolidar frequência ou processar folha
+POST → despacha ações declaradas em _ACOES
+
+_ACOES é o registro central de tudo que o dashboard conhece sobre cada processo:
+    label        → texto exibido no botão e no card
+    job_tipo     → ProcessamentoJob.Tipo correspondente
+    resumo_fn    → método da view que retorna dict de resumo (ou None)
+    situacao_fn  → método da view que retorna dict de situação (ou None)
+    icon         → ícone Bootstrap para o card de última execução
 """
 import calendar
 import csv
@@ -17,12 +24,36 @@ from core.views import BaseTemplateView
 from pessoal.models import (
     Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob
 )
-from pessoal.tasks import disparar_consolidacao, disparar_folha
+from pessoal.tasks import disparar_consolidacao, disparar_folha, disparar_carga_escala
 
+
+# ─── Registro central de ações ───────────────────────────────────────────────
+# Cada entrada define tudo que a view e o template precisam saber sobre uma ação.
+# Para adicionar uma nova ação: inclua aqui e implemente _acao_<chave> + _resumo_<chave>
+# (se aplicável). O template e o loop de _montar_dashboard se adaptam automaticamente.
 
 _ACOES = {
-    'consolidar_freq': _('Consolidar frequência'),
-    'processar_folha': _('Processar folha'),
+    'carregar_escala': {
+        'label':       _('Carregar escala'),
+        'job_tipo':    ProcessamentoJob.Tipo.CARGA_ESCALA,
+        'resumo_fn':   None,
+        'situacao_fn': None,
+        'icon':        'bi bi-calendar-date-fill text-primary-matte',
+    },
+    'consolidar_freq': {
+        'label':       _('Consolidar frequência'),
+        'job_tipo':    ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ,
+        'resumo_fn':   '_resumo_freq',
+        'situacao_fn': '_situacao_freq',
+        'icon':        'bi bi-calendar-check-fill text-info-matte',
+    },
+    'processar_folha': {
+        'label':       _('Processar folha'),
+        'job_tipo':    ProcessamentoJob.Tipo.FOLHA,
+        'resumo_fn':   '_resumo_folha',
+        'situacao_fn': None,
+        'icon':        'bi bi-percent text-warning-matte',
+    },
 }
 
 
@@ -37,7 +68,7 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         context['filtro'] = {
             'filial_id':   filial_id,
             'competencia': competencia.strftime('%Y-%m') if competencia else datetime.today().strftime('%Y-%m'),
-            'acoes':       _ACOES,
+            'acoes':       {k: v['label'] for k, v in _ACOES.items()},
         }
         context['consultado'] = False
         if filial_id and competencia:
@@ -47,55 +78,83 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     def _montar_dashboard(self, filial_id: int, competencia: date) -> dict:
         _, fim_comp = self._parse_periodo(competencia)
 
-        # ── jobs ─────────────────────────────────────────────────────────────
-        jobs      = ProcessamentoJob.objects.filter(filial_id=filial_id, competencia=competencia)
-        job_freq  = jobs.filter(tipo=ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ).first()
-        job_folha = jobs.filter(tipo=ProcessamentoJob.Tipo.FOLHA).first()
+        # ── Jobs — um único hit para todos os tipos ───────────────────────────
+        tipos = [cfg['job_tipo'] for cfg in _ACOES.values()]
+        jobs_qs = ProcessamentoJob.objects.filter(
+            filial_id=filial_id,
+            competencia=competencia,
+            tipo__in=tipos,
+        )
+        jobs_map = {j.tipo: j for j in jobs_qs}
 
-        # ── consolidados ─────────────────────────────────────────────────────
-        # lista única reutilizada para totais, erros e situação — evita queries repetidas
+        # ── Monta lista de cards de jobs para o template ──────────────────────
+        # Cada item: {acao, label, icon, job, resumo, situacao}
+        cards_jobs = []
+        for acao, cfg in _ACOES.items():
+            job     = jobs_map.get(cfg['job_tipo'])
+            resumo  = None
+            situacao = None
+            # Chama resumo/situacao independente do job — refletem estado atual do banco
+            if cfg['resumo_fn']:
+                resumo = getattr(self, cfg['resumo_fn'])(filial_id, competencia, fim_comp)
+            if cfg['situacao_fn']:
+                situacao = getattr(self, cfg['situacao_fn'])(filial_id, competencia, fim_comp)
+            cards_jobs.append({
+                'acao':    acao,
+                'label':   cfg['label'],
+                'icon':    cfg['icon'],
+                'job':     job,
+                'resumo':  resumo,
+                'situacao': situacao,
+            })
+
+        return {
+            'cards_jobs': cards_jobs,
+            'consultado': True,
+        }
+
+    # ── Funções de resumo/situação ────────────────────────────────────────────
+
+    def _resumo_freq(self, filial_id, competencia, fim_comp) -> dict | None:
+        """Totalizadores de frequência + situação consolidada num único dict."""
         consolidados = list(
             FrequenciaConsolidada.objects.filter(
                 contrato__funcionario__filial_id=filial_id,
                 competencia=competencia,
             )
         )
+        if not consolidados:
+            return None
 
-        resumo_freq = None
-        qtd_erros_freq = 0
-        if consolidados:
-            totais = {
-                'H_horas_extras':          0.0,
-                'dias_falta_just':         0,
-                'dias_falta_njust':        0,
-                'dias_atestado':           0,
-            }
-            for fc in consolidados:
-                c = fc.consolidado or {}
-                totais['H_horas_extras']  += c.get('H_horas_extras', 0)
-                totais['dias_falta_just'] += c.get('H_dias_falta_just', 0)
-                totais['dias_falta_njust']+= c.get('H_dias_falta_njust', 0)
-                totais['dias_atestado']   += c.get('H_dias_afastamento', 0)
-                qtd_erros_freq            += len(fc.erros or {})
-            resumo_freq = totais
+        totais = {
+            'H_horas_extras':   0.0,
+            'dias_falta_just':  0,
+            'dias_falta_njust': 0,
+            'dias_atestado':    0,
+        }
+        qtd_erros = 0
+        for fc in consolidados:
+            c = fc.consolidado or {}
+            totais['H_horas_extras']   += c.get('H_horas_extras', 0)
+            totais['dias_falta_just']  += c.get('H_dias_falta_just', 0)
+            totais['dias_falta_njust'] += c.get('H_dias_falta_njust', 0)
+            totais['dias_atestado']    += c.get('H_dias_afastamento', 0)
+            qtd_erros                  += len(fc.erros or {})
 
-        # ── período real consolidado ──────────────────────────────────────────
-        # min(inicio) e max(fim) dos FrequenciaConsolidada da filial/competência
+        # Período consolidado (min/max) — reutiliza a query já feita via Python
+        # para evitar uma query extra; se a lista for grande, vale substituir por aggregate
         datas = FrequenciaConsolidada.objects.filter(
             contrato__funcionario__filial_id=filial_id,
             competencia=competencia,
         ).aggregate(inicio=Min('inicio'), fim=Max('fim'))
 
-        periodo_consolidado = None
+        periodo = None
         if datas['inicio'] and datas['fim']:
-            inicio_local = timezone.localtime(datas['inicio']) # converte para horario local antes de formatar
-            fim_local    = timezone.localtime(datas['fim'])
-            periodo_consolidado = {
-                'inicio': inicio_local.strftime('%d/%m/%y'),
-                'fim': fim_local.strftime('%d/%m/%y')
+            periodo = {
+                'inicio': timezone.localtime(datas['inicio']).strftime('%d/%m/%y'),
+                'fim':    timezone.localtime(datas['fim']).strftime('%d/%m/%y'),
             }
 
-        # ── total de contratos vigentes ───────────────────────────────────────
         total_contratos = (
             Contrato.objects
             .filter(funcionario__filial_id=filial_id, inicio__lte=fim_comp)
@@ -103,59 +162,45 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             .count()
         )
 
-        # ── situação real do consolidado ──────────────────────────────────────
-        # reflete o estado atual independente de quando/quantas vezes o job rodou
-        situacao_freq = {
+        return {
+            **totais,
             'consolidados':    len(consolidados),
             'total_contratos': total_contratos,
-            'pendencias':      qtd_erros_freq,
-            'periodo':         periodo_consolidado,
-            # FECHADO apenas se há consolidados e zero pendências
-            'status': 'FECHADO' if consolidados and not qtd_erros_freq else 'ABERTO',
+            'pendencias':      qtd_erros,
+            'periodo':         periodo,
+            'status':          'FECHADO' if consolidados and not qtd_erros else 'ABERTO',
         }
 
-        # ── resumo de folha ───────────────────────────────────────────────────
-        folha_qs = FolhaPagamento.objects.filter(
-            contrato__funcionario__filial_id=filial_id, competencia=competencia
+    def _situacao_freq(self, filial_id, competencia, fim_comp):
+        # Situação já está embutida no resumo para frequência; retorna None
+        # para evitar query dupla — o template usa card.resumo diretamente.
+        return None
+
+    def _resumo_folha(self, filial_id, competencia, fim_comp) -> dict | None:
+        qs = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
         )
-        resumo_folha = folha_qs.aggregate(
+        if not qs.exists():
+            return None
+        return qs.aggregate(
             total_bruto=Sum('proventos'),
             total_descontos=Sum('descontos'),
             total_liq=Sum('liquido'),
             qtd_total=Count('id'),
             qtd_erros=Count('id', filter=Qm(total_erros__gt=0)),
-        ) if folha_qs.exists() else None
-
-        return {
-            'job_freq':       job_freq,
-            'job_folha':      job_folha,
-            'resumo_freq':    resumo_freq,
-            'resumo_folha':   resumo_folha,
-            'situacao_freq':  situacao_freq,
-            'consultado':     True,
-        }
+        )
 
     # ── GET handlers ─────────────────────────────────────────────────────────
 
     def get(self, request, *args, **kwargs):
-        if request.GET.get('job_status'):
-            return self._status_job(request)
         if request.GET.get('erros_json'):
             return self._export_erros_json(request)
         if request.GET.get('export') == 'erros_freq':
             return self._export_erros_csv(request)
         return super().get(request, *args, **kwargs)
 
-    def _status_job(self, request):
-        """Polling: retorna status atual do job."""
-        try:
-            job = ProcessamentoJob.objects.get(pk=request.GET['job_status'])
-            return JsonResponse({'status': job.status})
-        except ProcessamentoJob.DoesNotExist:
-            return JsonResponse({'status': 'ER'})
-
     def _export_erros_json(self, request):
-        """Erros de consolidação formatados para o modal AJAX."""
         filial_id, competencia = self._parse_params()
         rows = []
         qs = FrequenciaConsolidada.objects.filter(
@@ -175,12 +220,11 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         return JsonResponse(rows, safe=False)
 
     def _export_erros_csv(self, request):
-        """Download CSV dos dias pendentes."""
         filial_id, competencia = self._parse_params()
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="erros_freq_{competencia}.csv"'
-        response.write('\ufeff'.encode('utf8'))                  # BOM para Excel
-        response.set_cookie('fileDownload', 'true', max_age=60)  # fecha appModalLoading
+        response.write('\ufeff'.encode('utf8'))
+        response.set_cookie('fileDownload', 'true', max_age=60)
         writer = csv.writer(response, delimiter=';')
         writer.writerow(['Matrícula', 'Funcionário', 'Data', 'Motivo'])
         qs = FrequenciaConsolidada.objects.filter(
@@ -202,20 +246,22 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         if acao not in _ACOES:
             messages.error(request, 'Ação inválida.')
             return redirect(request.path)
-
         if not filial_id or not competencia:
             messages.error(request, 'Filial e competência obrigatórios.')
             return redirect(request.path)
 
         try:
             getattr(self, f'_acao_{acao}')(filial_id, competencia)
-            return redirect(f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}")
+            return redirect(
+                f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}"
+            )
         except Exception as e:
             messages.error(request, str(e))
-            return redirect(f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}")
+            return redirect(
+                f"{request.path}?filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}"
+            )
 
-
-    def _acao_consolidar_freq(self, filial_id: int, competencia: date) -> ProcessamentoJob:
+    def _acao_consolidar_freq(self, filial_id, competencia):
         inicio, fim = self._parse_periodo(competencia)
         inicio_str  = self.request.POST.get('inicio', '').strip()
         fim_str     = self.request.POST.get('fim',    '').strip()
@@ -234,17 +280,34 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             usuario=self.request.user,
         )
 
-    def _acao_processar_folha(self, filial_id: int, competencia: date) -> ProcessamentoJob:
+    def _acao_processar_folha(self, filial_id, competencia):
         return disparar_folha(
             filial_id=filial_id,
             competencia=competencia,
             usuario=self.request.user,
         )
 
+    def _acao_carregar_escala(self, filial_id, competencia):
+        inicio, fim = self._parse_periodo(competencia)
+        inicio_str  = self.request.POST.get('inicio', '').strip()
+        fim_str     = self.request.POST.get('fim',    '').strip()
+        if inicio_str:
+            inicio = date.fromisoformat(inicio_str)
+        if fim_str:
+            fim = date.fromisoformat(fim_str)
+        return disparar_carga_escala(
+            filial_id=filial_id,
+            competencia=competencia,
+            inicio=inicio,
+            fim=fim,
+            matricula_de=self.request.POST.get('matricula_de',  '').strip() or None,
+            matricula_ate=self.request.POST.get('matricula_ate', '').strip() or None,
+            usuario=self.request.user,
+        )
+
     # ── Helpers ──────────────────────────────────────────────────────────────
 
     def _parse_params(self) -> tuple[int | None, date | None]:
-        """Lê filial_id e competência de GET ou POST."""
         params = self.request.GET if self.request.method == 'GET' else self.request.POST
         try:
             filial_id   = int(params.get('filial_id', 0)) or None
@@ -254,6 +317,5 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             return None, None
 
     def _parse_periodo(self, competencia: date) -> tuple[date, date]:
-        """Retorna (primeiro dia, último dia) da competência."""
         ultimo = calendar.monthrange(competencia.year, competencia.month)[1]
         return competencia, competencia.replace(day=ultimo)
