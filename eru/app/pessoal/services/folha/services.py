@@ -7,8 +7,8 @@ from .persistence import payroll_memory, db_save
 def merge_events(ev_e, ev_c, ev_f):
 # compila eventos dando precedencia para Funcionario > Cargo > Empresa
     regras = {e.evento.rastreio: e for e in ev_e}
-    regras.update({e.evento.rastreio: e for e in (ev_c_list or [])})
-    regras.update({e.evento.rastreio: e for e in (ev_f_list or [])})
+    regras.update({e.evento.rastreio: e for e in (ev_c or [])})
+    regras.update({e.evento.rastreio: e for e in (ev_f or [])})
     return regras    
 
 

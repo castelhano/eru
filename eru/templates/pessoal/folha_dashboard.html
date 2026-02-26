@@ -228,20 +228,18 @@
                                 </div>
                                 {% endif %}
 
-                                {% if card.resumo.pendencias is not None %}
-                                    {% if card.resumo.pendencias %}
+                                {% if card.resumo.pendencias %}
                                     <button type="button" id="btn_ver_erros"
                                             class="metric-box danger"
                                             style="cursor:pointer; border:1px solid var(--bs-danger)">
                                         <div class="m-val">{{ card.resumo.pendencias }}</div>
                                         <div class="m-label">Pendências</div>
                                     </button>
-                                    {% else %}
+                                {% elif card.resumo.pendencias is not None %}
                                     <div class="metric-box accent">
                                         <div class="m-val"><i class="bi bi-check-lg"></i></div>
                                         <div class="m-label">Sem pendências</div>
                                     </div>
-                                    {% endif %}
                                 {% endif %}
 
                                 {# Métricas de frequência #}

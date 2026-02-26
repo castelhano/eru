@@ -1,8 +1,9 @@
+import json
 from collections import OrderedDict
-from datetime import date, datetime, timedelta
+from datetime import date
 import calendar
 from django.utils import timezone
-from django.db.models import Q
+from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
 
 
 class CalendarioFrequenciaService:
@@ -88,23 +89,14 @@ class CalendarioFrequenciaService:
         
         for data, info in dias_mes.items():
             # Turno vigente para este dia específico (reversed = mais recente primeiro)
-            turno_hist = next((
-                th for th in reversed(turnos_hist)
-                if th.inicio_vigencia <= data and (
-                    th.fim_vigencia is None or th.fim_vigencia >= data
-                )
-            ), None)
-            
+            turno_hist = get_turno_dia(turnos_hist, data)
             if not turno_hist:
                 continue
-            
             turno = turno_hist.turno
             dias_turno = dias_por_turno[turno.id]
             
             # Calcula posição no ciclo
-            pos = (data - turno.inicio).days % turno.dias_ciclo if turno.dias_ciclo > 0 else 0
-            turno_dia = next((d for d in dias_turno if d.posicao_ciclo == pos), None)
-            
+            turno_dia = get_turno_dia_ciclo(turno, dias_turno, data)
             if not turno_dia:
                 continue
             
@@ -115,8 +107,7 @@ class CalendarioFrequenciaService:
                 info['escala'] = ' | '.join(
                     f"{h.get('entrada','')}–{h.get('saida','')}" 
                     for h in turno_dia.horarios
-                )
-                import json
+                )                
                 info['escala_json'] = json.dumps(turno_dia.horarios)
     
     def _get_origem(self, freq):

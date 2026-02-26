@@ -4,7 +4,7 @@ Consome registros de Frequencia do período e produz o dicionário
 para FrequenciaConsolidada.consolidado, compatível com o motor de folha.
 """
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from django.utils import timezone
 from pessoal.models import Frequencia, FrequenciaConsolidada, EventoFrequencia
 
@@ -82,17 +82,20 @@ def _calcular_dia(registros, carga_dia: float, incluir_intervalo: bool) -> dict:
     return r
 
 
-def _detectar_erros(inicio: date, fim: date, grupos: dict) -> dict:
+def _detectar_erros(inicio: date, fim: date, grupos: dict, contrato) -> dict:
     """
     Varre o período e marca dias sem nenhum registro como pendentes.
     Retorna dict {str(data): motivo} para o campo erros do consolidado.
     """
     erros = {}
+    contrato_inicio = contrato.inicio
+    contrato_fim    = contrato.fim or date.max
     cur = inicio
-    from datetime import timedelta
+    
     while cur <= fim:
-        if cur not in grupos:
-            erros[str(cur)] = 'Dia sem registro'
+        if contrato_inicio <= cur <= contrato_fim:
+            if cur not in grupos:
+                erros[str(cur)] = 'Dia sem registro'
         cur += timedelta(days=1)
     return erros
 
@@ -155,7 +158,7 @@ def consolidar(contrato, inicio: date, fim: date, incluir_intervalo: bool = Fals
             totais[k] = round(totais[k], 4)
 
     # 6. Detecta dias pendentes e define status/bloqueado
-    erros  = _detectar_erros(inicio, fim, grupos)
+    erros  = _detectar_erros(inicio, fim, grupos, contrato)
     status = FrequenciaConsolidada.Status.ABERTO if erros else FrequenciaConsolidada.Status.FECHADO
 
     # 7. Persiste — idempotente via update_or_create na competência
