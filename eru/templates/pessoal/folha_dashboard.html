@@ -91,8 +91,7 @@
 <div class="card mt-2">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item"><a class="nav-link active" href="#"><i class="bi bi-speedometer2"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="#"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link active disabled" href="#"><i class="bi bi-speedometer2"></i></a></li>
         </ul>
     </div>
     <div class="card-body">
@@ -214,7 +213,7 @@
 
                             <div class="metric-grid">
 
-                                {# Métricas de situação — contratos / consolidados / pendências #}
+                                {# Metricas de situacao — contratos / consolidados / pendencias #}
                                 {% if card.resumo.consolidados is not None %}
                                 <div class="metric-box accent">
                                     <div class="m-val">{{ card.resumo.consolidados }}</div>
@@ -299,9 +298,7 @@
 
                     <!-- ── Card de última execução — genérico para todos os jobs ── -->
                     <div class="dash-panel">
-                        <div class="panel-title">
-                            <i class="bi bi-bar-chart-line me-1"></i>Última execução
-                        </div>
+                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>{% translate 'Última execução'|escapejs %}</div>
                         <div class="row g-3">
                             {% for card in cards_jobs %}
                             <div class="col-12 col-xl-{% if cards_jobs|length == 1 %}12{% elif cards_jobs|length == 2 %}6{% else %}4{% endif %}">
@@ -422,9 +419,7 @@
             <div class="modal-footer py-2 justify-content-between">
                 <small class="text-secondary" id="modal_erros_count"></small>
                 <div class="d-flex gap-2">
-                    {% btn_tag 'CSV' id="download" icon="bi bi-download me-1"
-                       class="btn btn-sm btn-warning-matte"
-                       href="?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&export=erros_freq" %}
+                    {% btn_tag 'CSV' id="download" icon="bi bi-download me-1" class="btn btn-sm btn-warning-matte" href="?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&export=erros_freq" %}
                     {% btn_tag _('Fechar') data_bs_dismiss="modal" %}
                 </div>
             </div>

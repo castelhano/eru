@@ -22,6 +22,7 @@ const grid = new jsGrid({
   container: document.getElementById('grid_container'),
   items: [
     {% if perms.pessoal.view_funcionario %}{icon: 'bi bi-person', color: 'purple', desc: '{% translate 'Pessoal'|escapejs %}', href: '{% url 'pessoal:funcionario_list' %}'}, {% endif %}
+    {% if perms.pessoal.folha_dashboard %}{icon: 'bi bi-percent', color: 'purple', desc: '{% translate 'Folha'|escapejs %}', href: '{% url 'pessoal:folha_dashboard' %}'}, {% endif %}
   ]
 })
 
