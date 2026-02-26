@@ -27,7 +27,7 @@ def get_event_vars_master(asDict=False, **kwargs):
     res = {} if (asDict or is_calc) else []
     for obj in targets:
         cls = obj if isinstance(obj, type) else obj.__class__
-        props = [n for n, v in cls.__dict__.items() if isinstance(v, property)]
+        props = [n for n in dir(cls) if isinstance(getattr(cls, n, None), property)]
         if isinstance(res, list): res.extend(props)
         else: res.update({p: getattr(obj, p) if is_calc else 1 for p in props})
     freq = kwargs.get('consolidado')

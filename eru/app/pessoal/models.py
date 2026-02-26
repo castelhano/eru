@@ -197,7 +197,7 @@ class Funcionario(Pessoa):
         return self.pne
     @property
     def F_anos_empresa(self):
-        return self.F_diasEmpresa // 365
+        return self.F_dias_empresa // 365
     @property
     def F_dias_empresa(self):
         if not self.data_admissao: return 0

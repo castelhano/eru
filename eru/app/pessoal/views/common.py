@@ -25,12 +25,12 @@ from core.models import Filial
 from core.extras import asteval_run
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
-from core.views_base import (BaseListView, BaseTemplateView, BaseCreateView, BaseUpdateView, BaseDeleteView)
+from core.views_base import (BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView)
 
 # Pessoal App - Models
 from pessoal.models import (
     PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, Turno, TurnoDia, TurnoHistorico, Frequencia, EventoFrequencia, FrequenciaImport
+    EventoCargo, EventoFuncionario, TurnoHistorico, Frequencia, EventoFrequencia, FrequenciaImport
 )
 # Pessoal App
 from pessoal.forms import (
@@ -1297,13 +1297,19 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
         # define o modelo alvo
+        filiais = self.request.user.profile.filiais.all()
         if self.related == 'empresa':
-            return EventoEmpresa.objects.all()
+            return EventoEmpresa.objects.filter(filiais__in=filiais).distinct()
         elif self.related == 'cargo':
-            return EventoCargo.objects.all()
+            return EventoCargo.objects.filter(filiais__in=filiais).distinct()
         elif self.related == 'funcionario':
-            return EventoFuncionario.objects.all()
+            return EventoFuncionario.objects.filter(funcionario__filial__in=filiais)
         return None
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.related in ['empresa', 'cargo']:
+            kwargs['user'] = self.request.user
+        return kwargs
     def get_form_class(self):
         # define o form alvo
         forms_map = {

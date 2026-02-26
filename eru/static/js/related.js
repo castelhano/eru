@@ -483,13 +483,13 @@ class RelatedAddon {
                 }
                 if (this.config.parent) {
                     this.config.parent.reload();
-                    this.stackOnUpdate.push(() => { this.element.value = data.pk });
+                    this.stackOnUpdate.push(() => { this.element.value = data.id });
                 } else {
                     const opt = document.createElement('option');
-                    opt.value = data.pk;
+                    opt.value = data.id;
                     opt.innerHTML = data[this.config.value];
                     this.element.appendChild(opt);
-                    this.element.value = data.pk;
+                    this.element.value = data.id;
                 }
                 this._clearForm();
                 this.model.dialog.close();

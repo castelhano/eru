@@ -185,6 +185,10 @@ class EventoEmpresaTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoEmpresa
         fields = ('evento', 'inicio', 'fim', 'filiais', 'motivo')
+    def render_filiais(self, value):
+        if value:
+            return ", ".join([f.nome for f in value.all()])
+        return '--'
 
 
 class EventoCargoTable(EventoMovimentacaoBaseTable):
@@ -192,6 +196,10 @@ class EventoCargoTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoCargo
         fields = ('evento', 'cargo', 'inicio', 'fim', 'filiais', 'motivo')
+    def render_filiais(self, value):
+        if value:
+            return ", ".join([f.nome for f in value.all()])
+        return '--'
 
 class EventoFuncionarioTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
