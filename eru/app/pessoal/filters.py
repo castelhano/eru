@@ -176,5 +176,6 @@ class EventoFrequenciaFilter(django_filters.FilterSet):
             'contabiliza_horas': ['exact'], 
             'remunerado': ['exact'], 
             'dia_inteiro': ['exact'], 
+            'desconta_efetivos': ['exact'], 
             'prioridade': ['gte'], 
         }

@@ -53,10 +53,24 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/form.js' %}"></script>
+<script src="{% static 'js/vendor/imask.js' %}"></script>
 {% endblock %}
 
 <script>
 {% block add_script %}
-const form = new jsForm(document.getElementById('app_form'), {})
+const rastreio = IMask(document.getElementById('id_rastreio'), {
+  mask: '{EF_}*', // define prefixo
+  lazy: false,   // exibe prefixo imediatamente
+  blocks: {'*': {mask: /^[a-zA-Z0-9_]*$/}}
+});
+const form = new jsForm(document.getElementById('app_form'), {
+    customValidation: {
+        'rastreio': (val) => {
+            const isValid = val.trim() !== 'EF_';
+            return [isValid, '{% translate "Informe um código válido de rastreio" %}'];
+        }
+    }
+
+})
 {% endblock %}
 </script>

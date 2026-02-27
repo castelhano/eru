@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import date
 from django.db.models import Q, Sum, Count
 from pessoal.models import (
-    Funcionario, Contrato, Evento, FolhaPagamento,
+    Funcionario, Contrato, Evento, FolhaPagamento, EventoFrequencia,
     FrequenciaConsolidada, EventoEmpresa, EventoCargo, EventoFuncionario,
 )
 
@@ -11,7 +11,7 @@ from pessoal.models import (
 _TIPOS_PRIMITIVOS = (int, float, str, bool, type(None))
 
 # Nomes da whitelist injetados no symtable do asteval — nunca devem entrar no contexto
-_WHITELIST_NOMES  = frozenset({'sqrt', 'sin', 'cos', 'round', 'min', 'max', 'abs', 'True', 'False'})
+_WHITELIST_NOMES = frozenset({'sqrt', 'sin', 'cos', 'round', 'min', 'max', 'abs', 'True', 'False'})
 
 
 def _coerce(val):
@@ -33,9 +33,17 @@ def get_period(mes, ano):
 
 def get_event_vars_master(asDict=False, **kwargs):
     # Retorna variáveis disponíveis para composição de fórmulas em eventos.
+    # Três modos de uso:
     # 1. get_event_vars_master()                          → lista de strings para autocomplete
     # 2. get_event_vars_master(asDict=True)               → dict {nome: 1} para validação do asteval
     # 3. get_event_vars_master(funcionario=f, contrato=c) → dict {nome: valor} para cálculo
+    #
+    # Prefixos de variáveis disponíveis nas fórmulas:
+    #   F_*  → @property de Funcionario       ex: F_salario, F_anos_empresa
+    #   C_*  → @property de Contrato          ex: C_salario_hora, C_carga_mensal
+    #   H_*  → totalizadores nível 1 do consolidado de frequência
+    #   EF_* → totalizadores nível 2 por EventoFrequencia  ex: EF_he50_horas, EF_he50_dias
+    #   U_*  → eventos calculados pelo usuário na folha
     #
     # Atenção: adicionar modelos em `targets` expõe suas @property automaticamente.
     # Para o modo cálculo (3), lembre de passar a instância em run_single (services.py).
@@ -55,19 +63,41 @@ def get_event_vars_master(asDict=False, **kwargs):
         elif is_calc:
             for p in props:
                 val = _coerce(getattr(obj, p))
-                if val is not None:              # descarta tipos não utilizáveis em fórmulas
+                if val is not None:  # descarta tipos não utilizáveis em fórmulas
                     res[p] = val
         else:
             res.update({p: 1 for p in props})
 
-    # Valores consolidados de frequência — já são primitivos (int/float) vindos do JSONField
+    # Nível 1 (H_*) — primitivos vindos do JSONField do consolidado
     freq = kwargs.get('consolidado')
     if freq and not isinstance(freq, type):
-        data_h = freq.consolidado if is_calc else {}
+        consolidado = freq.consolidado if is_calc else {}
+        h_vars = {k: v for k, v in consolidado.items() if k != 'EF'}  # exclui chave do nível 2
         if isinstance(res, list):
-            res.extend(data_h.keys())
+            res.extend(h_vars.keys())
         else:
-            res.update({k: v if is_calc else 1 for k, v in data_h.items()})
+            res.update({k: v if is_calc else 1 for k, v in h_vars.items()})
+
+        # Nível 2 (EF_*) modo cálculo — lê valores reais do consolidado
+        if is_calc:
+            for rastreio, vals in consolidado.get('EF', {}).items():
+                res[f'{rastreio}_horas'] = vals['horas']  # ex: EF_he50_horas
+                res[f'{rastreio}_dias']  = vals['dias']   # ex: EF_he50_dias
+
+    # Nível 2 (EF_*) modo autocomplete/validação — lê rastreios cadastrados em EventoFrequencia.
+    # Fica fora do bloco freq para executar mesmo sem consolidado disponível.
+    if not is_calc:
+        ef_rastreios = (
+            EventoFrequencia.objects
+            .exclude(rastreio='')
+            .values_list('rastreio', flat=True)
+            .distinct()
+        )
+        for rastreio in ef_rastreios:
+            if isinstance(res, list):
+                res.extend([f'{rastreio}_horas', f'{rastreio}_dias'])
+            else:  # asDict
+                res.update({f'{rastreio}_horas': 1, f'{rastreio}_dias': 1})
 
     # Rastreios de eventos cadastrados pelo usuário (U_*) — valor 0 como neutro no cálculo
     customs = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
@@ -81,7 +111,7 @@ def get_event_vars_master(asDict=False, **kwargs):
 
 def get_batch_data(filial_id, inicio, fim):
     # Busca otimizada — um hit por tipo de dado, tudo que o cálculo da folha precisa.
-    vigencia  = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))  # filtro reutilizado nos três tipos de evento
+    vigencia = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))  # filtro reutilizado nos três tipos de evento
     contratos = (
         Contrato.objects
         .filter(funcionario__filial_id=filial_id)

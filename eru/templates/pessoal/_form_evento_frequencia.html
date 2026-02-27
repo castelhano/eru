@@ -16,7 +16,11 @@
                     </div>
                 </div>
                 <div class="row g-1">
-                    <div class="form-floating mb-1 col">
+                    <div class="form-floating mb-lg-1 col-lg">
+                        {{ form.rastreio }}
+                        {{ form.rastreio.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg">
                         {{ form.categoria }}
                         {{ form.categoria.i18n_label }}
                     </div>
@@ -39,6 +43,10 @@
                 <div class="form-check form-switch">
                     {{form.dia_inteiro}}
                     {{form.dia_inteiro.i18n_label}}
+                </div>
+                <div class="form-check form-switch">
+                    {{form.desconta_efetivos}}
+                    {{form.desconta_efetivos.i18n_label}}
                 </div>
                 <hr>
                 <div class="row">

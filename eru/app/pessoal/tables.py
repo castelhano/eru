@@ -211,7 +211,7 @@ class EventoFrequenciaTable(TableCustomMixin, Table):
     export_csv = True
     class Meta:
         model = EventoFrequencia        
-        fields = ('id','nome', 'categoria', 'contabiliza_horas', 'remunerado', 'dia_inteiro', 'prioridade', 'cor',)
+        fields = ('id','nome', 'categoria', 'rastreio' ,'contabiliza_horas', 'remunerado', 'dia_inteiro', 'desconta_efetivos', 'prioridade', 'cor',)
         actions = [
             {'action': 'update', 'url_name': 'pessoal:eventofrequencia_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_eventofrequencia'}
         ]
@@ -220,6 +220,7 @@ class EventoFrequenciaTable(TableCustomMixin, Table):
             'contabiliza_horas' : 'd-none d-lg-table-cell',
             'remunerado' : 'd-none d-lg-table-cell',
             'dia_inteiro' : 'd-none d-lg-table-cell',
+            'desconta_efetivos' : 'd-none d-lg-table-cell',
             'prioridade' : 'd-none d-md-table-cell',
             'cor' : 'fit d-none d-xl-table-cell',
         }

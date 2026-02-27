@@ -1324,6 +1324,7 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
         evento_obj = self.object # O objeto já foi carregado pela UpdateView
         context['related'] = self.related
         context['evento'] = evento_obj
+        context['props'] = get_event_vars_master()
         if self.related == 'empresa':
             context['model'] = {'id': 0, 'pk': 0}
         elif self.related == 'cargo':

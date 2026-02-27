@@ -252,7 +252,7 @@ class EventoEmpresaForm(EventoMovimentacaoBaseForm):
 class EventoFrequenciaForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = EventoFrequencia
-        fields = ['nome', 'categoria', 'contabiliza_horas', 'remunerado', 'dia_inteiro', 'prioridade', 'cor']
+        fields = ['nome', 'rastreio' ,'categoria', 'contabiliza_horas', 'remunerado', 'dia_inteiro', 'desconta_efetivos','prioridade', 'cor']
         widgets = {
             'nome': forms.TextInput(attrs={'autofocus': True}),
             'cor': forms.TextInput(attrs={'type': 'hidden', 'class': 'form-control-color'}),
