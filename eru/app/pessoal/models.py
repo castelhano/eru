@@ -567,6 +567,7 @@ class EventoFrequencia(models.Model):
     contabiliza_horas = models.BooleanField(_('Contabiliza Horas'), default=True)
     remunerado = models.BooleanField(_('Remunerado'), default=True)
     dia_inteiro = models.BooleanField(_('Dia Inteiro'), default=False)
+    desconta_efetivos = models.BooleanField(_('Desconta dias efetivos'), default=False)
     prioridade = models.PositiveIntegerField(_('Prioridade'), default=1)
     cor = models.CharField(_('Cor Hex'), max_length=7, null=True, blank=True)
     def __str__(self):
