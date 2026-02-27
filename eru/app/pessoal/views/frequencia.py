@@ -38,6 +38,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 return
             settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
             evento_folga_id = settings_obj.config.frequencia.evento_folga_id if settings_obj else None
+            evento_jornada_id = settings_obj.config.frequencia.evento_jornada_id if settings_obj else None
             dias_mes = CalendarioFrequenciaService(competencia, contrato).montar(
                 frequencias=self._obter_frequencias(contrato, competencia),
                 contratos_mes=self._obter_contratos_mes(funcionario, competencia, ultimo_dia),
@@ -48,6 +49,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 'funcionario': funcionario,
                 'competencia': competencia,
                 'evento_folga_id': evento_folga_id,
+                'evento_jornada_id': evento_jornada_id,
                 'dias_mes': dias_mes,
             })
         except Funcionario.DoesNotExist:

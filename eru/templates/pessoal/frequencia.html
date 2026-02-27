@@ -72,6 +72,7 @@
       <select class="form-select form-select-sm" data-field="evento">
         {% for ev in eventos_choices %}
         <option value="{{ ev.id }}"
+        {% if ev.id == h.evento_id %}selected {% endif %}
         data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
         data-categoria="{{ ev.categoria }}"
         data-cor="{{ ev.cor|default:'' }}">
@@ -178,7 +179,11 @@
         </div><!-- /header resumo -->
         
         <!-- calendario: data-evento-folga usado pelo JS para selecionar evento de folga -->
-        <div id="calendario-frequencia" data-role="calendario" data-evento-folga="{{ evento_folga_id|default:'' }}">
+        <div 
+          id="calendario-frequencia" 
+          data-role="calendario" 
+          data-evento-jornada="{{ evento_jornada_id|default:'' }}"
+          data-evento-folga="{{ evento_folga_id|default:'' }}">
           
           {% for dia, info in dias_mes.items %}
           {% if not info.bloqueado %}
@@ -316,6 +321,7 @@
       matricula: document.getElementById('id_matricula'),
       competencia: document.getElementById('id_competencia'),
       rowTpl: document.getElementById('horario-row-tpl'),
+      eventoJornadaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoJornada || null,
       eventoFolgaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoFolga || null,
     };
     
@@ -324,8 +330,14 @@
     const deletarRelatedIds = new Set();
     
     function novaRow() {
-      return $$.rowTpl.content.firstElementChild.cloneNode(true);
-    }
+      const row = $$.rowTpl.content.firstElementChild.cloneNode(true);
+      if ($$.eventoJornadaId) {
+          const select = row.querySelector('[data-field="evento"]');
+          const opt = [...select.options].find(o => o.value == $$.eventoJornadaId);
+          if (opt) opt.selected = true;
+      }
+      return row;
+  }
     
     function aplicarCorEvento(select) {
       const opt = select.options[select.selectedIndex];

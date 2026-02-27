@@ -372,6 +372,13 @@
                                         <span class="jb-val">{{ card.job.criado_por|capfirst|default:"—" }}</span>
                                     </div>
                                     {% endif %}
+                                    {% if card.job.observacoes %}
+                                        {% for obs in card.job.observacoes %}
+                                        <div class="small text-warning-matte mt-1">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> {{ obs }}
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
                                 </div>
                                 {% endif %}
                             </div>

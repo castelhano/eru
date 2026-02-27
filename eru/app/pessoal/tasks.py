@@ -32,7 +32,7 @@ from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
 
 # ─── Schema helper ───────────────────────────────────────────────────────────
 
-def _resultado(processados=0, falhas=0, periodo=None, filtro_de=None, filtro_ate=None):
+def _resultado(processados=0, falhas=0, periodo=None, filtro_de=None, filtro_ate=None, observacoes=None):
     """Monta o dict de resultado padronizado."""
     return {
         'processados': processados,
@@ -66,7 +66,7 @@ def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> Process
     return obj
 
 
-def _fechar_job(job_id: int, resultado: dict, erro: str | None = None):
+def _fechar_job(job_id: int, resultado: dict, erro: str | None = None, observacoes: list | None = None):
     """Grava o resultado final do job — CONCLUIDO ou ERRO."""
     if erro:
         resultado = _resultado()
@@ -75,6 +75,7 @@ def _fechar_job(job_id: int, resultado: dict, erro: str | None = None):
         status=ProcessamentoJob.Status.ERRO if erro else ProcessamentoJob.Status.CONCLUIDO,
         concluido_em=now(),
         resultado=resultado,
+        observacoes=observacoes or []
     )
 
 
@@ -203,6 +204,14 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
         evento_jornada = EventoFrequencia.objects.filter(pk=evento_jornada_id).first() if evento_jornada_id else None
         evento_folga   = EventoFrequencia.objects.filter(pk=evento_folga_id).first()   if evento_folga_id   else None
 
+        # Avisos de configuração — acumulados durante a execução e gravados no resultado.
+        # Não interrompem o job, mas explicam comportamento limitado (ex: 0 processados).
+        obs: list[str] = []
+        if not evento_jornada:
+            obs.append('Evento de jornada não configurado nas settings — registros de jornada não foram criados')
+        if not evento_folga:
+            obs.append('Evento de folga não configurado nas settings — folgas não foram criadas')
+
         # ── 3. Histórico de turnos de todos os contratos ──────────────────────
         # Uma única query com prefetch dos dias de ciclo — evita N+1 no loop principal.
         turnos_por_contrato: dict[int, list] = {}
@@ -216,6 +225,9 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
             .order_by('contrato_id', 'inicio_vigencia')
         ):
             turnos_por_contrato.setdefault(th.contrato_id, []).append(th)
+
+        if not turnos_por_contrato:
+            obs.append('Nenhum contrato com turno associado encontrado no período')
 
         # ── 3b. Dias do ciclo indexados por turno_id ──────────────────────────
         # Construído uma vez fora do loop — múltiplos contratos podem compartilhar o mesmo turno.
@@ -233,6 +245,7 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
         for contrato in contratos:
             historico = turnos_por_contrato.get(contrato.id, [])
             if not historico:
+                print(f"[ESCALA] contrato={contrato.id} sem turno — pulado")
                 continue  # contrato sem turno cadastrado — nada a carregar
 
             contrato_ok = False
@@ -249,6 +262,7 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
 
                 turno_hist = get_turno_dia(historico, cur)  # turno vigente neste dia
                 if not turno_hist:
+                    print(f"[ESCALA] contrato={contrato.id} dia={cur} sem turno_hist")
                     cur += timedelta(days=1)
                     continue
 
@@ -258,9 +272,10 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
                     cur,
                 )  # posição do dia no ciclo do turno
                 if not turno_dia:
+                    print(f"[ESCALA] contrato={contrato.id} dia={cur} sem turno_dia (ciclo)")
                     cur += timedelta(days=1)
                     continue
-
+                print(f"[ESCALA] contrato={contrato.id} dia={cur} eh_folga={turno_dia.eh_folga} horarios={turno_dia.horarios} evento_jornada={evento_jornada} evento_folga={evento_folga}")
                 try:
                     if turno_dia.eh_folga:
                         if evento_folga:
@@ -306,15 +321,17 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
             if bulk_create:
                 Frequencia.objects.bulk_create(bulk_create, ignore_conflicts=True)  # ignore_conflicts: segurança contra race condition
                 bulk_create.clear()  # libera memória a cada contrato processado
-
+        print(f"[ESCALA] obs={obs} resultado={_resultado(processados=processados, falhas=falhas, periodo=_fmt_periodo(inicio, fim), observacoes=obs)}")
         _fechar_job(job_id, _resultado(
             processados=processados,
             falhas=falhas,
             periodo=_fmt_periodo(inicio, fim),
             filtro_de=matricula_de,
             filtro_ate=matricula_ate,
+            observacoes=obs,  # lista vazia se tudo configurado corretamente
         ))
     except Exception as e:
+        print("CAI NO Exception: ", e)
         _fechar_job(job_id, {}, erro=str(e))
 
 
