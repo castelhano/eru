@@ -237,7 +237,7 @@ class Contrato(models.Model):
     inicio = models.DateField(_('Inicio'), default=datetime.today)
     fim = models.DateField(_('Fim'), blank=True, null=True)
     carga_mensal = models.PositiveIntegerField(_('Carga Mensal'), default=220)
-    carga_diaria = models.DecimalField( _('C Diária Decimal'), max_digits=5, decimal_places=2, null=True, blank=True)
+    carga_diaria = models.DecimalField( _('Carga Diária'), max_digits=5, decimal_places=2, null=True, blank=True)
     class Meta:
         indexes = [
             models.Index(fields=['funcionario', 'inicio', 'fim'], name='idx_contrato_vigencia'),

@@ -1,8 +1,9 @@
 /*
 * Gerencia atalhos de teclado e implementa tabulacao ao pressionar Enter em formularios
 **
-* @version  6.4
+* @version  6.5
 * @since    05/08/2024
+* @release  28/02/2026 [add changeContext()]
 * @release  23/01/2026 [removido suporte para i18n.js]
 * @release  31/10/2025 [removido suporte para teclas de acento ex ~ ´]
 * @ver < 6  [add keyup, multiple shortcuts at same trigger, priority as useCapture]
@@ -239,28 +240,57 @@ class Keywatch{
             this.handlers.keyup[event.context][event.scope].sort(sortComparator);
         }
     }
-    // retorna (caso exista) shortcut com a combinacao informada
+    // retorna (caso exista) shortcut com a combinacao informada, se omitido context busca no default
     getShortcut(scope, options={}){
         options = Object.assign({keydown: true, keyup: false, context: 'default'}, options)
-        let ajustedScope = this._getScope(scope).join(',');
+        let ajustedScope = this._getScope(scope).flat().join(',');
         let type = options.keydown ? 'keydown' : options.keyup ? 'keyup' : false;
         if([undefined, 0].includes(this.handlers?.[type]?.[options.context]?.[ajustedScope])) return false;
         return this.handlers[type][options.context][ajustedScope][0];
     }
+    // move atalho de contexto
+    changeContext(scope, newContext, options = {}) {
+        const t = this.getShortcut(scope, options);
+        if (!t) return;        
+        const adjScope = this._getScope(scope).flat().join(), oldCtx = t.context;        
+        for (const type of ['keydown', 'keyup']) {
+            if (!t[type]) continue;            
+            // 1. Remove item antigo
+            const oldL = this.handlers[type]?.[oldCtx]?.[adjScope];
+            if (oldL) {
+                const i = oldL.indexOf(t);
+                if (i !== -1) oldL.splice(i, 1);                
+                // Limpeza da arvore do atalho
+                if (!oldL.length) {
+                    delete this.handlers[type][oldCtx][adjScope];
+                    let empty = true;
+                    for (const _ in this.handlers[type][oldCtx]) { empty = false; break; }
+                    if (empty) delete this.handlers[type][oldCtx];
+                }
+            }            
+            // 2. Insercao e ordenacao
+            const list = ((this.handlers[type][newContext] ||= {})[adjScope] ||= []);
+            t.context = newContext;
+            list.push(t);
+            list.sort((a, b) => b.useCapture - a.useCapture);
+        }
+        t.context = newContext;
+    }
     // retorna lista com modificadores e key ex. getScope('g+u+i') = [['g','u'], 'i'], mods retornados classificados
-    _getScope(scope){
+    _getScope(scope) {
         let keys = scope.split(this.splitKey);
-        let index = keys.lastIndexOf('');
-        for(; index >= 0;){ // Trata existencia de + no scope ex: "ctrl++" ou "+"
+        let index = keys.lastIndexOf('');        
+        while (index >= 0) { // trata existencia de + no scope ex: "ctrl++" ou "+"
             keys[index - 1] += this.splitKey;
             keys.splice(index, 1);
             index = keys.lastIndexOf('');
-        }
-        keys.forEach((el, index)=>{
-            keys[index] = this.modifier[el] || el;
-        })
-        return [keys.slice(0, -1).sort(), keys[keys.length - 1]]
+        }        
+        // mapeia modificadores e separa a tecla final
+        const mapped = keys.map(el => this.modifier[el] || el);
+        const mainKey = mapped.pop(); // extrai tecla de acionamento        
+        return [mapped.sort(), mainKey];
     }
+
     
     // retorna array com shortcuts ex: ('g+i;g+u') => ['g+i','g+u']
     _getMultipleKeys(scope){

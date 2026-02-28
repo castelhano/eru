@@ -255,6 +255,7 @@ class TableCustomMixin:
         """Aplica paginacao e estiliza o form do django-filter"""
         RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
         if filter_obj:
+            filter_obj.form.auto_id = f"id_%s_filter" # altera id do elemento com sufixo _filter para evitar conflito com multiforms na pagina
             for f in filter_obj.form.fields.values():
                 if isinstance(f, forms.DateField): f.widget.input_type = 'date'
                 cls = 'form-select form-select-sm' if isinstance(f.widget, (forms.Select, forms.SelectMultiple)) else 'form-control form-control-sm'

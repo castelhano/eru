@@ -287,7 +287,6 @@ class jsForm{
                 }
                 const actionUrl = this.modalBody.getAttribute('action') || window.location.pathname;
                 window.location.href = actionUrl + '?' + params.toString();
-                // this.modalBody.submit()
                 
             }
             else{
@@ -299,7 +298,6 @@ class jsForm{
                 }
                 const actionUrl = form.getAttribute('action') || window.location.pathname;
                 window.location.href = actionUrl + '?' + params.toString();
-                // if(form){form.submit()}
             }
         })
         

@@ -51,7 +51,7 @@
     {% if perms.pessoal.view_grupoevento %}appKeyMap.bind('e+g', ()=>{document.getElementById('menu_grupo_evento').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_motivoreajuste %}appKeyMap.bind('e+m', ()=>{document.getElementById('menu_motivo_reajuste').click()}, {display: false}){% endif %}
     {% if perms.pessoal.view_eventoempresa %}appKeyMap.bind('e+v', ()=>{document.getElementById('menu_eventos_globais').click()}, {display: false}){% endif %}
-    {% if perms.pessoal.change_evento %}appKeyMap.bind('e+r', ()=>{document.getElementById('menu_evento_copy').click()}, {keydown: false, keyup: true, display: false}){% endif %}
+    {% if perms.pessoal.change_evento %}appKeyMap.bind('e+r', ()=>{document.getElementById('menu_evento_copy').click()}, {display: false}){% endif %}
     
 
     const menuFolha = new canvasNavDropdown({

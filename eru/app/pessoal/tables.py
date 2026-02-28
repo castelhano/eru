@@ -70,6 +70,11 @@ class ContratoTable(TableCustomMixin, Table):
         ]
         responsive_columns = {
             "funcionario": "d-none",
+            "regime": "d-none d-md-table-cell",
+            "salario": "d-none d-lg-table-cell",
+            "fim": "d-none d-md-table-cell",
+            "carga_mensal": "d-none d-lg-table-cell",
+            "carga_diaria": "d-none d-lg-table-cell",
         }
 
 
