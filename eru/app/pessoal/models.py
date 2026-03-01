@@ -633,6 +633,8 @@ class FrequenciaConsolidada(models.Model):
     bloqueado = models.BooleanField(_('Bloqueado'), default=False)
     processamento = models.DateTimeField(_('Data Processamento'), null=True, blank=True)
     consolidado = models.JSONField(_('Valores Consolidados'), default=dict, blank=True)
+    fechado_em  = models.DateTimeField(_('Fechado em'), null=True, blank=True)
+    fechado_por = models.ForeignKey( User, null=True, blank=True, on_delete=models.SET_NULL, related_name='consolidados_fechados', verbose_name=_('Fechado por'))
     erros = models.JSONField(_('Logs de Erros'), default=dict, blank=True)
     class Meta:
         unique_together = ('contrato', 'competencia')

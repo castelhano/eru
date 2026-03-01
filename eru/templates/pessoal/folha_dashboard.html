@@ -55,8 +55,13 @@
     padding: .25rem .65rem;
     border-radius: 2rem;
 }
-.freq-status.FECHADO { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
-.freq-status.ABERTO  { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.freq-status.FECHADO      { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.freq-status.PROCESSADO   { background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); }
+.freq-status.ABERTO       { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.freq-status.RASCUNHO     { background: var(--bs-secondary-bg-subtle); color: var(--bs-secondary-color); }
+.freq-status.PAGO         { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.freq-status.PAGO\ PARCIAL{ background: var(--bs-info-bg-subtle);    color: var(--bs-info-text-emphasis); }
+.freq-status.CANCELADO    { background: var(--bs-danger-bg-subtle);  color: var(--bs-danger-text-emphasis); }
 
 /* ── Job detail block ──────────────────────────────────── */
 .job-block { border-left: 3px solid var(--bs-border-color); padding: .5rem .75rem; margin-top: .6rem; font-size: .82rem; }
@@ -201,10 +206,24 @@ a.metric-box:hover {
                                 <i class="{{ card.icon }} me-1"></i>{{ card.label }} — {{ filtro.competencia }}
                             </div>
                             {% if card.resumo.status %}
-                            <span class="freq-status {{ card.resumo.status }}">
-                                <i class="bi bi-{% if card.resumo.status == 'FECHADO' %}check-circle-fill{% else %}exclamation-circle-fill{% endif %}"></i>
-                                {{ card.resumo.status }}
-                            </span>
+                            <div class="text-end">
+                                <span class="freq-status {{ card.resumo.status }}">
+                                    <i class="bi bi-{% if card.resumo.status == 'FECHADO' %}check-circle-fill{% elif card.resumo.status == 'PROCESSADO' %}clock-fill{% else %}exclamation-circle-fill{% endif %}"></i>
+                                    {{ card.resumo.status }}
+                                </span>
+                                {% if card.resumo.fechado_em %}
+                                <div class="text-secondary mt-1" style="font-size:.72rem">
+                                    <i class="bi bi-lock-fill me-1"></i>{{ card.resumo.fechado_em }}
+                                    {% if card.resumo.fechado_por %}· {{ card.resumo.fechado_por }}{% endif %}
+                                </div>
+                                {% endif %}
+                                {% if card.resumo.pago_em %}
+                                <div class="text-secondary mt-1" style="font-size:.72rem">
+                                    <i class="bi bi-cash-coin me-1"></i>{{ card.resumo.pago_em }}
+                                    {% if card.resumo.pago_por %}· {{ card.resumo.pago_por }}{% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
                             {% endif %}
                         </div>
 
@@ -222,7 +241,7 @@ a.metric-box:hover {
                             {% comment %}
                                 Macro local: renderiza um metric-box como <a> ou <div>
                                 Uso: include com with campo="x" classes="accent" valor=... label=...
-                                Não há include parcial em Django puro, então usamos um bloco with inline
+                                Não há include parcial em Django puro, então usamos um bloco with inline.
                             {% endcomment %}
 
                             {# consolidados #}
@@ -337,6 +356,11 @@ a.metric-box:hover {
                                 <div class="m-label">Com erros</div>
                             {% if url %}</a>{% else %}</div>{% endif %}
                             {% endwith %}
+                            {% elif card.resumo.qtd_erros is not None %}
+                            <div class="metric-box accent">
+                                <div class="m-val"><i class="bi bi-check-lg"></i></div>
+                                <div class="m-label">Sem erros</div>
+                            </div>
                             {% endif %}
 
                             {% endif %}{# /total_bruto #}
@@ -355,11 +379,18 @@ a.metric-box:hover {
                                 {# ── job principal ── #}
                                 {% include "pessoal/_job_block.html" with job=card.job label=card.label icon=card.icon acao=card.acao filtro=filtro %}
 
-                                {# ── sub-jobs (fechar / pagar / cancelar) ── #}
+                                {# ── sub-jobs como details/summary ── #}
                                 {% for sub in card.sub_jobs %}
-                                <div class="ms-3 mt-2">
-                                    {% include "pessoal/_job_block.html" with job=sub.job label=sub.label icon=sub.icon acao=sub.acao filtro=filtro is_sub=True %}
-                                </div>
+                                <details class="mt-2" style="font-size:.82rem">
+                                    <summary class="text-secondary" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.4rem">
+                                        <i class="{{ sub.icon }}"></i>
+                                        <span>{{ sub.label }}</span>
+                                        {% if sub.job %}<span class="job-status {{ sub.job.status }} ms-1">{{ sub.job.get_status_display }}</span>{% endif %}
+                                    </summary>
+                                    <div class="ms-2 mt-1">
+                                        {% include "pessoal/_job_block.html" with job=sub.job label=sub.label icon=sub.icon acao=sub.acao filtro=filtro is_sub=True %}
+                                    </div>
+                                </details>
                                 {% endfor %}
 
                             </div>
