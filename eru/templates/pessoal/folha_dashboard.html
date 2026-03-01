@@ -68,8 +68,32 @@
 .jb-val   { font-weight: 600; }
 
 /* ── Metric grid ───────────────────────────────────────── */
-.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .6rem; margin-top: .75rem; }
-.metric-box  { background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: .4rem; padding: .6rem .75rem; text-align: center; }
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--metric-min-width, 110px), 1fr));
+    gap: .6rem;
+    margin-top: .75rem;
+}
+/* base — div (não clicável) */
+.metric-box {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: .4rem;
+    padding: .6rem .75rem;
+    text-align: center;
+}
+/* link clicável — reseta estilos de <a> e mantém visual idêntico */
+a.metric-box {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: filter .15s, box-shadow .15s;
+}
+a.metric-box:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 0 0 2px var(--bs-primary);
+    color: inherit;
+}
 .metric-box .m-val   { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
 .metric-box .m-label { font-size: .68rem; color: var(--bs-secondary-color); margin-top: .2rem; }
 .metric-box.accent { border-color: var(--bs-primary); }
@@ -77,9 +101,6 @@
 .metric-box.danger { border-color: var(--bs-danger); }
 
 /* ── Misc ──────────────────────────────────────────────── */
-#tbl_erros td { font-size: .82rem; vertical-align: middle; }
-#tbl_erros td:first-child { white-space: nowrap; font-weight: 600; width: 110px; }
-
 .spin { animation: spin .8s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -178,125 +199,160 @@
                 {% if consultado %}
                 <div>
 
-                    {% for card in cards_jobs %}
+                    {# ── Cards de resumo ── #}
+                    {% for card in cards_jobs %}{% if card.resumo %}
+                    <div class="dash-panel mb-3">
 
-                        {# ── Card de resumo — freq tem situação + totais unificados ── #}
-                        {% if card.resumo %}
-                        <div class="dash-panel mb-3">
-
-                            {# Cabeçalho com situação (apenas para ações que retornam status) #}
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                <div class="panel-title mb-0">
-                                    <i class="{{ card.icon }} me-1"></i>{{ card.label }} — {{ filtro.competencia }}
-                                </div>
-                                {% if card.resumo.status %}
-                                <span class="freq-status {{ card.resumo.status }}">
-                                    {% if card.resumo.status == 'FECHADO' %}
-                                        <i class="bi bi-check-circle-fill"></i>
-                                    {% else %}
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-                                    {% endif %}
-                                    {{ card.resumo.status }}
-                                </span>
-                                {% endif %}
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <div class="panel-title mb-0">
+                                <i class="{{ card.icon }} me-1"></i>{{ card.label }} — {{ filtro.competencia }}
                             </div>
-
-                            {# Período consolidado #}
-                            {% if card.resumo.periodo %}
-                            <span class="fs-8 border rounded py-1 px-2 text-bg-primary-matte">
-                                Consolidado:
-                                <span class="border rounded text-bg-info-matte mx-1 px-1">{{ card.resumo.periodo.inicio }}</span>
-                                à
-                                <span class="border rounded text-bg-info-matte mx-1 px-1">{{ card.resumo.periodo.fim }}</span>
+                            {% if card.resumo.status %}
+                            <span class="freq-status {{ card.resumo.status }}">
+                                <i class="bi bi-{% if card.resumo.status == 'FECHADO' %}check-circle-fill{% else %}exclamation-circle-fill{% endif %}"></i>
+                                {{ card.resumo.status }}
                             </span>
                             {% endif %}
-
-                            <div class="metric-grid">
-
-                                {# Metricas de situacao — contratos / consolidados / pendencias #}
-                                {% if card.resumo.consolidados is not None %}
-                                <div class="metric-box accent">
-                                    <div class="m-val">{{ card.resumo.consolidados }}</div>
-                                    <div class="m-label">Consolidados</div>
-                                </div>
-                                {% endif %}
-
-                                {% if card.resumo.total_contratos is not None %}
-                                <div class="metric-box">
-                                    <div class="m-val">{{ card.resumo.total_contratos }}</div>
-                                    <div class="m-label">Contratos ativos</div>
-                                </div>
-                                {% endif %}
-
-                                {% if card.resumo.pendencias %}
-                                    <button type="button" id="btn_ver_erros"
-                                            class="metric-box danger"
-                                            style="cursor:pointer; border:1px solid var(--bs-danger)">
-                                        <div class="m-val">{{ card.resumo.pendencias }}</div>
-                                        <div class="m-label">Pendências</div>
-                                    </button>
-                                {% elif card.resumo.pendencias is not None %}
-                                    <div class="metric-box accent">
-                                        <div class="m-val"><i class="bi bi-check-lg"></i></div>
-                                        <div class="m-label">Sem pendências</div>
-                                    </div>
-                                {% endif %}
-
-                                {# Métricas de frequência #}
-                                {% if card.resumo.H_horas_extras is not None %}
-                                <div class="metric-box accent">
-                                    <div class="m-val">{{ card.resumo.H_horas_extras|floatformat:1 }}h</div>
-                                    <div class="m-label">Horas extras</div>
-                                </div>
-                                <div class="metric-box warn">
-                                    <div class="m-val">{{ card.resumo.dias_falta_just }}</div>
-                                    <div class="m-label">Faltas justif.</div>
-                                </div>
-                                <div class="metric-box danger">
-                                    <div class="m-val">{{ card.resumo.dias_falta_njust }}</div>
-                                    <div class="m-label">Faltas injustif.</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="m-val">{{ card.resumo.dias_atestado }}</div>
-                                    <div class="m-label">Atestados</div>
-                                </div>
-                                {% endif %}
-
-                                {# Métricas de folha #}
-                                {% if card.resumo.total_bruto is not None %}
-                                <div class="metric-box accent">
-                                    <div class="m-val">R$&nbsp;{{ card.resumo.total_bruto|floatformat:2 }}</div>
-                                    <div class="m-label">Proventos</div>
-                                </div>
-                                <div class="metric-box danger">
-                                    <div class="m-val">R$&nbsp;{{ card.resumo.total_descontos|floatformat:2 }}</div>
-                                    <div class="m-label">Descontos</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="m-val">R$&nbsp;{{ card.resumo.total_liq|floatformat:2 }}</div>
-                                    <div class="m-label">Líquido</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="m-val">{{ card.resumo.qtd_total }}</div>
-                                    <div class="m-label">Funcionários</div>
-                                </div>
-                                {% if card.resumo.qtd_erros %}
-                                <div class="metric-box danger">
-                                    <div class="m-val">{{ card.resumo.qtd_erros }}</div>
-                                    <div class="m-label">Com erros</div>
-                                </div>
-                                {% endif %}
-                                {% endif %}
-
-                            </div>{# /metric-grid #}
                         </div>
-                        {% endif %}{# /card.resumo #}
 
-                    {% endfor %}{# /cards_jobs — resumos #}
+                        {% if card.resumo.periodo %}
+                        <span class="fs-8 border rounded py-1 px-2 text-bg-primary-matte">
+                            Consolidado:
+                            <span class="border rounded text-bg-info-matte mx-1 px-1">{{ card.resumo.periodo.inicio }}</span>
+                            à
+                            <span class="border rounded text-bg-info-matte mx-1 px-1">{{ card.resumo.periodo.fim }}</span>
+                        </span>
+                        {% endif %}
 
-                    <!-- ── Card de última execução — genérico para todos os jobs ── -->
+                        <div class="metric-grid" style="--metric-min-width: {{ card.metric_min_width }}px">
+
+                            {# ── Macro local: renderiza um metric-box como <a> ou <div> ──
+                               Uso: {% include com with campo="x" classes="accent" valor=... label=... %}
+                               Não há include parcial em Django puro, então usamos um bloco with inline. #}
+
+                            {# consolidados #}
+                            {% if card.resumo.consolidados is not None %}
+                            {% with url=card.card_links.consolidados st=card.metric_style.consolidados %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box accent">{% else %}<div class="metric-box accent">{% endif %}
+                                <div class="m-val">{{ card.resumo.consolidados }}</div>
+                                <div class="m-label">Consolidados</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+                            {% endif %}
+
+                            {# total_contratos #}
+                            {% if card.resumo.total_contratos is not None %}
+                            {% with url=card.card_links.total_contratos %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box">{% else %}<div class="metric-box">{% endif %}
+                                <div class="m-val">{{ card.resumo.total_contratos }}</div>
+                                <div class="m-label">Contratos ativos</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+                            {% endif %}
+
+                            {# pendencias #}
+                            {% if card.resumo.pendencias %}
+                            {% with url=card.card_links.pendencias %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box danger">{% else %}<div class="metric-box danger">{% endif %}
+                                <div class="m-val">{{ card.resumo.pendencias }}</div>
+                                <div class="m-label">Pendências</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+                            {% elif card.resumo.pendencias is not None %}
+                            <div class="metric-box accent">
+                                <div class="m-val"><i class="bi bi-check-lg"></i></div>
+                                <div class="m-label">Sem pendências</div>
+                            </div>
+                            {% endif %}
+
+                            {# métricas de frequência #}
+                            {% if card.resumo.H_horas_extras is not None %}
+
+                            {% with url=card.card_links.H_horas_extras %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box accent">{% else %}<div class="metric-box accent">{% endif %}
+                                <div class="m-val">{{ card.resumo.H_horas_extras|floatformat:1 }}h</div>
+                                <div class="m-label">Horas extras</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.dias_falta_just %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box warn">{% else %}<div class="metric-box warn">{% endif %}
+                                <div class="m-val">{{ card.resumo.dias_falta_just }}</div>
+                                <div class="m-label">Faltas justif.</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.dias_falta_njust %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box danger">{% else %}<div class="metric-box danger">{% endif %}
+                                <div class="m-val">{{ card.resumo.dias_falta_njust }}</div>
+                                <div class="m-label">Faltas injustif.</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.dias_atestado %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box">{% else %}<div class="metric-box">{% endif %}
+                                <div class="m-val">{{ card.resumo.dias_atestado }}</div>
+                                <div class="m-label">Atestados</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% endif %}{# /H_horas_extras #}
+
+                            {# métricas de folha #}
+                            {% if card.resumo.total_bruto is not None %}
+
+                            {% with url=card.card_links.total_bruto st=card.metric_style.total_bruto %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box accent">{% else %}<div class="metric-box accent">{% endif %}
+                                <div class="m-val"{% if st.val_size %} style="font-size:{{ st.val_size }}"{% endif %}>
+                                    {% if not st.hide_prefix %}R$&nbsp;{% endif %}{{ card.resumo.total_bruto|floatformat:2 }}
+                                </div>
+                                <div class="m-label">Proventos{% if st.hide_prefix %} (R$){% endif %}</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.total_descontos st=card.metric_style.total_descontos %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box danger">{% else %}<div class="metric-box danger">{% endif %}
+                                <div class="m-val"{% if st.val_size %} style="font-size:{{ st.val_size }}"{% endif %}>
+                                    {% if not st.hide_prefix %}R$&nbsp;{% endif %}{{ card.resumo.total_descontos|floatformat:2 }}
+                                </div>
+                                <div class="m-label">Descontos{% if st.hide_prefix %} (R$){% endif %}</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.total_liq st=card.metric_style.total_liq %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box">{% else %}<div class="metric-box">{% endif %}
+                                <div class="m-val"{% if st.val_size %} style="font-size:{{ st.val_size }}"{% endif %}>
+                                    {% if not st.hide_prefix %}R$&nbsp;{% endif %}{{ card.resumo.total_liq|floatformat:2 }}
+                                </div>
+                                <div class="m-label">Líquido{% if st.hide_prefix %} (R$){% endif %}</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% with url=card.card_links.qtd_total %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box">{% else %}<div class="metric-box">{% endif %}
+                                <div class="m-val">{{ card.resumo.qtd_total }}</div>
+                                <div class="m-label">Funcionários</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+
+                            {% if card.resumo.qtd_erros %}
+                            {% with url=card.card_links.qtd_erros %}
+                            {% if url %}<a href="{{ url }}" target="_blank" class="metric-box danger">{% else %}<div class="metric-box danger">{% endif %}
+                                <div class="m-val">{{ card.resumo.qtd_erros }}</div>
+                                <div class="m-label">Com erros</div>
+                            {% if url %}</a>{% else %}</div>{% endif %}
+                            {% endwith %}
+                            {% endif %}
+
+                            {% endif %}{# /total_bruto #}
+
+                        </div>{# /metric-grid #}
+                    </div>
+                    {% endif %}{% endfor %}{# /cards_jobs resumos #}
+
+                    <!-- ── Card de última execução ── -->
                     <div class="dash-panel">
-                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>{% translate 'Última execução'|escapejs %}</div>
+                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>{% translate 'Última execução' %}</div>
                         <div class="row g-3">
                             {% for card in cards_jobs %}
                             <div class="col-12 col-xl-{% if cards_jobs|length == 1 %}12{% elif cards_jobs|length == 2 %}6{% else %}4{% endif %}">
@@ -305,17 +361,16 @@
                                         <i class="{{ card.icon }} me-2"></i>{{ card.label }}
                                     </span>
                                     {% if card.job %}
-                                    <span class="job-status pointer {{ card.job.status }}"
+                                    <span class="job-status {{ card.job.status }}"
                                           {% if card.job.status == 'PR' or card.job.status == 'AG' %}
                                           onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
                                           title="Clique para atualizar"
+                                          style="cursor:pointer"
                                           {% endif %}>
-                                        {% if card.job.status == 'PR' %}
-                                            <i class="bi bi-arrow-repeat spin"></i>
-                                        {% endif %}
+                                        {% if card.job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
                                         {{ card.job.get_status_display }}
                                         {% if card.job.status == 'PR' or card.job.status == 'AG' %}
-                                            <i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>
+                                        <i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>
                                         {% endif %}
                                     </span>
                                     {% else %}
@@ -372,14 +427,11 @@
                                         <span class="jb-val">{{ card.job.criado_por|capfirst|default:"—" }}</span>
                                     </div>
                                     {% endif %}
-                                    {% if card.job.observacoes %}
-                                        {% for obs in card.job.observacoes %}
-                                        <div class="small text-warning-matte mt-1">
-                                            <i class="bi bi-caret-right-fill"></i>
-                                            {{ obs }}
-                                        </div>
-                                        {% endfor %}
-                                    {% endif %}
+                                    {% for obs in card.job.observacoes %}
+                                    <div class="small text-warning-matte mt-1">
+                                        <i class="bi bi-caret-right-fill"></i> {{ obs }}
+                                    </div>
+                                    {% endfor %}
                                 </div>
                                 {% endif %}
                             </div>
@@ -394,45 +446,6 @@
         </form>
     </div>
 </div>
-
-<!-- Modal de pendências -->
-{% if consultado %}
-<div class="modal fade" id="modal_erros" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Pendências — Frequência
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="modal_erros_loading" class="text-center py-4">
-                    <div class="spinner-border spinner-border-sm text-secondary"></div>
-                </div>
-                <table class="table table-sm border table-striped table-hover mb-0 d-none" id="tbl_erros">
-                    <thead class="sticky-top small">
-                        <tr>
-                            <th>Matrícula</th>
-                            <th>Funcionário</th>
-                            <th>Data</th>
-                            <th>Motivo</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <div class="modal-footer py-2 justify-content-between">
-                <small class="text-secondary" id="modal_erros_count"></small>
-                <div class="d-flex gap-2">
-                    {% btn_tag 'CSV' id="download" icon="bi bi-download me-1" class="btn btn-sm btn-warning-matte" href="?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&export=erros_freq" %}
-                    {% btn_tag _('Fechar') data_bs_dismiss="modal" %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block add_script_src %}{% endblock %}
@@ -444,21 +457,18 @@ const idAcao   = document.getElementById('id_acao');
 const filialEl = document.getElementById('id_filial');
 const compEl   = document.getElementById('id_competencia');
 
-// Consulta via GET
 document.getElementById('btn_filtrar').addEventListener('click', () => {
     const f = filialEl.value, c = compEl.value;
     if (!f || !c) { appAlert('warning', 'Informe filial e competência.'); return; }
     window.location.href = `?filial_id=${f}&competencia=${c}`;
 });
 
-// Disparo de ação (appConfirm intercepta o onclick antes de chamar)
 function _disparar(acao) {
     try { appModalConfirm.hide(); } catch(e) {}
     idAcao.value = acao;
     form.submit();
 }
 
-// Duração legível entre dois ISO datetimes
 function _duracao(ini, fim) {
     const s = Math.round((new Date(fim) - new Date(ini)) / 1000);
     if (s < 60) return `${s}s`;
@@ -466,46 +476,9 @@ function _duracao(ini, fim) {
     return r ? `${m}min ${r}s` : `${m}min`;
 }
 
-// Preenche todas as células de duração de forma genérica
 document.querySelectorAll('.js-duracao').forEach(el => {
-    const ini = el.dataset.ini, fim = el.dataset.fim;
-    if (ini && fim) el.textContent = _duracao(ini, fim);
+    if (el.dataset.ini && el.dataset.fim)
+        el.textContent = _duracao(el.dataset.ini, el.dataset.fim);
 });
-
-// Modal de pendências — carrega via AJAX lazy
-{% if consultado %}
-const btnVerErros = document.getElementById('btn_ver_erros');
-if (btnVerErros) {
-    const bsModal = new bootstrap.Modal(document.getElementById('modal_erros'));
-    document.getElementById('modal_erros').addEventListener('hidden.bs.modal', () => {
-        appKeyMap.setContext();
-    });
-    let errosCarregados = false;
-
-    btnVerErros.addEventListener('click', () => {
-        bsModal.show();
-        appKeyMap.setContext('pendencias_modal');
-        if (errosCarregados) return;
-        fetch(`?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}&erros_json=1`)
-            .then(r => r.json())
-            .then(data => {
-                const tbody = document.querySelector('#tbl_erros tbody');
-                data.forEach(({ matricula, funcionario, data: dt, motivo }) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${matricula}</td><td>${funcionario}</td><td>${dt}</td><td>${motivo}</td>`;
-                    tbody.appendChild(tr);
-                });
-                document.getElementById('modal_erros_loading').classList.add('d-none');
-                document.getElementById('tbl_erros').classList.remove('d-none');
-                document.getElementById('modal_erros_count').textContent = `${data.length} registro(s)`;
-                errosCarregados = true;
-            })
-            .catch(() => {
-                document.getElementById('modal_erros_loading').innerHTML =
-                    '<span class="text-danger small">Erro ao carregar.</span>';
-            });
-    });
-}
-{% endif %}
 {% endblock %}
 </script>

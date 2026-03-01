@@ -707,6 +707,7 @@ class ProcessamentoJob(models.Model):
     iniciado_em = models.DateTimeField(_('Iniciado em'),  null=True, blank=True)
     concluido_em = models.DateTimeField(_('Concluído em'), null=True, blank=True)
     resultado = models.JSONField(_('Resultado'), default=dict, blank=True)
+    progresso = models.PositiveSmallIntegerField(_('Progresso'), default=0)
     observacoes = models.JSONField(_('Observações'), default=list, blank=True)
     class Meta:
         verbose_name = _('Job de Processamento')

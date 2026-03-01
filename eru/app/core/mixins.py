@@ -253,7 +253,7 @@ class TableCustomMixin:
                     self.columns[name].column.attrs.setdefault(target, {})["class"] = css
     def config(self, request, filter_obj=None):
         """Aplica paginacao e estiliza o form do django-filter"""
-        RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 10)}).configure(self)
+        RequestConfig(request, paginate={"per_page": getattr(self.Meta, 'paginate_by', 20)}).configure(self)
         if filter_obj:
             filter_obj.form.auto_id = f"id_%s_filter" # altera id do elemento com sufixo _filter para evitar conflito com multiforms na pagina
             for f in filter_obj.form.fields.values():

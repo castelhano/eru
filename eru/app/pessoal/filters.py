@@ -46,14 +46,14 @@ class FuncionarioFilter(django_filters.FilterSet):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.filters['filial'].field.widget.attrs.update({
-            'data-chained-field': 'id_empresa',
+            'data-chained-field': 'id_empresa_filter',
             'data-url': reverse_lazy('filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
         self.filters['status'].field.widget.attrs.update({'class_cols': '2'})
         cargo_field = self.filters['cargo'].field
         cargo_field.widget.attrs.update({
-            'data-chained-field': 'id_setor',
+            'data-chained-field': 'id_setor_filter',
             'data-url': reverse_lazy('pessoal:cargo_list'),
             'class': 'form-select form-select-sm select-chained'
         })
@@ -136,7 +136,7 @@ class FilialFilterMixin(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.filters['filiais'].field.widget.attrs.update({
-            'data-chained-field': 'id_empresa',
+            'data-chained-field': 'id_empresa_filter',
             'data-url': reverse_lazy('filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
