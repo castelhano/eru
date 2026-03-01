@@ -52,6 +52,7 @@ class ContratoTable(TableCustomMixin, Table):
     class Meta:
         model = Contrato
         template_name = '_tables/contrato_table.html'
+        paginate_by = 1
         fields = ('funcionario', 'cargo', 'regime', 'salario', 'inicio', 'fim','carga_mensal','carga_diaria',)
         actions = [
             {
@@ -116,6 +117,7 @@ class CargoTable(TableCustomMixin, Table):
         return ", ".join(force_str(choices.get(v, v)) for v in value)
     class Meta:
         model = Cargo
+        paginate_by = 2
         fields = ('nome', 'setor', 'funcoes_fixas')
         actions = [
             {'action': 'update', 'url_name': 'pessoal:cargo_update', 'path_params': {'pk': 'id'}, 'perm': 'pessoal.change_cargo'}

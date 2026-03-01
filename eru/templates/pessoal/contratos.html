@@ -30,7 +30,7 @@
         <form id="modal_form" method="POST" autocomplete="off" novalidate>
             <div class="modal-content">
                 <div class="modal-body">
-                    <h6 class="text-purple">Gestão de Contrato</h6>
+                    <h6 class="text-purple">{% translate 'Contrato'|escapejs %}</h6>
                     <hr>
                     {% csrf_token %}
                     <div class="row g-1">
@@ -117,7 +117,12 @@
     })
     modal._element.addEventListener('hidden.bs.modal', ()=>{
         appKeyMap.setContext();
-        window.location.href = "{{ request.path }}";
+        {% if is_update %}
+        window.location.href = "{{ request.path }}"; // se editando registro recarrega pagina base
+        {% else %}
+        modal.hide(); // se modal for para novo registro apenas fecha modal
+        {% endif %}
+
     })    
     // muda contexto do atalho alt+g para somente com modal aberto
     appKeyMap.changeContext('alt+g', 'modal_form')
@@ -135,8 +140,6 @@
     {% if is_update %}
         // ao editar, carrega carga_diaria_time (se digitado)
         if(form.carga_diaria.value != ''){
-            console.log('entrei');
-            
             const decimal = parseFloat(form.carga_diaria.value) || 0;
             const horas = Math.floor(decimal); // isola parte inteira
             const minutos = Math.round((decimal - horas) * 60); // calcula minutos, e arredonda para evitar erro de precisao

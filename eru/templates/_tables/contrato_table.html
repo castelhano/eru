@@ -1,120 +1,107 @@
-{% load i18n %}
-<div class="table-container">
-    <table class="table border table-striped table-hover mb-2" id="contratotable" data-navigate="true" data-action-selector="a" >
-        <thead>
-            <tr>
-                {% for column in table.columns %}
-                <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in table.paginated_rows %}
-            <tr>
-                {% for column, cell in row.items %}
-                <td {{ column.attrs.td.as_html }}>{{ cell }}</td>
-                {% endfor %}
-            </tr>
-            <!-- linha expansivel -->
-            <tr>
-                <td colspan="100%" class="p-0 border-0">
-                    <div class="collapse" id="turnos-{{ row.record.id }}">
-                        <div class="bg-body-tertiary p-2 border-top">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0"><i class="bi bi-calendar-week me-2"></i> Histórico de Turnos</h6>
-                                <button class="btn btn-sm btn-success-matte" data-role="addTurno" data-contrato-id="{{ row.record.id }}">
-                                    <i class="bi bi-plus-lg"></i>
+{% extends "_tables/bootstrap5_custom.html" %}
+{% load i18n django_tables2 %}
+{% block table %}
+<table class="table border table-striped table-hover mb-2" id="contratotable" data-navigate="true" data-action-selector="a" >
+    <thead>
+        <tr>
+            {% for column in table.columns %}
+            <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table.paginated_rows %}
+        <tr>
+            {% for column, cell in row.items %}
+            <td {{ column.attrs.td.as_html }}>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        <!-- linha expansivel -->
+        <tr>
+            <td colspan="100%" class="p-0 border-0">
+                <div class="collapse" id="turnos-{{ row.record.id }}">
+                    <div class="bg-body-tertiary p-2 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="bi bi-calendar-week me-2"></i> Histórico de Turnos</h6>
+                            <button class="btn btn-sm btn-success-matte" data-role="addTurno" data-contrato-id="{{ row.record.id }}">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                        
+                        <div data-role="turnosContainer" data-contrato-id="{{ row.record.id }}">
+                            {% for th in row.record.historico_turnos.all %}
+                            <div class="card card-body mb-2 py-2">
+                                <div class="row align-items-center">
+                                    <div class="col"><span class="text-body-secondary">{{ th.turno.nome }}</span></div>
+                                    <div class="col-auto text-body-secondary small">{{ th.inicio_vigencia|date:"d/m/Y" }} - {{ th.fim_vigencia|date:"d/m/Y"|default:"Vigente" }}</div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-sm btn-primary-matte" data-role="editTurno" 
+                                        data-turno-id="{{ th.turno.id }}"
+                                        data-inicio="{{ th.inicio_vigencia|date:'Y-m-d' }}"
+                                        data-fim="{{ th.fim_vigencia|date:'Y-m-d' }}"
+                                        data-id="{{ th.id }}" 
+                                        data-contrato-id="{{ row.record.id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger-matte" 
+                                    data-role="deleteTurno" 
+                                    data-id="{{ th.id }}"
+                                    onclick="deleteTurnoConfirmed"
+                                    data-appConfirm="true"
+                                    data-appConfirmMessage="{% translate 'Confirma operação'|escapejs %}?"
+                                    data-appConfirmColor="danger-matte"
+                                    data-appConfirmText="{% translate 'Excluir'|escapejs %}">
+                                    <i class="bi bi-trash3"></i>
                                 </button>
                             </div>
-                            
-                            <div data-role="turnosContainer" data-contrato-id="{{ row.record.id }}">
-                                {% for th in row.record.historico_turnos.all %}
-                                <div class="card card-body mb-2 py-2">
-                                    <div class="row align-items-center">
-                                        <div class="col"><span class="text-body-secondary">{{ th.turno.nome }}</span></div>
-                                        <div class="col-auto text-body-secondary small">{{ th.inicio_vigencia|date:"d/m/Y" }} - {{ th.fim_vigencia|date:"d/m/Y"|default:"Vigente" }}</div>
-                                        <div class="col-auto">
-                                            <button class="btn btn-sm btn-primary-matte" data-role="editTurno" 
-                                            data-turno-id="{{ th.turno.id }}"
-                                            data-inicio="{{ th.inicio_vigencia|date:'Y-m-d' }}"
-                                            data-fim="{{ th.fim_vigencia|date:'Y-m-d' }}"
-                                            data-id="{{ th.id }}" 
-                                            data-contrato-id="{{ row.record.id }}">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-danger-matte" 
-                                        data-role="deleteTurno" 
-                                        data-id="{{ th.id }}"
-                                        onclick="deleteTurnoConfirmed"
-                                        data-appConfirm="true"
-                                        data-appConfirmMessage="{% translate 'Confirma operação'|escapejs %}?"
-                                        data-appConfirmColor="danger-matte"
-                                        data-appConfirmText="{% translate 'Excluir'|escapejs %}">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
-                        {% empty %}
-                        <p class="text-body-secondary mb-0" data-role="emptyMessage">{% translate 'Nenhum turno cadastrado'|escapejs %}</p>
-                        {% endfor %}
                     </div>
-                    
-                    <div id="turno-form-{{ row.record.id }}" class="mt-2" style="display:none;">
-                        <div class="card card-body py-2">
-                            <input type="hidden" data-field="id" value="">
-                            <input type="hidden" data-field="contrato_id" value="{{ row.record.id }}">
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-4">
-                                    <label class="form-label small mb-1">{% translate 'Turno'|escapejs %}</label>
-                                    <select class="form-select form-select-sm" data-field="turno" required>
-                                        <option value="">{% translate 'Carregando...'|escapejs %}</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1">{% translate 'Início'|escapejs %}</label>
-                                    <input type="date" class="form-control form-control-sm" data-field="inicio_vigencia" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1">{% translate 'Fim'|escapejs %}</label>
-                                    <input type="date" class="form-control form-control-sm" data-field="fim_vigencia">
-                                </div>
-                                <div class="col-md-2 d-flex gap-1">
-                                    <button class="btn btn-sm btn-success-matte" data-role="saveTurno">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-secondary-matte" data-role="cancelTurno">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </div>
+                    {% empty %}
+                    <p class="text-body-secondary mb-0" data-role="emptyMessage">{% translate 'Nenhum turno cadastrado'|escapejs %}</p>
+                    {% endfor %}
+                </div>
+                
+                <div id="turno-form-{{ row.record.id }}" class="mt-2" style="display:none;">
+                    <div class="card card-body py-2">
+                        <input type="hidden" data-field="id" value="">
+                        <input type="hidden" data-field="contrato_id" value="{{ row.record.id }}">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small mb-1">{% translate 'Turno'|escapejs %}</label>
+                                <select class="form-select form-select-sm" data-field="turno" required>
+                                    <option value="">{% translate 'Carregando...'|escapejs %}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">{% translate 'Início'|escapejs %}</label>
+                                <input type="date" class="form-control form-control-sm" data-field="inicio_vigencia" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">{% translate 'Fim'|escapejs %}</label>
+                                <input type="date" class="form-control form-control-sm" data-field="fim_vigencia">
+                            </div>
+                            <div class="col-md-2 d-flex gap-1">
+                                <button class="btn btn-sm btn-success-matte" data-role="saveTurno">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <button class="btn btn-sm btn-secondary-matte" data-role="cancelTurno">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </td>
-    </tr>
-    {% empty %}
-        <tr>
-            <td colspan="100%">
-                {% translate 'Nenhum registro a exibir'|escapejs %}
-            </td>
-        </tr>
-    {% endfor %}
+        </div>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="100%">
+        {% translate 'Nenhum registro a exibir'|escapejs %}
+    </td>
+</tr>
+{% endfor %}
 </tbody>
 </table>
-</div>
-
-{% if table.page %}
-<nav class="d-flex justify-content-end mt-1">
-    <ul class="pagination">
-        {% if table.page.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ table.page.previous_page_number }}"><span aria-hidden="true">&laquo;</span></a></li>
-        {% endif %}
-        <li class="page-item disabled"><span class="page-link">{{ table.page.number }} / {{ table.paginator.num_pages }}</span></li>
-        {% if table.page.has_next %}
-        <li class="next page-item"><a class="page-link" href="?page={{ table.page.next_page_number }}"><span aria-hidden="true">&raquo;</span></a></li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
+{% endblock %}
