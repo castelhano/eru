@@ -132,7 +132,7 @@ a.metric-box:hover {
                     <div class="panel-title"><i class="bi bi-sliders me-1"></i>Parâmetros</div>
 
                     <div class="mb-3">
-                        <label class="form-label form-label-sm">Filial</label>
+                        <label class="form-label small mb-0">Filial</label>
                         <select name="filial_id" id="id_filial" class="form-select form-select-sm">
                             {% for empresa in user.profile.empresas %}
                             <optgroup label="{{ empresa.nome }}">
@@ -148,7 +148,7 @@ a.metric-box:hover {
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label form-label-sm">Competência</label>
+                        <label class="form-label small mb-0">Competência</label>
                         <input type="month" name="competencia" id="id_competencia"
                                class="form-control form-control-sm" value="{{ filtro.competencia }}">
                     </div>
@@ -158,26 +158,44 @@ a.metric-box:hover {
                     </button>
 
                     {% if consultado %}
-                    <hr>
-                    <div class="mb-3">
-                        <label class="form-label form-label-sm">
-                            Período <span class="text-secondary">(padrão: mês inteiro)</span>
-                        </label>
-                        <div class="mat-range">
-                            <input type="date" name="inicio" id="id_inicio" class="form-control form-control-sm">
-                            <input type="date" name="fim"    id="id_fim"    class="form-control form-control-sm">
+                    <hr class="my-3">
+                    <!-- accordion com filtros adicionais (opcionais)-->
+                    <div class="accordion" id="filter_extra_acc">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fs-7 py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#filter_periodo_acc">
+                                    Período
+                                </button>
+                            </h2>
+                            <div id="filter_periodo_acc" class="accordion-collapse collapse" data-bs-parent="#filter_extra_acc">
+                                <div class="accordion-body pb-2">
+                                    <div class="mat-range mb-1">
+                                        <input type="date" name="inicio" id="id_inicio" class="form-control form-control-sm">
+                                        <input type="date" name="fim"    id="id_fim"    class="form-control form-control-sm">
+                                    </div>
+                                    <span class="text-warning-matte fs-8"><i class="bi bi-info-circle-fill me-2"></i>Na omissão processa todo período</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fs-7 py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#filter_matriculas_acc">
+                                    Mátriculas
+                                </button>
+                            </h2>
+                            <div id="filter_matriculas_acc" class="accordion-collapse collapse" data-bs-parent="#filter_extra_acc">
+                                <div class="accordion-body pb-2">
+                                    <div class="mat-range mb-1">
+                                        <input type="text" name="matricula_de"  class="form-control form-control-sm" placeholder="De">
+                                        <input type="text" name="matricula_ate" class="form-control form-control-sm" placeholder="Até">
+                                    </div>
+                                    <span class="text-warning-matte fs-8"><i class="bi bi-info-circle-fill me-2"></i>Na omissão processa todos ativos</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label form-label-sm">
-                            Matrículas <span class="text-secondary">(opcional)</span>
-                        </label>
-                        <div class="mat-range">
-                            <input type="text" name="matricula_de"  class="form-control form-control-sm" placeholder="De">
-                            <input type="text" name="matricula_ate" class="form-control form-control-sm" placeholder="Até">
-                        </div>
-                    </div>
-                    <hr class="my-2">
+
+                    <hr class="my-3">
                     <div class="d-grid gap-2">
                         {% for valor, label in filtro.acoes.items %}
                         <button type="button"
