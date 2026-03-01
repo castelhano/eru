@@ -16,6 +16,10 @@ _ACOES — registro central de cada processo:
                        Use {filial_id} e {competencia} como placeholders;
                        a view os interpola antes de enviar ao template.
                        Use None para deixar o box não-clicável.
+    sub_jobs         → lista de chaves de _ACOES cujos jobs aparecem como
+                       sub-bloco no card de última execução deste item.
+                       Usado para agrupar processamento + fechamento + pagamento
+                       no mesmo card visual.
 """
 import calendar
 import csv
@@ -31,13 +35,16 @@ from core.views import BaseTemplateView
 from pessoal.models import (
     Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob, Funcionario
 )
-from pessoal.tasks import disparar_consolidacao, disparar_folha, disparar_carga_escala
-
+from pessoal.tasks import (
+    disparar_consolidacao, disparar_folha, disparar_carga_escala,
+    disparar_fechar_freq, disparar_fechar_folha, disparar_pagar_folha, disparar_cancelar_folha,
+)
 
 # ─── Registro central de ações ───────────────────────────────────────────────
 
 _ACOES = {
     'carregar_escala': {
+        'is_sub_job':       False,
         'label':            _('Carregar escala'),
         'job_tipo':         ProcessamentoJob.Tipo.CARGA_ESCALA,
         'resumo_fn':        None,
@@ -45,8 +52,10 @@ _ACOES = {
         'metric_min_width': None,
         'metric_style':     {},
         'card_links':       {},
+        'sub_jobs':         [],
     },
     'consolidar_freq': {
+        'is_sub_job':       False,
         'label':            _('Consolidar frequência'),
         'job_tipo':         ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ,
         'resumo_fn':        '_resumo_freq',
@@ -60,17 +69,29 @@ _ACOES = {
             'dias_falta_njust': '/pessoal/dashboard/detalhe/?tipo=freq_falta_njust&filial_id={filial_id}&competencia={competencia}',
             'dias_atestado':    '/pessoal/dashboard/detalhe/?tipo=freq_atestados&filial_id={filial_id}&competencia={competencia}',
             'consolidados':     '/pessoal/dashboard/detalhe/?tipo=freq_consolidados&filial_id={filial_id}&competencia={competencia}',
-            'total_contratos':  None,   # sem link — só informativo
+            'total_contratos':  None,
         },
+        'sub_jobs': ['fechar_freq'],
+    },
+    'fechar_freq': {
+        'is_sub_job':       True,
+        'label':            _('Fechar frequência'),
+        'job_tipo':         ProcessamentoJob.Tipo.FECHAR_FREQ,
+        'resumo_fn':        None,
+        'icon':             'bi bi-lock-fill text-info-matte',
+        'metric_min_width': None,
+        'metric_style':     {},
+        'card_links':       {},
+        'sub_jobs':         [],
     },
     'processar_folha': {
+        'is_sub_job':       False,
         'label':            _('Processar folha'),
         'job_tipo':         ProcessamentoJob.Tipo.FOLHA,
         'resumo_fn':        '_resumo_folha',
         'icon':             'bi bi-percent text-warning-matte',
         'metric_min_width': 150,
         'metric_style': {
-            # Oculta o prefixo "R$ " e reduz a fonte para caber valores maiores
             'total_bruto':     {'hide_prefix': True, 'val_size': '.9rem'},
             'total_descontos': {'hide_prefix': True, 'val_size': '.9rem'},
             'total_liq':       {'hide_prefix': True, 'val_size': '.9rem'},
@@ -82,6 +103,29 @@ _ACOES = {
             'qtd_total':       '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
             'qtd_erros':       '/pessoal/dashboard/detalhe/?tipo=folha_erros&filial_id={filial_id}&competencia={competencia}',
         },
+        'sub_jobs': ['fechar_folha', 'pagar_folha'],
+    },
+    'fechar_folha': {
+        'is_sub_job':       True,
+        'label':            _('Fechar folha'),
+        'job_tipo':         ProcessamentoJob.Tipo.FECHAR_FOLHA,
+        'resumo_fn':        None,
+        'icon':             'bi bi-lock-fill text-warning-matte',
+        'metric_min_width': None,
+        'metric_style':     {},
+        'card_links':       {},
+        'sub_jobs':         [],
+    },
+    'pagar_folha': {
+        'is_sub_job':       True,
+        'label':            _('Pagar folha'),
+        'job_tipo':         ProcessamentoJob.Tipo.PAGAR_FOLHA,
+        'resumo_fn':        None,
+        'icon':             'bi bi-cash-coin text-success-matte',
+        'metric_min_width': None,
+        'metric_style':     {},
+        'card_links':       {},
+        'sub_jobs':         [],
     },
 }
 
@@ -97,7 +141,8 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         context['filtro'] = {
             'filial_id':   filial_id,
             'competencia': competencia.strftime('%Y-%m') if competencia else datetime.today().strftime('%Y-%m'),
-            'acoes':       {k: v['label'] for k, v in _ACOES.items()},
+            # botões de ação exibidos no painel — exclui sub_jobs (aparecem nos cards)
+            'acoes': {k: v['label'] for k, v in _ACOES.items() if not v.get('is_sub_job')},
         }
         context['consultado'] = False
         if filial_id and competencia:
@@ -120,6 +165,8 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
 
         cards_jobs = []
         for acao, cfg in _ACOES.items():
+            if cfg.get('is_sub_job'):
+                continue  # sub-jobs aparecem embutidos nos cards principais, não como cards próprios
             job    = jobs_map.get(cfg['job_tipo'])
             resumo = (
                 getattr(self, cfg['resumo_fn'])(filial_id, competencia, fim_comp)
@@ -146,6 +193,17 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
                 'metric_min_width': cfg.get('metric_min_width') or 110,
                 'metric_style':     cfg.get('metric_style', {}),
                 'card_links':       links,
+                # sub_jobs: lista de dicts {acao, label, icon, job} para renderizar
+                # como sub-bloco no card de última execução
+                'sub_jobs': [
+                    {
+                        'acao':  sub_acao,
+                        'label': _ACOES[sub_acao]['label'],
+                        'icon':  _ACOES[sub_acao]['icon'],
+                        'job':   jobs_map.get(_ACOES[sub_acao]['job_tipo']),
+                    }
+                    for sub_acao in cfg.get('sub_jobs', [])
+                ],
             })
 
         return {'cards_jobs': cards_jobs, 'consultado': True}
@@ -290,6 +348,66 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
 
     def _acao_processar_folha(self, filial_id, competencia):
         return disparar_folha(
+            filial_id=filial_id,
+            competencia=competencia,
+            usuario=self.request.user,
+        )
+
+    def _acao_fechar_freq(self, filial_id, competencia):
+        # Bloqueia se houver qualquer consolidado ABERTO (com erros) na competência
+        freq_aberta = FrequenciaConsolidada.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FrequenciaConsolidada.Status.ABERTO,
+        ).exists()
+        if freq_aberta:
+            raise ValueError(
+                'Existem frequências com pendências (ABERTO). '
+                'Corrija os erros antes de fechar a frequência.'
+            )
+        return disparar_fechar_freq(
+            filial_id=filial_id,
+            competencia=competencia,
+            usuario=self.request.user,
+        )
+
+    def _acao_fechar_folha(self, filial_id, competencia):
+        # Bloqueia se houver qualquer frequência ainda ABERTA (com erros)
+        freq_aberta = FrequenciaConsolidada.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FrequenciaConsolidada.Status.ABERTO,
+        ).exists()
+        if freq_aberta:
+            raise ValueError(
+                'Existem frequências com pendências (ABERTO). '
+                'Corrija ou feche a frequência antes de fechar a folha.'
+            )
+        return disparar_fechar_folha(
+            filial_id=filial_id,
+            competencia=competencia,
+            usuario=self.request.user,
+        )
+
+    def _acao_pagar_folha(self, filial_id, competencia):
+        # Bloqueia se houver qualquer folha que não esteja FECHADO
+        nao_fechada = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+        ).exclude(status=FolhaPagamento.Status.FECHADO).exists()
+        if nao_fechada:
+            raise ValueError(
+                'Existem folhas não fechadas na competência. '
+                'Feche todas as folhas antes de efetuar o pagamento.'
+            )
+        return disparar_pagar_folha(
+            filial_id=filial_id,
+            competencia=competencia,
+            usuario=self.request.user,
+        )
+
+    def _acao_cancelar_folha(self, filial_id, competencia):
+        return disparar_cancelar_folha(
             filial_id=filial_id,
             competencia=competencia,
             usuario=self.request.user,

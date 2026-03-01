@@ -52,3 +52,43 @@ def db_save(contract, competence, json_memo, errors):
         }
     )
     return obj
+
+# ─── Transições de estado ─────────────────────────────────────────────────────
+
+def fechar_folha(folha) -> None:
+    """
+    Fecha uma FolhaPagamento individual (RASCUNHO → FECHADO).
+    Pré-condição: status == RASCUNHO. Ignorada silenciosamente para outros status.
+    Estrutura pronta para rotinas futuras (ex: bloquear edição de frequência, gerar holerite).
+    """
+    if folha.status != folha.Status.RASCUNHO:
+        return
+    # [ponto de extensão] rotinas pré-fechamento aqui
+    folha.status = folha.Status.FECHADO
+    folha.save(update_fields=['status'])
+
+
+def pagar_folha(folha) -> None:
+    """
+    Marca uma FolhaPagamento como paga (FECHADO → PAGO).
+    Pré-condição: status == FECHADO. Ignorada silenciosamente para outros status.
+    Estrutura pronta para rotinas futuras (ex: integração bancária, contabilidade).
+    """
+    if folha.status != folha.Status.FECHADO:
+        return
+    # [ponto de extensão] rotinas pré-pagamento aqui (integração bancária, etc.)
+    folha.status = folha.Status.PAGO
+    folha.save(update_fields=['status'])
+
+
+def cancelar_folha(folha) -> None:
+    """
+    Cancela uma FolhaPagamento (FECHADO → CANCELADO).
+    PAGO é irreversível — cancelamento só é permitido antes do pagamento.
+    Estrutura pronta para rotinas futuras (ex: estorno, notificação).
+    """
+    if folha.status != folha.Status.FECHADO:
+        return
+    # [ponto de extensão] rotinas pré-cancelamento aqui
+    folha.status = folha.Status.CANCELADO
+    folha.save(update_fields=['status'])

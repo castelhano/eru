@@ -220,9 +220,9 @@ a.metric-box:hover {
                         <div class="metric-grid" style="--metric-min-width: {{ card.metric_min_width }}px">
 
                             {% comment %}
-                                Macro local: renderiza um metric-box como <a> ou <div></div>
+                                Macro local: renderiza um metric-box como <a> ou <div>
                                 Uso: include com with campo="x" classes="accent" valor=... label=...
-                                Não há include parcial em Django puro, então usamos um bloco with inline.
+                                Não há include parcial em Django puro, então usamos um bloco with inline
                             {% endcomment %}
 
                             {# consolidados #}
@@ -351,87 +351,17 @@ a.metric-box:hover {
                         <div class="row g-3">
                             {% for card in cards_jobs %}
                             <div class="col-12 col-xl-{% if cards_jobs|length == 1 %}12{% elif cards_jobs|length == 2 %}6{% else %}4{% endif %}">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
-                                    <span class="fw-semibold" style="font-size:.85rem">
-                                        <i class="{{ card.icon }} me-2"></i>{{ card.label }}
-                                    </span>
-                                    {% if card.job %}
-                                    <span class="job-status {{ card.job.status }}"
-                                          {% if card.job.status == 'PR' or card.job.status == 'AG' %}
-                                          onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
-                                          title="Clique para atualizar"
-                                          style="cursor:pointer"
-                                          {% endif %}>
-                                        {% if card.job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
-                                        {{ card.job.get_status_display }}
-                                        {% if card.job.status == 'PR' and card.job.progresso %}
-                                        {{ card.job.progresso }}%
-                                        {% endif %}
-                                        {% if card.job.status == 'PR' or card.job.status == 'AG' %}
-                                        <i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>
-                                        {% endif %}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-secondary" style="font-size:.75rem">Não executado</span>
-                                    {% endif %}
-                                </div>
 
-                                {% if card.job %}
-                                <div class="job-block {{ card.job.status }}">
-                                    {% if card.job.resultado.erro %}
-                                    <div class="text-danger small">{{ card.job.resultado.erro }}</div>
-                                    {% else %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Processados</span>
-                                        <span class="jb-val">{{ card.job.resultado.processados|default:"—" }}</span>
-                                    </div>
-                                    <div class="jb-row">
-                                        <span class="jb-label">Falhas</span>
-                                        <span class="jb-val">{{ card.job.resultado.falhas|default:"0" }}</span>
-                                    </div>
-                                    {% if card.job.resultado.periodo %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Período</span>
-                                        <span class="jb-val">{{ card.job.resultado.periodo }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% if card.job.resultado.filtro_de or card.job.resultado.filtro_ate %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Matrículas</span>
-                                        <span class="jb-val">
-                                            {{ card.job.resultado.filtro_de|default:"início" }} →
-                                            {{ card.job.resultado.filtro_ate|default:"fim" }}
-                                        </span>
-                                    </div>
-                                    {% endif %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Iniciado</span>
-                                        <span class="jb-val">{{ card.job.iniciado_em|date:"d/m/Y H:i"|default:"—" }}</span>
-                                    </div>
-                                    <div class="jb-row">
-                                        <span class="jb-label">Concluído</span>
-                                        <span class="jb-val">{{ card.job.concluido_em|date:"d/m/Y H:i"|default:"—" }}</span>
-                                    </div>
-                                    {% if card.job.iniciado_em and card.job.concluido_em %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Duração</span>
-                                        <span class="jb-val js-duracao"
-                                              data-ini="{{ card.job.iniciado_em|date:'c' }}"
-                                              data-fim="{{ card.job.concluido_em|date:'c' }}"></span>
-                                    </div>
-                                    {% endif %}
-                                    <div class="jb-row">
-                                        <span class="jb-label">Por</span>
-                                        <span class="jb-val">{{ card.job.criado_por|capfirst|default:"—" }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% for obs in card.job.observacoes %}
-                                    <div class="small text-warning-matte mt-1">
-                                        <i class="bi bi-caret-right-fill"></i> {{ obs }}
-                                    </div>
-                                    {% endfor %}
+                                {# ── job principal ── #}
+                                {% include "pessoal/_job_block.html" with job=card.job label=card.label icon=card.icon acao=card.acao filtro=filtro %}
+
+                                {# ── sub-jobs (fechar / pagar / cancelar) ── #}
+                                {% for sub in card.sub_jobs %}
+                                <div class="ms-3 mt-2">
+                                    {% include "pessoal/_job_block.html" with job=sub.job label=sub.label icon=sub.icon acao=sub.acao filtro=filtro is_sub=True %}
                                 </div>
-                                {% endif %}
+                                {% endfor %}
+
                             </div>
                             {% endfor %}
                         </div>

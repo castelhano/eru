@@ -22,11 +22,12 @@ from django.utils.timezone import now
 from django_q.tasks import async_task
 
 from pessoal.models import (
-    Contrato, EventoFrequencia, Frequencia,
+    Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
     PessoalSettings, ProcessamentoJob, TurnoHistorico,
 )
-from pessoal.services.frequencia.engine import consolidar
+from pessoal.services.frequencia.engine import consolidar, fechar as fechar_freq_consolidado
 from pessoal.services.folha.services import payroll_run
+from pessoal.services.folha.persistence import fechar_folha, pagar_folha, cancelar_folha
 from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
 
 
@@ -373,5 +374,195 @@ def disparar_carga_escala(filial_id: int, competencia: date, inicio: date, fim: 
         competencia.isoformat(), inicio.isoformat(), fim.isoformat(),  # datas como string — django-q serializa via JSON
         matricula_de, matricula_ate,
         task_name=f"escala_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
+    )
+    return job
+
+
+# ─── Worker: fechar frequência ────────────────────────────────────────────────
+
+def _worker_fechar_freq(job_id: int, filial_id: int, competencia_str: str):
+    """
+    Fecha todos os FrequenciaConsolidada com status PROCESSADO da competência.
+    Consolidados ABERTO (com erros) são ignorados — não bloqueiam o lote.
+    Síncrono hoje; estrutura pronta para virar async_task futuramente.
+    """
+    ProcessamentoJob.objects.filter(pk=job_id).update(
+        status=ProcessamentoJob.Status.PROCESSANDO,
+        iniciado_em=now(),
+        progresso=0,
+    )
+    try:
+        competencia  = date.fromisoformat(competencia_str)
+        qs           = FrequenciaConsolidada.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FrequenciaConsolidada.Status.PROCESSADO,
+        )
+        total        = qs.count()
+        processados  = 0
+        for i, fc in enumerate(qs.iterator(), 1):
+            fechar_freq_consolidado(fc)
+            processados += 1
+            pct = round(i / total * 100) if total else 100
+            if pct % 5 == 0 or i == total:
+                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+        ignorados = (
+            FrequenciaConsolidada.objects
+            .filter(contrato__funcionario__filial_id=filial_id,
+                    competencia=competencia,
+                    status=FrequenciaConsolidada.Status.ABERTO)
+            .count()
+        )
+        obs = [f'{ignorados} consolidado(s) com erros ignorados'] if ignorados else []
+        _fechar_job(job_id, _resultado(processados=processados), observacoes=obs)
+    except Exception as e:
+        _fechar_job(job_id, {}, erro=str(e))
+
+
+def disparar_fechar_freq(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+    """Enfileira fechamento de frequência e retorna o job criado."""
+    job = _abrir_job(ProcessamentoJob.Tipo.FECHAR_FREQ, filial_id, competencia, usuario)
+    async_task(
+        _worker_fechar_freq,
+        job.id, filial_id, competencia.isoformat(),
+        task_name=f"fechar_freq_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
+    )
+    return job
+
+
+# ─── Worker: fechar folha ─────────────────────────────────────────────────────
+
+def _worker_fechar_folha(job_id: int, filial_id: int, competencia_str: str):
+    """
+    Fecha todas as FolhaPagamento com status RASCUNHO da competência.
+    Folhas com erros de cálculo são incluídas — decisão do operador.
+    Bloqueio de folhas com frequência ABERTO deve ser feito na view antes de disparar.
+    """
+    ProcessamentoJob.objects.filter(pk=job_id).update(
+        status=ProcessamentoJob.Status.PROCESSANDO,
+        iniciado_em=now(),
+        progresso=0,
+    )
+    try:
+        competencia = date.fromisoformat(competencia_str)
+        qs          = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FolhaPagamento.Status.RASCUNHO,
+        )
+        total       = qs.count()
+        processados = 0
+        for i, fp in enumerate(qs.iterator(), 1):
+            fechar_folha(fp)
+            processados += 1
+            pct = round(i / total * 100) if total else 100
+            if pct % 5 == 0 or i == total:
+                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+        _fechar_job(job_id, _resultado(processados=processados))
+    except Exception as e:
+        _fechar_job(job_id, {}, erro=str(e))
+
+
+def disparar_fechar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+    """Enfileira fechamento de folha e retorna o job criado."""
+    job = _abrir_job(ProcessamentoJob.Tipo.FECHAR_FOLHA, filial_id, competencia, usuario)
+    async_task(
+        _worker_fechar_folha,
+        job.id, filial_id, competencia.isoformat(),
+        task_name=f"fechar_folha_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
+    )
+    return job
+
+
+# ─── Worker: pagar folha ──────────────────────────────────────────────────────
+
+def _worker_pagar_folha(job_id: int, filial_id: int, competencia_str: str):
+    """
+    Marca como PAGO todas as FolhaPagamento com status FECHADO da competência.
+    Folhas RASCUNHO/CANCELADO são ignoradas — não bloqueiam o lote.
+    """
+    ProcessamentoJob.objects.filter(pk=job_id).update(
+        status=ProcessamentoJob.Status.PROCESSANDO,
+        iniciado_em=now(),
+        progresso=0,
+    )
+    try:
+        competencia = date.fromisoformat(competencia_str)
+        qs          = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FolhaPagamento.Status.FECHADO,
+        )
+        total       = qs.count()
+        processados = 0
+        for i, fp in enumerate(qs.iterator(), 1):
+            pagar_folha(fp)
+            processados += 1
+            pct = round(i / total * 100) if total else 100
+            if pct % 5 == 0 or i == total:
+                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+        ignorados = (
+            FolhaPagamento.objects
+            .filter(contrato__funcionario__filial_id=filial_id,
+                    competencia=competencia)
+            .exclude(status__in=[FolhaPagamento.Status.FECHADO, FolhaPagamento.Status.PAGO])
+            .count()
+        )
+        obs = [f'{ignorados} folha(s) não fechada(s) ignoradas'] if ignorados else []
+        _fechar_job(job_id, _resultado(processados=processados), observacoes=obs)
+    except Exception as e:
+        _fechar_job(job_id, {}, erro=str(e))
+
+
+def disparar_pagar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+    """Enfileira pagamento de folha e retorna o job criado."""
+    job = _abrir_job(ProcessamentoJob.Tipo.PAGAR_FOLHA, filial_id, competencia, usuario)
+    async_task(
+        _worker_pagar_folha,
+        job.id, filial_id, competencia.isoformat(),
+        task_name=f"pagar_folha_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
+    )
+    return job
+
+
+# ─── Worker: cancelar folha ───────────────────────────────────────────────────
+
+def _worker_cancelar_folha(job_id: int, filial_id: int, competencia_str: str):
+    """
+    Cancela todas as FolhaPagamento com status FECHADO da competência.
+    Folhas PAGO são irreversíveis e ignoradas.
+    """
+    ProcessamentoJob.objects.filter(pk=job_id).update(
+        status=ProcessamentoJob.Status.PROCESSANDO,
+        iniciado_em=now(),
+        progresso=0,
+    )
+    try:
+        competencia = date.fromisoformat(competencia_str)
+        qs          = FolhaPagamento.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FolhaPagamento.Status.FECHADO,
+        )
+        total       = qs.count()
+        processados = 0
+        for i, fp in enumerate(qs.iterator(), 1):
+            cancelar_folha(fp)
+            processados += 1
+            pct = round(i / total * 100) if total else 100
+            if pct % 5 == 0 or i == total:
+                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+        _fechar_job(job_id, _resultado(processados=processados))
+    except Exception as e:
+        _fechar_job(job_id, {}, erro=str(e))
+
+
+def disparar_cancelar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+    """Enfileira cancelamento de folha e retorna o job criado."""
+    job = _abrir_job(ProcessamentoJob.Tipo.CANCELAR_FOLHA, filial_id, competencia, usuario)
+    async_task(
+        _worker_cancelar_folha,
+        job.id, filial_id, competencia.isoformat(),
+        task_name=f"cancelar_folha_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job

@@ -17,7 +17,7 @@ def get_interpreter():
         use_numpy=False,
         with_if=True,
         with_ifexp=True,
-        builtins_readonly=True
+        builtins_readonly=True,
     )
 
 

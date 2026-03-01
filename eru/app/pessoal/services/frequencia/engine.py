@@ -301,3 +301,18 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
         }
     )
     return obj
+
+# ─── Transições de estado ─────────────────────────────────────────────────────
+
+def fechar(consolidado) -> None:
+    """
+    Fecha um FrequenciaConsolidada individual (PROCESSADO → FECHADO).
+    Pré-condição: status == PROCESSADO (sem erros). Chamada ignorada silenciosamente
+    para outros status — permite uso seguro em loop de lote.
+    Estrutura pronta para rotinas futuras (ex: gerar PDF, notificar DP).
+    """
+    if consolidado.status != consolidado.Status.PROCESSADO:
+        return
+    # [ponto de extensão] rotinas pré-fechamento aqui
+    consolidado.status = consolidado.Status.FECHADO
+    consolidado.save(update_fields=['status'])

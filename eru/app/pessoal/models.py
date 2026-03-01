@@ -692,7 +692,11 @@ class FrequenciaImport(models.Model):
 class ProcessamentoJob(models.Model):
     class Tipo(models.TextChoices):
         CONSOLIDACAO_FREQ = 'CF', _('Consolidação de Frequência')
+        FECHAR_FREQ       = 'FF', _('Fechamento de Frequência')
         FOLHA             = 'FP', _('Folha de Pagamento')
+        FECHAR_FOLHA      = 'FH', _('Fechamento de Folha')
+        PAGAR_FOLHA       = 'PF', _('Pagamento de Folha')
+        CANCELAR_FOLHA    = 'XF', _('Cancelamento de Folha')
         CARGA_ESCALA      = 'CE', _('Carga de Escala')
     class Status(models.TextChoices):
         AGUARDANDO   = 'AG', _('Aguardando')

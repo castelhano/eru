@@ -78,26 +78,35 @@ def get_event_vars_master(asDict=False, **kwargs):
         else:
             res.update({k: v if is_calc else 1 for k, v in h_vars.items()})
 
-        # Nível 2 (EF_*) modo cálculo — lê valores reais do consolidado
+        # Nível 2 (EF_*) modo cálculo — primeiro zera todos os rastreios cadastrados
+        # (garante que fórmulas que referenciam EF_x_horas não quebrem quando o
+        # funcionário não tem aquele tipo de ocorrência no mês), depois sobrescreve
+        # com os valores reais do consolidado quando existirem.
         if is_calc:
+            for ef_rastreio in (EventoFrequencia.objects
+                                .exclude(rastreio='')
+                                .values_list('rastreio', flat=True)
+                                .distinct()):
+                res.setdefault(f'{ef_rastreio}_horas', 0.0)
+                res.setdefault(f'{ef_rastreio}_dias',  0)
             for rastreio, vals in consolidado.get('EF', {}).items():
-                res[f'{rastreio}_horas'] = vals['horas']  # ex: EF_he50_horas
-                res[f'{rastreio}_dias']  = vals['dias']   # ex: EF_he50_dias
+                res[f'{rastreio}_horas'] = vals['horas']
+                res[f'{rastreio}_dias']  = vals['dias']
 
     # Nível 2 (EF_*) modo autocomplete/validação — lê rastreios cadastrados em EventoFrequencia.
     # Fica fora do bloco freq para executar mesmo sem consolidado disponível.
-    if is_calc:
-        # garante valor neutro para rastreios que não ocorreram no mes
-        for rastreio in (EventoFrequencia.objects
-                        .exclude(rastreio='')
-                        .values_list('rastreio', flat=True)
-                        .distinct()):
-            res.setdefault(f'{rastreio}_horas', 0.0)
-            res.setdefault(f'{rastreio}_dias',  0)
-        # sobrescreve com valores reais quando existirem
-        for rastreio, vals in consolidado.get('EF', {}).items():
-            res[f'{rastreio}_horas'] = vals['horas']
-            res[f'{rastreio}_dias']  = vals['dias']
+    if not is_calc:
+        ef_rastreios = (
+            EventoFrequencia.objects
+            .exclude(rastreio='')
+            .values_list('rastreio', flat=True)
+            .distinct()
+        )
+        for rastreio in ef_rastreios:
+            if isinstance(res, list):
+                res.extend([f'{rastreio}_horas', f'{rastreio}_dias'])
+            else:  # asDict
+                res.update({f'{rastreio}_horas': 1, f'{rastreio}_dias': 1})
 
     # Rastreios de eventos cadastrados pelo usuário (U_*) — valor 0 como neutro no cálculo
     customs = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())

@@ -1,0 +1,106 @@
+{% comment %}
+    ── _job_block.html ────────────────────────────────────────────────────────
+   Variáveis esperadas via include ... with ...
+     job      → instância ProcessamentoJob ou None
+     label    → str label da ação
+     icon     → str classe Bootstrap icon
+     acao     → str chave da ação (para _disparar())
+     filtro   → dict {filial_id, competencia}
+     is_sub   → bool (opcional) — estilo mais compacto para sub-jobs
+{% endcomment %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-1">
+    <span class="fw-semibold" style="font-size:{% if is_sub %}.78rem{% else %}.85rem{% endif %}">
+        <i class="{{ icon }} me-1"></i>{{ label }}
+    </span>
+    <div class="d-flex align-items-center gap-1">
+
+        {% if job %}
+        {# badge de status #}
+        <span class="job-status {{ job.status }}"
+              {% if job.status == 'PR' or job.status == 'AG' %}
+              onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
+              title="Clique para atualizar" style="cursor:pointer"
+              {% endif %}>
+            {% if job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+            {{ job.get_status_display }}
+            {% if job.status == 'PR' and job.progresso %}{{ job.progresso }}%{% endif %}
+            {% if job.status == 'PR' or job.status == 'AG' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
+        </span>
+        {% else %}
+        <span class="text-secondary" style="font-size:.75rem">Não executado</span>
+        {% endif %}
+
+        {# botão de ação — só aparece quando a ação faz sentido disparar #}
+        {% if acao == 'fechar_freq' or acao == 'fechar_folha' or acao == 'pagar_folha' %}
+        <button type="button"
+                onclick="_disparar('{{ acao }}')"
+                class="btn btn-xs py-0 px-1 {% if acao == 'pagar_folha' %}btn-success-matte{% else %}btn-secondary-matte{% endif %}"
+                style="font-size:.72rem"
+                data-appConfirm="true"
+                data-appConfirmTitle="<i class='{{ icon }} me-2'></i>{{ label }}"
+                data-appConfirmMessage="Confirma operação em lote para a competência <b>{{ filtro.competencia }}</b>?">
+            {{ label }}
+        </button>
+        {% endif %}
+
+    </div>
+</div>
+
+{% if job %}
+<div class="job-block {{ job.status }} {% if is_sub %}ms-0 mt-1{% endif %}">
+    {% if job.resultado.erro %}
+    <div class="text-danger small">{{ job.resultado.erro }}</div>
+    {% else %}
+    <div class="jb-row">
+        <span class="jb-label">Processados</span>
+        <span class="jb-val">{{ job.resultado.processados|default:"—" }}</span>
+    </div>
+    {% if job.resultado.falhas %}
+    <div class="jb-row">
+        <span class="jb-label">Falhas</span>
+        <span class="jb-val">{{ job.resultado.falhas }}</span>
+    </div>
+    {% endif %}
+    {% if job.resultado.periodo %}
+    <div class="jb-row">
+        <span class="jb-label">Período</span>
+        <span class="jb-val">{{ job.resultado.periodo }}</span>
+    </div>
+    {% endif %}
+    {% if job.resultado.filtro_de or job.resultado.filtro_ate %}
+    <div class="jb-row">
+        <span class="jb-label">Matrículas</span>
+        <span class="jb-val">
+            {{ job.resultado.filtro_de|default:"início" }} →
+            {{ job.resultado.filtro_ate|default:"fim" }}
+        </span>
+    </div>
+    {% endif %}
+    <div class="jb-row">
+        <span class="jb-label">Iniciado</span>
+        <span class="jb-val">{{ job.iniciado_em|date:"d/m/Y H:i"|default:"—" }}</span>
+    </div>
+    <div class="jb-row">
+        <span class="jb-label">Concluído</span>
+        <span class="jb-val">{{ job.concluido_em|date:"d/m/Y H:i"|default:"—" }}</span>
+    </div>
+    {% if job.iniciado_em and job.concluido_em %}
+    <div class="jb-row">
+        <span class="jb-label">Duração</span>
+        <span class="jb-val js-duracao"
+              data-ini="{{ job.iniciado_em|date:'c' }}"
+              data-fim="{{ job.concluido_em|date:'c' }}"></span>
+    </div>
+    {% endif %}
+    <div class="jb-row">
+        <span class="jb-label">Por</span>
+        <span class="jb-val">{{ job.criado_por|capfirst|default:"—" }}</span>
+    </div>
+    {% endif %}
+    {% for obs in job.observacoes %}
+    <div class="small text-warning-matte mt-1">
+        <i class="bi bi-caret-right-fill"></i> {{ obs }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
