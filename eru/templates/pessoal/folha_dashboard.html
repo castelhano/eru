@@ -172,13 +172,6 @@ a.metric-box:hover {
                             <input type="text" name="matricula_ate" class="form-control form-control-sm" placeholder="Até">
                         </div>
                     </div>
-                    <div class="mb-3 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="incluir_intervalo"
-                               id="id_incl_int" value="1">
-                        <label class="form-check-label form-label-sm" for="id_incl_int">
-                            Incluir intervalos na jornada
-                        </label>
-                    </div>
                     <hr class="my-2">
                     <div class="d-grid gap-2">
                         {% for valor, label in filtro.acoes.items %}
@@ -226,9 +219,11 @@ a.metric-box:hover {
 
                         <div class="metric-grid" style="--metric-min-width: {{ card.metric_min_width }}px">
 
-                            {# ── Macro local: renderiza um metric-box como <a> ou <div> ──
-                               Uso: {% include com with campo="x" classes="accent" valor=... label=... %}
-                               Não há include parcial em Django puro, então usamos um bloco with inline. #}
+                            {% comment %}
+                                Macro local: renderiza um metric-box como <a> ou <div></div>
+                                Uso: include com with campo="x" classes="accent" valor=... label=...
+                                Não há include parcial em Django puro, então usamos um bloco with inline.
+                            {% endcomment %}
 
                             {# consolidados #}
                             {% if card.resumo.consolidados is not None %}
@@ -369,6 +364,9 @@ a.metric-box:hover {
                                           {% endif %}>
                                         {% if card.job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
                                         {{ card.job.get_status_display }}
+                                        {% if card.job.status == 'PR' and card.job.progresso %}
+                                        {{ card.job.progresso }}%
+                                        {% endif %}
                                         {% if card.job.status == 'PR' or card.job.status == 'AG' %}
                                         <i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>
                                         {% endif %}

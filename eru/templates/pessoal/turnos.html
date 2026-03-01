@@ -22,7 +22,7 @@
                         <select id="id_turno" class="form-select" onchange="if(this.value) window.location='?turno_id='+this.value">
                             <option value="">{% translate 'Selecione ou crie novo'|escapejs %}</option>
                             {% for t in turnos_list %}
-                            <option value="{{ t.id }}" {% if turno.id == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                            <option value="{{ t.id|safe }}" {% if turno.id == t.id %}selected{% endif %}>{{ t.nome }}</option>
                             {% endfor %}
                         </select>
                         <label>{% translate 'Turno'|escapejs %}</label>
@@ -100,7 +100,7 @@
             </div>
             
             <div class="card-body">
-                <input type="hidden" data-field="id" value="{{ dia.id|default:'' }}">
+                <input type="hidden" data-field="id" value="{{ dia.id|safe|default:'' }}">
                 <input type="hidden" data-field="posicao_ciclo" value="{{ pos }}">
                 
                 <div data-role="configContainer" {% if dia.eh_folga %}style="display:none"{% endif %}>

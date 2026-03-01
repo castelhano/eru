@@ -29,7 +29,7 @@ from django.utils import timezone
 from django.shortcuts import redirect
 from core.views import BaseTemplateView
 from pessoal.models import (
-    Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob
+    Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob, Funcionario
 )
 from pessoal.tasks import disparar_consolidacao, disparar_folha, disparar_carga_escala
 
@@ -54,14 +54,12 @@ _ACOES = {
         'metric_min_width': 110,
         'metric_style':     {},
         'card_links': {
-            # Substitua pelos nomes de URL reais quando as views estiverem prontas.
-            # Use {filial_id} e {competencia} como placeholders — a view interpola.
-            'pendencias':       '/pessoal/frequencia/pendencias/?filial_id={filial_id}&competencia={competencia}',
-            'H_horas_extras':   '/pessoal/frequencia/horas-extras/?filial_id={filial_id}&competencia={competencia}',
-            'dias_falta_just':  '/pessoal/frequencia/faltas/?filial_id={filial_id}&competencia={competencia}&tipo=justificada',
-            'dias_falta_njust': '/pessoal/frequencia/faltas/?filial_id={filial_id}&competencia={competencia}&tipo=injustificada',
-            'dias_atestado':    '/pessoal/frequencia/atestados/?filial_id={filial_id}&competencia={competencia}',
-            'consolidados':     '/pessoal/frequencia/?filial_id={filial_id}&competencia={competencia}',
+            'pendencias':       '/pessoal/dashboard/detalhe/?tipo=freq_erros&filial_id={filial_id}&competencia={competencia}',
+            'H_horas_extras':   '/pessoal/dashboard/detalhe/?tipo=freq_he&filial_id={filial_id}&competencia={competencia}',
+            'dias_falta_just':  '/pessoal/dashboard/detalhe/?tipo=freq_falta_just&filial_id={filial_id}&competencia={competencia}',
+            'dias_falta_njust': '/pessoal/dashboard/detalhe/?tipo=freq_falta_njust&filial_id={filial_id}&competencia={competencia}',
+            'dias_atestado':    '/pessoal/dashboard/detalhe/?tipo=freq_atestados&filial_id={filial_id}&competencia={competencia}',
+            'consolidados':     '/pessoal/dashboard/detalhe/?tipo=freq_consolidados&filial_id={filial_id}&competencia={competencia}',
             'total_contratos':  None,   # sem link — só informativo
         },
     },
@@ -78,11 +76,11 @@ _ACOES = {
             'total_liq':       {'hide_prefix': True, 'val_size': '.9rem'},
         },
         'card_links': {
-            'total_bruto':     '/pessoal/folha/proventos/?filial_id={filial_id}&competencia={competencia}',
-            'total_descontos': '/pessoal/folha/descontos/?filial_id={filial_id}&competencia={competencia}',
-            'total_liq':       '/pessoal/folha/?filial_id={filial_id}&competencia={competencia}',
-            'qtd_total':       '/pessoal/folha/?filial_id={filial_id}&competencia={competencia}',
-            'qtd_erros':       '/pessoal/folha/erros/?filial_id={filial_id}&competencia={competencia}',
+            'total_bruto':     '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
+            'total_descontos': '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
+            'total_liq':       '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
+            'qtd_total':       '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
+            'qtd_erros':       '/pessoal/dashboard/detalhe/?tipo=folha_erros&filial_id={filial_id}&competencia={competencia}',
         },
     },
 }
@@ -285,7 +283,6 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             competencia=competencia,
             inicio=inicio,
             fim=fim,
-            incluir_intervalo=self.request.POST.get('incluir_intervalo') == '1',
             matricula_de=self.request.POST.get('matricula_de',  '').strip() or None,
             matricula_ate=self.request.POST.get('matricula_ate', '').strip() or None,
             usuario=self.request.user,
@@ -330,3 +327,229 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     def _parse_periodo(self, competencia: date) -> tuple[date, date]:
         ultimo = calendar.monthrange(competencia.year, competencia.month)[1]
         return competencia, competencia.replace(day=ultimo)
+
+# ─── Registro de tipos de detalhe para DashboardDetalheView ──────────────────
+#
+# Cada entrada define como obter e exibir os dados de um card clicável do dashboard.
+#
+# Campos:
+#   titulo       → título exibido no topo da página de detalhe
+#   fonte        → 'freq_erros'      — erros do JSON FrequenciaConsolidada.erros
+#                  'freq_consolidado' — FrequenciaConsolidada filtrado por filtro_consolidado
+#                  'folha'            — FolhaPagamento filtrado por filtro_qs
+#   filtro_consolidado → callable(consolidado_dict) → bool, usado quando fonte='freq_consolidado'
+#   filtro_qs    → dict de kwargs para .filter(), usado quando fonte='folha'
+#   colunas      → lista de chaves que o template deve renderizar
+#                  colunas especiais: 'matricula', 'nome' (do funcionário), 'erros_json' (folha)
+_DETALHES: dict[str, dict] = {
+    # ── Frequência — erros do JSON (dias sem registro, etc.) ─────────────────
+    'freq_erros': {
+        'titulo':              _('Pendências de Frequência'),
+        'fonte':               'freq_erros',
+        'colunas':             ['matricula', 'nome', 'data', 'motivo'],
+    },
+    # ── Frequência — consolidados com hora extra ──────────────────────────────
+    'freq_he': {
+        'titulo':              _('Horas Extras'),
+        'fonte':               'freq_consolidado',
+        'filtro_consolidado':  lambda c: (c.get('H_horas_extras') or 0) > 0,
+        'colunas':             ['matricula', 'nome', 'H_horas_extras'],
+    },
+    # ── Frequência — faltas justificadas ─────────────────────────────────────
+    'freq_falta_just': {
+        'titulo':              _('Faltas Justificadas'),
+        'fonte':               'freq_consolidado',
+        'filtro_consolidado':  lambda c: (c.get('H_dias_falta_just') or 0) > 0,
+        'colunas':             ['matricula', 'nome', 'H_dias_falta_just', 'H_faltas_justificadas'],
+    },
+    # ── Frequência — faltas injustificadas ───────────────────────────────────
+    'freq_falta_njust': {
+        'titulo':              _('Faltas Injustificadas'),
+        'fonte':               'freq_consolidado',
+        'filtro_consolidado':  lambda c: (c.get('H_dias_falta_njust') or 0) > 0,
+        'colunas':             ['matricula', 'nome', 'H_dias_falta_njust', 'H_faltas_injustificadas'],
+    },
+    # ── Frequência — atestados/afastamentos ──────────────────────────────────
+    'freq_atestados': {
+        'titulo':              _('Atestados / Afastamentos'),
+        'fonte':               'freq_consolidado',
+        'filtro_consolidado':  lambda c: (c.get('H_dias_afastamento') or 0) > 0,
+        'colunas':             ['matricula', 'nome', 'H_dias_afastamento', 'H_atestados'],
+    },
+    # ── Frequência — todos os consolidados ───────────────────────────────────
+    'freq_consolidados': {
+        'titulo':              _('Frequências Consolidadas'),
+        'fonte':               'freq_consolidado',
+        'filtro_consolidado':  None,  # sem filtro — lista todos
+        'colunas':             ['matricula', 'nome', 'H_dias_trabalhados', 'H_horas_trabalhadas',
+                                'H_horas_extras', 'H_dias_falta_just', 'H_dias_falta_njust', 'status'],
+    },
+    # ── Folha — lista geral ───────────────────────────────────────────────────
+    'folha_lista': {
+        'titulo':              _('Folha de Pagamento'),
+        'fonte':               'folha',
+        'filtro_qs':           {},
+        'colunas':             ['matricula', 'nome', 'proventos', 'descontos', 'liquido', 'status'],
+    },
+    # ── Folha — com erros de cálculo ─────────────────────────────────────────
+    'folha_erros': {
+        'titulo':              _('Folha com Erros de Cálculo'),
+        'fonte':               'folha',
+        'filtro_qs':           {'total_erros__gt': 0},
+        'colunas':             ['matricula', 'nome', 'total_erros', 'erros_json'],
+    },
+}
+
+# Mapeamento nome-coluna → label legível para o cabeçalho da tabela
+_COLUNA_LABEL: dict[str, str] = {
+    'matricula':              'Matrícula',
+    'nome':                   'Nome',
+    'data':                   'Data',
+    'motivo':                 'Motivo',
+    'status':                 'Status',
+    'H_horas_trabalhadas':    'Horas Trab.',
+    'H_horas_extras':         'Horas Extras',
+    'H_faltas_justificadas':  'Horas Falta J.',
+    'H_faltas_injustificadas':'Horas Falta I.',
+    'H_dias_trabalhados':     'Dias Trab.',
+    'H_dias_falta_just':      'Dias Falta J.',
+    'H_dias_falta_njust':     'Dias Falta I.',
+    'H_dias_afastamento':     'Dias Afas.',
+    'H_atestados':            'Horas Atestado',
+    'proventos':              'Proventos (R$)',
+    'descontos':              'Descontos (R$)',
+    'liquido':                'Líquido (R$)',
+    'total_erros':            'Qtd. Erros',
+    'erros_json':             'Detalhes dos Erros',
+}
+
+
+class DashboardDetalheView(LoginRequiredMixin, BaseTemplateView):
+    """
+    View única para todos os cards clicáveis do dashboard.
+
+    GET /pessoal/dashboard/detalhe/?tipo=TIPO&filial_id=X&competencia=YYYY-MM
+
+    O parâmetro `tipo` mapeia para _DETALHES e determina qual queryset executar
+    e quais colunas renderizar. O template é genérico para todos os tipos.
+    """
+    template_name = 'pessoal/dashboard_detalhe.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tipo = self.request.GET.get('tipo', '').strip()
+        cfg  = _DETALHES.get(tipo)
+
+        if not cfg:
+            context.update({'erro': _('Tipo de detalhe inválido.'), 'linhas': [], 'colunas': [], 'titulo': ''})
+            return context
+
+        try:
+            filial_id, competencia = self._parse_params()
+        except Exception:
+            filial_id = competencia = None
+
+        if not filial_id or not competencia:
+            context.update({'erro': _('Filial e competência obrigatórios.'), 'linhas': [], 'colunas': [], 'titulo': cfg['titulo']})
+            return context
+
+        linhas  = self._coletar(cfg, filial_id, competencia)
+        colunas = [(col, _COLUNA_LABEL.get(col, col)) for col in cfg['colunas']]
+
+        context.update({
+            'titulo':      cfg['titulo'],
+            'colunas':     colunas,
+            'linhas':      linhas,
+            'filial_id':   filial_id,
+            'competencia': competencia.strftime('%Y-%m'),
+            'tipo':        tipo,
+            'erro':        None,
+        })
+        return context
+
+    # ── Coletores por fonte ───────────────────────────────────────────────────
+
+    def _coletar(self, cfg: dict, filial_id: int, competencia: date) -> list[dict]:
+        fonte = cfg['fonte']
+        if fonte == 'freq_erros':
+            return self._coletar_freq_erros(filial_id, competencia)
+        if fonte == 'freq_consolidado':
+            return self._coletar_freq_consolidado(cfg, filial_id, competencia)
+        if fonte == 'folha':
+            return self._coletar_folha(cfg, filial_id, competencia)
+        return []
+
+    def _coletar_freq_erros(self, filial_id: int, competencia: date) -> list[dict]:
+        """Abre o JSON de erros de cada FrequenciaConsolidada e retorna uma linha por erro."""
+        qs = (
+            FrequenciaConsolidada.objects
+            .filter(contrato__funcionario__filial_id=filial_id, competencia=competencia)
+            .select_related('contrato__funcionario')
+            .order_by('contrato__funcionario__matricula')
+        )
+        linhas = []
+        for fc in qs:
+            f = fc.contrato.funcionario
+            for data_str, motivo in sorted((fc.erros or {}).items()):
+                linhas.append({
+                    'matricula': f.matricula,
+                    'nome':      f.nome,
+                    'data':      data_str,
+                    'motivo':    motivo,
+                })
+        return linhas
+
+    def _coletar_freq_consolidado(self, cfg: dict, filial_id: int, competencia: date) -> list[dict]:
+        """Retorna uma linha por FrequenciaConsolidada, com campos do JSON consolidado."""
+        qs = (
+            FrequenciaConsolidada.objects
+            .filter(contrato__funcionario__filial_id=filial_id, competencia=competencia)
+            .select_related('contrato__funcionario')
+            .order_by('contrato__funcionario__matricula')
+        )
+        fn_filtro = cfg.get('filtro_consolidado')
+        linhas = []
+        for fc in qs:
+            c = fc.consolidado or {}
+            if fn_filtro and not fn_filtro(c):
+                continue
+            f = fc.contrato.funcionario
+            row = {'matricula': f.matricula, 'nome': f.nome, 'status': fc.get_status_display()}
+            for col in cfg['colunas']:
+                if col not in ('matricula', 'nome', 'status'):
+                    row[col] = c.get(col, 0)
+            linhas.append(row)
+        return linhas
+
+    def _coletar_folha(self, cfg: dict, filial_id: int, competencia: date) -> list[dict]:
+        """Retorna uma linha por FolhaPagamento com campos de proventos/descontos/erros."""
+        filtro_qs = cfg.get('filtro_qs') or {}
+        qs = (
+            FolhaPagamento.objects
+            .filter(contrato__funcionario__filial_id=filial_id, competencia=competencia, **filtro_qs)
+            .select_related('contrato__funcionario')
+            .order_by('contrato__funcionario__matricula')
+        )
+        linhas = []
+        for fp in qs:
+            f = fp.contrato.funcionario
+            row = {
+                'matricula':  f.matricula,
+                'nome':       f.nome,
+                'proventos':  fp.proventos,
+                'descontos':  fp.descontos,
+                'liquido':    fp.liquido,
+                'status':     fp.get_status_display(),
+                'total_erros': fp.total_erros,
+                'erros_json': fp.erros or {},
+            }
+            linhas.append(row)
+        return linhas
+
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    def _parse_params(self) -> tuple[int, date]:
+        p = self.request.GET
+        filial_id   = int(p.get('filial_id', 0)) or None
+        competencia = datetime.strptime(p.get('competencia', ''), '%Y-%m').date().replace(day=1)
+        return filial_id, competencia

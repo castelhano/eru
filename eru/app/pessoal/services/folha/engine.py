@@ -11,7 +11,14 @@ def get_whitelist():
     }
 
 def get_interpreter():
-    return Interpreter(minimal=True, user_symbols=get_whitelist(), builtins_readonly=True)
+    return Interpreter(
+        minimal=True,
+        user_symbols=get_whitelist(),
+        use_numpy=False,
+        with_if=True,
+        with_ifexp=True,
+        builtins_readonly=True
+    )
 
 
 def extract_deps(formula):

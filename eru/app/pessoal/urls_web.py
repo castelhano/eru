@@ -95,6 +95,7 @@ urlpatterns = [
     # FOLHA
     # ============================================
     path('dashboard/', folha.FolhaDashboardView.as_view(), name='folha_dashboard'),
+    path('dashboard/detalhe/', folha.DashboardDetalheView.as_view(), name='dashboard_detalhe'),
     
     # ============================================
     # FREQUÊNCIA

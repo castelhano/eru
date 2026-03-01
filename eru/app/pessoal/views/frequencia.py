@@ -37,8 +37,10 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 messages.warning(self.request, f"Funcionário {matricula} sem contrato vigente em {competencia_str}")
                 return
             settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
-            evento_folga_id = settings_obj.config.frequencia.evento_folga_id if settings_obj else None
-            evento_jornada_id = settings_obj.config.frequencia.evento_jornada_id if settings_obj else None
+            cfg_freq = settings_obj.config.frequencia if settings_obj else None
+            evento_folga_id              = cfg_freq.evento_folga_id              if cfg_freq else None
+            evento_jornada_id            = cfg_freq.evento_jornada_id            if cfg_freq else None
+            incluir_intervalos_jornada   = cfg_freq.incluir_intervalos_jornada   if cfg_freq else False
             dias_mes = CalendarioFrequenciaService(competencia, contrato).montar(
                 frequencias=self._obter_frequencias(contrato, competencia),
                 contratos_mes=self._obter_contratos_mes(funcionario, competencia, ultimo_dia),
@@ -50,6 +52,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 'competencia': competencia,
                 'evento_folga_id': evento_folga_id,
                 'evento_jornada_id': evento_jornada_id,
+                'incluir_intervalos_jornada': incluir_intervalos_jornada,
                 'dias_mes': dias_mes,
             })
         except Funcionario.DoesNotExist:

@@ -71,7 +71,7 @@
       <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
       <select class="form-select form-select-sm" data-field="evento">
         {% for ev in eventos_choices %}
-        <option value="{{ ev.id }}"
+        <option value="{{ ev.id|safe }}"
         {% if ev.id == h.evento_id %}selected {% endif %}
         data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
         data-categoria="{{ ev.categoria }}"
@@ -225,7 +225,7 @@
               data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
               data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
               >
-                <input type="hidden" data-field="id" value="{{ h.id|default:'' }}">
+                <input type="hidden" data-field="id" value="{{ h.id|safe|default:'' }}">
                 
                 <!-- icone indica origem do registro -->
                 <div class="col-auto d-none d-lg-flex align-items-center">
@@ -254,7 +254,7 @@
                   <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
                   <select class="form-select form-select-sm" data-field="evento">
                     {% for ev in eventos_choices %}
-                    <option value="{{ ev.id }}"
+                    <option value="{{ ev.id|safe }}"
                     data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
                     data-categoria="{{ ev.categoria }}"
                     data-cor="{{ ev.cor|default:'' }}"
@@ -323,6 +323,7 @@
       rowTpl: document.getElementById('horario-row-tpl'),
       eventoJornadaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoJornada || null,
       eventoFolgaId: document.querySelector('[data-role="calendario"]')?.dataset.eventoFolga || null,
+      incluirIntervalosJornada: {{ incluir_intervalos_jornada|default:False|yesno:'true,false' }},
     };
     
     let isSaving = false;
@@ -390,39 +391,53 @@
     function calcularResumoDia(container) {
       const resumo = container.closest('.card-body')?.querySelector('[data-role="resumoDia"]');
       if (!resumo) return;
-      
+
       // oculta resumo se houver evento de dia inteiro ativo no container
       const temDiaInteiro = container.querySelector('[data-role="horarioRow"][data-dia-inteiro="true"]');
       if (temDiaInteiro) { resumo.style.display = 'none'; return; }
       resumo.style.display = '';
-      
+
       const rows = [...container.querySelectorAll('[data-role="horarioRow"]')]
-      .filter(r => !r.classList.contains('pe-none'));
-      
-      const slots = [];
+        .filter(r => !r.classList.contains('pe-none'));
+
+      // Separar slots de jornada e de intervalo (categoria INTERVALO)
+      const slotsJornada   = [];
+      const slotsIntervalo = [];
       for (const row of rows) {
-        let entrada = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
-        let saida   = timeToMinutes(row.querySelector('[data-field="saida"]').value);
+        const cat    = row.querySelector('[data-field="evento"]')?.selectedOptions[0]?.dataset.categoria;
+        let entrada  = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
+        let saida    = timeToMinutes(row.querySelector('[data-field="saida"]').value);
         if (entrada === null || saida === null) continue;
         if (saida <= entrada) saida += 1440; // normaliza virada
-        slots.push({ entrada, saida });
+        if (cat === 'INTERVALO') slotsIntervalo.push({ entrada, saida });
+        else                     slotsJornada.push({ entrada, saida });
       }
-      
-      const temDados = slots.length > 0;
+
+      const temDados = slotsJornada.length > 0;
       let totalMin = 0, intraMin = 0;
-      slots.forEach((s, i) => {
+
+      slotsJornada.forEach((s, i) => {
         totalMin += s.saida - s.entrada;
-        if (i > 0) intraMin += s.entrada - slots[i-1].saida;
       });
-      
+
+      if ($$.incluirIntervalosJornada) {
+        // intrajornada = lacunas entre os slots de jornada (mesmo comportamento do engine)
+        slotsJornada.forEach((s, i) => {
+          if (i > 0) intraMin += s.entrada - slotsJornada[i-1].saida;
+        });
+      } else {
+        // intrajornada = soma dos registros com categoria INTERVALO lançados manualmente
+        slotsIntervalo.forEach(s => { intraMin += s.saida - s.entrada; });
+      }
+
       // interjornada: tempo livre entre fim deste dia e início do próximo (baseado em 24h de ciclo)
       const interjornada = temDados
-      ? (slots[0].entrada + 1440) - slots[slots.length-1].saida
-      : 0;
-      
-      resumo.querySelector('[data-field="horasTotais"]').textContent   = temDados ? minutesToTime(totalMin) : '--';
-      resumo.querySelector('[data-field="interjornada"]').textContent  = temDados ? minutesToTime(interjornada) : '--'; // exibe antes de intra
-      resumo.querySelector('[data-field="intrajornada"]').textContent  = temDados && slots.length > 1 ? minutesToTime(intraMin) : '--';
+        ? (slotsJornada[0].entrada + 1440) - slotsJornada[slotsJornada.length - 1].saida
+        : 0;
+
+      resumo.querySelector('[data-field="horasTotais"]').textContent  = temDados ? minutesToTime(totalMin) : '--';
+      resumo.querySelector('[data-field="interjornada"]').textContent = temDados ? minutesToTime(interjornada) : '--';
+      resumo.querySelector('[data-field="intrajornada"]').textContent = temDados ? (intraMin > 0 ? minutesToTime(intraMin) : '--') : '--';
     }
     
     

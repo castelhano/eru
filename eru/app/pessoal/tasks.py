@@ -104,11 +104,12 @@ def _filtrar_contratos(filial_id: int, inicio: date, fim: date,
 # ─── Workers ─────────────────────────────────────────────────────────────────
 
 def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
-                       inicio_str: str, fim_str: str, incluir_intervalo: bool,
+                       inicio_str: str, fim_str: str,
                        matricula_de: str | None, matricula_ate: str | None):
     """
     Consolida frequência de todos os contratos vigentes no período.
     Cada contrato é processado individualmente — falha individual não interrompe o lote.
+    O parâmetro incluir_intervalos_jornada é lido de PessoalSettings por contrato no engine.
     """
     ProcessamentoJob.objects.filter(pk=job_id).update(
         status=ProcessamentoJob.Status.PROCESSANDO,
@@ -118,13 +119,18 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
         inicio    = date.fromisoformat(inicio_str)
         fim       = date.fromisoformat(fim_str)
         contratos = _filtrar_contratos(filial_id, inicio, fim, matricula_de, matricula_ate)
+        total     = contratos.count()
         processados = falhas = 0
-        for c in contratos:
+        for i, c in enumerate(contratos, 1):
             try:
-                consolidar(c, inicio, fim, incluir_intervalo)
+                consolidar(c, inicio, fim)
                 processados += 1
             except Exception as e:
                 falhas += 1  # registra falha individual e segue para o próximo
+            # atualiza progresso a cada 5% (ou pelo menos uma vez por contrato)
+            pct = round(i / total * 100) if total else 100
+            if pct % 5 == 0 or i == total:
+                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
         _fechar_job(job_id, _resultado(
             processados=processados,
             falhas=falhas,
@@ -329,7 +335,6 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
 # ─── API pública ─────────────────────────────────────────────────────────────
 
 def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: date,
-                          incluir_intervalo: bool = False,
                           matricula_de: str | None = None,
                           matricula_ate: str | None = None,
                           usuario=None) -> ProcessamentoJob:
@@ -339,7 +344,7 @@ def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: 
         _worker_consolidar,
         job.id, filial_id,
         competencia.isoformat(), inicio.isoformat(), fim.isoformat(),  # datas como string — django-q serializa via JSON
-        incluir_intervalo, matricula_de, matricula_ate,
+        matricula_de, matricula_ate,
         task_name=f"consolidar_freq_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job

@@ -86,18 +86,18 @@ def get_event_vars_master(asDict=False, **kwargs):
 
     # Nível 2 (EF_*) modo autocomplete/validação — lê rastreios cadastrados em EventoFrequencia.
     # Fica fora do bloco freq para executar mesmo sem consolidado disponível.
-    if not is_calc:
-        ef_rastreios = (
-            EventoFrequencia.objects
-            .exclude(rastreio='')
-            .values_list('rastreio', flat=True)
-            .distinct()
-        )
-        for rastreio in ef_rastreios:
-            if isinstance(res, list):
-                res.extend([f'{rastreio}_horas', f'{rastreio}_dias'])
-            else:  # asDict
-                res.update({f'{rastreio}_horas': 1, f'{rastreio}_dias': 1})
+    if is_calc:
+        # garante valor neutro para rastreios que não ocorreram no mes
+        for rastreio in (EventoFrequencia.objects
+                        .exclude(rastreio='')
+                        .values_list('rastreio', flat=True)
+                        .distinct()):
+            res.setdefault(f'{rastreio}_horas', 0.0)
+            res.setdefault(f'{rastreio}_dias',  0)
+        # sobrescreve com valores reais quando existirem
+        for rastreio, vals in consolidado.get('EF', {}).items():
+            res[f'{rastreio}_horas'] = vals['horas']
+            res[f'{rastreio}_dias']  = vals['dias']
 
     # Rastreios de eventos cadastrados pelo usuário (U_*) — valor 0 como neutro no cálculo
     customs = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())

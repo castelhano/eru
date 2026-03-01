@@ -187,19 +187,21 @@ def _detectar_erros(inicio: date, fim: date, grupos: dict, contrato) -> dict:
     return erros
 
 
-def consolidar(contrato, inicio: date, fim: date, incluir_intervalo: bool = False) -> FrequenciaConsolidada:
+def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     """
     Ponto de entrada principal do engine.
     Processa o período [inicio, fim] para o contrato e persiste FrequenciaConsolidada.
     Retorna a instância salva.
+    O comportamento de incluir intervalos na jornada é lido de PessoalSettings.config.frequencia.incluir_intervalos_jornada.
     """
     tz = timezone.get_current_timezone()
 
-    # 1. Configurações da filial — intervalo noturno com fallback para padrão legal
-    settings_obj = PessoalSettings.objects.filter(filial_id=contrato.funcionario.filial_id).first()
-    cfg_freq     = settings_obj.config.frequencia if settings_obj else FrequenciaSchema()
-    hn_inicio    = cfg_freq.hn_inicio  # time(22, 0) por padrão
-    hn_fim       = cfg_freq.hn_fim     # time(6, 0) por padrão
+    # 1. Configurações da filial — intervalo noturno e inclusão de intervalos com fallback para padrão
+    settings_obj      = PessoalSettings.objects.filter(filial_id=contrato.funcionario.filial_id).first()
+    cfg_freq          = settings_obj.config.frequencia if settings_obj else FrequenciaSchema()
+    hn_inicio         = cfg_freq.hn_inicio  # time(22, 0) por padrão
+    hn_fim            = cfg_freq.hn_fim     # time(6, 0) por padrão
+    incluir_intervalo = cfg_freq.incluir_intervalos_jornada
 
     # 2. Busca registros do período — eventos dia_inteiro via campo data, demais via inicio
     frequencias = (
