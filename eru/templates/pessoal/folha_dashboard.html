@@ -110,6 +110,24 @@ a.metric-box:hover {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .mat-range { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+
+/* ── Histórico de execuções ────────────────────────────────── */
+.historico-details summary::-webkit-details-marker { display: none; }
+.historico-details[open] .hist-chevron { transform: rotate(180deg); }
+.hist-list { display: flex; flex-direction: column; gap: .4rem; padding-top: .25rem; }
+.hist-item {
+    padding: .45rem .6rem;
+    border-radius: .3rem;
+    border: 1px solid var(--bs-border-color-translucent);
+    background: var(--bs-body-bg);
+}
+
+.exec-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 768px) {
+    .exec-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+.exec-col { padding: .75rem; border-radius: .4rem; border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); min-width: 0; }
+.exec-divider { border-left: 2px solid var(--bs-border-color); padding-left: .75rem; margin-top: .75rem; }
 {% endblock %}
 </style>
 
@@ -224,24 +242,10 @@ a.metric-box:hover {
                                 <i class="{{ card.icon }} me-1"></i>{{ card.label }} — {{ filtro.competencia }}
                             </div>
                             {% if card.resumo.status %}
-                            <div class="text-end">
-                                <span class="freq-status {{ card.resumo.status }}">
-                                    <i class="bi bi-{% if card.resumo.status == 'FECHADO' %}check-circle-fill{% elif card.resumo.status == 'PROCESSADO' %}clock-fill{% else %}exclamation-circle-fill{% endif %}"></i>
-                                    {{ card.resumo.status }}
-                                </span>
-                                {% if card.resumo.fechado_em %}
-                                <div class="text-secondary mt-1" style="font-size:.72rem">
-                                    <i class="bi bi-lock-fill me-1"></i>{{ card.resumo.fechado_em }}
-                                    {% if card.resumo.fechado_por %}· {{ card.resumo.fechado_por }}{% endif %}
-                                </div>
-                                {% endif %}
-                                {% if card.resumo.pago_em %}
-                                <div class="text-secondary mt-1" style="font-size:.72rem">
-                                    <i class="bi bi-cash-coin me-1"></i>{{ card.resumo.pago_em }}
-                                    {% if card.resumo.pago_por %}· {{ card.resumo.pago_por }}{% endif %}
-                                </div>
-                                {% endif %}
-                            </div>
+                            <span class="freq-status {{ card.resumo.status }}">
+                                <i class="bi bi-{% if card.resumo.status == 'FECHADO' or card.resumo.status == 'PAGO' %}check-circle-fill{% elif card.resumo.status == 'PROCESSADO' or card.resumo.status == 'RASCUNHO' %}clock-fill{% elif card.resumo.status == 'CANCELADO' %}x-circle-fill{% else %}exclamation-circle-fill{% endif %}"></i>
+                                {{ card.resumo.status }}
+                            </span>
                             {% endif %}
                         </div>
 
@@ -387,35 +391,22 @@ a.metric-box:hover {
                     </div>
                     {% endif %}{% endfor %}{# /cards_jobs resumos #}
 
-                    <!-- ── Card de última execução ── -->
+                    <!-- ── Última execução ── -->
                     <div class="dash-panel">
-                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>{% translate 'Última execução' %}</div>
-                        <div class="row g-3">
+                        <div class="panel-title"><i class="bi bi-bar-chart-line me-1"></i>Última execução</div>
+                        <div class="exec-grid">
                             {% for card in cards_jobs %}
-                            <div class="col-12 col-xl-{% if cards_jobs|length == 1 %}12{% elif cards_jobs|length == 2 %}6{% else %}4{% endif %}">
-
-                                {# ── job principal ── #}
+                            <div class="exec-col">
                                 {% include "pessoal/_job_block.html" with job=card.job label=card.label icon=card.icon acao=card.acao filtro=filtro %}
-
-                                {# ── sub-jobs como details/summary ── #}
                                 {% for sub in card.sub_jobs %}
-                                <details class="mt-2" style="font-size:.82rem">
-                                    <summary class="text-secondary" style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.4rem">
-                                        <i class="{{ sub.icon }}"></i>
-                                        <span>{{ sub.label }}</span>
-                                        {% if sub.job %}<span class="job-status {{ sub.job.status }} ms-1">{{ sub.job.get_status_display }}</span>{% endif %}
-                                    </summary>
-                                    <div class="ms-2 mt-1">
-                                        {% include "pessoal/_job_block.html" with job=sub.job label=sub.label icon=sub.icon acao=sub.acao filtro=filtro is_sub=True %}
-                                    </div>
-                                </details>
+                                <div class="exec-divider">
+                                    {% include "pessoal/_job_block.html" with job=sub.job label=sub.label icon=sub.icon acao=sub.acao filtro=filtro is_sub=True %}
+                                </div>
                                 {% endfor %}
-
                             </div>
                             {% endfor %}
                         </div>
                     </div>
-
                 </div>{# /painel direito #}
                 {% endif %}
 

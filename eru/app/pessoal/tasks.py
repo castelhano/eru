@@ -33,7 +33,7 @@ from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
 
 # ─── Schema helper ───────────────────────────────────────────────────────────
 
-def _resultado(processados=0, falhas=0, periodo=None, filtro_de=None, filtro_ate=None, observacoes=None):
+def _resultado(processados=0, falhas=0, periodo=None, filtro_de=None, filtro_ate=None):
     """Monta o dict de resultado padronizado."""
     return {
         'processados': processados,
@@ -51,7 +51,26 @@ def _fmt_periodo(inicio: date, fim: date) -> str:
 # ─── Helpers internos ────────────────────────────────────────────────────────
 
 def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> ProcessamentoJob:
-    """Cria ou reabre o job — idempotente por (tipo, filial, competencia)."""
+    """Cria ou reabre o job — idempotente por (tipo, filial, competencia).
+    Se já existe um job concluído/erro, arquiva o estado atual no campo historico antes de resetar.
+    """
+    existente = ProcessamentoJob.objects.filter(
+        tipo=tipo, filial_id=filial_id, competencia=competencia
+    ).first()
+
+    historico = list(existente.historico) if existente and getattr(existente, 'historico', None) else []
+
+    # Arquiva snapshot do estado anterior se houve execução (não arquiva AGUARDANDO sem dados)
+    if existente and existente.status not in (ProcessamentoJob.Status.AGUARDANDO,):
+        snapshot = {
+            'ts':          existente.concluido_em.isoformat() if existente.concluido_em else existente.iniciado_em.isoformat() if existente.iniciado_em else None,
+            'status':      existente.status,
+            'por':         str(existente.criado_por) if existente.criado_por else None,
+            'resultado':   existente.resultado or {},
+            'observacoes': existente.observacoes or [],
+        }
+        historico.append(snapshot)
+
     obj, _ = ProcessamentoJob.objects.update_or_create(
         tipo=tipo,
         filial_id=filial_id,
@@ -59,9 +78,11 @@ def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> Process
         defaults={
             'status':       ProcessamentoJob.Status.AGUARDANDO,
             'criado_por':   usuario,
-            'iniciado_em':  None,   # zerado a cada reabertura
+            'iniciado_em':  None,
             'concluido_em': None,
             'resultado':    {},
+            'observacoes':  [],
+            'historico':    historico,
         }
     )
     return obj

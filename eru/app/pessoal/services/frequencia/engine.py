@@ -280,8 +280,9 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     }
 
     # 9. Detecta dias sem registro e define status
+    # ABERTO = tem erros/pendências | PROCESSADO = ok, aguarda fechamento explícito pelo usuário
     erros  = _detectar_erros(inicio, fim, grupos, contrato)
-    status = FrequenciaConsolidada.Status.ABERTO if erros else FrequenciaConsolidada.Status.FECHADO
+    status = FrequenciaConsolidada.Status.ABERTO if erros else FrequenciaConsolidada.Status.PROCESSADO
 
     # 10. Persiste — idempotente via update_or_create na competência
     inicio_dt = datetime.combine(inicio, datetime.min.time())

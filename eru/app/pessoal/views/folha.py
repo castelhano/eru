@@ -249,18 +249,6 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             .count()
         )
 
-        # Fechamento: pega o mais recente entre os consolidados fechados
-        fechamento = (
-            FrequenciaConsolidada.objects
-            .filter(contrato__funcionario__filial_id=filial_id,
-                    competencia=competencia,
-                    status=FrequenciaConsolidada.Status.FECHADO)
-            .select_related('fechado_por')
-            .order_by('-fechado_em')
-            .values('fechado_em', 'fechado_por__username')
-            .first()
-        )
-
         todos_fechados = all(fc.status == FrequenciaConsolidada.Status.FECHADO for fc in consolidados)
         status = 'FECHADO' if todos_fechados else ('ABERTO' if qtd_erros else 'PROCESSADO')
 
@@ -271,8 +259,6 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
             'pendencias':      qtd_erros,
             'periodo':         periodo,
             'status':          status,
-            'fechado_em':      timezone.localtime(fechamento['fechado_em']).strftime('%d/%m/%Y %H:%M') if fechamento and fechamento['fechado_em'] else None,
-            'fechado_por':     fechamento['fechado_por__username'] if fechamento else None,
         }
 
     def _resumo_folha(self, filial_id, competencia, fim_comp) -> dict | None:
@@ -304,31 +290,7 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
         else:
             status = 'RASCUNHO'
 
-        # Auditoria: busca nos jobs de fechamento e pagamento
-        def _job_info(tipo):
-            job = ProcessamentoJob.objects.filter(
-                filial_id=filial_id,
-                competencia=competencia,
-                tipo=tipo,
-                status=ProcessamentoJob.Status.CONCLUIDO,
-            ).select_related('criado_por').order_by('-concluido_em').first()
-            if not job:
-                return None, None
-            em = timezone.localtime(job.concluido_em).strftime('%d/%m/%Y %H:%M') if job.concluido_em else None
-            por = job.criado_por.username if job.criado_por else None
-            return em, por
-
-        fechado_em, fechado_por = _job_info(ProcessamentoJob.Tipo.FECHAR_FOLHA)
-        pago_em, pago_por       = _job_info(ProcessamentoJob.Tipo.PAGAR_FOLHA)
-
-        return {
-            **agg,
-            'status':     status,
-            'fechado_em': fechado_em,
-            'fechado_por': fechado_por,
-            'pago_em':    pago_em,
-            'pago_por':   pago_por,
-        }
+        return {**agg, 'status': status}
 
     # ── GET handlers ─────────────────────────────────────────────────────────
 
