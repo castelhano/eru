@@ -4,8 +4,8 @@ from django import forms
 from django.db.models import Q
 from django.urls import reverse_lazy
 from .models import (
-    PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, MotivoReajuste, FrequenciaImport, EventoFrequencia
+    PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Rescisao, Dependente, Evento, GrupoEvento,
+    EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste, FrequenciaImport, EventoFrequencia
 )
 from datetime import date
 from core.mixins import BootstrapMixin
@@ -111,11 +111,31 @@ class DependenteForm(BootstrapMixin, forms.ModelForm):
 class FuncionarioForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Funcionario
-        fields = ['filial','matricula','nome','apelido','nome_social','genero','data_admissao','data_nascimento','data_desligamento','motivo_desligamento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne','status','foto']
+        # data_desligamento e motivo_desligamento foram movidos para RescisaoForm
+        fields = ['filial','matricula','nome','apelido','nome_social','genero','data_admissao','data_nascimento','rg','rg_emissao','rg_orgao_expedidor','cpf','titulo_eleitor','titulo_zona','titulo_secao','reservista','cnh','cnh_categoria','cnh_primeira_habilitacao','cnh_emissao','cnh_validade','fone1','fone2','email','endereco','bairro','cidade','uf','estado_civil','nome_mae','nome_pai','detalhe','usuario','pne','foto']
         widgets = {
             'detalhe': forms.Textarea(attrs={'style': 'min-height:300px'}),
             'pne': forms.CheckboxInput(attrs={'role': 'switch'}),
             'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
+        }
+
+
+class RescisaoForm(BootstrapMixin, forms.ModelForm):
+    class Meta:
+        model = Rescisao
+        fields = [
+            'funcionario', 'contrato', 'motivo', 'data_desligamento',
+            'aviso_tipo', 'aviso_dias_devidos', 'aviso_dias_cumpridos',
+            'multa_fgts_paga', 'ferias_proporcionais_pagas', 'ferias_vencidas_pagas',
+            'decimo_terceiro_proporcional', 'detalhe',
+        ]
+        widgets = {
+            'data_desligamento': forms.DateInput(attrs={'type': 'date', 'autofocus': True}),
+            'multa_fgts_paga':              forms.CheckboxInput(attrs={'role': 'switch'}),
+            'ferias_proporcionais_pagas':   forms.CheckboxInput(attrs={'role': 'switch'}),
+            'ferias_vencidas_pagas':        forms.CheckboxInput(attrs={'role': 'switch'}),
+            'decimo_terceiro_proporcional': forms.CheckboxInput(attrs={'role': 'switch'}),
+            'detalhe': forms.Textarea(attrs={'rows': 4}),
         }
 
 class MotivoReajusteForm(BootstrapMixin, forms.ModelForm):

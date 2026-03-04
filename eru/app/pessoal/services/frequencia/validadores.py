@@ -20,6 +20,8 @@ class FrequenciaValidador:
             raise ValidationError(f"Horário de saída deve ser maior que entrada no dia {item['dia']}")
 
     def _horarios_conflitam(self, item1, item2):
+        # metodo nao usado no motor !! atualmente validacao de overlap do lote ocorre somente no cliente
+        # mantido metodo para uso futuro, adicionar no validar_lote
         def to_min(t): h, m = t.split(':'); return int(h) * 60 + int(m)
         in1,  out1 = to_min(item1['entrada']), to_min(item1['saida']) + (1440 if item1.get('virada') else 0)
         in2,  out2 = to_min(item2['entrada']), to_min(item2['saida']) + (1440 if item2.get('virada') else 0) # normaliza virada para comparação correta

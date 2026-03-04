@@ -5,8 +5,8 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
 from .models import (
-    Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario, MotivoReajuste,
-    EventoFrequencia
+    Funcionario, Contrato, Afastamento, Rescisao, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario,
+    MotivoReajuste, EventoFrequencia
 )
 
 
@@ -32,7 +32,7 @@ class FuncionarioFilter(django_filters.FilterSet):
     )
     class Meta:
         model = Funcionario
-        fields = ['empresa','filial','setor','cargo','status','motivo_desligamento','pne','cnh_validade__lte','funcao_fixa']
+        fields = ['empresa', 'filial', 'setor', 'cargo', 'status', 'pne', 'cnh_validade__lte', 'funcao_fixa']
     def filter_funcao_fixa(self, queryset, name, value):
         if not value:
             return queryset

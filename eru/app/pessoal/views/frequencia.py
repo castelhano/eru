@@ -37,14 +37,17 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
                 messages.warning(self.request, f"Funcionário {matricula} sem contrato vigente em {competencia_str}")
                 return
             settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
-            cfg_freq = settings_obj.config.frequencia if settings_obj else None
-            evento_folga_id              = cfg_freq.evento_folga_id              if cfg_freq else None
-            evento_jornada_id            = cfg_freq.evento_jornada_id            if cfg_freq else None
-            incluir_intervalos_jornada   = cfg_freq.incluir_intervalos_jornada   if cfg_freq else False
+            cfg          = settings_obj.config if settings_obj else None
+            cfg_freq     = cfg.frequencia    if cfg else None
+            cfg_afast    = cfg.afastamento   if cfg else None  # AfastamentoSchema com mapeamento de eventos
+            evento_folga_id            = cfg_freq.evento_folga_id            if cfg_freq else None
+            evento_jornada_id          = cfg_freq.evento_jornada_id          if cfg_freq else None
+            incluir_intervalos_jornada = cfg_freq.incluir_intervalos_jornada if cfg_freq else False
             dias_mes = CalendarioFrequenciaService(competencia, contrato).montar(
                 frequencias=self._obter_frequencias(contrato, competencia),
                 contratos_mes=self._obter_contratos_mes(funcionario, competencia, ultimo_dia),
                 turnos_hist=self._obter_turnos_vigentes(contrato, competencia, ultimo_dia),
+                afastamento_cfg=cfg_afast,  # injeta mapeamento afastamento -> EventoFrequencia
             )
             context.update({
                 'contrato': contrato,
@@ -68,10 +71,13 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
             contrato = self._get_contrato(funcionario, competencia, ultimo_dia)
             if not contrato:
                 return JsonResponse({'status': 'error', 'message': 'Contrato não encontrado'}, status=400)
+            settings_obj = PessoalSettings.objects.filter(filial=funcionario.filial).first()
+            cfg_afast    = settings_obj.config.afastamento if settings_obj else None
             FrequenciaPersistenciaService(contrato).sincronizar_mes(
-                data.get('frequencias', []), 
+                data.get('frequencias', []),
                 deletar_ids=data.get('deletar_ids', []),
                 deletar_related_ids=data.get('deletar_related_ids', []),
+                afastamento_cfg=cfg_afast,  # substitui evento em dias de afastamento
             )
             messages.success(request, DEFAULT_MESSAGES.get('updated_plural'))
             return JsonResponse({'status': 'success'})

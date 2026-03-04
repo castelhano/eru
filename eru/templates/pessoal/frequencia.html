@@ -188,24 +188,37 @@
           {% for dia, info in dias_mes.items %}
           {% if not info.bloqueado %}
           
-          <div class="card mt-2"><!-- card dia -->
-            <div class="card-header">
+          <div class="card mt-2{% if info.afastado %} border-warning-subtle{% endif %}"><!-- card dia -->
+            <div class="card-header{% if info.afastado %} bg-warning-subtle{% endif %}">
               <div class="row g-1">
-                <div class="col d-flex align-items-center text-body-secondary text-truncate">{{ dia|date:"d/m/y (l)" }}</div>
+                <div class="col d-flex align-items-center text-body-secondary text-truncate">
+                  {{ dia|date:"d/m/y (l)" }}
+                  {% if info.afastado %}<span class="badge bg-warning text-dark ms-2"><i class="bi bi-bandaid"></i> Afastado</span>{% endif %}
+                </div>
                 <div class="col-auto d-flex gap-1">
-                  {% if info.escala and not info.escala_folga or info.escala_folga and evento_folga_id %}
-                  <!-- botao visivel se ha escala de jornada OU folga com evento configurado -->
-                  <button type="button" class="btn btn-sm btn-secondary-matte"
-                  data-role="carregarEscala"
-                  data-dia="{{ dia|date:'Y-m-d' }}"
-                  data-escala='{{ info.escala_json }}'
-                  data-folga="{{ info.escala_folga|yesno:'true,false' }}">
-                  <i class="bi bi-calendar2-week"></i> Escala
-                </button>
+                  {% if not info.afastado %}
+                    {% if info.escala and not info.escala_folga or info.escala_folga and evento_folga_id %}
+                    <button type="button" class="btn btn-sm btn-secondary-matte"
+                      data-role="carregarEscala"
+                      data-dia="{{ dia|date:'Y-m-d' }}"
+                      data-escala='{{ info.escala_json }}'
+                      data-folga="{{ info.escala_folga|yesno:'true,false' }}">
+                      <i class="bi bi-calendar2-week"></i> Escala
+                    </button>
+                  {% endif %}
+                  <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
+                    <i class="bi bi-plus-lg"></i>
+                  </button>
+                {% else %}
+                  {% if info.afastamento_evento_id %}
+                  <button type="button" class="btn btn-sm btn-warning-matte d-none"
+                    data-role="aplicarAfastamento"
+                    data-dia="{{ dia|date:'Y-m-d' }}"
+                    data-evento-id="{{ info.afastamento_evento_id }}">
+                    <i class="bi bi-bandaid me-1"></i>{% translate 'Usar afastamento'|escapejs %}
+                  </button>
                 {% endif %}
-                <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
-                  <i class="bi bi-plus-lg"></i>
-                </button>
+              {% endif %}{# /if not afastado #}
               </div>
             </div>
           </div><!-- /card-header dia -->
@@ -218,12 +231,13 @@
             </p>
             {% endif %}
             
-            <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}">
+            <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}" data-afastado="{{ info.afastado|yesno:'true,false' }}" data-afastamento-evento="{{ info.afastamento_evento_id|default:'' }}">
               {% for h in info.horarios %}
               <div class="row mb-2 g-2" 
-              data-role="horarioRow" 
-              data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
-              data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
+                data-role="horarioRow" 
+                data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
+                data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
+                data-bloqueado="{% if info.afastado and h.id %}true{% else %}false{% endif %}"
               >
                 <input type="hidden" data-field="id" value="{{ h.id|safe|default:'' }}">
                 
@@ -269,9 +283,11 @@
                 <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
               </div>
               <div class="col-md-auto text-end">
+                {% if not info.afastado or not h.id %}
                 <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
                   <i class="bi bi-trash3-fill"></i>
                 </button>
+                {% endif %}
               </div>
             </div><!-- /horarioRow -->
             {% endfor %}<!-- /for info.horarios -->
@@ -461,13 +477,41 @@
     }
     
     document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
+    
+    // bloqueia linhas de afastamento ja salvas
+    function bloquearRow(row) {
+      row.querySelectorAll('input, select').forEach(el => el.disabled = true);
+      const btnDel = row.querySelector('[data-role="removeHorario"]');
+      if (btnDel) btnDel.style.display = 'none';
+    }
+    document.querySelectorAll('[data-role="horarioRow"][data-bloqueado="true"]').forEach(bloquearRow);
     document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
+      if (container.dataset.afastado === 'true') {
+        calcularResumoDia(container);
+        return; // dias afastados são tratados pelo bloco de init de afastamento abaixo
+      }
       if (!container.querySelector('[data-role="horarioRow"]')) {
         const row = novaRow();
         container.appendChild(row);
         toggleRowFields(row);
       }
       calcularResumoDia(container); // inicializa resumo ao carregar página
+    });
+
+    document.querySelectorAll('[data-role="horariosContainer"][data-afastado="true"]').forEach(container => {
+      const temSalvo = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value.trim() !== '');
+      if (!temSalvo) return;
+      const eventoAfastamentoId = container.dataset.afastamentoEvento;
+      const temRegistroAlheio = [...container.querySelectorAll('[data-role="horarioRow"]')]
+      .filter(row => row.querySelector('[data-field="id"]')?.value.trim() !== '')
+      .some(row => {
+        const select = row.querySelector('[data-field="evento"]');
+        return select?.value != eventoAfastamentoId;
+      });
+      if (!temRegistroAlheio) return;
+      
+      const btn = document.querySelector(`[data-role="aplicarAfastamento"][data-dia="${container.dataset.dia}"]`);
+      if (btn) btn.classList.remove('d-none');
     });
     
     document.addEventListener('click', e => {
@@ -510,6 +554,7 @@
       else if (role === 'removeHorario') {
         const container = target.closest('[data-role="horariosContainer"]');
         const row = target.closest('[data-role="horarioRow"]');
+        if(row.dataset.bloqueado === 'true') return;
         const id = row.querySelector('[data-field="id"]').value;
         if (container.querySelectorAll('[data-role="horarioRow"]').length > 1) {
           if (id) deletarIds.add(id);
@@ -528,6 +573,32 @@
           calcularResumoDia(container); // reseta resumo de horas
         }
       }
+      else if (role === 'aplicarAfastamento') {
+        const dia        = target.dataset.dia;
+        const eventoId   = target.dataset.eventoId;
+        const container  = document.querySelector(`[data-role="horariosContainer"][data-dia="${dia}"]`);
+        if (!container) return;
+        
+        // marca todos os IDs salvos existentes para deleção
+        container.querySelectorAll('[data-field="id"]').forEach(el => {
+          if (el.value.trim()) deletarIds.add(el.value.trim());
+        });
+        
+        // limpa o container
+        container.innerHTML = '';
+        
+        // cria nova linha com evento de afastamento, já bloqueada
+        const row = novaRow();
+        const select = row.querySelector('[data-field="evento"]');
+        const opt = [...select.options].find(o => o.value == eventoId);
+        if (opt) opt.selected = true;
+        row.setAttribute('data-dirty', 'true');  // força envio no save
+        container.appendChild(row);
+        toggleRowFields(row);
+        bloquearRow(row);  // bloqueia imediatamente
+        calcularResumoDia(container);
+        target.classList.add('d-none'); // oculta o botão após uso
+      }
       else if (role === 'saveAll') {
         saveFrequencias();
       }
@@ -536,14 +607,15 @@
     document.addEventListener('change', e => {
       // marca linha como data-dirty=true para informar que foi alterada, somente linhas 
       // alteradas são enviadas para o payload
+      const row = e.target.closest('[data-role="horarioRow"]');
+      if (row?.dataset.bloqueado === 'true') return;  // ← adicionar esta linha
       if (['entrada', 'saida', 'evento', 'observacao'].includes(e.target.dataset.field)) {
-        e.target.closest('[data-role="horarioRow"]')?.setAttribute('data-dirty', 'true');
+        row?.setAttribute('data-dirty', 'true');
       }
       if (e.target.dataset.field === 'evento')
-      toggleRowFields(e.target.closest('[data-role="horarioRow"]'));
+      toggleRowFields(row);
       // atualiza virada e resumo ao mudar qualquer campo de hora
       if (e.target.dataset.field === 'entrada' || e.target.dataset.field === 'saida') {
-        const row = e.target.closest('[data-role="horarioRow"]');
         atualizarVirada(row, true);
         calcularResumoDia(row.closest('[data-role="horariosContainer"]'));
       }
@@ -729,9 +801,23 @@
       filtrarDias({}); // chama funcao sem params para limpar filtros
       document.getElementById('btn_clear_filter').style.display = 'none';
     }
-    
-    
-    
+
+    // pré-carrega evento de afastamento nos dias afastados sem registro salvo
+    document.querySelectorAll('[data-role="horariosContainer"][data-afastado="true"]').forEach(container => {
+      const eventoId = container.dataset.afastamentoEvento;
+      if (!eventoId) return;  // cfg não configurado — não interfere
+      // só pré-carrega se não há nenhum registro já salvo neste dia
+      const temSalvo = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value.trim() !== '');
+      if (temSalvo) return;
+      // cria linha, seleciona o evento de afastamento e desabilita campos (somente-leitura)
+      const row = novaRow();
+      const opt = [...row.querySelector('[data-field="evento"]').options].find(o => o.value == eventoId);
+      if (opt) opt.selected = true;
+      container.appendChild(row);
+      toggleRowFields(row);                                              // aplica dia_inteiro, cor etc.
+      row.querySelectorAll('input, select, button[data-role="removeHorario"]').forEach(el => el.disabled = true);
+    });
+
   })();
   
   {% endblock %}

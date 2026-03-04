@@ -22,7 +22,7 @@ from django.utils.timezone import now
 from django_q.tasks import async_task
 
 from pessoal.models import (
-    Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
+    Afastamento, Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
     PessoalSettings, ProcessamentoJob, TurnoHistorico,
 )
 from pessoal.services.frequencia.engine import consolidar, fechar as fechar_freq_consolidado
@@ -231,6 +231,16 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
         evento_jornada = EventoFrequencia.objects.filter(pk=evento_jornada_id).first() if evento_jornada_id else None
         evento_folga   = EventoFrequencia.objects.filter(pk=evento_folga_id).first()   if evento_folga_id   else None
 
+        cfg_afast          = settings_obj.config.afastamento if settings_obj else None
+        evento_doenca_id   = cfg_afast.evento_doenca_id      if cfg_afast else None
+        evento_acidente_id = cfg_afast.evento_acidente_id    if cfg_afast else None
+        evento_outro_id    = cfg_afast.evento_outro_id       if cfg_afast else None
+        _mapa_afastamento  = {
+            Afastamento.Motivo.DOENCA:            EventoFrequencia.objects.filter(pk=evento_doenca_id).first()   if evento_doenca_id   else None,
+            Afastamento.Motivo.ACIDENTE_TRABALHO: EventoFrequencia.objects.filter(pk=evento_acidente_id).first() if evento_acidente_id else None,
+            Afastamento.Motivo.OUTRO:             EventoFrequencia.objects.filter(pk=evento_outro_id).first()    if evento_outro_id    else None,
+        }
+
         # Avisos de configuração — acumulados durante a execução e gravados no resultado.
         # Não interrompem o job, mas explicam comportamento limitado (ex: 0 processados).
         obs: list[str] = []
@@ -252,6 +262,19 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
             .order_by('contrato_id', 'inicio_vigencia')
         ):
             turnos_por_contrato.setdefault(th.contrato_id, []).append(th)
+
+        # ── 3c. Afastamentos de todos os funcionários no período ──────────────
+        # Indexados por funcionario_id para lookup O(1) no loop.
+        funcionario_ids = list(contratos.values_list('funcionario_id', flat=True))
+        afastamentos_por_func: dict[int, list] = {}
+        for af in (
+            Afastamento.objects
+            .filter(funcionario_id__in=funcionario_ids)
+            .filter(data_afastamento__lte=fim)
+            .filter(Q(data_retorno__isnull=True) | Q(data_retorno__gte=inicio))
+            .order_by('funcionario_id', 'data_afastamento')
+        ):
+            afastamentos_por_func.setdefault(af.funcionario_id, []).append(af)
 
         if not turnos_por_contrato:
             obs.append('Nenhum contrato com turno associado encontrado no período')
@@ -285,6 +308,29 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
                 if (contrato.id, cur) in ocupados:
                     cur += timedelta(days=1)  # dia já possui registro — não sobrescreve
                     continue
+
+                # verifica se dia está coberto por afastamento
+                afs_func = afastamentos_por_func.get(contrato.funcionario_id, [])
+                afastamento = next(
+                    (a for a in afs_func
+                     if a.data_afastamento <= cur and (a.data_retorno is None or a.data_retorno >= cur)),
+                    None
+                )
+                if afastamento:
+                    evento_af = _mapa_afastamento.get(afastamento.motivo)
+                    if evento_af:
+                        bulk_create.append(Frequencia(
+                            contrato=contrato,
+                            evento=evento_af,
+                            data=cur,
+                            inicio=None,
+                            fim=None,
+                            editado=False,
+                            observacao='Escala automática',
+                        ))
+                        contrato_ok = True
+                    cur += timedelta(days=1)
+                    continue  # não carrega escala em dia de afastamento
 
                 turno_hist = get_turno_dia(historico, cur)  # turno vigente neste dia
                 if not turno_hist:
