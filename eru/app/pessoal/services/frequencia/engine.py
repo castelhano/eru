@@ -15,15 +15,33 @@ Estrutura do consolidado gerado:
     Chave 'EF': {rastreio: {horas, dias}}
     Exposto no motor de folha como EF_<rastreio>_horas / EF_<rastreio>_dias.
 
-Hora extra:
+─── Hora extra ──────────────────────────────────────────────────────────────
   carga_diaria preenchida → calculada dia a dia (excedente sobre carga_diaria).
-  carga_diaria ausente    → H_horas_extras = 0, cálculo fica na fórmula do evento
-                            de folha usando H_horas_trabalhadas vs C_carga_mensal.
+  carga_diaria ausente    → H_horas_extras = 0. O motor de folha calcula HE
+                            usando H_horas_trabalhadas vs C_carga_mensal proporcional.
 
-Hora noturna:
+─── Hora noturna ────────────────────────────────────────────────────────────
   Calculada apenas para registros de categoria JORNADA com horário (não dia_inteiro).
   Intervalo configurável em FrequenciaSchema (padrão 22h–06h).
   Janela cruza meia-noite — interseção calculada em dois segmentos.
+
+─── Eventos dia_inteiro e carga de horas ────────────────────────────────────
+  Eventos com dia_inteiro=True não têm início/fim registrados no banco.
+  Para contabilizar horas desses eventos (ex: atestado, falta justificada):
+
+    contabiliza_horas=True  + carga_diaria preenchida no contrato
+      → horas = carga_diaria (valor exato do contrato)
+
+    contabiliza_horas=True  + carga_diaria ausente (metodologia mensal)
+      → horas = 0 no nível H_*
+      → O motor de folha é responsável por calcular o valor proporcional
+         usando C_carga_mensal e H_dias_efetivos. Isso é intencional:
+         a carga diária "real" de um funcionário mensal varia conforme
+         dias úteis, afastamentos no período e data de admissão/demissão —
+         variáveis que o motor de folha conhece, mas o engine de frequência não.
+
+    contabiliza_horas=False (qualquer carga)
+      → horas = 0 (evento não computa jornada, ex: folga, feriado)
 """
 import calendar
 from collections import defaultdict
@@ -64,7 +82,8 @@ def _agrupar_por_dia(frequencias, tz) -> dict:
 def _carga_dia(contrato) -> float | None:
     """
     Retorna carga horária diária explícita do contrato, ou None.
-    None indica metodologia mensal — HE não é calculada dia a dia pelo engine.
+    None indica metodologia mensal — HE não é calculada dia a dia pelo engine,
+    e eventos dia_inteiro contribuem 0h para H_* (motor de folha resolve proporcionalmente).
     """
     return float(contrato.carga_diaria) if contrato.carga_diaria else None
 
@@ -76,10 +95,10 @@ def _segmentos_noturnos(dia: date, hn_inicio: time, hn_fim: time) -> list:
       [dia 22h → dia+1 00h] e [dia 00h → dia 06h]
     """
     return [
-        (datetime.combine(dia,              hn_inicio),
-         datetime.combine(dia + timedelta(days=1), time(0, 0))),   # 22h → meia-noite
-        (datetime.combine(dia,              time(0, 0)),
-         datetime.combine(dia,              hn_fim)),               # meia-noite → 06h
+        (datetime.combine(dia,                          hn_inicio),
+         datetime.combine(dia + timedelta(days=1),      time(0, 0))),   # 22h → meia-noite
+        (datetime.combine(dia,                          time(0, 0)),
+         datetime.combine(dia,                          hn_fim)),        # meia-noite → 06h
     ]
 
 
@@ -89,7 +108,6 @@ def _horas_noturnas(inicio_dt: datetime, fim_dt: datetime,
     Calcula horas dentro da janela noturna para um registro de jornada.
     Trata corretamente turnos que cruzam meia-noite.
     """
-    # naive para comparação uniforme — timezone já foi resolvido antes da chamada
     ini = inicio_dt.replace(tzinfo=None)
     fim = fim_dt.replace(tzinfo=None)
     total = 0.0
@@ -111,24 +129,38 @@ def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool,
                   hn_inicio: time, hn_fim: time) -> dict:
     """
     Processa todos os registros de um único dia e retorna parciais.
+
     Nível 1: acumula por categoria.
     Nível 2: acumula por rastreio do EventoFrequencia (EF_*).
+
     Hora extra: calculada apenas se carga_dia está definida (metodologia diária).
+
     Hora noturna: calculada apenas para JORNADA com horário (não dia_inteiro).
+
+    Eventos dia_inteiro com contabiliza_horas=True:
+      - usa carga_dia se disponível
+      - usa 0.0 se metodologia mensal (motor de folha aplica proporcional)
     """
     r = {
-        'h_trabalhadas':   0.0,  'h_extras':        0.0,  'h_noturnas':     0.0,
-        'h_intervalo':     0.0,  'h_aj':            0.0,  'h_anj':          0.0,
+        'h_trabalhadas':   0.0,  'h_extras':        0.0,  'h_noturnas':      0.0,
+        'h_intervalo':     0.0,  'h_aj':            0.0,  'h_anj':           0.0,
         'h_atestado':      0.0,
         'dia_trabalhado':  False, 'dia_falta_just':  False, 'dia_falta_njust': False,
         'dia_folga':       False, 'dia_afastamento': False, 'desconta_efetivos': False,
         'ef': defaultdict(lambda: {'horas': 0.0, 'dias': 0}),
     }
-    carga_ref = carga_dia or 0.0  # base para eventos dia_inteiro quando metodologia mensal
 
     for f in registros:
-        cat   = f.evento.categoria
-        horas = carga_ref if f.evento.dia_inteiro else _horas(f)
+        cat = f.evento.categoria
+
+        # horas do registro:
+        #   com horário real → duração calculada
+        #   dia_inteiro + contabiliza_horas → carga_dia (ou 0 se metodologia mensal)
+        #   dia_inteiro + não contabiliza   → 0
+        if f.evento.dia_inteiro:
+            horas = (carga_dia or 0.0) if f.evento.contabiliza_horas else 0.0
+        else:
+            horas = _horas(f)
 
         # Nível 2 — acumula por rastreio independente da categoria
         if f.evento.rastreio:
@@ -146,11 +178,11 @@ def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool,
         elif cat in _CAT_INTERVALO and incluir_intervalo:
             r['h_intervalo'] += horas
         elif cat in _CAT_AJ:
-            r['h_aj']          += horas
-            r['dia_falta_just'] = True
+            r['h_aj']           += horas
+            r['dia_falta_just']  = True
             if f.evento.dia_inteiro:
-                r['h_atestado']     += horas
-                r['dia_afastamento'] = True
+                r['h_atestado']      += horas
+                r['dia_afastamento']  = True
         elif cat in _CAT_ANJ:
             r['h_anj']           += horas
             r['dia_falta_njust']  = True
@@ -192,11 +224,10 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     Ponto de entrada principal do engine.
     Processa o período [inicio, fim] para o contrato e persiste FrequenciaConsolidada.
     Retorna a instância salva.
-    O comportamento de incluir intervalos na jornada é lido de PessoalSettings.config.frequencia.incluir_intervalos_jornada.
     """
     tz = timezone.get_current_timezone()
 
-    # 1. Configurações da filial — intervalo noturno e inclusão de intervalos com fallback para padrão
+    # 1. Configurações da filial — intervalo noturno e inclusão de intervalos
     settings_obj      = PessoalSettings.objects.filter(filial_id=contrato.funcionario.filial_id).first()
     cfg_freq          = settings_obj.config.frequencia if settings_obj else FrequenciaSchema()
     hn_inicio         = cfg_freq.hn_inicio  # time(22, 0) por padrão
@@ -214,7 +245,7 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
 
     # 3. Agrupa por dia e resolve carga diária do contrato
     grupos    = _agrupar_por_dia(frequencias, tz)
-    carga_dia = _carga_dia(contrato)  # None se metodologia mensal
+    carga_dia = _carga_dia(contrato)
 
     # 4. Totalizadores nível 1 (H_*)
     totais = {
@@ -228,17 +259,17 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     }
 
     # Dias de contrato ativo no período — base para H_dias_efetivos
-    contrato_fim_dt = contrato.fim or date.max
-    H_dias_contrato = sum(
+    contrato_fim_dt  = contrato.fim or date.max
+    H_dias_contrato  = sum(
         1 for n in range((fim - inicio).days + 1)
         if contrato.inicio <= (inicio + timedelta(n)) <= contrato_fim_dt
     )
-    dias_descontados = 0  # acumulado por dias com evento desconta_efetivos=True
+    dias_descontados = 0
 
     # Acumulador nível 2 (EF_*)
     ef_acc: dict[str, dict] = defaultdict(lambda: {'horas': 0.0, 'dias': 0})
 
-    # 5. Processa cada dia com registro dentro do range solicitado
+    # 5. Processa cada dia com registro dentro do range
     for dia, registros in grupos.items():
         if not (inicio <= dia <= fim):
             continue
@@ -265,22 +296,20 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     # 6. Totalizadores de período
     totais['H_dias_mes']      = calendar.monthrange(inicio.year, inicio.month)[1]
     totais['H_dias_contrato'] = H_dias_contrato
-    totais['H_dias_efetivos'] = H_dias_contrato - dias_descontados  # base para proporcional de HE mensal
+    totais['H_dias_efetivos'] = H_dias_contrato - dias_descontados
 
     # 7. Arredonda floats para 4 casas — evita ruído de ponto flutuante
     for k, v in totais.items():
         if isinstance(v, float):
             totais[k] = round(v, 4)
 
-    # 8. Nível 2: serializa EF_* no consolidado
-    # Motor de folha acessa como EF_<rastreio>_horas e EF_<rastreio>_dias via collectors.py
+    # 8. Nível 2: serializa EF_*
     totais['EF'] = {
         rastreio: {'horas': round(vals['horas'], 4), 'dias': vals['dias']}
         for rastreio, vals in ef_acc.items()
     }
 
     # 9. Detecta dias sem registro e define status
-    # ABERTO = tem erros/pendências | PROCESSADO = ok, aguarda fechamento explícito pelo usuário
     erros  = _detectar_erros(inicio, fim, grupos, contrato)
     status = FrequenciaConsolidada.Status.ABERTO if erros else FrequenciaConsolidada.Status.PROCESSADO
 
@@ -290,7 +319,7 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
 
     obj, _ = FrequenciaConsolidada.objects.update_or_create(
         contrato=contrato,
-        competencia=inicio.replace(day=1),  # competência = sempre dia 1 do mês
+        competencia=inicio.replace(day=1),
         defaults={
             'inicio':        timezone.make_aware(inicio_dt, tz),
             'fim':           timezone.make_aware(fim_dt,    tz),
@@ -303,17 +332,15 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     )
     return obj
 
+
 # ─── Transições de estado ─────────────────────────────────────────────────────
 
 def fechar(consolidado) -> None:
     """
     Fecha um FrequenciaConsolidada individual (PROCESSADO → FECHADO).
-    Pré-condição: status == PROCESSADO (sem erros). Chamada ignorada silenciosamente
-    para outros status — permite uso seguro em loop de lote.
-    Estrutura pronta para rotinas futuras (ex: gerar PDF, notificar DP).
+    Chamada ignorada silenciosamente para outros status — permite uso seguro em loop de lote.
     """
     if consolidado.status != consolidado.Status.PROCESSADO:
         return
-    # [ponto de extensão] rotinas pré-fechamento aqui
     consolidado.status = consolidado.Status.FECHADO
     consolidado.save(update_fields=['status'])

@@ -642,44 +642,11 @@ class Frequencia(models.Model):
         horario = (f"{self.inicio.strftime('%H:%M')}-{self.fim.strftime('%H:%M')}"
                    if self.inicio and self.fim else 'dia inteiro')
         return f"{self.contrato.funcionario} | {dia} | {self.evento} ({horario})"
-    def clean(self):
-        super().clean()
-        data_ref = self.data or (self.inicio.date() if self.inicio else None)
-        if data_ref:
-            # erro impeditivo: lancamento em periodo de afastamento ativo
-            afastado = Afastamento.objects.filter(
-                funcionario=self.contrato.funcionario,
-                data_afastamento__lte=data_ref
-            ).filter(
-                Q(data_retorno__isnull=True) | Q(data_retorno__gte=data_ref)
-            ).exists()
-            if afastado:
-                raise ValidationError(_("Funcionario esta afastado nesta data — lancamento bloqueado"))
-            # erro impeditivo: lancamento apos desligamento exige decisao do usuario
-            rescisao = getattr(self.contrato.funcionario, 'rescisao', None)
-            if rescisao and data_ref > rescisao.data_desligamento:
-                raise ValidationError(
-                    _("Lancamento apos data de desligamento (%(data)s). Revise ou exclua este registro.")
-                    % {'data': rescisao.data_desligamento}
-                )
-        if self.inicio and self.fim:
-            if self.fim <= self.inicio:
-                raise ValidationError(_("Horario de fim deve ser maior que o inicio"))
-            # sobreposicao de horarios para o mesmo contrato
-            overlap = Frequencia.objects.filter(
-                contrato=self.contrato,
-                inicio__lt=self.fim,
-                fim__gt=self.inicio
-            ).exclude(pk=self.pk)
-            if overlap.exists():
-                raise ValidationError(_("Registro sobrepoe outras entradas existentes"))
-
     @property
     def H_jornada(self):
         if self.inicio and self.fim:
             return self.fim - self.inicio
         return None
-
     @property
     def H_horas_decimais(self):
         duracao = self.H_jornada

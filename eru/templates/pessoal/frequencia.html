@@ -103,7 +103,7 @@
   <div class="card-body tab-content">
     <h5 class="card-title mb-3">{% translate 'Pessoal'|escapejs %}: <b class="text-purple">{% translate 'Frequência'|escapejs %}</b></h5>
     
-    <form method="get" id="form-filtro" class="row g-3" autocomplete="off">
+    <form method="get" id="form-filtro" class="row g-3" autocomplete="off" novalidate>
       <div class="tab-pane fade show active" id="base" role="tabpanel">
         
         <!-- filtro -->
@@ -654,41 +654,61 @@
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       
       for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
-        if (row.dataset.deleted === 'true') continue; // linha apagada, já em deletarIds
+        if (row.dataset.deleted === 'true') continue;
+        // linhas bloqueadas sem dirty nunca são enviadas (ex: registros de afastamento preexistentes)
+        if (row.dataset.bloqueado === 'true' && row.dataset.dirty !== 'true') continue;
+        
         const isDirty = row.dataset.dirty === 'true' || !row.querySelector('[data-field="id"]').value;
-        if (!isDirty) continue; // ignora linhas nao alteradas
+        if (!isDirty) continue;
         if (row.classList.contains('pe-none')) continue;
-        const container = row.closest('[data-role="horariosContainer"]');
-        const dia = container.dataset.dia;
-        const evSelect  = row.querySelector('[data-field="evento"]');
-        const inputIn   = row.querySelector('[data-field="entrada"]');
-        const inputOut  = row.querySelector('[data-field="saida"]');
+        
+        const container    = row.closest('[data-role="horariosContainer"]');
+        const dia          = container.dataset.dia;
+        const evSelect     = row.querySelector('[data-field="evento"]');
         const isDiaInteiro = evSelect.options[evSelect.selectedIndex]?.dataset.diaInteiro === 'true';
-        const hIn = inputIn.value, hOut = inputOut.value;
+        const inputIn      = row.querySelector('[data-field="entrada"]');
+        const inputOut     = row.querySelector('[data-field="saida"]');
         
-        if (!evSelect.value || (!isDiaInteiro && !hIn && !hOut)) continue;
+        if (!evSelect.value) continue;
         
-        if (!isDiaInteiro && (!hIn || !hOut)) {
+        // eventos dia_inteiro: não usam entrada/saída — campos podem estar disabled
+        // e o banco os ignora (inicio=null, fim=null). Envia apenas evento + dia.
+        if (isDiaInteiro) {
+          frequencias.push({
+            id:         row.querySelector('[data-field="id"]').value || null,
+            dia,
+            entrada:    null,
+            saida:      null,
+            virada:     false,
+            evento_id:  evSelect.value,
+            observacao: row.querySelector('[data-field="observacao"]').value,
+          });
+          continue;
+        }
+        
+        // eventos com horário: valida presença e consistência
+        const hIn  = inputIn.value;
+        const hOut = inputOut.value;
+        if (!hIn && !hOut) continue; // continua em linhas vazias, nao eh carregado no payload
+        
+        if (!hIn || !hOut) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
           return;
         }
         
-        const valIn  = isDiaInteiro ? '00:00' : hIn;
-        const valOut = isDiaInteiro ? '23:59' : hOut;
-        // virada: saida no dia seguinte — sinaliza ao backend via flag
         const virada = row.dataset.virada === 'true';
-        if (!virada && timeToMinutes(valOut) <= timeToMinutes(valIn)) {
+        if (!virada && timeToMinutes(hOut) <= timeToMinutes(hIn)) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
           appNotify('warning', `Horário de fim não pode ser menor que início em ${dia}`);
           return;
         }
         
+        // verifica overlap com outros slots do mesmo dia neste payload
         if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
-        // para comparação de overlap, normaliza saida de virada com +1440min
-        const minIn  = timeToMinutes(valIn);
-        const minOut = timeToMinutes(valOut) + (virada ? 1440 : 0);
+        const minIn  = timeToMinutes(hIn);
+        const minOut = timeToMinutes(hOut) + (virada ? 1440 : 0);
         const conflito = slotsPorDia[dia].find(s => minIn < s.out && minOut > s.in);
         if (conflito) {
           conflito.rowRef.querySelector('[data-field="saida"]').classList.add('is-invalid');
@@ -699,30 +719,35 @@
         
         slotsPorDia[dia].push({ in: minIn, out: minOut, rowRef: row });
         frequencias.push({
-          id: row.querySelector('[data-field="id"]').value || null,
-          dia, entrada: valIn, saida: valOut,
-          virada, // backend usa para incrementar data de saida
-          evento_id: evSelect.value,
+          id:         row.querySelector('[data-field="id"]').value || null,
+          dia,
+          entrada:    hIn,
+          saida:      hOut,
+          virada,
+          evento_id:  evSelect.value,
           observacao: row.querySelector('[data-field="observacao"]').value,
         });
       }
       
-      if (!frequencias.length && !deletarIds.size && !deletarRelatedIds.size) { appNotify('warning', 'Nenhuma frequência preenchida para salvar'); return;}
+      if (!frequencias.length && !deletarIds.size && !deletarRelatedIds.size) {
+        appNotify('warning', 'Nenhuma frequência preenchida para salvar');
+        return;
+      }
       
       isSaving = true;
-      const btn = $$.btnSave;
+      const btn          = $$.btnSave;
       const originalHTML = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+      btn.disabled       = true;
+      btn.innerHTML      = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
       
       fetch(window.location.pathname, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ 
-          matricula: $$.matricula.value, 
-          competencia: $$.competencia.value, 
+        body: JSON.stringify({
+          matricula:           $$.matricula.value,
+          competencia:         $$.competencia.value,
           frequencias,
-          deletar_ids: [...deletarIds],
+          deletar_ids:         [...deletarIds],
           deletar_related_ids: [...deletarRelatedIds],
         }),
       })
@@ -734,10 +759,11 @@
       .catch(error => {
         appAlert('danger', 'Erro: ' + (error.message || error), false);
         isSaving = false;
-        btn.disabled = false;
+        btn.disabled  = false;
         btn.innerHTML = originalHTML;
       });
     }
+
     
     // funcao para filtro nas linhas (tudo no cliente)
     // apenas aplica d-none
