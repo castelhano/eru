@@ -328,7 +328,7 @@ a.metric-box:hover {
                             {% with url=card.card_links.dias_atestado %}
                             {% if url %}<a href="{{ url }}" target="_blank" class="metric-box">{% else %}<div class="metric-box">{% endif %}
                                 <div class="m-val">{{ card.resumo.dias_atestado }}</div>
-                                <div class="m-label">Atestados</div>
+                                <div class="m-label">Afastamentos</div>
                             {% if url %}</a>{% else %}</div>{% endif %}
                             {% endwith %}
 

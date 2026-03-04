@@ -30,7 +30,7 @@ class FrequenciaManagementView(LoginRequiredMixin, BaseTemplateView):
 
     def _processar_filtro(self, context, matricula, competencia_str):
         try:
-            funcionario = Funcionario.objects.get(matricula=matricula)
+            funcionario = Funcionario.objects.select_related('filial__empresa').get(matricula=matricula)
             competencia, ultimo_dia = self._parse_competencia(competencia_str)
             contrato = self._get_contrato(funcionario, competencia, ultimo_dia)
             if not contrato:

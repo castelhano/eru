@@ -339,6 +339,7 @@ def fechar(consolidado) -> None:
     """
     Fecha um FrequenciaConsolidada individual (PROCESSADO → FECHADO).
     Chamada ignorada silenciosamente para outros status — permite uso seguro em loop de lote.
+    !! Metodo não usado no motor, mantido para posisvel uso futuro.
     """
     if consolidado.status != consolidado.Status.PROCESSADO:
         return

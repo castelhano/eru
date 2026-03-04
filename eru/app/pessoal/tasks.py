@@ -459,32 +459,24 @@ def _worker_fechar_freq(job_id: int, filial_id: int, competencia_str: str):
         progresso=0,
     )
     try:
-        competencia  = date.fromisoformat(competencia_str)
-        qs           = FrequenciaConsolidada.objects.filter(
+        competencia = date.fromisoformat(competencia_str)
+
+        processados = FrequenciaConsolidada.objects.filter(
             contrato__funcionario__filial_id=filial_id,
             competencia=competencia,
             status=FrequenciaConsolidada.Status.PROCESSADO,
-        )
-        total        = qs.count()
-        processados  = 0
-        for i, fc in enumerate(qs.iterator(), 1):
-            fechar_freq_consolidado(fc)
-            processados += 1
-            pct = round(i / total * 100) if total else 100
-            if pct % 5 == 0 or i == total:
-                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
-        ignorados = (
-            FrequenciaConsolidada.objects
-            .filter(contrato__funcionario__filial_id=filial_id,
-                    competencia=competencia,
-                    status=FrequenciaConsolidada.Status.ABERTO)
-            .count()
-        )
+        ).update(status=FrequenciaConsolidada.Status.FECHADO)
+
+        ignorados = FrequenciaConsolidada.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+            status=FrequenciaConsolidada.Status.ABERTO,
+        ).count()
+
         obs = [f'{ignorados} consolidado(s) com erros ignorados'] if ignorados else []
         _fechar_job(job_id, _resultado(processados=processados), observacoes=obs)
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
-
 
 def disparar_fechar_freq(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
     """Enfileira fechamento de frequência e retorna o job criado."""

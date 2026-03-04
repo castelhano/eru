@@ -29,23 +29,20 @@
     overflow-x: hidden;
   }
 
-@media (max-width: 991.98px) {
-  /* borda lateral colorida indica a origem do registro, so aplicado no mobile */
-  [data-role="horarioRow"] {
-    border-left: 2px solid transparent;
-    padding-left: 4px;
-    border-radius: 2px;
+  @media (max-width: 991.98px) {
+    /* borda lateral colorida indica a origem do registro, so aplicado no mobile */
+    [data-role="horarioRow"] {
+      border-left: 2px solid transparent;
+      padding-left: 4px;
+      border-radius: 2px;
+    }
+    [data-role="horarioRow"][data-origem="manual"]  { border-color: var(--bs-warning); }
+    [data-role="horarioRow"][data-origem="ponto"]   { border-color: var(--bs-info);    }
+    [data-role="horarioRow"][data-origem="sistema"] { border-color: var(--bs-secondary); }
+    [data-role="horarioRow"][data-origem="escala"]  { border-color: var(--bs-secondary-color); }
+    [data-role="horarioRow"][data-origem="novo"]    { border-color: var(--bs-secondary-color); }
   }
-  [data-role="horarioRow"][data-origem="manual"]  { border-color: var(--bs-warning); }
-  [data-role="horarioRow"][data-origem="ponto"]   { border-color: var(--bs-info);    }
-  [data-role="horarioRow"][data-origem="sistema"] { border-color: var(--bs-secondary); }
-  [data-role="horarioRow"][data-origem="escala"]  { border-color: var(--bs-secondary-color); }
-  /* nova linha (sem id) — sem borda, discreta */
-  [data-role="horarioRow"][data-origem="novo"]    { border-color: var(--bs-secondary-color); }
-}
 
-
-  
   {% endblock %}
 </style>
 
@@ -72,25 +69,25 @@
       <select class="form-select form-select-sm" data-field="evento">
         {% for ev in eventos_choices %}
         <option value="{{ ev.id|safe }}"
-        {% if ev.id == h.evento_id %}selected {% endif %}
-        data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
-        data-categoria="{{ ev.categoria }}"
-        data-cor="{{ ev.cor|default:'' }}">
-        {{ ev.nome }}
-      </option>
-      {% endfor %}
-    </select>
+          {% if ev.id == h.evento_id %}selected {% endif %}
+          data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+          data-categoria="{{ ev.categoria }}"
+          data-cor="{{ ev.cor|default:'' }}">
+          {{ ev.nome }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md">
+      <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+      <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
+    </div>
+    <div class="col-md-auto text-end">
+      <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+        <i class="bi bi-trash3-fill"></i>
+      </button>
+    </div>
   </div>
-  <div class="col-md">
-    <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-    <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}...">
-  </div>
-  <div class="col-md-auto text-end">
-    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-      <i class="bi bi-trash3-fill"></i>
-    </button>
-  </div>
-</div>
 </template>
 
 <div class="card mt-2"><!-- card principal -->
@@ -148,6 +145,9 @@
                 </div>
               </div>
             </div>
+            <div class="row">
+              <div class="col-12 small">{{funcionario.filial.empresa.nome}} - {{funcionario.filial.nome}}</div>
+            </div>
             <!-- filtros -->
             <div class="row gx-2 small text-body-tertiary mt-2">
               <div class="col col-lg-auto pt-1 order-1">
@@ -188,12 +188,12 @@
           {% for dia, info in dias_mes.items %}
           {% if not info.bloqueado %}
           
-          <div class="card mt-2{% if info.afastado %} border-warning-subtle{% endif %}"><!-- card dia -->
-            <div class="card-header{% if info.afastado %} bg-warning-subtle{% endif %}">
+          <div class="card mt-2 text-body-secondary" data-role="cardDia"><!-- card dia -->
+            <div class="card-header{% if info.afastado %} text-bg-warning-matte{% endif %}">
               <div class="row g-1">
-                <div class="col d-flex align-items-center text-body-secondary text-truncate">
+                <div class="col d-flex align-items-center text-truncate">
                   {{ dia|date:"d/m/y (l)" }}
-                  {% if info.afastado %}<span class="badge bg-warning text-dark ms-2"><i class="bi bi-bandaid"></i> Afastado</span>{% endif %}
+                  {% if info.afastado %}<span class="badge text-bg-warning-matte ms-2">Afastado</span>{% endif %}
                 </div>
                 <div class="col-auto d-flex gap-1">
                   {% if not info.afastado %}
@@ -205,115 +205,120 @@
                       data-folga="{{ info.escala_folga|yesno:'true,false' }}">
                       <i class="bi bi-calendar2-week"></i> Escala
                     </button>
-                  {% endif %}
-                  <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
-                {% else %}
-                  {% if info.afastamento_evento_id %}
-                  <button type="button" class="btn btn-sm btn-warning-matte d-none"
-                    data-role="aplicarAfastamento"
-                    data-dia="{{ dia|date:'Y-m-d' }}"
-                    data-evento-id="{{ info.afastamento_evento_id }}">
-                    <i class="bi bi-bandaid me-1"></i>{% translate 'Usar afastamento'|escapejs %}
-                  </button>
-                {% endif %}
-              {% endif %}{# /if not afastado #}
-              </div>
-            </div>
-          </div><!-- /card-header dia -->
-          
-          <div class="card-body">
-            
-            {% if info.escala %}
-            <p class="text-body-secondary small mb-2">
-              <i class="bi bi-calendar2-week"></i> Escala: <b>{{ info.escala }}</b>
-            </p>
-            {% endif %}
-            
-            <div data-role="horariosContainer" data-dia="{{ dia|date:'Y-m-d' }}" data-afastado="{{ info.afastado|yesno:'true,false' }}" data-afastamento-evento="{{ info.afastamento_evento_id|default:'' }}">
-              {% for h in info.horarios %}
-              <div class="row mb-2 g-2" 
-                data-role="horarioRow" 
-                data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
-                data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
-                data-bloqueado="{% if info.afastado and h.id %}true{% else %}false{% endif %}"
-              >
-                <input type="hidden" data-field="id" value="{{ h.id|safe|default:'' }}">
-                
-                <!-- icone indica origem do registro -->
-                <div class="col-auto d-none d-lg-flex align-items-center">
-                  {% if h.id %}
-                    {% if h.origem == 'manual' %}
-                    <i class="bi bi-pencil-fill text-warning-matte" data-role="origemIcon" title="{% translate 'Editado manualmente'|escapejs %}"></i>
-                    {% elif h.origem == 'ponto' %}
-                    <i class="bi bi-clock-fill text-info" data-role="origemIcon" title="{% translate 'Importação'|escapejs %}"></i>
-                    {% else %}
-                    <i class="bi bi-gear-fill text-secondary" data-role="origemIcon" title="Gerado pelo sistema"></i>
                     {% endif %}
+                    <button type="button" class="btn btn-sm btn-success-matte" data-role="addHorario" data-dia="{{ dia|date:'Y-m-d' }}">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
                   {% else %}
-                    <i class="bi bi-calendar2-week text-body-secondary" data-role="origemIcon" title="{% translate 'Novo'|escapejs %}"></i>
-                  {% endif %}
+                    {% if info.afastamento_evento_id %}
+                    <button type="button" class="btn btn-sm btn-warning-matte d-none"
+                      data-role="aplicarAfastamento"
+                      data-dia="{{ dia|date:'Y-m-d' }}"
+                      data-evento-id="{{ info.afastamento_evento_id }}">
+                      <i class="bi bi-bandaid me-1"></i>{% translate 'Usar afastamento'|escapejs %}
+                    </button>
+                    {% endif %}
+                  {% endif %}{# /if not afastado #}
                 </div>
-                
-                <div class="col-6 col-md-2" data-field-wrapper="entrada">
-                  <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
-                  <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
-                </div>
-                <div class="col-6 col-md-2" data-field-wrapper="saida">
-                  <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
-                  <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
-                </div>
-                <div class="col-12 col-md-3">
-                  <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
-                  <select class="form-select form-select-sm" data-field="evento">
-                    {% for ev in eventos_choices %}
-                    <option value="{{ ev.id|safe }}"
-                    data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
-                    data-categoria="{{ ev.categoria }}"
-                    data-cor="{{ ev.cor|default:'' }}"
-                    {% if ev.id == h.evento_id %}selected{% endif %}>
-                    {{ ev.nome }}
-                  </option>
-                  {% endfor %}
-                </select>
               </div>
-              <div class="col-md">
-                <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
-                <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
-              </div>
-              <div class="col-md-auto text-end">
-                {% if not info.afastado or not h.id %}
-                <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
-                  <i class="bi bi-trash3-fill"></i>
-                </button>
-                {% endif %}
-              </div>
-            </div><!-- /horarioRow -->
-            {% endfor %}<!-- /for info.horarios -->
-          </div><!-- /horariosContainer -->
-          <!-- adiciona resumo de horas ao final de cada dia -->
-          <div class="mt-2" data-role="resumoDia">
-            <small class="text-body-secondary">
-              {% translate 'Horas'|escapejs %}: <strong data-field="horasTotais">--</strong> |
-              {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> |
-              {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
-            </small>
-          </div>          
-        </div><!-- /card-body dia -->
-      </div><!-- /card dia -->
-      
-      {% endif %}<!-- /if not bloqueado -->
-      {% endfor %}<!-- /for dias_mes -->
-      
-    </div><!-- /calendario -->
-    
-    {% endif %}<!-- /if contrato -->
-    
-  </div><!-- /tab-pane -->
-</form>
+            </div><!-- /card-header dia -->
+          
+            <div class="card-body">
+              
+              {% if info.escala %}
+              <p class="text-body-secondary small mb-2">
+                <i class="bi bi-calendar2-week"></i> Escala: <b>{{ info.escala }}</b>
+              </p>
+              {% endif %}
+              
+              <div data-role="horariosContainer"
+                data-dia="{{ dia|date:'Y-m-d' }}"
+                data-afastado="{{ info.afastado|yesno:'true,false' }}"
+                data-afastamento-evento="{{ info.afastamento_evento_id|default:'' }}"
+                data-pendente="false">
+                {% for h in info.horarios %}
+                <div class="row mb-2 g-2" 
+                  data-role="horarioRow" 
+                  data-dia-inteiro="{{ h.dia_inteiro|default:'false' }}" 
+                  data-origem="{% if h.id %}{{ h.origem }}{% else %}escala{% endif %}"
+                  data-bloqueado="{% if info.afastado and h.id %}true{% else %}false{% endif %}"
+                >
+                  <input type="hidden" data-field="id" value="{{ h.id|safe|default:'' }}">
+                  
+                  <!-- icone indica origem do registro -->
+                  <div class="col-auto d-none d-lg-flex align-items-center">
+                    {% if h.id %}
+                      {% if h.origem == 'manual' %}
+                      <i class="bi bi-pencil-fill text-warning-matte" data-role="origemIcon" title="{% translate 'Editado manualmente'|escapejs %}"></i>
+                      {% elif h.origem == 'ponto' %}
+                      <i class="bi bi-clock-fill text-info" data-role="origemIcon" title="{% translate 'Importação'|escapejs %}"></i>
+                      {% else %}
+                      <i class="bi bi-gear-fill text-secondary" data-role="origemIcon" title="Gerado pelo sistema"></i>
+                      {% endif %}
+                    {% else %}
+                      <i class="bi bi-calendar2-week text-body-secondary" data-role="origemIcon" title="{% translate 'Novo'|escapejs %}"></i>
+                    {% endif %}
+                  </div>
+                  
+                  <div class="col-6 col-md-2" data-field-wrapper="entrada">
+                    <label class="form-label small d-md-none">{% translate 'Entrada'|escapejs %}</label>
+                    <input type="time" class="form-control form-control-sm" data-field="entrada" value="{{ h.entrada }}">
+                  </div>
+                  <div class="col-6 col-md-2" data-field-wrapper="saida">
+                    <label class="form-label small d-md-none">{% translate 'Saída'|escapejs %}</label>
+                    <input type="time" class="form-control form-control-sm" data-field="saida" value="{{ h.saida }}">
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label small d-md-none">{% translate 'Evento'|escapejs %}</label>
+                    <select class="form-select form-select-sm" data-field="evento">
+                      {% for ev in eventos_choices %}
+                      <option value="{{ ev.id|safe }}"
+                        data-dia-inteiro="{{ ev.dia_inteiro|yesno:'true,false' }}"
+                        data-categoria="{{ ev.categoria }}"
+                        data-cor="{{ ev.cor|default:'' }}"
+                        {% if ev.id == h.evento_id %}selected{% endif %}>
+                        {{ ev.nome }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md">
+                    <label class="form-label small d-md-none">{% translate 'Observação'|escapejs %}</label>
+                    <input type="text" class="form-control form-control-sm" data-field="observacao" placeholder="{% translate 'Observação'|escapejs %}..." value="{{ h.observacao|default:'' }}">
+                  </div>
+                  <div class="col-md-auto text-end">
+                    {% if not info.afastado or not h.id %}
+                    <button type="button" class="btn btn-sm btn-danger-matte" data-role="removeHorario">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                    {% endif %}
+                  </div>
+                </div><!-- /horarioRow -->
+                {% endfor %}<!-- /for info.horarios -->
+              </div><!-- /horariosContainer -->
 
-</div><!-- /card-body tab-content -->
+              <!-- adiciona resumo de horas ao final de cada dia -->
+              <div class="mt-2" data-role="resumoDia">
+                <small class="text-body-secondary">
+                  {% translate 'Horas'|escapejs %}: <strong data-field="horasTotais">--</strong> |
+                  {% translate 'Intrajornada'|escapejs %}: <strong data-field="intrajornada">--</strong> |
+                  {% translate 'Interjornada'|escapejs %}: <strong data-field="interjornada">--</strong>
+                </small>
+              </div>          
+            </div><!-- /card-body dia -->
+          </div><!-- /card dia -->
+          
+          {% endif %}<!-- /if not bloqueado -->
+          {% endfor %}<!-- /for dias_mes -->
+          
+        </div><!-- /calendario -->
+        
+        {% endif %}<!-- /if contrato -->
+        
+      </div><!-- /tab-pane -->
+    </form>
+
+  </div><!-- /card-body tab-content -->
 </div><!-- /card principal -->
 {% endblock %}
 
@@ -345,16 +350,18 @@
     let isSaving = false;
     const deletarIds = new Set();
     const deletarRelatedIds = new Set();
-    
+
+    // ─── Funções utilitárias ──────────────────────────────────────────────────
+
     function novaRow() {
       const row = $$.rowTpl.content.firstElementChild.cloneNode(true);
       if ($$.eventoJornadaId) {
-          const select = row.querySelector('[data-field="evento"]');
-          const opt = [...select.options].find(o => o.value == $$.eventoJornadaId);
-          if (opt) opt.selected = true;
+        const select = row.querySelector('[data-field="evento"]');
+        const opt = [...select.options].find(o => o.value == $$.eventoJornadaId);
+        if (opt) opt.selected = true;
       }
       return row;
-  }
+    }
     
     function aplicarCorEvento(select) {
       const opt = select.options[select.selectedIndex];
@@ -368,7 +375,6 @@
       }
     }
     
-    // converte "HH:MM" em minutos totais
     function timeToMinutes(t) {
       if (!t) return null;
       const [h, m] = t.split(':').map(Number);
@@ -378,8 +384,15 @@
     function minutesToTime(min) {
       return `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;
     }
-    
-    // detecta virada de dia (saida <= entrada) e atualiza icone da linha
+
+    function bloquearRow(row) {
+      row.querySelectorAll('input, select').forEach(el => el.disabled = true);
+      const btnDel = row.querySelector('[data-role="removeHorario"]');
+      if (btnDel) btnDel.style.display = 'none';
+    }
+
+    // ─── Virada de dia ────────────────────────────────────────────────────────
+
     function atualizarVirada(row, editando=false) {
       const entrada = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
       const saida   = timeToMinutes(row.querySelector('[data-field="saida"]').value);
@@ -389,8 +402,8 @@
       if (!editando) return;
       const icon = row.querySelector('[data-role="origemIcon"]');
       if (!icon) return;
-       if (virada) {
-        icon.dataset.classeOriginal ??= icon.className;  // salva só na primeira vez
+      if (virada) {
+        icon.dataset.classeOriginal ??= icon.className;
         icon.dataset.tituloOriginal ??= icon.title;
         icon.className = 'bi bi-moon-fill text-orange';
         icon.title = '+1 dia (virada de dia)';
@@ -401,14 +414,13 @@
         delete icon.dataset.tituloOriginal;
       }
     }
+
+    // ─── Resumo de horas do dia ───────────────────────────────────────────────
     
-    
-    // calcula e exibe resumo de horas do dia no bloco resumoDia
     function calcularResumoDia(container) {
       const resumo = container.closest('.card-body')?.querySelector('[data-role="resumoDia"]');
       if (!resumo) return;
 
-      // oculta resumo se houver evento de dia inteiro ativo no container
       const temDiaInteiro = container.querySelector('[data-role="horarioRow"][data-dia-inteiro="true"]');
       if (temDiaInteiro) { resumo.style.display = 'none'; return; }
       resumo.style.display = '';
@@ -416,7 +428,6 @@
       const rows = [...container.querySelectorAll('[data-role="horarioRow"]')]
         .filter(r => !r.classList.contains('pe-none'));
 
-      // Separar slots de jornada e de intervalo (categoria INTERVALO)
       const slotsJornada   = [];
       const slotsIntervalo = [];
       for (const row of rows) {
@@ -424,7 +435,7 @@
         let entrada  = timeToMinutes(row.querySelector('[data-field="entrada"]').value);
         let saida    = timeToMinutes(row.querySelector('[data-field="saida"]').value);
         if (entrada === null || saida === null) continue;
-        if (saida <= entrada) saida += 1440; // normaliza virada
+        if (saida <= entrada) saida += 1440;
         if (cat === 'INTERVALO') slotsIntervalo.push({ entrada, saida });
         else                     slotsJornada.push({ entrada, saida });
       }
@@ -432,21 +443,16 @@
       const temDados = slotsJornada.length > 0;
       let totalMin = 0, intraMin = 0;
 
-      slotsJornada.forEach((s, i) => {
-        totalMin += s.saida - s.entrada;
-      });
+      slotsJornada.forEach(s => { totalMin += s.saida - s.entrada; });
 
       if ($$.incluirIntervalosJornada) {
-        // intrajornada = lacunas entre os slots de jornada (mesmo comportamento do engine)
         slotsJornada.forEach((s, i) => {
           if (i > 0) intraMin += s.entrada - slotsJornada[i-1].saida;
         });
       } else {
-        // intrajornada = soma dos registros com categoria INTERVALO lançados manualmente
         slotsIntervalo.forEach(s => { intraMin += s.saida - s.entrada; });
       }
 
-      // interjornada: tempo livre entre fim deste dia e início do próximo (baseado em 24h de ciclo)
       const interjornada = temDados
         ? (slotsJornada[0].entrada + 1440) - slotsJornada[slotsJornada.length - 1].saida
         : 0;
@@ -455,7 +461,8 @@
       resumo.querySelector('[data-field="interjornada"]').textContent = temDados ? minutesToTime(interjornada) : '--';
       resumo.querySelector('[data-field="intrajornada"]').textContent = temDados ? (intraMin > 0 ? minutesToTime(intraMin) : '--') : '--';
     }
-    
+
+    // ─── Toggle campos da linha (dia_inteiro, cor, virada) ────────────────────
     
     function toggleRowFields(row) {
       const select = row.querySelector('[data-field="evento"]');
@@ -467,60 +474,98 @@
       const container = row.closest('[data-role="horariosContainer"]');
       if (!container) return;
       [...container.querySelectorAll('[data-role="horarioRow"]')]
-      .filter(r => r !== row)
-      .forEach(r => {
-        ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro));
-        const id = r.querySelector('[data-field="id"]').value;
-        if(id) isDiaInteiro ? deletarRelatedIds.add(id) : deletarRelatedIds.delete(id);
-      });
-      calcularResumoDia(container); // atualiza resumo após qualquer mudança de evento
+        .filter(r => r !== row)
+        .forEach(r => {
+          ['opacity-50','pe-none','text-decoration-line-through'].forEach(cls => r.classList.toggle(cls, isDiaInteiro));
+          const id = r.querySelector('[data-field="id"]').value;
+          if (id) isDiaInteiro ? deletarRelatedIds.add(id) : deletarRelatedIds.delete(id);
+        });
+      calcularResumoDia(container);
     }
-    
+
+    // ─── Marcar dia de afastamento com registro pendente ─────────────────────
+
+    function marcarContainerPendente(container) {
+      container.dataset.pendente = 'true';
+      const card = container.closest('[data-role="cardDia"]');
+      if (!card) return;
+      const header = card.querySelector('.card-header');
+      header.classList.remove('text-bg-warning-matte');
+      header.classList.add('text-bg-danger-matte');
+    }
+
+    function desmarcarContainerPendente(container) {
+      container.dataset.pendente = 'false';
+      const card = container.closest('[data-role="cardDia"]');
+      if (!card) return;
+      const header = card.querySelector('.card-header');
+      if(header){
+        header.classList.remove('text-bg-danger-matte')
+        header.classList.add('text-bg-warning-matte')
+      };
+    }
+
+    // ─── Inicialização ────────────────────────────────────────────────────────
+
     document.querySelectorAll('[data-role="horarioRow"]').forEach(toggleRowFields);
-    
-    // bloqueia linhas de afastamento ja salvas
-    function bloquearRow(row) {
-      row.querySelectorAll('input, select').forEach(el => el.disabled = true);
-      const btnDel = row.querySelector('[data-role="removeHorario"]');
-      if (btnDel) btnDel.style.display = 'none';
-    }
     document.querySelectorAll('[data-role="horarioRow"][data-bloqueado="true"]').forEach(bloquearRow);
+
     document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
       if (container.dataset.afastado === 'true') {
         calcularResumoDia(container);
-        return; // dias afastados são tratados pelo bloco de init de afastamento abaixo
+        return; // dias afastados tratados no bloco abaixo
       }
       if (!container.querySelector('[data-role="horarioRow"]')) {
         const row = novaRow();
         container.appendChild(row);
         toggleRowFields(row);
       }
-      calcularResumoDia(container); // inicializa resumo ao carregar página
+      calcularResumoDia(container);
     });
 
+    // init dias afastados: detecta pendentes e pré-carrega evento quando sem registro
     document.querySelectorAll('[data-role="horariosContainer"][data-afastado="true"]').forEach(container => {
+      const eventoId = container.dataset.afastamentoEvento;
       const temSalvo = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value.trim() !== '');
-      if (!temSalvo) return;
-      const eventoAfastamentoId = container.dataset.afastamentoEvento;
+
+      if (!temSalvo) {
+        // sem registro salvo: pré-carrega evento de afastamento desabilitado
+        if (!eventoId) return;
+        const row = novaRow();
+        const opt = [...row.querySelector('[data-field="evento"]').options].find(o => o.value == eventoId);
+        if (opt) opt.selected = true;
+        container.appendChild(row);
+        toggleRowFields(row);
+        row.querySelectorAll('input, select, button[data-role="removeHorario"]').forEach(el => el.disabled = true);
+        return;
+      }
+
+      // tem registro salvo: verifica se já está com evento de afastamento ou é pendente
       const temRegistroAlheio = [...container.querySelectorAll('[data-role="horarioRow"]')]
-      .filter(row => row.querySelector('[data-field="id"]')?.value.trim() !== '')
-      .some(row => {
-        const select = row.querySelector('[data-field="evento"]');
-        return select?.value != eventoAfastamentoId;
-      });
-      if (!temRegistroAlheio) return;
-      
+        .filter(row => row.querySelector('[data-field="id"]')?.value.trim() !== '')
+        .some(row => row.querySelector('[data-field="evento"]')?.value != eventoId);
+
+      if (!temRegistroAlheio) return; // já tratado — sem ação
+
+      // pendente: destaca e exibe botão
+      marcarContainerPendente(container);
       const btn = document.querySelector(`[data-role="aplicarAfastamento"][data-dia="${container.dataset.dia}"]`);
       if (btn) btn.classList.remove('d-none');
     });
+
+    // ─── Event listeners ──────────────────────────────────────────────────────
     
     document.addEventListener('click', e => {
       const target = e.target.closest('[data-role]');
       if (!target) return;
       const role = target.dataset.role;
       
-      if (role === 'run_filter') { aplicarFiltros() }
-      else if (role === 'clear_filter') { limparFiltros() }
+      if (role === 'run_filter') {
+        aplicarFiltros();
+      }
+      else if (role === 'clear_filter') {
+        limparFiltros();
+      }
       else if (role === 'addHorario') {
         const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${target.dataset.dia}"]`);
         const row = novaRow();
@@ -554,50 +599,53 @@
       else if (role === 'removeHorario') {
         const container = target.closest('[data-role="horariosContainer"]');
         const row = target.closest('[data-role="horarioRow"]');
-        if(row.dataset.bloqueado === 'true') return;
+        if (row.dataset.bloqueado === 'true') return;
         const id = row.querySelector('[data-field="id"]').value;
         if (container.querySelectorAll('[data-role="horarioRow"]').length > 1) {
           if (id) deletarIds.add(id);
           row.remove();
-          calcularResumoDia(container); // atualiza resumo apos remocao
+          calcularResumoDia(container);
         } else {
-          // ao tentar apagar ultima linha, apenas limpa dados
           if (id) deletarIds.add(id);
           row.dataset.deleted = 'true';
-          row.querySelector('[data-field="id"]').value        = '';
-          row.querySelector('[data-field="entrada"]').value   = '';
-          row.querySelector('[data-field="saida"]').value     = '';
+          row.querySelector('[data-field="id"]').value         = '';
+          row.querySelector('[data-field="entrada"]').value    = '';
+          row.querySelector('[data-field="saida"]').value      = '';
           row.querySelector('[data-field="observacao"]').value = '';
           row.querySelector('[data-field="evento"]').selectedIndex = 0;
-          toggleRowFields(row);   // reseta cor, dia-inteiro, virada
-          calcularResumoDia(container); // reseta resumo de horas
+          toggleRowFields(row);
+          calcularResumoDia(container);
         }
       }
       else if (role === 'aplicarAfastamento') {
-        const dia        = target.dataset.dia;
-        const eventoId   = target.dataset.eventoId;
-        const container  = document.querySelector(`[data-role="horariosContainer"][data-dia="${dia}"]`);
+        const dia       = target.dataset.dia;
+        const eventoId  = target.dataset.eventoId;
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${dia}"]`);
         if (!container) return;
         
-        // marca todos os IDs salvos existentes para deleção
+        // marca IDs existentes para deleção
         container.querySelectorAll('[data-field="id"]').forEach(el => {
           if (el.value.trim()) deletarIds.add(el.value.trim());
         });
         
-        // limpa o container
         container.innerHTML = '';
         
-        // cria nova linha com evento de afastamento, já bloqueada
         const row = novaRow();
         const select = row.querySelector('[data-field="evento"]');
         const opt = [...select.options].find(o => o.value == eventoId);
         if (opt) opt.selected = true;
-        row.setAttribute('data-dirty', 'true');  // força envio no save
+        row.setAttribute('data-dirty', 'true');
         container.appendChild(row);
         toggleRowFields(row);
-        bloquearRow(row);  // bloqueia imediatamente
+        bloquearRow(row);
         calcularResumoDia(container);
-        target.classList.add('d-none'); // oculta o botão após uso
+
+        // remove marcação de pendente
+        desmarcarContainerPendente(container);
+        target.classList.add('d-none');
+
+        // re-aplica filtro ativo para atualizar visibilidade imediatamente
+        aplicarFiltros();
       }
       else if (role === 'saveAll') {
         saveFrequencias();
@@ -605,49 +653,47 @@
     });
     
     document.addEventListener('change', e => {
-      // marca linha como data-dirty=true para informar que foi alterada, somente linhas 
-      // alteradas são enviadas para o payload
       const row = e.target.closest('[data-role="horarioRow"]');
-      if (row?.dataset.bloqueado === 'true') return;  // ← adicionar esta linha
+      if (row?.dataset.bloqueado === 'true') return;
       if (['entrada', 'saida', 'evento', 'observacao'].includes(e.target.dataset.field)) {
         row?.setAttribute('data-dirty', 'true');
       }
-      if (e.target.dataset.field === 'evento')
-      toggleRowFields(row);
-      // atualiza virada e resumo ao mudar qualquer campo de hora
+      if (e.target.dataset.field === 'evento') toggleRowFields(row);
       if (e.target.dataset.field === 'entrada' || e.target.dataset.field === 'saida') {
         atualizarVirada(row, true);
         calcularResumoDia(row.closest('[data-role="horariosContainer"]'));
       }
     });
+
+    // switch Pendentes: aplica filtro imediatamente ao mudar
+    document.getElementById('id_filter_empty')?.addEventListener('change', aplicarFiltros);
     
-    // carregar escala para todos os dias nao preenchidos
+    // carregar escala para todos os dias não preenchidos
     document.querySelector('[data-role="carregarEscalaTodos"]')?.addEventListener('click', () => {
       document.querySelectorAll('[data-role="carregarEscala"]').forEach(btn => {
-        if (btn.disabled) return; // já carregado
-        
-        const container = document.querySelector(
-        `[data-role="horariosContainer"][data-dia="${btn.dataset.dia}"]`
-        );
+        if (btn.disabled) return;
+        const container = document.querySelector(`[data-role="horariosContainer"][data-dia="${btn.dataset.dia}"]`);
         if (!container) return;
-        
-        // pula se ha qualquer registro ja salvo (id preenchido)
-        const temSalvo = [...container.querySelectorAll('[data-field="id"]')]
-        .some(el => el.value.trim() !== '');
+        const temSalvo = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value.trim() !== '');
         if (temSalvo) return;
-        
-        // pula se há evento dia inteiro ativo
-        const temDiaInteiro = container.querySelector(
-        '[data-role="horarioRow"][data-dia-inteiro="true"]'
-        );
+        const temDiaInteiro = container.querySelector('[data-role="horarioRow"][data-dia-inteiro="true"]');
         if (temDiaInteiro) return;
-        
         btn.click();
       });
     });
+
+    // ─── Save ─────────────────────────────────────────────────────────────────
     
     function saveFrequencias() {
       if (isSaving) return;
+
+      // bloqueia se houver dias de afastamento com registro pendente
+      const pendentes = document.querySelectorAll('[data-role="horariosContainer"][data-pendente="true"]');
+      if (pendentes.length) {
+        appNotify('warning', `{% translate 'Ajuste as pendências antes de salvar'|escapejs %}`, false);
+        return;
+      }
+
       const frequencias = [];
       const slotsPorDia = {};
       
@@ -655,7 +701,6 @@
       
       for (const row of document.querySelectorAll('[data-role="horarioRow"]')) {
         if (row.dataset.deleted === 'true') continue;
-        // linhas bloqueadas sem dirty nunca são enviadas (ex: registros de afastamento preexistentes)
         if (row.dataset.bloqueado === 'true' && row.dataset.dirty !== 'true') continue;
         
         const isDirty = row.dataset.dirty === 'true' || !row.querySelector('[data-field="id"]').value;
@@ -671,8 +716,7 @@
         
         if (!evSelect.value) continue;
         
-        // eventos dia_inteiro: não usam entrada/saída — campos podem estar disabled
-        // e o banco os ignora (inicio=null, fim=null). Envia apenas evento + dia.
+        // eventos dia_inteiro: envia sem entrada/saída (banco salva inicio=null, fim=null)
         if (isDiaInteiro) {
           frequencias.push({
             id:         row.querySelector('[data-field="id"]').value || null,
@@ -686,11 +730,13 @@
           continue;
         }
         
-        // eventos com horário: valida presença e consistência
         const hIn  = inputIn.value;
         const hOut = inputOut.value;
-        if (!hIn && !hOut) continue; // continua em linhas vazias, nao eh carregado no payload
         
+        // linha vazia (dia não preenchido) — ignora silenciosamente
+        if (!hIn && !hOut) continue;
+        
+        // linha parcialmente preenchida — erro
         if (!hIn || !hOut) {
           inputIn.classList.add('is-invalid');
           inputOut.classList.add('is-invalid');
@@ -705,10 +751,9 @@
           return;
         }
         
-        // verifica overlap com outros slots do mesmo dia neste payload
         if (!slotsPorDia[dia]) slotsPorDia[dia] = [];
-        const minIn  = timeToMinutes(hIn);
-        const minOut = timeToMinutes(hOut) + (virada ? 1440 : 0);
+        const minIn    = timeToMinutes(hIn);
+        const minOut   = timeToMinutes(hOut) + (virada ? 1440 : 0);
         const conflito = slotsPorDia[dia].find(s => minIn < s.out && minOut > s.in);
         if (conflito) {
           conflito.rowRef.querySelector('[data-field="saida"]').classList.add('is-invalid');
@@ -764,33 +809,32 @@
       });
     }
 
+    // ─── Filtros ──────────────────────────────────────────────────────────────
     
-    // funcao para filtro nas linhas (tudo no cliente)
-    // apenas aplica d-none
     function filtrarDias(options = {}) {
       const {
         apenasVazios = false,
         categoria    = null,
-        inicio   = null,
-        fim      = null,
+        inicio       = null,
+        fim          = null,
       } = options;
       
       document.querySelectorAll('[data-role="horariosContainer"]').forEach(container => {
-        const card = container.closest('.card');
-        const dia  = container.dataset.dia; // formato YYYY-MM-DD
+        const card = container.closest('[data-role="cardDia"]');
+        const dia  = container.dataset.dia;
         
-        // intervalo de datas
         if (inicio && dia < inicio) { card.style.display = 'none'; return; }
         if (fim    && dia > fim)    { card.style.display = 'none'; return; }
         
-        // filtro dias em branco: nenhum id salvo E nenhum valor preenchido
         if (apenasVazios) {
+          // pendente de afastamento é tratado como pendência — garante visível
+          if (container.dataset.pendente === 'true') { card.style.display = ''; return; }
+
           const temSalvo   = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value);
           const temPreench = [...container.querySelectorAll('[data-field="entrada"]')].some(el => el.value);
           if (temSalvo || temPreench) { card.style.display = 'none'; return; }
         }
         
-        // filtro por categoria de evento
         if (categoria) {
           const rows = [...container.querySelectorAll('[data-role="horarioRow"]')];
           const bate = rows.some(row => {
@@ -798,7 +842,8 @@
             return sel?.selectedOptions[0]?.dataset.categoria === categoria;
           });
           if (!bate) { card.style.display = 'none'; return; }
-        }        
+        }
+        
         card.style.display = '';
       });
     }
@@ -807,42 +852,24 @@
       const apenasVazios = document.getElementById('id_filter_empty')?.checked   ?? false;
       const categoria    = document.getElementById('id_filter_categoria')?.value || null;
       const inicio       = document.getElementById('id_filter_inicio')?.value    || null;
-      const fim          = document.getElementById('id_filter_fim')?.value       || null;
+      const fim          = document.getElementById('id_filter_fim')?.value        || null;
       
       filtrarDias({ apenasVazios, categoria, inicio, fim });
       
-      // indica visualmente que há filtro ativo
       const temFiltro = apenasVazios || categoria || inicio || fim;
       document.getElementById('btn_clear_filter').style.display = temFiltro ? '' : 'none';
     }
     
     function limparFiltros() {
-      const ids = ['id_filter_empty', 'id_filter_categoria', 'id_filter_inicio', 'id_filter_fim'];
-      ids.forEach(id => {
+      ['id_filter_empty', 'id_filter_categoria', 'id_filter_inicio', 'id_filter_fim'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         if (el.type === 'checkbox') el.checked = false;
         else el.value = '';
       });
-      filtrarDias({}); // chama funcao sem params para limpar filtros
+      filtrarDias({});
       document.getElementById('btn_clear_filter').style.display = 'none';
     }
-
-    // pré-carrega evento de afastamento nos dias afastados sem registro salvo
-    document.querySelectorAll('[data-role="horariosContainer"][data-afastado="true"]').forEach(container => {
-      const eventoId = container.dataset.afastamentoEvento;
-      if (!eventoId) return;  // cfg não configurado — não interfere
-      // só pré-carrega se não há nenhum registro já salvo neste dia
-      const temSalvo = [...container.querySelectorAll('[data-field="id"]')].some(el => el.value.trim() !== '');
-      if (temSalvo) return;
-      // cria linha, seleciona o evento de afastamento e desabilita campos (somente-leitura)
-      const row = novaRow();
-      const opt = [...row.querySelector('[data-field="evento"]').options].find(o => o.value == eventoId);
-      if (opt) opt.selected = true;
-      container.appendChild(row);
-      toggleRowFields(row);                                              // aplica dia_inteiro, cor etc.
-      row.querySelectorAll('input, select, button[data-role="removeHorario"]').forEach(el => el.disabled = true);
-    });
 
   })();
   
