@@ -78,7 +78,7 @@ _ACOES = {
         'label':            _('Fechar frequência'),
         'job_tipo':         ProcessamentoJob.Tipo.FECHAR_FREQ,
         'resumo_fn':        None,
-        'icon':             'bi bi-lock-fill text-info-matte',
+        # 'icon':             'bi bi-lock-fill text-info-matte',
         'metric_min_width': None,
         'metric_style':     {},
         'card_links':       {},
@@ -110,7 +110,7 @@ _ACOES = {
         'label':            _('Fechar folha'),
         'job_tipo':         ProcessamentoJob.Tipo.FECHAR_FOLHA,
         'resumo_fn':        None,
-        'icon':             'bi bi-lock-fill text-warning-matte',
+        # 'icon':             'bi bi-lock-fill text-warning-matte',
         'metric_min_width': None,
         'metric_style':     {},
         'card_links':       {},
@@ -199,7 +199,7 @@ class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
                     {
                         'acao':  sub_acao,
                         'label': _ACOES[sub_acao]['label'],
-                        'icon':  _ACOES[sub_acao]['icon'],
+                        'icon':  _ACOES[sub_acao].get('icon', None),
                         'job':   jobs_map.get(_ACOES[sub_acao]['job_tipo']),
                     }
                     for sub_acao in cfg.get('sub_jobs', [])
