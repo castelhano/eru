@@ -206,7 +206,28 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 [data-bs-theme="dark"] .table-emphasis td, td.table-emphasis { background-color: #2d3748 !important; color: #e2e8f0 !important; }
 
 /* classes estilizacao bg text color, seguindo paleta fosca 'matte' */
-.text-bg-danger-matte { background-color: rgba(220, 53, 69, 0.12) !important; color: #dc3545 !important; }
+.text-bg-danger-matte { background-color: #fcebed !important; color: #dc3545 !important; }
+.text-bg-success-matte { background-color: #e9f5ef !important; color: #198754 !important; }
+.text-bg-warning-matte { background-color: #fff8e6 !important; color: #4b3c10 !important; }
+.text-bg-info-matte { background-color: #ebf5f7 !important; color: #2c8191 !important; }
+.text-bg-primary-matte { background-color: #eff2f4 !important; color: #5a7d9a !important; }
+.text-bg-secondary-matte { background-color: #f0f1f2 !important; color: #6c757d !important; }
+.text-bg-purple-matte { background-color: #f1ecf9 !important; color: #6f42c1 !important; }
+.text-bg-orange-matte { background-color: #ffefef !important; color: #fd7e14 !important; }
+.text-bg-pink-matte { background-color: #fbeaf2 !important; color: #d63384 !important; }
+.text-bg-dark-matte { background-color: #e9e9ea !important; color: #212529 !important; }
+[data-bs-theme="dark"] .text-bg-danger-matte { background-color: #3b282b !important; color: #ff8585 !important; }
+[data-bs-theme="dark"] .text-bg-success-matte { background-color: #22322f !important; color: #75f0a3 !important; }
+[data-bs-theme="dark"] .text-bg-success-matte-2 { background-color: #22322f !important; color: #78a68d !important; }
+[data-bs-theme="dark"] .text-bg-warning-matte { background-color: #423f24 !important; color: #ffda6a !important; }
+[data-bs-theme="dark"] .text-bg-info-matte { background-color: #27393d !important; color: #6edff6 !important; }
+[data-bs-theme="dark"] .text-bg-primary-matte { background-color: #28333d !important; color: #8eb3d3 !important; }
+[data-bs-theme="dark"] .text-bg-secondary-matte { background-color: #2b3034 !important; color: #adb5bd !important; }
+[data-bs-theme="dark"] .text-bg-purple-matte { background-color: #2b263e !important; color: #a370f7 !important; }
+[data-bs-theme="dark"] .text-bg-orange-matte { background-color: #3b3127 !important; color: #feb272 !important; }
+[data-bs-theme="dark"] .text-bg-pink-matte { background-color: #362936 !important; color: #e685b5 !important; }
+[data-bs-theme="dark"] .text-bg-dark-matte { background-color: #2c3034 !important; color: #adb5bd !important; }
+/* .text-bg-danger-matte { background-color: rgba(220, 53, 69, 0.12) !important; color: #dc3545 !important; }
 .text-bg-success-matte { background-color: rgba(25, 135, 84, 0.12) !important; color: #198754 !important; }
 .text-bg-warning-matte { background-color: rgba(255, 193, 7, 0.15) !important; color: #4b3c10 !important; }
 .text-bg-info-matte { background-color: rgba(49, 151, 171, 0.12) !important; color: #2c8191 !important; }
@@ -215,8 +236,8 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 .text-bg-purple-matte { background-color: rgba(111, 66, 193, 0.12) !important; color: #6f42c1 !important; }
 .text-bg-orange-matte { background-color: rgba(253, 126, 20, 0.12) !important; color: #fd7e14 !important; }
 .text-bg-pink-matte { background-color: rgba(214, 51, 132, 0.12) !important; color: #d63384 !important; }
-.text-bg-dark-matte { background-color: rgba(33, 37, 41, 0.12) !important; color: #212529 !important; }
-[data-bs-theme="dark"] .text-bg-danger-matte { color: #ff8585 !important; }
+.text-bg-dark-matte { background-color: rgba(33, 37, 41, 0.12) !important; color: #212529 !important; } */
+/* [data-bs-theme="dark"] .text-bg-danger-matte { color: #ff8585 !important; }
 [data-bs-theme="dark"] .text-bg-success-matte { color: #75f0a3 !important; }
 [data-bs-theme="dark"] .text-bg-warning-matte { color: #ffda6a !important; }
 [data-bs-theme="dark"] .text-bg-info-matte { color: #6edff6 !important; }
@@ -225,7 +246,7 @@ tr.selected td{background-color: var(--bs-secondary-bg);}
 [data-bs-theme="dark"] .text-bg-purple-matte { color: #a370f7 !important; }
 [data-bs-theme="dark"] .text-bg-orange-matte { color: #feb272 !important; }
 [data-bs-theme="dark"] .text-bg-pink-matte { color: #e685b5 !important; }
-[data-bs-theme="dark"] .text-bg-dark-matte { background-color: rgba(255, 255, 255, 0.05) !important; color: #adb5bd !important; }
+[data-bs-theme="dark"] .text-bg-dark-matte { background-color: rgba(255, 255, 255, 0.05) !important; color: #adb5bd !important; } */
 
 
 

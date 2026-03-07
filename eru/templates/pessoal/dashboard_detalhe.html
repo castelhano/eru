@@ -22,11 +22,67 @@
     list-style: none;
 }
 .erros-list li:last-child { border-bottom: none; }
+
+/* botão voltar ao topo */
+#btn-scroll-top {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1050;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+}
+#btn-scroll-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* card ocupa todo o espaço disponível abaixo do header do layout */
+.card-detalhe {
+    height: calc(100vh - 66px); /* 50px header layout + 16px margem do mt-2 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* card-body cresce para preencher o card e controla o scroll */
+.card-detalhe .card-body {
+    flex: 1;
+    overflow: hidden;           /* contém o table-responsive */
+    display: flex;
+    flex-direction: column;
+}
+
+/* table-responsive ocupa o espaço restante após o detalhe-header */
+.card-detalhe .table-responsive {
+    flex: 1;
+    overflow-y: auto;
+}
+.table-detalhe {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+/* thead sticky relativo ao scroll do table-responsive */
+.table-detalhe thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-top: 1px solid var(--bs-border-color);
+    border-bottom: 2px solid var(--bs-border-color);
+    background-color: var(--bs-body-bg);
+    background-clip: padding-box;
+}
 {% endblock %}
 </style>
 
 {% block content_fluid %}
-<div class="card mt-2">
+<div class="card mt-2 card-detalhe">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
@@ -35,7 +91,9 @@
             <li class="nav-item ms-auto">
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-secondary-matte" onclick="window.close()">{% translate 'Fechar' %}</button>
-                    {% btn_tag 'CSV' icon="bi bi-arrow-bar-down" class="btn btn-sm btn-warning-matte" href=export_url %}
+                    {% if linhas %}
+                        {% btn_tag 'CSV' icon="bi bi-arrow-bar-down" class="btn btn-sm btn-warning-matte" href=export_url %}
+                    {% endif %}
                 </div>
             </li>
         </ul>
@@ -45,7 +103,6 @@
 
         {% if erro %}
         <div class="alert alert-danger">{{ erro }}</div>
-
         {% else %}
 
         <div class="detalhe-header">
@@ -59,11 +116,11 @@
 
         {% if linhas %}
         <div class="table-responsive">
-            <table class="table table-sm table-hover border small">
-                <thead class="sticky-top">
+            <table class="table table-sm table-hover border border-top-0 small table-detalhe">
+                <thead>
                     <tr>
                         {% for col_key, col_label in colunas %}
-                        <th>{{ col_label }}</th>
+                        <th class="text-bg-success-matte-2">{{ col_label }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -89,7 +146,7 @@
                                 {% endif %}
 
                             {% elif col_key == 'status' %}
-                                <span class="badge {% if val == 'Fechado' or val == 'Processado' or val == 'Pago' %}bg-success{% elif val == 'Aberto' or val == 'Rascunho' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                <span class="badge {% if val == 'Fechado' or val == 'Processado' or val == 'Pago' %}text-bg-success-matte{% elif val == 'Aberto' or val == 'Rascunho' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
                                     {{ val }}
                                 </span>
 
@@ -122,4 +179,26 @@
         {% endif %}
     </div>
 </div>
+
+<!-- botão voltar ao topo -->
+<button id="btn-scroll-top" class="btn btn-sm btn-secondary-matte" title="Voltar ao topo">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
 {% endblock %}
+
+<script>
+{% block add_script %}
+(function () {
+    const btn = document.getElementById('btn-scroll-top');
+
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 200);
+    }, { passive: true });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+})();
+{% endblock %}
+</script>
