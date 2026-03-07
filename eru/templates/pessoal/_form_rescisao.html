@@ -3,7 +3,7 @@
     <h5 class="card-title">{% translate 'Desligamento'|escapejs %}: <b class="text-purple">{% translate 'Funcionário'|escapejs %}</b></h5>
     <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
     <details class="my-2 small">
-        <summary class="text-bg-primary-matte px-2 py-1 fw-bold">Detalhes</summary>
+        <summary id="filter" class="text-bg-primary-matte px-2 py-1 fw-bold">{% translate 'Detalhes'|escapejs %} <sup class="badge d-none d-lg-inline-block text-bg-orange-matte">F2</sup></summary>
         <dl class="custom-dl mt-2">
             <dt>Matrícula:</dt><dd class="text-bg-secondary-matte">{{funcionario.matricula}}</dd>
             <dt>Nome:</dt><dd class="text-bg-secondary-matte">{{funcionario.nome}}</dd>
@@ -57,7 +57,7 @@
                 <input type="hidden" name="contrato" value="{{ contrato.id|safe }}">
                 
                 <div class="mt-3">
-                    {% btn_tag _('Desligar') class="btn btn-sm btn-danger-matte" id="submit" type="submit" data_confirm="true" %}
+                    {% btn_tag _('Desligar') class="btn btn-sm btn-danger-matte" id="submitBtn" type="submit" data_confirm="true" %}
                 </div>
             </div>
 

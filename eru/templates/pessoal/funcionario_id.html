@@ -153,9 +153,9 @@
 
 <script>
     {% block add_script %}
-    const [cpf, cnh] = _formRun();
+    const [cpf, cnh] = _formRun();    
     const form = new jsForm('#pessoal_form', {
-        imask: [cpf, cnh]
+        imask: [cpf, cnh],
     })
     {% if disabled %}
     form.disabled();

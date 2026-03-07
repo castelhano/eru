@@ -85,20 +85,25 @@ summary, dl, dd {
 
 <script>
     {% block add_script %}
+    appKeyMap.bind('f2', ()=>{document.getElementById('detail_funcionario').click()}, {
+        icon: 'bi bi-funnel-fill', 
+        desc:'{% translate 'Exibe lista de detalhes'|escapejs %}', 
+        origin: 'rescisao.html'
+    })
     const form = new jsForm(document.getElementById('pessoal_form'), {})
     
     // ajusta atributos do modal de confirmacao para desligamento
-    const submitBtn = document.getElementById('submit');
+    const submitBtn = document.getElementById('submitBtn');
     const msg = [
     "<b class='text-danger-matte me-2'>{% translate 'Atenção'|escapejs %}!</b>",
-    "{% translate 'Desligar funcionário gera atualizações em cascata em todo o sistema.'|escapejs %}!<br><br>",
-    "{% translate 'Revise com cautela as informações inseridas antes de prosseguir com a baixa definitiva.'|escapejs %}!",
+    "{% translate 'Desligar funcionário gera atualizações em cascata em todo o sistema.'|escapejs %}<br><br>",
+    "{% translate 'Revise com cautela as informações inseridas antes de prosseguir com a baixa definitiva.'|escapejs %}",
     ];
     const confirmModalAttrs = {
         confirmMessage: msg.join(' '),
         confirmColor: 'danger-matte',
         confirmText: '{% translate 'Desligar'|escapejs %}',
-        confirmDelay: 10
+        confirmDelay: 1
     }
     Object.assign(submitBtn.dataset, confirmModalAttrs);
     

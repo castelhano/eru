@@ -122,6 +122,7 @@ class Funcionario(Pessoa):
         ATIVO     = "A", _("Ativo")
         AFASTADO  = "F", _("Afastado")
         DESLIGADO = "D", _("Desligado")
+        PROCESSANDO_DESLIGAMENTO = "PD", _("Desligando") + '...'
     filial        = models.ForeignKey(Filial, on_delete=models.RESTRICT, verbose_name=_('Filial'))
     matricula     = models.CharField(_('Matricula'), max_length=15, unique=True, blank=False)
     data_admissao = models.DateField(_('Data Admissao'), blank=True, null=True, default=date.today)
@@ -175,7 +176,7 @@ class Funcionario(Pessoa):
         return self._cached_contrato
     @property
     def F_eh_editavel(self):
-        return self.status != self.Status.DESLIGADO
+        return self.status not in [self.Status.DESLIGADO, self.Status.PROCESSANDO_DESLIGAMENTO]
     @property
     def F_cargo(self):
         return self.F_contrato.cargo if self.F_contrato else None
@@ -552,7 +553,7 @@ class Rescisao(models.Model):
     decimo_terceiro_proporcional = models.BooleanField(_('13 Proporcional Pago'), default=False)
     total_bruto   = models.DecimalField(_('Total Bruto'), max_digits=12, decimal_places=2, default=0)
     total_liquido = models.DecimalField(_('Total Líquido'), max_digits=12, decimal_places=2, default=0)
-    regras = models.JSONField( _('Memória de Cálculo'), default=dict)
+    regras = models.JSONField( _('Memória de Cálculo'), default=dict, blank=True)
     detalhe = models.TextField(_('Detalhe'), blank=True)
     class Meta:
         default_permissions = ()

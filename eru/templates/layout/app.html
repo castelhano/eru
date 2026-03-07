@@ -234,7 +234,7 @@
         appKeyMap.bind('alt+i', ()=>{try{document.getElementById('home').click()}catch(e){}}, {icon: 'bi bi-house-fill', desc:'{% translate 'Retorna à página inicial'|escapejs %}'})
         if(document.getElementById('root')){appKeyMap.bind('alt+.', ()=>{try{document.getElementById('root').click()}catch(e){}}, {desc:'{% translate 'Retorna inicio do módulo'|escapejs %}'})}
         if(document.getElementById('add')){appKeyMap.bind('alt+n', ()=>{try{document.getElementById('add').click()}catch(e){}}, {icon: 'bi bi-plus-square-fill text-success', desc:'{% translate 'Novo registro'|escapejs %}'})}
-        if(document.getElementById('submit')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submit').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'{% translate 'Grava alterações'|escapejs %}'})}
+        if(document.getElementById('submitBtn')){appKeyMap.bind('alt+g', ()=>{try{document.getElementById('submitBtn').click()}catch(e){}}, {icon: 'bi bi-floppy-fill text-primary', desc:'{% translate 'Grava alterações'|escapejs %}'})}
         if(document.getElementById('back')){appKeyMap.bind('alt+v', ()=>{try{document.getElementById('back').click()}catch(e){}}, {icon: 'bi bi-arrow-up', desc:'{% translate 'Retorna origem'|escapejs %}'})}
         if(document.getElementById('extra')){appKeyMap.bind('f3', ()=>{try{document.getElementById('extra').click()}catch(e){}}, {icon: 'bi bi-three-dots-vertical', desc:'{% translate 'Exibe lista de operações para registro'|escapejs %}'})}
         if(document.getElementById('filter')){appKeyMap.bind('alt+f', ()=>{try{document.getElementById('filter').click()}catch(e){}}, {icon: 'bi bi-search', desc:'{% translate 'Aplica filtros na página'|escapejs %}'})}

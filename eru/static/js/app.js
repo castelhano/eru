@@ -389,6 +389,9 @@ function appAlert(tipo, mensagem, options={}){
             appModalConfirm.hide();
           };
         }
+        else if(el.type == 'submit' && el.form){
+          document.getElementById('appModalConfirm_button').onclick = () => {el.form.submit()};
+        }
         if(el.hasAttribute('data-confirm-delay')){
           span = document.createElement('span');
           let counter = el.getAttribute('data-confirm-delay');
