@@ -13,13 +13,9 @@ _ACOES — registro central de cada processo:
                            campo        → chave no dict retornado por resumo_fn
                            label        → texto exibido abaixo do valor
                            format       → 'int' | 'float1' | 'float2' | 'currency' | 'check'
-                           css          → classe base do metric-box (accent/warn/danger/…)
-                           css_fn       → callable(valor) → str — sobrescreve css dinamicamente
-                                          ex: lambda v: 'danger' if v else 'accent'
+                           css          → classe extra do metric-box (accent/warn/danger/…)
                            hide_if_zero → bool — oculta o box se valor == 0 (padrão False)
                            url_key      → chave em card_links para tornar o box clicável
-                           url_fn       → callable(valor) → bool — suprime o link se False
-                                          ex: lambda v: v > 0  (só clicável se houver ocorrências)
     card_links       → dict campo → URL de detalhe (target=_blank)
                        Use {filial_id} e {competencia} como placeholders.
                        Use None para deixar o box não-clicável.
@@ -42,7 +38,7 @@ from django.shortcuts import redirect
 
 from core.views import BaseTemplateView
 from pessoal.models import (
-    Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob
+    Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob, Funcionario
 )
 from pessoal.tasks import (
     disparar_consolidacao, disparar_folha, disparar_carga_escala,
@@ -70,13 +66,13 @@ _ACOES = {
         'icon':             'bi bi-calendar-check-fill text-info-matte',
         'permission':       'pessoal.consolidar_frequencia',
         'metric_fields': [
-            {'campo': 'consolidados',    'label': _('Consolidados'),     'format': 'int',     'css': 'accent', 'hide_if_zero': False, 'url_key': 'consolidados',    'url_fn': None,                  'css_fn': None},
-            {'campo': 'total_contratos', 'label': _('Contratos ativos'), 'format': 'int',     'css': '',       'hide_if_zero': False, 'url_key': 'total_contratos', 'url_fn': None,                  'css_fn': None},
-            {'campo': 'pendencias',      'label': _('Pendências'),       'format': 'check',   'css': 'danger', 'hide_if_zero': False, 'url_key': 'pendencias',      'url_fn': lambda v: v > 0,       'css_fn': lambda v: 'danger' if v else 'accent'},
-            {'campo': 'H_horas_extras',  'label': _('Horas extras'),     'format': 'float1h', 'css': 'accent', 'hide_if_zero': False, 'url_key': 'H_horas_extras',  'url_fn': lambda v: v > 0,       'css_fn': None},
-            {'campo': 'dias_falta_just', 'label': _('Faltas justif.'),   'format': 'int',     'css': 'warn',   'hide_if_zero': False, 'url_key': 'dias_falta_just', 'url_fn': lambda v: v > 0,       'css_fn': lambda v: 'warn' if v else ''},
-            {'campo': 'dias_falta_njust','label': _('Faltas injustif.'), 'format': 'int',     'css': 'danger', 'hide_if_zero': False, 'url_key': 'dias_falta_njust','url_fn': lambda v: v > 0,       'css_fn': lambda v: 'danger' if v else ''},
-            {'campo': 'dias_atestado',   'label': _('Afastamentos'),     'format': 'int',     'css': '',       'hide_if_zero': False, 'url_key': 'dias_atestado',   'url_fn': lambda v: v > 0,       'css_fn': None},
+            {'campo': 'consolidados',    'label': _('Consolidados'),      'format': 'int',    'css': 'accent',  'hide_if_zero': False, 'url_key': 'consolidados'},
+            {'campo': 'total_contratos', 'label': _('Contratos ativos'),  'format': 'int',    'css': '',        'hide_if_zero': False, 'url_key': 'total_contratos'},
+            {'campo': 'pendencias',      'label': _('Pendências'),        'format': 'check',  'css': 'danger',  'hide_if_zero': False, 'url_key': 'pendencias'},
+            {'campo': 'H_horas_extras',  'label': _('Horas extras'),      'format': 'float1h','css': 'accent',  'hide_if_zero': False, 'url_key': 'H_horas_extras'},
+            {'campo': 'dias_falta_just', 'label': _('Faltas justif.'),    'format': 'int',    'css': 'warn',    'hide_if_zero': False, 'url_key': 'dias_falta_just'},
+            {'campo': 'dias_falta_njust','label': _('Faltas injustif.'),  'format': 'int',    'css': 'danger',  'hide_if_zero': False, 'url_key': 'dias_falta_njust'},
+            {'campo': 'dias_atestado',   'label': _('Afastamentos'),      'format': 'int',    'css': '',        'hide_if_zero': False, 'url_key': 'dias_atestado'},
         ],
         'card_links': {
             'pendencias':       '/pessoal/dashboard/detalhe/?tipo=freq_erros&filial_id={filial_id}&competencia={competencia}',
@@ -93,6 +89,7 @@ _ACOES = {
                 'label':      _('Fechar frequência'),
                 'job_tipo':   ProcessamentoJob.Tipo.FECHAR_FREQ,
                 'permission': 'pessoal.consolidar_frequencia',
+                'icon':       'bi bi-lock-fill text-info-matte',
             },
         },
     },
@@ -103,11 +100,11 @@ _ACOES = {
         'icon':             'bi bi-percent text-warning-matte',
         'permission':       'pessoal.rodar_folha',
         'metric_fields': [
-            {'campo': 'total_bruto',     'label': _('Proventos (R$)'), 'format': 'currency', 'css': 'accent', 'hide_if_zero': False, 'url_key': 'total_bruto',     'url_fn': None,            'css_fn': None},
-            {'campo': 'total_descontos', 'label': _('Descontos (R$)'), 'format': 'currency', 'css': 'danger', 'hide_if_zero': False, 'url_key': 'total_descontos', 'url_fn': None,            'css_fn': None},
-            {'campo': 'total_liq',       'label': _('Líquido (R$)'),   'format': 'currency', 'css': '',       'hide_if_zero': False, 'url_key': 'total_liq',       'url_fn': None,            'css_fn': None},
-            {'campo': 'qtd_total',       'label': _('Funcionários'),   'format': 'int',      'css': '',       'hide_if_zero': False, 'url_key': 'qtd_total',       'url_fn': None,            'css_fn': None},
-            {'campo': 'qtd_erros',       'label': _('Com erros'),      'format': 'check',    'css': 'danger', 'hide_if_zero': False, 'url_key': 'qtd_erros',       'url_fn': lambda v: v > 0, 'css_fn': lambda v: 'danger' if v else 'accent'},
+            {'campo': 'total_bruto',     'label': _('Proventos (R$)'),   'format': 'currency', 'css': 'accent',  'hide_if_zero': False, 'url_key': 'total_bruto'},
+            {'campo': 'total_descontos', 'label': _('Descontos (R$)'),   'format': 'currency', 'css': 'danger',  'hide_if_zero': False, 'url_key': 'total_descontos'},
+            {'campo': 'total_liq',       'label': _('Líquido (R$)'),     'format': 'currency', 'css': '',        'hide_if_zero': False, 'url_key': 'total_liq'},
+            {'campo': 'qtd_total',       'label': _('Funcionários'),     'format': 'int',      'css': '',        'hide_if_zero': False, 'url_key': 'qtd_total'},
+            {'campo': 'qtd_erros',       'label': _('Com erros'),        'format': 'check',    'css': 'danger',  'hide_if_zero': False, 'url_key': 'qtd_erros'},
         ],
         'card_links': {
             'total_bruto':     '/pessoal/dashboard/detalhe/?tipo=folha_lista&filial_id={filial_id}&competencia={competencia}',
@@ -122,11 +119,13 @@ _ACOES = {
                 'label':      _('Fechar folha'),
                 'job_tipo':   ProcessamentoJob.Tipo.FECHAR_FOLHA,
                 'permission': 'pessoal.rodar_folha',
+                'icon':       'bi bi-lock-fill text-warning-matte',
             },
             'pagar_folha': {
                 'label':      _('Pagar folha'),
                 'job_tipo':   ProcessamentoJob.Tipo.PAGAR_FOLHA,
                 'permission': 'pessoal.rodar_folha',
+                'icon':       'bi bi-cash-coin text-success-matte',
             },
         },
     },
@@ -153,56 +152,9 @@ def _acoes_permitidas(acoes: dict, user) -> dict:
     }
 
 
-
-def _montar_historico_unificado(job_principal, label_principal: str, sub_jobs: list) -> list[dict]:
-    """
-    Funde o histórico do job principal com o dos sub-jobs num único array
-    ordenado por timestamp DESC. Cada entrada carrega label e status para
-    o template renderizar sem lógica adicional.
-    Custo: iteração em memória sobre listas já carregadas — zero queries.
-    """
-    entradas = []
-
-    def _extrair(job, label):
-        if not job:
-            return
-        # Execução atual (se concluída ou com erro)
-        if job.status in ('OK', 'ER') and job.iniciado_em:
-            entradas.append({
-                'label':  label,
-                'status': job.status,
-                'ts':     job.iniciado_em,
-                'por':    job.criado_por or '',
-            })
-        # Execuções anteriores do histórico
-        for h in (job.historico or []):
-            ts_raw = h.get('ts', '')
-            if not ts_raw:
-                continue
-            try:
-                from django.utils.dateparse import parse_datetime
-                ts = parse_datetime(ts_raw)
-            except Exception:
-                continue
-            if ts:
-                entradas.append({
-                    'label':  label,
-                    'status': h.get('status', ''),
-                    'ts':     ts,
-                    'por':    h.get('por', ''),
-                })
-
-    _extrair(job_principal, label_principal)
-    for sub in sub_jobs:
-        _extrair(sub['job'], sub['label'])
-
-    entradas.sort(key=lambda e: e['ts'], reverse=True)
-    return entradas
-
-
 # ─── View principal ──────────────────────────────────────────────────────────
 
-class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTemplateView):
+class FolhaDashboardView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'pessoal/folha_dashboard.html'
     permission_required = 'pessoal.folha_dashboard'
 
@@ -257,26 +209,19 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
                     valor = resumo.get(campo)
                     if valor is None:
                         continue
-                    # css_fn sobrescreve css se definido
-                    css = mf['css_fn'](valor) if mf.get('css_fn') else mf['css']
-                    # url_fn suprime o link se retornar False
-                    base_url = links.get(mf.get('url_key'))
-                    url = base_url if (base_url and (not mf.get('url_fn') or mf['url_fn'](valor))) else None
                     metric_boxes.append({
                         **mf,
                         'valor': valor,
-                        'css':   css,
-                        'url':   url,
+                        'url':   links.get(mf.get('url_key')),
                     })
 
             # Sub-jobs: filtra por permissão e enriquece com job
-            job_principal = jobs_map.get(cfg['job_tipo'])
             sub_jobs = [
                 {
-                    'acao':      sub_acao,
-                    'label':     sub_cfg['label'],
-                    'icon':      sub_cfg.get('icon', ''),
-                    'job':       jobs_map.get(sub_cfg['job_tipo']),
+                    'acao':  sub_acao,
+                    'label': sub_cfg['label'],
+                    'icon':  sub_cfg.get('icon', ''),
+                    'job':   jobs_map.get(sub_cfg['job_tipo']),
                     'permitido': (
                         not sub_cfg.get('permission')
                         or self.request.user.has_perm(sub_cfg['permission'])
@@ -286,16 +231,15 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
             ]
 
             cards_jobs.append({
-                'acao':                acao,
-                'label':               cfg['label'],
-                'icon':                cfg['icon'],
-                'job':                 job_principal,
-                'resumo':              resumo,
-                'metric_boxes':        metric_boxes,
-                'metric_min_width':    cfg.get('metric_min_width') or 110,
-                'card_links':          links,
-                'sub_jobs':            sub_jobs,
-                'historico_unificado': _montar_historico_unificado(job_principal, cfg['label'], sub_jobs),
+                'acao':             acao,
+                'label':            cfg['label'],
+                'icon':             cfg['icon'],
+                'job':              jobs_map.get(cfg['job_tipo']),
+                'resumo':           resumo,
+                'metric_boxes':     metric_boxes,
+                'metric_min_width': cfg.get('metric_min_width') or 110,
+                'card_links':       links,
+                'sub_jobs':         sub_jobs,
             })
 
         return {'cards_jobs': cards_jobs, 'consultado': True}
@@ -303,19 +247,17 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
     # ── Funções de resumo ─────────────────────────────────────────────────────
 
     def _resumo_freq(self, filial_id, competencia, fim_comp) -> dict | None:
-        # Uma única query: carrega objetos + calcula Min/Max de inicio/fim via anotação
-        qs = FrequenciaConsolidada.objects.filter(
-            contrato__funcionario__filial_id=filial_id,
-            competencia=competencia,
+        consolidados = list(
+            FrequenciaConsolidada.objects.filter(
+                contrato__funcionario__filial_id=filial_id,
+                competencia=competencia,
+            )
         )
-        datas = qs.aggregate(inicio=Min('inicio'), fim=Max('fim'))
-        consolidados = list(qs)
         if not consolidados:
             return None
 
         totais    = {'H_horas_extras': 0.0, 'dias_falta_just': 0, 'dias_falta_njust': 0, 'dias_atestado': 0}
         qtd_erros = 0
-        todos_fechados = True
         for fc in consolidados:
             c = fc.consolidado or {}
             totais['H_horas_extras']   += c.get('H_horas_extras', 0)
@@ -323,8 +265,11 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
             totais['dias_falta_njust'] += c.get('H_dias_falta_njust', 0)
             totais['dias_atestado']    += c.get('H_dias_afastamento', 0)
             qtd_erros                  += len(fc.erros or {})
-            if fc.status != FrequenciaConsolidada.Status.FECHADO:
-                todos_fechados = False
+
+        datas = FrequenciaConsolidada.objects.filter(
+            contrato__funcionario__filial_id=filial_id,
+            competencia=competencia,
+        ).aggregate(inicio=Min('inicio'), fim=Max('fim'))
 
         periodo = None
         if datas['inicio'] and datas['fim']:
@@ -340,6 +285,7 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
             .count()
         )
 
+        todos_fechados = all(fc.status == FrequenciaConsolidada.Status.FECHADO for fc in consolidados)
         status = 'FECHADO' if todos_fechados else ('ABERTO' if qtd_erros else 'PROCESSADO')
 
         return {
@@ -356,6 +302,9 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
             contrato__funcionario__filial_id=filial_id,
             competencia=competencia,
         )
+        if not qs.exists():
+            return None
+
         agg = qs.aggregate(
             total_bruto=Sum('proventos'),
             total_descontos=Sum('descontos'),
@@ -363,9 +312,6 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
             qtd_total=Count('id'),
             qtd_erros=Count('id', filter=Qm(total_erros__gt=0)),
         )
-
-        if not agg['qtd_total']:
-            return None
 
         statuses = set(qs.values_list('status', flat=True).distinct())
         if statuses == {FolhaPagamento.Status.PAGO}:

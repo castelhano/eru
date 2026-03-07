@@ -1,0 +1,45 @@
+{% comment %}
+    ── _metric_box.html ───────────────────────────────────────────────────────
+    Variáveis esperadas via include ... with ...
+      box → dict produzido por _montar_dashboard:
+              campo        → chave do resumo
+              label        → texto exibido abaixo do valor
+              format       → 'int' | 'float1' | 'float1h' | 'float2' | 'currency' | 'check'
+              css          → classe extra do metric-box (accent/warn/danger/…)
+              hide_if_zero → bool
+              valor        → valor numérico
+              url          → URL de detalhe ou None
+{% endcomment %}
+
+{% if not box.hide_if_zero or box.valor %}
+
+{% if box.url %}<a href="{{ box.url }}" target="_blank" class="metric-box {{ box.css }}">
+{% else %}<div class="metric-box {{ box.css }}">
+{% endif %}
+
+    <div class="m-val">
+        {% if box.format == 'check' %}
+            {% if box.valor %}
+                {{ box.valor }}
+            {% else %}
+                <i class="bi bi-check-lg"></i>
+            {% endif %}
+        {% elif box.format == 'currency' %}
+            {{ box.valor|floatformat:2 }}
+        {% elif box.format == 'float2' %}
+            {{ box.valor|floatformat:2 }}
+        {% elif box.format == 'float1' %}
+            {{ box.valor|floatformat:1 }}
+        {% elif box.format == 'float1h' %}
+            {{ box.valor|floatformat:1 }}h
+        {% else %}
+            {{ box.valor }}
+        {% endif %}
+    </div>
+    <div class="m-label">{{ box.label }}</div>
+
+{% if box.url %}</a>
+{% else %}</div>
+{% endif %}
+
+{% endif %}{# /hide_if_zero #}

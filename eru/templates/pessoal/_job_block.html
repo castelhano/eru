@@ -1,52 +1,36 @@
 {% comment %}
     ── _job_block.html ────────────────────────────────────────────────────────
-   Variáveis esperadas via include ... with ...
-     job      → instância ProcessamentoJob ou None
-     label    → str label da ação
-     icon     → str classe Bootstrap icon (opcional)
-     acao     → str chave da ação (para _disparar())
-     filtro   → dict {filial_id, competencia}
-     is_sub   → bool (opcional) — estilo mais compacto para sub-jobs
+    Variáveis esperadas via include ... with ...
+      card   → dict completo do card (job, label, icon, sub_jobs, historico_unificado)
+      filtro → dict {filial_id, competencia}
 {% endcomment %}
 
+{% with job=card.job %}
+
+{# ── Cabeçalho: label + status badge ── #}
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-2">
-    <span class="fw-semibold" style="font-size:{% if is_sub %}.78rem{% else %}.88rem{% endif %}">
-        <i class="{{ icon }} me-1"></i>{{ label }}
+    <span class="fw-semibold" style="font-size:.88rem">
+        <i class="{{ card.icon }} me-1"></i>{{ card.label }}
     </span>
-    <div class="d-flex align-items-center gap-1 flex-wrap">
-
-        {% if job %}
-        <span class="job-status {{ job.status }}"
-              {% if job.status == 'PR' or job.status == 'AG' %}
-              onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
-              title="Clique para atualizar" style="cursor:pointer"
-              {% endif %}>
-            {% if job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
-            {{ job.get_status_display }}
-            {% if job.status == 'PR' and job.progresso %}{{ job.progresso }}%{% endif %}
-            {% if job.status == 'PR' or job.status == 'AG' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
-        </span>
-        {% else %}
-        <span class="text-secondary" style="font-size:.75rem">Não executado</span>
-        {% endif %}
-
-        {% if acao == 'fechar_freq' or acao == 'fechar_folha' or acao == 'pagar_folha' or acao == 'cancelar_folha' %}
-        <button type="button"
-                onclick="_disparar('{{ acao }}')"
-                class="btn btn-xs py-0 px-2 {% if acao == 'pagar_folha' %}btn-success-matte{% else %}btn-secondary-matte{% endif %}"
-                style="font-size:.72rem"
-                data-appConfirm="true"
-                data-appConfirmTitle="<i class='{{ icon }} me-2'></i>{{ label }}"
-                data-appConfirmMessage="Confirma operação em lote para a competência <b>{{ filtro.competencia }}</b>?">
-            {{ label }}
-        </button>
-        {% endif %}
-
-    </div>
+    {% if job %}
+    <span class="job-status {{ job.status }}"
+          {% if job.status == 'PR' or job.status == 'AG' %}
+          onclick="window.location.href='?filial_id={{ filtro.filial_id }}&competencia={{ filtro.competencia }}'"
+          title="Clique para atualizar" style="cursor:pointer"
+          {% endif %}>
+        {% if job.status == 'PR' %}<i class="bi bi-arrow-repeat spin"></i>{% endif %}
+        {{ job.get_status_display }}
+        {% if job.status == 'PR' and job.progresso %}{{ job.progresso }}%{% endif %}
+        {% if job.status == 'PR' or job.status == 'AG' %}<i class="bi bi-arrow-clockwise ms-1" style="font-size:.7rem"></i>{% endif %}
+    </span>
+    {% else %}
+    <span class="text-secondary" style="font-size:.75rem">Não executado</span>
+    {% endif %}
 </div>
 
+{# ── Detalhes da última execução ── #}
 {% if job %}
-<div class="job-block {{ job.status }} {% if is_sub %}ms-0{% endif %}">
+<div class="job-block {{ job.status }}">
     {% if job.resultado.erro %}
     <div class="text-danger small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ job.resultado.erro }}</div>
     {% else %}
@@ -87,42 +71,57 @@
     </div>
     {% endif %}
     {% for obs in job.observacoes %}
-    <div class="small text-warning-matte mt-1">
-        <i class="bi bi-caret-right-fill"></i> {{ obs }}
-    </div>
+    <div class="small text-warning-matte mt-1"><i class="bi bi-caret-right-fill"></i> {{ obs }}</div>
     {% endfor %}
 </div>
+{% endif %}
 
-{% if job.historico %}
+{# ── Sub-jobs como botões adaptáveis ── #}
+{% if  card.job %}
+<div class="d-flex flex-wrap gap-1 mt-2">
+    {% for sub in card.sub_jobs %}
+        {% if sub.permitido %}
+        <button type="button"
+                onclick="_disparar('{{ sub.acao }}')"
+                class="btn btn-sm flex-fill {% if sub.job.status == 'OK' %}btn-success-matte{% elif sub.job.status == 'ER' %}btn-danger-matte{% else %}btn-secondary-matte{% endif %}"
+                {% if sub.job.status == 'PR' or sub.job.status == 'AG' %}disabled{% endif %}
+                data-appConfirm="true"
+                data-appConfirmTitle="{% if sub.icon %}<i class='{{ sub.icon }} me-2'></i>{% endif %}{{ sub.label }}"
+                data-appConfirmMessage="Confirma operação em lote para a competência <b>{{ filtro.competencia }}</b>?">
+            {% if sub.icon %}<i class="{{ sub.icon }} me-1"></i>{% endif %}
+            {% if sub.job.status == 'AG' or sub.job.status == 'PR' %}<i class="bi bi-arrow-repeat spin me-1"></i>{% endif %}
+            {{ sub.label }}
+            {% if sub.job.status == 'OK' %}<i class="bi bi-check-lg ms-1"></i>
+            {% elif sub.job.status == 'ER' %}<i class="bi bi-exclamation-triangle ms-1"></i>{% endif %}
+        </button>
+        {% endif %}
+    {% empty %}
+    <!-- btn apenas para alinhar height de cards sem action  -->
+    <button class="btn btn-sm border-0 flex-fill" disabled>&nbsp;</button>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+{# ── Histórico unificado ── #}
+{% if card.historico_unificado %}
 <details class="mt-2 historico-details">
     <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--bs-secondary-color)">
         <i class="bi bi-clock-history"></i>
-        <span>{{ job.historico|length }} execução{{ job.historico|length|pluralize:"ões" }} anterior{{ job.historico|length|pluralize:"es" }}</span>
+        <span>Histórico</span>
         <i class="bi bi-chevron-down ms-1 hist-chevron" style="font-size:.65rem;transition:transform .2s"></i>
     </summary>
     <div class="hist-list mt-1">
-        {% for h in job.historico reversed %}
-        <div class="hist-item">
-            <div class="d-flex align-items-center justify-content-between gap-2">
-                <span class="job-status {{ h.status }}" style="font-size:.68rem;padding:.1rem .4rem">{{ h.status }}</span>
-                <span style="font-size:.7rem;color:var(--bs-secondary-color)">{{ h.ts|slice:":16"|cut:"T" }}{% if h.por %} · {{ h.por }}{% endif %}</span>
-            </div>
-            {% if h.resultado.erro %}
-            <div class="text-danger mt-1" style="font-size:.72rem"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ h.resultado.erro }}</div>
-            {% elif h.resultado.processados is not None %}
-            <div class="mt-1" style="font-size:.72rem;color:var(--bs-secondary-color)">
-                {{ h.resultado.processados }} processado{{ h.resultado.processados|pluralize }}
-                {% if h.resultado.falhas %} · <span class="text-danger">{{ h.resultado.falhas }} falha{{ h.resultado.falhas|pluralize }}</span>{% endif %}
-                {% if h.resultado.periodo %} · {{ h.resultado.periodo }}{% endif %}
-            </div>
-            {% endif %}
-            {% for obs in h.observacoes %}
-            <div class="text-warning-matte mt-1" style="font-size:.7rem"><i class="bi bi-caret-right-fill"></i> {{ obs }}</div>
-            {% endfor %}
+        {% for h in card.historico_unificado %}
+        <div class="hist-item d-flex align-items-center gap-1 flex-wrap">
+            <span style="font-size:.78rem;font-weight:600;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.label }}</span>
+            <span style="font-size:.7rem;color:var(--bs-secondary-color);white-space:nowrap;flex:1">
+                {{ h.ts|date:"d/m/Y H:i" }}{% if h.por %} · {{ h.por|capfirst }}{% endif %}
+            </span>
+            <span class="job-status {{ h.status }}" style="font-size:.68rem;padding:.1rem .4rem;flex-shrink:0">{{ h.status }}</span>
         </div>
         {% endfor %}
     </div>
 </details>
 {% endif %}
-
-{% endif %}
+{% endwith %}
