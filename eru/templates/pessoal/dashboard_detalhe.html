@@ -1,5 +1,5 @@
 {% extends "layout/app.html" %}
-{% load static i18n tag_extra %}
+{% load static i18n tag_extra ui_components %}
 {% block title %}{{ titulo }}{% endblock %}
 {% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock %}
 
@@ -33,7 +33,10 @@
                 <a class="nav-link active disabled" href="#"><i class="bi bi-table"></i></a>
             </li>
             <li class="nav-item ms-auto">
-                <button type="button" class="nav-link" onclick="window.close()"><i class="bi bi-arrow-left me-1"></i>{% translate 'Voltar' %}</button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-secondary-matte" onclick="window.close()">{% translate 'Fechar' %}</button>
+                    {% btn_tag 'CSV' icon="bi bi-arrow-bar-down" class="btn btn-sm btn-warning-matte" href=export_url %}
+                </div>
             </li>
         </ul>
     </div>

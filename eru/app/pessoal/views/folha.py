@@ -662,7 +662,6 @@ class DashboardDetalheView(LoginRequiredMixin, BaseTemplateView):
 
         linhas  = self._coletar(cfg, filial_id, competencia)
         colunas = [(col, _COLUNA_LABEL.get(col, col)) for col in cfg['colunas']]
-
         context.update({
             'titulo':      cfg['titulo'],
             'colunas':     colunas,
@@ -671,8 +670,49 @@ class DashboardDetalheView(LoginRequiredMixin, BaseTemplateView):
             'competencia': competencia.strftime('%Y-%m'),
             'tipo':        tipo,
             'erro':        None,
+            'export_url':  f"?tipo={tipo}&filial_id={filial_id}&competencia={competencia.strftime('%Y-%m')}&export=csv"
         })
         return context
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'csv':
+            return self._export_csv(request)
+        return super().get(request, *args, **kwargs)
+
+    def _export_csv(self, request):
+        tipo = request.GET.get('tipo', '').strip()
+        cfg  = _DETALHES.get(tipo)
+        if not cfg:
+            return HttpResponse('Tipo inválido.', status=400)
+
+        try:
+            filial_id, competencia = self._parse_params()
+        except Exception:
+            return HttpResponse('Parâmetros inválidos.', status=400)
+
+        if not filial_id or not competencia:
+            return HttpResponse('Parâmetros inválidos.', status=400)
+
+        linhas  = self._coletar(cfg, filial_id, competencia)
+        colunas = cfg['colunas']
+
+        response = HttpResponse(
+            content_type='text/csv; charset=utf-8-sig',
+            headers={'Content-Disposition': f'attachment; filename="{tipo}_{competencia}.csv"'},
+        )
+        response.set_cookie('fileDownload', 'true', max_age=60)
+
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow([_COLUNA_LABEL.get(c, c) for c in colunas])
+
+        for linha in linhas:
+            writer.writerow([
+                '; '.join(f"{k}: {v}" for k, v in linha[col].items())
+                if col == 'erros_json' and isinstance(linha.get(col), dict)
+                else linha.get(col, '')
+                for col in colunas
+            ])
+
+        return response
 
     def _coletar(self, cfg: dict, filial_id: int, competencia: date) -> list[dict]:
         fonte = cfg['fonte']
