@@ -229,9 +229,9 @@ a.metric-box:hover {
                         <button type="button"
                                 onclick="_disparar('{{ valor }}')"
                                 class="btn btn-sm btn-primary-matte btn-acao"
-                                data-appConfirm="true"
-                                data-appConfirmTitle="<i class='bi bi-braces-asterisk me-2'></i>{{ label }}"
-                                data-appConfirmMessage="Confirma operação? O processo será <b>executado em segundo plano</b>.">
+                                data-confirm="true"
+                                data-confirm-title="<i class='bi bi-braces-asterisk me-2'></i>{{ label }}"
+                                data-confirm-message="Confirma operação? O processo será <b>executado em segundo plano</b>.">
                             {{ label }}
                         </button>
                         {% endfor %}

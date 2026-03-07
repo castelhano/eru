@@ -85,9 +85,9 @@
                 onclick="_disparar('{{ sub.acao }}')"
                 class="btn btn-sm flex-fill {% if sub.job.status == 'OK' %}btn-success-matte{% elif sub.job.status == 'ER' %}btn-danger-matte{% else %}btn-secondary-matte{% endif %}"
                 {% if sub.job.status == 'PR' or sub.job.status == 'AG' %}disabled{% endif %}
-                data-appConfirm="true"
-                data-appConfirmTitle="{% if sub.icon %}<i class='{{ sub.icon }} me-2'></i>{% endif %}{{ sub.label }}"
-                data-appConfirmMessage="Confirma operação em lote para a competência <b>{{ filtro.competencia }}</b>?">
+                data-confirm="true"
+                data-confirm-title="{% if sub.icon %}<i class='{{ sub.icon }} me-2'></i>{% endif %}{{ sub.label }}"
+                data-confirm-message="Confirma operação em lote para a competência <b>{{ filtro.competencia }}</b>?">
             {% if sub.icon %}<i class="{{ sub.icon }} me-1"></i>{% endif %}
             {% if sub.job.status == 'AG' or sub.job.status == 'PR' %}<i class="bi bi-arrow-repeat spin me-1"></i>{% endif %}
             {{ sub.label }}

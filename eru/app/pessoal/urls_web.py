@@ -12,6 +12,7 @@ urlpatterns = [
     path('funcionario/new/', common.FuncionarioCreateView.as_view(), name='funcionario_create'),
     path('funcionario/<int:pk>/update/', common.FuncionarioUpdateView.as_view(), name='funcionario_update'),
     path('funcionario/<int:pk>/delete/', common.FuncionarioDeleteView.as_view(), name='funcionario_delete'),
+    path('rescisao/<int:pk>', common.RescisaoProcessView.as_view(), name='funcionario_desligar'),
     
     # ============================================
     # DEPENDENTE

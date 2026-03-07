@@ -1,0 +1,172 @@
+{% extends "layout/app.html" %}
+{% load static i18n ui_components %}
+{% block title %}{% translate 'Funcionário'|escapejs %}{% endblock %}
+{% block canvas_menu %}{% include "_component/menu/pessoal.html" %}{% endblock%}
+
+<style>
+{% block style %}
+summary, dl, dd {
+    user-select: none;
+}
+.custom-dl {
+    display: grid;
+    grid-template-columns: max-content 1fr; 
+    column-gap: 1rem;
+    margin-bottom: 0;
+}
+
+.custom-dl dt, .custom-dl dd {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+.custom-dl dt {
+    grid-column: 1; /* fixa coluna 1 */
+}
+.custom-dl dd {
+    padding-left: 8px;
+    margin-bottom: 0.25rem; /* espacamento entre as linhas */
+    grid-column: 2; /* fixa coluna 2 */
+}
+
+{% endblock style %}
+</style>
+
+{% block content_fluid %}
+<div class="card mt-2">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" title="ALT + V" href="{% url 'pessoal:funcionario_update' funcionario.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            {% if perms.pessoal.delete_rescisao %}
+            <li class="nav-item dropdown ms-auto">
+                <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item dropdown-item-danger pointer" data-bs-toggle="modal" data-bs-target="#delete_modal">{% translate 'Excluir Registro'|escapejs %}</a></li>
+                </ul>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    <form id="pessoal_form" action="{% url 'pessoal:funcionario_desligar' funcionario.id|safe %}" method="POST" autocomplete="off" novalidate>
+        {% csrf_token %}
+        {% include 'pessoal/_form_rescisao.html' %}
+    </form>
+</div>
+
+{% if perms.pessoal.delete_rescisao %}
+<div class="modal fade" id="delete_modal" tabindex="-1" data-kw-context="modalDelete" data-kw-context-start="show.bs.modal" data-kw-context-end="hide.bs.modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="row">
+                <div class="col"><h5 class="ms-3 mt-3"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>{% translate 'Excluir Registro'|escapejs %}</span></h5></div>
+                <div class="col-auto pe-4 pt-2"><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            </div>
+            <div class="modal-body">
+                <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</span></p>
+                <div class="row mt-2">
+                    <form action="url" method="POST">
+                        <div class="col text-end">
+                            {% csrf_token %}
+                            {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
+                            {% btn_tag 'delete' %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock%}
+
+{% block add_script_src %}
+<script src="{% static 'js/form.js' %}"></script>
+{% endblock %}
+
+<script>
+    {% block add_script %}
+    const form = new jsForm(document.getElementById('pessoal_form'), {})
+    
+    // ajusta atributos do modal de confirmacao para desligamento
+    const submitBtn = document.getElementById('submit');
+    const msg = [
+    "<b class='text-danger-matte me-2'>{% translate 'Atenção'|escapejs %}!</b>",
+    "{% translate 'Desligar funcionário gera atualizações em cascata em todo o sistema.'|escapejs %}!<br><br>",
+    "{% translate 'Revise com cautela as informações inseridas antes de prosseguir com a baixa definitiva.'|escapejs %}!",
+    ];
+    const confirmModalAttrs = {
+        confirmMessage: msg.join(' '),
+        confirmColor: 'danger-matte',
+        confirmText: '{% translate 'Desligar'|escapejs %}',
+        confirmDelay: 10
+    }
+    Object.assign(submitBtn.dataset, confirmModalAttrs);
+    
+    // logica para calculo do aviso previo proporcional para
+    // carregar nos controles
+    function calcularAviso() {
+        const dataDesligamentoStr = document.getElementById('id_data_desligamento').value;
+        const motivo = document.getElementById('id_motivo').value;
+        const campoAviso = document.getElementById('id_aviso_dias_devidos');
+        const campoCumpridos = document.getElementById('id_aviso_dias_cumpridos');
+        const swMultaFghts = document.getElementById('id_multa_fgts_paga');
+        
+        // Selectors para os switches de verbas
+        const sw13 = document.getElementById('id_decimo_terceiro_proporcional');
+        const swFeriasProp = document.getElementById('id_ferias_proporcionais_pagas');
+        const swFeriasVenc = document.getElementById('id_ferias_vencidas_pagas');
+        
+        const dataAdmissaoStr = "{{funcionario.data_admissao|date:'Y-m-d'}}";
+        
+        if (!dataDesligamentoStr || !motivo) {
+            appNotify("warning", "Selecione a data de desligamento e o motivo para cálculo");
+            return;
+        }        
+        
+        const admissao = new Date(dataAdmissaoStr + 'T00:00:00');
+        const desligamento = new Date(dataDesligamentoStr + 'T00:00:00');        
+        
+        // Cálculo de anos completos
+        let anos = desligamento.getFullYear() - admissao.getFullYear();
+        const m = desligamento.getMonth() - admissao.getMonth();
+        if (m < 0 || (m === 0 && desligamento.getDate() < admissao.getDate())) {
+            anos--;
+        }        
+        
+        /* ============================================
+        # 1. Cálculo de Dias de Aviso e Switches (analise de motivo)
+        ==============================================*/
+        let diasAviso = 30;
+        if (['EM', 'RI'].includes(motivo)) { // pelo empregador ou rescisao indireta
+            diasAviso += Math.min(anos * 3, 60);
+            swMultaFghts.checked = true;
+            sw13.checked = true;
+            swFeriasProp.checked = true;
+        } 
+        else if (motivo === 'PD') { // pedido de desligamento
+            diasAviso = 30; // pedido de demissao e sempre 30 fixo
+            swMultaFghts.checked = false;
+            sw13.checked = true;
+            swFeriasProp.checked = true;
+        }
+        else if (['JC', 'AB'].includes(motivo)) { // justa causa ou abandono
+            diasAviso = 0;
+            swMultaFghts.checked = false;
+            sw13.checked = false;
+            swFeriasProp.checked = false;
+        }
+        swFeriasVenc.checked = true; // ferias vencidas sao pagas indiferente do motivo
+        
+        /* ============================================
+        # 2. Cálculo de Dias Cumpridos
+        ==============================================*/
+        const tipoAviso = document.getElementById('id_aviso_tipo').value;
+        let diasCumprido = motivo === 'RI' ? 0 : tipoAviso === 'T' ? Math.min(diasAviso, 30) : 0;
+        
+        // Atualiza os valores na tela
+        campoAviso.value = diasAviso;
+        campoCumpridos.value = diasCumprido;
+    }
+
+    {% endblock %}
+</script>

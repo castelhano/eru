@@ -45,11 +45,11 @@
                         {% if turno %}
                         <button type="button" 
                         class="btn btn-sm btn-danger-matte" 
-                        data-appConfirmAction="deleteTurnoConfirmed"
-                        data-appConfirm="true"
-                        data-appConfirmMessage="{% translate 'Deseja realmente excluir este turno? Esta operação não pode ser desfeita'|escapejs %}"
-                        data-appConfirmColor="danger-matte"
-                        data-appConfirmText="{% translate 'Excluir'|escapejs %}">
+                        data-confirmAction="deleteTurnoConfirmed"
+                        data-confirm="true"
+                        data-confirm-message="{% translate 'Deseja realmente excluir este turno? Esta operação não pode ser desfeita'|escapejs %}"
+                        data-confirm-color="danger-matte"
+                        data-confirm-text="{% translate 'Excluir'|escapejs %}">
                         <i class="bi bi-trash3"></i>
                     </button>
                     {% endif %}

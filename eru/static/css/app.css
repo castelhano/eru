@@ -22,10 +22,24 @@ dialog:focus-visible{outline: none!important;}
 
 .form-floating > label::after{ background-color: transparent!important }
 
+summary{list-style: none;}
+summary::before {
+  content: "\f231";
+  font-family: "bootstrap-icons";
+  display: inline-block;
+  margin-right: 6px;
+  transform: translateY(2px);
+  transition: transform 0.2s ease-in-out;
+}
+details[open] summary::before {transform: translateY(2px) rotate(90deg);}
+
 .widget-thumb-img{position: relative;height: 150px;border: 3px solid #dee2e6;border-radius: .25rem;}
 .widget-thumb-controls{margin-top: 5px;}
 
 .form-check-label{user-select: none;}
+@media (min-width: 992px) {
+    .border-lg-start { border-left: 1px solid !important;border-color: var(--bs-border-color) !important;}
+}
 
 .text-justify{text-align: justify;}
 .text-transparent{color: transparent!important;}

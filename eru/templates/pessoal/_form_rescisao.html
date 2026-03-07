@@ -1,0 +1,94 @@
+{% load i18n ui_components %}
+<div class="card-body tab-content">
+    <h5 class="card-title">{% translate 'Desligamento'|escapejs %}: <b class="text-purple">{% translate 'Funcionário'|escapejs %}</b></h5>
+    <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
+    <details class="my-2 small">
+        <summary class="text-bg-primary-matte px-2 py-1 fw-bold">Detalhes</summary>
+        <dl class="custom-dl mt-2">
+            <dt>Matrícula:</dt><dd class="text-bg-secondary-matte">{{funcionario.matricula}}</dd>
+            <dt>Nome:</dt><dd class="text-bg-secondary-matte">{{funcionario.nome}}</dd>
+            <dt>Admissão:</dt><dd class="text-bg-secondary-matte">{{funcionario.data_admissao|date:"d/m/Y"}}</dd>
+        </dl>
+    </details>
+
+    <div class="tab-pane fade show active" id="base" role="tabpanel">
+        <div class="row">
+            <div class="col col-lg">
+                <div class="row g-1">
+                    <div class="form-floating mb-1 col-lg-4">
+                        {{ form.data_desligamento }}
+                        {{ form.data_desligamento.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-8">
+                        {{ form.motivo }}
+                        {{ form.motivo.i18n_label }}
+                    </div>
+                </div>
+                
+                <div class="row g-1">
+                    <div class="col-lg-4">
+                        <div class="input-group mb-lg-1">
+                            <div class="form-floating">
+                                {{ form.aviso_tipo }}
+                                {{ form.aviso_tipo.i18n_label }}
+                            </div>
+                            <button type="button" onclick="calcularAviso()" class="btn btn-warning-matte" title="Calcular aviso">
+                                <i class="bi bi-calculator"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-4">
+                        {{ form.aviso_dias_devidos }}
+                        {{ form.aviso_dias_devidos.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-1 col-lg-4">
+                        {{ form.aviso_dias_cumpridos }}
+                        {{ form.aviso_dias_cumpridos.i18n_label }}
+                    </div>
+                </div>
+                
+                <div class="row g-1">
+                    <div class="col-12">
+                        {{ form.detalhe }}
+                    </div>
+                </div>
+                
+                <input type="hidden" name="funcionario" value="{{ funcionario.id|safe }}">
+                <input type="hidden" name="contrato" value="{{ contrato.id|safe }}">
+                
+                <div class="mt-3">
+                    {% btn_tag _('Desligar') class="btn btn-sm btn-danger-matte" id="submit" type="submit" data_confirm="true" %}
+                </div>
+            </div>
+
+            <!-- card com switches -->
+            <div class="col-lg-4 border-0 border-lg-start mt-3 mt-lg-0">
+                <h6 class="text-secondary mb-3 border-bottom pb-2 d-none d-lg-block">{% translate 'Detalhes'|escapejs %}</h6>
+                <div class="form-check form-switch mb-1">
+                    {{ form.multa_fgts_paga }}
+                    <label class="form-check-label" for="{{ form.multa_fgts_paga.id_for_label }}">
+                        {{ form.multa_fgts_paga.label }}
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.ferias_vencidas_pagas }}
+                    <label class="form-check-label" for="{{ form.ferias_vencidas_pagas.id_for_label }}">
+                        {{ form.ferias_vencidas_pagas.label }}
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.ferias_proporcionais_pagas }}
+                    <label class="form-check-label" for="{{ form.ferias_proporcionais_pagas.id_for_label }}">
+                        {{ form.ferias_proporcionais_pagas.label }}
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.decimo_terceiro_proporcional }}
+                    <label class="form-check-label" for="{{ form.decimo_terceiro_proporcional.id_for_label }}">
+                        {{ form.decimo_terceiro_proporcional.label }}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

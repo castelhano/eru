@@ -120,10 +120,10 @@ if(__sw < 768){ // Acesso somente em dispositivos de tela grande (lg ou >)
 {% block content %}
 <div id="march_container"></div>
 <a id="back"
-data-appConfirm="true" 
-data-appConfirmTitle="<i class='bi bi-info-circle-fill me-2'></i>Retornar" 
-data-appConfirmMessage="Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?" 
-data-appConfirmText="Voltar"
+data-confirm="true" 
+data-confirm-title="<i class='bi bi-info-circle-fill me-2'></i>Retornar" 
+data-confirm-message="Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?" 
+data-confirm-text="Voltar"
 class="d-none" href="{% url 'trafego:planejamento_id' planejamento.id|safe %}"></a>
 <form id="grid_form" action="{% url 'trafego:planejamento_grid_update' planejamento.id|safe %}" method="POST" autocomplete="off">
     {% csrf_token %}
@@ -135,9 +135,9 @@ class="d-none" href="{% url 'trafego:planejamento_id' planejamento.id|safe %}"><
 
 <script>
     {% block add_script %}
-    document.getElementById('home').setAttribute('data-appConfirm', 'true');
-    document.getElementById('home').setAttribute('data-appConfirmTitle', '<i class="bi bi-info-circle-fill me-2"></i>Página Inicial');
-    document.getElementById('home').setAttribute('data-appConfirmMessage', 'Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?');
-    document.getElementById('home').setAttribute('data-appConfirmText', 'Página Inicial');
+    document.getElementById('home').setAttribute('data-confirm', 'true');
+    document.getElementById('home').setAttribute('data-confirm-title', '<i class="bi bi-info-circle-fill me-2"></i>Página Inicial');
+    document.getElementById('home').setAttribute('data-confirm-message', 'Ao confirmar todas as alterações não salvas serão perdidas, confirma operação?');
+    document.getElementById('home').setAttribute('data-confirm-text', 'Página Inicial');
     {% endblock %}
 </script>

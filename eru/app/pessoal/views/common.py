@@ -34,7 +34,7 @@ from pessoal.models import (
 )
 # Pessoal App
 from pessoal.forms import (
-    PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
+    PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, RescisaoForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
     EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm, FrequenciaImportForm
 )
 from pessoal.filters import (
@@ -562,11 +562,12 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
     permission_required = 'pessoal.view_funcionario' # exige apenas view para carregar usuario (mesmo sem perm de update)
     def dispatch(self, request, *args, **kwargs):
         funcionario = self.get_object()
-        if request.method == 'POST' and not request.user.has_perm('pessoal.change_funcionario'):
-            return redirect('handler', 403)
-        if not funcionario.F_eh_editavel:
-            messages.error( request, _("Não é possível alterar dados de funcionários desligados"))
-            return redirect('pessoal:funcionario_list', id=funcionario.id)
+        if request.method == 'POST':
+            if request.user.has_perm('pessoal.change_funcionario'):
+                return redirect('handler', 403)
+            if not funcionario.F_eh_editavel:
+                messages.error( request, _("Não é possível alterar dados de funcionários desligados"))
+                return redirect('pessoal:funcionario_list', pk=funcionario.id)
         return super().dispatch(request, *args, **kwargs)
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -1269,6 +1270,50 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
         return context
     def get_success_url(self):
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
+
+class RescisaoProcessView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'pessoal.funcionario_desligar'
+    template_name = 'pessoal/rescisao.html'
+    def get_object(self, pk):
+        return get_object_or_404(
+            Funcionario.objects.select_related('filial__empresa'), 
+            pk=pk
+        )
+    def get(self, request, pk):
+        funcionario = self.get_object(pk)        
+        if not funcionario.F_eh_editavel:
+            messages.error(request, "Funcionário bloqueado para edição")
+            return redirect('pessoal:funcionario_update', pk=funcionario.id)
+        if funcionario.status == Funcionario.Status.AFASTADO:
+            messages.warning(request, "Retorne o funcionário do afastamento antes de rescindir")
+            return redirect('pessoal:funcionario_detail', pk=pk)
+        contrato = funcionario.F_contrato
+        if not contrato:
+            messages.error(request, "Funcionário não possui contrato vigente para rescindir")
+            return redirect('pessoal:funcionario_detail', pk=pk)
+        form = RescisaoForm(funcionario=funcionario, contrato=contrato)
+        return render(request, self.template_name, {
+            'form': form, 
+            'funcionario': funcionario,
+            'contrato': contrato
+        })
+    def post(self, request, pk):
+        funcionario = self.get_object(pk)
+        contrato = funcionario.F_contrato        
+        form = RescisaoForm(request.POST, funcionario=funcionario, contrato=contrato)        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+                messages.success(request, f"Rescisão de {funcionario.matricula} processada com sucesso")
+                return redirect('pessoal:funcionario_update', pk=funcionario.id)
+            except Exception as e:
+                form.add_error(None, f"Erro crítico ao salvar: {str(e)}")        
+        return render(request, self.template_name, {
+            'form': form, 
+            'funcionario': funcionario,
+            'contrato': contrato
+        })
 
 
 class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):

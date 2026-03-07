@@ -2,6 +2,7 @@ import re, json
 from itertools import groupby
 from django import forms
 from django.db.models import Q
+from django.utils import timezone
 from django.urls import reverse_lazy
 from .models import (
     PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Rescisao, Dependente, Evento, GrupoEvento,
@@ -119,7 +120,6 @@ class FuncionarioForm(BootstrapMixin, forms.ModelForm):
             'matricula': forms.TextInput(attrs={'class': 'fw-bold', 'autofocus': True}),
         }
 
-
 class RescisaoForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Rescisao
@@ -130,13 +130,37 @@ class RescisaoForm(BootstrapMixin, forms.ModelForm):
             'decimo_terceiro_proporcional', 'detalhe',
         ]
         widgets = {
-            'data_desligamento': forms.DateInput(attrs={'type': 'date', 'autofocus': True}),
+            'data_desligamento':            forms.DateInput(attrs={'type': 'date', 'autofocus': True}),
             'multa_fgts_paga':              forms.CheckboxInput(attrs={'role': 'switch'}),
             'ferias_proporcionais_pagas':   forms.CheckboxInput(attrs={'role': 'switch'}),
             'ferias_vencidas_pagas':        forms.CheckboxInput(attrs={'role': 'switch'}),
             'decimo_terceiro_proporcional': forms.CheckboxInput(attrs={'role': 'switch'}),
-            'detalhe': forms.Textarea(attrs={'rows': 4}),
+            'detalhe': forms.Textarea(attrs={'class': 'form-control form-control-sm', 'rows': 4,'placeholder': _('Detalhe')}),
         }
+    def __init__(self, *args, **kwargs):
+        self.funcionario = kwargs.pop('funcionario', None)
+        self.contrato = kwargs.pop('contrato', None)
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.initial['data_desligamento'] = timezone.now().date()
+            self.initial['ferias_vencidas_pagas'] = True
+            self.initial['decimo_terceiro_proporcional'] = True
+            self.initial['ferias_proporcionais_pagas'] = True
+    def clean(self):
+        cleaned_data = super().clean()
+        # impede rescisao se houver afastamento em aberto
+        if self.funcionario.afastamentos().filter(data_retorno__isnull=True).exists():
+            raise forms.ValidationError(
+                "Funcionário possui afastamento ativo. Registre o retorno antes de desligar"
+            )
+        return cleaned_data
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.funcionario = self.funcionario
+        instance.contrato = self.contrato
+        if commit:
+            instance.save()
+        return instance
 
 class MotivoReajusteForm(BootstrapMixin, forms.ModelForm):
     class Meta:

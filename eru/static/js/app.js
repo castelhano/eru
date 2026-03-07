@@ -165,7 +165,7 @@ function appAlert(tipo, mensagem, options={}){
     return cookieValue;
   }
   
-  // Exibe modal para confirmacao no evento click para elementos com data-appConfirm="true"
+  // Exibe modal para confirmacao no evento click para elementos com data-confirm="true"
   function confirmOnClick(options){
     if(options?.href){document.getElementById('appModalConfirm_link').href = options.href}
     appModalConfirm.show()
@@ -356,7 +356,7 @@ function appAlert(tipo, mensagem, options={}){
     
     // retorna context para anterior a abertura do modal de confirmacao
     appModalConfirm._element.addEventListener('hide.bs.modal', ()=>{appKeyMap.setContext()})
-    if(document.querySelector('[data-appConfirm="true"]')){
+    if(document.querySelector('[data-confirm="true"]')){
       appKeyMap.bind('alt+c', ()=>{document.getElementById('appModalConfirm_button').click()}, {context: 'appConfirmModal', icon: 'bi bi-floppy-fill text-primary', desc: gettext('Confirma operação')})
     }
     
@@ -364,8 +364,8 @@ function appAlert(tipo, mensagem, options={}){
     document.querySelectorAll('table[data-navigate="true"]').forEach(t => appNavigateTable(t, t.dataset));
     
     
-    // Exibe modal de confirmacao para elementos com atributo data-appConfirm='true'
-    document.querySelectorAll('[data-appConfirm="true"]').forEach((el)=>{
+    // Exibe modal de confirmacao para elementos com atributo data-confirm='true'
+    document.querySelectorAll('[data-confirm="true"]').forEach((el)=>{
       let timeout, interv, span;
       el.onclick = (e)=>{
         e.preventDefault();
@@ -375,10 +375,10 @@ function appAlert(tipo, mensagem, options={}){
           clearTimeout(timeout);
           span.remove();
         }
-        if(el.hasAttribute('data-appConfirmTitle')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-appConfirmTitle')}
-        if(el.hasAttribute('data-appConfirmMessage')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-appConfirmMessage')}
-        if(el.hasAttribute('data-appConfirmColor')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-appConfirmColor')}`}
-        if(el.hasAttribute('data-appConfirmText')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-appConfirmText')}
+        if(el.hasAttribute('data-confirm-title')){document.getElementById('appModalConfirm_title').innerHTML = el.getAttribute('data-confirm-title')}
+        if(el.hasAttribute('data-confirm-message')){document.getElementById('appModalConfirm_message').innerHTML = el.getAttribute('data-confirm-message')}
+        if(el.hasAttribute('data-confirm-color')){document.getElementById('appModalConfirm_button').classList = `btn btn-sm btn-${el.getAttribute('data-confirm-color')}`}
+        if(el.hasAttribute('data-confirm-text')){document.getElementById('appModalConfirm_button').innerHTML = el.getAttribute('data-confirm-text')}
         if(el.hasAttribute('href')){
           document.getElementById('appModalConfirm_button').onclick = ()=>{ location.href = el.href };
         }
@@ -389,9 +389,9 @@ function appAlert(tipo, mensagem, options={}){
             appModalConfirm.hide();
           };
         }
-        if(el.hasAttribute('data-appConfirmDelay')){
+        if(el.hasAttribute('data-confirm-delay')){
           span = document.createElement('span');
-          let counter = el.getAttribute('data-appConfirmDelay');
+          let counter = el.getAttribute('data-confirm-delay');
           span.innerHTML = ' ' + counter;
           document.getElementById('appModalConfirm_button').disabled = true;
           document.getElementById('appModalConfirm_button').appendChild(span);

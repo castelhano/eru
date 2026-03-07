@@ -387,7 +387,7 @@ class Afastamento(models.Model):
         self.full_clean()
         with transaction.atomic():
             super().save(*args, **kwargs)
-            self.funcionario.sync_status()  # delega toda logica de status ao funcionario
+            self.funcionario.sync_status()  # sincroniza status do funcionario
 auditlog.register(Afastamento)
 
 
@@ -550,9 +550,18 @@ class Rescisao(models.Model):
     ferias_proporcionais_pagas   = models.BooleanField(_('Ferias Proporcionais Pagas'), default=False)
     ferias_vencidas_pagas        = models.BooleanField(_('Ferias Vencidas Pagas'), default=False)
     decimo_terceiro_proporcional = models.BooleanField(_('13 Proporcional Pago'), default=False)
+    total_bruto   = models.DecimalField(_('Total Bruto'), max_digits=12, decimal_places=2, default=0)
+    total_liquido = models.DecimalField(_('Total Líquido'), max_digits=12, decimal_places=2, default=0)
+    regras = models.JSONField( _('Memória de Cálculo'), default=dict)
     detalhe = models.TextField(_('Detalhe'), blank=True)
+    class Meta:
+        default_permissions = ()
+        permissions = [
+            ("funcionario_desligar", _("Pode desligar funcionário")),
+            ("funcionario_reativar", _("Pode reativar funcionário")),
+        ]
     def __str__(self):
-        return f'{self.funcionario.matricula} | {self.data_desligamento}'
+        return f'{self.funcionario.matricula} | {self.data_desligamento}'    
     def clean(self):
         if self.data_desligamento and self.funcionario.data_admissao:
             if self.data_desligamento < self.funcionario.data_admissao:
