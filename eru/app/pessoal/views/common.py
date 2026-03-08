@@ -182,15 +182,21 @@ class ContratoManagementView(LoginRequiredMixin, PermissionRequiredMixin, CSVExp
         func = ctx['form'].instance.funcionario
         qs = Contrato.objects.select_related('cargo__setor').prefetch_related('historico_turnos__turno').filter(funcionario=func).order_by('-inicio')
         f = ContratoFilter(self.request.GET, queryset=qs)
+        disabled = not func.F_eh_editavel
         ctx.update({
-            'table': ContratoTable(f.qs).config(self.request, filter_obj=f),
+            'table': ContratoTable(f.qs, disabled=disabled).config(self.request, filter_obj=f),
             'funcionario': func,
             'is_update': ctx['form'].instance.pk is not None,
+            'disabled': disabled,
         })
         return ctx
     def get_success_url(self):
         return self.request.path
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.funcionario.F_eh_editavel:
+            messages.error(request, _("Nao e possivel alterar dados de funcionarios desligados"))
+            return redirect(self.get_success_url())
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return self._handle_turno_ajax(request)
         return super().post(request, *args, **kwargs)

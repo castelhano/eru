@@ -63,9 +63,10 @@ class ContratoTable(TableCustomMixin, Table):
             {
                 'action': 'update',
                 'url_name': 'pessoal:contrato_list',
-                'perm': 'pessoal.change_contrato', # Checagem automática no Mixin
-                'path_params': {'pk': 'funcionario_id'}, # Vira /contratos/ID_FUNC/
-                'query_params': {'edit': 'id'}           # Vira ?edit=ID_CONTRATO
+                'perm': 'pessoal.change_contrato',
+                'data_disabled': True,
+                'path_params': {'pk': 'funcionario_id'},
+                'query_params': {'edit': 'id'}
             }
         ]
         responsive_columns = {
@@ -76,6 +77,11 @@ class ContratoTable(TableCustomMixin, Table):
             "carga_mensal": "d-none d-lg-table-cell",
             "carga_diaria": "d-none d-lg-table-cell",
         }
+    def __init__(self, *args, **kwargs):
+        self.disabled = kwargs.pop('disabled', False)
+        super().__init__(*args, **kwargs)
+        if self.disabled:
+            self.attrs['disabled'] = True
 
 
 class SetorTable(TableCustomMixin, Table):

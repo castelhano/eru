@@ -254,6 +254,10 @@ class Contrato(models.Model):
             )
             if overlap.exists():
                 raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'))
+    def save(self, *args, **kwargs):
+        if not self.funcionario.F_eh_editavel:
+            raise ValidationError(_("Nao e possivel alterar dados de funcionarios desligados"))
+        super().save(*args, **kwargs)
     @property
     def C_dias_contrato(self):
         return max(((self.fim or date.today()) - self.inicio).days, 0)

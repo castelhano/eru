@@ -1,7 +1,7 @@
 {% extends "_tables/bootstrap5_custom.html" %}
 {% load i18n django_tables2 %}
 {% block table %}
-<table class="table border table-striped table-hover mb-2" id="contratotable" data-navigate="true" data-action-selector="a" >
+<table class="table border table-striped table-hover mb-2" id="contratotable" data-navigate="true" data-action-selector="a" data-disabled="{{table.attrs.disabled|default:'False'}}">
     <thead>
         <tr>
             {% for column in table.columns %}
