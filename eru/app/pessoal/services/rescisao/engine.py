@@ -97,18 +97,18 @@ def calcular_rescisao(dados: dict) -> dict:
     # ── férias proporcionais ──────────────────────────────────────────────────
     if flags['ferias_proporcionais']:
         _calcular_ferias_proporcionais(
-            saldo_ferias['meses_periodo_atual'], salario, motivo, verbas, erros
+            saldo_ferias['meses_periodo_atual'], salario, verbas, erros
         )
 
     # ── férias vencidas ───────────────────────────────────────────────────────
     if flags['ferias_vencidas'] and saldo_ferias['ferias_vencidas']:
         _calcular_ferias_vencidas(
-            saldo_ferias['dias_vencidos'], salario, motivo, verbas, erros
+            saldo_ferias['dias_vencidos'], salario, verbas, erros
         )
 
     # ── 13º proporcional ─────────────────────────────────────────────────────
     if flags['decimo_terceiro']:
-        _calcular_decimo_terceiro(data_deslig, salario, motivo, verbas, erros)
+        _calcular_decimo_terceiro(data_deslig, salario, verbas, erros)
 
     # ── multa FGTS ────────────────────────────────────────────────────────────
     if flags['multa_fgts']:
@@ -234,15 +234,14 @@ def _calcular_saldo_salario(contrato, data_deslig: date, salario: float,
         erros['saldo_salario'] = str(e)
 
 
-def _calcular_ferias_proporcionais(meses: int, salario: float, motivo: str,
+def _calcular_ferias_proporcionais(meses: int, salario: float,
                                     verbas: list, erros: dict) -> None:
     """
     Férias proporcionais + 1/3 constitucional.
-    Não devidas em demissão por justa causa.
+    Guard de motivo (JC) tratado pelas flags no caller — não repetir aqui.
     """
-    from pessoal.models import Rescisao
-    if motivo == Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA or meses == 0:
-        return
+    if meses == 0:
+        return  # nada a calcular — guard JC já tratado pelas flags no caller
     try:
         valor_ferias = float(_dec(salario / 12 * meses))
         valor_terco  = float(_dec(valor_ferias / 3))
@@ -266,12 +265,12 @@ def _calcular_ferias_proporcionais(meses: int, salario: float, motivo: str,
         erros['ferias_proporcionais'] = str(e)
 
 
-def _calcular_ferias_vencidas(dias_vencidos: int, salario: float, motivo: str,
+def _calcular_ferias_vencidas(dias_vencidos: int, salario: float,
                                verbas: list, erros: dict) -> None:
     """
     Férias vencidas não gozadas + 1/3.
     Recebe dias_vencidos reais (de FeriasAquisitivo) ou estimados (fallback).
-    Devidas em todos os motivos exceto justa causa (já tratado pelo caller).
+    Guard de motivo (JC) tratado pelas flags no caller — não repetir aqui.
     """
     try:
         valor_ferias = float(_dec(salario / 30 * dias_vencidos))
@@ -296,15 +295,13 @@ def _calcular_ferias_vencidas(dias_vencidos: int, salario: float, motivo: str,
         erros['ferias_vencidas'] = str(e)
 
 
-def _calcular_decimo_terceiro(data_deslig: date, salario: float, motivo: str,
+def _calcular_decimo_terceiro(data_deslig: date, salario: float,
                                verbas: list, erros: dict) -> None:
     """
     13º proporcional (meses trabalhados no ano corrente).
-    Não devido em pedido de demissão com menos de 1 ano ou justa causa.
+    Guard de motivo (JC) tratado pelas flags no caller — não repetir aqui.
     """
-    from pessoal.models import Rescisao
-    if motivo == Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA:
-        return
+    # guard JC já tratado pelas flags no caller
     try:
         meses = data_deslig.month  # meses completos no ano (jan=1 … dez=12)
         valor = float(_dec(salario / 12 * meses))
@@ -400,11 +397,9 @@ def _detectar_divergencias(flags: dict, motivo: str) -> dict:
     Compara as flags do usuário com as regras padrão CLT e retorna
     um dict com as divergências para registro de auditoria no campo regras.
     """
-    from pessoal.models import Rescisao
-    JC = Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA
-    PD = Rescisao.MotivoDesligamento.PEDIDO
-
     from pessoal.models import Rescisao as _R
+    JC = _R.MotivoDesligamento.POR_JUSTA_CAUSA
+    PD = _R.MotivoDesligamento.PEDIDO
     tem_aviso_indenizado_pd = (
         motivo == PD and
         getattr(flags.get('_rescisao_obj'), 'aviso_tipo', None) == _R.AvisoPrevioTipo.INDENIZADO

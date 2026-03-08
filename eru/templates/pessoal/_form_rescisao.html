@@ -15,11 +15,15 @@
         <div class="row">
             <div class="col col-lg">
                 <div class="row g-1">
-                    <div class="form-floating mb-1 col-lg-4">
+                    <div class="form-floating mb-1 col-lg">
                         {{ form.data_desligamento }}
                         {{ form.data_desligamento.i18n_label }}
                     </div>
-                    <div class="form-floating mb-lg-1 col-lg-8">
+                    <div class="form-floating mb-1 col-lg">
+                        {{ form.data_comunicacao }}
+                        {{ form.data_comunicacao.i18n_label }}
+                    </div>
+                    <div class="form-floating mb-lg-1 col-lg-6">
                         {{ form.motivo }}
                         {{ form.motivo.i18n_label }}
                     </div>

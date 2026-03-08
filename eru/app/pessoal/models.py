@@ -405,6 +405,7 @@ class Rescisao(models.Model):
     funcionario       = models.OneToOneField(Funcionario, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Funcionario'))
     contrato          = models.OneToOneField(Contrato, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Contrato rescindido'))
     motivo            = models.CharField(_('Motivo'), max_length=3, choices=MotivoDesligamento.choices)
+    data_comunicacao = models.DateField( _('Data da Comunicação'), null=True, blank=True)
     data_desligamento = models.DateField(_('Data de Desligamento'))
     aviso_tipo           = models.CharField(_('Tipo de Aviso'), max_length=1, choices=AvisoPrevioTipo.choices, blank=True)
     aviso_dias_devidos   = models.PositiveSmallIntegerField(_('Dias Devidos'), default=0)

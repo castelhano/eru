@@ -124,7 +124,7 @@ class RescisaoForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Rescisao
         fields = [
-            'funcionario', 'contrato', 'motivo', 'data_desligamento',
+            'funcionario', 'contrato', 'motivo', 'data_comunicacao','data_desligamento',
             'aviso_tipo', 'aviso_dias_devidos', 'aviso_dias_cumpridos',
             'multa_fgts_paga', 'ferias_proporcionais_pagas', 'ferias_vencidas_pagas',
             'decimo_terceiro_proporcional', 'detalhe',

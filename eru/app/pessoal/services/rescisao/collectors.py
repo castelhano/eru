@@ -5,7 +5,7 @@ Responsabilidade única: buscar e estruturar tudo que o engine precisa,
 sem nenhuma lógica de cálculo. Segue o mesmo padrão de folha/collectors.py.
 """
 from datetime import date
-from django.db.models import Min, Q, Sum
+from django.db.models import Min, Q
 from pessoal.models import (
     Funcionario, Contrato, EventoEmpresa, EventoCargo, EventoFuncionario,
     FrequenciaConsolidada, Afastamento, FeriasAquisitivo,
@@ -98,20 +98,33 @@ def _get_saldo_ferias(funcionario: Funcionario, data_admissao: date,
     Fallback para cálculo estimado se não houver períodos cadastrados.
     """
     # tenta usar períodos aquisitivos reais — fonte confiável
-    aquisitivos_pendentes = FeriasAquisitivo.objects.filter(
+    # dias_direito total - dias já gozados em uma única query agregada
+    from django.db.models import Sum, F
+    agg = FeriasAquisitivo.objects.filter(
         funcionario=funcionario,
         status__in=[FeriasAquisitivo.Status.DISPONIVEL, FeriasAquisitivo.Status.PARCIAL],
-    )
-    if aquisitivos_pendentes.exists():
-        # dias reais disponíveis considerando gozos já registrados
-        dias_vencidos = sum(a.dias_disponiveis for a in aquisitivos_pendentes)
+    ).aggregate(total_direito=Sum('dias_direito'))
+
+    if agg['total_direito']:
+        from pessoal.models import FeriasGozo
+        dias_gozados = FeriasGozo.objects.filter(
+            aquisitivo__funcionario=funcionario,
+            aquisitivo__status__in=[
+                FeriasAquisitivo.Status.DISPONIVEL,
+                FeriasAquisitivo.Status.PARCIAL,
+            ],
+        ).aggregate(
+            total=Sum(F('dias') + F('dias_abono'))
+        )['total'] or 0
+
+        dias_vencidos = max(agg['total_direito'] - dias_gozados, 0)
         return {
-            'admissao':             data_admissao,
-            'meses_periodo_atual':  _meses_periodo_atual(data_admissao, data_desligamento),
-            'periodos_completos':   0,        # não usado quando dias_vencidos está preenchido
-            'dias_vencidos':        dias_vencidos,
-            'ferias_vencidas':      dias_vencidos > 0,
-            'fonte':                'aquisitivo_real',
+            'admissao':            data_admissao,
+            'meses_periodo_atual': _meses_periodo_atual(data_admissao, data_desligamento),
+            'periodos_completos':  0,  # não usado quando dias_vencidos está preenchido
+            'dias_vencidos':       dias_vencidos,
+            'ferias_vencidas':     dias_vencidos > 0,
+            'fonte':               'aquisitivo_real',
         }
 
     # fallback: estimativa por meses quando módulo de férias não foi implantado
