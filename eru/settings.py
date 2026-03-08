@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'pydantic',
     'django_q',
+    'django_ckeditor_5',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +48,17 @@ Q_CLUSTER = {
     'retry':      180,
     # 'django_redis': 'default',  # comentado ate migrar para redis
     'orm':        'default',    # usa o banco Django como broker
+}
+
+# Configuração do Editor (focado em documentos)
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'highlight', '|', 
+                    'insertTable', 'bulletedList', 'numberedList', 'alignment', '|', 'undo', 'redo'],
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties']
+        },
+    }
 }
 
 ROOT_URLCONF = 'eru.urls'

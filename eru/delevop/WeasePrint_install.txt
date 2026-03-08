@@ -1,0 +1,127 @@
+Para implementar essa solução robusta (Django + CKEditor 5 + WeasyPrint), siga este roteiro técnico. Ele substitui sua lógica antiga de Regex por um motor de renderização real.
+
+1. Instalação de Dependências
+O WeasyPrint precisa de bibliotecas do sistema para renderizar fontes e imagens.
+No Linux (Ubuntu/Debian):
+bash
+sudo apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
+Use o código com cuidado.
+
+No Windows:
+Instale o GTK for Windows Runtime.
+No seu Ambiente Virtual (Python):
+bash
+pip install django-ckeditor-5 weasyprint
+Use o código com cuidado.
+
+2. Configuração do Projeto (settings.py)
+Adicione o CKEditor às suas aplicações instaladas:
+python
+INSTALLED_APPS = [
+    # ...
+    'django_ckeditor_5',
+    # ...
+]
+
+# Configuração do Editor (focado em documentos)
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': ['heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'highlight', '|', 
+                    'insertTable', 'bulletedList', 'numberedList', 'alignment', '|', 'undo', 'redo'],
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties']
+        },
+    }
+}
+Use o código com cuidado.
+
+3. O Modelo (Model)
+Troque o TextField comum pelo campo do CKEditor:
+python
+from django.db import models
+from django_ckeditor_5.fields import CKEditor5Field
+
+class Termo(models.Model):
+    nome = models.CharField(max_length=100)
+    # O parâmetro 'config_name' deve bater com o que definimos no settings
+    body = CKEditor5Field('Conteúdo', config_name='default') 
+Use o código com cuidado.
+
+4. O Template Base para Relatórios (relatorios/base_pdf.html)
+Este arquivo CSS é o "segredo" para o WeasyPrint entender que é um papel A4.
+html
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+            }
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        /* Repete o cabeçalho da tabela em novas páginas */
+        thead { display: table-header-group; }
+        
+        .logo { width: 150px; height: auto; margin-bottom: 20px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .highlight-blue { color: #0044cc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    {% block content %}{% endblock %}
+</body>
+</html>
+Use o código com cuidado.
+
+5. A View de Geração (views.py)
+Agora, em vez de md_report, usamos o motor do Django para injetar as variáveis no HTML e o WeasyPrint para gerar o PDF.
+python
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.http import HttpResponse
+
+def gerar_termo_pdf(request, termo_id, acidente_id):
+    termo = Termo.objects.get(id=termo_id)
+    acidente = Acidente.objects.get(id=acidente_id)
+    
+    # 1. Renderiza o conteúdo dinâmico (troca as variáveis {{ acidente.nome }} do CKEditor)
+    from django.template import Template, Context
+    template_dinamico = Template(termo.body)
+    contexto_dados = Context({'acidente': acidente, 'empresa': acidente.empresa})
+    conteudo_processado = template_dinamico.render(contexto_dados)
+
+    # 2. Insere esse conteúdo no seu template base de PDF
+    html_final = render_to_string('relatorios/layout_final.html', {
+        'corpo': conteudo_processado,
+        'logo_url': request.build_absolute_uri(acidente.empresa.logo.url) if acidente.empresa.logo else None
+    })
+
+    # 3. Converte para PDF
+    pdf_file = HTML(string=html_final, base_url=request.build_absolute_uri('/')).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="termo_{acidente.id}.pdf"'
+    return response
+Use o código com cuidado.

@@ -7,302 +7,317 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<link rel="stylesheet" href="{% static 'css/app.css' %}">
-<link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 11px;
-    color: #1a1a1a;
-    padding: 20mm 15mm;
-  }
-
-  /* ── cabeçalho ── */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    border-bottom: 2px solid #333;
-    padding-bottom: 8px;
-    margin-bottom: 14px;
-  }
-  .header-title { font-size: 15px; font-weight: bold; }
-  .header-sub   { font-size: 10px; color: #666; margin-top: 2px; }
-  /* .badge-simulacao {
-    background: #f59e0b;
-    color: white;
-    font-size: 9px;
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 3px;
-    letter-spacing: 0.5px;
-  } */
-
-  /* ── seções ── */
-  .section { margin-bottom: 14px; }
-  .section-title {
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #555;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 3px;
-    margin-bottom: 8px;
-  }
-
-  /* ── grid de dados ── */
-  .data-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px 12px;
-  }
-  .data-item label {
-    display: block;
-    font-size: 9px;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .data-item span { font-weight: bold; }
-
-  /* ── tabela de verbas ── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10.5px;
-  }
-  thead th {
-    background: #f3f4f6;
-    text-align: left;
-    padding: 5px 8px;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #555;
-    border-bottom: 1px solid #ddd;
-  }
-  thead th.right { text-align: right; }
-  tbody td {
-    padding: 5px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-  }
-  tbody td.right { text-align: right; }
-  tbody td.formula { color: #888; font-size: 9.5px; font-family: monospace; }
-
-  .tipo-P { color: #15803d; font-weight: bold; }
-  .tipo-D { color: #dc2626; font-weight: bold; }
-
-  /* linhas de desconto com fundo levemente avermelhado */
-  tr.desconto { background: #fff5f5; }
-
-  /* ── totais ── */
-  .totais {
-    margin-top: 8px;
-    display: flex;
-    justify-content: flex-end;
-  }
-  .totais-box { min-width: 260px; }
-  .totais-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-  .totais-row.bruto    { background: #f9fafb; }
-  .totais-row.desconto { background: #fff5f5; color: #dc2626; }
-  .totais-row.liquido  {
-    background: #1e3a5f;
-    color: white;
-    font-weight: bold;
-    font-size: 12px;
-    border-radius: 3px;
-    margin-top: 2px;
-  }
-
-  /* ── flags divergentes ── */
-  .divergencia-box {
-    background: #fffbeb;
-    border: 1px solid #f59e0b;
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-size: 10px;
-  }
-  .divergencia-box strong { color: #92400e; }
-
-  /* ── rodapé ── */
-  .footer {
-    margin-top: 20px;
-    padding-top: 8px;
-    border-top: 1px solid #ddd;
-    font-size: 9px;
-    color: #999;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  /* WeasyPrint: forçar quebra de página antes da tabela se necessário */
-  @media print {
-    .page-break { page-break-before: always; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
+  <style>
+    @page {
+      margin-top: 1.5cm;
+      margin-bottom: 2.5cm;
+      margin-left: 1.0cm;
+      margin-right: 1.0cm;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+    }
+    
+    /* ── cabeçalho ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #333;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+    }
+    .header-title { font-size: 15px; font-weight: bold; }
+    .header-sub   { font-size: 10px; color: #666; margin-top: 2px; }
+    /* ── seções ── */
+    .section { margin-bottom: 14px; }
+    .section-title {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 3px;
+      margin-bottom: 8px;
+    }
+    
+    /* ── grid de dados ── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px 12px;
+    }
+    .data-item label {
+      display: block;
+      font-size: 9px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .data-item span { font-weight: bold; }
+    
+    /* ── tabela de verbas ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+    }
+    thead th {
+      background: #f3f4f6;
+      text-align: left;
+      padding: 5px 8px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+    }
+    thead th.right { text-align: right; }
+    tbody td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    tbody td.right { text-align: right; }
+    tbody td.formula { color: #888; font-size: 9.5px; font-family: monospace; }
+    
+    .tipo-P { color: #15803d; font-weight: bold; }
+    .tipo-D { color: #dc2626; font-weight: bold; }
+    
+    /* linhas de desconto com fundo levemente avermelhado */
+    tr.desconto { background: #fff5f5; }
+    
+    /* ── totais ── */
+    .totais {
+      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .totais-box { min-width: 260px; }
+    .totais-row {
+      margin-top: 5px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+    /* .totais-row.bruto    { background: #f9fafb; } */
+    /* .totais-row.desconto { background: #fff5f5; color: #dc2626; } */
+    /* .totais-row.liquido  {
+      background: #1e3a5f;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      border-radius: 3px;
+      margin-top: 2px;
+    } */
+    
+    /* ── flags divergentes ── */
+    .divergencia-box {
+      background: #fffbeb;
+      border: 1px solid #f59e0b;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-size: 10px;
+    }
+    .divergencia-box strong { color: #92400e; }
+    
+    
+    /* ── rodape ── */
+    .footer {
+      position: fixed;
+      bottom: -1.5cm; /* Ajuste conforme necessário */
+      left: 0;
+      right: 0;
+      width: 100%;
+      border-top: 1px solid #ddd;
+      padding-top: 5px;
+    }
+    
+    .footer table {
+      width: 100%;
+      border: none !important;
+    }
+    
+    .footer td {
+      border: none !important;
+      color: #999;
+      vertical-align: top;
+    }
+    
+    /* WeasyPrint: forçar quebra de página antes da tabela se necessário */
+    @media print {
+      .page-break { page-break-before: always; }
+    }
+  </style>
 </head>
-<body>
-
-<!-- CABEÇALHO -->
-<div class="header">
-  <div>
-    <div class="header-title">Rescisão de Contrato de Trabalho</div>
-    <div class="header-sub">
-      {{ resultado.contexto.cargo }} &mdash;
-      Regime: {{ resultado.contexto.regime }}
+<body>  
+  <!-- CABEÇALHO -->
+  <div class="header">
+    <div>
+      <div class="header-title">Rescisão de Contrato de Trabalho</div>
+      <div class="header-sub">
+        {{ resultado.contexto.cargo }} &mdash;
+        Regime: {{ resultado.contexto.regime }}
+      </div>
     </div>
-  </div>
-  <div style="text-align:right">
-    {% if simulacao %}
+    <div style="text-align:right">
+      {% if simulacao %}
       <div class="badge text-bg-warning-matte fs-8">SIMULAÇÃO</div>
-    {% endif %}
-    <div class="header-sub" style="margin-top:4px">
-      Emitido em: {% now "d/m/Y H:i" %}
-    </div>
-  </div>
-</div>
-
-<!-- DADOS DO FUNCIONÁRIO -->
-<div class="section">
-  <div class="section-title">Dados do Funcionário</div>
-  <div class="data-grid">
-    <div class="data-item">
-      <label>Empresa</label>
-      <span>{{ funcionario.filial.empresa.razao_social }}</span>
-    </div>
-    <div class="data-item">
-      <label>Filial</label>
-      <span>{{ funcionario.filial.nome_fantasia }}</span>
-    </div>
-    <div class="data-item">
-      <label>Cargo</label>
-      <span>{{ resultado.contexto.cargo }}</span>
-    </div>
-    <div class="data-item">
-      <label>Matrícula</label>
-      <span>{{ resultado.contexto.matricula }}</span>
-    </div>
-    <div class="data-item">
-      <label>Nome</label>
-      <span>{{ funcionario.nome }}</span>
-    </div>
-    <div class="data-item">
-      <label>Admissão</label>
-      <span>{{ resultado.contexto.data_admissao }}</span>
-    </div>
-    <div class="data-item">
-      <label>Desligamento</label>
-      <span>{{ resultado.contexto.data_desligamento }}</span>
-    </div>
-    <div class="data-item">
-      <label>Tempo de Casa</label>
-      <span>{{ resultado.contexto.anos_completos }} ano(s) / {{ resultado.contexto.dias_empresa }} dia(s)</span>
-    </div>
-    <div class="data-item">
-      <label>Salário Base</label>
-      <span>R$ {{ resultado.contexto.salario|floatformat:2 }}</span>
-    </div>
-    <div class="data-item">
-      <label>Motivo</label>
-      <span>{{ resultado.contexto.motivo_display }}</span>
-    </div>
-    <div class="data-item">
-      <label>Fonte Férias</label>
-      <span>{{ resultado.contexto.ferias_fonte }}</span>
-    </div>
-  </div>
-</div>
-
-<!-- VERBAS -->
-<div class="section">
-  <div class="section-title">Verbas Rescisórias</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Verba</th>
-        <th>Tipo</th>
-        <th>Fórmula</th>
-        <th class="right">Valor (R$)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for verba in resultado.verbas %}
-      <tr {% if verba.tipo == 'D' %}class="desconto"{% endif %}>
-        <td>{{ verba.nome }}</td>
-        <td>
-          <span class="tipo-{{ verba.tipo }}">
-            {% if verba.tipo == 'P' %}Provento{% elif verba.tipo == 'D' %}Desconto{% else %}{{ verba.tipo }}{% endif %}
-          </span>
-        </td>
-        <td class="formula">{{ verba.formula }}</td>
-        <td class="right">
-          {% if verba.tipo == 'D' %}&minus; {% endif %}{{ verba.valor|floatformat:2 }}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <div class="totais">
-    <div class="totais-box">
-      <div class="totais-row bruto">
-        <span>Total Bruto</span>
-        <span>R$ {{ resultado.total_bruto|floatformat:2 }}</span>
-      </div>
-      {% if resultado.total_bruto != resultado.total_liquido %}
-      <div class="totais-row desconto">
-        <span>Descontos</span>
-        <span>&minus; R$ {{ resultado.total_desconto|floatformat:2 }}</span>
-      </div>
       {% endif %}
-      <div class="totais-row liquido">
-        <span>Total Líquido</span>
-        <span>R$ {{ resultado.total_liquido|floatformat:2 }}</span>
+      <div class="header-sub" style="margin-top:4px">
+        Emitido em: {% now "d/m/Y H:i" %}
       </div>
     </div>
   </div>
-</div>
-
-<!-- DIVERGÊNCIAS CLT (se houver) -->
-{% if resultado.contexto.flags_divergentes %}
-<div class="section">
-  <div class="section-title">Atenção — Divergências em relação à CLT</div>
-  <div class="divergencia-box">
-    <strong>As seguintes verbas foram configuradas de forma diferente do padrão CLT:</strong>
-    <ul style="margin-top:6px; padding-left:16px;">
-      {% for chave, div in resultado.contexto.flags_divergentes.items %}
-      <li>
-        <strong>{{ chave }}</strong>:
-        Usuário definiu <em>{{ div.usuario|yesno:"sim,não" }}</em>,
-        CLT padrão seria <em>{{ div.clt|yesno:"sim,não" }}</em>.
-      </li>
-      {% endfor %}
-    </ul>
+  
+  <!-- DADOS DO FUNCIONÁRIO -->
+  <div class="section">
+    <div class="section-title">Dados do Funcionário</div>
+    <div class="data-grid">
+      <div class="data-item">
+        <label>Empresa</label>
+        <span>{{ funcionario.filial.empresa.razao_social }}</span>
+      </div>
+      <div class="data-item">
+        <label>Filial</label>
+        <span>{{ funcionario.filial.nome_fantasia }}</span>
+      </div>
+      <div class="data-item">
+        <label>Cargo</label>
+        <span>{{ resultado.contexto.cargo }}</span>
+      </div>
+      <div class="data-item">
+        <label>Matrícula</label>
+        <span>{{ resultado.contexto.matricula }}</span>
+      </div>
+      <div class="data-item">
+        <label>Nome</label>
+        <span>{{ funcionario.nome }}</span>
+      </div>
+      <div class="data-item">
+        <label>Admissão</label>
+        <span>{{ resultado.contexto.data_admissao }}</span>
+      </div>
+      <div class="data-item">
+        <label>Desligamento</label>
+        <span>{{ resultado.contexto.data_desligamento }}</span>
+      </div>
+      <div class="data-item">
+        <label>Tempo de Casa</label>
+        <span>{{ resultado.contexto.anos_completos }} ano(s) / {{ resultado.contexto.dias_empresa }} dia(s)</span>
+      </div>
+      <div class="data-item">
+        <label>Salário Base</label>
+        <span>R$ {{ resultado.contexto.salario|floatformat:2 }}</span>
+      </div>
+      <div class="data-item">
+        <label>Motivo</label>
+        <span>{{ resultado.contexto.motivo_display }}</span>
+      </div>
+      <div class="data-item">
+        <label>Fonte Férias</label>
+        <span>{{ resultado.contexto.ferias_fonte }}</span>
+      </div>
+    </div>
   </div>
-</div>
-{% endif %}
-
-<!-- RODAPÉ -->
-<div class="footer">
-  <span>
-    {% if simulacao %}
-      Documento de SIMULAÇÃO — não possui validade legal.
-    {% else %}
-      Documento gerado pelo sistema de RH.
-    {% endif %}
-  </span>
-  <span>Funcionário ID: {{ resultado.contexto.funcionario_id }} | Contrato ID: {{ resultado.contexto.contrato_id }}</span>
-</div>
-
+  
+  <!-- VERBAS -->
+  <div class="section">
+    <div class="section-title">Verbas Rescisórias</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Verba</th>
+          <th>Tipo</th>
+          <th>Fórmula</th>
+          <th class="right">Valor (R$)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for verba in resultado.verbas %}
+        <tr {% if verba.tipo == 'D' %}class="desconto"{% endif %}>
+          <td>{{ verba.nome }}</td>
+          <td>
+            <span class="tipo-{{ verba.tipo }}">
+              {% if verba.tipo == 'P' %}Provento{% elif verba.tipo == 'D' %}Desconto{% else %}{{ verba.tipo }}{% endif %}
+            </span>
+          </td>
+          <td class="formula">{{ verba.formula }}</td>
+          <td class="right">
+            {% if verba.tipo == 'D' %}&minus; {% endif %}{{ verba.valor|floatformat:2 }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    <div class="totais">
+      <div class="totais-box">
+        <div class="totais-row bruto text-bg-secondary-matte">
+          <span>Total Bruto</span>
+          <span>R$ {{ resultado.total_bruto|floatformat:2 }}</span>
+        </div>
+        {% if resultado.total_bruto != resultado.total_liquido %}
+        <div class="totais-row desconto text-bg-danger-matte">
+          <span>Descontos</span>
+          <span>&minus; R$ {{ resultado.total_desconto|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        <div class="totais-row liquido text-bg-primary-matte">
+          <span>Total Líquido</span>
+          <span>R$ {{ resultado.total_liquido|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- DIVERGÊNCIAS CLT (se houver) -->
+  {% if resultado.contexto.flags_divergentes %}
+  <div class="section">
+    <div class="section-title">Atenção — Divergências em relação à CLT</div>
+    <div class="divergencia-box">
+      <strong>As seguintes verbas foram configuradas de forma diferente do padrão CLT:</strong>
+      <ul style="margin-top:6px; padding-left:16px;">
+        {% for chave, div in resultado.contexto.flags_divergentes.items %}
+        <li>
+          <strong>{{ chave }}</strong>:
+          Usuário definiu <em>{{ div.usuario|yesno:"sim,não" }}</em>,
+          CLT padrão seria <em>{{ div.clt|yesno:"sim,não" }}</em>.
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- RODAPÉ -->
+  <div class="footer">
+    <table>
+      <tr>
+        <td style="text-align: left; width: 50%;">
+          {% if simulacao %}
+          Documento de SIMULAÇÃO — não possui validade legal.
+          {% else %}
+          Documento gerado pelo sistema de RH.
+          {% endif %}
+        </td>
+        <td style="text-align: right; width: 50%;">
+          Funcionário ID: {{ resultado.contexto.funcionario_id }} | Contrato ID: {{ resultado.contexto.contrato_id }}
+        </td>
+      </tr>
+    </table>
+  </div>
+  
+  
 </body>
 </html>
