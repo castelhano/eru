@@ -61,7 +61,8 @@
                 <input type="hidden" name="contrato" value="{{ contrato.id|safe }}">
                 
                 <div class="mt-3">
-                    {% btn_tag _('Desligar') class="btn btn-sm btn-danger-matte" id="submitBtn" type="submit" data_confirm="true" %}
+                    {% btn_tag _('Desligar') class="btn btn-sm btn-danger-matte" id="submitBtn" type="submit" name="acao" value="salvar" data_confirm="true" %}
+                    {% btn_tag _('Simular') class="btn btn-sm btn-info-matte" type="submit" name="acao" value="simular" formtarget="_blank" %}
                 </div>
             </div>
 

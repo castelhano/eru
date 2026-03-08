@@ -84,6 +84,53 @@ def simular_desligamento(funcionario_id: int, rescisao_id: int) -> dict:
     return calcular_rescisao(dados)  # sem salvar_resultado → zero side effects
 
 
+def simular_sem_persistir(funcionario_id: int, dados_form: dict) -> dict:
+    """
+    Simulação pura — zero objetos criados ou alterados no banco.
+    Recebe os dados já validados do formulário (form.cleaned_data).
+    Usado pelo botão Simular na view de rescisão.
+
+    dados_form esperado:
+        motivo, aviso_tipo, aviso_dias_devidos, aviso_dias_cumpridos,
+        data_desligamento, ferias_proporcionais_pagas, ferias_vencidas_pagas,
+        decimo_terceiro_proporcional, multa_fgts_paga
+    """
+    funcionario = (
+        Funcionario.objects
+        .select_related('filial__empresa')
+        .get(pk=funcionario_id)
+    )
+    contrato = funcionario.F_contrato
+    data_desligamento = dados_form['data_desligamento']
+
+    # consolida frequência do mês — idempotente, não muda nada se já consolidado
+    _consolidar_mes_desligamento(contrato, data_desligamento)
+
+    dados = get_dados_rescisao(funcionario, contrato, data_desligamento)
+
+    # injeta proxy com os dados do form no lugar do rescisao_obj real
+    dados['rescisao_obj'] = _RescisaoProxy(dados_form)
+
+    return calcular_rescisao(dados)
+
+
+class _RescisaoProxy:
+    """
+    Objeto leve que expõe a mesma interface que Rescisao para o engine,
+    sem precisar de um objeto salvo no banco.
+    Evita que o engine precise de tratamento especial para simulação.
+    """
+    def __init__(self, dados_form: dict):
+        self.motivo                    = dados_form.get('motivo', '')
+        self.aviso_tipo                = dados_form.get('aviso_tipo', '')
+        self.aviso_dias_devidos        = dados_form.get('aviso_dias_devidos', 0)
+        self.aviso_dias_cumpridos      = dados_form.get('aviso_dias_cumpridos', 0)
+        self.ferias_proporcionais_pagas = dados_form.get('ferias_proporcionais_pagas', True)
+        self.ferias_vencidas_pagas      = dados_form.get('ferias_vencidas_pagas', True)
+        self.decimo_terceiro_proporcional = dados_form.get('decimo_terceiro_proporcional', True)
+        self.multa_fgts_paga            = dados_form.get('multa_fgts_paga', False)
+
+
 # ─── helpers privados ────────────────────────────────────────────────────────
 
 def _get_objetos(funcionario_id: int, rescisao_id: int | None = None):

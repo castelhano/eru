@@ -61,6 +61,7 @@ def calcular_rescisao(dados: dict) -> dict:
     verbas = []
 
     # ── contexto de auditoria ─────────────────────────────────────────────────
+
     contexto = {
         'funcionario_id':    funcionario.pk,
         'matricula':         funcionario.matricula,
@@ -70,11 +71,12 @@ def calcular_rescisao(dados: dict) -> dict:
         'salario':           salario,
         'carga_mensal':      contrato.carga_mensal,
         # data_admissao vem do funcionário — contrato.inicio pode ser posterior (recontrato)
-        'data_admissao':     str(funcionario.data_admissao or contrato.inicio),
-        'data_desligamento': str(data_deslig),
+        'data_admissao':     funcionario.data_admissao or contrato.inicio,
+        'data_desligamento': data_deslig,
         'dias_empresa':      dias_empresa,
         'anos_completos':    anos_completos,
         'motivo':            motivo,
+        'motivo_display':    dict(Rescisao.MotivoDesligamento.choices).get(motivo, motivo),
         'meses_ferias':      saldo_ferias['meses_periodo_atual'],
         'ferias_vencidas':   saldo_ferias['ferias_vencidas'],
         'ferias_fonte':      saldo_ferias.get('fonte', 'estimado'),  # auditoria
@@ -397,12 +399,12 @@ def _detectar_divergencias(flags: dict, motivo: str) -> dict:
     Compara as flags do usuário com as regras padrão CLT e retorna
     um dict com as divergências para registro de auditoria no campo regras.
     """
-    from pessoal.models import Rescisao as _R
-    JC = _R.MotivoDesligamento.POR_JUSTA_CAUSA
-    PD = _R.MotivoDesligamento.PEDIDO
+    from pessoal.models import Rescisao
+    JC = Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA
+    PD = Rescisao.MotivoDesligamento.PEDIDO
     tem_aviso_indenizado_pd = (
         motivo == PD and
-        getattr(flags.get('_rescisao_obj'), 'aviso_tipo', None) == _R.AvisoPrevioTipo.INDENIZADO
+        getattr(flags.get('_rescisao_obj'), 'aviso_tipo', None) == Rescisao.AvisoPrevioTipo.INDENIZADO
     )
     padrao = {
         # PD + tipo indenizado é desconto legítimo — não é divergência
@@ -411,9 +413,9 @@ def _detectar_divergencias(flags: dict, motivo: str) -> dict:
         'ferias_vencidas':      True,
         'decimo_terceiro':      motivo != JC,
         'multa_fgts':           motivo in (
-            _R.MotivoDesligamento.PELO_EMPREGADOR,
-            _R.MotivoDesligamento.ABANDONO,
-            _R.MotivoDesligamento.RESCISAO_INDIRETA,
+            Rescisao.MotivoDesligamento.PELO_EMPREGADOR,
+            Rescisao.MotivoDesligamento.ABANDONO,
+            Rescisao.MotivoDesligamento.RESCISAO_INDIRETA,
         ),
     }
     # retorna só o que diverge — dict vazio = tudo conforme CLT

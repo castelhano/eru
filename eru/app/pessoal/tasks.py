@@ -29,6 +29,7 @@ from pessoal.services.frequencia.engine import consolidar, fechar as fechar_freq
 from pessoal.services.folha.services import payroll_run
 from pessoal.services.folha.persistence import fechar_folha, pagar_folha, cancelar_folha
 from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
+from pessoal.services.rescisao import processar_desligamento
 
 # ─── Schema helper ───────────────────────────────────────────────────────────
 
@@ -407,11 +408,8 @@ def disparar_desligamento(funcionario_id: int, usuario) -> 'ProcessamentoJob':
     Chamado pelo Rescisao.save() ou pela view após salvar o formulário.
 
     object_id = funcionario_id — convenção documentada no Tipo.DESLIGAR_FUNCIONARIO.
-    """
+    """   
     funcionario = Funcionario.objects.get(pk=funcionario_id)
-
-    # Lookup por object_id — para DESLIGAR_FUNCIONARIO o identificador único é o funcionário,
-    # não filial/competência (que dispararia o unique_together do model).
     job, _ = ProcessamentoJob.objects.update_or_create(
         tipo=ProcessamentoJob.Tipo.DESLIGAR_FUNCIONARIO,
         object_id=funcionario_id,
@@ -434,6 +432,7 @@ def disparar_desligamento(funcionario_id: int, usuario) -> 'ProcessamentoJob':
         group='rescisao',
     )
     return job
+
 
 
 def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: date,

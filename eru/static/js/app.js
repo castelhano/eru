@@ -390,7 +390,17 @@ function appAlert(tipo, mensagem, options={}){
           };
         }
         else if(el.type == 'submit' && el.form){
-          document.getElementById('appModalConfirm_button').onclick = () => {el.form.submit()};
+          document.getElementById('appModalConfirm_button').onclick = () => {
+            if(el.name){
+            // injeta o name/value do botão original no form, necessario em caso de form com mais de um submit
+              let hidden = document.createElement('input');
+              hidden.type  = 'hidden';
+              hidden.name  = el.name;
+              hidden.value = el.value;
+              el.form.appendChild(hidden);
+            }
+            el.form.submit();
+          };
         }
         if(el.hasAttribute('data-confirm-delay')){
           span = document.createElement('span');
