@@ -21,7 +21,7 @@ from .mixins import AjaxableListMixin, CSVExportMixin
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse
 
 # metodo auxiliar para inicializar campo config em profile
 def initialize_profile_config():

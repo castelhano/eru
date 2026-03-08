@@ -1,7 +1,5 @@
 import json
-# import calendar
-from datetime import datetime, date, timedelta
-from collections import OrderedDict
+from datetime import date
 # Django Core
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -10,7 +8,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Q, Count
 from django.http import JsonResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -21,7 +19,6 @@ from rest_framework import viewsets, permissions
 from django_tables2 import SingleTableView
 
 # Core App
-from core.models import Filial
 from core.extras import asteval_run
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
@@ -30,12 +27,12 @@ from core.views_base import (BaseListView, BaseCreateView, BaseUpdateView, BaseD
 # Pessoal App - Models
 from pessoal.models import (
     PessoalSettings, Setor, Cargo, Funcionario, Contrato, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, EventoEmpresa, 
-    EventoCargo, EventoFuncionario, TurnoHistorico, Frequencia, EventoFrequencia, FrequenciaImport
+    EventoCargo, EventoFuncionario, TurnoHistorico, EventoFrequencia
 )
 # Pessoal App
 from pessoal.forms import (
     PessoalSettingsForm, SetorForm, CargoForm, FuncionarioForm, ContratoForm, AfastamentoForm, DependenteForm, RescisaoForm, EventoForm, GrupoEventoForm, EventoEmpresaForm, 
-    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm, FrequenciaImportForm
+    EventoCargoForm, EventoFuncionarioForm, MotivoReajusteForm, EventoFrequenciaForm
 )
 from pessoal.filters import (
     FuncionarioFilter, ContratoFilter, AfastamentoFilter, CargoFilter, EventoFilter, EventoEmpresaFilter, EventoCargoFilter, 
@@ -637,50 +634,6 @@ class DependenteUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpda
         return context
     def get_success_url(self):
         return reverse('pessoal:dependente_update', kwargs={'pk': self.object.id})
-
-class RescisaoProcessView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    permission_required = 'pessoal.funcionario_desligar'
-    template_name = 'pessoal/rescisao.html'
-    def get_object(self, pk):
-        return get_object_or_404(
-            Funcionario.objects.select_related('filial__empresa'), 
-            pk=pk
-        )
-    def get(self, request, pk):
-        funcionario = self.get_object(pk)        
-        if not funcionario.F_eh_editavel:
-            messages.error(request, "Funcionário bloqueado para edição")
-            return redirect('pessoal:funcionario_update', pk=funcionario.id)
-        if funcionario.status == Funcionario.Status.AFASTADO:
-            messages.warning(request, "Retorne o funcionário do afastamento antes de rescindir")
-            return redirect('pessoal:funcionario_detail', pk=pk)
-        contrato = funcionario.F_contrato
-        if not contrato:
-            messages.error(request, "Funcionário não possui contrato vigente para rescindir")
-            return redirect('pessoal:funcionario_detail', pk=pk)
-        form = RescisaoForm(funcionario=funcionario, contrato=contrato)
-        return render(request, self.template_name, {
-            'form': form, 
-            'funcionario': funcionario,
-            'contrato': contrato
-        })
-    def post(self, request, pk):
-        funcionario = self.get_object(pk)
-        contrato = funcionario.F_contrato        
-        form = RescisaoForm(request.POST, funcionario=funcionario, contrato=contrato)        
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    form.save()
-                messages.warning(request, f"Rescisão iniciada, este processo irá rodar em segundo plano")
-                return redirect('pessoal:funcionario_update', pk=funcionario.id)
-            except Exception as e:
-                form.add_error(None, f"Erro crítico ao salvar: {str(e)}")        
-        return render(request, self.template_name, {
-            'form': form, 
-            'funcionario': funcionario,
-            'contrato': contrato
-        })
 
 
 class EventoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):

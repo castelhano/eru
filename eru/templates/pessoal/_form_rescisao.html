@@ -3,7 +3,7 @@
     <h5 class="card-title">{% translate 'Desligamento'|escapejs %}: <b class="text-purple">{% translate 'Funcionário'|escapejs %}</b></h5>
     <h6 class="text-orange">{{funcionario.matricula}} - {{funcionario.nome}}</h6>
     <details class="my-2 small">
-        <summary id="filter" class="text-bg-primary-matte px-2 py-1 fw-bold">{% translate 'Detalhes'|escapejs %} <sup class="badge d-none d-lg-inline-block text-bg-orange-matte">F2</sup></summary>
+        <summary id="detail_funcionario" class="text-bg-primary-matte px-2 py-1 fw-bold">{% translate 'Detalhes'|escapejs %} <sup class="badge d-none d-lg-inline-block text-bg-orange-matte">F2</sup></summary>
         <dl class="custom-dl mt-2">
             <dt>Matrícula:</dt><dd class="text-bg-secondary-matte">{{funcionario.matricula}}</dd>
             <dt>Nome:</dt><dd class="text-bg-secondary-matte">{{funcionario.nome}}</dd>

@@ -12,6 +12,10 @@ from auditlog.registry import auditlog
 from .schemas import PessoalSettingsSchema
 
 
+# ============================================
+# SETTINGS
+# ============================================
+
 class PessoalSettings(BaseSettings):
     filial = models.OneToOneField(
         'core.Filial',
@@ -24,6 +28,10 @@ class PessoalSettings(BaseSettings):
         return "Pessoal settings"
 auditlog.register(PessoalSettings)
 
+
+# ============================================
+# FUNCIONÁRIO
+# ============================================
 
 class Pessoa(models.Model):
     class EstadoCivil(models.TextChoices):
@@ -88,35 +96,6 @@ class Pessoa(models.Model):
     class Meta:
         abstract = True
 
-
-class Setor(models.Model):
-    nome = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
-    def __str__(self):
-        return self.nome
-    def ativos(self):
-        return Funcionario.objects.filter(contrato__cargo__setor=self, is_active=True).distinct().count()
-auditlog.register(Setor)
-
-
-class Cargo(models.Model):
-    class FuncaoTipo(models.TextChoices):
-        MOTORISTA = "M", _("Motorista")
-        AUXILIAR  = "A", _("Auxiliar")
-        TRAFEGO   = "T", _("Trafego")
-        OFICINA   = "O", _("Oficina")
-    nome          = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
-    setor         = models.ForeignKey(Setor, on_delete=models.PROTECT, verbose_name=_('Setor'))
-    atividades    = models.TextField(_('Atividades'), blank=True)
-    funcoes_fixas = models.JSONField(_('Funcoes Fixas'), default=list, blank=True)
-    def __str__(self):
-        return self.nome
-    def ativos(self):
-        return 0
-    class Meta:
-        ordering = ['nome']
-auditlog.register(Cargo)
-
-
 class Funcionario(Pessoa):
     class Status(models.TextChoices):
         ATIVO     = "A", _("Ativo")
@@ -142,17 +121,26 @@ class Funcionario(Pessoa):
         super().delete(*args, **kwargs)
     def sync_status(self) -> None:
         """
-        Fonte unica de edicao para status do funcionario.
-        Prioridade: DESLIGADO > AFASTADO > ATIVO.
+        Fonte única de edição para status do funcionário.
+        Prioridade: DESLIGADO > PROCESSANDO_DESLIGAMENTO > AFASTADO > ATIVO.
         Deve ser chamado dentro de transaction.atomic() pelo chamador.
         """
-        if hasattr(self, 'rescisao'):                                          # desligado e permanente
-            novo = self.Status.DESLIGADO
-        elif self.afastamentos().filter(data_retorno__isnull=True).exists():   # afastamento sem data de retorno
+        if hasattr(self, 'rescisao'):
+            job = (
+                ProcessamentoJob.objects
+                .filter(tipo=ProcessamentoJob.Tipo.DESLIGAR_FUNCIONARIO, object_id=self.pk)
+                .order_by('-id')
+                .first()
+            )
+            if job and job.status == ProcessamentoJob.Status.CONCLUIDO:
+                novo = self.Status.DESLIGADO
+            else:
+                novo = self.Status.PROCESSANDO_DESLIGAMENTO
+        elif self.afastamentos().filter(data_retorno__isnull=True).exists():
             novo = self.Status.AFASTADO
         else:
             novo = self.Status.ATIVO
-        if self.status != novo:                                                # evita UPDATE desnecessario
+        if self.status != novo:
             self.status = novo
             self.save(update_fields=['status'])
     def dependentes(self):
@@ -214,9 +202,38 @@ class Funcionario(Pessoa):
 auditlog.register(Funcionario, exclude_fields=['foto'])
 
 
-# ---------------------------------------------------------------------------
-# Contrato / Turno / Escala
-# ---------------------------------------------------------------------------
+
+# ============================================
+# FUNCIONARIO RELATED
+# ============================================
+
+class Setor(models.Model):
+    nome = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
+    def __str__(self):
+        return self.nome
+    def ativos(self):
+        return Funcionario.objects.filter(contrato__cargo__setor=self, is_active=True).distinct().count()
+auditlog.register(Setor)
+
+
+class Cargo(models.Model):
+    class FuncaoTipo(models.TextChoices):
+        MOTORISTA = "M", _("Motorista")
+        AUXILIAR  = "A", _("Auxiliar")
+        TRAFEGO   = "T", _("Trafego")
+        OFICINA   = "O", _("Oficina")
+    nome          = models.CharField(_('Nome'), max_length=50, unique=True, blank=False)
+    setor         = models.ForeignKey(Setor, on_delete=models.PROTECT, verbose_name=_('Setor'))
+    atividades    = models.TextField(_('Atividades'), blank=True)
+    funcoes_fixas = models.JSONField(_('Funcoes Fixas'), default=list, blank=True)
+    def __str__(self):
+        return self.nome
+    def ativos(self):
+        return 0
+    class Meta:
+        ordering = ['nome']
+auditlog.register(Cargo)
+
 
 class Contrato(models.Model):
     # carga_diaria espera valor decimal ja convertido: 07:20 -> 7.3333
@@ -246,6 +263,9 @@ class Contrato(models.Model):
         if self.inicio and self.fim and self.fim <= self.inicio:
             raise ValidationError({'fim': DEFAULT_MESSAGES.get('endShorterThanStart')})
         if self.funcionario_id:
+            if self.inicio:
+                if self.inicio < self.funcionario.data_admissao:
+                    raise ValidationError(_("O contrato não pode iniciar antes da data de admissão"))
             overlap = Contrato.objects.filter(
                 funcionario_id=self.funcionario_id
             ).exclude(pk=self.pk).filter(
@@ -277,6 +297,311 @@ class Contrato(models.Model):
         return round(self.carga_mensal / 30, 4)
 auditlog.register(Contrato)
 
+class Dependente(models.Model):
+    class Parentesco(models.TextChoices):
+        CONJUGE     = "C",  _("Conjuge")
+        FILHO       = "F",  _("Filho / Enteado")
+        IRMAO       = "I",  _("Irmao")
+        PAI_MAE     = "P",  _("Pai / Mae")
+        SOGRO_SOGRA = "S",  _("Sogro / Sogra")
+        ASCENDENTE  = "A",  _("Ascendente")
+        DESCENDENTE = "N",  _("Descendente")
+        INCAPAZ     = "In", _("Incapaz")
+        OUTRO       = "M",  _("Outro")
+    funcionario        = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionario'))
+    nome               = models.CharField(_('Nome'), max_length=230, blank=False)
+    parentesco         = models.CharField(_('Parentesco'), max_length=3, choices=Parentesco.choices, default='F', blank=True)
+    genero             = models.CharField(_('Genero'), max_length=3, choices=Pessoa.Genero.choices, blank=True)
+    data_nascimento    = models.DateField(_('Data Nascimento'), blank=True, null=True)
+    rg                 = models.CharField(_('Rg'), max_length=20, blank=True)
+    rg_emissao         = models.DateField(_('Rg Emissao'), blank=True, null=True)
+    rg_orgao_expedidor = models.CharField(_('Rg Org Expedidor'), max_length=15, blank=True)
+    cpf                = models.CharField(_('Cpf'), max_length=20, blank=True)
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.nome[:10]}'
+    def idade(self):
+        if self.data_nascimento:
+            hoje = date.today()
+            return hoje.year - self.data_nascimento.year - (
+                (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day)
+            )
+        return ''
+auditlog.register(Dependente)
+
+class Afastamento(models.Model):
+    class Motivo(models.TextChoices):
+        DOENCA            = "D", _("Doenca")
+        ACIDENTE_TRABALHO = "A", _("Acidente Trabalho")
+        OUTRO             = "O", _("Outro")
+    class Origem(models.TextChoices):
+        INSS      = "I", _("INSS")
+        ESCALA    = "E", _("Escala")
+        SINDICATO = "S", _("Sindicato")
+        GESTORA   = "G", _("Gestora")
+        OUTRO     = "O", _("Outro")
+    funcionario      = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionario'))
+    motivo           = models.CharField(_('Motivo'), max_length=3, choices=Motivo.choices, default='D', blank=True)
+    origem           = models.CharField(_('Origem'), max_length=3, choices=Origem.choices, default='I', blank=True)
+    data_afastamento = models.DateField(_('Data Afastamento'), blank=True, null=True, default=datetime.today)
+    data_retorno     = models.DateField(_('Data Retorno'), blank=True, null=True)
+    reabilitado      = models.BooleanField(_('Reabilitado'), default=False)
+    remunerado       = models.BooleanField(_('Remunerado'), default=False)
+    detalhe          = models.TextField(_('Detalhe'), blank=True)
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.data_afastamento}'
+    @property
+    def T_dias_afastado(self):
+        # dias corridos do afastamento; retorno futuro resulta em 0
+        if not self.data_afastamento:
+            return 0
+        end_date = self.data_retorno if self.data_retorno else date.today()
+        return max((end_date - self.data_afastamento).days, 0)
+    def clean(self):
+        if self.data_retorno and self.data_afastamento and self.data_retorno < self.data_afastamento:
+            raise ValidationError({'data_retorno': _("A data de retorno nao pode ser anterior a data de afastamento")})
+        if not self.data_afastamento:
+            return
+        if not self.pk and self.funcionario.status == Funcionario.Status.DESLIGADO:
+            # nao permite afastamento de funcionario ja desligado
+            raise ValidationError(_("Nao e possivel lanccar afastamento para funcionario desligado"))
+        # valida sobreposicao de periodos de afastamento
+        query = Afastamento.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
+        if self.data_retorno:
+            overlap = query.filter(
+                Q(data_afastamento__lte=self.data_retorno) &
+                (Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True))
+            )
+        else:
+            overlap = query.filter(
+                Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True)
+            )
+        if overlap.exists():
+            raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.funcionario.sync_status()  # sincroniza status do funcionario
+auditlog.register(Afastamento)
+
+
+class Rescisao(models.Model):
+    """
+    Evento unico e definitivo de desligamento.
+    OneToOne garante unicidade estrutural — recontratacao exige novo Funcionario.
+    Ao ser salva: fecha o contrato vigente e promove status para DESLIGADO via sync_status().
+    """
+    class MotivoDesligamento(models.TextChoices):
+        PELO_EMPREGADOR   = "EM", _("Pelo Empregador")
+        POR_JUSTA_CAUSA   = "JC", _("Por Justa Causa")
+        PEDIDO            = "PD", _("Pedido de Desligamento")
+        RESCISAO_INDIRETA = "RI", _("Rescisao Indireta")
+        ABANDONO          = "AB", _("Abandono de Emprego")
+        DECISAO_JUDICIAL  = "DJ", _("Decisao Judicial")
+    class AvisoPrevioTipo(models.TextChoices):
+        TRABALHADO = "T", _("Trabalhado")
+        INDENIZADO = "I", _("Indenizado")
+        DISPENSADO = "D", _("Dispensado")
+    funcionario       = models.OneToOneField(Funcionario, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Funcionario'))
+    contrato          = models.OneToOneField(Contrato, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Contrato rescindido'))
+    motivo            = models.CharField(_('Motivo'), max_length=3, choices=MotivoDesligamento.choices)
+    data_desligamento = models.DateField(_('Data de Desligamento'))
+    aviso_tipo           = models.CharField(_('Tipo de Aviso'), max_length=1, choices=AvisoPrevioTipo.choices, blank=True)
+    aviso_dias_devidos   = models.PositiveSmallIntegerField(_('Dias Devidos'), default=0)
+    aviso_dias_cumpridos = models.PositiveSmallIntegerField(_('Dias Cumpridos'), default=0)
+    multa_fgts_paga              = models.BooleanField(_('Multa FGTS Paga'), default=False)
+    ferias_proporcionais_pagas   = models.BooleanField(_('Ferias Proporcionais Pagas'), default=False)
+    ferias_vencidas_pagas        = models.BooleanField(_('Ferias Vencidas Pagas'), default=False)
+    decimo_terceiro_proporcional = models.BooleanField(_('13 Proporcional Pago'), default=False)
+    total_bruto   = models.DecimalField(_('Total Bruto'), max_digits=12, decimal_places=2, default=0)
+    total_liquido = models.DecimalField(_('Total Líquido'), max_digits=12, decimal_places=2, default=0)
+    regras = models.JSONField( _('Memória de Cálculo'), default=dict, blank=True)
+    detalhe = models.TextField(_('Detalhe'), blank=True)
+    class Meta:
+        default_permissions = ()
+        permissions = [
+            ("funcionario_desligar", _("Pode desligar funcionário")),
+            ("funcionario_reativar", _("Pode reativar funcionário")),
+        ]
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.data_desligamento}'    
+    def clean(self):
+        if self.data_desligamento and self.funcionario.data_admissao:
+            if self.data_desligamento < self.funcionario.data_admissao:
+                raise ValidationError({'data_desligamento': _("Data de desligamento nao pode ser anterior a admissao")})
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            # fecha contrato vigente na data da rescisao se ainda estiver em aberto
+            if self.contrato.fim is None:
+                self.contrato.fim = self.data_desligamento
+                self.contrato.save(update_fields=['fim'])
+            self.funcionario.sync_status()  # promove status -> DESLIGADO
+auditlog.register(Rescisao)
+
+
+# ============================================
+# FERIAS
+# ============================================
+TABELA_FERIAS_CLT = [
+    (5,  30),
+    (14, 24),
+    (23, 18),
+    (32, 12),
+]  # (limite_faltas, dias_direito) — acima de 32 faltas = 0 dias
+
+def dias_direito_por_faltas(faltas: int) -> int:
+    """Retorna dias de férias conforme tabela CLT art. 130."""
+    for limite, dias in TABELA_FERIAS_CLT:
+        if faltas <= limite:
+            return dias
+    return 0  # mais de 32 faltas — perde o direito
+
+class FeriasAquisitivo(models.Model):
+    class Status(models.TextChoices):
+        ABERTO     = 'AB', _('Em Aquisição')   # período ainda em curso
+        DISPONIVEL = 'DI', _('Disponível')     # 12 meses completos, não gozado
+        PARCIAL    = 'PA', _('Parcialmente Gozado')
+        GOZADO     = 'GO', _('Gozado')         # totalmente consumido
+        PERDIDO    = 'PE', _('Perdido')        # prescrição ou justa causa
+
+    funcionario       = models.ForeignKey('Funcionario', on_delete=models.RESTRICT, related_name='ferias_aquisitivos', verbose_name=_('Funcionário'))
+    contrato          = models.ForeignKey('Contrato', on_delete=models.RESTRICT, related_name='ferias_aquisitivos', verbose_name=_('Contrato'))
+    inicio            = models.DateField(_('Início do Período Aquisitivo'))
+    fim               = models.DateField(_('Fim do Período Aquisitivo'))
+    inicio_concessivo = models.DateField(_('Início do Período Concessivo'))
+    fim_concessivo    = models.DateField(_('Fim do Período Concessivo'))
+    status            = models.CharField(_('Status'), max_length=2, choices=Status.choices, default=Status.ABERTO, db_index=True)
+    dias_direito      = models.PositiveSmallIntegerField( _('Dias de Direito'), default=30)
+    regras            = models.JSONField(_('Memória de Cálculo'), default=dict, blank=True)
+    class Meta:
+        verbose_name        = _('Período Aquisitivo de Férias')
+        ordering            = ['funcionario', 'inicio']
+        constraints         = [
+            models.UniqueConstraint(fields=['funcionario', 'inicio'], name='unique_ferias_aquisitivo_por_funcionario')
+        ]
+    def __str__(self):
+        return f'{self.funcionario.matricula} | {self.inicio} → {self.fim} | {self.get_status_display()}'
+    @property
+    def dias_gozados(self) -> int:
+        """Soma dos dias efetivamente gozados + abono nos gozos vinculados."""
+        return sum(g.dias + g.dias_abono for g in self.gozos.all())
+    @property
+    def dias_disponiveis(self) -> int:
+        """Dias ainda disponíveis para gozo."""
+        return max(self.dias_direito - self.dias_gozados, 0)
+    @property
+    def vencido(self) -> bool:
+        """True se o período concessivo expirou sem gozo total."""
+        return date.today() > self.fim_concessivo and self.dias_disponiveis > 0
+    def clean(self):
+        if self.inicio and self.fim and self.fim <= self.inicio:
+            raise ValidationError({'fim': _('Fim do período deve ser posterior ao início.')})
+        if self.inicio_concessivo and self.fim_concessivo:
+            if self.fim_concessivo <= self.inicio_concessivo:
+                raise ValidationError({'fim_concessivo': _('Fim concessivo deve ser posterior ao início concessivo')})
+        # período concessivo deve começar após o aquisitivo
+        if self.fim and self.inicio_concessivo and self.inicio_concessivo < self.fim:
+            raise ValidationError({'inicio_concessivo': _('Período concessivo deve iniciar após o fim do aquisitivo')})
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+auditlog.register(FeriasAquisitivo)
+
+
+class FeriasGozo(models.Model):
+    aquisitivo       = models.ForeignKey(FeriasAquisitivo, on_delete=models.RESTRICT, related_name='gozos', verbose_name=_('Período Aquisitivo'))
+    inicio           = models.DateField(_('Início do Gozo'))
+    fim              = models.DateField(_('Fim do Gozo'))
+    dias             = models.PositiveSmallIntegerField(_('Dias de Gozo'))
+    abono_pecuniario = models.BooleanField( _('Abono Pecuniário'), default=False)
+    dias_abono       = models.PositiveSmallIntegerField( _('Dias de Abono'), default=0)
+    adiantamento_13  = models.BooleanField( _('Adiantamento 13º'), default=False)
+    remunerado       = models.BooleanField(_('Remunerado'), default=True)
+    regras           = models.JSONField(_('Memória de Cálculo'), default=dict, blank=True)
+    observacao       = models.TextField(_('Observação'), blank=True)
+    class Meta:
+        verbose_name        = _('Gozo de Férias')
+        ordering            = ['aquisitivo', 'inicio']
+    def __str__(self):
+        return (f'{self.aquisitivo.funcionario.matricula} | {self.inicio} → {self.fim} ({self.dias}d)')
+    def clean(self):
+        # datas consistentes
+        if self.inicio and self.fim and self.fim < self.inicio:
+            raise ValidationError({'fim': _('Fim do gozo deve ser posterior ao início')})
+        # dias coerentes com o intervalo informado
+        if self.inicio and self.fim:
+            dias_calculados = (self.fim - self.inicio).days + 1
+            if self.dias != dias_calculados:
+                raise ValidationError({
+                    'dias': _(f'Dias informados ({self.dias}) divergem do intervalo início–fim ({dias_calculados} dias)')
+                })
+        # abono: dias_abono só válido com abono_pecuniario=True; valor fixo 10
+        if self.abono_pecuniario and self.dias_abono not in (0, 10):
+            raise ValidationError({'dias_abono': _('Dias de abono deve ser 0 ou 10')})
+        if not self.abono_pecuniario and self.dias_abono != 0:
+            raise ValidationError({'dias_abono': _('Dias de abono deve ser 0 quando sem abono pecuniário')})
+        if self.aquisitivo_id:
+            # gozo não pode exceder dias disponíveis no aquisitivo
+            dias_ja_gozados = sum(
+                g.dias + g.dias_abono
+                for g in self.aquisitivo.gozos.exclude(pk=self.pk)
+            )
+            total_com_este = dias_ja_gozados + (self.dias or 0) + self.dias_abono
+            if total_com_este > self.aquisitivo.dias_direito:
+                raise ValidationError(
+                    _(f'Total de dias gozados ({total_com_este}) excede o direito ({self.aquisitivo.dias_direito} dias)')
+                )
+            # máximo 3 fracionamentos (CLT art. 134 §1)
+            fracoes = self.aquisitivo.gozos.exclude(pk=self.pk).count()
+            if fracoes >= 3:
+                raise ValidationError(_('Férias não podem ser fracionadas em mais de 3 períodos (CLT art. 134)'))
+            # gozo deve estar dentro do período concessivo
+            if self.inicio < self.aquisitivo.inicio_concessivo:
+                raise ValidationError({
+                    'inicio': _('Início do gozo anterior ao período concessivo')
+                })
+            # sobreposição com outros gozos do mesmo funcionário
+            overlap = (
+                FeriasGozo.objects
+                .filter(aquisitivo__funcionario=self.aquisitivo.funcionario)
+                .exclude(pk=self.pk)
+                .filter(inicio__lte=self.fim, fim__gte=self.inicio)
+            )
+            if overlap.exists():
+                raise ValidationError(_('Período de gozo sobrepõe outro gozo já registrado'))
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        # atualiza status do aquisitivo após cada gozo salvo
+        self.aquisitivo.refresh_from_db()
+        _sync_status_aquisitivo(self.aquisitivo)
+auditlog.register(FeriasGozo)
+
+
+def _sync_status_aquisitivo(aquisitivo: FeriasAquisitivo) -> None:
+    """
+    Recalcula e persiste o status do FeriasAquisitivo com base nos gozos.
+    Chamado após save/delete de FeriasGozo.
+    Prioridade: GOZADO > PARCIAL > DISPONIVEL (ABERTO e PERDIDO não são alterados aqui).
+    """
+    if aquisitivo.status in (FeriasAquisitivo.Status.ABERTO, FeriasAquisitivo.Status.PERDIDO):
+        return  # esses status são gerenciados pelo serviço, não pelo gozo
+    if aquisitivo.dias_disponiveis == 0:
+        novo = FeriasAquisitivo.Status.GOZADO
+    elif aquisitivo.dias_gozados > 0:
+        novo = FeriasAquisitivo.Status.PARCIAL
+    else:
+        novo = FeriasAquisitivo.Status.DISPONIVEL
+    if aquisitivo.status != novo:
+        aquisitivo.status = novo
+        aquisitivo.save(update_fields=['status'])
+
+
+# ============================================
+# FREQUENCIA / TURNO
+# ============================================
 
 class Turno(models.Model):
     class DiaSemana(models.TextChoices):
@@ -338,99 +663,130 @@ class TurnoHistorico(models.Model):
             raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
 auditlog.register(TurnoHistorico)
 
-
-class Afastamento(models.Model):
-    class Motivo(models.TextChoices):
-        DOENCA            = "D", _("Doenca")
-        ACIDENTE_TRABALHO = "A", _("Acidente Trabalho")
-        OUTRO             = "O", _("Outro")
-    class Origem(models.TextChoices):
-        INSS      = "I", _("INSS")
-        ESCALA    = "E", _("Escala")
-        SINDICATO = "S", _("Sindicato")
-        GESTORA   = "G", _("Gestora")
-        OUTRO     = "O", _("Outro")
-    funcionario      = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionario'))
-    motivo           = models.CharField(_('Motivo'), max_length=3, choices=Motivo.choices, default='D', blank=True)
-    origem           = models.CharField(_('Origem'), max_length=3, choices=Origem.choices, default='I', blank=True)
-    data_afastamento = models.DateField(_('Data Afastamento'), blank=True, null=True, default=datetime.today)
-    data_retorno     = models.DateField(_('Data Retorno'), blank=True, null=True)
-    reabilitado      = models.BooleanField(_('Reabilitado'), default=False)
-    remunerado       = models.BooleanField(_('Remunerado'), default=False)
-    detalhe          = models.TextField(_('Detalhe'), blank=True)
+class EventoFrequencia(models.Model):
+    class Categoria(models.TextChoices):
+        JORNADA        = 'PRD', _('Jornada/Trabalho')
+        INTERVALO      = 'INT', _('Intervalo')
+        AUSENCIA_JUST  = 'AJ',  _('Ausencia Justificada')
+        AUSENCIA_NJUST = 'ANJ', _('Ausencia Nao Justificada')
+        FOLGA          = 'FLG', _('Folga')
+        HORA_EXTRA     = 'HE',  _('Hora Extra')
+    nome              = models.CharField(_('Nome'), max_length=100)
+    rastreio          = models.SlugField(_('Rastreio'), unique=True, blank=True)
+    categoria         = models.CharField(_('Categoria'), max_length=4, choices=Categoria.choices, default=Categoria.JORNADA)
+    contabiliza_horas = models.BooleanField(_('Contabiliza Horas'), default=True)
+    remunerado        = models.BooleanField(_('Remunerado'), default=True)
+    dia_inteiro       = models.BooleanField(_('Dia Inteiro'), default=False)
+    desconta_efetivos = models.BooleanField(_('Desconta dias efetivos'), default=False)
+    prioridade        = models.PositiveIntegerField(_('Prioridade'), default=1)
+    cor               = models.CharField(_('Cor Hex'), max_length=7, null=True, blank=True)
     def __str__(self):
-        return f'{self.funcionario.matricula} | {self.data_afastamento}'
+        return self.nome
+auditlog.register(EventoFrequencia, exclude_fields=['cor'])
+
+
+class Frequencia(models.Model):
+    contrato   = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
+    evento     = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
+    data       = models.DateField(_('Data'), null=True, blank=True, db_index=True)
+    inicio     = models.DateTimeField(_('Inicio'), null=True, blank=True, db_index=True)
+    fim        = models.DateTimeField(_('Fim'), null=True, blank=True)
+    metadados  = models.JSONField(_('Importacao'), default=dict, blank=True)        # horarios importados, sem edicao manual
+    editado    = models.BooleanField(_('Editado Manualmente'), default=False)
+    cancelado  = models.BooleanField( _('Cancelado'), default=False, db_index=True) # entradas com metadados nao sao apagadas, apenas marcadas como cancelado
+    observacao = models.CharField(_('Observacao'), max_length=255, blank=True)
+    class Meta:
+        ordering = ['inicio']
+    def __str__(self):
+        dia     = self.data or (self.inicio.date() if self.inicio else '?')
+        horario = (f"{self.inicio.strftime('%H:%M')}-{self.fim.strftime('%H:%M')}"
+                   if self.inicio and self.fim else 'dia inteiro')
+        prefix = '[CANCEL] ' if self.cancelado else ''
+        return f"{prefix}{self.contrato.funcionario} | {dia} | {self.evento} ({horario})"
     @property
-    def T_dias_afastado(self):
-        # dias corridos do afastamento; retorno futuro resulta em 0
-        if not self.data_afastamento:
-            return 0
-        end_date = self.data_retorno if self.data_retorno else date.today()
-        return max((end_date - self.data_afastamento).days, 0)
-    def clean(self):
-        if self.data_retorno and self.data_afastamento and self.data_retorno < self.data_afastamento:
-            raise ValidationError({'data_retorno': _("A data de retorno nao pode ser anterior a data de afastamento")})
-        if not self.data_afastamento:
-            return
-        if not self.pk and self.funcionario.status == Funcionario.Status.DESLIGADO:
-            # nao permite afastamento de funcionario ja desligado
-            raise ValidationError(_("Nao e possivel lanccar afastamento para funcionario desligado"))
-        # valida sobreposicao de periodos de afastamento
-        query = Afastamento.objects.filter(funcionario=self.funcionario).exclude(pk=self.pk)
-        if self.data_retorno:
-            overlap = query.filter(
-                Q(data_afastamento__lte=self.data_retorno) &
-                (Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True))
-            )
-        else:
-            overlap = query.filter(
-                Q(data_retorno__gte=self.data_afastamento) | Q(data_retorno__isnull=True)
-            )
-        if overlap.exists():
-            raise ValidationError(DEFAULT_MESSAGES.get('recordOverlap'), '')
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-            self.funcionario.sync_status()  # sincroniza status do funcionario
-auditlog.register(Afastamento)
+    def H_jornada(self):
+        if self.inicio and self.fim:
+            return self.fim - self.inicio
+        return None
+    @property
+    def H_horas_decimais(self):
+        duracao = self.H_jornada
+        return duracao.total_seconds() / 3600 if duracao else 0.0
+auditlog.register(Frequencia, exclude_fields=['metadados', 'editado', 'observacao'])
 
 
-class Dependente(models.Model):
-    class Parentesco(models.TextChoices):
-        CONJUGE     = "C",  _("Conjuge")
-        FILHO       = "F",  _("Filho / Enteado")
-        IRMAO       = "I",  _("Irmao")
-        PAI_MAE     = "P",  _("Pai / Mae")
-        SOGRO_SOGRA = "S",  _("Sogro / Sogra")
-        ASCENDENTE  = "A",  _("Ascendente")
-        DESCENDENTE = "N",  _("Descendente")
-        INCAPAZ     = "In", _("Incapaz")
-        OUTRO       = "M",  _("Outro")
-    funcionario        = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionario'))
-    nome               = models.CharField(_('Nome'), max_length=230, blank=False)
-    parentesco         = models.CharField(_('Parentesco'), max_length=3, choices=Parentesco.choices, default='F', blank=True)
-    genero             = models.CharField(_('Genero'), max_length=3, choices=Pessoa.Genero.choices, blank=True)
-    data_nascimento    = models.DateField(_('Data Nascimento'), blank=True, null=True)
-    rg                 = models.CharField(_('Rg'), max_length=20, blank=True)
-    rg_emissao         = models.DateField(_('Rg Emissao'), blank=True, null=True)
-    rg_orgao_expedidor = models.CharField(_('Rg Org Expedidor'), max_length=15, blank=True)
-    cpf                = models.CharField(_('Cpf'), max_length=20, blank=True)
+class FrequenciaConsolidada(models.Model):
+    class Status(models.TextChoices):
+        ABERTO     = 'A', _('Aberto')
+        FECHADO    = 'F', _('Fechado')
+        PROCESSADO = 'P', _('Processado')
+    contrato      = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='consolidados_freq')
+    competencia   = models.DateField(_('Competencia'), db_index=True)
+    inicio        = models.DateTimeField(_('Inicio'), db_index=True)
+    fim           = models.DateTimeField(_('Fim'), null=True, blank=True)
+    status        = models.CharField(_('Status'), max_length=1, choices=Status.choices, default=Status.ABERTO)
+    bloqueado     = models.BooleanField(_('Bloqueado'), default=False)  # True quando ha erros impeditivos
+    processamento = models.DateTimeField(_('Data Processamento'), null=True, blank=True)
+    consolidado   = models.JSONField(_('Valores Consolidados'), default=dict, blank=True)
+    erros         = models.JSONField(_('Logs de Erros'), default=dict, blank=True)  # apenas erros impeditivos; avisos ficam fora
+    class Meta:
+        unique_together = ('contrato', 'competencia')
     def __str__(self):
-        return f'{self.funcionario.matricula} | {self.nome[:10]}'
-    def idade(self):
-        if self.data_nascimento:
-            hoje = date.today()
-            return hoje.year - self.data_nascimento.year - (
-                (hoje.month, hoje.day) < (self.data_nascimento.month, self.data_nascimento.day)
-            )
-        return ''
-auditlog.register(Dependente)
+        return f"{self.contrato.funcionario.matricula} - {self.competencia.strftime('%m/%Y')}"
+    @property
+    def H_faltas_justificadas(self):   return self.consolidado.get('H_faltas_justificadas', 0)
+    @property
+    def H_faltas_injustificadas(self): return self.consolidado.get('H_faltas_injustificadas', 0)
+    @property
+    def H_horas_trabalhadas(self):     return self.consolidado.get('H_horas_trabalhadas', 0.0)
+    @property
+    def H_horas_extras(self):          return self.consolidado.get('H_horas_extras', 0.0)
+    @property
+    def H_atestados(self):             return self.consolidado.get('H_atestados', 0)
+    @property
+    def H_horas_intervalo(self):       return self.consolidado.get('H_intervalos', 0.0)
+    @property
+    def H_dias_trabalhados(self):      return self.consolidado.get('H_dias_trabalhados', 0)
+    @property
+    def H_dias_falta_just(self):       return self.consolidado.get('H_dias_falta_just', 0)
+    @property
+    def H_dias_falta_njust(self):      return self.consolidado.get('H_dias_falta_njust', 0)
+    @property
+    def H_dias_folga(self):            return self.consolidado.get('H_dias_folga', 0)
+    @property
+    def H_dias_afastamento(self):      return self.consolidado.get('H_dias_afastamento', 0)
+    def tem_erros(self) -> bool:
+        return self.bloqueado
 
 
-# ---------------------------------------------------------------------------
-# Eventos de movimentacao salarial
-# ---------------------------------------------------------------------------
+class FrequenciaImport(models.Model):
+    class Origem(models.TextChoices):
+        RELOGIO_AFD = 'AFD', _('Arquivo AFD (Relogio Fisico)')
+        APP_MOBILE  = 'APP', _('Aplicativo Movel (GPS)')
+        PORTAL_WEB  = 'WEB', _('Portal do Funcionario')
+        IMPORT_CSV  = 'CSV', _('Importacao de Planilha')
+    contrato         = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='batidas_brutas')
+    data_hora        = models.DateTimeField(_('Data e Hora Original'), db_index=True)
+    origem           = models.CharField(_('Origem'), max_length=3, choices=Origem.choices, default=Origem.RELOGIO_AFD)
+    nsr              = models.CharField(_('NSR'), max_length=50, blank=True, null=True, help_text="Numero Sequencial de Registro (AFD)")
+    num_relogio      = models.CharField(_('Nr Relogio/Equipamento'), max_length=50, blank=True, null=True)
+    latitude         = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude        = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    hash_verificacao = models.CharField(max_length=255, blank=True, null=True, help_text="Hash de integridade do registro original")
+    created_at       = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        verbose_name        = _('Importacao de Frequencia')
+        verbose_name_plural = _('Importacoes de Frequencias')
+        ordering            = ['-data_hora']
+        indexes             = [models.Index(fields=['contrato', 'data_hora'])]
+    def __str__(self):
+        return f"{self.contrato.funcionario.matricula} | {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
+
+
+
+# ============================================
+# EVENTOS
+# ============================================
 
 class GrupoEvento(models.Model):
     nome = models.CharField(_('Nome'), max_length=100, blank=False, unique=True)
@@ -523,69 +879,10 @@ class EventoFuncionario(EventoMovimentacao):
 auditlog.register(EventoFuncionario)
 
 
-# ---------------------------------------------------------------------------
-# Rescisao
-# ---------------------------------------------------------------------------
 
-class Rescisao(models.Model):
-    """
-    Evento unico e definitivo de desligamento.
-    OneToOne garante unicidade estrutural — recontratacao exige novo Funcionario.
-    Ao ser salva: fecha o contrato vigente e promove status para DESLIGADO via sync_status().
-    """
-    class MotivoDesligamento(models.TextChoices):
-        PELO_EMPREGADOR   = "EM", _("Pelo Empregador")
-        POR_JUSTA_CAUSA   = "JC", _("Por Justa Causa")
-        PEDIDO            = "PD", _("Pedido de Desligamento")
-        RESCISAO_INDIRETA = "RI", _("Rescisao Indireta")
-        ABANDONO          = "AB", _("Abandono de Emprego")
-        DECISAO_JUDICIAL  = "DJ", _("Decisao Judicial")
-    class AvisoPrevioTipo(models.TextChoices):
-        TRABALHADO = "T", _("Trabalhado")
-        INDENIZADO = "I", _("Indenizado")
-        DISPENSADO = "D", _("Dispensado")
-    funcionario       = models.OneToOneField(Funcionario, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Funcionario'))
-    contrato          = models.OneToOneField(Contrato, on_delete=models.RESTRICT, related_name='rescisao', verbose_name=_('Contrato rescindido'))
-    motivo            = models.CharField(_('Motivo'), max_length=3, choices=MotivoDesligamento.choices)
-    data_desligamento = models.DateField(_('Data de Desligamento'))
-    aviso_tipo           = models.CharField(_('Tipo de Aviso'), max_length=1, choices=AvisoPrevioTipo.choices, blank=True)
-    aviso_dias_devidos   = models.PositiveSmallIntegerField(_('Dias Devidos'), default=0)
-    aviso_dias_cumpridos = models.PositiveSmallIntegerField(_('Dias Cumpridos'), default=0)
-    multa_fgts_paga              = models.BooleanField(_('Multa FGTS Paga'), default=False)
-    ferias_proporcionais_pagas   = models.BooleanField(_('Ferias Proporcionais Pagas'), default=False)
-    ferias_vencidas_pagas        = models.BooleanField(_('Ferias Vencidas Pagas'), default=False)
-    decimo_terceiro_proporcional = models.BooleanField(_('13 Proporcional Pago'), default=False)
-    total_bruto   = models.DecimalField(_('Total Bruto'), max_digits=12, decimal_places=2, default=0)
-    total_liquido = models.DecimalField(_('Total Líquido'), max_digits=12, decimal_places=2, default=0)
-    regras = models.JSONField( _('Memória de Cálculo'), default=dict, blank=True)
-    detalhe = models.TextField(_('Detalhe'), blank=True)
-    class Meta:
-        default_permissions = ()
-        permissions = [
-            ("funcionario_desligar", _("Pode desligar funcionário")),
-            ("funcionario_reativar", _("Pode reativar funcionário")),
-        ]
-    def __str__(self):
-        return f'{self.funcionario.matricula} | {self.data_desligamento}'    
-    def clean(self):
-        if self.data_desligamento and self.funcionario.data_admissao:
-            if self.data_desligamento < self.funcionario.data_admissao:
-                raise ValidationError({'data_desligamento': _("Data de desligamento nao pode ser anterior a admissao")})
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-            # fecha contrato vigente na data da rescisao se ainda estiver em aberto
-            if self.contrato.fim is None:
-                self.contrato.fim = self.data_desligamento
-                self.contrato.save(update_fields=['fim'])
-            self.funcionario.sync_status()  # promove status -> DESLIGADO
-auditlog.register(Rescisao)
-
-
-# ---------------------------------------------------------------------------
-# Folha de Pagamento
-# ---------------------------------------------------------------------------
+# ============================================
+# FOLHA
+# ============================================
 
 class FolhaPagamento(models.Model):
     class Status(models.TextChoices):
@@ -619,145 +916,29 @@ class FolhaPagamento(models.Model):
         return f"{self.contrato.funcionario.matricula} | {self.competencia.strftime('%m/%Y')}"
 
 
-# ---------------------------------------------------------------------------
-# Frequencia
-# ---------------------------------------------------------------------------
-
-class EventoFrequencia(models.Model):
-    class Categoria(models.TextChoices):
-        JORNADA        = 'PRD', _('Jornada/Trabalho')
-        INTERVALO      = 'INT', _('Intervalo')
-        AUSENCIA_JUST  = 'AJ',  _('Ausencia Justificada')
-        AUSENCIA_NJUST = 'ANJ', _('Ausencia Nao Justificada')
-        FOLGA          = 'FLG', _('Folga')
-        HORA_EXTRA     = 'HE',  _('Hora Extra')
-    nome              = models.CharField(_('Nome'), max_length=100)
-    rastreio          = models.SlugField(_('Rastreio'), unique=True, blank=True)
-    categoria         = models.CharField(_('Categoria'), max_length=4, choices=Categoria.choices, default=Categoria.JORNADA)
-    contabiliza_horas = models.BooleanField(_('Contabiliza Horas'), default=True)
-    remunerado        = models.BooleanField(_('Remunerado'), default=True)
-    dia_inteiro       = models.BooleanField(_('Dia Inteiro'), default=False)
-    desconta_efetivos = models.BooleanField(_('Desconta dias efetivos'), default=False)
-    prioridade        = models.PositiveIntegerField(_('Prioridade'), default=1)
-    cor               = models.CharField(_('Cor Hex'), max_length=7, null=True, blank=True)
-    def __str__(self):
-        return self.nome
-auditlog.register(EventoFrequencia, exclude_fields=['cor'])
-
-
-class Frequencia(models.Model):
-    contrato   = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='frequencias')
-    evento     = models.ForeignKey(EventoFrequencia, on_delete=models.RESTRICT, verbose_name=_('Evento'))
-    data       = models.DateField(_('Data'), null=True, blank=True, db_index=True)
-    inicio     = models.DateTimeField(_('Inicio'), null=True, blank=True, db_index=True)
-    fim        = models.DateTimeField(_('Fim'), null=True, blank=True)
-    metadados  = models.JSONField(_('Importacao'), default=dict, blank=True) # horarios importados, sem edicao manual
-    editado    = models.BooleanField(_('Editado Manualmente'), default=False)
-    observacao = models.CharField(_('Observacao'), max_length=255, blank=True)
-    class Meta:
-        ordering = ['inicio']
-    def __str__(self):
-        dia     = self.data or (self.inicio.date() if self.inicio else '?')
-        horario = (f"{self.inicio.strftime('%H:%M')}-{self.fim.strftime('%H:%M')}"
-                   if self.inicio and self.fim else 'dia inteiro')
-        return f"{self.contrato.funcionario} | {dia} | {self.evento} ({horario})"
-    @property
-    def H_jornada(self):
-        if self.inicio and self.fim:
-            return self.fim - self.inicio
-        return None
-    @property
-    def H_horas_decimais(self):
-        duracao = self.H_jornada
-        return duracao.total_seconds() / 3600 if duracao else 0.0
-auditlog.register(Frequencia, exclude_fields=['metadados', 'editado', 'observacao'])
-
-
-class FrequenciaConsolidada(models.Model):
-    class Status(models.TextChoices):
-        ABERTO     = 'A', _('Aberto')
-        FECHADO    = 'F', _('Fechado')
-        PROCESSADO = 'P', _('Processado')
-    contrato      = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='consolidados_freq')
-    competencia   = models.DateField(_('Competencia'), db_index=True)
-    inicio        = models.DateTimeField(_('Inicio'), db_index=True)
-    fim           = models.DateTimeField(_('Fim'), null=True, blank=True)
-    status        = models.CharField(_('Status'), max_length=1, choices=Status.choices, default=Status.ABERTO)
-    bloqueado     = models.BooleanField(_('Bloqueado'), default=False)  # True quando ha erros impeditivos
-    processamento = models.DateTimeField(_('Data Processamento'), null=True, blank=True)
-    consolidado   = models.JSONField(_('Valores Consolidados'), default=dict, blank=True)
-    erros         = models.JSONField(_('Logs de Erros'), default=dict, blank=True)  # apenas erros impeditivos; avisos ficam fora
-    class Meta:
-        unique_together = ('contrato', 'competencia')
-    def __str__(self):
-        return f"{self.contrato.funcionario.matricula} - {self.competencia.strftime('%m/%Y')}"
-    @property
-    def H_faltas_justificadas(self):   return self.consolidado.get('H_faltas_justificadas', 0)
-    @property
-    def H_faltas_injustificadas(self): return self.consolidado.get('H_faltas_injustificadas', 0)
-    @property
-    def H_horas_trabalhadas(self):     return self.consolidado.get('H_horas_trabalhadas', 0.0)
-    @property
-    def H_horas_extras(self):          return self.consolidado.get('H_horas_extras', 0.0)
-    @property
-    def H_atestados(self):             return self.consolidado.get('H_atestados', 0)
-    @property
-    def H_horas_intervalo(self):       return self.consolidado.get('H_intervalos', 0.0)
-    @property
-    def H_dias_trabalhados(self):      return self.consolidado.get('H_dias_trabalhados', 0)
-    @property
-    def H_dias_falta_just(self):       return self.consolidado.get('H_dias_falta_just', 0)
-    @property
-    def H_dias_falta_njust(self):      return self.consolidado.get('H_dias_falta_njust', 0)
-    @property
-    def H_dias_folga(self):            return self.consolidado.get('H_dias_folga', 0)
-    @property
-    def H_dias_afastamento(self):      return self.consolidado.get('H_dias_afastamento', 0)
-    def tem_erros(self) -> bool:
-        return self.bloqueado
-
-
-class FrequenciaImport(models.Model):
-    class Origem(models.TextChoices):
-        RELOGIO_AFD = 'AFD', _('Arquivo AFD (Relogio Fisico)')
-        APP_MOBILE  = 'APP', _('Aplicativo Movel (GPS)')
-        PORTAL_WEB  = 'WEB', _('Portal do Funcionario')
-        IMPORT_CSV  = 'CSV', _('Importacao de Planilha')
-    contrato         = models.ForeignKey('Contrato', on_delete=models.CASCADE, related_name='batidas_brutas')
-    data_hora        = models.DateTimeField(_('Data e Hora Original'), db_index=True)
-    origem           = models.CharField(_('Origem'), max_length=3, choices=Origem.choices, default=Origem.RELOGIO_AFD)
-    nsr              = models.CharField(_('NSR'), max_length=50, blank=True, null=True, help_text="Numero Sequencial de Registro (AFD)")
-    num_relogio      = models.CharField(_('Nr Relogio/Equipamento'), max_length=50, blank=True, null=True)
-    latitude         = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    longitude        = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    hash_verificacao = models.CharField(max_length=255, blank=True, null=True, help_text="Hash de integridade do registro original")
-    created_at       = models.DateTimeField(auto_now_add=True)
-    class Meta:
-        verbose_name        = _('Importacao de Frequencia')
-        verbose_name_plural = _('Importacoes de Frequencias')
-        ordering            = ['-data_hora']
-        indexes             = [models.Index(fields=['contrato', 'data_hora'])]
-    def __str__(self):
-        return f"{self.contrato.funcionario.matricula} | {self.data_hora.strftime('%d/%m/%Y %H:%M')}"
-
+# ============================================
+# AUXILIARES
+# ============================================
 
 class ProcessamentoJob(models.Model):
     class Tipo(models.TextChoices):
-        CONSOLIDACAO_FREQ = 'CF', _('Consolidacao de Frequencia')
-        FECHAR_FREQ       = 'FF', _('Fechamento de Frequencia')
-        FOLHA             = 'FP', _('Folha de Pagamento')
-        FECHAR_FOLHA      = 'FH', _('Fechamento de Folha')
-        PAGAR_FOLHA       = 'PF', _('Pagamento de Folha')
-        CANCELAR_FOLHA    = 'XF', _('Cancelamento de Folha')
-        CARGA_ESCALA      = 'CE', _('Carga de Escala')
+        CONSOLIDACAO_FREQ    = 'CF', _('Consolidacao de Frequencia')
+        FECHAR_FREQ          = 'FF', _('Fechamento de Frequencia')
+        FOLHA                = 'FP', _('Folha de Pagamento')
+        FECHAR_FOLHA         = 'FH', _('Fechamento de Folha')
+        PAGAR_FOLHA          = 'PF', _('Pagamento de Folha')
+        CANCELAR_FOLHA       = 'XF', _('Cancelamento de Folha')
+        CARGA_ESCALA         = 'CE', _('Carga de Escala')
+        DESLIGAR_FUNCIONARIO = 'DF', _('Desligamento de Funcionário')
     class Status(models.TextChoices):
-        AGUARDANDO  = 'AG', _('Aguardando')
-        PROCESSANDO = 'PR', _('Processando')
-        CONCLUIDO   = 'OK', _('Concluido')
-        ERRO        = 'ER', _('Erro')
+        AGUARDANDO           = 'AG', _('Aguardando')
+        PROCESSANDO          = 'PR', _('Processando')
+        CONCLUIDO            = 'OK', _('Concluido')
+        ERRO                 = 'ER', _('Erro')
     tipo         = models.CharField(_('Tipo'), max_length=2, choices=Tipo.choices)
     filial       = models.ForeignKey('core.Filial', on_delete=models.CASCADE, verbose_name=_('Filial'))
     competencia  = models.DateField(_('Competencia'), db_index=True)
+    object_id    = models.PositiveIntegerField( _('ID do Objeto'), null=True, blank=True, db_index=True)
     status       = models.CharField(_('Status'), max_length=2, choices=Status.choices, default=Status.AGUARDANDO, db_index=True)
     criado_por   = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_('Criado por'))
     iniciado_em  = models.DateTimeField(_('Iniciado em'), null=True, blank=True)
@@ -768,8 +949,19 @@ class ProcessamentoJob(models.Model):
     observacoes  = models.JSONField(_('Observacoes'), default=list, blank=True)
     class Meta:
         verbose_name    = _('Job de Processamento')
-        unique_together = ('tipo', 'filial', 'competencia')  # reabre no lugar do anterior
         ordering        = ['-concluido_em']
+        constraints     = [
+            models.UniqueConstraint(
+                fields=['tipo', 'filial', 'competencia'],
+                condition=~Q(tipo='DF'),
+                name='unique_job_lote',
+            ),
+            models.UniqueConstraint(
+                fields=['tipo', 'object_id'],
+                condition=Q(tipo='DF'),
+                name='unique_job_objeto',
+            ),
+        ]
     def __str__(self):
         return f"{self.get_tipo_display()} | {self.filial} | {self.competencia.strftime('%m/%Y')} | {self.get_status_display()}"
     @property

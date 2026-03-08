@@ -22,14 +22,13 @@ from django.utils.timezone import now
 from django_q.tasks import async_task
 
 from pessoal.models import (
-    Afastamento, Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
+    Funcionario, Afastamento, Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
     PessoalSettings, ProcessamentoJob, TurnoHistorico,
 )
 from pessoal.services.frequencia.engine import consolidar, fechar as fechar_freq_consolidado
 from pessoal.services.folha.services import payroll_run
 from pessoal.services.folha.persistence import fechar_folha, pagar_folha, cancelar_folha
 from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
-
 
 # ─── Schema helper ───────────────────────────────────────────────────────────
 
@@ -401,6 +400,41 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
 
 
 # ─── API pública ─────────────────────────────────────────────────────────────
+
+def disparar_desligamento(funcionario_id: int, usuario) -> 'ProcessamentoJob':
+    """
+    Cria o ProcessamentoJob e enfileira o processamento via qcluster.
+    Chamado pelo Rescisao.save() ou pela view após salvar o formulário.
+
+    object_id = funcionario_id — convenção documentada no Tipo.DESLIGAR_FUNCIONARIO.
+    """
+    funcionario = Funcionario.objects.get(pk=funcionario_id)
+
+    # Lookup por object_id — para DESLIGAR_FUNCIONARIO o identificador único é o funcionário,
+    # não filial/competência (que dispararia o unique_together do model).
+    job, _ = ProcessamentoJob.objects.update_or_create(
+        tipo=ProcessamentoJob.Tipo.DESLIGAR_FUNCIONARIO,
+        object_id=funcionario_id,
+        defaults={
+            'filial':      funcionario.filial,
+            'competencia': funcionario.rescisao.data_desligamento.replace(day=1),
+            'status':      ProcessamentoJob.Status.AGUARDANDO,
+            'criado_por':  usuario,
+            'progresso':   0,
+            'resultado':   {},
+            'historico':   [],
+        }
+    )
+    # Enfileira a task — passa job.id para que o service atualize o progresso
+    async_task(
+        'pessoal.services.rescisao.processar_desligamento',
+        funcionario_id,
+        job.id,
+        task_name=f'rescisao_{funcionario_id}',
+        group='rescisao',
+    )
+    return job
+
 
 def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: date,
                           matricula_de: str | None = None,
