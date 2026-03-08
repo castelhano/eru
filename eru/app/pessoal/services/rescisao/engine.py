@@ -69,14 +69,15 @@ def calcular_rescisao(dados: dict) -> dict:
         'regime':            contrato.regime,
         'salario':           salario,
         'carga_mensal':      contrato.carga_mensal,
-        'data_admissao':     str(funcionario.data_admissao or contrato.inicio),
-        'data_desligamento': str(data_deslig),
+        'data_admissao':     funcionario.data_admissao or contrato.inicio,
+        'data_desligamento': data_deslig,
         'dias_empresa':      dias_empresa,
         'anos_completos':    anos_completos,
         'motivo':            motivo,
+        'motivo_display':    dict(Rescisao.MotivoDesligamento.choices).get(motivo, motivo),
         'meses_ferias':      saldo_ferias['meses_periodo_atual'],
         'ferias_vencidas':   saldo_ferias['ferias_vencidas'],
-        'ferias_fonte':      saldo_ferias.get('fonte', 'estimado'),  # auditoria
+        'ferias_fonte':      saldo_ferias.get('fonte', 'estimado'),
         'flags_usuario':     {k: v for k, v in flags.items() if k not in ('_rescisao_obj',)},
         'flags_divergentes': _detectar_divergencias(flags, motivo),  # divergências da regra CLT
     }

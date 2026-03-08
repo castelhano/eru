@@ -58,7 +58,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
     .data-item label {
       display: block;
       font-size: 9px;
-      color: #888;
+      color: #333;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
@@ -110,16 +110,6 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
       padding: 4px 8px;
       font-size: 11px;
     }
-    /* .totais-row.bruto    { background: #f9fafb; } */
-    /* .totais-row.desconto { background: #fff5f5; color: #dc2626; } */
-    /* .totais-row.liquido  {
-      background: #1e3a5f;
-      color: white;
-      font-weight: bold;
-      font-size: 12px;
-      border-radius: 3px;
-      margin-top: 2px;
-    } */
     
     /* ── flags divergentes ── */
     .divergencia-box {
@@ -130,6 +120,37 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
       font-size: 10px;
     }
     .divergencia-box strong { color: #92400e; }
+    
+    
+    /* ── assinaturas ── */
+    .assinaturas-container {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      width: 100%;
+      page-break-inside: avoid;
+    }
+    
+    .assinatura-box {
+      flex: 1;
+      text-align: center;
+      padding: 0 10px;
+      max-width: 250px;
+    }
+    
+    .assinatura-box p {
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.5;
+      font-size: 10px;
+    }
+    
+    .linha-assinatura {
+      border-top: 1px solid #333;
+      margin-bottom: 4px !important;
+      width: 100%;
+    }
     
     
     /* ── rodape ── */
@@ -186,11 +207,11 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
     <div class="data-grid">
       <div class="data-item">
         <label>Empresa</label>
-        <span>{{ funcionario.filial.empresa.razao_social }}</span>
+        <span>{{ funcionario.filial.empresa.id|safe }} {{ funcionario.filial.empresa.razao_social }}</span>
       </div>
       <div class="data-item">
         <label>Filial</label>
-        <span>{{ funcionario.filial.nome_fantasia }}</span>
+        <span>{{ funcionario.filial.id|safe }} {{ funcionario.filial.nome_fantasia }}</span>
       </div>
       <div class="data-item">
         <label>Cargo</label>
@@ -226,7 +247,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
       </div>
       <div class="data-item">
         <label>Fonte Férias</label>
-        <span>{{ resultado.contexto.ferias_fonte }}</span>
+        <span>{{ resultado.contexto.ferias_fonte|capfirst }}</span>
       </div>
     </div>
   </div>
@@ -281,7 +302,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
     </div>
   </div>
   
-  <!-- DIVERGÊNCIAS CLT (se houver) -->
+  <!-- divergencias CLT (se houver) -->
   {% if resultado.contexto.flags_divergentes %}
   <div class="section">
     <div class="section-title">Atenção — Divergências em relação à CLT</div>
@@ -299,6 +320,22 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
     </div>
   </div>
   {% endif %}
+  
+  
+  <!-- Bloco de Assinaturas -->
+  <div class="assinaturas-container">
+    <div class="assinatura-box">
+      <div class="linha-assinatura"></div>
+      <p class="fw-bold">{{ funcionario.nome }}</p>
+      <p>Funcionário</p>
+    </div>
+    <div class="assinatura-box">
+      <div class="linha-assinatura"></div>
+      <p class="fw-bold">{{ funcionario.filial.empresa.razao_social }}</p>
+      <p>Empregador</p>
+    </div>
+  </div>
+  
   
   <!-- RODAPÉ -->
   <div class="footer">

@@ -5,8 +5,8 @@
     <details class="my-2 small">
         <summary id="detail_funcionario" class="text-bg-primary-matte px-2 py-1 fw-bold">{% translate 'Detalhes'|escapejs %} <sup class="badge d-none d-lg-inline-block text-bg-orange-matte">F2</sup></summary>
         <dl class="custom-dl mt-2">
-            <dt>Matrícula:</dt><dd class="text-bg-secondary-matte">{{funcionario.matricula}}</dd>
-            <dt>Nome:</dt><dd class="text-bg-secondary-matte">{{funcionario.nome}}</dd>
+            <dt>Empresa:</dt><dd class="text-bg-secondary-matte">{{funcionario.filial.empresa.razao_social}}</dd>
+            <dt>Filial:</dt><dd class="text-bg-secondary-matte">{{funcionario.filial.nome}}</dd>
             <dt>Admissão:</dt><dd class="text-bg-secondary-matte">{{funcionario.data_admissao|date:"d/m/Y"}}</dd>
         </dl>
     </details>
