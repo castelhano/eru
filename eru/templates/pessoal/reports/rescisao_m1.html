@@ -3,10 +3,13 @@ Template: pessoal/templates/reports/simulacao_pdf.html
 Usado pelo WeasyPrint para gerar o PDF de simulação/resultado de rescisão.
 Funciona para simulação (simulacao=True) e para o resultado final processado.
 {% endcomment %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<link rel="stylesheet" href="{% static 'css/vendor/bootstrap.min.css' %}">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,7 +31,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
   }
   .header-title { font-size: 15px; font-weight: bold; }
   .header-sub   { font-size: 10px; color: #666; margin-top: 2px; }
-  .badge-simulacao {
+  /* .badge-simulacao {
     background: #f59e0b;
     color: white;
     font-size: 9px;
@@ -36,7 +39,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
     padding: 2px 8px;
     border-radius: 3px;
     letter-spacing: 0.5px;
-  }
+  } */
 
   /* ── seções ── */
   .section { margin-bottom: 14px; }
@@ -161,7 +164,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
   </div>
   <div style="text-align:right">
     {% if simulacao %}
-      <div class="badge-simulacao">SIMULAÇÃO — NÃO OFICIAL</div>
+      <div class="badge text-bg-warning-matte fs-8">SIMULAÇÃO</div>
     {% endif %}
     <div class="header-sub" style="margin-top:4px">
       Emitido em: {% now "d/m/Y H:i" %}
@@ -175,11 +178,11 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
   <div class="data-grid">
     <div class="data-item">
       <label>Empresa</label>
-      <span>{{ funcionario.filial.empresa.nome }}</span>
+      <span>{{ funcionario.filial.empresa.razao_social }}</span>
     </div>
     <div class="data-item">
       <label>Filial</label>
-      <span>{{ funcionario.filial.nome }}</span>
+      <span>{{ funcionario.filial.nome_fantasia }}</span>
     </div>
     <div class="data-item">
       <label>Cargo</label>
@@ -259,9 +262,7 @@ Funciona para simulação (simulacao=True) e para o resultado final processado.
       {% if resultado.total_bruto != resultado.total_liquido %}
       <div class="totais-row desconto">
         <span>Descontos</span>
-        <span>&minus; R$ {% widthratio resultado.total_bruto 1 1 %}
-          {# calcula desconto = bruto - liquido #}
-        </span>
+        <span>&minus; R$ {{ resultado.total_desconto|floatformat:2 }}</span>
       </div>
       {% endif %}
       <div class="totais-row liquido">

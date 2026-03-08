@@ -40,7 +40,7 @@ def calcular_rescisao(dados: dict) -> dict:
     Orquestra o cálculo de todas as verbas.
     `dados` é o dict retornado por collectors.get_dados_rescisao().
     """
-    from pessoal.models import Rescisao  # import local evita circular
+    from pessoal.models import Rescisao
     contrato         = dados['contrato']
     funcionario      = dados['funcionario']
     rescisao_obj     = dados.get('rescisao_obj')  # instância de Rescisao (pode ser None em dry_run)
@@ -61,7 +61,6 @@ def calcular_rescisao(dados: dict) -> dict:
     verbas = []
 
     # ── contexto de auditoria ─────────────────────────────────────────────────
-
     contexto = {
         'funcionario_id':    funcionario.pk,
         'matricula':         funcionario.matricula,
@@ -70,28 +69,23 @@ def calcular_rescisao(dados: dict) -> dict:
         'regime':            contrato.regime,
         'salario':           salario,
         'carga_mensal':      contrato.carga_mensal,
-        # data_admissao vem do funcionário — contrato.inicio pode ser posterior (recontrato)
-        'data_admissao':     funcionario.data_admissao or contrato.inicio,
-        'data_desligamento': data_deslig,
+        'data_admissao':     str(funcionario.data_admissao or contrato.inicio),
+        'data_desligamento': str(data_deslig),
         'dias_empresa':      dias_empresa,
         'anos_completos':    anos_completos,
         'motivo':            motivo,
-        'motivo_display':    dict(Rescisao.MotivoDesligamento.choices).get(motivo, motivo),
         'meses_ferias':      saldo_ferias['meses_periodo_atual'],
         'ferias_vencidas':   saldo_ferias['ferias_vencidas'],
         'ferias_fonte':      saldo_ferias.get('fonte', 'estimado'),  # auditoria
-        'flags_usuario':     {k: v for k, v in flags.items() if k != '_rescisao_obj'},
+        'flags_usuario':     {k: v for k, v in flags.items() if k not in ('_rescisao_obj',)},
         'flags_divergentes': _detectar_divergencias(flags, motivo),  # divergências da regra CLT
     }
 
     # ── aviso prévio ──────────────────────────────────────────────────────────
-    # PD + Trabalhado/Dispensado: sem verba. PD + Indenizado: desconto D — passa para _calcular_aviso.
-    # A função decide internamente se gera P ou D com base no aviso_tipo.
-    _aviso_tipo = getattr(rescisao_obj, 'aviso_tipo', None) if rescisao_obj else None
-    _pd_indenizado = (motivo == Rescisao.MotivoDesligamento.PEDIDO and
-                      _aviso_tipo == Rescisao.AvisoPrevioTipo.INDENIZADO)
-    if flags['aviso'] and (motivo != Rescisao.MotivoDesligamento.PEDIDO or _pd_indenizado):
-        _calcular_aviso(rescisao_obj, salario, anos_completos, verbas, erros, flags)
+    # _calcular_aviso decide sozinho com base em aviso_tipo + dias devidos/cumpridos.
+    # JC não tem aviso — única exceção tratada aqui para não precisar de rescisao_obj.
+    if rescisao_obj and motivo != Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA:
+        _calcular_aviso(rescisao_obj, salario, anos_completos, verbas, erros)
 
     # ── saldo de salário — sempre devido ──────────────────────────────────────
     _calcular_saldo_salario(contrato, data_deslig, salario, verbas, erros)
@@ -125,8 +119,8 @@ def calcular_rescisao(dados: dict) -> dict:
         'contexto':         contexto,
         'verbas':           verbas,
         'frequencia_base':  _snapshot_consolidado(consolidado),
-        # float com exatamente 2 casas — DecimalField(decimal_places=2) valida isso
         'total_bruto':      float(total_bruto),
+        'total_desconto':   float(total_desconto),
         'total_liquido':    float(total_liquido),
         'erros':            erros,
     }
@@ -135,7 +129,7 @@ def calcular_rescisao(dados: dict) -> dict:
 # ─── verbas individuais ───────────────────────────────────────────────────────
 
 def _calcular_aviso(rescisao_obj, salario: float, anos_completos: int,
-                    verbas: list, erros: dict, flags: dict = None) -> None:
+                    verbas: list, erros: dict) -> None:
     """
     Aviso prévio — comportamento por motivo e tipo:
 
@@ -148,27 +142,27 @@ def _calcular_aviso(rescisao_obj, salario: float, anos_completos: int,
     """
     from pessoal.models import Rescisao
     try:
-        tipo_aviso = rescisao_obj.aviso_tipo
-        motivo     = rescisao_obj.motivo
+        tipo_aviso     = rescisao_obj.aviso_tipo
+        motivo         = rescisao_obj.motivo
+        dias_cumpridos = rescisao_obj.aviso_dias_cumpridos or 0
         T  = Rescisao.AvisoPrevioTipo.TRABALHADO
         I  = Rescisao.AvisoPrevioTipo.INDENIZADO
         D  = Rescisao.AvisoPrevioTipo.DISPENSADO
         PD = Rescisao.MotivoDesligamento.PEDIDO
 
-        # trabalhado ou dispensado — sem verba em qualquer motivo
-        if tipo_aviso in (T, D):
+        # dispensado — empresa abriu mão, sem verba em qualquer motivo
+        if tipo_aviso == D:
             return
 
-        # dias devidos:
-        #   PD  → sempre 30 (aviso é obrigação do funcionário, sem proporcionalidade)
-        #   demais → proporcional Lei 12.506 (30 + 3×anos, máx 90), mas respeita
-        #            aviso_dias_devidos se o usuário informou valor diferente
+        # dias devidos CLT:
+        #   PD  → sempre 30 (obrigação do funcionário, sem proporcionalidade)
+        #   demais → proporcional Lei 12.506 (30 + 3×anos, máx 90)
         if motivo == PD:
             dias_devidos_clt = 30
         else:
             dias_devidos_clt = min(_DIAS_BASE_AVISO + _DIAS_EXTRA_ANO * anos_completos, 90)
 
-        # respeita o que o usuário informou — registra divergência se diferente
+        # respeita aviso_dias_devidos se RH informou valor diferente da CLT
         dias_devidos_usuario = rescisao_obj.aviso_dias_devidos or 0
         if dias_devidos_usuario and dias_devidos_usuario != dias_devidos_clt:
             dias_devidos  = dias_devidos_usuario
@@ -177,9 +171,36 @@ def _calcular_aviso(rescisao_obj, salario: float, anos_completos: int,
             dias_devidos  = dias_devidos_clt
             aviso_diverge = {}
 
-        dias_cumpridos   = rescisao_obj.aviso_dias_cumpridos or 0
-        dias_indenizados = max(dias_devidos - dias_cumpridos, 0)
+        dias_nao_cumpridos = max(dias_devidos - dias_cumpridos, 0)
 
+        # ── Trabalhado ────────────────────────────────────────────────────────
+        if tipo_aviso == T:
+            # cumprimento total — sem verba
+            if dias_nao_cumpridos == 0:
+                return
+            # cumprimento parcial/zero — desconto pelos dias corridos não cumpridos
+            # (dias corridos: folgas já embutidas no divisor salario/30)
+            valor = float(_dec(salario / 30 * dias_nao_cumpridos))
+            verbas.append({
+                'nome':     'Aviso Prévio — Desconto (dias não cumpridos)',
+                'rastreio': 'aviso_desconto',
+                'tipo':     'D',
+                'valor':    valor,
+                'formula':  f'salario / 30 * {dias_nao_cumpridos}',
+                'detalhes': {
+                    'dias_devidos':       dias_devidos,
+                    'dias_devidos_clt':   dias_devidos_clt,
+                    'dias_cumpridos':     dias_cumpridos,
+                    'dias_nao_cumpridos': dias_nao_cumpridos,
+                    'tipo_aviso':         tipo_aviso,
+                    **({'divergencia': aviso_diverge} if aviso_diverge else {}),
+                },
+            })
+            return
+
+        # ── Indenizado ────────────────────────────────────────────────────────
+        # dias_indenizados = dias que não foram trabalhados (empresa ou funcionário paga)
+        dias_indenizados = max(dias_devidos - dias_cumpridos, 0)
         if dias_indenizados == 0:
             return
 
@@ -194,8 +215,8 @@ def _calcular_aviso(rescisao_obj, salario: float, anos_completos: int,
             **({'divergencia': aviso_diverge} if aviso_diverge else {}),
         }
 
-        if motivo == PD and tipo_aviso == I:
-            # PD + indenizado → desconto: funcionário deve à empresa
+        if motivo == PD:
+            # PD + indenizado → desconto: funcionário não cumpriu, empresa desconta
             verbas.append({
                 'nome':     'Aviso Prévio — Desconto (não cumprido)',
                 'rastreio': 'aviso_desconto',
@@ -371,8 +392,7 @@ def _extrair_flags(rescisao_obj, motivo: str) -> dict:
 
     if rescisao_obj:
         return {
-            # aviso: True se há dias indenizados — engine decide se é P ou D pelo tipo
-            'aviso':               (rescisao_obj.aviso_dias_devidos or 0) > 0,
+            # aviso removido das flags — _calcular_aviso decide sozinho pelo tipo+dias
             'ferias_proporcionais': rescisao_obj.ferias_proporcionais_pagas,
             'ferias_vencidas':      rescisao_obj.ferias_vencidas_pagas,
             'decimo_terceiro':      rescisao_obj.decimo_terceiro_proporcional,
@@ -382,7 +402,6 @@ def _extrair_flags(rescisao_obj, motivo: str) -> dict:
         }
     # dry_run sem instância — regras padrão CLT
     return {
-        'aviso':               motivo not in (JC, PD),
         'ferias_proporcionais': motivo != JC,
         'ferias_vencidas':      True,   # JC mantém vencidas — CLT art. 146
         'decimo_terceiro':      motivo != JC,
@@ -402,13 +421,7 @@ def _detectar_divergencias(flags: dict, motivo: str) -> dict:
     from pessoal.models import Rescisao
     JC = Rescisao.MotivoDesligamento.POR_JUSTA_CAUSA
     PD = Rescisao.MotivoDesligamento.PEDIDO
-    tem_aviso_indenizado_pd = (
-        motivo == PD and
-        getattr(flags.get('_rescisao_obj'), 'aviso_tipo', None) == Rescisao.AvisoPrevioTipo.INDENIZADO
-    )
     padrao = {
-        # PD + tipo indenizado é desconto legítimo — não é divergência
-        'aviso':               motivo not in (JC, PD) or tem_aviso_indenizado_pd,
         'ferias_proporcionais': motivo != JC,
         'ferias_vencidas':      True,
         'decimo_terceiro':      motivo != JC,
