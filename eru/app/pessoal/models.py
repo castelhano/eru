@@ -672,6 +672,7 @@ class EventoFrequencia(models.Model):
         AUSENCIA_NJUST = 'ANJ', _('Ausencia Nao Justificada')
         FOLGA          = 'FLG', _('Folga')
         HORA_EXTRA     = 'HE',  _('Hora Extra')
+        FERIADO        = 'FER', _('Feriado')
     nome              = models.CharField(_('Nome'), max_length=100)
     rastreio          = models.SlugField(_('Rastreio'), unique=True, blank=True)
     categoria         = models.CharField(_('Categoria'), max_length=4, choices=Categoria.choices, default=Categoria.JORNADA)
@@ -805,7 +806,9 @@ class Evento(models.Model):
     rastreio = models.SlugField(unique=True)
     tipo     = models.CharField(_('Tipo'), max_length=3, choices=TipoMovimento.choices, default='P', blank=False)
     grupo    = models.ForeignKey(GrupoEvento, on_delete=models.RESTRICT, null=True, verbose_name=_('Grupo'))
-
+    class Meta:
+        ordering = ['nome']
+        verbose_name = _('Evento')
     def __str__(self):
         return self.nome
 auditlog.register(Evento)

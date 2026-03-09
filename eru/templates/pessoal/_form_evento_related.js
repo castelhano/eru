@@ -11,7 +11,7 @@ appKeyMap.bind('alt+t', ()=>{empresas.checkAll()}, {
 
 const responseValidade = document.getElementById('responseValidate');
 const validateBtn = document.getElementById('id_validate');
-const submitBtn = document.getElementById('submit');
+const submitBtn = document.getElementById('submitBtn');
 
 const submitShortcut = appKeyMap.getShortcut('alt+g');
 submitShortcut.desc = gettext('Salvar ou Validar formula');
@@ -63,13 +63,13 @@ async function syntaxCheck() {
         const result = await response.json();
         if (result.status === 'ok') {
             responseValidade.innerHTML = `<i class="bi bi-check2-circle text-success me-2"></i> ${gettext('Sintaxe é valida')}`
-            document.getElementById('submit').disabled = false;
+            submitBtn.disabled = false;
         } else {
             responseValidade.innerHTML = `<i class="bi bi-x-octagon-fill text-danger me-2"></i> [ <b>${result.type}</b> ] <br>--<br>${result.message}`;
-            document.getElementById('submit').disabled = true;
+            submitBtn.disabled = true;
         }
     } catch (error) {        
         responseValidade.innerHTML = gettext('[500] Erro no servidor, se o problema persistir, contate o administrador');
-        document.getElementById('submit').disabled = false;
+        submitBtn.disabled = false;
     }
 }

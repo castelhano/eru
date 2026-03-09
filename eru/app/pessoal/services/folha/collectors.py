@@ -118,15 +118,18 @@ def get_event_vars_master(asDict=False, **kwargs):
     return res
 
 
-def get_batch_data(filial_id, inicio, fim):
-    # Busca otimizada — um hit por tipo de dado, tudo que o cálculo da folha precisa.
-    vigencia = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))  # filtro reutilizado nos três tipos de evento
+def get_batch_data(filial_id, inicio, fim, matricula_de=None, matricula_ate=None):
+    vigencia  = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))
     contratos = (
         Contrato.objects
         .filter(funcionario__filial_id=filial_id)
         .filter(vigencia)
-        .select_related('funcionario', 'cargo')  # evita N+1 no loop de run_single
+        .select_related('funcionario', 'cargo')
     )
+    if matricula_de:
+        contratos = contratos.filter(funcionario__matricula__gte=matricula_de)
+    if matricula_ate:
+        contratos = contratos.filter(funcionario__matricula__lte=matricula_ate)
     # FrequenciaConsolidada indexada por contrato_id para lookup O(1) em run_single
     frequencias = {
         f.contrato_id: f

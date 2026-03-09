@@ -68,7 +68,7 @@
         window.location.href = `/pessoal/settings/${filial.value}`;
     }
     {% if object %}
-    document.getElementById('submit').disabled = false;
+    document.getElementById('submitBtn').disabled = false;
     document.getElementById('extra').disabled = false;
     const element = document.getElementById('editor_holder');
     const schema = {schema: {{ schema_json|safe }}, startval: {{ config_json|safe }}};

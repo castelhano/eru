@@ -462,9 +462,20 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
         )
 
     def _acao_processar_folha(self, filial_id, competencia):
+        inicio, fim = self._parse_periodo(competencia)
+        inicio_str  = self.request.POST.get('inicio', '').strip()
+        fim_str     = self.request.POST.get('fim',    '').strip()
+        if inicio_str:
+            inicio = date.fromisoformat(inicio_str)
+        if fim_str:
+            fim = date.fromisoformat(fim_str)
         return disparar_folha(
             filial_id=filial_id,
             competencia=competencia,
+            inicio=inicio,
+            fim=fim,
+            matricula_de=self.request.POST.get('matricula_de',  '').strip() or None,
+            matricula_ate=self.request.POST.get('matricula_ate', '').strip() or None,
             usuario=self.request.user,
         )
 

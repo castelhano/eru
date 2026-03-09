@@ -59,6 +59,7 @@ _CAT_INTERVALO = {_CAT.INTERVALO}
 _CAT_AJ        = {_CAT.AUSENCIA_JUST}
 _CAT_ANJ       = {_CAT.AUSENCIA_NJUST}
 _CAT_FOLGA     = {_CAT.FOLGA}
+_CAT_FERIADO   = {_CAT.FERIADO}
 # HORA_EXTRA não é processada como categoria — HE é derivada automaticamente.
 # Lançamentos manuais com categoria HORA_EXTRA são acumulados no nível 2 via rastreio.
 
@@ -125,8 +126,7 @@ def _horas_noturnas(inicio_dt: datetime, fim_dt: datetime,
     return total
 
 
-def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool,
-                  hn_inicio: time, hn_fim: time) -> dict:
+def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool, hn_inicio: time, hn_fim: time) -> dict:
     """
     Processa todos os registros de um único dia e retorna parciais.
 
@@ -146,28 +146,25 @@ def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool,
         'h_intervalo':     0.0,  'h_aj':            0.0,  'h_anj':           0.0,
         'h_atestado':      0.0,
         'dia_trabalhado':  False, 'dia_falta_just':  False, 'dia_falta_njust': False,
-        'dia_folga':       False, 'dia_afastamento': False, 'desconta_efetivos': False,
+        'dia_folga':       False, 'dia_afastamento': False, 'dia_feriado':     False,  # novo
+        'desconta_efetivos': False,
         'ef': defaultdict(lambda: {'horas': 0.0, 'dias': 0}),
     }
-
     for f in registros:
-        cat = f.evento.categoria
-
         # horas do registro:
         #   com horário real → duração calculada
         #   dia_inteiro + contabiliza_horas → carga_dia (ou 0 se metodologia mensal)
         #   dia_inteiro + não contabiliza   → 0
+        cat = f.evento.categoria
         if f.evento.dia_inteiro:
             horas = (carga_dia or 0.0) if f.evento.contabiliza_horas else 0.0
         else:
             horas = _horas(f)
-
         # Nível 2 — acumula por rastreio independente da categoria
         if f.evento.rastreio:
             r['ef'][f.evento.rastreio]['horas'] += horas
             if f.evento.dia_inteiro:
                 r['ef'][f.evento.rastreio]['dias'] += 1
-
         # Nível 1 — acumula por categoria
         if cat in _CAT_TRABALHO:
             r['h_trabalhadas'] += horas
@@ -188,17 +185,16 @@ def _calcular_dia(registros, carga_dia: float | None, incluir_intervalo: bool,
             r['dia_falta_njust']  = True
         elif cat in _CAT_FOLGA:
             r['dia_folga'] = True
-
+        elif cat in _CAT_FERIADO:
+            r['dia_feriado'] = True
         if f.evento.desconta_efetivos:
-            r['desconta_efetivos'] = True  # basta um evento no dia para descontar
-
+            r['desconta_efetivos'] = True
     # Hora extra diária — só se metodologia diária (carga_dia explícita no contrato)
     if carga_dia:
         excedente = r['h_trabalhadas'] - carga_dia
         if excedente > 0:
             r['h_extras']      = excedente
             r['h_trabalhadas'] = carga_dia  # normaliza — evita dupla contagem no mensal
-
     return r
 
 
@@ -219,6 +215,7 @@ def _detectar_erros(inicio: date, fim: date, grupos: dict, contrato) -> dict:
     return erros
 
 
+
 def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     """
     Ponto de entrada principal do engine.
@@ -226,14 +223,14 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     Retorna a instância salva.
     """
     tz = timezone.get_current_timezone()
-
+    
     # 1. Configurações da filial — intervalo noturno e inclusão de intervalos
     settings_obj      = PessoalSettings.objects.filter(filial_id=contrato.funcionario.filial_id).first()
     cfg_freq          = settings_obj.config.frequencia if settings_obj else FrequenciaSchema()
-    hn_inicio         = cfg_freq.hn_inicio  # time(22, 0) por padrão
-    hn_fim            = cfg_freq.hn_fim     # time(6, 0) por padrão
+    hn_inicio         = cfg_freq.hn_inicio
+    hn_fim            = cfg_freq.hn_fim
     incluir_intervalo = cfg_freq.incluir_intervalos_jornada
-
+    
     # 2. Busca registros do período — eventos dia_inteiro via campo data, demais via inicio
     frequencias = (
         Frequencia.objects
@@ -247,6 +244,11 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     grupos    = _agrupar_por_dia(frequencias, tz)
     carga_dia = _carga_dia(contrato)
 
+    # ─── sabados e domingos do período — puro calendário, sem depender de lançamentos
+    dias_nao_uteis = sum(
+        1 for n in range((fim - inicio).days + 1)
+        if (inicio + timedelta(n)).weekday() in (5, 6)  # 5=sábado, 6=domingo
+    )
     # 4. Totalizadores nível 1 (H_*)
     totais = {
         'H_horas_trabalhadas':     0.0, 'H_horas_extras':         0.0,
@@ -255,9 +257,9 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
         'H_atestados':             0.0,
         'H_dias_trabalhados':      0,   'H_dias_falta_just':       0,
         'H_dias_falta_njust':      0,   'H_dias_folga':            0,
-        'H_dias_afastamento':      0,
+        'H_dias_afastamento':      0,   'H_dias_feriado':          0,   # novo
     }
-
+    
     # Dias de contrato ativo no período — base para H_dias_efetivos
     contrato_fim_dt  = contrato.fim or date.max
     H_dias_contrato  = sum(
@@ -287,6 +289,7 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
         if d['dia_falta_njust']:   totais['H_dias_falta_njust'] += 1
         if d['dia_folga']:         totais['H_dias_folga']        += 1
         if d['dia_afastamento']:   totais['H_dias_afastamento']  += 1
+        if d['dia_feriado']:       totais['H_dias_feriado']      += 1  # novo
         if d['desconta_efetivos']: dias_descontados              += 1
 
         for rastreio, vals in d['ef'].items():
@@ -297,6 +300,8 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
     totais['H_dias_mes']      = calendar.monthrange(inicio.year, inicio.month)[1]
     totais['H_dias_contrato'] = H_dias_contrato
     totais['H_dias_efetivos'] = H_dias_contrato - dias_descontados
+    # dias úteis = dias do mês - fins de semana (calendário) - feriados (lançados na frequência)
+    totais['H_dias_uteis']    = totais['H_dias_mes'] - dias_nao_uteis - totais['H_dias_feriado']
 
     # 7. Arredonda floats para 4 casas — evita ruído de ponto flutuante
     for k, v in totais.items():
@@ -331,7 +336,6 @@ def consolidar(contrato, inicio: date, fim: date) -> FrequenciaConsolidada:
         }
     )
     return obj
-
 
 # ─── Transições de estado ─────────────────────────────────────────────────────
 

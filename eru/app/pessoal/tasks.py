@@ -164,19 +164,32 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
         _fechar_job(job_id, {}, erro=str(e))  # falha fatal — ex: erro de banco
 
 
-def _worker_folha(job_id: int, filial_id: int, mes: int, ano: int):
-    """Processa folha de pagamento de todos os contratos vigentes na competência."""
+# tasks.py — _worker_folha
+def _worker_folha(job_id: int, filial_id: int, competencia_str: str,
+                  inicio_str: str, fim_str: str,
+                  matricula_de: str | None, matricula_ate: str | None):
+    """Processa folha de pagamento dos contratos vigentes no período."""
     ProcessamentoJob.objects.filter(pk=job_id).update(
         status=ProcessamentoJob.Status.PROCESSANDO,
         iniciado_em=now(),
     )
     try:
-        total  = payroll_run(filial_id, mes, ano)   # retorna qtd de contratos processados
-        inicio = date(ano, mes, 1)
-        fim    = date(ano, mes, calendar.monthrange(ano, mes)[1])
+        competencia = date.fromisoformat(competencia_str)
+        inicio      = date.fromisoformat(inicio_str)
+        fim         = date.fromisoformat(fim_str)
+        resultado   = payroll_run(
+            filial_id=filial_id,
+            mes=competencia.month,
+            ano=competencia.year,
+            matricula_de=matricula_de,
+            matricula_ate=matricula_ate,
+        )
         _fechar_job(job_id, _resultado(
-            processados=total,
+            processados=resultado['processados'],
+            falhas=len(resultado['falhas']),
             periodo=_fmt_periodo(inicio, fim),
+            filtro_de=matricula_de,
+            filtro_ate=matricula_ate,
         ))
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
@@ -451,12 +464,23 @@ def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: 
     return job
 
 
-def disparar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+def disparar_folha(filial_id: int, competencia: date,
+                   inicio: date | None = None,
+                   fim: date | None = None,
+                   matricula_de: str | None = None,
+                   matricula_ate: str | None = None,
+                   usuario=None) -> ProcessamentoJob:
     """Enfileira processamento de folha e retorna o job criado."""
     job = _abrir_job(ProcessamentoJob.Tipo.FOLHA, filial_id, competencia, usuario)
+    if not inicio:
+        inicio = competencia
+    if not fim:
+        fim = competencia.replace(day=calendar.monthrange(competencia.year, competencia.month)[1])
     async_task(
         _worker_folha,
-        job.id, filial_id, competencia.month, competencia.year,
+        job.id, filial_id,
+        competencia.isoformat(), inicio.isoformat(), fim.isoformat(),
+        matricula_de, matricula_ate,
         task_name=f"folha_{filial_id}_{competencia.isoformat()}_{int(now().timestamp())}",
     )
     return job
