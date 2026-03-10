@@ -119,11 +119,15 @@ def get_event_vars_master(asDict=False, **kwargs):
 
 
 def get_batch_data(filial_id, inicio, fim, matricula_de=None, matricula_ate=None):
-    vigencia  = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))
+    competencia = inicio.replace(day=1)  # normaliza para primeiro do mês
+    # contratos: filtro por range de datas — contrato pode iniciar/terminar no meio do mês
+    vigencia_contrato = Q(inicio__lte=fim) & (Q(fim__gte=inicio) | Q(fim__isnull=True))
+    # eventos: filtro por competência — normalizado para primeiro do mês no clean()
+    vigencia_evento = Q(inicio__lte=competencia) & (Q(fim__gte=competencia) | Q(fim__isnull=True))
     contratos = (
         Contrato.objects
         .filter(funcionario__filial_id=filial_id)
-        .filter(vigencia)
+        .filter(vigencia_contrato)
         .select_related('funcionario', 'cargo')
     )
     if matricula_de:
@@ -133,16 +137,16 @@ def get_batch_data(filial_id, inicio, fim, matricula_de=None, matricula_ate=None
     # FrequenciaConsolidada indexada por contrato_id para lookup O(1) em run_single
     frequencias = {
         f.contrato_id: f
-        for f in FrequenciaConsolidada.objects.filter(contrato__in=contratos, competencia=inicio)
+        for f in FrequenciaConsolidada.objects.filter(contrato__in=contratos, competencia=competencia)
     }
     # Eventos de empresa — lista plana (aplicados a todos os contratos da filial)
-    ev_e = list(EventoEmpresa.objects.filter(filiais=filial_id).filter(vigencia).select_related('evento'))
+    ev_e = list(EventoEmpresa.objects.filter(filiais=filial_id).filter(vigencia_evento).select_related('evento'))
     # Eventos de cargo e funcionário — indexados por FK para lookup O(1) em run_single
     ev_c = {}
-    for e in EventoCargo.objects.filter(filiais=filial_id).filter(vigencia).select_related('evento', 'cargo'):
+    for e in EventoCargo.objects.filter(filiais=filial_id).filter(vigencia_evento).select_related('evento', 'cargo'):
         ev_c.setdefault(e.cargo_id, []).append(e)
     ev_f = {}
-    for e in EventoFuncionario.objects.filter(funcionario__filial_id=filial_id).filter(vigencia).select_related('evento'):
+    for e in EventoFuncionario.objects.filter(funcionario__filial_id=filial_id).filter(vigencia_evento).select_related('evento'):
         ev_f.setdefault(e.funcionario_id, []).append(e)
     return contratos, ev_e, ev_c, ev_f, frequencias
 

@@ -828,16 +828,20 @@ class EventoMovimentacao(models.Model):
     O campo valor armazena formula avaliada pelo motor de folha.
     """
     evento = models.ForeignKey(Evento, on_delete=models.RESTRICT, verbose_name=_('Evento'))
-    inicio = models.DateField(_('Inicio'), blank=False, null=False, default=datetime.today)
-    fim    = models.DateField(_('Fim'), blank=True, null=True)
+    inicio = models.DateField(_('Competência Inicio'), blank=False, null=False, default=datetime.today)
+    fim    = models.DateField(_('Competência Fim'), blank=True, null=True)
     valor  = models.TextField(_('Valor'), blank=True)
     motivo = models.ForeignKey(MotivoReajuste, on_delete=models.RESTRICT, verbose_name=_('Motivo'))
     class Meta:
         abstract = True
     def clean(self):
-        if self.fim and self.inicio > self.fim:
-            raise ValidationError({'fim': _('Data de fim nao pode ser menor que data de inicio')})
-        # detecta campos de contexto (funcionario, cargo) para validar sobreposicao por escopo
+        # normaliza para primeiro dia do mês — form entrega input month (YYYY-MM)
+        if self.inicio:
+            self.inicio = self.inicio.replace(day=1)
+        if self.fim:
+            self.fim = self.fim.replace(day=1)
+        if self.fim and self.inicio and self.fim < self.inicio:
+            raise ValidationError({'fim': _('Competência fim não pode ser anterior ao início')})
         campos_validos = [
             f for f in self._meta.get_fields()
             if f.name not in ['id', 'evento', 'inicio', 'fim', 'valor', 'motivo']

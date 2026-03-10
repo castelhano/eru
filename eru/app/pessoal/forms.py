@@ -192,7 +192,8 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         fields = ['evento', 'inicio', 'fim', 'valor', 'motivo']
         widgets = {
-            'inicio': forms.DateInput(attrs={'autofocus': True}),
+            'inicio': forms.DateInput(attrs={'autofocus': True, 'type': 'month'}, format='%Y-%m'),
+            'fim':    forms.DateInput(attrs={'type': 'month'}, format='%Y-%m'),
             'evento': forms.Select(attrs={'class': 'form-select'}),
             'valor': forms.Textarea(attrs={'class': 'form-control', 'rows': 4,'placeholder': _('Valor / Formula')}),
             'motivo': forms.Select(attrs={'class': 'form-select'}),
@@ -211,6 +212,12 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
         Ex: return EventoCargo
         """
         raise NotImplementedError("Subclasses devem implementar 'get_model_class'")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # formata valor inicial para YYYY-MM
+        for field in ('inicio', 'fim'):
+            if self.instance and getattr(self.instance, field):
+                self.initial[field] = getattr(self.instance, field).strftime('%Y-%m')
     def clean(self):
         cd = super().clean()
         inicio, fim, ev = cd.get('inicio'), cd.get('fim'), cd.get('evento')
