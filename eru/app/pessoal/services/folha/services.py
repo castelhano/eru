@@ -4,7 +4,8 @@ from django.db import transaction
 from .collectors import get_period, get_batch_data, get_event_vars_master
 from .engine import get_interpreter, dependence_resolve, engine_run
 from .persistence import payroll_memory, db_save
-from pessoal.models import FolhaPagamento
+from pessoal.models import FolhaPagamento, PessoalSettings
+from .tributos import calcular_tributos
 
 
 def merge_events(ev_e, ev_c_list, ev_f_list):
@@ -29,6 +30,25 @@ def run_single(contrato, competencia, ev_e, ev_c_list, ev_f_list, freq, aeval):
         contrato=contrato,
         consolidado=freq,
     )
+    
+    # ── tributos: calculados antes do engine_run e injetados como variáveis ──
+    # inss_devido e irrf_devido ficam disponíveis nas fórmulas dos eventos
+    # o usuário cria EventoEmpresa rastreio='inss' fórmula='inss_devido' tipo='D'
+    # e EventoEmpresa rastreio='irrf' fórmula='irrf_devido' tipo='D'
+    settings_obj = PessoalSettings.objects.filter(
+        filial_id=contrato.funcionario.filial_id
+    ).first()
+    num_dependentes = contrato.funcionario.dependentes_set.filter(
+        deduz_irrf=True
+    ).count()
+    tributos = calcular_tributos(
+        salario_bruto   = float(contrato.salario or 0),
+        num_dependentes = num_dependentes,
+        competencia     = competencia,
+        settings_obj    = settings_obj,
+    )
+    vars_dict.update(tributos)
+
     # 2. Define as regras de variaveis de usuario (U_*) e a ordem de calculo
     regras = merge_events(ev_e, ev_c_list, ev_f_list)
     ordem       = dependence_resolve(regras)

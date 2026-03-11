@@ -181,6 +181,10 @@ class EventoMovimentacaoBaseTable(TableCustomMixin, Table):
             'motivo': 'd-none d-md-table-cell',
             'valor': 'd-none'
         }
+    def render_inicio(self, value):
+        return value.strftime('%m/%Y') if value else '--'
+    def render_fim(self, value):
+        return value.strftime('%m/%Y') if value else '--'
     def __init__(self, *args, **kwargs):
         related_type = kwargs.pop('related', 'empresa')
         self.actions = [{
@@ -198,6 +202,11 @@ class EventoEmpresaTable(EventoMovimentacaoBaseTable):
     class Meta(EventoMovimentacaoBaseTable.Meta):
         model = EventoEmpresa
         fields = ('evento', 'inicio', 'fim', 'filiais', 'motivo')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Meta.responsive_columns.update({
+            'filiais': 'd-none d-xl-table-cell'
+        })
     def render_filiais(self, value):
         if value:
             return ", ".join([f.nome for f in value.all()])

@@ -46,7 +46,24 @@
                 <input type="hidden" name="funcionario" id="id_funcionario" value="{{funcionario.id|safe}}">
                 {% btn_tag 'submit' %}
             </div>
-            <div class="col-lg-4 border-start"></div>
+            <div class="col-lg-4 border-lg-start">
+                <div class="form-check form-switch mb-1">
+                    {{ form.deduz_irrf }}
+                    <label class="form-check-label" for="{{ form.deduz_irrf.id_for_label }}">{{ form.deduz_irrf.label }}</label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.deduz_plano_saude }}
+                    <label class="form-check-label" for="{{ form.deduz_plano_saude.id_for_label }}">{{ form.deduz_plano_saude.label }}</label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.plano_saude }}
+                    <label class="form-check-label" for="{{ form.plano_saude.id_for_label }}">{{ form.plano_saude.label }}</label>
+                </div>
+                <div class="form-check form-switch mb-1">
+                    {{ form.incapacitado }}
+                    <label class="form-check-label" for="{{ form.incapacitado.id_for_label }}">{{ form.incapacitado.label }}</label>
+                </div>
+            </div>
         </div>
     </div>
 </div>

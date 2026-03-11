@@ -1,5 +1,5 @@
 import ast, math
-from graphlib import TopologicalSorter, CycleError
+from graphlib import TopologicalSorter
 from asteval import Interpreter
 
 

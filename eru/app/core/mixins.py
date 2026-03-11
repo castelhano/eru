@@ -140,8 +140,9 @@ class BootstrapMixin:
             widget = field.widget
             # 1. normalizacao de datas
             if isinstance(field, forms.DateField):
-                widget.input_type = 'date'
-                widget.format = '%Y-%m-%d'
+                if getattr(widget, 'input_type', None) != 'month':
+                    widget.input_type = 'date'
+                    widget.format = '%Y-%m-%d'
             # 2. atribuicao de classes CSS
             css_class = self._CSS_MAP.get(type(widget), 'form-control')
             current_class = widget.attrs.get('class', '')

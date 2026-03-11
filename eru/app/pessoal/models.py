@@ -306,9 +306,8 @@ class Dependente(models.Model):
         SOGRO_SOGRA = "S",  _("Sogro / Sogra")
         ASCENDENTE  = "A",  _("Ascendente")
         DESCENDENTE = "N",  _("Descendente")
-        INCAPAZ     = "In", _("Incapaz")
         OUTRO       = "M",  _("Outro")
-    funcionario        = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, verbose_name=_('Funcionario'))
+    funcionario        = models.ForeignKey(Funcionario, on_delete=models.RESTRICT, related_name='dependentes_set', verbose_name=_('Funcionario'))
     nome               = models.CharField(_('Nome'), max_length=230, blank=False)
     parentesco         = models.CharField(_('Parentesco'), max_length=3, choices=Parentesco.choices, default='F', blank=True)
     genero             = models.CharField(_('Genero'), max_length=3, choices=Pessoa.Genero.choices, blank=True)
@@ -317,6 +316,10 @@ class Dependente(models.Model):
     rg_emissao         = models.DateField(_('Rg Emissao'), blank=True, null=True)
     rg_orgao_expedidor = models.CharField(_('Rg Org Expedidor'), max_length=15, blank=True)
     cpf                = models.CharField(_('Cpf'), max_length=20, blank=True)
+    deduz_irrf         = models.BooleanField(_('Deduz IRRF'), default=False)
+    deduz_plano_saude  = models.BooleanField(_('Deduz Plano de Saúde'), default=False)
+    plano_saude        = models.BooleanField(_('Possui Plano de Saúde'), default=False)
+    incapacitado       = models.BooleanField(_('Incapacitado'), default=False)
     def __str__(self):
         return f'{self.funcionario.matricula} | {self.nome[:10]}'
     def idade(self):

@@ -10,10 +10,6 @@ from pessoal.models import (
 # Tipos que podem ser usados em fórmulas e serializados para JSON sem conversão
 _TIPOS_PRIMITIVOS = (int, float, str, bool, type(None))
 
-# Nomes da whitelist injetados no symtable do asteval — nunca devem entrar no contexto
-_WHITELIST_NOMES = frozenset({'sqrt', 'sin', 'cos', 'round', 'min', 'max', 'abs', 'True', 'False'})
-
-
 def _coerce(val):
     """
     Converte o valor de uma @property para tipo utilizável em fórmula.
@@ -43,6 +39,7 @@ def get_event_vars_master(asDict=False, **kwargs):
     #   C_*  → @property de Contrato          ex: C_salario_hora, C_carga_mensal
     #   H_*  → totalizadores nível 1 do consolidado de frequência
     #   EF_* → totalizadores nível 2 por EventoFrequencia  ex: EF_he50_horas, EF_he50_dias
+    #   FM_* → evento do motor de folha, injetados em get_event_vars_master para estar disponivel no autocomplete
     #   U_*  → eventos calculados pelo usuário na folha
     #
     # Atenção: adicionar modelos em `targets` expõe suas @property automaticamente.
@@ -108,6 +105,13 @@ def get_event_vars_master(asDict=False, **kwargs):
             else:  # asDict
                 res.update({f'{rastreio}_horas': 1, f'{rastreio}_dias': 1})
 
+    # Tributos — calculados pelo motor antes do engine_run e injetados via run_single
+    _VARS_TRIBUTOS = ['FM_inss_devido', 'FM_irrf_devido', 'FM_base_inss', 'FM_base_irrf']
+    if isinstance(res, list):
+        res.extend(_VARS_TRIBUTOS)
+    else:
+        res.update({v: 0 if is_calc else 1 for v in _VARS_TRIBUTOS}) 
+    
     # Rastreios de eventos cadastrados pelo usuário (U_*) — valor 0 como neutro no cálculo
     customs = list(Evento.objects.exclude(rastreio='').values_list('rastreio', flat=True).distinct())
     if isinstance(res, list):

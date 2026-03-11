@@ -104,7 +104,7 @@ class ContratoForm(BootstrapMixin, forms.ModelForm):
 class DependenteForm(BootstrapMixin, forms.ModelForm):
     class Meta:
         model = Dependente
-        fields = ['funcionario','nome','parentesco','genero','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf']
+        fields = ['funcionario','nome','parentesco','genero','data_nascimento', 'rg','rg_emissao','rg_orgao_expedidor','cpf', 'deduz_irrf', 'deduz_plano_saude', 'plano_saude', 'incapacitado']
         widgets = {
             'nome': forms.TextInput(attrs={'autofocus': True}),
         }
@@ -214,6 +214,9 @@ class EventoMovimentacaoBaseForm(BootstrapMixin, forms.ModelForm):
         raise NotImplementedError("Subclasses devem implementar 'get_model_class'")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # ensina o DateField a aceitar YYYY-MM e normaliza para primeiro do mês
+        for field_name in ('inicio', 'fim'):
+            self.fields[field_name].input_formats = ['%Y-%m']
         # formata valor inicial para YYYY-MM
         for field in ('inicio', 'fim'):
             if self.instance and getattr(self.instance, field):
