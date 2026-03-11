@@ -469,7 +469,6 @@ class FeriasAquisitivo(models.Model):
         PARCIAL    = 'PA', _('Parcialmente Gozado')
         GOZADO     = 'GO', _('Gozado')         # totalmente consumido
         PERDIDO    = 'PE', _('Perdido')        # prescrição ou justa causa
-
     funcionario       = models.ForeignKey('Funcionario', on_delete=models.RESTRICT, related_name='ferias_aquisitivos', verbose_name=_('Funcionário'))
     contrato          = models.ForeignKey('Contrato', on_delete=models.RESTRICT, related_name='ferias_aquisitivos', verbose_name=_('Contrato'))
     inicio            = models.DateField(_('Início do Período Aquisitivo'))
@@ -926,6 +925,38 @@ class FolhaPagamento(models.Model):
     def __str__(self):
         return f"{self.contrato.funcionario.matricula} | {self.competencia.strftime('%m/%Y')}"
 
+class Adiantamento(models.Model):
+    class Status(models.TextChoices):
+        PENDENTE   = 'P', _('Pendente')
+        CANCELADO  = 'C', _('Cancelado')    # pode cancelar antes do desconto
+        DESCONTADO = 'D', _('Descontado')
+    contrato         = models.ForeignKey(Contrato, on_delete=models.RESTRICT, related_name='adiantamentos')
+    competencia_pgto = models.DateField()   # mes de pagamento — normalizado para dia 1
+    competencia_desc = models.DateField()   # mes de desconto — normalizado para dia 1
+    valor            = models.DecimalField(max_digits=10, decimal_places=2)
+    status           = models.CharField(max_length=1, choices=Status.choices, default=Status.PENDENTE)
+    observacao       = models.TextField(blank=True)  # motivo de cancelamento, ajuste manual, etc.
+    class Meta:
+        ordering = ['-competencia_pgto']
+        constraints = [
+            # um adiantamento pendente por contrato por competência de desconto
+            # evita desconto duplo na mesma folha
+            models.UniqueConstraint(
+                fields=['contrato', 'competencia_desc'],
+                condition=models.Q(status='P'),
+                name='unique_adiantamento_pendente_por_competencia'
+            )
+        ]
+    def clean(self):
+        if self.competencia_pgto:
+            self.competencia_pgto = self.competencia_pgto.replace(day=1)
+        if self.competencia_desc:
+            self.competencia_desc = self.competencia_desc.replace(day=1)
+        if self.competencia_pgto and self.competencia_desc:
+            if self.competencia_desc < self.competencia_pgto:
+                raise ValidationError({
+                    'competencia_desc': _('Competência de desconto não pode ser anterior ao pagamento')
+                })
 
 # ============================================
 # AUXILIARES
