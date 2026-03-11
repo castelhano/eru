@@ -40,24 +40,22 @@ def dependence_resolve(rules):
         raise ValueError(f"Ciclo de dependência detectado: {e}")
 
 
-
 def engine_run(aeval, context, order_calc, rules_dict):
 # recebe um dicionario {event: formula} e uma lista dos eventos ordenados por precedencia
 # ele itera, calcula e insere o resultado no proprio context para o proximo calculo
     aeval.symtable.clear()
     aeval.symtable.update(get_whitelist())
     aeval.symtable.update(context)
+    aeval.error = []  # limpa erros residuais entre contratos
     erros = {}
     for rastreio in order_calc:
         if rastreio in rules_dict:
             res = aeval(rules_dict[rastreio].valor)
-            if len(aeval.error) > 0:
+            if aeval.error:
                 err = aeval.error[0]
-                tipo_erro = getattr(err, 'exc_name', 'Error')
-                msg_erro = getattr(err, 'msg', 'Erro desconhecido')
-                erros[rastreio] = f"{tipo_erro}: {msg_erro}"
-                aeval.symtable[rastreio] = 0 # garante que o calculo siga sem quebrar
-                aeval.error = [] # limpa os erros do interpretador para a proxima iteracao
+                erros[rastreio] = f"{getattr(err, 'exc_name', 'Error')}: {getattr(err, 'msg', 'Erro desconhecido')}"
+                aeval.symtable[rastreio] = 0
+                aeval.error = []
             else:
-                aeval.symtable[rastreio] = res            
+                aeval.symtable[rastreio] = res
     return dict(aeval.symtable), erros

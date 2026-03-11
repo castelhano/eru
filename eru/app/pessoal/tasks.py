@@ -164,10 +164,8 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
         _fechar_job(job_id, {}, erro=str(e))  # falha fatal — ex: erro de banco
 
 
-# tasks.py — _worker_folha
-def _worker_folha(job_id: int, filial_id: int, competencia_str: str,
-                  inicio_str: str, fim_str: str,
-                  matricula_de: str | None, matricula_ate: str | None):
+def _worker_folha(job_id, filial_id, competencia_str, inicio_str, fim_str,
+                  matricula_de, matricula_ate):
     """Processa folha de pagamento dos contratos vigentes no período."""
     ProcessamentoJob.objects.filter(pk=job_id).update(
         status=ProcessamentoJob.Status.PROCESSANDO,
@@ -184,16 +182,20 @@ def _worker_folha(job_id: int, filial_id: int, competencia_str: str,
             matricula_de=matricula_de,
             matricula_ate=matricula_ate,
         )
+        # repassa falhas individuais para observacoes — visíveis no dashboard
+        obs = [
+            f"{f['matricula']}: {f['erro']}"
+            for f in resultado['falhas']
+        ]
         _fechar_job(job_id, _resultado(
             processados=resultado['processados'],
             falhas=len(resultado['falhas']),
             periodo=_fmt_periodo(inicio, fim),
             filtro_de=matricula_de,
             filtro_ate=matricula_ate,
-        ))
+        ), observacoes=obs)
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
-
 
 def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
                             inicio_str: str, fim_str: str,

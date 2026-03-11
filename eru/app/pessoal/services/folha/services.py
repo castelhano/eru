@@ -21,26 +21,21 @@ def run_single(contrato, competencia, ev_e, ev_c_list, ev_f_list, freq, aeval):
 # >> Chama a engine para resolver o grafo
 # >> Chama a engine para calcular
     if freq is None: # se nao localizado frequencia no periodo interrompe execucao e retorna erro
-        return db_save(contrato, competencia, 
-                      {'eventos': [], 'contexto_entrada': {}}, 
-                      {'frequencia': 'Frequência não consolidada para esta competência'})    
-    _, dias_comp = calendar.monthrange(competencia.year, competencia.month)
-    fim_comp = competencia.replace(day=dias_comp)
+        return db_save(contrato, competencia,
+                      {'eventos': [], 'contexto_entrada': {}},
+                      {'frequencia': 'Frequência não consolidada para esta competência'})
     vars_dict = get_event_vars_master(
-        funcionario=contrato.funcionario, 
+        funcionario=contrato.funcionario,
         contrato=contrato,
-        consolidado=freq
+        consolidado=freq,
     )
     # 2. Define as regras de variaveis de usuario (U_*) e a ordem de calculo
-    regras = merge_events(ev_e, ev_c_list, ev_f_list, competencia, fim_comp)
-    
-    # dependence_resolve usa um evento representativo por rastreio (primeiro segmento)
-    regras_repr = {rastreio: segs[0]['evento'] for rastreio, segs in regras.items()}
-    ordem       = dependence_resolve(regras_repr)
+    regras = merge_events(ev_e, ev_c_list, ev_f_list)
+    ordem       = dependence_resolve(regras)
     # 3. Executa o motor de calculo
-    resultado_vars, erros = engine_run(aeval, vars_dict, ordem, regras, dias_comp)
+    resultado_vars, erros = engine_run(aeval, vars_dict, ordem, regras)
     # 4. Formata a memoria e persiste no banco
-    memoria = payroll_memory(resultado_vars, regras_repr, erros)
+    memoria = payroll_memory(resultado_vars, regras, erros)
     return db_save(contrato, competencia, memoria, erros)
 
 
