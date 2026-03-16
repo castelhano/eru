@@ -15,9 +15,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views import View
 
-from pessoal.models import Funcionario, ProcessamentoJob
+from core.models import Job
+from pessoal.models import Funcionario
 from pessoal.forms import RescisaoForm
-from pessoal.tasks import disparar_desligamento
+from pessoal.tasks import Tipos, disparar_desligamento
 from pessoal.services.rescisao import simular_sem_persistir
 
 
@@ -104,14 +105,16 @@ class RescisaoProcessView(LoginRequiredMixin, PermissionRequiredMixin, View):
         """
         Fluxo real: salva Rescisao e dispara processamento assíncrono.
         """
+        # object_id dentro de params identifica o funcionário — sem campo dedicado no model
         job_em_execucao = (
-            ProcessamentoJob.objects
+            Job.objects
             .filter(
-                tipo=ProcessamentoJob.Tipo.DESLIGAR_FUNCIONARIO,
-                object_id=funcionario.pk,
+                app='pessoal',
+                tipo=Tipos.DESLIGAR_FUNCIONARIO,
+                params__object_id=funcionario.pk,
                 status__in=[
-                    ProcessamentoJob.Status.AGUARDANDO,
-                    ProcessamentoJob.Status.PROCESSANDO,
+                    Job.Status.AGUARDANDO,
+                    Job.Status.PROCESSANDO,
                 ],
             )
             .exists()
@@ -119,7 +122,6 @@ class RescisaoProcessView(LoginRequiredMixin, PermissionRequiredMixin, View):
         if job_em_execucao:
             messages.warning(request, 'Processamento de desligamento já está em andamento.')
             return redirect('pessoal:funcionario_update', pk=funcionario.pk)
-
         try:
             with transaction.atomic():
                 form.save()

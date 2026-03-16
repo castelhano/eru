@@ -773,7 +773,6 @@ class EventoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteVi
 
 
 class EventoRelatedDeleteView(LoginRequiredMixin, BaseDeleteView):
-    success_url = reverse_lazy('pessoal:evento_list')
     def dispatch(self, request, *args, **kwargs):
         self.related = kwargs.get('related', '').lower()
         perm_name = f"pessoal.delete_evento{self.related}"
@@ -783,15 +782,24 @@ class EventoRelatedDeleteView(LoginRequiredMixin, BaseDeleteView):
         if not request.user.has_perm(perm_name):
             return redirect('handler', 403)
         return super().dispatch(request, *args, **kwargs)
+    def get_success_url(self):
+        obj = self.get_object()
+        related_id = 0
+        if self.related != 'empresa':
+            related_id = getattr(obj, f"{self.related}_id")
+        return reverse_lazy('pessoal:eventorelated_list', kwargs={
+            'related': self.related,
+            'pk': related_id
+        })
     def get_queryset(self):
-        # retorna modelos alvo
-        if self.related == 'empresa':
-            return EventoEmpresa.objects.all()
-        elif self.related == 'cargo':
-            return EventoCargo.objects.all()
-        elif self.related == 'funcionario':
-            return EventoFuncionario.objects.all()
-        return None
+        mapping = {
+            'empresa': EventoEmpresa,
+            'cargo': EventoCargo,
+            'funcionario': EventoFuncionario
+        }
+        model = mapping.get(self.related)
+        return model.objects.all() if model else None
+
 
 class GrupoEventoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = GrupoEvento

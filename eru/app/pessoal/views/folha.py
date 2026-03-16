@@ -5,7 +5,7 @@ POST → despacha ações declaradas em _ACOES
 
 _ACOES — registro central de cada processo:
     label            → texto exibido no botão e no card
-    job_tipo         → ProcessamentoJob.Tipo correspondente
+    job_tipo         → Tipos.tipo_correspondente (definido em task.py)
     resumo_fn        → método que retorna dict de resumo (ou None)
     icon             → ícone Bootstrap para o card de última execução
     permission       → django permission codename exigida (ou None = livre)
@@ -40,12 +40,13 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.shortcuts import redirect
 
+from core.models import Job
 from core.views import BaseTemplateView
 from pessoal.models import (
-    Contrato, FolhaPagamento, FrequenciaConsolidada, ProcessamentoJob
+    Contrato, FolhaPagamento, FrequenciaConsolidada
 )
 from pessoal.tasks import (
-    disparar_consolidacao, disparar_folha, disparar_carga_escala,
+    Tipos, disparar_consolidacao, disparar_folha, disparar_carga_escala,
     disparar_fechar_freq, disparar_fechar_folha, disparar_pagar_folha, disparar_cancelar_folha,
 )
 
@@ -54,7 +55,7 @@ from pessoal.tasks import (
 _ACOES = {
     'carregar_escala': {
         'label':            _('Carregar escala'),
-        'job_tipo':         ProcessamentoJob.Tipo.CARGA_ESCALA,
+        'job_tipo':         Tipos.CARGA_ESCALA,
         'resumo_fn':        None,
         'icon':             'bi bi-calendar-date-fill text-primary-matte',
         'permission':       'pessoal.importar_escalas',
@@ -65,7 +66,7 @@ _ACOES = {
     },
     'consolidar_freq': {
         'label':            _('Consolidar frequência'),
-        'job_tipo':         ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ,
+        'job_tipo':         Tipos.CONSOLIDACAO_FREQ,
         'resumo_fn':        '_resumo_freq',
         'icon':             'bi bi-calendar-check-fill text-info-matte',
         'permission':       'pessoal.consolidar_frequencia',
@@ -91,14 +92,14 @@ _ACOES = {
         'sub_jobs': {
             'fechar_freq': {
                 'label':      _('Fechar frequência'),
-                'job_tipo':   ProcessamentoJob.Tipo.FECHAR_FREQ,
+                'job_tipo':   Tipos.FECHAR_FREQ,
                 'permission': 'pessoal.consolidar_frequencia',
             },
         },
     },
     'processar_folha': {
         'label':            _('Processar folha'),
-        'job_tipo':         ProcessamentoJob.Tipo.FOLHA,
+        'job_tipo':         Tipos.FOLHA,
         'resumo_fn':        '_resumo_folha',
         'icon':             'bi bi-percent text-warning-matte',
         'permission':       'pessoal.rodar_folha',
@@ -120,12 +121,12 @@ _ACOES = {
         'sub_jobs': {
             'fechar_folha': {
                 'label':      _('Fechar folha'),
-                'job_tipo':   ProcessamentoJob.Tipo.FECHAR_FOLHA,
+                'job_tipo':   Tipos.FECHAR_FOLHA,
                 'permission': 'pessoal.rodar_folha',
             },
             'pagar_folha': {
                 'label':      _('Pagar folha'),
-                'job_tipo':   ProcessamentoJob.Tipo.PAGAR_FOLHA,
+                'job_tipo':   Tipos.PAGAR_FOLHA,
                 'permission': 'pessoal.rodar_folha',
             },
         },
@@ -134,24 +135,20 @@ _ACOES = {
 
 # ─── Helpers de estrutura ────────────────────────────────────────────────────
 
-def _todos_job_tipos(acoes: dict) -> list:
-    """Achata _ACOES coletando todos os job_tipo (principais + sub_jobs)."""
-    tipos = []
+def _todos_job_tipos(acoes: dict) -> list[str]:
+    """Coleta todos os job_tipo de ações principais e sub_jobs — usado no filter do jobs_map."""
+    tipos = [cfg['job_tipo'] for cfg in acoes.values()]
     for cfg in acoes.values():
-        tipos.append(cfg['job_tipo'])
         for sub in cfg.get('sub_jobs', {}).values():
             tipos.append(sub['job_tipo'])
     return tipos
 
-
 def _acoes_permitidas(acoes: dict, user) -> dict:
-    """Filtra _ACOES retornando apenas ações que o usuário tem permissão."""
+    """Filtra ações pelo campo permission do usuário."""
     return {
-        chave: cfg
-        for chave, cfg in acoes.items()
-        if not cfg.get('permission') or user.has_perm(cfg['permission'])
+        k: v for k, v in acoes.items()
+        if not v.get('permission') or user.has_perm(v['permission'])
     }
-
 
 
 def _montar_historico_unificado(job_principal, label_principal: str, sub_jobs: list) -> list[dict]:
@@ -227,12 +224,15 @@ class FolhaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, BaseTempla
         _, fim_comp = self._parse_periodo(competencia)
         comp_str    = competencia.strftime('%Y-%m')
 
+        # filial_id e competencia estão em params (JSONField) — lookup via __ do Django ORM
+        # competencia em isoformat para bater com o que os disparadores gravam em params
         jobs_map = {
             j.tipo: j
-            for j in ProcessamentoJob.objects.filter(
-                filial_id=filial_id,
-                competencia=competencia,
+            for j in Job.objects.filter(
+                app='pessoal',
                 tipo__in=_todos_job_tipos(acoes),
+                params__filial_id=filial_id,
+                params__competencia=competencia.isoformat(),  # "YYYY-MM-DD" — padrão de tasks.py
             )
         }
 

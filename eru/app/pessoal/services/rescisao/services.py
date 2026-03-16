@@ -15,7 +15,8 @@ from datetime import date
 from django.db import transaction
 from django.utils import timezone
 
-from pessoal.models import Funcionario, Rescisao, ProcessamentoJob
+from core.models import Job
+from pessoal.models import Funcionario, Rescisao
 from pessoal.services.frequencia.engine import consolidar as consolidar_frequencia
 from .collectors import get_dados_rescisao
 from .engine import calcular_rescisao
@@ -27,9 +28,8 @@ def processar_desligamento(funcionario_id: int, job_id: int) -> dict:
     Chamado pelo qcluster via tasks.disparar_desligamento().
     Atualiza o job com progresso e resultado.
     """
-    job = ProcessamentoJob.objects.get(pk=job_id)
-    _atualizar_job(job, ProcessamentoJob.Status.PROCESSANDO, progresso=0)
-
+    job = Job.objects.get(pk=job_id)
+    _atualizar_job(job, Job.Status.PROCESSANDO, progresso=0)
     try:
         funcionario, rescisao, contrato = _get_objetos(funcionario_id)
 
@@ -53,7 +53,7 @@ def processar_desligamento(funcionario_id: int, job_id: int) -> dict:
 
         # Marca job CONCLUIDO ANTES de salvar_resultado — sync_status precisa encontrar
         # o job já concluído no banco para transicionar o funcionário para DESLIGADO.
-        _atualizar_job(job, ProcessamentoJob.Status.CONCLUIDO, progresso=100, resultado=resultado)
+        _atualizar_job(job, Job.Status.CONCLUIDO, progresso=100, resultado=resultado)
 
         with transaction.atomic():
             salvar_resultado(rescisao, resultado)
@@ -63,8 +63,9 @@ def processar_desligamento(funcionario_id: int, job_id: int) -> dict:
         return resultado
 
     except Exception as exc:
-        _atualizar_job(job, ProcessamentoJob.Status.ERRO, resultado={'erro': str(exc)})
+        _atualizar_job(job, Job.Status.ERRO, resultado={'erro': str(exc)})
         raise  # propaga para o qcluster registrar o traceback
+
 
 
 def simular_desligamento(funcionario_id: int, rescisao_id: int) -> dict:
@@ -160,17 +161,17 @@ def _consolidar_mes_desligamento(contrato, data_desligamento: date) -> None:
     consolidar_frequencia(contrato, inicio_mes, data_desligamento)
 
 
-def _atualizar_job(job: ProcessamentoJob, status: str | None = None,
+def _atualizar_job(job: Job, status: str | None = None,
                    progresso: int | None = None, resultado: dict | None = None) -> None:
     """Atualiza campos do job sem sobrescrever o que não foi passado."""
-    update_fields = ['update_at'] if hasattr(job, 'update_at') else []
+    update_fields = []
     if status is not None:
         job.status = status
         update_fields.append('status')
-        if status == ProcessamentoJob.Status.PROCESSANDO:
+        if status == Job.Status.PROCESSANDO:
             job.iniciado_em = timezone.now()
             update_fields.append('iniciado_em')
-        elif status in (ProcessamentoJob.Status.CONCLUIDO, ProcessamentoJob.Status.ERRO):
+        elif status in (Job.Status.CONCLUIDO, Job.Status.ERRO):
             job.concluido_em = timezone.now()
             update_fields.append('concluido_em')
     if progresso is not None:

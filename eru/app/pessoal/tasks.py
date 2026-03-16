@@ -1,7 +1,7 @@
 """
 tasks.py — Tasks assíncronas via Django Q2.
 Dispara consolidação de frequência, processamento de folha e carga de escala em background.
-O modelo ProcessamentoJob rastreia o estado de cada execução para consumo no dashboard.
+O modelo core.Job rastreia o estado de cada execução para consumo no dashboard.
 
 Schema padrão de resultado (todo worker deve respeitar):
 {
@@ -12,6 +12,13 @@ Schema padrão de resultado (todo worker deve respeitar):
     'filtro_ate':  str | None,  # matrícula final do filtro aplicado
     'erro':        str | None,  # preenchido apenas em falha fatal do job inteiro
 }
+
+Schema padrão de params (todo disparador deve respeitar):
+{
+    'filial_id':    int,         # FK para core.Filial
+    'competencia':  str,         # "YYYY-MM-DD" (primeiro dia do mês)
+    'object_id':    int | None,  # usado em jobs de objeto único (ex: desligamento)
+}
 """
 import calendar
 from datetime import date, datetime, timedelta
@@ -21,15 +28,30 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_q.tasks import async_task
 
+from core.models import Job
 from pessoal.models import (
     Funcionario, Afastamento, Contrato, EventoFrequencia, Frequencia, FrequenciaConsolidada, FolhaPagamento,
-    PessoalSettings, ProcessamentoJob, TurnoHistorico,
+    PessoalSettings, TurnoHistorico,
 )
 from pessoal.services.frequencia.engine import consolidar, fechar as fechar_freq_consolidado
 from pessoal.services.folha.services import payroll_run
 from pessoal.services.folha.persistence import fechar_folha, pagar_folha, cancelar_folha
 from pessoal.services.turno.utils import get_turno_dia, get_turno_dia_ciclo
 from pessoal.services.rescisao import processar_desligamento
+
+# ─── Constantes de tipo ───────────────────────────────────────────────────────
+class Tipos:
+    CONSOLIDACAO_FREQ    = 'CF'
+    FECHAR_FREQ          = 'FF'
+    FOLHA                = 'FP'
+    FECHAR_FOLHA         = 'FH'
+    PAGAR_FOLHA          = 'PF'
+    CANCELAR_FOLHA       = 'XF'
+    CARGA_ESCALA         = 'CE'
+    DESLIGAR_FUNCIONARIO = 'DF'
+
+APP = 'pessoal'  # identificador do app — usado em todos os Jobs deste módulo
+
 
 # ─── Schema helper ───────────────────────────────────────────────────────────
 
@@ -50,18 +72,27 @@ def _fmt_periodo(inicio: date, fim: date) -> str:
 
 # ─── Helpers internos ────────────────────────────────────────────────────────
 
-def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> ProcessamentoJob:
-    """Cria ou reabre o job — idempotente por (tipo, filial, competencia).
-    Se já existe um job concluído/erro, arquiva o estado atual no campo historico antes de resetar.
+def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> Job:
     """
-    existente = ProcessamentoJob.objects.filter(
-        tipo=tipo, filial_id=filial_id, competencia=competencia
-    ).first()
+    Busca ou cria o Job de lote — idempotente por (app, tipo, params.filial_id, params.competencia).
+    A unicidade é garantida por lógica em vez de constraint de banco, permitindo que outros
+    apps e tipos coexistam sem restrições adicionais no modelo core.
+
+    Se já existe um job com execução anterior (não AGUARDANDO), arquiva o estado
+    atual em historico antes de resetar — preserva o rastreio de reprocessamentos.
+    """
+    comp_str  = competencia.isoformat()
+    existente = (
+        Job.objects
+        .filter(app=APP, tipo=tipo)
+        .filter(params__filial_id=filial_id, params__competencia=comp_str)
+        .first()
+    )
 
     historico = list(existente.historico) if existente and getattr(existente, 'historico', None) else []
 
     # Arquiva snapshot do estado anterior se houve execução (não arquiva AGUARDANDO sem dados)
-    if existente and existente.status not in (ProcessamentoJob.Status.AGUARDANDO,):
+    if existente and existente.status not in (Job.Status.AGUARDANDO,):
         snapshot = {
             'ts':          existente.concluido_em.isoformat() if existente.concluido_em else existente.iniciado_em.isoformat() if existente.iniciado_em else None,
             'status':      existente.status,
@@ -71,21 +102,32 @@ def _abrir_job(tipo: str, filial_id: int, competencia: date, usuario) -> Process
         }
         historico.append(snapshot)
 
-    obj, _ = ProcessamentoJob.objects.update_or_create(
+    params_base = {'filial_id': filial_id, 'competencia': comp_str}
+
+    if existente:
+        # Reseta o job para nova execução mantendo o histórico arquivado
+        Job.objects.filter(pk=existente.pk).update(
+            status=Job.Status.AGUARDANDO,
+            criado_por=usuario,
+            iniciado_em=None,
+            concluido_em=None,
+            resultado={},
+            observacoes=[],
+            historico=historico,
+            params=params_base,
+        )
+        existente.refresh_from_db()
+        return existente
+
+    return Job.objects.create(
+        app=APP,
         tipo=tipo,
-        filial_id=filial_id,
-        competencia=competencia,
-        defaults={
-            'status':       ProcessamentoJob.Status.AGUARDANDO,
-            'criado_por':   usuario,
-            'iniciado_em':  None,
-            'concluido_em': None,
-            'resultado':    {},
-            'observacoes':  [],
-            'historico':    historico,
-        }
+        criado_por=usuario,
+        params=params_base,
+        resultado={},
+        observacoes=[],
+        historico=historico,
     )
-    return obj
 
 
 def _fechar_job(job_id: int, resultado: dict, erro: str | None = None, observacoes: list | None = None):
@@ -93,8 +135,8 @@ def _fechar_job(job_id: int, resultado: dict, erro: str | None = None, observaco
     if erro:
         resultado = _resultado()
         resultado['erro'] = erro  # falha fatal substitui qualquer resultado parcial
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.ERRO if erro else ProcessamentoJob.Status.CONCLUIDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.ERRO if erro else Job.Status.CONCLUIDO,
         concluido_em=now(),
         resultado=resultado,
         observacoes=observacoes or []
@@ -133,8 +175,8 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
     Cada contrato é processado individualmente — falha individual não interrompe o lote.
     O parâmetro incluir_intervalos_jornada é lido de PessoalSettings por contrato no engine.
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
     )
     try:
@@ -152,7 +194,7 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
             # atualiza progresso a cada 5% (ou pelo menos uma vez por contrato)
             pct = round(i / total * 100) if total else 100
             if pct % 5 == 0 or i == total:
-                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+                Job.objects.filter(pk=job_id).update(progresso=pct)
         _fechar_job(job_id, _resultado(
             processados=processados,
             falhas=falhas,
@@ -167,8 +209,8 @@ def _worker_consolidar(job_id: int, filial_id: int, competencia_str: str,
 def _worker_folha(job_id, filial_id, competencia_str, inicio_str, fim_str,
                   matricula_de, matricula_ate):
     """Processa folha de pagamento dos contratos vigentes no período."""
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
     )
     try:
@@ -209,8 +251,8 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
     - Turnos e dias do ciclo: carregados uma única vez via prefetch, antes do loop
     - Inserção: bulk_create com flush por contrato para controlar uso de memória
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
     )
     try:
@@ -417,30 +459,53 @@ def _worker_carregar_escala(job_id: int, filial_id: int, competencia_str: str,
 
 # ─── API pública ─────────────────────────────────────────────────────────────
 
-def disparar_desligamento(funcionario_id: int, usuario) -> 'ProcessamentoJob':
+def disparar_desligamento(funcionario_id: int, usuario) -> Job:
     """
-    Cria o ProcessamentoJob e enfileira o processamento via qcluster.
+    Cria o Job e enfileira o processamento via qcluster.
     Chamado pelo Rescisao.save() ou pela view após salvar o formulário.
 
-    object_id = funcionario_id — convenção documentada no Tipo.DESLIGAR_FUNCIONARIO.
-    """   
+    object_id = funcionario_id — convenção documentada no tipo Tipos.DESLIGAR_FUNCIONARIO
+    A unicidade é por (app, tipo, params.object_id) — um desligamento por funcionário de cada vez.
+    """
     funcionario = Funcionario.objects.get(pk=funcionario_id)
-    job, _ = ProcessamentoJob.objects.update_or_create(
-        tipo=ProcessamentoJob.Tipo.DESLIGAR_FUNCIONARIO,
-        object_id=funcionario_id,
-        defaults={
-            'filial':      funcionario.filial,
-            'competencia': funcionario.rescisao.data_desligamento.replace(day=1),
-            'status':      ProcessamentoJob.Status.AGUARDANDO,
-            'criado_por':  usuario,
-            'progresso':   0,
-            'resultado':   {},
-            'historico':   [],
-        }
+
+    # Busca job existente pelo object_id dentro de params — sem constraint de banco
+    existente = (
+        Job.objects
+        .filter(app=APP, tipo=Tipos.DESLIGAR_FUNCIONARIO)
+        .filter(params__object_id=funcionario_id)
+        .first()
     )
+
+    params = {
+        'object_id':   funcionario_id,
+        'filial_id':   funcionario.filial_id,
+        'competencia': funcionario.rescisao.data_desligamento.replace(day=1).isoformat(),
+    }
+
+    if existente:
+        Job.objects.filter(pk=existente.pk).update(
+            status=Job.Status.AGUARDANDO,
+            criado_por=usuario,
+            progresso=0,
+            resultado={},
+            historico=[],
+            params=params,
+        )
+        job = existente
+    else:
+        job = Job.objects.create(
+            app=APP,
+            tipo=Tipos.DESLIGAR_FUNCIONARIO,
+            criado_por=usuario,
+            params=params,
+            resultado={},
+            historico=[],
+        )
+
     # Enfileira a task — passa job.id para que o service atualize o progresso
     async_task(
-        'pessoal.services.rescisao.processar_desligamento',
+        processar_desligamento,
         funcionario_id,
         job.id,
         task_name=f'rescisao_{funcionario_id}',
@@ -449,13 +514,12 @@ def disparar_desligamento(funcionario_id: int, usuario) -> 'ProcessamentoJob':
     return job
 
 
-
 def disparar_consolidacao(filial_id: int, competencia: date, inicio: date, fim: date,
                           matricula_de: str | None = None,
                           matricula_ate: str | None = None,
-                          usuario=None) -> ProcessamentoJob:
+                          usuario=None) -> Job:
     """Enfileira consolidação de frequência e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.CONSOLIDACAO_FREQ, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.CONSOLIDACAO_FREQ, filial_id, competencia, usuario)
     async_task(
         _worker_consolidar,
         job.id, filial_id,
@@ -471,9 +535,9 @@ def disparar_folha(filial_id: int, competencia: date,
                    fim: date | None = None,
                    matricula_de: str | None = None,
                    matricula_ate: str | None = None,
-                   usuario=None) -> ProcessamentoJob:
+                   usuario=None) -> Job:
     """Enfileira processamento de folha e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.FOLHA, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.FOLHA, filial_id, competencia, usuario)
     if not inicio:
         inicio = competencia
     if not fim:
@@ -491,9 +555,9 @@ def disparar_folha(filial_id: int, competencia: date,
 def disparar_carga_escala(filial_id: int, competencia: date, inicio: date, fim: date,
                           matricula_de: str | None = None,
                           matricula_ate: str | None = None,
-                          usuario=None) -> ProcessamentoJob:
+                          usuario=None) -> Job:
     """Enfileira carga de escala e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.CARGA_ESCALA, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.CARGA_ESCALA, filial_id, competencia, usuario)
     async_task(
         _worker_carregar_escala,
         job.id, filial_id,
@@ -512,8 +576,8 @@ def _worker_fechar_freq(job_id: int, filial_id: int, competencia_str: str):
     Consolidados ABERTO (com erros) são ignorados — não bloqueiam o lote.
     Síncrono hoje; estrutura pronta para virar async_task futuramente.
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
         progresso=0,
     )
@@ -537,9 +601,9 @@ def _worker_fechar_freq(job_id: int, filial_id: int, competencia_str: str):
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
 
-def disparar_fechar_freq(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+def disparar_fechar_freq(filial_id: int, competencia: date, usuario=None) -> Job:
     """Enfileira fechamento de frequência e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.FECHAR_FREQ, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.FECHAR_FREQ, filial_id, competencia, usuario)
     async_task(
         _worker_fechar_freq,
         job.id, filial_id, competencia.isoformat(),
@@ -556,8 +620,8 @@ def _worker_fechar_folha(job_id: int, filial_id: int, competencia_str: str):
     Folhas com erros de cálculo são incluídas — decisão do operador.
     Bloqueio de folhas com frequência ABERTO deve ser feito na view antes de disparar.
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
         progresso=0,
     )
@@ -575,15 +639,15 @@ def _worker_fechar_folha(job_id: int, filial_id: int, competencia_str: str):
             processados += 1
             pct = round(i / total * 100) if total else 100
             if pct % 5 == 0 or i == total:
-                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+                Job.objects.filter(pk=job_id).update(progresso=pct)
         _fechar_job(job_id, _resultado(processados=processados))
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
 
 
-def disparar_fechar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+def disparar_fechar_folha(filial_id: int, competencia: date, usuario=None) -> Job:
     """Enfileira fechamento de folha e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.FECHAR_FOLHA, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.FECHAR_FOLHA, filial_id, competencia, usuario)
     async_task(
         _worker_fechar_folha,
         job.id, filial_id, competencia.isoformat(),
@@ -599,8 +663,8 @@ def _worker_pagar_folha(job_id: int, filial_id: int, competencia_str: str):
     Marca como PAGO todas as FolhaPagamento com status FECHADO da competência.
     Folhas RASCUNHO/CANCELADO são ignoradas — não bloqueiam o lote.
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
         progresso=0,
     )
@@ -618,7 +682,7 @@ def _worker_pagar_folha(job_id: int, filial_id: int, competencia_str: str):
             processados += 1
             pct = round(i / total * 100) if total else 100
             if pct % 5 == 0 or i == total:
-                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+                Job.objects.filter(pk=job_id).update(progresso=pct)
         ignorados = (
             FolhaPagamento.objects
             .filter(contrato__funcionario__filial_id=filial_id,
@@ -632,9 +696,9 @@ def _worker_pagar_folha(job_id: int, filial_id: int, competencia_str: str):
         _fechar_job(job_id, {}, erro=str(e))
 
 
-def disparar_pagar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+def disparar_pagar_folha(filial_id: int, competencia: date, usuario=None) -> Job:
     """Enfileira pagamento de folha e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.PAGAR_FOLHA, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.PAGAR_FOLHA, filial_id, competencia, usuario)
     async_task(
         _worker_pagar_folha,
         job.id, filial_id, competencia.isoformat(),
@@ -650,8 +714,8 @@ def _worker_cancelar_folha(job_id: int, filial_id: int, competencia_str: str):
     Cancela todas as FolhaPagamento com status FECHADO da competência.
     Folhas PAGO são irreversíveis e ignoradas.
     """
-    ProcessamentoJob.objects.filter(pk=job_id).update(
-        status=ProcessamentoJob.Status.PROCESSANDO,
+    Job.objects.filter(pk=job_id).update(
+        status=Job.Status.PROCESSANDO,
         iniciado_em=now(),
         progresso=0,
     )
@@ -669,15 +733,15 @@ def _worker_cancelar_folha(job_id: int, filial_id: int, competencia_str: str):
             processados += 1
             pct = round(i / total * 100) if total else 100
             if pct % 5 == 0 or i == total:
-                ProcessamentoJob.objects.filter(pk=job_id).update(progresso=pct)
+                Job.objects.filter(pk=job_id).update(progresso=pct)
         _fechar_job(job_id, _resultado(processados=processados))
     except Exception as e:
         _fechar_job(job_id, {}, erro=str(e))
 
 
-def disparar_cancelar_folha(filial_id: int, competencia: date, usuario=None) -> ProcessamentoJob:
+def disparar_cancelar_folha(filial_id: int, competencia: date, usuario=None) -> Job:
     """Enfileira cancelamento de folha e retorna o job criado."""
-    job = _abrir_job(ProcessamentoJob.Tipo.CANCELAR_FOLHA, filial_id, competencia, usuario)
+    job = _abrir_job(Tipos.CANCELAR_FOLHA, filial_id, competencia, usuario)
     async_task(
         _worker_cancelar_folha,
         job.id, filial_id, competencia.isoformat(),
