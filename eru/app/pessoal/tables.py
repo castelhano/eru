@@ -2,10 +2,10 @@ from core.mixins import TableCustomMixin
 from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
-from django_tables2 import Table, Column
+from django_tables2 import Table, Column, CheckBoxColumn, TemplateColumn, DateColumn
 from .models import (
     Funcionario, Contrato, Setor, Cargo, Afastamento, Dependente, Evento, GrupoEvento, MotivoReajuste, 
-    EventoEmpresa, EventoCargo, EventoFuncionario, EventoFrequencia
+    EventoEmpresa, EventoCargo, EventoFuncionario, EventoFrequencia, FeriasAquisitivo
 )
 
 
@@ -252,3 +252,51 @@ class EventoFrequenciaTable(TableCustomMixin, Table):
             f'text-shadow: 1px 1px 2px rgba(0,0,0,0.5); user-select: all; cursor: pointer;">'
             f'{value}</span>'
         )
+
+
+class FeriasAquisitivoTable(TableCustomMixin, Table):
+    selecionar = CheckBoxColumn( # checkbox para o lançamento em lote
+        accessor='pk', 
+        orderable=False, 
+        attrs={"th__input": {"id": "select-all-ferias", "class": "form-check-input"}, 
+               "td__input": {"class": "form-check-input ferias-checkbox"}}
+    )    
+    funcionario = Column(accessor='funcionario.nome', verbose_name=_('Funcionário'))
+    matricula = Column(accessor='funcionario.matricula', verbose_name=_('Matrícula'))
+    periodo = TemplateColumn(
+        template_code='{{ record.inicio|date:"d/m/Y" }} - {{ record.fim|date:"d/m/Y" }}',
+        verbose_name=_('Período Aquisitivo')
+    )
+    dias_disponiveis = Column(verbose_name=_('Saldo'))
+    class Meta:
+        model = FeriasAquisitivo
+        fields = ('selecionar', 'matricula', 'funcionario', 'periodo', 'fim_concessivo', 'dias_direito', 'dias_disponiveis', 'status')
+        actions = [
+            {
+                'action': 'view', 
+                'url_name': 'pessoal:ferias_aquisitivo_detail', 
+                'path_params': {'pk': 'id'}, 
+                'perm': 'pessoal.view_feriasaquisitivo',
+            },
+            {
+                'action': 'add', 
+                'url_name': 'pessoal:ferias_gozo_create', 
+                'query_params': {'aquisitivo': 'id'}, 
+                'perm': 'pessoal.add_feriasgozo',
+            }
+        ]
+        responsive_columns = {
+            'dias_direito': 'd-none d-md-table-cell',
+            'fim_concessivo': 'd-none d-xl-table-cell',
+            'status': 'fit',
+        }
+    def render_status(self, value, record):
+        classes = {
+            'AB': 'bg-light-info text-info',
+            'DI': 'bg-light-success text-success',
+            'PA': 'bg-light-warning text-warning',
+            'GO': 'bg-light-secondary text-secondary',
+            'PE': 'bg-light-danger text-danger',
+        }
+        cls = classes.get(record.status, 'bg-light')
+        return mark_safe(f'<span class="badge {cls}">{record.get_status_display()}</span>')

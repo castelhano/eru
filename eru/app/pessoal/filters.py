@@ -5,8 +5,8 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from core.models import Empresa, Filial
 from .models import (
-    Funcionario, Contrato, Afastamento, Rescisao, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario,
-    MotivoReajuste, EventoFrequencia
+    Funcionario, Contrato, Afastamento, Setor, Cargo, Evento, EventoEmpresa, EventoCargo, EventoFuncionario,
+    MotivoReajuste, EventoFrequencia, FeriasAquisitivo
 )
 
 
@@ -179,3 +179,25 @@ class EventoFrequenciaFilter(django_filters.FilterSet):
             'desconta_efetivos': ['exact'], 
             'prioridade': ['gte'], 
         }
+
+class FeriasAquisitivoFilter(django_filters.FilterSet):
+    empresa = django_filters.ModelChoiceFilter(field_name='filial__empresa', queryset=Empresa.objects.none(), label=_('Empresa'))
+    filial = django_filters.ModelChoiceFilter(queryset=Filial.objects.none(), label=_('Filial'))
+    status = django_filters.ChoiceFilter(choices=FeriasAquisitivo.Status.choices)
+    matricula = django_filters.CharFilter(field_name='funcionario__matricula', lookup_expr='icontains', label='Matricula')
+    class Meta:
+        model = FeriasAquisitivo
+        fields = ['empresa','filial', 'status', 'matricula']
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.filters['filial'].field.widget.attrs.update({
+            'data-chained-field': 'id_empresa_filter',
+            'data-url': reverse_lazy('filial_list'),
+            'class': 'form-select form-select-sm select-chained'
+        })
+        if user:
+            filiais_qs = user.profile.filiais.all()
+            self.filters['empresa'].queryset = Empresa.objects.filter(filiais__in=filiais_qs).distinct()
+            empresa_id = self.data.get('empresa')
+            self.filters['filial'].field.queryset = filiais_qs.filter(empresa_id=empresa_id) if empresa_id else Filial.objects.none()

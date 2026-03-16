@@ -1,6 +1,6 @@
 # pessoal/urls.py
 from django.urls import path
-from pessoal.views import common, frequencia, turno, folha, rescisao
+from pessoal.views import common, frequencia, turno, folha, rescisao, ferias
 
 app_name = 'pessoal'
 
@@ -29,6 +29,11 @@ urlpatterns = [
     path('afastamento/<int:pk>/new/', common.AfastamentoCreateView.as_view(), name='afastamento_create'),
     path('afastamento/<int:pk>/update/', common.AfastamentoUpdateView.as_view(), name='afastamento_update'),
     path('afastamento/<int:pk>/delete/', common.AfastamentoDeleteView.as_view(), name='afastamento_delete'),
+
+    # ============================================
+    # FERIAS
+    # ============================================
+    path('ferias/', ferias.FeriasListView.as_view(), name='ferias_list'),
     
     # ============================================
     # SETOR
