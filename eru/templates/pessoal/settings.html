@@ -72,7 +72,6 @@
     document.getElementById('extra').disabled = false;
     const element = document.getElementById('editor_holder');
     const schema = {schema: {{ schema_json|safe }}, startval: {{ config_json|safe }}};
-    
     const editor = new JSONEditor(element, {...jsoneditor_options, ...schema});
     const form = document.getElementById('app_form');
     form.onsubmit = (e) => {

@@ -72,8 +72,8 @@ class PessoalSettingsUpdateView(BaseUpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.object:
-            context['config_json'] = json.dumps(self.object.config.model_dump(), cls=DjangoJSONEncoder)
-            schema_dict = PessoalSettingsSchema.model_json_schema()
+            schema_dict = self.object.get_filtered_schema(self.request.user)
+            context['config_json'] = json.dumps(self.object.get_filtered_config(self.request.user), cls=DjangoJSONEncoder)
             context['schema_json'] = json.dumps(schema_dict, cls=DjangoJSONEncoder)
         else:
             context['config_json'] = json.dumps({})

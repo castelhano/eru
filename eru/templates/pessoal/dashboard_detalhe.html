@@ -90,7 +90,7 @@
             </li>
             <li class="nav-item ms-auto">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-secondary-matte" onclick="window.close()">{% translate 'Fechar' %}</button>
+                    <button type="button" id="back" class="btn btn-sm btn-secondary-matte" onclick="window.close()">{% translate 'Fechar' %}</button>
                     {% if linhas %}
                         {% btn_tag 'CSV' icon="bi bi-arrow-bar-down" class="btn btn-sm btn-warning-matte" href=export_url %}
                     {% endif %}
@@ -189,6 +189,7 @@
 
 <script>
 {% block add_script %}
+appKeyMap.unbind('alt+l');
 (function () {
     const btn = document.getElementById('btn-scroll-top');
 

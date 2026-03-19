@@ -30,6 +30,14 @@ class FolhaSchema(BaseModel):
 
 class PessoalSettingsSchema(BaseModel):
     model_config = {"title": _("Configurações Gerais")}
-    afastamento: AfastamentoSchema = Field(default_factory=AfastamentoSchema, title=_("Afastamento"), json_schema_extra={"options": {"collapsed": True}})
-    frequencia: FrequenciaSchema = Field(default_factory=FrequenciaSchema, title=_("Frequência"), json_schema_extra={"options": {"collapsed": True}})
-    folha: FolhaSchema = Field(default_factory=FolhaSchema, title=_("Folha"), json_schema_extra={"options": {"collapsed": True}})
+    afastamento: AfastamentoSchema = Field(default_factory=AfastamentoSchema, title=_("Afastamento"), json_schema_extra={
+        "options": {"collapsed": True},
+        "perm_view": "pessoal.view_afastamento",
+        "perm_change": "pessoal.change_afastamento"
+    })
+    frequencia: FrequenciaSchema = Field(default_factory=FrequenciaSchema, title=_("Frequência"), json_schema_extra={
+        "options": {"collapsed": True}
+    })
+    folha: FolhaSchema = Field(default_factory=FolhaSchema, title=_("Folha"), json_schema_extra={
+        "options": {"collapsed": True}
+    })
