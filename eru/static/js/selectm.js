@@ -1,790 +1,866 @@
 /*
 * jsSelectm   Implementa controle para select multiple
 *
-* @version  2.5
+* @version  3.0
 * @since    03/02/2023
-* @release  15/12/2025 [refactor: optgroup support, performance, error handling]
+* @release  2026 [refactor: performance, config groups, dropdown checkAll]
 * @author   Rafael Gustavo Alves {@email castelhano.rafael@gmail.com}
 * @depend   bootstrap 5.x, bootstrap icons
 */
-class jsSelectm{
+
+// Flag de classe para evitar injeção duplicada de estilos
+let _jsSelectmStylesInjected = false;
+
+class jsSelectm {
     /**
-     * Construtor da classe jsSelectm. Inicializa o componente de seleção múltipla baseado em um elemento select.
-     * @param {string|HTMLElement} el - Seletor CSS ou elemento HTML do select.
-     * @param {Object} [options] - Opções de configuração para personalizar o componente.
-     * @param {Object} options.options - Dicionário de opções {value: {value, text, ...}}.
-     * @param {Array} options.selected - Valores pré-selecionados.
-     * @param {string|Object} options.title - Título do componente.
-     * @param {string} options.icon - Classe do ícone Bootstrap.
-     * @param {Function} options.onchange - Callback para mudanças, recebe array de mudanças.
-     * @param {boolean} options.disabled - Desabilita interações.
-     * @param {boolean} options.checkAll - Habilita controle "Marcar Todos".
-     * @param {boolean} options.groupCounter - Mostra contador por grupo.
-     * @param {boolean} options.canFilter - Habilita filtro de opções.
-     * @param {string} options.emptyMessage - Mensagem quando vazio.
-     * @param {Object} options.filterOptions - Opções para input de filtro.
-     * @param {boolean} options.sort - Ordena opções alfabeticamente.
-     * @param {Object} options.styles - Estilos customizados.
-     * @param {Object} options.classlist - Classes CSS customizadas.
+     * Construtor da classe jsSelectm
+     * @param {string|HTMLElement} el          - Seletor CSS ou elemento HTML do select.
+     * @param {Object} [options]               - Opções de configuração.
+     * @param {Object}   options.options       - Dicionário de opções {value: {value, text, ...}}.
+     * @param {Object}   options.groups        - Grupos via config: {'Nome': [val1, val2, ...]}. optgroup no HTML tem precedência.
+     * @param {Array}    options.selected      - Valores pré-selecionados.
+     * @param {string|Object} options.title    - Título do componente.
+     * @param {string}   options.icon          - Classe do ícone Bootstrap.
+     * @param {Function} options.onchange      - Callback para mudanças, recebe array de mudanças.
+     * @param {boolean}  options.disabled      - Desabilita interações.
+     * @param {boolean}  options.checkAll      - Habilita dropdown checkAll.
+     * @param {boolean}  options.groupCounter  - Mostra contador por grupo.
+     * @param {boolean}  options.canFilter     - Habilita filtro de opções.
+     * @param {string}   options.emptyMessage  - Mensagem quando vazio.
+     * @param {Object}   options.filterOptions - Opções para input de filtro.
+     * @param {boolean}  options.sort          - Ordena opções alfabeticamente.
+     * @param {Object}   options.styles        - Estilos customizados.
+     * @param {Object}   options.classlist     - Classes CSS customizadas.
      */
-    constructor(el, options){
+    constructor(el, options) {
         this.select = typeof el === 'string' ? document.querySelector(el) : el;
         if (!this.select || this.select.tagName !== 'SELECT') {
             console.error('jsSelectm: Invalid select element');
             return;
         }
-        this.select.style.display = 'none'; // oculta select original
-        // Configuracoes
+        this.select.style.display = 'none';
+
         this.defaults = {
-            options: {},                                               // Options do select, dicionario {1: {value: 1, text: 'Ativo'}}
-            selected: [],                                              // Opcoes pre selecionadas ao instanciar objeto
-            title: false,                                              // Titulo do select
-            icon: false,                                               // Se informado sera inserido icone ao lado do titulo
-            onchange: (changes) => {return true},                      // Funcao a ser chamada ao alterar componente, recebe array de mudanças
-            disabled: false,                                           // Se true desativa operacoes nos eventos click e altera formatacao
-            checkAll: true,                                            // Se true sera adicionado controle para marcar todas as opcoes
-            groupCounter: true,                                        // Se true adiciona contador de opcoes somente nas opcoes de grupo
-            canFilter: false,                                          // Se true adiciona input para filtrar opcoes
-            // emptyMessage sera exibido se nenhum option estiver disponivel
-            emptyMessage: 'Nada a exibir',
-            filterOptions: {                                           // Opcoes para o input#search
-                placeholder: 'Pesquisa'
-            },
-            sort: false,                                                // Se true reordena opcoes baseado no innerText
-        }
-        this.config = { ...this.defaults, ...options };
-        this.config.styles = { ...this._getDefaultStyles(), ...options?.styles || {}};
-        this.config.classlist = { ...this._getDefaultClasslist(), ...options?.classlist || {}};
-        //--
-        this.options = this.config.options;     // apontador para config.options, options armazena stado inicial dos elementos
-        this.groups = {};                       // grupos baseados em optgroup
-        this.selected = [...this.config.selected]; // copia para evitar mutacao externa
-        this.changes = [];                      // rastreia mudanças para onchange
-        
-        //--
+            options:       {},
+            groups:        {},                          // Grupos via config: {'Nome': [val1, val2, ...]}
+            selected:      [],
+            title:         false,
+            icon:          false,
+            onchange:      () => true,
+            disabled:      false,
+            checkAll:      true,
+            groupCounter:  true,
+            canFilter:     false,
+            emptyMessage:  'Nada a exibir',
+            filterOptions: { placeholder: 'Pesquisa' },
+            sort:          false,
+        };
+
+        this.config           = { ...this.defaults, ...options };
+        this.config.styles    = { ...this._getDefaultStyles(),    ...(options?.styles    || {}) };
+        this.config.classlist = { ...this._getDefaultClasslist(), ...(options?.classlist || {}) };
+
+        this.options  = this.config.options;
+        this.groups   = {};
+        this.selected = [...this.config.selected];
+        this.changes  = [];
+
+        // Contadores incrementais — evitam recalcular getSummary() do zero a cada interação
+        // _counts.default = {total, selected}; _counts[groupName] = {total, selected}
+        this._counts = {};
+
         this._init();
     }
-    /**
-     * Método privado de inicialização. Configura o componente, constrói o modelo e insere no DOM.
-     * @private
-     * @returns {void}
-     */
+
+    // ─── Inicialização ────────────────────────────────────────────────────────
+
     _init() {
         try {
-            this._addPseudoClass();                    // adiciona pseudo classes para componentes
-            if(Object.keys(this.options).length === 0){        // se opcoes nao informadas ao instanciar objeto, constroi opcoes a partir do select
-                let result = this._initOptions();      // monta modelo de opcoes a partir das options do select informado 
-                this.options = result.options;
+            this._injectStyles();
+
+            if (Object.keys(this.options).length === 0) {
+                const result  = this._initOptions();
+                this.options  = result.options;
                 this.selected = result.selected;
-                this.groups = result.groups;
-            }
-            else{ // caso options sejam informadas ao instanciar componente, cria options no select original
-                for(let opt in this.options){
-                    let el = document.createElement('option');
-                    el.value = this.options[opt].value;
-                    el.innerHTML = this.options[opt].text || '';
-                    el.selected = this.options[opt].selected === true;
-                    if(this.options[opt].selected && !this.selected.includes(opt)){ this.selected.push(opt) }
+                this.groups   = result.groups;
+            } else {
+                for (const key in this.options) {
+                    const opt = this.options[key];
+                    const el  = document.createElement('option');
+                    el.value     = opt.value;
+                    el.innerHTML = opt.text || '';
+                    el.selected  = opt.selected === true;
+                    if (opt.selected && !this.selected.includes(key)) this.selected.push(key);
                     this.select.appendChild(el);
-                    this.options[opt].el = el;
+                    this.options[key].el = el;
                 }
             }
-            
-            // Cria this.model, extrutura que armazena apontadores para todos os elementos criados
+
+            this._applyConfigGroups();   // aplica grupos via config (optgroup tem precedência)
             this._normalizeOptions();
+            this._buildCounts();         // inicializa contadores incrementais
+
             this.model = this._buildModel();
-            let summary = this.getSummary();
-            if(summary.default.total === 0){ this.model.wrapper.style.display = 'none' }
-            if(summary.default.total === 0 && Object.keys(this.groups).length === 0){ 
-                this.model.container.appendChild(this._addEmptyMessage());
+
+            const summary = this.getSummary();
+            if (summary.default.total === 0) this.model.wrapper.style.display = 'none';
+            if (summary.default.total === 0 && Object.keys(this.groups).length === 0) {
+                this.model.container.appendChild(this._buildEmptyMessage());
             }
-            if(this.config.groupCounter){ this._groupCounterUpdate() }
-            
-            if(this.config.checkAll){ // adiciona controle de 'marcar todos' para cada grupo
-                for(let group in this.model.groups){
-                    this._checkAllUpdateStatus(this._containerGetState(this.model.groups[group].wrapper) , this.model.groups[group].checkAll);
-                    if(this.config.disabled){ this.model.groups[group].checkAll.container.classList.add('disabled') }
-                    if(this.config.sort){ this._sort(this.model.groups[group].wrapper) }
+
+            if (this.config.groupCounter) this._groupCounterUpdateAll();
+
+            if (this.config.checkAll) {
+                // atualiza estado inicial do checkAll global
+                this._checkAllUpdateStatus(
+                    this._containerGetState(this.model.wrapper),
+                    this.model.checkAll
+                );
+                if (this.config.disabled) this.model.checkAll.btn.classList.add('disabled');
+                if (this.config.sort) this._sort(this.model.wrapper);
+
+                // atualiza estado inicial dos checkAll de grupos
+                for (const group in this.model.groups) {
+                    this._checkAllUpdateStatus(
+                        this._containerGetState(this.model.groups[group].wrapper),
+                        this.model.groups[group].checkAll
+                    );
+                    if (this.config.disabled) this.model.groups[group].checkAll.btn.classList.add('disabled');
+                    if (this.config.sort) this._sort(this.model.groups[group].wrapper);
                 }
-                this._checkAllUpdateStatus(this._containerGetState(this.model.wrapper) , this.model.checkAll);
-                if(this.config.disabled){ this.model.checkAll.container.classList.add('disabled') }
-                if(this.config.sort){ this._sort(this.model.wrapper) }
             }
-            // -- Adiciona componente no DOM
+
             this.select.after(this.model.container);
-        } catch (error) {
-            console.error('jsSelectm: Error during initialization', error);
+        } catch (err) {
+            console.error('jsSelectm: Error during initialization', err);
         }
     }
+
     /**
-     * Método privado para inicializar opções a partir do select HTML, detectando optgroup.
-     * @private
-     * @returns {Object} - Objeto com options, selected e groups.
-     * @returns {Object} return.options - Dicionário de opções.
-     * @returns {Array} return.selected - Valores selecionados.
-     * @returns {Object} return.groups - Grupos baseados em optgroup.
+     * Carrega opções a partir do select HTML, detectando optgroup.
      */
-    _initOptions(){ // para selects contruidos no template, carrega opcoes no modelo
-        let options = {};
-        let selected = this.selected.length > 0 ? [...this.selected] : [];
-        let groups = {};
-        // Detecta optgroup e agrupa options
-        this.select.querySelectorAll('optgroup, option').forEach((el) => {
+    _initOptions() {
+        const options  = {};
+        const selected = this.selected.length > 0 ? [...this.selected] : [];
+        const groups   = {};
+
+        this.select.querySelectorAll('optgroup, option').forEach(el => {
             if (el.tagName === 'OPTGROUP') {
-                let opts = el.querySelectorAll('option');
+                const opts = el.querySelectorAll('option');
                 if (opts.length > 0) {
-                    let groupName = el.label || el.getAttribute('label') || 'Grupo';
-                    groups[groupName] = { options: []};
-                    opts.forEach((opt) => {
-                        let optConfig = this._parseOption(opt);
-                        options[opt.value] = { ...optConfig, 'data-group': groupName };
+                    const groupName = el.label || el.getAttribute('label') || 'Grupo';
+                    groups[groupName] = { options: [] };
+                    opts.forEach(opt => {
+                        const cfg = this._parseOption(opt);
+                        options[opt.value] = { ...cfg, 'data-group': groupName };
                         groups[groupName].options.push(opt.value);
                         if (opt.selected && !selected.includes(opt.value)) selected.push(opt.value);
                     });
                 } else {
-                    // Remove optgroup vazio para evitar conflitos
                     el.remove();
                 }
             } else if (el.tagName === 'OPTION' && !el.closest('optgroup')) {
-                let optConfig = this._parseOption(el);
-                options[el.value] = optConfig;
+                const cfg = this._parseOption(el);
+                options[el.value] = cfg;
                 if (el.selected && !selected.includes(el.value)) selected.push(el.value);
             }
         });
-        return {options: options, selected: selected, groups: groups}
-    }
-    /**
-     * Método privado para analisar um elemento option e extrair suas propriedades.
-     * @private
-     * @param {HTMLElement} el - Elemento option a ser analisado.
-     * @returns {Object} - Configuração da opção com value, text, selected, etc.
-     */
-    _parseOption(el) {
-        let opt = { el: el, text: el.innerText, value: el.value, selected: el.selected };
-        for(let attr of el.attributes){
-            opt[attr.name] = attr.value;
-        }
-        return opt;
-    }
-    /**
-     * Método privado para normalizar opções, marcando selected conforme this.selected.
-     * @private
-     * @returns {void}
-     */
-    _normalizeOptions(){ 
-        this.selected.forEach((el)=>{ 
-        // marca options selected=true para os itens em this.selected (caso nao informado ao instanciar elemento)
-            if (this.options[el]) {
-                this.options[el].selected = true;
-                if (this.options[el].el) this.options[el].el.selected = true;
-            }
-        })
+
+        return { options, selected, groups };
     }
 
     /**
-     * Método público para marcar/desmarcar todas as opções do container padrão.
-     * @param {boolean} [state] - Estado desejado; se omitido, inverte o estado atual.
-     * @returns {void}
+     * Aplica grupos informados via config.groups.
+     * optgroup no HTML tem precedência: se a option já tem data-group, é ignorada aqui.
      */
-    checkAll(state){ // marca todas as opcoes para o container padrao
-        this.model.checkAll.state = state == undefined ? this.model.checkAll.state : state == true ? 'uncheck' : 'check';
-        this._checkAllSwitch(this.model.checkAll)
-        this.config.onchange(this.changes);
-        this.changes = [];
+    _applyConfigGroups() {
+        const configGroups = this.config.groups || {};
+        for (const groupName in configGroups) {
+            const values = configGroups[groupName];
+            if (!Array.isArray(values)) continue;
+
+            values.forEach(val => {
+                const key = String(val);
+                if (!this.options[key]) return;
+                // optgroup vence — se já tem grupo atribuído, não sobrescreve
+                if (this.options[key]['data-group']) return;
+
+                if (!this.groups[groupName]) {
+                    this.groups[groupName] = { options: [] };
+                }
+                this.options[key]['data-group'] = groupName;
+                this.groups[groupName].options.push(key);
+            });
+        }
     }
+
+    _parseOption(el) {
+        const opt = { el, text: el.innerText, value: el.value, selected: el.selected };
+        for (const attr of el.attributes) opt[attr.name] = attr.value;
+        return opt;
+    }
+
+    _normalizeOptions() {
+        this.selected.forEach(key => {
+            if (this.options[key]) {
+                this.options[key].selected = true;
+                if (this.options[key].el) this.options[key].el.selected = true;
+            }
+        });
+    }
+
+    // ─── Contadores incrementais ──────────────────────────────────────────────
+
     /**
-     * Método público para marcar/desmarcar todas as opções de um grupo específico ou todos os grupos.
-     * @param {string|boolean} [group] - Nome do grupo ou boolean para todos os grupos.
-     * @param {boolean} [state] - Estado desejado; se omitido, inverte o estado atual.
-     * @returns {void}
+     * Inicializa _counts a partir do estado atual das opções.
+     * Chamado uma única vez após _normalizeOptions.
      */
-    groupCheckAll(group=undefined, state=undefined){ // marca todas as opcoes para o grupo informado, na omissaomarca todas as opcoes de todos os grupos
-        if(typeof group == 'boolean' && state == undefined){ // checkAll para todos os grupos
+    _buildCounts() {
+        this._counts = { default: { total: 0, selected: 0 } };
+
+        for (const groupName in this.groups) {
+            this._counts[groupName] = { total: 0, selected: 0 };
+        }
+
+        for (const key in this.options) {
+            const opt       = this.options[key];
+            const groupName = opt['data-group'];
+            const bucket    = groupName ? this._counts[groupName] : this._counts.default;
+            if (!bucket) continue;  // segurança
+            bucket.total++;
+            if (opt.selected) bucket.selected++;
+        }
+    }
+
+    /**
+     * Atualiza o contador incremental ao marcar/desmarcar uma opção.
+     * @param {string} key       - Value da opção.
+     * @param {boolean} selected - Novo estado.
+     */
+    _countUpdate(key, selected) {
+        const groupName = this.options[key]?.['data-group'];
+        const bucket    = groupName ? this._counts[groupName] : this._counts.default;
+        if (!bucket) return;
+        bucket.selected += selected ? 1 : -1;
+    }
+
+    // ─── Métodos públicos ─────────────────────────────────────────────────────
+
+    /**
+     * Retorna resumo das seleções por grupo — usa contadores em memória, O(1).
+     * @returns {Object} - {default: {total, selected}, [group]: {total, selected}}
+     */
+    getSummary() {
+        const summary = {};
+        for (const key in this._counts) {
+            summary[key] = { ...this._counts[key] };
+        }
+        return summary;
+    }
+
+    /** Marca/desmarca todas as opções do container padrão. */
+    checkAll(state) {
+        const ca = this.model.checkAll;
+        ca.state = state === undefined ? ca.state : (state ? 'uncheck' : 'check');
+        this._checkAllSwitch(ca);
+        this._fireOnchange();
+    }
+
+    /** Marca/desmarca todas as opções de um grupo específico ou de todos os grupos. */
+    groupCheckAll(group = undefined, state = undefined) {
+        if (typeof group === 'boolean' && state === undefined) {
             state = group;
             group = undefined;
         }
-        if(group && !this.groups[group]){return}
-        
-        if(group){
-            this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
-            this._checkAllSwitch(this.model.groups[group].checkAll);
-            if(this.config.groupCounter){ this._groupCounterUpdate(group) }
+        if (group && !this.groups[group]) return;
+
+        const targets = group ? [group] : Object.keys(this.groups);
+        targets.forEach(g => {
+            const ca = this.model.groups[g].checkAll;
+            ca.state = state === undefined ? ca.state : (state ? 'uncheck' : 'check');
+            this._checkAllSwitch(ca);
+            if (this.config.groupCounter) this._groupCounterUpdate(g);
+        });
+        this._fireOnchange();
+    }
+
+    /** Adiciona múltiplas opções. */
+    addOptions(options) {
+        if (!Array.isArray(options)) {
+            console.warn('jsSelectm: addOptions expects an array');
+            return;
         }
-        else{
-            for(let group in this.groups){ 
-                this.model.groups[group].checkAll.state = state == undefined ? this.model.groups[group].checkAll.state : state == true ? 'uncheck' : 'check';
-                this._checkAllSwitch(this.model.groups[group].checkAll) ;
-                if(this.config.groupCounter){ this._groupCounterUpdate(group) }
+        options.forEach(opt => {
+            try { this.addOption(opt); }
+            catch (err) { console.error('jsSelectm: Error in addOptions', err); }
+        });
+    }
+
+    /** Adiciona uma nova opção. */
+    addOption(option) {
+        try {
+            if (!option?.value) { console.warn('jsSelectm: Option requires "value"'); return; }
+            const key = String(option.value);
+            if (this.options[key]) { console.warn('jsSelectm: Duplicate option value'); return; }
+
+            const el = document.createElement('option');
+            el.value     = option.value;
+            el.innerHTML = option?.text || '';
+            el.selected  = option.selected === true;
+            this.select.appendChild(el);
+
+            this.options[key] = { ...option, el };
+            if (option.selected) this.selected.push(key);
+
+            const optModel = this._buildOptionEl(this.options[key]);
+            const groupName = option.group;
+
+            if (groupName) {
+                if (!this.groups[groupName]) {
+                    this.groups[groupName] = { options: [] };
+                    this._counts[groupName] = { total: 0, selected: 0 };
+                    this._addGroupToModel(groupName, [], this.model);
+                }
+                this.options[key]['data-group'] = groupName;
+                this.groups[groupName].options.push(key);
+                optModel.container.setAttribute('data-group', groupName);
+                this.model.groups[groupName].options[key] = optModel;
+                this.model.groups[groupName].wrapper.appendChild(optModel.container);
+                if (this.config.sort) this._sort(this.model.groups[groupName].wrapper);
+            } else {
+                this.model.options[key] = optModel;
+                this.model.wrapper.appendChild(optModel.container);
+                this.model.wrapper.style.display = 'block';
+                if (this.config.sort) this._sort(this.model.wrapper);
+            }
+
+            // atualiza contadores
+            const bucket = groupName ? this._counts[groupName] : this._counts.default;
+            if (bucket) {
+                bucket.total++;
+                if (option.selected) bucket.selected++;
+            }
+
+            if (this.model.emptyMessage) {
+                this.model.emptyMessage.remove();
+                this.model.emptyMessage = null;
+            }
+
+            this.config.onchange([{ value: option.value, selected: option.selected || false }]);
+        } catch (err) {
+            console.error('jsSelectm: Error adding option', err);
+        }
+    }
+
+    // ─── Construção do modelo DOM ─────────────────────────────────────────────
+
+    _buildModel() {
+        const model = {};
+
+        // container principal
+        model.container = document.createElement('div');
+        model.container.className = this.config.classlist.wrapper;
+        model.container.setAttribute('style', this.config.styles.wrapper);
+        model.container.setAttribute('data-role', 'wrapper');
+        model.container.addEventListener('click',   ev => this._handleClick(ev));
+        model.container.addEventListener('keydown', ev => this._handleKeydown(ev));
+
+        // título
+        if (this.config.title) {
+            model.title = this._buildTitle();
+            model.container.appendChild(model.title);
+        }
+
+        // accordion de grupos
+        model.accordion = document.createElement('div');
+        model.accordion.className = 'accordion my-2';
+        model.accordion.setAttribute('data-role', 'groupsContainer');
+        model.container.appendChild(model.accordion);
+
+        // wrapper das options sem grupo
+        model.wrapper = document.createElement('div');
+
+        if (this.config.canFilter) {
+            model.input = this._buildSearchInput();
+            model.wrapper.appendChild(model.input);
+        }
+        if (this.config.checkAll) {
+            model.checkAll = this._buildCheckAllDropdown();
+            model.wrapper.appendChild(model.checkAll.container);
+        }
+
+        model.options = {};
+        model.groups  = {};
+
+        // monta grupos
+        for (const groupName in this.groups) {
+            this._addGroupToModel(groupName, this.groups[groupName].options, model);
+        }
+
+        // monta options sem grupo via fragment
+        const fragment = document.createDocumentFragment();
+        for (const key in this.options) {
+            if (!this.options[key]['data-group']) {
+                model.options[key] = this._buildOptionEl(this.options[key]);
+                fragment.appendChild(model.options[key].container);
             }
         }
-        this.config.onchange(this.changes);
-        this.changes = [];
+        model.wrapper.appendChild(fragment);
+        model.container.appendChild(model.wrapper);
+
+        // ordena grupos no accordion
+        if (this.config.sort) {
+            const sorted = [...model.accordion.children].sort((a, b) =>
+                a.innerText.toUpperCase().localeCompare(b.innerText.toUpperCase())
+            );
+            sorted.forEach(item => model.accordion.appendChild(item));
+        }
+
+        return model;
     }
-    /**
-     * Método privado para criar o elemento de título do componente.
-     * @private
-     * @returns {HTMLElement} - Elemento div contendo o título.
-     */
-    _addTitle(){ // cria elemento de titulo para componente
-        // options pode ser string simples com texto para o titulo ou dicionario ex {innerText: 'texto', etc: 2}
-        let container = document.createElement('div');
-        container.style = this.config.styles.titleContainer;
-        container.classList = this.config.classlist.titleContainer;
-        if(this.config.icon){
-            let icon = document.createElement('i');
-            icon.classList = this.config.icon;
-            icon.style = this.config.styles.icon;
+
+    _buildTitle() {
+        const container = document.createElement('div');
+        container.setAttribute('style', this.config.styles.titleContainer);
+        container.className = this.config.classlist.titleContainer;
+        if (this.config.icon) {
+            const icon = document.createElement('i');
+            icon.className = this.config.icon;
+            icon.setAttribute('style', this.config.styles.icon);
             container.appendChild(icon);
         }
-        let text = document.createElement('span');
-        text.style = this.config.styles.title;
-        text.classList = this.config.classlist.title;
-        if(typeof this.config.title == 'string'){text.innerHTML = this.config.title}
-        else{ for(let k in this.config.title){ text.setAttribute(k, this.config.title[k]) }}
+        const text = document.createElement('span');
+        text.setAttribute('style', this.config.styles.title);
+        text.className = this.config.classlist.title;
+        if (typeof this.config.title === 'string') {
+            text.innerHTML = this.config.title;
+        } else {
+            for (const k in this.config.title) text.setAttribute(k, this.config.title[k]);
+        }
         container.appendChild(text);
         return container;
     }
+
     /**
-     * Método privado para criar o controle "Marcar Todos".
-     * @private
-     * @param {Object} [options] - Opções para o controle.
-     * @param {string} options.state - Estado inicial ('check', 'uncheck', 'partial').
-     * @returns {Object} - Objeto com container, icon, text e state.
+     * Cria o dropdown checkAll (ícone de estado + menu com "Marcar todos" / "Desmarcar todos").
      */
-    _addCheckAll(options={}){ // cria um controle para selecionar todas as opcoes
-        let container = document.createElement('div');
-        let icon = document.createElement('i');
-        let text = document.createElement('span');
-        container.setAttribute('data-role', 'checkAll');
-        container.style = this.config.styles.checkAll;
-        container.classList = this.config.classlist.checkAll;
-        text.style = this.config.styles.checkAllText;
-        text.classList = this.config.classlist.checkAllText;
-        let state = options?.state || 'uncheck';
-        icon.classList = state == 'unckeck' ? this.config.classlist.uncheck : state == 'check' ? this.config.classlist.check : this.config.classlist.partial;
-        text.innerHTML = state == 'uncheck' ? gettext('Marcar todos') : gettext('Desmarcar todos');
-        container.appendChild(icon);
-        container.appendChild(text);
-        return {
-            container: container,
-            icon: icon,
-            text: text,
-            state: state
-        }
+    _buildCheckAllDropdown(groupName = null) {
+        const wrapper  = document.createElement('div');
+        wrapper.className = 'dropdown d-inline-block';
+        wrapper.setAttribute('data-role', 'checkAll');
+        if (groupName) wrapper.setAttribute('data-group', groupName);
+
+        // botão gatilho
+        const btn = document.createElement('button');
+        btn.type      = 'button';
+        btn.className = this.config.classlist.checkAll;
+        btn.setAttribute('style', this.config.styles.checkAll);
+        btn.setAttribute('data-bs-toggle', 'dropdown');
+        btn.setAttribute('aria-expanded', 'false');
+
+        const icon = document.createElement('i');
+        icon.className = this.config.classlist.uncheck;
+
+        btn.appendChild(icon);
+        
+        const label = document.createElement('span');
+        label.className = 'ms-1 text-body-tertiary user-select-none';
+        label.innerHTML = gettext('Selecionar');
+        btn.appendChild(label);
+
+        wrapper.appendChild(btn);
+
+        // menu
+        const menu = document.createElement('ul');
+        menu.className = 'dropdown-menu dropdown-menu-sm shadow-sm py-1';
+
+        const itemCheck   = this._buildCheckAllMenuItem('check',   gettext('Marcar todos'),   'bi bi-check-square me-2');
+        const itemUncheck = this._buildCheckAllMenuItem('uncheck', gettext('Desmarcar todos'), 'bi bi-square me-2');
+
+        menu.appendChild(itemCheck.li);
+        menu.appendChild(itemUncheck.li);
+        wrapper.appendChild(menu);
+
+        const obj = {
+            container:    wrapper,
+            btn:          btn,
+            icon:         icon,
+            menu:         menu,
+            itemCheck:    itemCheck,
+            itemUncheck:  itemUncheck,
+            state:        'uncheck',   // estado atual: 'check' | 'uncheck' | 'partial'
+        };
+
+        // bind dos itens do menu
+        itemCheck.a.addEventListener('click', ev => {
+            ev.stopPropagation();
+            this._checkAllExecute('check', obj, groupName);
+            bootstrap.Dropdown.getInstance(btn)?.hide();
+        });
+        itemUncheck.a.addEventListener('click', ev => {
+            ev.stopPropagation();
+            this._checkAllExecute('uncheck', obj, groupName);
+            bootstrap.Dropdown.getInstance(btn)?.hide();
+        });
+
+        return obj;
     }
+
+    _buildCheckAllMenuItem(action, label, iconClass) {
+        const li = document.createElement('li');
+        const a  = document.createElement('button');
+        a.type = 'button';
+        a.className = 'dropdown-item py-1 small';
+        a.setAttribute('data-action', action);
+
+        const ic = document.createElement('i');
+        ic.className = iconClass;
+        a.appendChild(ic);
+        a.appendChild(document.createTextNode(label));
+        li.appendChild(a);
+
+        return { li, a, icon: ic };
+    }
+
     /**
-     * Método privado para criar o input de busca para filtrar opções.
-     * @private
-     * @param {Object} [options] - Opções para o input.
-     * @param {boolean} [groupContainer=false] - Se é para container de grupo.
-     * @returns {HTMLElement} - Elemento input.
+     * Executa marcar ou desmarcar todos — respeita filtro (só afeta opções visíveis).
+     * @param {'check'|'uncheck'} action
+     * @param {Object} checkAll
+     * @param {string|null} groupName
      */
-    _addSearchInput(options={}, groupContainer=false){
-        let input = document.createElement('input');
-        input.type = 'search';
-        ['placeholder'].forEach((el)=>{ if(this.config.filterOptions?.[el]) {input.setAttribute(el, this.config.filterOptions[el])} })
-        input.style = groupContainer ? this.config.styles.groupInput : this.config.styles.input;
-        input.classList = groupContainer ? this.config.classlist.groupInput : this.config.classlist.input;
-        input.oninput = (ev)=>{
+    _checkAllExecute(action, checkAll, groupName = null) {
+        const selector = action === 'check'
+            ? '[data-value]:not([data-selected]):not(.d-none)'
+            : '[data-value][data-selected]:not(.d-none)';
+
+        checkAll.container.parentNode.querySelectorAll(selector).forEach(el => {
+            this._optionSwitch(el, action === 'check', false);
+        });
+
+        this._checkAllUpdateStatus(
+            this._containerGetState(checkAll.container.parentNode),
+            checkAll
+        );
+
+        if (groupName && this.config.groupCounter) this._groupCounterUpdate(groupName);
+
+        this._fireOnchange();
+    }
+
+    _buildSearchInput(groupContainer = false) {
+        const input   = document.createElement('input');
+        input.type    = 'search';
+        const opts    = this.config.filterOptions || {};
+        if (opts.placeholder) input.setAttribute('placeholder', opts.placeholder);
+        input.setAttribute('style', groupContainer ? this.config.styles.groupInput : this.config.styles.input);
+        input.className = groupContainer ? this.config.classlist.groupInput : this.config.classlist.input;
+        if (this.config.disabled) input.disabled = true;
+
+        input.addEventListener('input', () => {
             try {
-                input.parentNode.querySelectorAll('[data-role="option"]').forEach((el)=>{
-                    if(el.innerText.toLowerCase().includes(input.value.toLowerCase())){el.classList.remove('d-none')}
-                    else{el.classList.add('d-none')}
-                })
-            } catch (error) {
-                console.error('jsSelectm: Error filtering options', error);
+                const q = input.value.toLowerCase();
+                input.parentNode.querySelectorAll('[data-role="option"]').forEach(el => {
+                    el.classList.toggle('d-none', !el.innerText.toLowerCase().includes(q));
+                });
+                // atualiza ícone do checkAll refletindo o estado das opções visíveis
+                if (this.config.checkAll) {
+                    const ca = input.parentNode.querySelector('[data-role="checkAll"]');
+                    if (ca) {
+                        const groupAttr = ca.dataset?.group;
+                        const caObj = groupAttr
+                            ? this.model.groups[groupAttr]?.checkAll
+                            : this.model.checkAll;
+                        if (caObj) {
+                            this._checkAllUpdateStatus(
+                                this._containerGetState(caObj.container.parentNode),
+                                caObj
+                            );
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('jsSelectm: Error filtering', err);
             }
-        }
-        if(this.config.disabled){input.disabled = true}
+        });
+
         return input;
     }
-    /**
-     * Método privado para criar a mensagem de vazio.
-     * @private
-     * @param {Object} [model=this.model] - Modelo a ser usado.
-     * @returns {HTMLElement} - Elemento div com a mensagem.
-     */
-    _addEmptyMessage(model=this.model){
-        model.emptyMessage = document.createElement('div'); 
-        model.emptyMessage.style = this.config.styles.emptyMessage; 
-        model.emptyMessage.classList = this.config.classlist.emptyMessage;
-        model.emptyMessage.innerHTML = this.config.emptyMessage;
-        return model.emptyMessage;
-    }
-    // Metodos de estilizacao 
-    /**
-     * Método privado para obter estilos padrão.
-     * @private
-     * @returns {Object} - Objeto com estilos CSS.
-     */
-    _getDefaultStyles(){
-        return {
-            wrapper: 'position:relative;border: 1px solid var(--bs-border-color);border-radius: 0.375rem;padding: 0.375rem 0.875rem 0.475rem 0.75rem;',
-            container: 'max-height:230px; overflow-y: scroll;',
-            option: 'padding: 2px 5px; border-radius: 3px;',
-            selected: 'background-color: rgba(25, 135, 84, 0.25)!important;',
-            titleContainer: '',
-            title: '',
-            icon: 'margin-right: 8px;margin-left: 5px;',
-            input: 'outline: none; color: var(--bs-body-color); width: 99%;',
-            groupInput: 'outline: none; color: var(--bs-body-color); width: 100%!important;padding-left: 10px;',
-            groupLabel: 'width: 100%',
-            groupCounter: 'font-size: 0.75rem; margin-right: 15px;',
-            checkAll: 'padding: 2px 5px;',
-            checkAllText: '',
-            emptyMessage: '',
-        }
-    }
-    /**
-     * Método privado para obter classes CSS padrão.
-     * @private
-     * @returns {Object} - Objeto com classes CSS.
-     */
-    _getDefaultClasslist(){
-        return {
-            wrapper: 'selectm-wrapper',
-            container: '',
-            option: 'selectm-option',
-            titleContainer: '',
-            title: 'fw-bold text-body-secondary',
-            icon: '',
-            input: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
-            groupInput: 'border-0 border-bottom rounded-top bg-body py-1 mb-1',
-            groupLabel: '',
-            groupCounter: 'badge bg-body-secondary fw-normal ms-2 text-body',
-            checkAll: 'pointer user-select-none',
-            checkAllText: 'text-body-tertiary',
-            uncheck: 'bi bi-square me-2',
-            check: 'bi bi-check-square-fill me-2',
-            partial: 'bi bi-dash-square me-2',
-            emptyMessage: 'mb-1 ps-1 text-body-tertiary',
-        }
-    }
-    /**
-     * Método privado para adicionar estilos CSS pseudo-classes ao documento.
-     * @private
-     * @returns {void}
-     */
-    _addPseudoClass(){
-        let style = document.createElement('style');
-        style.innerHTML = '.selectm-wrapper.disabled{background-color: #E9ECEF;}';
-        style.innerHTML += '[data-bs-theme="dark"] .selectm-wrapper.disabled{background-color: #393939;}';
-        style.innerHTML += '[data-role="checkAll"].disabled{cursor: default; font-style: italic;}';
-        style.innerHTML += '.selectm-option[data-selected]{background-color: rgba(25, 135, 84, 0.25)!important;}';
-        style.innerHTML += '@media(min-width: 992px){.selectm-option:hover {cursor: pointer; background-color: var(--bs-secondary-bg);}}';
-        document.getElementsByTagName('head')[0].appendChild(style);
-    }
-    
-    // Metodos de manipulacao de estado
-    /**
-     * Método privado para alternar o estado de uma opção (marcar/desmarcar).
-     * @private
-     * @param {HTMLElement} el - Elemento da opção.
-     * @param {boolean|null} [state=null] - Estado desejado; se null, inverte.
-     * @param {boolean} [updatecheckAll=true] - Se deve atualizar o checkAll.
-     * @returns {void}
-     */
-    _optionSwitch(el, state=null, updatecheckAll=true){
-        // recebe elemento data-role=option e altera estado, se nao informado state (true ou false) inverte estado do elemento
-        let opt = el.dataset?.group ? this.model.groups[el.dataset.group].options[el.dataset.value] : this.model.options[el.dataset.value];
-        if (!opt) return;
-        let htmlOpt = this.options[el.dataset.value];
-        let newState = state != null ? state : opt.selected ? false : true;
-        opt.selected = newState;     // atualiza modelo em memoria
-        if(!newState){
-            el.removeAttribute('data-selected'); // atualiza componente
-            if (htmlOpt.el) htmlOpt.el.selected = false; // atualiza elemento html original
-            let index = this.selected.indexOf(el.dataset.value);
-            if(index > -1){ this.selected.splice(index, 1) }
-            opt.icon.classList = this.config.classlist.uncheck;
-        }
-        else{
-            el.setAttribute('data-selected', '');
-            if (htmlOpt.el) htmlOpt.el.selected = true; // atualiza elemento html original
-            this.selected.push(el.dataset.value);
-            opt.icon.classList = this.config.classlist.check;
-        }
-        // rastreia mudança
-        this.changes.push({ value: el.dataset.value, selected: newState });
-        // atualiza contole de marcar todos
-        if(updatecheckAll){ // atualiza checkAll
-            let modelTarget = opt.container.dataset?.group ? this.model.groups[opt.container.dataset.group] : this.model;
-            this._checkAllUpdateStatus(this._containerGetState(modelTarget.wrapper), opt.container.dataset?.group ? this.model.groups[opt.container.dataset.group].checkAll : this.model.checkAll);
-            this.config.onchange(this.changes);
-            this.changes = []; // limpa após callback
-        }
-        if(el.dataset?.group && this.config.groupCounter){this._groupCounterUpdate(el.dataset.group);}
-    }
-    /**
-     * Método privado para atualizar o status do controle "Marcar Todos".
-     * @private
-     * @param {string} state - Estado ('none', 'all', 'partial').
-     * @param {Object} checkAll - Objeto do controle checkAll.
-     * @returns {void}
-     */
-    _checkAllUpdateStatus(state, checkAll){ // atualiza informacoes (icone, descricao e status) do controle de marcar todos
-        if(state == 'none'){
-            checkAll.text.innerHTML = gettext('Marcar todos');
-            checkAll.container.removeAttribute('data-checked');
-            checkAll.icon.classList = this.config.classlist.uncheck;
-            checkAll.state = 'uncheck';
-        }
-        else{
-            if(state == 'all'){ 
-                checkAll.icon.classList = this.config.classlist.check;
-                checkAll.state = 'check';
-            }
-            else{ 
-                checkAll.icon.classList = this.config.classlist.partial;
-                checkAll.state = 'partial';
-             }
-            checkAll.text.innerHTML = gettext('Desmarcar todos');
-            checkAll.container.setAttribute('data-checked', '');   
-        }
-    }
-    /**
-     * Método privado para alternar o estado do controle "Marcar Todos".
-     * @private
-     * @param {Object} checkAll - Objeto do controle checkAll.
-     * @returns {void}
-     */
-    _checkAllSwitch(checkAll){ // marca todas as opcoes do container
-        let count = 0;
-        if(checkAll.state == 'check' || checkAll.state == 'partial'){ // desmarca todas as opcoes
-            checkAll.container.parentNode.querySelectorAll('[data-value][data-selected]:not(.d-none)').forEach((el)=>{
-                this._optionSwitch(el, false, false); // desmarca option sem ajustar o checkAll
-                count++;
-            })
-        }
-        else{ // marca todas as opcoes
-            checkAll.container.parentNode.querySelectorAll('[data-value]:not([data-selected]):not(.d-none)').forEach((el)=>{
-                this._optionSwitch(el, true, false); // marca option sem ajustar o checkAll
-                count++;
-            })
-        }
-        this._checkAllUpdateStatus(this._containerGetState(checkAll.container.parentNode), checkAll) // atualiza checkAll ao final
-        if(count > 0){ 
-            this.config.onchange(this.changes);
-            this.changes = []; // limpa após callback
-        }
-    }
-    /**
-     * Método privado para atualizar o contador de seleções por grupo.
-     * @private
-     * @param {string|boolean} [group=false] - Nome do grupo ou false para todos.
-     * @param {Object} [summary=this.getSummary()] - Resumo das seleções.
-     * @returns {void}
-     */
-    _groupCounterUpdate(group=false, summary=this.getSummary()){ // atualiza contador para grupos
-        if(group){ // atualiza contador para grupo informado
-            this.model.groups[group].groupCounter.innerHTML = `${summary[group].selected} / ${summary[group].total}`;
-        }
-        else{ // atualiza contador para todos os grupos
-            for(let g in this.groups){
-                this.model.groups[g].groupCounter.innerHTML = `${summary[g].selected} / ${summary[g].total}`;
-            }
-        }
-    }
-    /**
-     * Método privado para obter o estado de seleção de um container.
-     * @private
-     * @param {HTMLElement} container - Container a ser verificado.
-     * @returns {string} - 'none', 'all' ou 'partial'.
-     */
-    _containerGetState(container){ // retorna all, none ou partial, baseado na quantidade de opcoes selecionadas no container
-        let total = container.querySelectorAll('[data-value]').length;
-        let selected = container.querySelectorAll('[data-value][data-selected]').length;
-        return selected == 0 ? 'none' : selected == total ? 'all' : 'partial';
-    }
-    /**
-     * Método público para obter resumo das seleções por grupo.
-     * @returns {Object} - Objeto com total e selected por grupo, incluindo 'default'.
-     */
-    getSummary(){ 
-    // retorna resumo das opcoes separado por grupo ex {grupo1: {total: 22, selected: 4}, default: {total: 14, selected: 6}}
-        let summary = {default: {total: 0, selected: 0}}
-        let groupsCount = [0,0];
-        for(let group in this.groups){
-            let entry = {total: this.groups[group].options.length, selected: 0};
-            groupsCount[0] += entry.total;
-            this.groups[group].options.forEach((el)=>{
-                if(this.selected.includes(el)){
-                    entry.selected += 1;
-                    groupsCount[1] += 1;
-                }
-            })
-            summary[group] = entry;
-        }
-        summary.default.total = Object.keys(this.options).length - groupsCount[0];
-        summary.default.selected = this.selected.length - groupsCount[1];
-        return summary ;
-    }
-    // Metodos de manipulacao de opcoes
-    /**
-     * Método privado para construir o modelo DOM do componente.
-     * @private
-     * @returns {Object} - Modelo com elementos criados.
-     */
-    _buildModel(){ // constroi base do componente e insere na pagina, retorna escopo do modelo com apontadores
-        let model = {};
-        model.container = document.createElement('div'); // container principal, todo componente eh inserido aq
-        model.container.style = this.config.styles.wrapper;
-        model.container.classList = this.config.classlist.wrapper;
-        model.container.setAttribute('data-role', 'wrapper');
-        model.container.addEventListener('click', (ev)=>{this._handleOnclick(ev)})
-        model.wrapper = document.createElement('div'); // container dos options (sem grupo associado)
-        if(this.config.title){ // adiciona titulo para componente
-            model.title = this._addTitle();
-            model.container.appendChild(model.title);
-        }
-        if(this.config.canFilter){ // adiciona input para filtrar opcoes
-            model.input = this._addSearchInput(this.config.filterOptions)
-            model.wrapper.appendChild(model.input)
-        }
-        if(this.config.checkAll){ // adiciona controle para marca / desmarcar todas as opcoes
-            model.checkAll = this._addCheckAll({})
-            model.wrapper.appendChild(model.checkAll.container);
-        }
-        model.options = {};
-        model.groups = {};
-        // cria accordion para grupos
-        model.accordion = document.createElement('div');
-        model.accordion.classList = 'accordion my-2';
-        model.accordion.setAttribute('data-role','groupsContainer');
-        model.container.appendChild(model.accordion);
-        
-        // adiciona wrapper das opcoes sem grupo no container principa
-        model.container.appendChild(model.wrapper);
 
-        // percorre todas as options construindo entrada no seu respectivo container
-        let fragmentDefault = document.createDocumentFragment();
-        for(let option in this.options){ 
-            if(this.options[option]?.['data-group']){
-                let groupName = this.options[option]['data-group'];
-                if(!model.groups[groupName]){ 
-                    this._addGroup(groupName, [], model);
-                }
-                // cria entrada em this.model para option
-                model.groups[groupName].options[option] = this._addOption(this.options[option]);
-                // adiciona option no wrapper
-                model.groups[groupName].wrapper.appendChild(model.groups[groupName].options[option].container); 
-            }
-            else{
-                model.options[option] = this._addOption(this.options[option]);  // cria entrada em this.model para option
-                fragmentDefault.appendChild(model.options[option].container); // adiciona option no wrapper
-            }
-        }
-        model.wrapper.appendChild(fragmentDefault);
-        if(this.config.sort){ // se sort = true, classifica nome dos grupos em ordem crescente (usando o innerText)
-            let itens = [...model.accordion.children].sort((a, b) => {
-                let textoA = a.innerText.toUpperCase(); // Usar toUpperCase para ordenação sem distinção de maiúsculas/minúsculas
-                let textoB = b.innerText.toUpperCase();
-                if (textoA < textoB) { return -1 }
-                if (textoA > textoB) { return 1 }
-                return 0;
-            });
-            itens.forEach(item => { model.accordion.appendChild(item); });
-        }
-        return model;
+    _buildEmptyMessage() {
+        const el = document.createElement('div');
+        el.setAttribute('style', this.config.styles.emptyMessage);
+        el.className = this.config.classlist.emptyMessage;
+        el.innerHTML = this.config.emptyMessage;
+        this.model.emptyMessage = el;
+        return el;
     }
-    /**
-     * Método privado para criar um elemento de opção no componente.
-     * @private
-     * @param {Object} config - Configuração da opção.
-     * @returns {Object} - Objeto com container, icon, text e selected.
-     */
-    _addOption(config){ // cria elemento que representa uma <option> para componente
-        let container = document.createElement('div');
-        container.classList = this.config.classlist.option; 
-        container.style = this.config.styles.option;
-        container.setAttribute('data-role', 'option')
-        container.setAttribute('data-value', config.value)
-        let icon = document.createElement('i');
-        let text = document.createElement('span');
-        let result = {
-            container: container,
-            icon: icon,
-            text: text,
-            selected: config.selected == true
-        };
-        // adiciona data-group no elemento para identificacao do evento click
-        if(config['data-group']){ container.setAttribute('data-group', config['data-group']) }
-        if(config?.selected){
-            container.setAttribute('data-selected', '');
-            icon.classList = this.config.classlist.check;
-        }
-        else{ icon.classList = this.config.classlist.uncheck }
+
+    _buildOptionEl(config) {
+        const container = document.createElement('div');
+        container.className = this.config.classlist.option;
+        container.setAttribute('style', this.config.styles.option);
+        container.setAttribute('data-role', 'option');
+        container.setAttribute('data-value', config.value);
+        container.setAttribute('tabindex', '0');
+
+        const icon = document.createElement('i');
+        const text = document.createElement('span');
         text.innerHTML = config.text;
+
+        if (config['data-group']) container.setAttribute('data-group', config['data-group']);
+
+        if (config.selected) {
+            container.setAttribute('data-selected', '');
+            icon.className = this.config.classlist.check;
+        } else {
+            icon.className = this.config.classlist.uncheck;
+        }
+
         container.appendChild(icon);
         container.appendChild(text);
-        return result;
+
+        return { container, icon, text, selected: config.selected === true };
     }
-    /**
-     * Método público para adicionar múltiplas opções.
-     * @param {Array} options - Array de objetos de opção.
-     * @returns {void}
-     */
-    addOptions(options){
-        if(!Array.isArray(options)){console.warn('jsSelectm: addOptions expect an array element');return;}
-        let changes = [];
-        options.forEach((el)=>{ 
-            try {
-                this.addOption(el);
-                changes.push({ value: el.value, selected: el.selected || false });
-            } catch(err) {
-                console.error('jsSelectm: Error adding option in addOptions', err);
-            }
-        })
-        if (changes.length > 0) this.config.onchange(changes);
-    }
-    /**
-     * Método público para adicionar uma nova opção.
-     * @param {Object} option - Objeto da opção a adicionar.
-     * @param {string} option.value - Valor da opção.
-     * @param {string} option.text - Texto da opção.
-     * @param {boolean} [option.selected] - Se está selecionada.
-     * @param {string} [option.group] - Grupo da opção.
-     * @returns {void}
-     */
-    addOption(option) { // adiciona novo option tanto no select original quanto no componente
-        try {
-            if(!option?.value){console.warn('jsSelectm: Option require at least "value"'); return;} // option.value eh obrigatorio
-            if(this.options[option.value]){console.warn('jsSelectm: Option value duplicated'); return;} // option.value nao pode ser duplicado
-            
-            let opt = this._addOption(option);      // cria extrutura do option para this.model
-            let el = document.createElement('option');
-            el.value = option.value;
-            el.innerHTML = option?.text || '';
-            el.selected = option.selected === true;
-            this.select.appendChild(el);
-            //--
-            this.options[option.value] = {...option, ...{el: el}};              // adiciona option na lista geral de opcoes
-            if(option.selected){ this.selected.push(String(option.value)) };    // adiciona em this.selected
-            
-            if(option?.group){
-                // Para compatibilidade, se group informado, trata como optgroup
-                let groupName = option.group;
-                if(!this.groups[groupName]){ 
-                    this.groups[groupName] = { options: [], dataI18n: null };
-                    this._addGroup(groupName, [], this.model);
-                }
-                this.groups[groupName].options.push(option.value);
-                opt.container.setAttribute('data-group', groupName);
-                this.model.groups[groupName].options[option.value] = opt;
-                this.model.groups[groupName].wrapper.appendChild(opt.container);
-                if(this.config.sort){this._sort(this.model.groups[groupName].wrapper)}
-            }
-            else{
-                this.model.options[option.value] = opt;
-                this.model.wrapper.appendChild(opt.container);
-                if(this.config.sort){this._sort(this.model.wrapper)}
-                this.model.wrapper.style.display = 'block'; // assegura que container esta visivel ao adicionar um elemento
-            }
-            if(this.model.emptyMessage){ this.model.emptyMessage.remove(); this.model.emptyMessage = null; }
-            this.config.onchange([{ value: option.value, selected: option.selected || false }]);
-        } catch (error) {
-            console.error('jsSelectm: Error adding option', error);
-        }
-    }
-    /**
-     * Método privado para ordenar opções em um wrapper.
-     * @private
-     * @param {HTMLElement} wrapper - Container das opções.
-     * @returns {void}
-     */
-    _sort(wrapper){ // reordena (ordem crescente) options no componente baseado no text (innerHTML)
-        let items = [...wrapper.querySelectorAll('[data-value]')];
-        // para sort usamos document.fragment para otimizar desempenho evitando reescrita no DOM
-        let fragment = document.createDocumentFragment();
-        items.sort((a, b) => a.innerText.localeCompare(b.innerText));
-        items.forEach(el => fragment.appendChild(el));
-        wrapper.appendChild(fragment);
-    }
-    /**
-     * Método privado para criar um novo grupo no modelo.
-     * @private
-     * @param {string} [name='novo'] - Nome do grupo.
-     * @param {Array} [options=[]] - Opções do grupo.
-     * @param {Object} [model=this.model] - Modelo a ser usado.
-     * @returns {Object} - Grupo criado.
-     */
-    _addGroup(name='novo', options=[], model=this.model){ // cria elementos para novo grupo
-        model.groups[name] = {}; // inicia extrutura de novo grupo
-        let acc_item = document.createElement('div');acc_item.classList = 'accordion-item';
-        let acc_header = document.createElement('div');acc_header.classList = 'accordion-header pointer';
-        //--
-        let acc_button = document.createElement('div');
-        acc_button.classList = 'accordion-button collapsed fs-6 py-2';
-        acc_button.setAttribute('data-bs-toggle','collapse');
-        acc_button.setAttribute('data-bs-target',`[data-groupContainer="${name}"]`);
-        let acc_button_text = document.createElement('span');
-        acc_button_text.style = this.config.styles.groupLabel;
-        acc_button_text.classList = this.config.classlist.groupLabel;
-        let dataI18n = this.groups[name]?.dataI18n;
-        acc_button_text.innerHTML = name
-        acc_button.appendChild(acc_button_text);
-        if(this.config.groupCounter){
+
+    _addGroupToModel(name, optionKeys = [], model = this.model) {
+        model.groups[name] = {};
+
+        const accItem   = document.createElement('div');
+        accItem.className = 'accordion-item';
+
+        const accHeader = document.createElement('div');
+        accHeader.className = 'accordion-header pointer';
+
+        const accButton = document.createElement('div');
+        accButton.className = 'accordion-button collapsed fs-6 py-2';
+        accButton.setAttribute('data-bs-toggle', 'collapse');
+        accButton.setAttribute('data-bs-target', `[data-groupContainer="${CSS.escape(name)}"]`);
+
+        const labelSpan = document.createElement('span');
+        labelSpan.setAttribute('style', this.config.styles.groupLabel);
+        labelSpan.className = this.config.classlist.groupLabel;
+        labelSpan.innerHTML = name;
+        accButton.appendChild(labelSpan);
+
+        if (this.config.groupCounter) {
             model.groups[name].groupCounter = document.createElement('span');
-            model.groups[name].groupCounter.style = this.config.styles.groupCounter;
-            model.groups[name].groupCounter.classList = this.config.classlist.groupCounter;
+            model.groups[name].groupCounter.setAttribute('style', this.config.styles.groupCounter);
+            model.groups[name].groupCounter.className = this.config.classlist.groupCounter;
             model.groups[name].groupCounter.innerHTML = '0 / 0';
-            acc_button.appendChild(model.groups[name].groupCounter);
+            accButton.appendChild(model.groups[name].groupCounter);
         }
-        //--
+
+        // wrapper das opções do grupo
         model.groups[name].wrapper = document.createElement('div');
-        model.groups[name].wrapper.classList = 'accordion-collapse collapse';
+        model.groups[name].wrapper.className = 'accordion-collapse collapse';
         model.groups[name].wrapper.setAttribute('data-groupContainer', name);
         model.groups[name].wrapper.setAttribute('data-bs-parent', '[data-role="groupsContainer"]');
-        //--
-        if(this.config.canFilter){ // adiciona input para filtrar opcoes
-            model.groups[name].input = this._addSearchInput(this.config.filterOptions, true)
-            model.groups[name].wrapper.appendChild(model.groups[name].input)
+
+        if (this.config.canFilter) {
+            model.groups[name].input = this._buildSearchInput(true);
+            model.groups[name].wrapper.appendChild(model.groups[name].input);
         }
-        if(this.config.checkAll){ // adiciona controle para marcar / desmarcar todas as opcoes
-            model.groups[name].checkAll = this._addCheckAll({})
-            model.groups[name].checkAll.container.setAttribute('data-group', name)
+        if (this.config.checkAll) {
+            model.groups[name].checkAll = this._buildCheckAllDropdown(name);
             model.groups[name].wrapper.appendChild(model.groups[name].checkAll.container);
         }
-        acc_header.appendChild(acc_button);
-        acc_item.appendChild(acc_header);
-        acc_item.appendChild(model.groups[name].wrapper);
-        model.accordion.appendChild(acc_item);
-        // incia entrada para options no modelo
+
+        accHeader.appendChild(accButton);
+        accItem.appendChild(accHeader);
+        accItem.appendChild(model.groups[name].wrapper);
+        model.accordion.appendChild(accItem);
+
         model.groups[name].options = {};
-        
-        // carrega options nos grupos usando fragment
-        let fragment = document.createDocumentFragment();
-        options.forEach((el)=>{
-            model.groups[name].options[el] = this._addOption(this.options[el]);         // cria elemento adiciona entrada no modelo
-            fragment.appendChild(model.groups[name].options[el].container);
-        })
+
+        const fragment = document.createDocumentFragment();
+        optionKeys.forEach(key => {
+            model.groups[name].options[key] = this._buildOptionEl(this.options[key]);
+            fragment.appendChild(model.groups[name].options[key].container);
+        });
         model.groups[name].wrapper.appendChild(fragment);
-        return model.groups[name]
+
+        return model.groups[name];
     }
-    
-    // Metodos para eventos
-    /**
-     * Método privado para lidar com eventos de clique no componente.
-     * @private
-     * @param {Event} ev - Evento de clique.
-     * @returns {void}
-     */
-    _handleOnclick(ev){
-        if(this.config.disabled){return} // se componente disabled, nao responde a eventos
-        try {
-            // click disparado do container
-            if(ev.target.dataset?.role == 'option'){ this._optionSwitch(ev.target) }
-            else if(ev.target.parentNode?.dataset?.role == 'option'){ this._optionSwitch(ev.target.parentNode) }
-            else if(ev.target.dataset?.role == 'checkAll'){ 
-                if(ev.target.dataset?.group){ this._checkAllSwitch(this.model.groups[ev.target.dataset.group].checkAll) }
-                else{ this._checkAllSwitch(this.model.checkAll) }
-            }
-            else if(ev.target.parentNode?.dataset?.role == 'checkAll'){ 
-                if(ev.target.parentNode.dataset.group){this._checkAllSwitch(this.model.groups[ev.target.parentNode.dataset.group].checkAll) }
-                else{ this._checkAllSwitch(this.model.checkAll) }
-            }
-        } catch (error) {
-            console.error('jsSelectm: Error handling click', error);
+
+    // ─── Estado e seleção ─────────────────────────────────────────────────────
+
+    _optionSwitch(el, state = null, updateCheckAll = true) {
+        const key     = el.dataset?.value;
+        const group   = el.dataset?.group || null;
+        const optMdl  = group
+            ? this.model.groups[group]?.options[key]
+            : this.model.options[key];
+
+        if (!optMdl || !this.options[key]) return;
+
+        const newState = state !== null ? state : !optMdl.selected;
+
+        if (newState === optMdl.selected) return; // sem mudança real
+
+        optMdl.selected = newState;
+        const htmlOpt   = this.options[key];
+
+        if (newState) {
+            el.setAttribute('data-selected', '');
+            optMdl.icon.className = this.config.classlist.check;
+            if (htmlOpt.el) htmlOpt.el.selected = true;
+            if (!this.selected.includes(key)) this.selected.push(key);
+        } else {
+            el.removeAttribute('data-selected');
+            optMdl.icon.className = this.config.classlist.uncheck;
+            if (htmlOpt.el) htmlOpt.el.selected = false;
+            const idx = this.selected.indexOf(key);
+            if (idx > -1) this.selected.splice(idx, 1);
         }
+
+        this._countUpdate(key, newState);
+        this.changes.push({ value: key, selected: newState });
+
+        if (group && this.config.groupCounter) this._groupCounterUpdate(group);
+
+        if (updateCheckAll) {
+            const caObj = group ? this.model.groups[group]?.checkAll : this.model.checkAll;
+            if (caObj) {
+                this._checkAllUpdateStatus(
+                    this._containerGetState(caObj.container.parentNode),
+                    caObj
+                );
+            }
+            this._fireOnchange();
+        }
+    }
+
+    /**
+     * Atualiza o ícone do botão dropdown refletindo o estado atual (check / uncheck / partial).
+     */
+    _checkAllUpdateStatus(state, checkAll) {
+        if (!checkAll) return;
+        if (state === 'none') {
+            checkAll.icon.className = this.config.classlist.uncheck;
+            checkAll.state = 'uncheck';
+        } else if (state === 'all') {
+            checkAll.icon.className = this.config.classlist.check;
+            checkAll.state = 'check';
+        } else {
+            checkAll.icon.className = this.config.classlist.partial;
+            checkAll.state = 'partial';
+        }
+    }
+
+    _checkAllSwitch(checkAll) {
+        // mantido para compatibilidade com chamadas de checkAll() / groupCheckAll()
+        const action = (checkAll.state === 'check' || checkAll.state === 'partial') ? 'uncheck' : 'check';
+        const groupName = checkAll.container.dataset?.group || null;
+        this._checkAllExecute(action, checkAll, groupName);
+    }
+
+    _containerGetState(container) {
+        const options  = container.querySelectorAll('[data-value]');
+        const selected = container.querySelectorAll('[data-value][data-selected]');
+        if (selected.length === 0) return 'none';
+        if (selected.length === options.length) return 'all';
+        return 'partial';
+    }
+
+    _groupCounterUpdate(groupName) {
+        const el = this.model.groups[groupName]?.groupCounter;
+        if (!el) return;
+        const c = this._counts[groupName] || { total: 0, selected: 0 };
+        el.innerHTML = `${c.selected} / ${c.total}`;
+    }
+
+    _groupCounterUpdateAll() {
+        for (const g in this.groups) this._groupCounterUpdate(g);
+    }
+
+    _fireOnchange() {
+        if (this.changes.length === 0) return;
+        this.config.onchange(this.changes);
+        this.changes = [];
+    }
+
+    // ─── Eventos ──────────────────────────────────────────────────────────────
+
+    _handleClick(ev) {
+        if (this.config.disabled) return;
+        try {
+            // sobe a árvore até o primeiro elemento com data-role relevante
+            const target = ev.target.closest('[data-role="option"], [data-role="checkAll"]');
+            if (!target) return;
+
+            if (target.dataset.role === 'option') {
+                this._optionSwitch(target);
+            }
+            // checkAll é tratado diretamente pelos listeners do dropdown
+        } catch (err) {
+            console.error('jsSelectm: Error handling click', err);
+        }
+    }
+
+    _handleKeydown(ev) {
+        if (this.config.disabled) return;
+        if (ev.key !== ' ' && ev.key !== 'Enter') return;
+        const target = ev.target.closest('[data-role="option"]');
+        if (!target) return;
+        ev.preventDefault();
+        this._optionSwitch(target);
+    }
+
+    // ─── Estilos e classes ────────────────────────────────────────────────────
+
+    /** Injeta pseudo-classes uma única vez por página. */
+    _injectStyles() {
+        if (_jsSelectmStylesInjected) return;
+        _jsSelectmStylesInjected = true;
+
+        const style = document.createElement('style');
+        style.innerHTML = [
+            '.selectm-wrapper.disabled{background-color:#E9ECEF;}',
+            '[data-bs-theme="dark"] .selectm-wrapper.disabled{background-color:#393939;}',
+            '.selectm-option[data-selected]{background-color:rgba(25,135,84,0.25)!important;}',
+            '@media(min-width:992px){.selectm-option:hover{cursor:pointer;background-color:var(--bs-secondary-bg);}}',
+            '.selectm-option:focus{outline:2px solid var(--bs-primary);outline-offset:1px;}',
+        ].join('');
+        document.head.appendChild(style);
+    }
+
+    _getDefaultStyles() {
+        return {
+            wrapper:        'position:relative;border:1px solid var(--bs-border-color);border-radius:0.375rem;padding:0.375rem 0.875rem 0.475rem 0.75rem;',
+            container:      'max-height:230px;overflow-y:scroll;',
+            option:         'padding:2px 5px;border-radius:3px;',
+            selected:       'background-color:rgba(25,135,84,0.25)!important;',
+            titleContainer: '',
+            title:          '',
+            icon:           'margin-right:8px;margin-left:5px;',
+            input:          'outline:none;color:var(--bs-body-color);width:99%;',
+            groupInput:     'outline:none;color:var(--bs-body-color);width:100%!important;padding-left:10px;',
+            groupLabel:     'width:100%',
+            groupCounter:   'font-size:0.75rem;margin-right:15px;',
+            checkAll:       'padding: 5px !important;',
+            emptyMessage:   '',
+        };
+    }
+
+    _getDefaultClasslist() {
+        return {
+            wrapper:        'selectm-wrapper',
+            container:      '',
+            option:         'selectm-option',
+            titleContainer: '',
+            title:          'fw-bold text-body-secondary',
+            icon:           '',
+            input:          'border-0 border-bottom rounded-top bg-body py-1 mb-1',
+            groupInput:     'border-0 border-bottom rounded-top bg-body py-1 mb-1',
+            groupLabel:     '',
+            groupCounter:   'badge bg-body-secondary fw-normal ms-2 text-body',
+            // botão do dropdown checkAll — sem fundo, sem borda, só o ícone
+            checkAll:       'p-0 border-0 bg-transparent text-body-secondary text-decoration-none dropdown-toggle',
+            checkAllText:   'text-body-tertiary',
+            uncheck:        'bi bi-square me-2',
+            check:          'bi bi-check-square-fill me-2',
+            partial:        'bi bi-dash-square me-2',
+            emptyMessage:   'mb-1 ps-1 text-body-tertiary',
+        };
     }
 }
