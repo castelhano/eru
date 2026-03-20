@@ -10,6 +10,10 @@
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
         </ul>
     </div>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" name="Foo" id="id_Foo">
+        <label class="form-check-label" for="id_Foo">Foo</label>
+    </div>
     <form id="app_form" action="" method="POST" autocomplete="off" novalidate>
         {% csrf_token %}
         {{ form.config_data }}
@@ -46,7 +50,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="editor_holder" class="mt-4"></div>
+                <div id="editor_holder" class="mt-4 jedison-container"></div>
             </div>
         </div>
     </form>
@@ -55,8 +59,9 @@
 {% endblock%}
 
 {% block add_script_src %}
-<script src="{% static 'js/vendor/jsoneditor.js' %}"></script>
-<script src="{% static 'js/jsoneditor.config.js' %}"></script>
+<script src="{% static 'js/vendor/jedison.js' %}"></script>
+<!-- <script src="{# static 'js/vendor/jsoneditor.js' #}"></script>
+<script src="{# static 'js/jsoneditor.config.js' #}"></script> -->
 <script src="{% static 'js/url.js' %}"></script>
 {% endblock %}
 
@@ -70,9 +75,20 @@
     {% if object %}
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('extra').disabled = false;
-    const element = document.getElementById('editor_holder');
-    const schema = {schema: {{ schema_json|safe }}, startval: {{ config_json|safe }}};
-    const editor = new JSONEditor(element, {...jsoneditor_options, ...schema});
+    const schema = {{ schema_json|safe }};
+    const startval = {{ config_json|safe }};
+    // schema['x-format'] = 'grid';
+    // schema.properties.frequencia.properties.incluir_intervalos_jornada['x-format'] = "checkbox";
+    console.log(schema);
+    
+    const editor = new Jedison.Create({
+        container: document.getElementById('editor_holder'),
+        theme: new Jedison.ThemeBootstrap5(),
+        btnContents: false,
+        iconLib: 'bootstrap-icons',
+        schema: schema,
+        data: startval
+    });
     const form = document.getElementById('app_form');
     form.onsubmit = (e) => {
         const errors = editor.validate();

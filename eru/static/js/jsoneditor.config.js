@@ -20,7 +20,7 @@ JSONEditor.defaults.iconlibs.bootstrapicons = class extends JSONEditor.AbstractI
 };
 
 const jsoneditor_options = {
-    theme: 'bootstrap5',
+    theme: 'barebones',
     iconlib: 'bootstrapicons',
     disable_edit_json: true,
     disable_properties: true,

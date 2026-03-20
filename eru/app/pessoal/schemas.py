@@ -9,7 +9,8 @@ class AfastamentoSchema(BaseModel):
     evento_outro_id:    int | SkipJsonSchema[None] = Field(None, title=_("Evento para Outros Afastamentos"))
 
 class FrequenciaSchema(BaseModel):
-    incluir_intervalos_jornada: bool = Field(False, title= _("Incluir intervalos na jornada"), json_schema_extra={'format': 'checkbox'})
+    incluir_intervalos_jornada: bool = Field(False, title= _("Incluir intervalos na jornada"), json_schema_extra={'x-format': 'checkbox'})
+    fei: bool = Field(False, title= _("Incluir intervalos na jornada"), json_schema_extra={'x-format': 'checkbox'})
     evento_jornada_id: int | SkipJsonSchema[None] = Field(None, title=_("Evento padrão Jornada"))
     evento_folga_id: int | SkipJsonSchema[None] = Field(None, title=_("Evento padrão para Folga"))
     hora_noturna_inicio:        str = Field(default='22:00', title=_("Início hora noturna"))

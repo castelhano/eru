@@ -111,11 +111,11 @@ details[open] summary::before {transform: translateY(2px) rotate(90deg);}
 .btn-success-matte:active, .btn-success-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
 .btn-success-matte:focus { box-shadow: 0 0 0 0.10rem rgba(108, 142, 104, 0.25); }
 
-.btn-primary-matte, .btn-primary-matte:focus { --matte-bg: #5a7d9a; --matte-color: #ffffff; --matte-border: #4a6881; background-color: var(--matte-bg); border-color: var(--matte-border); color: var(--matte-color); transition: filter 0.2s ease, background-color 0.2s ease; }
-[data-bs-theme="dark"] .btn-primary-matte { --matte-bg: #3d566e; --matte-border: #32465a; }
-.btn-primary-matte:hover { color: var(--matte-color); background-color: var(--matte-bg); filter: brightness(1.08) saturate(1.1); border-color: var(--matte-border); }
-.btn-primary-matte:active, .btn-primary-matte.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
-.btn-primary-matte:focus { box-shadow: 0 0 0 0.10rem rgba(90, 125, 154, 0.25); }
+.btn-primary-matte, .jedi-quick-add-property-toggle, .btn-primary-matte:focus { --matte-bg: #5a7d9a; --matte-color: #ffffff; --matte-border: #4a6881; background-color: var(--matte-bg); border-color: var(--matte-border); color: var(--matte-color); transition: filter 0.2s ease, background-color 0.2s ease; }
+[data-bs-theme="dark"] .btn-primary-matte, .jedi-quick-add-property-toggle { --matte-bg: #3d566e; --matte-border: #32465a; }
+.btn-primary-matte:hover, .jedi-quick-add-property-toggle:hover { color: var(--matte-color); background-color: var(--matte-bg); filter: brightness(1.08) saturate(1.1); border-color: var(--matte-border); }
+.btn-primary-matte:active, .btn-primary-matte.active, .jedi-quick-add-property-toggle:active, .jedi-quick-add-property-toggle.active { background-color: var(--matte-border) !important; border-color: var(--matte-border) !important; filter: brightness(0.95); }
+.btn-primary-matte:focus, .jedi-quick-add-property-toggle:focus { box-shadow: 0 0 0 0.10rem rgba(90, 125, 154, 0.25); }
 
 .btn-warning-matte, .btn-warning-matte:focus { --matte-bg: #d4a35d; --matte-color: #ffffff; --matte-border: #b88d50; background-color: var(--matte-bg)!important; border-color: var(--matte-border)!important; color: var(--matte-color)!important; transition: filter 0.2s ease, background-color 0.2s ease; }
 [data-bs-theme="dark"] .btn-warning-matte { --matte-bg: #8c6d3e; --matte-border: #755b34; }
@@ -360,9 +360,33 @@ dialog.related  {width: 100%; box-sizing: border-box; margin: 0; padding: 1rem;}
 .ts-dropdown{ color: var(--bs-secondary-text-emphasis)!important; }
 .ts-wrapper.single .ts-control { height: calc(3.5rem + calc(var(--bs-border-width) * 2)); line-height: 1.25 !important; }
 
-/* ajustes json editor */
-[data-bs-theme="dark"] .card .bg-light{background-color: var(--bs-body-bg) !important; color: var(--bs-body-color) !important;}
-#editor_holder {margin-top: 15px !important;}
-#editor_holder .card-body {margin-top: 0 !important;}
-#editor_holder .h3{font-size: 1.4rem !important;color: var(--bs-secondary-text-emphasis);}
-#editor_holder .level-1 .json-editor-btn-collapse {display: none !important;}
+
+/* ==============================================
+   Switch style para checkboxes do jedison
+   Animação idêntica ao Bootstrap 5
+   ============================================== */
+
+.jedison-container .form-check {
+  padding-left: 2.5em !important;
+}
+
+.jedison-container .form-check .form-check-input {
+  width: 2em;
+  margin-left: -2.5em;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+  background-color: var(--bs-body-bg);
+  border-radius: 2em;
+}
+
+.jedison-container .form-check .form-check-input:checked {
+  background-position: right center;
+  background-color: #0d6efd;
+}
+
+.jedison-container .form-check .form-check-input:focus {
+  border-color: #86b7fe;
+}
+
