@@ -23,6 +23,7 @@ from core.extras import asteval_run
 from core.constants import DEFAULT_MESSAGES
 from core.mixins import AjaxableListMixin, AjaxableFormMixin, CSVExportMixin
 from core.views_base import (BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView)
+from core.model_base import resolve_refs
 
 # Pessoal App - Models
 from pessoal.models import (
@@ -61,23 +62,26 @@ class PessoalSettingsUpdateView(BaseUpdateView):
         except Exception as e:
             raise PermissionDenied
         obj, created = PessoalSettings.objects.get_or_create(filial=filial)
-        if self.request.GET.get('reset_default') == 'true':
+        if not created and self.request.GET.get('reset_default') == 'true':
         # se definido url param ?reset_default=true, reseta das configuracoes para o padrao
             obj.config = {}
             obj.save()
             messages.success(self.request, DEFAULT_MESSAGES.get('reset_default'))
-        elif created:
-            obj.save() 
         return obj
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.object:
-            schema_dict = self.object.get_filtered_schema(self.request.user)
-            context['config_json'] = json.dumps(self.object.get_filtered_config(self.request.user), cls=DjangoJSONEncoder)
-            context['schema_json'] = json.dumps(schema_dict, cls=DjangoJSONEncoder)
+            from pessoal.schemas import AfastamentoSchema
+            print(AfastamentoSchema.model_json_schema())
+            schema = resolve_refs(json.loads(json.dumps(
+                self.object.get_schema().model_json_schema(mode='serialization'),
+                cls=DjangoJSONEncoder
+            )))
+            context['schema_json'] = json.dumps(schema, cls=DjangoJSONEncoder)
+            context['config_json'] = json.dumps(self.object.config.model_dump(), cls=DjangoJSONEncoder)
         else:
-            context['config_json'] = json.dumps({})
             context['schema_json'] = json.dumps({})
+            context['config_json'] = json.dumps({})
         return context
     def form_valid(self, form):
         self.object = form.save(commit=False)

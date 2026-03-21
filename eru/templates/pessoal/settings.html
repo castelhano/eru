@@ -60,8 +60,7 @@
 
 {% block add_script_src %}
 <script src="{% static 'js/vendor/jedison.js' %}"></script>
-<!-- <script src="{# static 'js/vendor/jsoneditor.js' #}"></script>
-<script src="{# static 'js/jsoneditor.config.js' #}"></script> -->
+<script src="{% static 'js/jedison.config.js' %}"></script>
 <script src="{% static 'js/url.js' %}"></script>
 {% endblock %}
 
@@ -75,31 +74,48 @@
     {% if object %}
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('extra').disabled = false;
-    const schema = {{ schema_json|safe }};
-    const startval = {{ config_json|safe }};
-    // schema['x-format'] = 'grid';
-    // schema.properties.frequencia.properties.incluir_intervalos_jornada['x-format'] = "checkbox";
-    console.log(schema);
+    
+    const rawSchema = {{ schema_json|safe }};
+    const rawData = {{ config_json|safe }};
+    const layoutSchema = {
+        '__all__': {
+            'x-enableCollapseToggle': true,
+        },
+        '__root__': {
+            'description': 'Meu form ajustado',
+        },
+        'folha': {
+            'x-format': 'grid',
+        },
+        'folha.dia_fechamento': {
+            'x-grid': {'columns': 6},
+            'description': 'Dia do mês em que a folha é fechada'
+        },
+        'folha.permite_adiantamento': {
+            'x-containerAttributes': {'data-switch': 'true'}
+        },
+        'frequencia.incluir_intervalos_jornada': {
+            'x-containerAttributes': {'data-switch': 'true'}
+        }
+    }
+    const formatedSchema = applyLayout(rawSchema, layoutSchema);
+    console.log(rawSchema);
+    console.log(formatedSchema);
+    
+    
     
     const editor = new Jedison.Create({
         container: document.getElementById('editor_holder'),
         theme: new Jedison.ThemeBootstrap5(),
         btnContents: false,
         iconLib: 'bootstrap-icons',
-        schema: schema,
-        data: startval
+        schema: formatedSchema,
+        data: rawData,
     });
+
     const form = document.getElementById('app_form');
     form.onsubmit = (e) => {
-        const errors = editor.validate();
-        if (errors.length) {
-            console.log(errors);
-            appNotify('danger', _('Existem campos inválidos, verifique antes de prosseguir'))
-            e.preventDefault();
-            return;
-        }        
-        const jsonString = JSON.stringify(editor.getValue());
-        document.getElementById('id_config_data').value = jsonString;
+        document.getElementById('id_config_data').value = JSON.stringify(editor.getValue());
     };
     {% endif %}
     {% endblock %}
