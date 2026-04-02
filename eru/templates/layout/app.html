@@ -27,7 +27,7 @@
         {% block style %}{% endblock %}
     </style>
     
-    <script src="{% url 'javascript-catalog' %}"></script>
+    <script src="{% url 'core:javascript-catalog' %}"></script>
     {% block script_preload_src %}{% endblock %}
     <script>
         const __sw = screen?.width || null;
@@ -40,7 +40,7 @@
 <body class="{% block body_classlist %}{% endblock %}" style="{% block body_style %}{% endblock %}">
     <nav class="navbar fixed-top py-1 {% block navbar_classlist %}bg-body-tertiary border-bottom{% endblock %}">
         <div class="container-fluid">
-            <a class="text-body" id="home" href="{% url 'index' %}"><i class="bi bi-input-cursor fs-4"></i></a>
+            <a class="text-body" id="home" href="{% url 'core:index' %}"><i class="bi bi-input-cursor fs-4"></i></a>
             <span class="navbar-brand">{% block nav_title %}ERU{% endblock %}</span>
             <i class="bi bi-sliders2 fs-4 pointer px-2 px-lg-3" id="canvasNavLink" data-bs-toggle="offcanvas" data-bs-target="#canvasNav"></i>
             <div class="offcanvas offcanvas-end" tabindex="-1" id="canvasNav">
@@ -76,10 +76,10 @@
                     <ul id="customCanvasNavMenu" class="navbar-nav justify-content-end flex-grow-1 mt-2"></ul>
                     {% block canvasNav %}{% endblock %}
                     <div class="position-sticky mt-2" style="top: 95%;">
-                        <form action="{% url 'logout' %}" method="POST" onsubmit="return appOnLogout()">
+                        <form action="{% url 'core:logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-primary-matte me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>{% translate 'Sair'|hl_str:'q' %}</button>
-                            <a href="{% url 'change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha'|escapejs %}</a>
+                            <a href="{% url 'core:change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha'|escapejs %}</a>
                             <a href="" class="btn btn-sm btn-secondary-matte float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>{% translate 'Tarefas'|escapejs %}</a>
                         </form>
                     </div>

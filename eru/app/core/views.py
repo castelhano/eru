@@ -35,7 +35,7 @@ class IndexView(LoginRequiredMixin, BaseTemplateView):
         profile = getattr(request.user, 'profile', None)
         if profile and profile.force_password_change:
             messages.warning( request, '<b>Atenção.</b> É necessário trocar sua senha para continuar.' )
-            return redirect('change_password')
+            return redirect('core:change_password')
         return super().dispatch(request, *args, **kwargs)
 
 class CustomLoginView(auth_views.LoginView):
@@ -87,7 +87,7 @@ class CustomLoginView(auth_views.LoginView):
 class CustomPasswordChangeView(auth_views.PasswordChangeView):
     form_class = CustomPasswordChangeForm
     template_name = 'core/change_password.html'
-    success_url = reverse_lazy('login')
+    success_url = reverse_lazy('core:login')
     @transaction.atomic
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -129,7 +129,7 @@ class HandlerView(LoginRequiredMixin, BaseTemplateView):
         return context
 
 
-class LogAuditListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
+class LogListView(LoginRequiredMixin, PermissionRequiredMixin, CSVExportMixin, BaseListView):
     model = LogEntry
     template_name = 'core/logs.html'
     permission_required = 'auditlog.view_logentry'
@@ -240,7 +240,7 @@ class EmpresaCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateV
     template_name = 'core/empresa_add.html'
     permission_required = 'core.add_empresa'
     def get_success_url(self):
-        return reverse('empresa_update', kwargs={'pk': self.object.pk})
+        return reverse('core:empresa_update', kwargs={'pk': self.object.pk})
 
 
 class FilialCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateView):
@@ -253,7 +253,7 @@ class FilialCreateView(LoginRequiredMixin, PermissionRequiredMixin, BaseCreateVi
         context['empresa'] = get_object_or_404(Empresa, pk=self.kwargs.get('pk'))
         return context
     def get_success_url(self):
-        return reverse('empresa_update', kwargs={'pk': self.object.empresa.pk})
+        return reverse('core:empresa_update', kwargs={'pk': self.object.empresa.pk})
 
 class UsuarioCreateView(BaseCreateView):
     model = User
@@ -261,14 +261,14 @@ class UsuarioCreateView(BaseCreateView):
     template_name = 'core/usuario_add.html'
     context_object_name = 'usuario'
     def get_success_url(self):
-        return reverse('usuario_update', kwargs={'pk': self.object.pk})
+        return reverse('core:usuario_update', kwargs={'pk': self.object.pk})
 
 
 class GrupoCreateView(BaseCreateView):
     form_class = GroupForm
     template_name = 'core/grupo_add.html'
     permission_required = 'auth.add_group'
-    success_url = reverse_lazy('grupo_list')
+    success_url = reverse_lazy('core:grupo_list')
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         exclude_itens = ['sessions', 'contenttypes', 'admin']
@@ -287,7 +287,7 @@ class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdate
     template_name = 'core/settings.html'
     permission_required = 'core.view_settings'
     success_message = _("Configurações atualizadas com sucesso!")
-    success_url = reverse_lazy('settings')
+    success_url = reverse_lazy('core:settings_update')
     def get_object(self, queryset=None):
         # recuperar instancia ou cria (no primeiro uso) com valores default
         obj, created = Settings.objects.get_or_create(pk=1)
@@ -310,7 +310,7 @@ class EmpresaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateV
         context['table'] = FilialTable(self.object.filiais.all(), request=self.request).config(self.request)
         return context
     def get_success_url(self):
-        return reverse('empresa_update', kwargs={'pk': self.object.id})
+        return reverse('core:empresa_update', kwargs={'pk': self.object.id})
 
 class FilialUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
     model = Filial
@@ -323,7 +323,7 @@ class FilialUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVi
         context['empresa'] = self.object.empresa 
         return context
     def get_success_url(self):
-        return reverse('filial_update', kwargs={'pk': self.object.id})
+        return reverse('core:filial_update', kwargs={'pk': self.object.id})
 
 
 class UsuarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
@@ -331,12 +331,12 @@ class UsuarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateV
     form_class = UserForm
     permission_required = 'auth.change_user'
     template_name = 'core/usuario_id.html'
-    success_url = reverse_lazy('usuario_list')
+    success_url = reverse_lazy('core:usuario_list')
     context_object_name = 'usuario'
     def get_queryset(self):
         return super().get_queryset().select_related('profile')
     def get_success_url(self):
-        return reverse('usuario_update', kwargs={'pk': self.object.pk})
+        return reverse('core:usuario_update', kwargs={'pk': self.object.pk})
 
 
 class GrupoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
@@ -345,7 +345,7 @@ class GrupoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVie
     template_name = 'core/grupo_id.html'
     permission_required = 'auth.change_group'
     def get_success_url(self):
-        return reverse('grupo_update', kwargs={'pk': self.object.id})
+        return reverse('core:grupo_update', kwargs={'pk': self.object.id})
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['grupo'] = self.object
@@ -360,23 +360,23 @@ class GrupoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateVie
 class EmpresaDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Empresa
     permission_required = 'core.delete_empresa'
-    success_url = reverse_lazy('empresa_list')
+    success_url = reverse_lazy('core:empresa_list')
 
 class FilialDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Filial
     permission_required = 'core.delete_filial'
     def get_success_url(self):
-        return reverse('empresa_update', kwargs={'pk': self.object.empresa.id})
+        return reverse('core:empresa_update', kwargs={'pk': self.object.empresa.id})
 
 class UsuarioDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = User
     permission_required = 'auth.delete_user'
-    success_url = reverse_lazy('usuario_list')
+    success_url = reverse_lazy('core:usuario_list')
 
 class GrupoDeleteView(LoginRequiredMixin, PermissionRequiredMixin, BaseDeleteView):
     model = Group
     permission_required = 'auth.delete_group'
-    success_url = reverse_lazy('grupo_list')
+    success_url = reverse_lazy('core:grupo_list')
 
 
 

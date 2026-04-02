@@ -12,7 +12,7 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active disabled" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.auth.add_user %}
-      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'usuario_create' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
+      <li class="nav-item ms-1"><a class="nav-link border" id="add" href="{% url 'core:usuario_create' %}" title="ALT+N"><i class="bi bi-plus-lg text-success"></i></a></li>
       {% endif %}
     </ul>
   </div>
@@ -27,7 +27,7 @@
       </div>
       <div class="col-lg-auto ps-auto ps-lg-0 order-1 order-lg-2" style="min-width: 200px;">
         <div class="filter-container">
-          <h6 class="text-body-secondary d-flex justify-content-between">{% translate 'Filtros'|escapejs %}<a class="text-body-secondary text-decoration-none fs-8" id="clear" href="{% url 'usuario_list' %}">{% translate 'Limpar'|escapejs %}</a></h6>
+          <h6 class="text-body-secondary d-flex justify-content-between">{% translate 'Filtros'|escapejs %}<a class="text-body-secondary text-decoration-none fs-8" id="clear" href="{% url 'core:usuario_list' %}">{% translate 'Limpar'|escapejs %}</a></h6>
           <ul class="list-unstyled">
             <li><a href="#" id="id_ativos" onclick="urlFilter('is_active','True')">{% translate 'Ativos'|escapejs %}</a></li>
             <li><a href="#" id="id_bloqueados" onclick="urlFilter('is_active','False')">{% translate 'Bloqueados'|escapejs %}</a></li>

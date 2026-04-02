@@ -10,7 +10,7 @@
   <div class="card-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'grupo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'core:grupo_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.auth.delete_group %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -21,7 +21,7 @@
       {% endif %}
     </ul>
   </div>
-  <form action="{% url 'grupo_update' grupo.id|safe %}" method="POST" autocomplete="off">
+  <form action="{% url 'core:grupo_update' grupo.id|safe %}" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'core/_form_grupo.html' %}
   </form>
@@ -39,7 +39,7 @@
         <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
         <div class="row mt-2">
           <div class="col text-end">
-            <form action="{% url 'grupo_delete' grupo.id|safe %}" method="POST">
+            <form action="{% url 'core:grupo_delete' grupo.id|safe %}" method="POST">
               {% csrf_token %}
               {% btn_tag 'Cancelar' data_bs_dismiss="modal" %}
               {% btn_tag 'delete' %}

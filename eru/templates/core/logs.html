@@ -17,7 +17,7 @@
   <div class="card-body tab-content">
     <h5 class="card-title">{% translate 'Logs'|escapejs %}</h5>
     <div class="tab-pane fade show active" id="base" role="tabpanel">
-      <form id="filterForm" action="{% url 'logs' %}" method="GET" autocomplete="off">
+      <form id="filterForm" action="{% url 'core:log_list' %}" method="GET" autocomplete="off">
         {% csrf_token %}
         <div class="row">
           

@@ -13,7 +13,7 @@
     const empresaAtual = '{{empresa_atual}}';
     const blankRowEnabled = {{blank_row|default:'false'}};
 
-    return fetch("{% url 'get_empresas' %}")
+    return fetch("{% url 'core:get_empresas' %}")
       .then(response => response.json())
       .then(data => {
         let optionsHtml = '';

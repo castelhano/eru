@@ -31,7 +31,7 @@
         id: 'menu_menuSettings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
-        href: '{% url 'settings' %}',
+        href: '{% url 'core:settings_update' %}',
         keybind: [
             'alt+u',
             ()=>{menuSettings.click()},
@@ -46,7 +46,7 @@
         id: 'menu_menuLogs',
         class: 'text-warning',
         icon: 'bi bi-database-fill-lock',
-        href: '{% url 'logs' %}',
+        href: '{% url 'core:log_list' %}',
         keybind: [
             'alt+o',
             ()=>{menuLogs.click()},

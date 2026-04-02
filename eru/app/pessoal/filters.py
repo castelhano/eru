@@ -47,7 +47,7 @@ class FuncionarioFilter(django_filters.FilterSet):
         super().__init__(*args, **kwargs)
         self.filters['filial'].field.widget.attrs.update({
             'data-chained-field': 'id_empresa_filter',
-            'data-url': reverse_lazy('filial_list'),
+            'data-url': reverse_lazy('core:filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
         self.filters['status'].field.widget.attrs.update({'class_cols': '2'})
@@ -137,7 +137,7 @@ class FilialFilterMixin(django_filters.FilterSet):
         super().__init__(*args, **kwargs)
         self.filters['filiais'].field.widget.attrs.update({
             'data-chained-field': 'id_empresa_filter',
-            'data-url': reverse_lazy('filial_list'),
+            'data-url': reverse_lazy('core:filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
         if self.user:
@@ -193,7 +193,7 @@ class FeriasAquisitivoFilter(django_filters.FilterSet):
         super().__init__(*args, **kwargs)
         self.filters['filial'].field.widget.attrs.update({
             'data-chained-field': 'id_empresa_filter',
-            'data-url': reverse_lazy('filial_list'),
+            'data-url': reverse_lazy('core:filial_list'),
             'class': 'form-select form-select-sm select-chained'
         })
         if user:

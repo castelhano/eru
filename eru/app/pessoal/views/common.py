@@ -310,7 +310,7 @@ class EventoRelatedListView(LoginRequiredMixin, BaseListView):
         self.related = kwargs.get('related', '').lower()
         self.related_id = kwargs.get('pk')
         if self.related not in self.CONFIG_MAP:
-            return redirect('index')
+            return redirect('core:index')
         perm = f'pessoal.view_evento{self.related}'
         if not request.user.has_perm(perm):
             raise PermissionDenied
@@ -484,9 +484,9 @@ class EventoRelatedCreateView(LoginRequiredMixin, BaseCreateView):
         perm_name = f"pessoal.view_evento{self.related}"
         if self.related not in ['empresa', 'cargo', 'funcionario']:
             messages.error(request, f"{DEFAULT_MESSAGES['400']} <b>pessoal:evento_related_add, invalid related</b>")
-            return redirect('index')
+            return redirect('core:index')
         if not request.user.has_perm(perm_name):
-            return redirect('handler', code=403)
+            return redirect('core:handler', code=403)
         return super().dispatch(request, *args, **kwargs)
     def get_form_class(self):
         forms_map = {
@@ -567,7 +567,7 @@ class FuncionarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin,  BaseUp
         funcionario = self.get_object()
         if request.method == 'POST':
             if not request.user.has_perm('pessoal.change_funcionario'):
-                return redirect('handler', 403)
+                return redirect('core:handler', 403)
             if not funcionario.F_eh_editavel:
                 messages.error( request, _("Não é possível alterar dados de funcionários desligados"))
                 return redirect('pessoal:funcionario_update', pk=funcionario.id)
@@ -656,9 +656,9 @@ class EventoRelatedUpdateView(LoginRequiredMixin, BaseUpdateView):
                 request, 
                 f"{DEFAULT_MESSAGES['400']} <b>evento_related_update [bad request]</b>"
             )
-            return redirect('index')
+            return redirect('core:index')
         if not request.user.has_perm(perm_name):
-            return redirect('handler', 403)
+            return redirect('core:handler', 403)
         return super().dispatch(request, *args, **kwargs)
     def get_queryset(self):
         # define o modelo alvo
@@ -780,7 +780,7 @@ class EventoRelatedDeleteView(LoginRequiredMixin, BaseDeleteView):
             messages.error(request, f"{DEFAULT_MESSAGES['400']} <b>evento_related_delete [bad request: invalid related]</b>")
             return redirect('pessoal:eventos')
         if not request.user.has_perm(perm_name):
-            return redirect('handler', 403)
+            return redirect('core:handler', 403)
         return super().dispatch(request, *args, **kwargs)
     def get_success_url(self):
         obj = self.get_object()

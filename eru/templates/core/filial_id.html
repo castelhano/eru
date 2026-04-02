@@ -15,7 +15,7 @@
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
-            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'empresa_update' filial.empresa.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+            <li class="nav-item"><a class="nav-link" id="back" href="{% url 'core:empresa_update' filial.empresa.id|safe %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
             {% if perms.core.delete_filial %}
             <li class="nav-item dropdown ms-auto">
                 <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -26,7 +26,7 @@
             {% endif %}
         </ul>
     </div>
-    <form id="core_form" action="{% url 'filial_update' filial.id|safe %}" method="POST" autocomplete="off" enctype="multipart/form-data" novalidate>
+    <form id="core_form" action="{% url 'core:filial_update' filial.id|safe %}" method="POST" autocomplete="off" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
     {% include 'core/_form_filial.html' %}
     </form>
@@ -44,7 +44,7 @@
                 <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
                 <div class="row mt-2">
                     <div class="col text-end">
-                        <form action="{% url 'filial_delete' filial.id|safe %}" method="POST">
+                        <form action="{% url 'core:filial_delete' filial.id|safe %}" method="POST">
                             {% csrf_token %}
                             {% btn_tag 'Cancelar' data_bs_dismiss="modal" %}
                             {% btn_tag 'delete' %}

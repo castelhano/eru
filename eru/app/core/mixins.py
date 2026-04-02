@@ -16,7 +16,7 @@ from .templatetags.ui_components import btn_tag
 
 class AjaxableListMixin:
 # mixin para consulta de registros via ajax, adicione na view, e no template:
-# fetch('{% url "empresa_list" %}?id=1', {})
+# fetch('{% url "core:empresa_list" %}?id=1', {})
 # .then(res => res.json())
 # .then(data => console.log(data));
     def render_to_response(self, context, **response_kwargs):
@@ -38,7 +38,7 @@ class AjaxableListMixin:
 
 class AjaxableFormMixin:
 # mixin para create / update de registros via ajax, adicione o mixin na view e no template:
-# fetch('{% url "empresa_create" %}', {
+# fetch('{% url "core:empresa_create" %}', {
 #     method: 'POST',
 #     headers: {
 #         'Content-Type': 'application/json',

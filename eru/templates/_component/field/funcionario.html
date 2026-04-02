@@ -24,7 +24,7 @@
     let nome = document.getElementById("id_nome_funcionario");
     let funcionario = document.getElementById("id_funcionario");
     if (matricula.value === '') { cleanFuncionário(); return; }
-    let url = "{% url 'funcionario-api-list' %}?matricula=" + matricula.value;
+    let url = "{% url 'core:funcionario-api-list' %}?matricula=" + matricula.value;
     try {
       let response = await fetch(url);
       if (!response.ok) {  // se erro na resposta

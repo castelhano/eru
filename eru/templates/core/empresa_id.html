@@ -11,9 +11,9 @@
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" data-bs-target="#base" href="#"><i class="bi bi-list"></i></a></li>
       {% if perms.core.add_filial %}
-      <li class="nav-item ms-1"><a class="nav-link active" id="add" href="{% url 'filial_create' empresa.id|safe %}"><i class="bi bi-plus-square-fill text-success me-2"></i> <span class="text-success-emphasis fs-7">{% translate 'Filial'|escapejs %}</span></a></li>
+      <li class="nav-item ms-1"><a class="nav-link active" id="add" href="{% url 'core:filial_create' empresa.id|safe %}"><i class="bi bi-plus-square-fill text-success me-2"></i> <span class="text-success-emphasis fs-7">{% translate 'Filial'|escapejs %}</span></a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'empresa_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
+      <li class="nav-item"><a class="nav-link" id="back" href="{% url 'core:empresa_list' %}"><i class="bi bi-arrow-counterclockwise"></i></a></li>
       {% if perms.core.delete_empresa %}
       <li class="nav-item dropdown ms-auto">
         <a class="nav-link dropdown-toggle border text-body" data-bs-toggle="dropdown" href="#" role="button"></a>
@@ -24,7 +24,7 @@
       {% endif %}
     </ul>
   </div>
-  <form id="app_form" action="{% url 'empresa_update' empresa.id|safe %}" enctype="multipart/form-data" method="POST" autocomplete="off">
+  <form id="app_form" action="{% url 'core:empresa_update' empresa.id|safe %}" enctype="multipart/form-data" method="POST" autocomplete="off">
     {% csrf_token %}
     {% include 'core/_form_empresa.html' %}
   </form>
@@ -42,7 +42,7 @@
         <p><b class="text-danger">{% translate 'Atenção'|escapejs %}!!</b> {% translate 'Esta operação não pode ser desfeita, confirma a exclusão do registro?'|escapejs %}</p>
         <div class="row mt-2">
           <div class="col text-end">
-            <form action="{% url 'empresa_delete' empresa.id|safe %}" method="POST">
+            <form action="{% url 'core:empresa_delete' empresa.id|safe %}" method="POST">
               {% csrf_token %}
               {% btn_tag _('Cancelar') data_bs_dismiss="modal" %}
               {% btn_tag 'delete' %}
