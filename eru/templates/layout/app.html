@@ -27,7 +27,7 @@
         {% block style %}{% endblock %}
     </style>
     
-    <script src="{% url 'core:javascript-catalog' %}"></script>
+    <script src="{% url 'javascript-catalog' %}"></script>
     {% block script_preload_src %}{% endblock %}
     <script>
         const __sw = screen?.width || null;
@@ -79,7 +79,7 @@
                         <form action="{% url 'core:logout' %}" method="POST" onsubmit="return appOnLogout()">
                             {% csrf_token %}
                             <button class="btn btn-sm btn-primary-matte me-1" id="logout" type="submit"><i class="bi bi-power me-2"></i>{% translate 'Sair'|hl_str:'q' %}</button>
-                            <a href="{% url 'core:change_password' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha'|escapejs %}</a>
+                            <a href="{% url 'core:password_change' %}" class="btn btn-sm btn-secondary-matte" id="change_password_btn"><i class="bi-shield-fill me-2"></i>{% translate 'Senha'|escapejs %}</a>
                             <a href="" class="btn btn-sm btn-secondary-matte float-end" id="jobs_btn" target="_blank"><i class="bi bi-database-fill-gear me-2"></i>{% translate 'Tarefas'|escapejs %}</a>
                         </form>
                     </div>

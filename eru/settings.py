@@ -123,9 +123,9 @@ PROJECT_ROOT = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'app'))
 
 
-LOGIN_URL = 'login' 
-LOGOUT_REDIRECT_URL = 'login'
-LOGIN_REDIRECT_URL = 'index'
+LOGIN_URL = 'core:login' 
+LOGOUT_REDIRECT_URL = 'core:login'
+LOGIN_REDIRECT_URL = 'core:index'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

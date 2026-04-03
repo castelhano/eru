@@ -117,7 +117,7 @@ def _process_extras(extra_dict, app_name, default_path):
             
             context = cfg.get("context", "")
             path_mod = cfg.get("path_module", path_mod_root)
-            url_pattern = cfg.get("path", f"{context.lower()}/")
+            url_pattern = cfg.get("path", f"{model_name.lower()}/{context.lower()}/")
             url_name = cfg.get("name", f"{model_name.lower()}_{context.lower()}")
             custom_sfx = cfg.get("suffix", None)
             

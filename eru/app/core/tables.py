@@ -18,7 +18,7 @@ class EmpresaTable(TableCustomMixin, Table):
         model = Empresa
         fields = ("id", "nome", "razao_social", "cnpj_base", "filiais")
         actions = [
-            {'action': 'update', 'url_name': 'empresa_update', 'path_params': {'pk': 'id'}, 'perm': 'core.change_empresa'}
+            {'action': 'update', 'url_name': 'core:empresa_update', 'path_params': {'pk': 'id'}, 'perm': 'core.change_empresa'}
         ]
         responsive_columns = {
             "id": "fit pe-5",
@@ -37,7 +37,7 @@ class FilialTable(TableCustomMixin, Table):
         model = Filial
         fields = ("id", "nome", "cnpj", "cidade")
         actions = [
-            {'action': 'update', 'url_name': 'filial_update', 'path_params': {'pk': 'id'}, 'perm':'core.change_filial'}
+            {'action': 'update', 'url_name': 'core:filial_update', 'path_params': {'pk': 'id'}, 'perm':'core.change_filial'}
         ]
         responsive_columns = {
             "id": "d-none d-sm-table-cell",
@@ -51,7 +51,7 @@ class UsuarioTable(TableCustomMixin, Table):
         model = User
         fields = ("id", "username", "first_name", "last_name", "is_active", "last_login")
         actions = [
-            {'action': 'update', 'url_name': 'usuario_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_user'}
+            {'action': 'update', 'url_name': 'core:usuario_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_user'}
         ]
         responsive_columns = {
             "id": "d-none d-md-table-cell",
@@ -66,7 +66,7 @@ class GrupoTable(TableCustomMixin, Table):
         model = Group
         fields = ("id", "name")
         actions = [
-            {'action': 'update', 'url_name': 'grupo_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_group'},
+            {'action': 'update', 'url_name': 'core:grupo_update', 'path_params': {'pk': 'id'}, 'perm':'auth.change_group'},
             {
                 'url_name': 'usuario_list',
                 'query_params': {'group': 'id'},
