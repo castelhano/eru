@@ -6,9 +6,9 @@
         name: '{% translate 'Cadastro'|hl_str:'c' %}',
         icon: 'bi bi-list',
         itens: [
-        {% if perms.core.view_empresa %}{name: '{% translate 'Empresa'|hl_str:'e' %}', id:'menu_empresa', href: '{% url 'empresa_list' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
-        {% if perms.auth.view_user %}{name: '{% translate 'Usuário'|hl_str:'u' %}', id:'menu_usuario', href: '{% url 'usuario_list' %}', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
-        {% if perms.auth.view_group %}{name: '{% translate 'Grupo'|hl_str:'g' %}', id:'menu_grupo', href: '{% url 'grupo_list' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.core.view_empresa %}{name: '{% translate 'Empresa'|hl_str:'e' %}', id:'menu_empresa', href: '{% url 'core:empresa_list' %}', keybind: ['e', ()=>{if(cadastro.isOpen()){document.getElementById('menu_empresa').click()}}, {display: false, preventDefault: false}]},{% endif %}
+        {% if perms.auth.view_user %}{name: '{% translate 'Usuário'|hl_str:'u' %}', id:'menu_usuario', href: '{% url 'core:usuario_list' %}', keybind: ['u', ()=>{if(cadastro.isOpen()){document.getElementById('menu_usuario').click()}}, {display: false, preventDefault: false}]}, {% endif %}
+        {% if perms.auth.view_group %}{name: '{% translate 'Grupo'|hl_str:'g' %}', id:'menu_grupo', href: '{% url 'core:grupo_list' %}', keybind: ['g', ()=>{if(cadastro.isOpen()){document.getElementById('menu_grupo').click()}}, {display: false, preventDefault: false}]}, {% endif %}
         ],
         keybind: [
             'alt+c',
@@ -31,7 +31,7 @@
         id: 'menu_menuSettings',
         class: 'text-purple',
         icon: 'bi bi-gear-fill',
-        href: '{% url 'core:settings_update' %}',
+        href: '{% url 'core:settings_manage' %}',
         keybind: [
             'alt+u',
             ()=>{menuSettings.click()},

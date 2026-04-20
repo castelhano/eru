@@ -84,7 +84,7 @@ class CustomLoginView(auth_views.LoginView):
             messages.error(self.request, 'Erro: falha na autenticação.')
         return super().form_invalid(form)
 
-class CustomPasswordChangeView(auth_views.PasswordChangeView):
+class PasswordChangeView(auth_views.PasswordChangeView):
     form_class = CustomPasswordChangeForm
     template_name = 'core/change_password.html'
     success_url = reverse_lazy('core:login')
@@ -280,14 +280,14 @@ class GrupoCreateView(BaseCreateView):
 
 # METODOS UPDATE
 
-class SettingsUpdateView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
+class SettingsManageView(LoginRequiredMixin, PermissionRequiredMixin, BaseUpdateView):
 # classe Settings do core opera como singleton
     model = Settings
     form_class = SettingsForm
     template_name = 'core/settings.html'
     permission_required = 'core.view_settings'
     success_message = _("Configurações atualizadas com sucesso!")
-    success_url = reverse_lazy('core:settings_update')
+    success_url = reverse_lazy('core:settings_manage')
     def get_object(self, queryset=None):
         # recuperar instancia ou cria (no primeiro uso) com valores default
         obj, created = Settings.objects.get_or_create(pk=1)
