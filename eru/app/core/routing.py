@@ -96,7 +96,7 @@ def _process_cruds(models_list, app_name, default_path, is_related=False):
                 path_str=path_mod, 
                 model=name, 
                 context=context_name,
-                custom_suffix="" 
+                custom_suffix=None
             )
             if view_class:
                 urls.append(path(f"{singular}/{pk_part}{url_tail}", 
